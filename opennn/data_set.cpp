@@ -3587,6 +3587,36 @@ void DataSet::set_binary_simple_columns()
 
             variable_index++;
         }
+        else if(columns(column_index).type == ColumnType::Binary)
+        {
+            Tensor<string,1> positive_words(4);
+            Tensor<string,1> negative_words(4);
+
+            positive_words.setValues({"yes","positive","+","true"});
+            negative_words.setValues({"no","negative","-","false"});
+
+            string first_category = columns(column_index).categories(0);
+            string original_first_category = columns(column_index).categories(0);
+            trim(first_category);
+
+            string second_category = columns(column_index).categories(1);
+            string original_second_category = columns(column_index).categories(1);
+            trim(second_category);
+
+            transform(first_category.begin(), first_category.end(), first_category.begin(), ::tolower);
+            transform(second_category.begin(), second_category.end(), second_category.begin(), ::tolower);
+
+            if( contains(positive_words, first_category) && contains(negative_words, second_category) )
+            {
+                columns(column_index).categories(0) = original_first_category;
+                columns(column_index).categories(1) = original_second_category;
+            }
+            else if( contains(positive_words, second_category) && contains(negative_words, first_category) )
+            {
+                columns(column_index).categories(0) = original_second_category;
+                columns(column_index).categories(1) = original_first_category;
+            }
+        }
         else if(columns(column_index).type == ColumnType::Categorical)
         {
             variable_index += columns(column_index).get_categories_number();
