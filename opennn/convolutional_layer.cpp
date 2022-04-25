@@ -290,27 +290,13 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
 
 #endif
 
-
-    cout << "inputs 4d convolutional: " << endl;
-    cout << inputs << endl;
-
-    cout << "Weights (kernels):" << endl;
-    cout << synaptic_weights << endl;
-
-    cout << "biases: " << endl << biases << endl;
-
     calculate_convolutions(inputs,
                            convolutional_layer_forward_propagation->combinations);
-
-    cout << "Convolutions: " << endl << convolutional_layer_forward_propagation->combinations << endl;
 
     calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
                                       convolutional_layer_forward_propagation->activations,
                                       convolutional_layer_forward_propagation->activations_derivatives);
 
-
-
-    system("pause");
 
 /// @todo check here next layer
 //    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);

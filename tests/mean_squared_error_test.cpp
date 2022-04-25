@@ -662,17 +662,15 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     neural_network.forward_propagate(batch, forward_propagation);
     forward_propagation.print();
 
-/*
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
     LossIndexBackPropagation back_propagation(1, &mean_squared_error);
 
-    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+//    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
 
     cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
-    */
 }
 
 
