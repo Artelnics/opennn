@@ -117,10 +117,6 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 
 void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
 {
-//    cout<<"-----------"<<endl;
-//    cout<<"inputs"<<endl;
-//    cout<<inputs<<endl;
-
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
 
@@ -150,29 +146,28 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForward
 
 #endif
 
+    // Check, problems with colmajor and rowmajor
+
     const Index rows = inputs.dimension(0);
     const Index columns = inputs.dimension(1);
     const Index channels_number = inputs.dimension(2);
-    const Index batch_size = inputs.dimension(3);
+//    const Index batch_size = inputs.dimension(3);
 
-//    cout << "inputs: " << inputs.dimension(0) << "; " << inputs.dimension(1) << "; " << inputs.dimension(2) << "; " << inputs.dimension(3) << endl;
+    Index image_counter = 0;
+    Index variable_counter = 0;
 
-//    cout << inputs(0,0,0,0)<< "; " << inputs(0,1,0,0)<< "; " << inputs(1,0,0,0)<< "; " << inputs(1,1,0,0) << endl;
-//    cout << inputs(0,0,0,1)<< "; " << inputs(0,1,0,1)<< "; " << inputs(1,0,0,1)<< "; " << inputs(1,1,0,1) << endl;
+    for(Index i = 0; i < flatten_layer_forward_propagation->outputs.size(); i++)
+    {
+        flatten_layer_forward_propagation->outputs(image_counter,variable_counter) = inputs(i);
 
-//    memcpy(flatten_layer_forward_propagation->outputs.data(),
-//           inputs.data(),
-//           static_cast<size_t>(inputs.size())*sizeof(float));
+        variable_counter++;
 
-//    cout << "outputs: " << flatten_layer_forward_propagation->outputs << endl;
-
-//    for(Index i = 0; i < flatten_layer_forward_propagation->outputs.size(); i++) cout << "outputs (" << i << "): " << flatten_layer_forward_propagation->outputs(i) << endl;
-
-//    system("pause");
-
-    //const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*rows*columns}};
-
-    //flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
+        if(variable_counter == channels_number * rows * columns)
+        {
+            variable_counter = 0;
+            image_counter++;
+        }
+    }
 }
 
 
