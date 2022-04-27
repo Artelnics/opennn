@@ -109,6 +109,8 @@ public:
    UnscalingLayer* get_unscaling_layer_pointer() const;
    BoundingLayer* get_bounding_layer_pointer() const;
    FlattenLayer* get_flatten_layer_pointer() const;
+   ConvolutionalLayer* get_convolutional_layer_pointer() const;
+   PoolingLayer* get_pooling_layer_pointer() const;
    ProbabilisticLayer* get_probabilistic_layer_pointer() const;
    LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const;
    RecurrentLayer* get_recurrent_layer_pointer() const;
@@ -142,7 +144,6 @@ public:
 
    void set_threads_number(const int&);
 
-
    void set_scaling_layer(ScalingLayer&);
 
    void set_display(const bool&);
@@ -156,6 +157,9 @@ public:
 
    Index get_perceptron_layers_number() const;
    Index get_probabilistic_layers_number() const;
+   Index get_flatten_layers_number() const;
+   Index get_convolutional_layers_number() const;
+   Index get_pooling_layers_number() const;
    Index get_long_short_term_memory_layers_number() const;
    Index get_recurrent_layers_number() const;
 

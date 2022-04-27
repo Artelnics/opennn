@@ -64,19 +64,30 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_3.get_layer_pointer(3)->get_type() == Layer::Type::Unscaling, LOG);
 
     ///@todo ImageClassification Project Type
-    /*
+
     // ImageClassification
 
-    NeuralNetwork neural_network_4(NeuralNetwork::ProjectType::ImageClassification, {1, 4, 2});
+    // Inputs variables dimension = (channels, width, height)
+    Tensor<Index, 1> inputs_variables_dimension(3);
+    inputs_variables_dimension.setValues({1,28,28});
+    Index blocks_number = 0;
+    Index outputs_number = 10;
+    Tensor<Index, 1> filters_dimensions(3);
+    filters_dimensions.setValues({2,2,1});
+    NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number,filters_dimensions, outputs_number);
 
-    assert_true(neural_network_4.get_layers_number() == 1, LOG);
     assert_true(neural_network_4.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
 
-    NeuralNetwork neural_network_5(NeuralNetwork::ImageClassification, {1});
+//    NeuralNetwork neural_network_4(NeuralNetwork::ProjectType::ImageClassification, {1, 4, 2});
 
-    assert_true(neural_network_5.get_layers_number() == 1, LOG);
-    assert_true(neural_network_5.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
-*/
+//    assert_true(neural_network_4.get_layers_number() == 1, LOG);
+//    assert_true(neural_network_4.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
+
+//    NeuralNetwork neural_network_5(NeuralNetwork::ProjectType::ImageClassification, {1});
+
+//    assert_true(neural_network_5.get_layers_number() == 1, LOG);
+//    assert_true(neural_network_5.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
+    /**/
 
     //    Layers constructor
 
