@@ -603,6 +603,50 @@ FlattenLayer* NeuralNetwork::get_flatten_layer_pointer() const
 }
 
 
+ConvolutionalLayer* NeuralNetwork::get_convolutional_layer_pointer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Type::Convolutional)
+        {
+            return dynamic_cast<ConvolutionalLayer*>(layers_pointers[i]);
+        }
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "ConvolutionalLayer* get_convolutional_layer_pointer() const method.\n"
+           << "No convolutional layer in neural network.\n";
+
+    throw invalid_argument(buffer.str());
+}
+
+
+PoolingLayer* NeuralNetwork::get_pooling_layer_pointer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Type::Pooling)
+        {
+            return dynamic_cast<PoolingLayer*>(layers_pointers[i]);
+        }
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "PoolingLayer* get_pooling_layer_pointer() const method.\n"
+           << "No pooling layer in neural network.\n";
+
+    throw invalid_argument(buffer.str());
+}
+
+
 /// Returns a pointer to the first probabilistic layer composing this neural network.
 
 ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
@@ -782,10 +826,8 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::ImageClassification)
     {
-
-
+        // Use the set mode build specifically for image classification
     }
-
 
     outputs_names.resize(outputs_number);
 
@@ -824,27 +866,32 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     for(Index i = 0; i < blocks_number; i++)
     {
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        add_layer(convolutional_layer);
+        this->add_layer(convolutional_layer);
 
         outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
         // Pooling layer 1
 
         PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
-        add_layer(pooling_layer_1);
+        this->add_layer(pooling_layer_1);
 
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
     }
 
+    /*FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
+    this->add_layer(flatten_layer);
+
+    outputs_dimensions = flatten_layer->get_outputs_dimensions();*/
+
     const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
 
     PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 18);
-    add_layer(perceptron_layer);
+    this->add_layer(perceptron_layer);
 
     const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
 
     ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
-    add_layer(probabilistic_layer);
+    this->add_layer(probabilistic_layer);
 }
 
 
@@ -1291,6 +1338,7 @@ Index NeuralNetwork::get_trainable_layers_number() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
         && layers_pointers(i)->get_type() != Layer::Type::Unscaling
+        && layers_pointers(i)->get_type() != Layer::Type::Flatten
         && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             count++;
@@ -1346,6 +1394,60 @@ Index NeuralNetwork::get_long_short_term_memory_layers_number() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers(i)->get_type() == Layer::Type::LongShortTermMemory)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+Index NeuralNetwork::get_flatten_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Type::Flatten)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+Index NeuralNetwork::get_convolutional_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Type::Convolutional)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+Index NeuralNetwork::get_pooling_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Type::Pooling)
         {
             count++;
         }
@@ -1895,6 +1997,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         buffer << layers_pointers[i]->get_type_string();
         if(i != (layers_pointers.size()-1)) buffer << " ";
+
+        cout << "Tipos de layers: " << layers_pointers[i]->get_type_string() << endl;
     }
 
     file_stream.PushText(buffer.str().c_str());
