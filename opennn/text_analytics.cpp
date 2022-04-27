@@ -190,9 +190,9 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
         replace(documents(j).begin(), documents(j).end() + documents(j).size(), '<' ,' ');
         replace(documents(j).begin(), documents(j).end() + documents(j).size(), '|' ,' ');
 
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¡' ,u' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¡' ,u' ');
 
 
         replace(documents(j).begin(), documents(j).end() + documents(j).size(), '.' ,' ');
