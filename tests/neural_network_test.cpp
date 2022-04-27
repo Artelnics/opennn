@@ -70,24 +70,20 @@ void NeuralNetworkTest::test_constructor()
     // Inputs variables dimension = (channels, width, height)
     Tensor<Index, 1> inputs_variables_dimension(3);
     inputs_variables_dimension.setValues({1,28,28});
-    Index blocks_number = 0;
+    Index blocks_number = 1;
     Index outputs_number = 10;
     Tensor<Index, 1> filters_dimensions(3);
-    filters_dimensions.setValues({2,2,1});
+    filters_dimensions.setValues({1,2,2});
     NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number,filters_dimensions, outputs_number);
 
+    cout << "Layers number: " << neural_network_4.get_layers_number() << endl;
+    assert_true(neural_network_4.get_layers_number() == 6, LOG); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
     assert_true(neural_network_4.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
-
-//    NeuralNetwork neural_network_4(NeuralNetwork::ProjectType::ImageClassification, {1, 4, 2});
-
-//    assert_true(neural_network_4.get_layers_number() == 1, LOG);
-//    assert_true(neural_network_4.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
-
-//    NeuralNetwork neural_network_5(NeuralNetwork::ProjectType::ImageClassification, {1});
-
-//    assert_true(neural_network_5.get_layers_number() == 1, LOG);
-//    assert_true(neural_network_5.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
-    /**/
+    assert_true(neural_network_4.get_layer_pointer(1)->get_type() == Layer::Type::Convolutional, LOG);
+    assert_true(neural_network_4.get_layer_pointer(2)->get_type() == Layer::Type::Pooling, LOG);
+    assert_true(neural_network_4.get_layer_pointer(3)->get_type() == Layer::Type::Flatten, LOG);
+    assert_true(neural_network_4.get_layer_pointer(4)->get_type() == Layer::Type::Perceptron, LOG);
+    assert_true(neural_network_4.get_layer_pointer(5)->get_type() == Layer::Type::Probabilistic, LOG);
 
     //    Layers constructor
 

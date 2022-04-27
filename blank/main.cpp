@@ -32,28 +32,6 @@ int main()
     {
         cout << "Blank script! " << endl;
 
-        TextAnalytics text_analytics;
-        Tensor<string,1> document(1);
-        Tensor<Tensor<string,1>,1> documents(1);
-
-        document(0) = " 1 issues cried holáóú rational 5 mindfulness imperational david@gmail.com";
-
-        documents(0) = document;
-
-        Tensor<Tensor<string,1>,1> tokens = text_analytics.tokenize(document);
-
-        string word = "designer";
-
-//        Tensor<Tensor<string,1>,1> documents_stemmed = text_analytics.apply_english_stemmer(documents);
-
-//        cout << documents_stemmed(0) << endl;
-
-        text_analytics.delete_numbers(documents);
-        text_analytics.delete_emails(documents);
-        text_analytics.replace_accented(documents);
-
-        cout << documents(0) << endl;
-
         cout << "Goodbye!" << endl;
 
         return 0;
