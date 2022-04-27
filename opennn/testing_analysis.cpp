@@ -1836,16 +1836,11 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     Tensor<type, 2> roc_curve(points_number + 1, 3);
     roc_curve.setZero();
 
-    cout << "TARGETS: " << endl << targets << endl;
-    cout << "OUTPUTS: " << endl << outputs << endl;
-
 #pragma omp parallel for schedule(dynamic)
 
-    for(Index i = 0; i <= static_cast<Index>(points_number); i++)
+    for(Index i = 1; i < static_cast<Index>(points_number); i++)
     {
         const type threshold = i * (1/static_cast<type>(points_number));
-
-//        const type threshold = 0;
 
         Index true_positive = 0;
         Index false_negative = 0;
@@ -1860,7 +1855,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             target = targets(j,0);
             output = outputs(j,0);
 
-            if(target >= threshold && output >= threshold)
+            if(target > threshold && output > threshold)
             {
                 true_positive++;
             }
@@ -1890,9 +1885,15 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         {
             roc_curve(i,1) = 0;
         }
-
-
     }
+
+    roc_curve(0,0) = 0;
+    roc_curve(0,1) = 0;
+    roc_curve(0,2) = 0;
+
+    roc_curve(points_number,0) = 1;
+    roc_curve(points_number,1) = 1;
+    roc_curve(points_number,2) = 1;
 
     return roc_curve;
 }
