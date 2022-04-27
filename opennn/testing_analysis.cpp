@@ -1878,15 +1878,6 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             }
         }
 
-//        if(threshold == 0)
-//        {
-//            cout << "True positive: " << true_positive << endl;
-//            cout << "True negative: " << true_negative << endl;
-//            cout << "False positive: " << false_positive << endl;
-//            cout << "False negative: " << false_negative << endl;
-
-//        }
-
         roc_curve(i,0) = 1 - static_cast<type>(true_positive)/(static_cast<type>(true_positive + false_negative));
         roc_curve(i,1) = static_cast<type>(true_negative)/(static_cast<type>(true_negative + false_positive));
         roc_curve(i,2) = static_cast<type>(threshold);
@@ -1902,10 +1893,6 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
 
     }
-
-//    roc_curve(points_number, 0) = type(1);
-//    roc_curve(points_number, 1) = type(1);
-//    roc_curve(points_number, 2) = type(1);
 
     return roc_curve;
 }
