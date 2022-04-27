@@ -878,10 +878,10 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
     }
 
-    /*FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
+    FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
     this->add_layer(flatten_layer);
 
-    outputs_dimensions = flatten_layer->get_outputs_dimensions();*/
+    outputs_dimensions = flatten_layer->get_outputs_dimensions();
 
     const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
 
