@@ -207,7 +207,6 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 //    Tensor<Index,1> new_input_variables_dimensions = input_variables_dimensions_element->GetText();
 
 //    set(new_input_variables_dimensions);
-
 }
 
 }
