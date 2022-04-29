@@ -9859,6 +9859,46 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     return cross_correlations;
 }
 
+
+/// Transforms a sentence to Tensor, according to dataset columns.
+/// @param sentence Sentence that we will transform
+
+Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
+{
+    Tensor<string, 1> tokens = get_tokens(sentence);
+
+    Tensor<type, 1> vector(get_columns_number() - 1);
+
+    TextAnalytics text_analytics;
+
+    Tensor<Tensor<string,1>,1> words = text_analytics.preprocess(tokens);
+
+    TextAnalytics::WordBag word_bag = text_analytics.calculate_word_bag(words);
+
+    const Tensor<string,1> columns_names = get_columns_names();
+
+    const Index words_number = word_bag.words.size();
+
+    vector.setZero();
+
+    for(Index i = 0; i < words_number; i++)
+    {
+        if( contains(columns_names, tokens(i)) )
+        {
+            auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), tokens(i));
+            const Index index = it - columns_names.data();
+
+            vector(index) = word_bag.frequencies(i);
+        }
+    }
+
+    return vector;
+
+};
+
+
+
+
 /// Generates an artificial data_set with a given number of samples and number of variables
 /// by constant data.
 /// @param samples_number Number of samples in the data_set.
@@ -10565,6 +10605,79 @@ void DataSet::read_bmp()
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
+
+
+void DataSet::read_txt()
+{
+    cout << "Reading .txt file..." << endl;
+
+    TextAnalytics text_analytics;
+
+    text_analytics.load_documents(data_file_name);
+
+    Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
+    Tensor<Tensor<type, 1>, 1> targets = text_analytics.get_targets();
+
+    Tensor<string, 1> full_document = text_analytics.join(document);
+
+    Tensor<Tensor<string, 1>, 1> document_tokens = text_analytics.preprocess(full_document);
+
+    TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
+
+    const Index document_words_number = document_word_bag.words.size();
+
+    const Index sentences_number = text_analytics.get_document_sentences_number(); ///@todo
+
+    data.resize(sentences_number, document_words_number + 1);
+
+    columns.resize(document_words_number + 1);
+    Tensor<string, 1> columns_names = document_word_bag.words;
+    columns_names = push_back(columns_names, "target");
+
+    Index rows_index = 0;
+
+    data.setZero();
+
+    for(Index i = 0; i < document.size(); i++)
+    {
+        Tensor<string, 1> sheet = document(i);
+
+        for(Index j = 0; j < sheet.size(); j++)
+        {
+            string line = sheet(j);
+
+            Tensor<string,1> tokens = get_tokens(line);
+
+            Tensor<Tensor<string, 1>,1> processed_tokens = text_analytics.preprocess(tokens);
+
+            TextAnalytics::WordBag line_word_bag = text_analytics.calculate_word_bag(processed_tokens);
+
+            Tensor<string, 1> line_words = line_word_bag.words;
+            Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
+
+            for(Index k = 0; k < line_words.size(); k++)
+            {
+                if( contains(columns_names, line_words(i)) )
+                {
+                    auto it = find(columns_names.data(), columns_names.data() + document_words_number, line_words(i));
+                    const Index index = it - columns_names.data();
+
+                    data(rows_index, index) = type(line_frequencies(k));
+                }
+            }
+
+            data(rows_index, document_words_number) = targets(i)(j);
+
+            rows_index++;
+        }
+    }
+
+    set(data);
+
+    has_columns_names = true;
+    set_columns_names(columns_names);
+};
+
 
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)
