@@ -23,7 +23,7 @@ namespace opennn
 
 TextAnalytics::TextAnalytics()
 {
-//    set_english_stop_words();
+    set_english_stop_words();
 }
 
 
@@ -33,6 +33,23 @@ TextAnalytics::~TextAnalytics()
 }
 
 // Get methods
+
+
+/// Returns a Tensor containing the documents.
+
+Tensor<Tensor<string,1> ,1> TextAnalytics::get_documents() const
+{
+    return documents;
+}
+
+
+/// Returns a Tensor containing the targets.
+
+Tensor<Tensor<type,1> ,1> TextAnalytics::get_targets() const
+{
+    return targets;
+}
+
 
 /// Returns the language selected.
 
@@ -69,6 +86,19 @@ Tensor<string, 1> TextAnalytics::get_stop_words() const
 }
 
 
+Index TextAnalytics::get_document_sentences_number() const
+{
+    Index count = 0;
+
+    for(Index i = 0; i < documents.dimension(0); i++)
+    {
+        count += documents(i).dimension(0);
+    }
+
+    return count;
+};
+
+
 // Set methods
 
 
@@ -80,11 +110,11 @@ void TextAnalytics::set_language(const Language& new_language)
 
     if(lang == ENG)
     {
-//        set_english_stop_word s();
+        set_english_stop_words();
     }
     else if(lang == SPA)
     {
-//        set_spanish_stop_words();
+        set_spanish_stop_words();
     }
     else
     {
@@ -160,47 +190,71 @@ void TextAnalytics::delete_breaks_and_tabs(Tensor<string, 1>& documents) const
 
 void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
 {
-    for(Index j = 0; j < documents.size(); j++)
-    {
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '!' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '#' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '$' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '~' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '%' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '&' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '/' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '(' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ')' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '\\' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '=' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '?' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '}' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '^' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '`' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '[' ,' ');
 
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ']' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '*' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '+' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ',' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ';' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ':' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '-' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '>' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '<' ,' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '|' ,' ');
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '.' ,' ');
+        replace_substring(documents, ".","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '!' ,' ');
+        replace_substring(documents, "!","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '#' ,' ');
+        replace_substring(documents, "#","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '$' ,' ');
+        replace_substring(documents, "$","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '~' ,' ');
+        replace_substring(documents, "~","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '%' ,' ');
+        replace_substring(documents, "%","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '&' ,' ');
+        replace_substring(documents, "&","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '/' ,' ');
+        replace_substring(documents, "/","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '(' ,' ');
+        replace_substring(documents, "(","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ')' ,' ');
+        replace_substring(documents, ")","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '\\' ,' ');
+        replace_substring(documents, "\\","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '=' ,' ');
+        replace_substring(documents, "=","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '?' ,' ');
+        replace_substring(documents, "?","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '}' ,' ');
+        replace_substring(documents, "}","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '^' ,' ');
+        replace_substring(documents, "^","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '`' ,' ');
+        replace_substring(documents, "`","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '[' ,' ');
+        replace_substring(documents, "[","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ']' ,' ');
+        replace_substring(documents, "]","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '*' ,' ');
+        replace_substring(documents, "*","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '+' ,' ');
+        replace_substring(documents, "+","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ',' ,' ');
+        replace_substring(documents, ",","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ';' ,' ');
+        replace_substring(documents, ";","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ':' ,' ');
+        replace_substring(documents, ":","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '-' ,' ');
+        replace_substring(documents, "-","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '>' ,' ');
+        replace_substring(documents, ">","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '<' ,' ');
+        replace_substring(documents, "<","");
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '|' ,' ');
+        replace_substring(documents, "|","");
 
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¡' ,u' ');
+        // @todo another language characters
 
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
+//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¡' ,u' ');
 
-        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '.' ,' ');
-    }
-
-//    new_documents.replace_substring("“", " ");
-//    new_documents.replace_substring("”", " ");
-//    new_documents.replace_substring("'", " ");
+        //    new_documents.replace_substring("“", " ");
+        //    new_documents.replace_substring("”", " ");
+        //    new_documents.replace_substring("'", " ");
 
     delete_extra_spaces(documents);
 }
@@ -220,25 +274,8 @@ void TextAnalytics::to_lower(Tensor<string,1>& documents) const
 }
 
 
-Tensor<string,1> TextAnalytics::split_string(string str, string delimiter) const
-{
-    Tensor<string,1> tensor(0);
-
-    size_t pos = 0;
-    std::string token;
-
-    while ((pos = str.find(delimiter)) != std::string::npos)
-    {
-        token = str.substr(0, pos);
-        std::cout << token << std::endl;
-        str.erase(0, pos + delimiter.length());
-        push_back(tensor,token);
-    }
-
-    return tensor;
-}
-
 /// Split documents into words Tensors. Each word is equivalent to a token.
+/// @param documents String tensor we will split
 
 Tensor<Tensor<string,1>,1> TextAnalytics::tokenize(const Tensor<string,1>& documents) const
 {
@@ -246,35 +283,27 @@ Tensor<Tensor<string,1>,1> TextAnalytics::tokenize(const Tensor<string,1>& docum
 
     Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
 
-    string empty_string;
-
     for(Index i = 0; i < documents_number; i++)
     {
-//        new_tokenized_documents[i] = split_string(documents[i], ' ');
-
-//        new_tokenized_documents[i] = new_tokenized_documents[i].trimmed();
-
-//        new_tokenized_documents[i] = new_tokenized_documents[i].filter_not_equal_to("");
-
-//        if(new_tokenized_documents[i].contains(empty_string))
-        {
-            cout << "Empty string" << endl;
-        }
+        new_tokenized_documents(i) = get_tokens(documents(i));
     }
 
     return new_tokenized_documents;
 }
 
 
+/// Joins a string tensor into a string
+/// @param token String tensor we will join
 
 string TextAnalytics::to_string(Tensor<string,1> token) const
 {
-    string palabra;
+    string word;
 
-    for(Index i = 0; i < token.size(); i++)
-        palabra += token(i) + " ";
+    for(Index i = 0; i < token.size() - 1; i++)
+        word += token(i) + " ";
+    word += token(token.size() - 1);
 
-    return palabra;
+    return word;
 };
 
 
@@ -295,103 +324,160 @@ Tensor<string,1> TextAnalytics::detokenize(const Tensor<Tensor<string,1>,1>& tok
     return new_documents;
 }
 
+void TextAnalytics::filter_not_equal_to(Tensor<string,1>& document, const Tensor<string,1>& delete_words) const
+{
+
+    for(Index i = 0; i < document.size(); i++)
+    {
+        const Index tokens_number = count_tokens(document(i),' ');
+        const Tensor<string, 1> tokens = get_tokens(document(i), ' ');
+
+        string result;
+
+        for(Index j = 0; j < tokens_number; j++)
+        {
+            if( ! contains(delete_words, tokens(j)) )
+            {
+                result += tokens(j) + " ";
+            }
+        }
+
+        document(i) = result;
+    }
+}
 
 
 /// Delete the words we want from the documents
 /// @param delete_words Tensor of words we want to delete
 
-Tensor<Tensor<string,1>,1> TextAnalytics::delete_words(const Tensor<Tensor<string,1>,1>& tokens, const Tensor<string,1>& delete_words) const
+void TextAnalytics::delete_words(Tensor<Tensor<string,1>,1>& tokens, const Tensor<string,1>& delete_words) const
 {
     const Index documents_number = tokens.size();
 
-    Tensor<Tensor<string,1>,1> new_documents(documents_number);
-
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < tokens[i].size(); j++)
-        {
-
-        }
-//        new_documents[i] = documents[i].filter_not_equal_to(delete_words);
+        filter_not_equal_to(tokens(i), delete_words);
     }
-
-    return new_documents;
 }
 
-/*
-Tensor<Tensor<string>> TextAnalytics::delete_stop_words(const Tensor<Tensor<string>>& tokens) const
+
+
+void TextAnalytics::delete_stop_words(Tensor<Tensor<string,1>,1>& tokens) const
 {
-    return delete_words(tokens, stop_words);
+    delete_words(tokens, stop_words);
 }
 
 
 /// Delete short words from the documents
 /// @param minimum_length Minimum length of the words that new documents must have(including herself)
 
-Tensor<Tensor<string>> TextAnalytics::delete_short_words(const Tensor<Tensor<string>>& tokens, const size_t& minimum_length) const
+void TextAnalytics::delete_short_words(Tensor<Tensor<string,1>,1>& documents, const Index& minimum_length) const
 {
-    Tensor<Tensor<string>> new_documents(tokens);
+    const Index documents_number = documents.size();
 
-    const size_t documents_number = tokens.size();
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        const size_t words_number = tokens[i].size();
+        Tensor<string,1> document = documents(i);
 
-        Tensor<size_t> indices;
-
-        for(size_t j = 0; j < words_number; j++)
+        for(Index j = 0; j < document.size(); j++)
         {
-            const string word = tokens[i][j];
+            const Index tokens_number = count_tokens(document(j),' ');
+            const Tensor<string, 1> tokens = get_tokens(document(j), ' ');
 
-            if(word.length() <= minimum_length)
+            string result;
+
+            for(Index k = 0; k < tokens_number; k++)
             {
-                indices.push_back(j);
+                if( static_cast<Index>(tokens(k).length()) >= minimum_length )
+                {
+                    result += tokens(k) + " ";
+                }
             }
+
+            document(j) = result;
         }
 
-        new_documents[i] = new_documents[i].delete_indices(indices);
+        documents(i) = document;
     }
-
-    return new_documents;
 }
+
 
 
 /// Delete short words from the documents
 /// @param maximum_length Maximum length of the words new documents must have(including herself)
 
-Tensor<Tensor<string>> TextAnalytics::delete_long_words(const Tensor<Tensor<string>>& tokens, const size_t& maximum_length) const
+void TextAnalytics::delete_long_words(Tensor<Tensor<string,1>,1>& documents, const Index& maximum_length) const
 {
-    Tensor<Tensor<string>> new_documents(tokens);
+    const Index documents_number = documents.size();
 
-    const size_t documents_number = tokens.size();
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        const size_t words_number = tokens[i].size();
+        Tensor<string,1> document = documents(i);
 
-        Tensor<size_t> indices;
-
-        for(size_t j = 0; j < words_number; j++)
+        for(Index j = 0; j < document.size(); j++)
         {
-            const string word = tokens[i][j];
+            const Index tokens_number = count_tokens(document(j),' ');
+            const Tensor<string, 1> tokens = get_tokens(document(j), ' ');
 
-            if(word.length() >= maximum_length)
+            string result;
+
+            for(Index k = 0; k < tokens_number; k++)
             {
-                indices.push_back(j);
+                if( static_cast<Index>(tokens(k).length()) <= maximum_length )
+                {
+                    result += tokens(k) + " ";
+                }
             }
+
+            document(j) = result;
         }
 
-        new_documents[i] = new_documents[i].delete_indices(indices);
+        documents(i) = document;
     }
-
-    return new_documents;
 }
+
+
+void TextAnalytics::delete_blanks(Tensor<string, 1>& vector) const
+{
+    const Index words_number = vector.size();
+
+    const Index empty_number = count_empty_values(vector);
+
+    Tensor<string, 1> vector_copy(vector);
+
+    vector.resize(words_number - empty_number);
+
+    Index index = 0;
+
+    string empty_string;
+
+    for(Index i = 0; i < words_number; i++)
+    {
+        trim(vector_copy(i));
+
+        if(!vector_copy(i).empty())
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+void TextAnalytics::delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens) const
+{
+    const Index documents_size = tokens.size();
+
+    for(Index i = 0; i < documents_size; i++)
+    {
+        delete_blanks(tokens(i));
+    }
+ };
 
 
 /// Reduces inflected(or sometimes derived) words to their word stem, base or root form.
 
-Tensor<Tensor<string>> TextAnalytics::apply_stemmer(const Tensor<Tensor<string>>& tokens) const
+Tensor<Tensor<string,1>,1> TextAnalytics::apply_stemmer(const Tensor<Tensor<string,1>,1>& tokens) const
 {
     if(lang == ENG)
     {
@@ -399,7 +485,7 @@ Tensor<Tensor<string>> TextAnalytics::apply_stemmer(const Tensor<Tensor<string>>
     }
     else if(lang == SPA)
     {
-        return apply_spanish_stemmer(tokens);
+//        return apply_spanish_stemmer(tokens);
     }
 
     return tokens;
@@ -407,55 +493,67 @@ Tensor<Tensor<string>> TextAnalytics::apply_stemmer(const Tensor<Tensor<string>>
 
 
 /// Reduces inflected (or sometimes derived) words to their word stem, base or root form (english language).
-/// @todo
+/// @param tokens
 
-Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<string>>& tokens) const
+Tensor<Tensor<string,1>,1> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<string,1>,1>& tokens) const
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_number = tokens.size();
 
-    Tensor<Tensor<string>> new_tokenized_documents(documents_number);
+    Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
 
     // Set vowels and suffixes
 
-    string vowels_pointer[] = {"a", "e", "i", "o", "u", "y"};
+    Tensor<string,1> vowels(6);
 
-    const Tensor<string> vowels(Tensor<string>(vowels_pointer, vowels_pointer + sizeof(vowels_pointer) / sizeof(string) ));
+    vowels.setValues({"a","e","i","o","u","y"});
 
-    string double_consonants_pointer[] = {"bb", "dd", "ff", "gg", "mm", "nn", "pp", "rr", "tt"};
+    Tensor<string,1> double_consonants(9);
 
-    const Tensor<string> double_consonants(Tensor<string>(double_consonants_pointer, double_consonants_pointer + sizeof(double_consonants_pointer) / sizeof(string) ));
+    double_consonants.setValues({"bb", "dd", "ff", "gg", "mm", "nn", "pp", "rr", "tt"});
 
-    string li_ending_pointer[] = {"c", "d", "e", "g", "h", "k", "m", "n", "r", "t"};
+    Tensor<string,1> li_ending(10);
 
-    const Tensor<string> li_ending(Tensor<string>(li_ending_pointer, li_ending_pointer + sizeof(li_ending_pointer) / sizeof(string) ));
+    li_ending.setValues({"c", "d", "e", "g", "h", "k", "m", "n", "r", "t"});
 
-    string step0_suffixes_pointer[] = {"'s'", "'s", "'"};
+    const Index step0_suffixes_size = 3;
 
-    const Tensor<string> step0_suffixes(Tensor<string>(step0_suffixes_pointer, step0_suffixes_pointer + sizeof(step0_suffixes_pointer) / sizeof(string) ));
+    Tensor<string,1> step0_suffixes(step0_suffixes_size);
 
-    string step1a_suffixes_pointer[] = {"sses", "ied", "ies", "us", "ss", "s"};
+    step0_suffixes.setValues({"'s'", "'s", "'"});
 
-    const Tensor<string> step1a_suffixes(Tensor<string>(step1a_suffixes_pointer, step1a_suffixes_pointer + sizeof(step1a_suffixes_pointer) / sizeof(string) ));
+    const Index step1a_suffixes_size = 6;
 
-    string step1b_suffixes_pointer[] = {"eedly", "ingly", "edly", "eed", "ing", "ed"};
+    Tensor<string,1> step1a_suffixes(step1a_suffixes_size);
 
-    const Tensor<string> step1b_suffixes(Tensor<string>(step1b_suffixes_pointer, step1b_suffixes_pointer + sizeof(step1b_suffixes_pointer) / sizeof(string) ));
+    step1a_suffixes.setValues({"sses", "ied", "ies", "us", "ss", "s"});
 
-    string step2_suffixes_pointer[] = {"ization", "ational", "fulness", "ousness", "iveness", "tional", "biliti", "lessli", "entli", "ation", "alism",
-                                       "aliti", "ousli", "iviti", "fulli", "enci", "anci", "abli", "izer", "ator", "alli", "bli", "ogi", "li"};
+    const Index step1b_suffixes_size = 6;
 
-    const Tensor<string> step2_suffixes(Tensor<string>(step2_suffixes_pointer, step2_suffixes_pointer + sizeof(step2_suffixes_pointer) / sizeof(string) ));
+    Tensor<string,1> step1b_suffixes(step1b_suffixes_size);
 
-    string step3_suffixes_pointer[] = {"ational", "tional", "alize", "icate", "iciti", "ative", "ical", "ness", "ful"};
+    step1b_suffixes.setValues({"eedly", "ingly", "edly", "eed", "ing", "ed"});
 
-    const Tensor<string> step3_suffixes(Tensor<string>(step3_suffixes_pointer, step3_suffixes_pointer + sizeof(step3_suffixes_pointer) / sizeof(string) ));
+    const Index step2_suffixes_size = 25;
 
-    string step4_suffixes_pointer[] = {"ement", "ance", "ence", "able", "ible", "ment", "ant", "ent", "ism", "ate", "iti", "ous",
-                                       "ive", "ize", "ion", "al", "er", "ic"};
+    Tensor<string,1> step2_suffixes(step2_suffixes_size);
 
-    const Tensor<string> step4_suffixes(Tensor<string>(step4_suffixes_pointer, step4_suffixes_pointer + sizeof(step4_suffixes_pointer) / sizeof(string) ));
+    step2_suffixes.setValues({"ization", "ational", "fulness", "ousness", "iveness", "tional", "biliti", "lessli", "entli", "ation", "alism",
+                              "aliti", "ousli", "iviti", "fulli", "enci", "anci", "abli", "izer", "ator", "alli", "bli", "ogi", "li"});
 
-    Matrix<string> special_words(40,2);
+    const Index step3_suffixes_size = 9;
+
+    Tensor<string,1> step3_suffixes(step3_suffixes_size);
+
+    step3_suffixes.setValues({"ational", "tional", "alize", "icate", "iciti", "ative", "ical", "ness", "ful"});
+
+    const Index step4_suffixes_size = 18;
+
+    Tensor<string,1> step4_suffixes(step4_suffixes_size);
+
+    step4_suffixes.setValues({"ement", "ance", "ence", "able", "ible", "ment", "ant", "ent", "ism", "ate", "iti", "ous",
+                              "ive", "ize", "ion", "al", "er", "ic"});
+
+    Tensor<string,2> special_words(40,2);
 
     special_words(0,0) = "skis";        special_words(0,1) = "ski";
     special_words(1,0) = "skies";       special_words(1,1) = "sky";
@@ -498,33 +596,27 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
     special_words(38,0) = "succeeded";  special_words(38,1) = "succeed";
     special_words(39,0) = "succeeding"; special_words(39,1) = "succeed";
 
-    const size_t step0_suffixes_size = step0_suffixes.size();
-    const size_t step1a_suffixes_size = step1a_suffixes.size();
-    const size_t step1b_suffixes_size = step1b_suffixes.size();
-    const size_t step2_suffixes_size = step2_suffixes.size();
-    const size_t step3_suffixes_size = step3_suffixes.size();
-    const size_t step4_suffixes_size = step4_suffixes.size();
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string> current_document_tokens = tokens[i];
-        const size_t current_document_tokens_number = current_document_tokens.size();
+        Tensor<string,1> current_document = tokens(i);
 
-        current_document_tokens.replace_substring("’", "'");
-        current_document_tokens.replace_substring("‘", "'");
-        current_document_tokens.replace_substring("‛", "'");
+        replace_substring(current_document, "’", "'");
+        replace_substring(current_document, "‘", "'");
+        replace_substring(current_document, "‛", "'");
 
-        new_tokenized_documents[i] = current_document_tokens;
-
-        for(size_t j = 0; j < current_document_tokens_number; j++)
+        for(Index j = 0; j < current_document.size(); j++)
         {
-            string current_word = new_tokenized_documents[i][j];
+            string current_word = current_document(j);
 
-            if(special_words.get_column(0).contains(current_word))
+            trim(current_word);
+
+            if( contains(special_words.chip(0,1),current_word))
             {
-                const size_t word_index = special_words.get_column(0).get_first_index(current_word);
+                auto it = find(special_words.data(), special_words.data() + special_words.size(), current_word);
 
-                new_tokenized_documents[i][j] = special_words(word_index,1);
+                Index word_index = it - special_words.data();
+
+                current_document(j) = special_words(word_index,1);
 
                 break;
             }
@@ -541,63 +633,39 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
 
             for(size_t k = 1; k < current_word.size(); k++)
             {
-                if(vowels.contains(string(1,current_word[k-1])) && current_word[k] == 'y')
+                if(contains(vowels, string(1,current_word[k-1]) ) && current_word[k] == 'y')
                 {
                     current_word[k] = 'Y';
                 }
             }
 
-            Tensor<string> r1_r2(2, "");
+            Tensor<string,1> r1_r2(2);
 
-            if(starts_with(current_word,"gener") || starts_with(current_word,"commun") || starts_with(current_word,"arsen"))
-            {
-                if(starts_with(current_word,"gener") || starts_with(current_word,"arsen"))
-                {
-                    r1_r2[0] = current_word.substr(5);
-                }
-                else
-                {
-                    r1_r2[0] = current_word.substr(6);
-                }
-
-                for(size_t k = 1; k < r1_r2[0].size(); k++)
-                {
-                    if(!vowels.contains(string(1,r1_r2[0][k])) && vowels.contains(string(1,r1_r2[0][k-1])))
-                    {
-                        r1_r2[1] = r1_r2[0].substr(i+1);
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                r1_r2 = get_r1_r2(current_word, vowels);
-            }
+            r1_r2 = get_r1_r2(current_word, vowels);
 
             bool step1a_vowel_found = false;
             bool step1b_vowel_found = false;
 
             // Step 0
 
-            for(size_t k = 0; k < step0_suffixes_size; k++)
+            for(Index l = 0; l < step0_suffixes_size; l++)
             {
-                const string current_suffix = step0_suffixes[k];
+                const string current_suffix = step0_suffixes(l);
 
                 if(ends_with(current_word,current_suffix))
                 {
                     current_word = current_word.substr(0,current_word.length()-current_suffix.length());
                     r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-current_suffix.length());
                     r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-current_suffix.length());
-
                     break;
                 }
             }
 
             // Step 1a
 
-            for(size_t k = 0; k < step1a_suffixes_size; k++)
+            for(size_t l = 0; l < step1a_suffixes_size; l++)
             {
-                const string current_suffix = step1a_suffixes[k];
+                const string current_suffix = step1a_suffixes[l];
 
                 if(ends_with(current_word, current_suffix))
                 {
@@ -626,7 +694,7 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
                     {
                         for(size_t l = 0; l < current_word.length() - 2; l++)
                         {
-                            if(vowels.contains(string(1,current_word[l])))
+                            if(contains(vowels, string(1,current_word[l])))
                             {
                                 step1a_vowel_found = true;
                                 break;
@@ -647,7 +715,7 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
 
             // Step 1b
 
-            for(size_t k = 0; k < step1b_suffixes_size; k++)
+            for(Index k = 0; k < step1b_suffixes_size; k++)
             {
                 const string current_suffix = step1b_suffixes[k];
 
@@ -682,7 +750,7 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
                     {
                         for(size_t l = 0; l <(current_word.length() - current_suffix.length()); l++)
                         {
-                            if(vowels.contains(string(1,current_word[l])))
+                            if(contains(vowels,string(1,current_word[l])))
                             {
                                 step1b_vowel_found = true;
                                 break;
@@ -711,10 +779,10 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
                                 r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-1);
                                 r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-1);
                             }
-                            else if((r1_r2[0] == "" && current_word.length() >= 3 && !vowels.contains(string(1,current_word[current_word.length()-1])) &&
+                            else if((r1_r2[0] == "" && current_word.length() >= 3 && !contains(vowels,string(1,current_word[current_word.length()-1])) &&
                                      !(current_word[current_word.length()-1] == 'w' || current_word[current_word.length()-1] == 'x' || current_word[current_word.length()-1] == 'Y') &&
-                                     vowels.contains(string(1,current_word[current_word.length()-2])) && !vowels.contains(string(1,current_word[current_word.length()-3]))) ||
-                                   (r1_r2[0] == "" && current_word.length() == 2 && vowels.contains(string(1,current_word[0])) && vowels.contains(string(1,current_word[1]))))
+                                     contains(vowels,string(1,current_word[current_word.length()-2])) && !contains(vowels,string(1,current_word[current_word.length()-3]))) ||
+                                    (r1_r2[0] == "" && current_word.length() == 2 && contains(vowels,string(1,current_word[0])) && contains(vowels, string(1,current_word[1]))))
                             {
                                 current_word = current_word + "e";
 
@@ -738,7 +806,7 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
             // Step 1c
 
             if(current_word.length() > 2 &&(current_word[current_word.length()-1] == 'y' || current_word[current_word.length()-1] == 'Y') &&
-               !vowels.contains(string(1,current_word[current_word.length()-2])))
+                    !contains(vowels, string(1,current_word[current_word.length()-2])))
             {
                 current_word = current_word.substr(0,current_word.length()-1) + "i";
 
@@ -763,9 +831,9 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
 
             // Step 2
 
-            for(size_t k = 0; k < step2_suffixes_size; k++)
+            for(Index l = 0; l < step2_suffixes_size; l++)
             {
-                const string current_suffix = step2_suffixes[k];
+                const string current_suffix = step2_suffixes[l];
 
                 if(ends_with(current_word,current_suffix) && ends_with(r1_r2[0],current_suffix))
                 {
@@ -953,7 +1021,7 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
                         r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
                         r1_r2[1] = r1_r2[1].substr(0,r1_r2[1].length()-2);
                     }
-                    else if(current_suffix == "li" && li_ending.contains(string(1,current_word[current_word.length()-4])))
+                    else if(current_suffix == "li" && contains(li_ending, string(1,current_word[current_word.length()-4])))
                     {
                         current_word = current_word.substr(0,current_word.length()-2);
                         r1_r2[0] = r1_r2[0].substr(0,r1_r2[0].length()-2);
@@ -966,9 +1034,9 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
 
             // Step 3
 
-            for(size_t k = 0; k < step3_suffixes_size; k++)
+            for(Index l = 0; l < step3_suffixes_size; l++)
             {
-                const string current_suffix = step3_suffixes[k];
+                const string current_suffix = step3_suffixes[l];
 
                 if(ends_with(current_word,current_suffix) && ends_with(r1_r2[0],current_suffix))
                 {
@@ -1047,9 +1115,9 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
 
             // Step 4
 
-            for(size_t k = 0; k < step4_suffixes_size; k++)
+            for(Index l = 0; l < step4_suffixes_size; l++)
             {
-                const string current_suffix = step4_suffixes[k];
+                const string current_suffix = step4_suffixes[l];
 
                 if(ends_with(current_word,current_suffix) && ends_with(r1_r2[1],current_suffix))
                 {
@@ -1082,24 +1150,25 @@ Tensor<Tensor<string>> TextAnalytics::apply_english_stemmer(const Tensor<Tensor<
             }
             else if(r1_r2[0][r1_r2[0].length()-1] == 'e')
             {
-                if(current_word.length() >= 4 &&(vowels.contains(string(1,current_word[current_word.length()-2])) ||
+                if(current_word.length() >= 4 &&(contains(vowels, string(1,current_word[current_word.length()-2])) ||
                                                  (current_word[current_word.length()-2] == 'w' || current_word[current_word.length()-2] == 'x' ||
-                                                   current_word[current_word.length()-2] == 'Y') || !vowels.contains(string(1,current_word[current_word.length()-3])) ||
-                                                   vowels.contains(string(1,current_word[current_word.length()-4]))))
+                                                  current_word[current_word.length()-2] == 'Y') || !contains(vowels, string(1,current_word[current_word.length()-3])) ||
+                                                 contains(vowels, string(1,current_word[current_word.length()-4]))))
                 {
                     current_word = current_word.substr(0,current_word.length()-1);
                 }
             }
 
-            replace_substring<string>(current_word,"Y","y");
-
-            new_tokenized_documents[i][j] = current_word;
+            replace(current_word,"Y","y");
+            current_document(j) = current_word;
         }
+        new_tokenized_documents(i) = current_document;
     }
 
     return new_tokenized_documents;
 }
 
+/*
 
 /// Reduces inflected(or sometimes derived) words to their word stem, base or root form(spanish language).
 
@@ -1415,120 +1484,136 @@ Tensor<Tensor<string>> TextAnalytics::apply_spanish_stemmer(const Tensor<Tensor<
 
     return new_tokenized_documents;
 }
-
+*/
 
 /// Delete the numbers of the documents.
 
-Tensor<Tensor<string>> TextAnalytics::delete_numbers(const Tensor<Tensor<string>>& tokens) const
+void TextAnalytics::delete_numbers(Tensor<Tensor<string,1>,1>& documents) const
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_number = documents.size();
 
-    Tensor<Tensor<string>> new_words(documents_number);
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        const size_t tokens_number = tokens[i].size();
+        Tensor<string, 1> document = documents(i);
 
-        Tensor<size_t> valid_indices;
+        const Index document_size = document.size();
 
-        for(size_t j = 0; j < tokens_number; j++)
+        for(Index j = 0; j < document_size; j++)
         {
-            if(!contains_number(tokens[i][j]))
+            Tensor<string,1> tokens = get_tokens(document(j));
+
+            string result;
+
+            for(Index k = 0; k < tokens.size(); k++)
             {
-                valid_indices.push_back(j);
+                if(!is_numeric_string(tokens(k)))
+                {
+                    result += tokens(k) + " ";
+                }
             }
+
+            document(j) = result;
         }
 
-        new_words[i] = tokens[i].get_subTensor(valid_indices);
+        documents(i) = document;
     }
-
-    return new_words;
 }
 
 
 /// Remove emails from documents.
 
-Tensor<Tensor<string>> TextAnalytics::delete_emails(const Tensor<Tensor<string>>& tokens) const
+void TextAnalytics::delete_emails(Tensor<Tensor<string,1>,1>& documents) const
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_number = documents.size();
 
-    Tensor<Tensor<string>> new_words(documents_number);
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        const size_t tokens_number = tokens[i].size();
+        Tensor<string, 1> document = documents(i);
 
-        Tensor<size_t> valid_indices;
+        const Index document_size = document.size();
 
-        for(size_t j = 0; j < tokens_number; j++)
+        for(Index j = 0; j < document_size; j++)
         {
-            if(!is_email(tokens[i][j]))
+            Tensor<string,1> tokens = get_tokens(document(j));
+
+            string result;
+
+            for(Index k = 0; k < tokens.size(); k++)
             {
-                valid_indices.push_back(j);
+                if(!is_email(tokens(k)))
+                {
+                    result += tokens(k) + " ";
+                }
             }
+
+            document(j) = result;
         }
 
-        new_words[i] = tokens[i].get_subTensor(valid_indices);
+        documents(i) = document;
     }
-
-    return new_words;
 }
 
 
 /// Remove the accents of the vowels in the documents.
 
-Tensor<Tensor<string>> TextAnalytics::replace_accented(const Tensor<Tensor<string>>& tokens) const
+void TextAnalytics::replace_accented(Tensor<Tensor<string,1>,1>& documents) const
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_size = documents.size();
 
-    Tensor<Tensor<string>> new_words(documents_number);
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_size; i++)
     {
-        const size_t tokens_number = tokens[i].size();
+        const Index document_size = documents(i).size();
 
-        new_words[i].set(tokens_number);
-
-        for(size_t j = 0; j < tokens_number; j++)
+        for(Index j = 0; j < document_size; j++)
         {
-            new_words[i][j] = replace_accented(tokens[i][j]);
+            replace_accented(documents(i)(j));
         }
     }
+}
 
-    return new_words;
+
+/// Remove the accents of the vowels of a word.
+
+void TextAnalytics::replace_accented(string& word) const
+{
+    replace(word, "á", "a");
+    replace(word, "é", "e");
+    replace(word, "í", "i");
+    replace(word, "ó", "o");
+    replace(word, "ú", "u");
 }
 
 
 
-Tensor<string> TextAnalytics::get_r1_r2(const string& word, const Tensor<string>& vowels) const
+Tensor<string,1> TextAnalytics::get_r1_r2(const string& word, const Tensor<string,1>& vowels) const
 {
-    const size_t word_length = word.length();
+    const Index word_length = word.length();
 
     string r1 = "";
 
-    for(size_t i = 1; i < word_length; i++)
+    for(Index i = 1; i < word_length; i++)
     {
-        if(!vowels.contains(word.substr(i,1)) && vowels.contains(word.substr(i-1,1)))
+        if(!contains(vowels, word.substr(i,1)) && contains(vowels, word.substr(i-1,1)))
         {
             r1 = word.substr(i+1);
             break;
         }
     }
 
-    const size_t r1_length = r1.length();
+    const Index r1_length = r1.length();
 
     string r2 = "";
 
-    for(size_t i = 1; i < r1_length; i++)
+    for(Index i = 1; i < r1_length; i++)
     {
-        if(!vowels.contains(r1.substr(i,1)) && vowels.contains(r1.substr(i-1,1)))
+        if(!contains(vowels, r1.substr(i,1)) && contains(vowels, r1.substr(i-1,1)))
         {
             r2 = r1.substr(i+1);
             break;
         }
     }
 
-    Tensor<string> r1_r2(2);
+    Tensor<string,1> r1_r2(2);
 
     r1_r2[0] = r1;
     r1_r2[1] = r2;
@@ -1537,30 +1622,30 @@ Tensor<string> TextAnalytics::get_r1_r2(const string& word, const Tensor<string>
 }
 
 
-string TextAnalytics::get_rv(const string& word, const Tensor<string>& vowels) const
+string TextAnalytics::get_rv(const string& word, const Tensor<string,1>& vowels) const
 {
     string rv = "";
 
-    const size_t word_lenght = word.length();
+    const Index word_lenght = word.length();
 
     if(word_lenght >= 2)
     {
-        if(!vowels.contains(word.substr(1,1)))
+        if(!contains(vowels, word.substr(1,1)))
         {
-            for(size_t i = 2; i < word_lenght; i++)
+            for(Index i = 2; i < word_lenght; i++)
             {
-                if(vowels.contains(word.substr(i,1)))
+                if(contains(vowels, word.substr(i,1)))
                 {
                     rv = word.substr(i+1);
                     break;
                 }
             }
         }
-        else if(vowels.contains(word.substr(0,1)) && vowels.contains(word.substr(1,1)))
+        else if(contains(vowels, word.substr(0,1)) && contains(vowels, word.substr(1,1)))
         {
-            for(size_t i = 2; i < word_lenght; i++)
+            for(Index i = 2; i < word_lenght; i++)
             {
-                if(!vowels.contains(word.substr(i,1)))
+                if(!contains(vowels, word.substr(i,1)))
                 {
                     rv = word.substr(i+1);
                     break;
@@ -1577,33 +1662,21 @@ string TextAnalytics::get_rv(const string& word, const Tensor<string>& vowels) c
 }
 
 
-/// Remove the accents of the vowels of a word.
-
-string TextAnalytics::replace_accented(const string& word) const
-{
-    string word_copy(word);
-
-    replace_substring<string>(word_copy, "á", "a");
-    replace_substring<string>(word_copy, "é", "e");
-    replace_substring<string>(word_copy, "í", "i");
-    replace_substring<string>(word_copy, "ó", "o");
-    replace_substring<string>(word_copy, "ú", "u");
-
-    return word_copy;
-}
-
 
 /// Calculate the total number of tokens in the documents.
 
-size_t TextAnalytics::count(const Tensor<Tensor<string>>& tokens) const
+Index TextAnalytics::count(const Tensor<Tensor<string,1>,1>& documents) const
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_number = documents.dimension(0);
 
-    size_t total_size = 0;
+    Index total_size = 0;
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        total_size += tokens[i].size();
+        for(Index j = 0; j < documents(i).dimension(0); j++)
+        {
+            total_size += count_tokens(documents(i)(j));
+        }
     }
 
     return total_size;
@@ -1612,41 +1685,48 @@ size_t TextAnalytics::count(const Tensor<Tensor<string>>& tokens) const
 
 /// Returns a Tensor with all the words as elements keeping the order.
 
-Tensor<string> TextAnalytics::join(const Tensor<Tensor<string>>& tokens) const
+Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents) const
 {
-    const size_t total_size = count(tokens);
+    const type words_number = count(documents);
 
-    Tensor<string> total(total_size);
+    Tensor<string,1> words_list(words_number);
 
-    const size_t documents_number = tokens.size();
+    Index current_tokens = 0;
 
-    size_t index = 0;
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents.dimension(0); i++)
     {
-        total.tuck_in(index, tokens[i]);
+        for(Index j = 0; j < documents(i).dimension(0); j++)
+        {
+            Tensor<string, 1> tokens = get_tokens(documents(i)(j));
 
-        index += tokens[i].size();
+            std::copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
+
+            current_tokens += tokens.size();
+        }
     }
 
-    return total;
+    return words_list;
 }
 
 
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string>>& tokens) const
+TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) const
 {
-    const Tensor<string> total = join(tokens);
+    const Tensor<string, 1> total = join(tokens);
 
-    const Tensor<size_t> count = total.count_unique();
+    const Tensor<Index, 1> count = count_unique(total);
 
-    const Tensor<size_t> rank = count.sort_descending_indices();
+    const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
 
-    const Tensor<string> words = total.get_unique_elements().sort_rank(rank);
-    const Tensor<size_t> frequencies = count.sort_rank(rank);
-    const Tensor<double> percentages = frequencies.to_double_Tensor()*(100.0/frequencies.to_double_Tensor().calculate_sum());
+    const Tensor<string,1> words = sort_by_rank(get_unique_elements(total),descending_rank);
+
+    const Tensor<Index,1> frequencies = sort_by_rank(count, descending_rank);
+
+    const Tensor<Index,0> total_frequencies = frequencies.sum();
+
+    const Tensor<double,1> percentages = ( 100/static_cast<double>(total_frequencies(0)) * frequencies.cast<double>()  );
 
     WordBag word_bag;
     word_bag.words = words;
@@ -1657,24 +1737,29 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<str
 }
 
 
+
 /// Create a word bag that contains the unique words that appear a minimum number
 /// of times in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_frequency Minimum frequency that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string>>& tokens,
-                                                         const size_t& minimum_frequency) const
+TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+                                                         const Index& minimum_frequency) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string> words = word_bag.words;
-    const Tensor<size_t> frequencies = word_bag.frequencies;
-    const Tensor<double> percentages = word_bag.percentages;
+    Tensor<string,1> words = word_bag.words;
+    Tensor<Index,1> frequencies = word_bag.frequencies;
+    Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<size_t> indices = frequencies.get_indices_less_than(minimum_frequency);
+    const Tensor<Index,1> indices = get_indices_less_than(frequencies, minimum_frequency);
 
-    word_bag.words = words.delete_indices(indices);
-    word_bag.frequencies = frequencies.delete_indices(indices);
-    word_bag.percentages = percentages.delete_indices(indices);
+    delete_indices(words, indices);
+    delete_indices(frequencies, indices);
+    delete_indices(percentages, indices);
+
+    word_bag.words = words;
+    word_bag.frequencies = frequencies;
+    word_bag.percentages = percentages;
 
     return word_bag;
 }
@@ -1684,20 +1769,24 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const
 /// in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_percentage Minimum percentage of occurrence that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor<string>>& tokens,
+TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
                                                          const double& minimum_percentage) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string> words = word_bag.words;
-    const Tensor<size_t> frequencies = word_bag.frequencies;
-    const Tensor<double> percentages = word_bag.percentages;
+    Tensor<string,1> words = word_bag.words;
+    Tensor<Index,1> frequencies = word_bag.frequencies;
+    Tensor<double,1> percentages = word_bag.percentages;
 
-    const Tensor<size_t> indices = percentages.get_indices_less_than(minimum_percentage);
+    const Tensor<Index,1> indices = get_indices_less_than(percentages, minimum_percentage);
 
-    word_bag.words = words.delete_indices(indices);
-    word_bag.frequencies = frequencies.delete_indices(indices);
-    word_bag.percentages = percentages.delete_indices(indices);
+    delete_indices(words, indices);
+    delete_indices(frequencies, indices);
+    delete_indices(percentages, indices);
+
+    word_bag.words = words;
+    word_bag.frequencies = frequencies;
+    word_bag.percentages = percentages;
 
     return word_bag;
 }
@@ -1707,24 +1796,28 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(cons
 /// of frequency in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_ratio Minimum ratio of frequency that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<string>>& tokens,
+TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
                                                          const double& minimum_ratio) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string> words = word_bag.words;
-    const Tensor<size_t> frequencies = word_bag.frequencies;
-    const Tensor<double> percentages = word_bag.percentages;
+    Tensor<string,1> words = word_bag.words;
+    Tensor<Index,1> frequencies = word_bag.frequencies;
+    Tensor<double,1> percentages = word_bag.percentages;
 
-    const size_t frequencies_sum = frequencies.calculate_sum();
+    const Tensor<Index,0> frequencies_sum = frequencies.sum();
 
-    const Tensor<double> ratios = frequencies.to_double_Tensor()/static_cast<double>(frequencies_sum);
+    const Tensor<double,1> ratios = frequencies.cast<double>()/static_cast<double>(frequencies_sum(0));
 
-    const Tensor<size_t> indices = ratios.get_indices_less_than(minimum_ratio);
+    const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
 
-    word_bag.words = words.delete_indices(indices);
-    word_bag.frequencies = frequencies.delete_indices(indices);
-    word_bag.percentages = percentages.delete_indices(indices);
+    delete_indices(words, indices);
+    delete_indices(frequencies, indices);
+    delete_indices(percentages, indices);
+
+    word_bag.words = words;
+    word_bag.frequencies = frequencies;
+    word_bag.percentages = percentages;
 
     return word_bag;
 }
@@ -1735,18 +1828,26 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Ten
 /// and their percentages in descending order.
 /// @param total_frequency Maximum cumulative frequency that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_total_frequency(const Tensor<Tensor<string>>& tokens,
-                                                                         const size_t& total_frequency) const
+TextAnalytics::WordBag TextAnalytics::calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+                                                                         const Index& total_frequency) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string> words = word_bag.words;
-    const Tensor<size_t> frequencies = word_bag.frequencies;
+    const Tensor<string,1> words = word_bag.words;
+    const Tensor<Index, 1> frequencies = word_bag.frequencies;
 
-    const size_t index = cumulative(frequencies.to_double_Tensor()).calculate_cumulative_index(static_cast<double>(total_frequency));
+    Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
 
-    word_bag.words = words.get_first(index);
-    word_bag.frequencies = frequencies.get_first(index);
+    Index i;
+
+    for( i = 0; i < frequencies.size(); i++)
+    {
+        if(cumulative_frequencies(i) >= total_frequency)
+           break;
+    }
+
+    word_bag.words = get_first(words, i);
+    word_bag.frequencies = get_first(frequencies, i);
 
     return word_bag;
 }
@@ -1756,34 +1857,34 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_total_frequency(const T
 /// frequent words, their frequencies and their percentages in descending order.
 /// @param maximum_size Maximum size of words Tensor.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tensor<Tensor<string>>& tokens,
-                                                                      const size_t& maximum_size) const
+TextAnalytics::WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+                                                                      const Index& maximum_size) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
-    const Tensor<string> words = word_bag.words;
-    const Tensor<size_t> frequencies = word_bag.frequencies;
+    const Tensor<string, 1> words = word_bag.words;
+    const Tensor<Index ,1> frequencies = word_bag.frequencies;
 
-    word_bag.words = words.get_first(maximum_size);
-    word_bag.frequencies = frequencies.get_first(maximum_size);
+    word_bag.words = get_first(words, maximum_size);
+    word_bag.frequencies = get_first(frequencies, maximum_size);
 
     return word_bag;
 }
 
 
-/// Returns a weights.
+/// Returns weights.
 
-size_t TextAnalytics::calculate_weight(const Tensor<string>& document_words, const TextAnalytics::WordBag& word_bag) const
+Index TextAnalytics::calculate_weight(const Tensor<string, 1>& document_words, const TextAnalytics::WordBag& word_bag) const
 {
-    size_t weight = 0;
+    Index weight = 0;
 
-    const Tensor<string> bag_words = word_bag.words;
+    const Tensor<string, 1> bag_words = word_bag.words;
 
-    const Tensor<size_t> bag_frequencies = word_bag.frequencies;
+    const Tensor<Index, 1> bag_frequencies = word_bag.frequencies;
 
-    for(size_t i = 0; i < document_words.size(); i++)
+    for(Index i = 0; i < document_words.size(); i++)
     {
-        for(size_t j = 0; j < word_bag.size(); j++)
+        for(Index j = 0; j < word_bag.size(); j++)
         {
             if(document_words[i] == bag_words[j])
             {
@@ -1798,42 +1899,36 @@ size_t TextAnalytics::calculate_weight(const Tensor<string>& document_words, con
 
 /// Returns the documents easier to work with them
 
-Tensor<Tensor<string>> TextAnalytics::preprocess(const Tensor<string>& documents) const
+Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& documents) const
 {
-    Tensor<string> documents_copy;
+    Tensor<string,1> documents_copy(documents);
 
-    documents_copy = delete_extra_spaces(documents);
+    to_lower(documents_copy);
 
-    documents_copy = delete_punctuation(documents_copy);
+    delete_punctuation(documents_copy);
 
-    Tensor<Tensor<string>> tokenized_documents = tokenize(documents_copy);
+    replace_substring(documents_copy,"_", " ");
+    replace_substring(documents_copy,".", " ");
 
-    tokenized_documents = delete_emails(tokenized_documents);
+    delete_extra_spaces(documents_copy);
 
-    documents_copy = detokenize(tokenized_documents);
+    Tensor<Tensor<string,1>,1> tokenized_documents = tokenize(documents_copy);
 
-    documents_copy = to_lower(documents_copy);
+    delete_stop_words(tokenized_documents);
 
-    documents_copy.replace_substring("_", " ");
-    documents_copy.replace_substring(".", " ");
+    delete_short_words(tokenized_documents, 3);
 
-    documents_copy = delete_extra_spaces(documents_copy);
+    delete_long_words(tokenized_documents);
 
-    tokenized_documents = tokenize(documents_copy);
+    delete_numbers(tokenized_documents);
 
-    tokenized_documents = delete_stop_words(tokenized_documents);
+    delete_emails(tokenized_documents);
 
-    tokenized_documents = delete_short_words(tokenized_documents, 3);
+    replace_accented(tokenized_documents);
 
-    tokenized_documents = delete_long_words(tokenized_documents);
+    delete_blanks(tokenized_documents);
 
-    tokenized_documents = delete_numbers(tokenized_documents);
-
-    tokenized_documents = delete_emails(tokenized_documents);
-
-//    tokenized_documents = apply_stemmer(tokenized_documents);
-
-//    tokenized_documents = replace_accented(tokenized_documents);
+    tokenized_documents = apply_stemmer(tokenized_documents);
 
     return tokenized_documents;
 }
@@ -1843,7 +1938,9 @@ Tensor<Tensor<string>> TextAnalytics::preprocess(const Tensor<string>& documents
 
 void TextAnalytics::set_english_stop_words()
 {
-    string stop_words_pointer[] = {"i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he",
+    stop_words.resize(180);
+
+    stop_words.setValues({"i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he",
                                    "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
                                    "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have",
                                    "has", "had", "having", "do", "does", "did", "doing", "would", "shall", "should", "could", "ought", "i'm", "you're", "he's",
@@ -1854,15 +1951,17 @@ void TextAnalytics::set_english_stop_words()
                                    "mightn't", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
                                    "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
                                    "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-                                   "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very"};
+                                   "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very"});
 
-    stop_words.set(Tensor<string>(stop_words_pointer, stop_words_pointer + sizeof(stop_words_pointer) / sizeof(string) ));
 }
+
 
 
 void TextAnalytics::set_spanish_stop_words()
 {
-    string stop_words_pointer[] = {"de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al",
+    stop_words.resize(327);
+
+    stop_words.setValues({"de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al",
                                    "es", "lo", "como", "más", "mas", "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "si", "sí", "porque", "esta", "son",
                                    "entre", "está", "cuando", "muy", "aún", "aunque", "sin", "sobre", "ser", "tiene", "también", "me", "hasta", "hay", "donde", "han", "quien",
                                    "están", "desde", "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", "fueron", "ese", "eso", "había",
@@ -1886,144 +1985,49 @@ void TextAnalytics::set_spanish_stop_words()
                                    "tendrás", "tendrá", "tendremos", "tendréis", "tendrán", "tendría", "tendrías", "tendríamos", "tendríais", "tendrían", "tenía",
                                    "tenías", "teníamos", "teníais", "tenían", "tuve", "tuviste", "tuvo", "tuvimos", "tuvisteis", "tuvieron", "tuviera", "tuvieras",
                                    "tuviéramos", "tuvierais", "tuvieran", "tuviese", "tuvieses", "tuviésemos", "tuvieseis", "tuviesen", "teniendo", "tenido", "tenida",
-                                   "tenidos", "tenidas", "tened"};
-
-    stop_words.set(Tensor<string>(stop_words_pointer, stop_words_pointer + sizeof(stop_words_pointer) / sizeof(string) ));
+                                   "tenidos", "tenidas", "tened"});
 }
+
 
 
 /// Clear stop words object.
 
 void TextAnalytics::clear_stop_words()
 {
-    stop_words.clear();
+    stop_words.resize(0);
 }
 
-
-/// Returns true if string is a number, and false otherwise.
-/// @param str String to check.
-
-bool TextAnalytics::is_number(const string& str) const
-{
-    return strspn( str.c_str(), "-.0123456789" ) == str.size();
-}
-
-
-/// Return true if word contains a number, and false otherwise.
-/// @param word Word to check.
-
-bool TextAnalytics::contains_number(const string& word) const
-{
-    return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
-}
-
-
-/// Return true if word is a email, and false otherwise.
-/// @param word Word to check.
-
-bool TextAnalytics::is_email(const string& word) const
-{
-    // define a regular expression
-    const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
-
-    // try to match the string with the regular expression
-    return regex_match(word, pattern);
-}
-
-
-/// Returns true if a word starting with a given substring, and false otherwise.
-/// @param word Word to check.
-/// @param starting Substring to comparison given word.
-
-bool TextAnalytics::starts_with(const string& word, const string& starting) const
-{
-    if(starting.length() > word.length() || starting.length() == 0)
-    {
-        return false;
-    }
-
-    return(word.substr(0,starting.length()) == starting);
-}
-
-
-/// Returns true if a word ending with a given substring, and false otherwise.
-/// @param word Word to check.
-/// @param ending Substring to comparison given word.
-
-bool TextAnalytics::ends_with(const string& word, const string& ending) const
-{
-    if(ending.length() > word.length())
-    {
-        return false;
-    }
-
-    return(word.substr(word.length() - ending.length()) == ending);
-}
-
-
-/// Returns true if a word ending with a given substring Tensor, and false otherwise.
-/// @param word Word to check.
-/// @param ending Substring Tensor with possibles endings words.
-
-bool TextAnalytics::ends_with(const string& word, const Tensor<string>& endings) const
-{
-    const size_t endings_size = endings.size();
-
-    for(size_t i = 0; i < endings_size; i++)
-    {
-        if(ends_with(word,endings[i]))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 
 /// Returns a Tensor with the number of words that each document contains.
 
-Tensor<size_t> TextAnalytics::get_words_number(const Tensor<Tensor<string>>& tokens) const
+Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_number = tokens.size();
 
-    Tensor<size_t> words_number(documents_number);
+    Tensor<Index, 1> words_number(documents_number);
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        words_number[i] = tokens[i].size();
+        words_number(i) = tokens(i).size();
     }
 
     return words_number;
 }
 
 
+
 /// Returns a Tensor with the number of sentences that each document contains.
 
-Tensor<size_t> TextAnalytics::get_sentences_number(const Tensor<string>& documents) const
+Tensor<Index, 1> TextAnalytics::get_sentences_number(const Tensor<string, 1>& documents) const
 {
-    const size_t documents_number = documents.size();
+    const Index documents_number = documents.size();
 
-    Tensor<size_t> sentences_number(documents_number);
+    Tensor<Index, 1> sentences_number(documents_number);
 
-    Tensor<Tensor<string>> documents_sentences(documents_number);
-
-    string empty_string;
-
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        documents_sentences[i] = split_string(documents[i], '.');
-
-        documents_sentences[i] = documents_sentences[i].trimmed();
-
-        documents_sentences[i] = documents_sentences[i].filter_not_equal_to("");
-
-        sentences_number[i] = documents_sentences[i].size();
-
-        if(documents_sentences[i].contains(empty_string))
-        {
-            cout << "Empty string" << endl;
-        }
+        sentences_number(i) = count_tokens(documents(i), '.');
     }
 
     return sentences_number;
@@ -2033,23 +2037,23 @@ Tensor<size_t> TextAnalytics::get_sentences_number(const Tensor<string>& documen
 /// Returns a Tensor with the percentage of presence in the documents with respect to all.
 /// @param words_name Tensor of words from which you want to know the percentage of presence.
 
-Tensor<double> TextAnalytics::get_words_presence_percentage(const Tensor<Tensor<string>>& tokens, const Tensor<string>& words_name) const
+Tensor<double, 1> TextAnalytics::get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens, const Tensor<string, 1>& words_name) const
 {
-    Tensor<double> word_presence_percentage(words_name.size());
+    Tensor<double, 1> word_presence_percentage(words_name.size());
 
-    for(size_t i = 0; i < words_name.size(); i++)
+    for(Index i = 0; i < words_name.size(); i++)
     {
-        size_t sum = 0;
+        Index sum = 0;
 
-        for(size_t j = 0; j < tokens.size(); j++)
+        for(Index j = 0; j < tokens.size(); j++)
         {
-            if(tokens[j].contains(words_name[i]))
+            if(contains(tokens(j),words_name(i) ))
             {
                 sum = sum + 1;
             }
         }
 
-        word_presence_percentage[i] = static_cast<double>(sum)*(static_cast<double>(100.0/tokens.size()));
+        word_presence_percentage(i) = static_cast<double>(sum)*(static_cast<double>(100.0/tokens.size()));
     }
 
 
@@ -2060,35 +2064,47 @@ Tensor<double> TextAnalytics::get_words_presence_percentage(const Tensor<Tensor<
 /// This function calculates the frequency of sets of consecutive words in all documents.
 /// @param minimum_frequency Minimum frequency that a word must have to obtain its combinations.
 /// @param combinations_length Words number of the combinations from 2.
-
-Matrix<string> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string>>& tokens,
-                                                                   const size_t& minimum_frequency,
-                                                                   const size_t& combinations_length) const
+/*
+Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
+                                                                   const Index& minimum_frequency,
+                                                                   const Index& combinations_length) const
 {
-    const TextAnalytics text_analytics;
+    const Tensor<string, 1> words = join(tokens);
 
-    const Tensor<string> words = text_analytics.join(tokens);
-
-    const TextAnalytics::WordBag top_word_bag = text_analytics.calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
-    const Tensor<string> words_name = top_word_bag.words;
+    const TextAnalytics::WordBag top_word_bag = calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
+    const Tensor<string, 1> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
     {
-        cout << "There are no words with such frequency of appearance" << endl;
-        exit(0);
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+               << "Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
+                  "const Index& minimum_frequency,"
+                  "const Index& combinations_length) const method."
+               << "Words number must be greater than 1.\n";
+
+        throw invalid_argument(buffer.str());
     }
 
     if(combinations_length < 2)
     {
-        cout << "Length of combinations not valid, must be greater than 1" << endl;
-        exit(0);
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+               << "Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,"
+                  "const Index& minimum_frequency,"
+                  "const Index& combinations_length) const method."
+               << "Length of combinations not valid, must be greater than 1";
+
+        throw invalid_argument(buffer.str());
     }
 
-    size_t combinated_words_size = 0;
+    Index combinated_words_size = 0;
 
-    for(size_t i = 0; i < words_name.size(); i++)
+    for(Index i = 0; i < words_name.size(); i++)
     {
-        for(size_t j = 0; j < words.size()-1; j++)
+        for(Index j = 0; j < words.size()-1; j++)
         {
             if(words_name[i] == words[j])
             {
@@ -2097,19 +2113,19 @@ Matrix<string> TextAnalytics::calculate_combinated_words_frequency(const Tensor<
         }
     }
 
-    Tensor<string> combinated_words(combinated_words_size);
+    Tensor<string, 1> combinated_words(combinated_words_size);
 
-    size_t index = 0;
+    Index index = 0;
 
-    for(size_t i = 0; i < words_name.size(); i++)
+    for(Index i = 0; i < words_name.size(); i++)
     {
-        for(size_t j = 0; j < words.size()-1; j++)
+        for(Index j = 0; j < words.size()-1; j++)
         {
             if(words_name[i] == words[j])
             {
                 string word = words[j];
 
-                for(size_t k = 1; k < combinations_length; k++)
+                for(Index k = 1; k < combinations_length; k++)
                 {
                     word += " " + words[j+k];
                 }
@@ -2121,26 +2137,28 @@ Matrix<string> TextAnalytics::calculate_combinated_words_frequency(const Tensor<
         }
     }
 
-    const Tensor<string> combinated_words_frequency = combinated_words.count_unique().to_string_Tensor();
+    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words ) ) );
 
-    Matrix<string> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
+    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
 
-    combinated_words_frequency_matrix.set_column(0,combinated_words.get_unique_elements(),"Combinated words");
-    combinated_words_frequency_matrix.set_column(1,combinated_words_frequency,"Frequency");
+    combinated_words_frequency_matrix.chip(0,1) = get_unique_elements(combinated_words),"Combinated words");
+    combinated_words_frequency_matrix.chip(1,0) = combinated_words_frequency,"Frequency");
 
     combinated_words_frequency_matrix = combinated_words_frequency_matrix.sort_descending_strings(1);
 
-    return(combinated_words_frequency_matrix);
+//    return(combinated_words_frequency_matrix);
+
+    return Tensor<string,2>();
 }
 
-
+/*
 /// Returns the correlations of words that appear a minimum percentage of times
 /// with the targets in descending order.
 /// @param minimum_percentage Minimum percentage of frequency that the word must have.
 
-Matrix<string> TextAnalytics::top_words_correlations(const Tensor<Tensor<string>>& tokens,
+Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
                                                      const double& minimum_percentage,
-                                                     const Tensor<size_t>& targets) const
+                                                     const Tensor<Index, 1>& targets) const
 {
     const TextAnalytics::WordBag top_word_bag = calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
     const Tensor<string> words_name = top_word_bag.words;
@@ -2177,139 +2195,77 @@ Matrix<string> TextAnalytics::top_words_correlations(const Tensor<Tensor<string>
     return(top_words_correlations);
 }
 
-
-/// Create a binary matrix of the documents with the targets.
-/// @todo
-
-Matrix<double> TextAnalytics::calculate_data_set(const Tensor<string>& documents,
-                                                 const Tensor<string>&,
-                                                 const TextAnalytics::WordBag& word_bag) const
-{
-    const Tensor<Tensor<string>> document_words = preprocess(documents);
-
-    const size_t documents_number = documents.size();
-
-    const size_t word_bag_size = word_bag.size();
-
-    const Tensor<string> word_bag_words = word_bag.words;
-
-    const Tensor<size_t> words_number = get_words_number(document_words);
-
-    Matrix<double> data_set(documents_number, word_bag_size, 0.0);
-
-    data_set.set_header(word_bag_words);
-
-    for(size_t i = 0; i < documents_number; i++)
-    {
-        for(size_t j = 0; j < words_number[i]; j++)
-        {
-            for(size_t k = 0; k < word_bag_size; k++)
-            {
-                if(document_words[i][j] == word_bag_words[k])
-                {
-                    data_set(i,k) += 1.0;
-
-                    break;
-                }
-            }
-        }
-    }
-
-    return data_set.append_column(words_number.to_double_Tensor(), "words_number");
-    //.assemble_columns(targets.to_bool_matrix().to_double_matrix());
-}
-
-
-Tensor<double> TextAnalytics::get_binary_Tensor(const Tensor<string>& elements_to_binarize, const Tensor<string>& unique_items) const
-{
-    const size_t unique_items_number = unique_items.size();
-
-    Tensor<double> binary_Tensor(unique_items_number);
-
-    for(size_t i = 0; i < unique_items_number; i++)
-    {
-        if(elements_to_binarize.contains(unique_items[i]))
-        {
-            binary_Tensor[i] = 1.0;
-        }
-        else
-        {
-            binary_Tensor[i] = 0.0;
-        }
-    }
-
-    return binary_Tensor;
-}
-
-
-Matrix<double> TextAnalytics::get_binary_matrix(const Tensor<string>& Tensor_to_binarize, const char& separator) const
-{
-    const size_t this_size = Tensor_to_binarize.size();
-
-    const Tensor<string> unique_mixes = Tensor_to_binarize.get_unique_elements();
-
-    Tensor<Tensor<string>> items(unique_mixes.size());
-
-    Tensor<string> unique_items;
-
-    for(size_t i = 0; i < unique_mixes.size(); i++)
-    {
-        items[i] = unique_mixes.split_element(i, separator);
-
-        unique_items = unique_items.assemble(items[i]).get_unique_elements();
-    }
-
-    const size_t unique_items_number = unique_items.size();
-
-    Matrix<double> binary_matrix(this_size, unique_items_number, 0.0);
-
-    binary_matrix.set_header(unique_items);
-
-    Tensor<string> elements;
-
-    Tensor<double> binary_items(unique_items_number);
-
-    for(size_t i = 0; i < this_size; i++)
-    {
-        elements = Tensor_to_binarize.split_element(i, separator);
-
-        binary_items = get_binary_Tensor(elements,unique_items);
-
-        binary_matrix.set_row(i, binary_items);
-    }
-
-    return(binary_matrix);
-}
-
-
-/// Returns a binary matrix indicating the elements of the columns.
-
-Matrix<double> TextAnalytics::get_unique_binary_matrix(const Tensor<string>& Tensor_to_binarize, const char& separator, const Tensor<string>& unique_items) const
-{
-    const size_t this_size = Tensor_to_binarize.size();
-
-    const size_t unique_items_number = unique_items.size();
-
-    Matrix<double> binary_matrix(this_size, unique_items_number,0.0);
-
-    binary_matrix.set_header(unique_items.to_string_Tensor());
-
-    Tensor<string> elements;
-
-    Tensor<double> binary_items(unique_items_number);
-
-    for(size_t i = 0; i < this_size; i++)
-    {
-        elements = Tensor_to_binarize.split_element(i, separator);
-
-        binary_items = get_binary_Tensor(elements,unique_items);
-
-        binary_matrix.set_row(i, binary_items);
-    }
-
-    return(binary_matrix);
-}
 */
+
+///@todo change loop to copy, doesnt work propperly with Tensors<>
+
+void TextAnalytics::load_documents(const string& path)
+{
+    const Index original_size = documents.size();
+
+    Tensor<Tensor<string,1>, 1> documents_copy(documents);
+
+    documents.resize(original_size + 1);
+
+    Tensor<Tensor<type,1>, 1> targets_copy(targets);
+
+    targets.resize(original_size + 1);
+
+    for(Index i = 0; i < original_size; i++)
+    {
+      documents(i) = documents_copy(i);
+      targets(i) = targets_copy(i);
+    };
+
+    Index lines_count = 0;
+    Index lines_number = 0;
+
+    std::ifstream file(path.c_str());
+    string line;
+
+    while(file.good())
+    {
+        getline(file, line);
+        trim(line);
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        lines_number++;
+
+        if(file.peek() == EOF) break;
+    }
+
+    file.close();
+
+    Tensor<string, 1> document(lines_number);
+    Tensor<type, 1> document_target(lines_number);
+
+    std::ifstream file2(path.c_str());
+
+    while(file2.good())
+    {
+        getline(file2, line);
+
+        if(line.empty()) continue;
+
+        Tensor<string,1> tokens = get_tokens(line, '\t');
+
+        document(lines_count) = tokens(0);
+        document_target(lines_count) = type(stof(tokens(1)));
+
+        lines_count++;
+
+        if(file2.peek() == EOF) break;
+    }
+
+    documents(original_size) = document;
+    targets(original_size) = document_target;
+
+    file2.close();
+};
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

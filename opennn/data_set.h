@@ -40,6 +40,7 @@
 #include "correlations.h"
 #include "opennn_strings.h"
 #include "tensor_utilities.h"
+#include "text_analytics.h"
 
 // Filesystem namespace
 
@@ -671,6 +672,9 @@ public:
    void set_image_width(const int&);
    void set_image_height(const int&);
 
+   // Text classification methods
+
+   Tensor<type,1> sentence_to_data(const string&) const;
 
    // Data generation
 
@@ -709,6 +713,7 @@ public:
    void read_csv();
    static Tensor<unsigned char,1> read_bmp_image(const string& filename);
    void read_bmp();
+   void read_txt();
 
    void load_data_binary();
    void load_time_series_data_binary(const string&);

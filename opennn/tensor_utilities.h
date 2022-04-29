@@ -16,6 +16,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "opennn_strings.h"
 
 #include "../eigen/Eigen/Dense"
 
@@ -50,8 +51,27 @@ bool is_binary(const Tensor<type, 2>&);
 
 void save_csv(const Tensor<type,2>&, const string&);
 
+// Rank and indices methods
+
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
+Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
+Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
+
+Index count_elements_less_than(const Tensor<Index,1>&, const Index&);
+Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
+
+Index count_elements_less_than(const Tensor<double,1>&, const double&);
+Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
+
+void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
+void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
+void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
+
+Tensor<string, 1> get_first(const Tensor<string,1>&, const Index& );
+Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index& );
+
+//
 
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 
@@ -79,6 +99,8 @@ void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tenso
 Index count_NAN(const Tensor<type, 1>&);
 Index count_NAN(const Tensor<type, 2>&);
 
+Index count_empty_values(const Tensor<string, 1>&);
+
 void check_size(const Tensor<type, 1>&, const Index&, const string&);
 
 void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
@@ -104,6 +126,8 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&);
 Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&);
 Tensor<type, 1> push_back(const Tensor<type, 1>&, const type&);
+
+Tensor<string, 1> to_string_tensor(const Tensor<type,1>&);
 
 }
 
