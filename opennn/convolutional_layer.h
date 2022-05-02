@@ -171,9 +171,13 @@ public:
 
    // Delta methods
 
-//   void calculate_hidden_delta(LayerForwardPropagation*,
-//                               LayerBackPropagation*,
-//                               LayerBackPropagation*) const;
+   void calculate_hidden_delta(LayerForwardPropagation*,
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const;
+
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
+                                          PerceptronLayerBackPropagation*,
+                                          PerceptronLayerBackPropagation*) const;
 
 
 //   void calculate_hidden_delta_convolutional(ConvolutionalLayer*,
@@ -246,7 +250,7 @@ protected:
 
    ConvolutionType convolution_type = ConvolutionType::Valid;
 
-   ActivationFunction activation_function = ActivationFunction::RectifiedLinear;
+   ActivationFunction activation_function = ActivationFunction::Linear;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
