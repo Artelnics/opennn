@@ -1800,8 +1800,6 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     const Index maximum_points_number = 200;
 
-//    const Index testing_samples_number = targets.dimension(0);
-
     Index points_number;
 
     points_number = maximum_points_number;
@@ -1835,21 +1833,12 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
 
-//    Tensor<type, 1> sorted_targets(testing_samples_number);
-//    Tensor<type, 1> sorted_outputs(testing_samples_number);
-
-//    for(Index i = 0; i < testing_samples_number; i++)
-//    {
-//        sorted_targets(i) = targets(sorted_indices(i),0);
-//        sorted_outputs(i) = outputs(sorted_indices(i),0);
-//    }
-
     Tensor<type, 2> roc_curve(points_number + 1, 3);
     roc_curve.setZero();
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(Index i = 0; i < static_cast<Index>(points_number); i++)
+    for(Index i = 1; i < static_cast<Index>(points_number); i++)
     {
         const type threshold = i * (1/static_cast<type>(points_number));
 
@@ -1858,10 +1847,10 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         Index false_positive = 0;
         Index true_negative = 0;
 
-        type target = type(0);
-        type output = type(0);
+        type target;
+        type output;
 
-        for(Index j = 0; j < points_number; j++)
+        for(Index j = 0; j <= targets.size(); j++)
         {
             target = targets(j,0);
             output = outputs(j,0);
@@ -1887,11 +1876,24 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         roc_curve(i,0) = 1 - static_cast<type>(true_positive)/(static_cast<type>(true_positive + false_negative));
         roc_curve(i,1) = static_cast<type>(true_negative)/(static_cast<type>(true_negative + false_positive));
         roc_curve(i,2) = static_cast<type>(threshold);
+
+        if(  isnan(roc_curve(i,0)) )
+        {
+            roc_curve(i,0) = 1;
+        }
+        if( isnan(roc_curve(i,1)))
+        {
+            roc_curve(i,1) = 0;
+        }
     }
 
-    roc_curve(points_number, 0) = type(1);
-    roc_curve(points_number, 1) = type(1);
-    roc_curve(points_number, 2) = type(1);
+    roc_curve(0,0) = 0;
+    roc_curve(0,1) = 0;
+    roc_curve(0,2) = 0;
+
+    roc_curve(points_number,0) = 1;
+    roc_curve(points_number,1) = 1;
+    roc_curve(points_number,2) = 1;
 
     return roc_curve;
 }

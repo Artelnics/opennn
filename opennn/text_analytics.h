@@ -23,7 +23,8 @@
 // OpenNN includes
 
 #include "tensor_utilities.h"
-
+#include "opennn_strings.h"
+#include "data_set.h"
 // TinyXml includes
 
 #include "tinyxml2.h"
@@ -80,21 +81,32 @@ public:
             cout << "Word bag size: " << words_size << endl;
 
             for(Index i = 0; i < words_size; i++)
-                cout << words(i) << ":frequency= " << frequencies(i) << ", percentage= " << percentages(i) << endl;
+                cout << words(i) << ": frequency= " << frequencies(i) << ", percentage= " << percentages(i) << endl;
         }
     };
 
     // Get methods
 
     Language get_language() const;
+
     string get_language_string() const;
 
-    Tensor<string, 1> get_documents() const;
+    Tensor<Tensor<string, 1>,1> get_documents() const;
+
+    Tensor<Tensor<string, 1>, 1> get_targets() const;
+
     Tensor<string, 1> get_stop_words() const;
+
+    Index get_document_sentences_number() const;
+
+    Tensor<Index, 1> get_words_number(const Tensor<Tensor<string, 1>, 1>&) const;
+
+    Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents) const;
 
     // Set methods
 
     void set_language(const Language&);
+
     void set_language(const string&);
 
     void set_stop_words(const Tensor<string ,1>&);
@@ -102,50 +114,65 @@ public:
     // Auxiliar methods
 
     void append_document(const string&);
+
     void append_documents(const Tensor<string, 1>&);
 
-    // Preprocess methods
+    void filter_not_equal_to(Tensor<string,1>&, const Tensor<string,1>&) const;
 
     void load_documents(const string&);
 
-    void delete_extra_spaces(Tensor<string, 1>&) const;
-    void delete_breaks_and_tabs(Tensor<string, 1>&) const;
-    void delete_punctuation(Tensor<string, 1>&) const;
-
-    void to_lower(Tensor<string, 1>&) const;
-
-
-    Tensor<string,1> split_string(string str, string delimiter = " ") const;
     string to_string(Tensor<string,1> token) const;
 
     Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&) const;
+
     Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&) const;
 
-    Tensor<Tensor<string, 1>, 1> delete_words(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
+    Index count(const Tensor<Tensor<string, 1>, 1>&) const;
 
-    Tensor<Tensor<string,1>, 1> delete_stop_words(const Tensor<Tensor<string, 1>, 1>&) const;
+    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&) const;
 
-    Tensor<Tensor<string,1>, 1> delete_short_words(const Tensor<Tensor<string, 1>, 1>&, const Index& = 2) const;
+    // Preprocess methods
 
-    Tensor<Tensor<string,1>, 1> delete_long_words(const Tensor<Tensor<string, 1>, 1>&, const Index& = 15) const;
+    void delete_extra_spaces(Tensor<string, 1>&) const;
 
-    Tensor<Tensor<string,1>, 1> delete_numbers(const Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_breaks_and_tabs(Tensor<string, 1>&) const;
 
-    Tensor<Tensor<string,1>, 1> delete_emails(const Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_punctuation(Tensor<string, 1>&) const;
 
-    Tensor<Tensor<string,1>, 1> replace_accented(const Tensor<Tensor<string, 1>, 1>&) const;
+    void delete_stop_words(Tensor<Tensor<string, 1>, 1>&) const;
+
+    void delete_short_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2) const;
+
+    void delete_long_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 15) const;
+
+    void delete_numbers(Tensor<Tensor<string, 1>, 1>&) const;
+
+    void delete_emails(Tensor<Tensor<string, 1>, 1>&) const;
+
+    void delete_words(Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
+
+    void delete_blanks(Tensor<string, 1>&) const;
+
+    void delete_blanks(Tensor<Tensor<string, 1>, 1>&) const;
+
+    void replace_accented(Tensor<Tensor<string, 1>, 1>&) const;
+
+    void replace_accented(string&) const;
+
+    void to_lower(Tensor<string, 1>&) const;
 
     // Stemming methods
 
     /// Reduces inflected(or sometimes derived) words to their word stem, base or root form
 
-    Tensor<string, 1> get_r1_r2(const string&, const Tensor<string, 1>&) const;
     string get_rv(const string&, const Tensor<string, 1>&) const;
 
-    string replace_accented(const string&) const;
+    Tensor<string, 1> get_r1_r2(const string&, const Tensor<string, 1>&) const;
 
     Tensor<Tensor<string, 1>, 1> apply_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
+
     Tensor<Tensor<string, 1>, 1> apply_english_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
+
     Tensor<Tensor<string, 1>, 1> apply_spanish_stemmer(const Tensor<Tensor<string, 1>, 1>&) const;
 
     // Word bag
@@ -153,16 +180,16 @@ public:
     /// It is a simplifying representation where a text(such as a sentence or a document) is represented
     /// as the bag(multiset) of its words, disregarding grammar and even word order but keeping multiplicity.
 
-    Index count(const Tensor<Tensor<string, 1>, 1>&) const;
-
-    Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&) const;
-
     WordBag calculate_word_bag(const Tensor<Tensor<string, 1>, 1>&) const;
 
     WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
+
     WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string, 1>, 1>&, const double&) const;
+
     WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string, 1>, 1>&, const double&) const;
+
     WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
+
     WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
 
     Index calculate_weight(const Tensor<string, 1>&, const TextAnalytics::WordBag&) const;
@@ -171,9 +198,7 @@ public:
 
     Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&) const;
 
-    Tensor<Index, 1> get_words_number(const Tensor<Tensor<string, 1>, 1>&) const;
 
-    Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents) const;
 
     Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
 
@@ -181,31 +206,11 @@ public:
 
     Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&) const;
 
-    Tensor<double, 2> calculate_data_set(const Tensor<string, 1>&, const Tensor<string, 1>&, const TextAnalytics::WordBag&) const;
-
-    // Binarize methods
-
-    Tensor<double, 1> get_binary_Tensor(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-    Tensor<double, 2> get_binary_matrix(const Tensor<string, 1>&, const char& separator = ' ') const;
-
-    Tensor<double, 2> get_unique_binary_matrix(const Tensor<string, 1>&, const char&, const Tensor<string, 1>&) const;
-
-private:
+private: //change to private
 
     void set_english_stop_words();
     void set_spanish_stop_words();
     void clear_stop_words();
-
-    bool is_number(const string&) const;
-    bool contains_number(const string&) const;
-
-    bool is_email(const string&) const;
-
-    bool starts_with(const string&, const string&) const;
-
-    bool ends_with(const string&, const string&) const;
-    bool ends_with(const string&, const Tensor<string, 1>&) const;
 
     // MEMBERS
 
@@ -216,6 +221,10 @@ private:
     /// Words which are filtered out before or after processing of natural language data.
 
     Tensor<string, 1> stop_words;
+
+    Tensor<Tensor<string,1>,1> documents;
+
+    Tensor<Tensor<string,1>,1> targets;
 
 };
 

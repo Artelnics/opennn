@@ -62,7 +62,7 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Order selection methods
+    // Neurons selection methods
 
     InputsSelectionResults perform_inputs_selection() final;
 
