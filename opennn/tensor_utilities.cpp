@@ -307,6 +307,229 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 }
 
 
+
+Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank)
+{
+    const Index tokens_size = tokens.size();
+
+    if(tokens_size != rank.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Strings Class.\n"
+               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
+               << "Tokens and rank size must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<string,1> sorted_tokens(tokens_size);
+
+    for(Index i = 0; i < tokens_size; i++)
+    {
+        sorted_tokens(i) = tokens(rank(i));
+    }
+
+    return sorted_tokens;
+};
+
+
+
+Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1>&rank)
+{
+    const Index tokens_size = tokens.size();
+
+    if(tokens_size != rank.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Strings Class.\n"
+               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
+               << "Tokens and rank size must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<Index,1> sorted_tokens(tokens_size);
+
+    for(Index i = 0; i < tokens_size; i++)
+    {
+        sorted_tokens(i) = tokens(rank(i));
+    }
+
+    return sorted_tokens;
+};
+
+
+
+Index count_elements_less_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    Index count = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(vector(i) < bound)
+            count++;
+    }
+
+    return count;
+};
+
+
+
+Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    const Index indices_size = count_elements_less_than(vector, bound);
+
+    Tensor<Index, 1> indices(indices_size);
+
+    Index index = 0;
+
+    for(Index i  = 0; i < vector.size(); i++)
+    {
+         if(vector(i) < bound)
+         {
+             indices(index) = i;
+             index++;
+         }
+    }
+
+    return indices;
+};
+
+
+
+Index count_elements_less_than(const Tensor<double,1>& vector, const double& bound)
+{
+    Index count = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(vector(i) < bound)
+            count++;
+    }
+
+    return count;
+};
+
+
+
+Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const double& bound)
+{
+    const Index indices_size = count_elements_less_than(vector, bound);
+
+    Tensor<Index, 1> indices(indices_size);
+
+    Index index = 0;
+
+    for(Index i  = 0; i < vector.size(); i++)
+    {
+         if(vector(i) < bound)
+         {
+             indices(index) = i;
+             index++;
+         }
+    }
+
+    return indices;
+};
+
+
+
+void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
+{
+    const Index original_size = vector.size();
+
+    const Index new_size = vector.size() - indices.size();
+
+    Tensor<string,1> vector_copy(vector);
+
+    vector.resize(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        if( !contains(indices, i) )
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+
+void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
+{
+    const Index original_size = vector.size();
+
+    const Index new_size = vector.size() - indices.size();
+
+    Tensor<Index,1> vector_copy(vector);
+
+    vector.resize(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        if( !contains(indices, i) )
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+
+void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
+{
+    const Index original_size = vector.size();
+
+    const Index new_size = vector.size() - indices.size();
+
+    Tensor<double,1> vector_copy(vector);
+
+    vector.resize(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        if( !contains(indices, i) )
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+
+Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
+{
+    Tensor<string, 1> new_vector(index);
+
+//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+
+    return new_vector;
+};
+
+
+
+Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
+{
+    Tensor<Index, 1> new_vector(index);
+
+//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+
+    return new_vector;
+};
+
+
+
 /// Returns the number of elements which are equal or greater than a minimum given value
 /// and equal or less than a maximum given value.
 /// @param minimum Minimum value.
@@ -619,6 +842,25 @@ Index count_NAN(const Tensor<type, 2>& x)
         {
             if(isnan(x(row_index, column_index))) count++;
         }
+    }
+
+    return count;
+}
+
+
+Index count_empty_values(const Tensor<string, 1>& vector)
+{
+    const Index words_number = vector.size();
+
+    Index count = 0;
+
+    string empty_string;
+
+    for( Index i = 0; i < words_number; i++)
+    {
+        string str = vector(i);
+        trim(str);
+        if(str == empty_string) count++;
     }
 
     return count;
@@ -989,6 +1231,19 @@ Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_val
 
     return new_vector;
 }
+
+Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
+{
+    Tensor<string, 1> vector(x.size());
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        vector(i) = std::to_string(x(i));
+    }
+
+};
+
+
 
 }
 

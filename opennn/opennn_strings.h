@@ -24,15 +24,25 @@ using namespace Eigen;
 
 namespace opennn
 {
-    Index count_tokens(const string&, const char&);
+    Index count_tokens(const string&, const char& separator = ' ');
 
-    Tensor<string, 1> get_tokens(const string&, const char&);
+    Tensor<string, 1> get_tokens(const string&, const char& delimiter=' ');
     void fill_tokens(const string&, const char&, Tensor<string, 1>&);
 
     Tensor<type, 1> to_type_vector(const string&, const char&);
 
+    Tensor<string, 1> get_unique_elements(const Tensor<string,1>&);
+    Tensor<Index, 1> count_unique(const Tensor<string,1>&);
+
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
+    bool is_email(const string&);
+    bool contains_number(const string&);
+
+    bool starts_with(const string& word, const string& starting);
+    bool ends_with(const string&, const string&);
+    bool ends_with(const string&, const Tensor<string,1>&);
+
     bool is_constant_numeric(const Tensor<type, 1>&);
     bool is_constant_string(const Tensor<string, 1>&);
 

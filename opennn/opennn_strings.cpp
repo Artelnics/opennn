@@ -50,7 +50,21 @@ Index count_tokens(string& str, const char& separator)
 
 Index count_tokens(const string& s, const char& c)
 {
-    return static_cast<Index>(count(s.begin(), s.end(), c) + 1);
+    string str_copy = s;
+
+    Index tokens_number = count(s.begin(), s.end(), c);
+
+    if(s[0] == ' ')
+    {
+        tokens_number--;
+    }
+    if(s[s.size() - 1] == ' ')
+    {
+        tokens_number--;
+    }
+
+    return (tokens_number+1);
+
 }
 
 
@@ -193,6 +207,42 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 }
 
 
+
+Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
+{
+    string result = " ";
+
+    for(Index i = 0; i < tokens.size(); i++)
+    {
+        if( !contains_substring(result, " " + tokens(i) + " ") )
+        {
+            result += tokens(i) + " ";
+        }
+    }
+
+    return get_tokens(result);
+};
+
+
+
+Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
+{
+    Tensor<string, 1> unique_elements = get_unique_elements(tokens);
+
+    const Index unique_size = unique_elements.size();
+
+    Tensor<Index, 1> unique_count(unique_size);
+
+    for(Index i = 0; i < unique_size; i++)
+    {
+        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements(i)));
+    }
+
+    return unique_count;
+};
+
+
+
 /// Returns true if the string passed as argument represents a number, and false otherwise.
 /// @param str String to be checked.
 
@@ -297,6 +347,78 @@ bool is_date_time_string(const string& str)
     {
         return false;
     }
+}
+
+
+/// Return true if word is a email, and false otherwise.
+/// @param word Word to check.
+
+bool is_email(const string& word)
+{
+    // define a regular expression
+    const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
+
+    // try to match the string with the regular expression
+    return regex_match(word, pattern);
+}
+
+
+/// Return true if word contains a number, and false otherwise.
+/// @param word Word to check.
+
+bool contains_number(const string& word)
+{
+    return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
+}
+
+
+/// Returns true if a word starting with a given substring, and false otherwise.
+/// @param word Word to check.
+/// @param starting Substring to comparison given word.
+
+bool starts_with(const string& word, const string& starting)
+{
+    if(starting.length() > word.length() || starting.length() == 0)
+    {
+        return false;
+    }
+
+    return(word.substr(0,starting.length()) == starting);
+}
+
+
+/// Returns true if a word ending with a given substring, and false otherwise.
+/// @param word Word to check.
+/// @param ending Substring to comparison given word.
+
+bool ends_with(const string& word, const string& ending)
+{
+    if(ending.length() > word.length())
+    {
+        return false;
+    }
+
+    return(word.substr(word.length() - ending.length()) == ending);
+}
+
+
+/// Returns true if a word ending with a given substring Tensor, and false otherwise.
+/// @param word Word to check.
+/// @param ending Substring Tensor with possibles endings words.
+
+bool ends_with(const string& word, const Tensor<string,1>& endings)
+{
+    const Index endings_size = endings.size();
+
+    for(Index i = 0; i < endings_size; i++)
+    {
+        if(ends_with(word,endings[i]))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
