@@ -45,7 +45,7 @@ Tensor<Tensor<string,1> ,1> TextAnalytics::get_documents() const
 
 /// Returns a Tensor containing the targets.
 
-Tensor<Tensor<type,1> ,1> TextAnalytics::get_targets() const
+Tensor<Tensor<string,1> ,1> TextAnalytics::get_targets() const
 {
     return targets;
 }
@@ -191,6 +191,7 @@ void TextAnalytics::delete_breaks_and_tabs(Tensor<string, 1>& documents) const
 void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
 {
 
+        replace_substring(documents, "\"","");
 //        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '.' ,' ');
         replace_substring(documents, ".","");
 //        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '!' ,' ');
@@ -1909,6 +1910,7 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
 
     replace_substring(documents_copy,"_", " ");
     replace_substring(documents_copy,".", " ");
+//    replace_substring(documents_copy,"', ' ');
 
     delete_extra_spaces(documents_copy);
 
@@ -1920,11 +1922,11 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
 
     delete_long_words(tokenized_documents);
 
-    delete_numbers(tokenized_documents);
+    replace_accented(tokenized_documents);
 
     delete_emails(tokenized_documents);
 
-    replace_accented(tokenized_documents);
+    delete_numbers(tokenized_documents);
 
     delete_blanks(tokenized_documents);
 
@@ -2207,7 +2209,7 @@ void TextAnalytics::load_documents(const string& path)
 
     documents.resize(original_size + 1);
 
-    Tensor<Tensor<type,1>, 1> targets_copy(targets);
+    Tensor<Tensor<string,1>, 1> targets_copy(targets);
 
     targets.resize(original_size + 1);
 
@@ -2239,7 +2241,7 @@ void TextAnalytics::load_documents(const string& path)
     file.close();
 
     Tensor<string, 1> document(lines_number);
-    Tensor<type, 1> document_target(lines_number);
+    Tensor<string, 1> document_target(lines_number);
 
     std::ifstream file2(path.c_str());
 
@@ -2252,7 +2254,7 @@ void TextAnalytics::load_documents(const string& path)
         Tensor<string,1> tokens = get_tokens(line, '\t');
 
         document(lines_count) = tokens(0);
-        document_target(lines_count) = type(stof(tokens(1)));
+        document_target(lines_count) = tokens(1);
 
         lines_count++;
 
