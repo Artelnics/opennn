@@ -70,7 +70,7 @@ void NeuralNetworkTest::test_constructor()
     // Inputs variables dimension = (channels, width, height)
     Tensor<Index, 1> inputs_variables_dimension(3);
     inputs_variables_dimension.setValues({1,28,28});
-    Index blocks_number = 1;
+    Index blocks_number = 0;
     Index outputs_number = 10;
     Tensor<Index, 1> filters_dimensions(3);
     filters_dimensions.setValues({1,2,2});

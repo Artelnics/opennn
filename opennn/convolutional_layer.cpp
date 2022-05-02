@@ -30,7 +30,7 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 /// with a number of kernels of a given size.
 /// The initialization values are random values from a normal distribution.
 /// @param new_inputs_dimensions A vector containing the new inputs' dimensions.
-/// @param kernels_dimensions A vector containing the number of kernels, their rows and columns.
+/// @param kernels_dimensions A vector containing the kernel rows, columns channels and number.
 
 ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions,
                                        const Tensor<Index, 1>& new_kernels_dimensions) : Layer()

@@ -1069,7 +1069,6 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         set_padding_width(static_cast<Index>(stoi(padding_width_string)));
     }
 }
-
 }
 
 // OpenNN: Open Neural Networks Library.

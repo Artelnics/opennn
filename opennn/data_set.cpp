@@ -8235,6 +8235,9 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
+cout << "columns_number: " << columns_number << endl;
+cout << "rows_number: " << rows_number << endl;
+
     cout << "Saving binary data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
@@ -10399,7 +10402,7 @@ void DataSet::read_bmp()
         }
     }
 
-    const Index classes_number = number_of_elements_in_directory(path);
+    Index classes_number = number_of_elements_in_directory(path);
     Index images_number = 0;
     Tensor<Index, 1> images_numbers(classes_number);
 
@@ -10476,7 +10479,6 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
-//                cout << data(row_index, k) << " ";
             }
 
             data(row_index, image_size + i) = 1;
@@ -10539,7 +10541,6 @@ void DataSet::read_bmp()
         columns(image_size).categories_uses.setConstant(VariableUse::Target);
     }else
     {
-
         Tensor<string, 1> categories(classes_number);
 
         for(Index i = 0 ; i < classes_number ; i++)

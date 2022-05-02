@@ -49,7 +49,7 @@ int main()
 
         DataSet data_set;
 //        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
-        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/mnist _binary/");
+        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/cancer/");
 
         data_set.read_bmp();
 
@@ -104,6 +104,13 @@ int main()
         FlattenLayer flatten_layer(input_dataset_batch_dimenison);
 
         neural_network.add_layer(&flatten_layer);
+
+        cout << "Flatten layer: " << flatten_layer.get_input_variables_dimensions() << endl;
+        cout << "Batch number: " << flatten_layer.get_inputs_batch_number() << endl;
+        cout << "Channels number: " << flatten_layer.get_inputs_channels_number() << endl;
+        cout << "Input width: " << flatten_layer.get_input_width() << endl;
+        cout << "Input height: " << flatten_layer.get_input_height() << endl;
+
 
         ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
 

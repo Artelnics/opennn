@@ -641,6 +641,12 @@ void ScalingLayer::set_scalers(const Tensor<string, 1>& new_scaling_methods_stri
 }
 
 
+void ScalingLayer::set_scaler(const Index& variable_index, const Scaler& new_scaler)
+{
+    scalers(variable_index) = new_scaler;
+}
+
+
 /// Sets all the methods to be used for scaling with the given method.
 /// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
@@ -825,6 +831,10 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const Index points_number = inputs.dimension(0);
 
+    cout << "Neurons number: "<< neurons_number<< endl;
+
+    cout << "Points number: "<< points_number<< endl;
+
     outputs.resize(points_number, neurons_number);
 
     for(Index i = 0; i < points_number; i++)
@@ -837,7 +847,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 {
                     cout << "OpenNN Warning: ScalingLayer class.\n"
                          << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                         << "Standard deviation of variable " << i << " is zero.\n"
+                         << "Standard deviation of variable " << j << " is zero.\n"
                          << "Those variables won't be scaled.\n";
                 }
 
@@ -1196,6 +1206,26 @@ string ScalingLayer::write_expression_python() const
 
     return buffer.str();
 }
+
+
+void ScalingLayer::print() const
+{
+    cout << "Scaling layer" << endl;
+
+    const Index inputs_number = get_inputs_number();
+
+    const Tensor<string, 1> scalers_text = write_scalers_text();
+
+    for(Index i = 0; i < inputs_number; i++)
+    {
+        cout << "Neuron " << i << endl;
+
+        cout << "Scaler " << scalers_text(i) << endl;
+
+        descriptives(i).print();
+    }
+}
+
 
 
 /// Serializes the scaling layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
