@@ -3676,40 +3676,9 @@ void DataSet::check_constant_columns()
                 columns(column).column_use = VariableUse::Unused;
             }
 
+
             variable_index += columns(column).get_categories_number();
         }
-//        switch(columns(column).type)
-//        {
-//            case ColumnType::DateTime:
-//                columns(column).column_use = VariableUse::Unused;
-//                variable_index++;
-//                break;
-
-//            case ColumnType::Constant:
-//                variable_index++;
-//                break;
-
-//            case ColumnType::Binary:
-//                if(columns(column).get_categories_number() == 1)
-//                {
-//                    columns(column).type = ColumnType::Constant;
-//                    columns(column).column_use = VariableUse::Unused;
-//                }
-//                variable_index++;
-//                break;
-
-//            case ColumnType::Categorical:
-
-//                if(columns(column).get_categories_number() == 1)
-//                {
-//                    columns(column).type = ColumnType::Constant;
-//                    columns(column).column_use = VariableUse::Unused;
-//                }
-//                variable_index += columns(column).get_categories_number();
-//                break;
-
-//        default: break;
-//        }
     }
 }
 
@@ -10616,7 +10585,7 @@ void DataSet::read_txt()
     text_analytics.load_documents(data_file_name);
 
     Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
-    Tensor<Tensor<type, 1>, 1> targets = text_analytics.get_targets();
+    Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
 
     Tensor<string, 1> full_document = text_analytics.join(document);
 
@@ -10657,16 +10626,16 @@ void DataSet::read_txt()
 
             for(Index k = 0; k < line_words.size(); k++)
             {
-                if( contains(columns_names, line_words(i)) )
+                if( contains(columns_names, line_words(k)) )
                 {
-                    auto it = find(columns_names.data(), columns_names.data() + document_words_number, line_words(i));
+                    auto it = find(columns_names.data(), columns_names.data() + document_words_number, line_words(k));
                     const Index index = it - columns_names.data();
 
                     data(rows_index, index) = type(line_frequencies(k));
                 }
             }
 
-            data(rows_index, document_words_number) = targets(i)(j);
+            data(rows_index, document_words_number) = type(stof(targets(i)(j)));
 
             rows_index++;
         }

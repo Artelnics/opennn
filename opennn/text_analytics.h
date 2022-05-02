@@ -93,7 +93,7 @@ public:
 
     Tensor<Tensor<string, 1>,1> get_documents() const;
 
-    Tensor<Tensor<type, 1>, 1> get_targets() const;
+    Tensor<Tensor<string, 1>, 1> get_targets() const;
 
     Tensor<string, 1> get_stop_words() const;
 
@@ -224,7 +224,7 @@ private: //change to private
 
     Tensor<Tensor<string,1>,1> documents;
 
-    Tensor<Tensor<type,1>,1> targets;
+    Tensor<Tensor<string,1>,1> targets;
 
 };
 
