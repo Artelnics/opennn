@@ -51,6 +51,10 @@ public:
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
+    Index get_inputs_batch_number() const;
+    Index get_inputs_channels_number() const;
+    Index get_input_width() const;
+    Index get_input_height() const;
     Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const final;

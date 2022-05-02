@@ -859,6 +859,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     delete_layers();
 
     ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
+
     this->add_layer(scaling_layer);
 
     Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
@@ -885,7 +886,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 18);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 3);
     this->add_layer(perceptron_layer);
 
     const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
@@ -2009,8 +2010,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-//        if(has_convolutional_layer() && layers_pointers[i]->get_type() == Layer::Type::Scaling) continue;
-
         layers_pointers[i]->write_XML(file_stream);
     }
 

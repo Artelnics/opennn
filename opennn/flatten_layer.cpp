@@ -52,7 +52,27 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 /// @todo
 Index FlattenLayer::get_inputs_number() const
 {
-    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2);
+    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2)*input_variables_dimensions(3);
+}
+
+Index FlattenLayer::get_input_height() const
+{
+    return input_variables_dimensions(0);
+}
+
+Index FlattenLayer::get_input_width() const
+{
+    return input_variables_dimensions(1);
+}
+
+Index FlattenLayer::get_inputs_channels_number() const
+{
+    return input_variables_dimensions(2);
+}
+
+Index FlattenLayer::get_inputs_batch_number() const
+{
+    return input_variables_dimensions(3);
 }
 
 /// Returns the number of neurons
@@ -160,12 +180,35 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("FlattenLayer");
 
-    file_stream.OpenElement("InputVariablesDimensions");
+    file_stream.OpenElement("InputVariablesDimension");
 
+    file_stream.OpenElement("BatchNumber");
     buffer.str("");
-    buffer << get_input_variables_dimensions();
+    buffer << get_inputs_batch_number();
 
     file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("InputChannels");
+    buffer.str("");
+    buffer << get_inputs_channels_number();
+
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("InputWidth");
+    buffer.str("");
+    buffer << get_input_width();
+
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("InputHeight");
+    buffer.str("");
+    buffer << get_input_height();
+
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
 
     file_stream.CloseElement();
 
@@ -191,7 +234,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    // Bounding neurons number
+    // Flatten layer input variables dimenison
 
     const tinyxml2::XMLElement* input_variables_dimensions_element = flatten_layer_element->FirstChildElement("InputVariablesDimensions");
 
@@ -204,9 +247,71 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-//    Tensor<Index,1> new_input_variables_dimensions = input_variables_dimensions_element->GetText();
+    // Input channels number
 
-//    set(new_input_variables_dimensions);
+    const tinyxml2::XMLElement* input_batch_number_element = input_variables_dimensions_element->NextSiblingElement("BatchNumber");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FlattenInputChannelsNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index batch_number = static_cast<Index>(atoi(input_batch_number_element->GetText()));
+
+    // Input channels number
+
+    const tinyxml2::XMLElement* input_channels_number_element = input_variables_dimensions_element->NextSiblingElement("InputChannels");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FlattenInputChannelsNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index input_channels_number = static_cast<Index>(atoi(input_channels_number_element->GetText()));
+
+    // Input width
+
+    const tinyxml2::XMLElement* input_width_element = input_variables_dimensions_element->NextSiblingElement("InputWidth");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FlattenInputWidth element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index input_width = static_cast<Index>(atoi(input_width_element->GetText()));
+
+    // Input height
+
+    const tinyxml2::XMLElement* input_height_element = input_variables_dimensions_element->NextSiblingElement("InputHeight");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FlattenInputHeight element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index input_height = static_cast<Index>(atoi(input_height_element->GetText()));
+
+    Tensor<Index,1> inputsDimensionTensor(4);
+
+    inputsDimensionTensor.setValues({batch_number, input_channels_number, input_width, input_height});
+
+    set(inputsDimensionTensor);
 }
 
 }
