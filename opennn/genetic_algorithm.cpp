@@ -81,6 +81,14 @@ const Index& GeneticAlgorithm::get_elitism_size() const
 }
 
 
+/// Returns the method used for initalizating the population
+
+const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
+{
+    return initialization_method;
+}
+
+
 /// Sets the members of the genetic algorithm object to their default values.
 
 void GeneticAlgorithm::set_default()
@@ -280,6 +288,15 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 }
 
 
+/// Sets a new initalization method.
+/// @param new_initializatio_method New initalization method (Random or WeigthedCorrelations).
+
+void GeneticAlgorithm::set_initialization_method(const GeneticAlgorithm::InitializationMethod& new_initialization_method)
+{
+    initialization_method = new_initialization_method;
+}
+
+
 /// Sets a new rate used in the mutation.
 /// It is a number between 0 and 1.
 /// @param new_mutation_rate Rate used for the mutation.
@@ -366,47 +383,157 @@ void GeneticAlgorithm::initialize_population()
 
     bool is_repeated;
 
-    for(Index i = 0; i < individuals_number; i++)
+    if(initialization_method == GeneticAlgorithm::InitializationMethod::Random)
     {
-        // Do-while for preventing repetition of samples
+        for(Index i = 0; i < individuals_number; i++)
+        {
+            // Do-while for preventing repetition of samples
 
-        do{
+            do{
 
-            is_repeated = false;
+                is_repeated = false;
 
-            // Individual generation
+                // Individual generation
+
+                for(Index j = 0; j < genes_number; j++)
+                {
+                    rand()%2 == 0 ? individual[j] = false : individual[j] = true;
+                }
+
+                // Prevent no inputs
+
+                if(is_false(individual))
+                {
+                    individual(static_cast<Index>(rand())%genes_number) = true;
+                }
+
+                // Check for repetitions
+
+                for(Index j = 0; j < i; j++)
+                {
+                    Tensor<bool,1> row = population.chip(j,0);
+
+                    if( are_equal(individual, row) )
+                    {
+                        is_repeated = true;
+                        break;
+                    }
+                }
+            }while(is_repeated);
+
+            //  Add individual to population
 
             for(Index j = 0; j < genes_number; j++)
             {
-                rand()%2 == 0 ? individual[j] = false : individual[j] = true;
+                population(i,j) = individual(j);
             }
+        }
+    }
+    else if(initialization_method == GeneticAlgorithm::InitializationMethod::WeightedCorrelations)
+    {
+        ostringstream buffer;
 
-            // Prevent no inputs
+        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+               << "void initialize_population() method.\n"
+               << "Weigthed correlations method is not implemented yet.\n";
 
-            if(is_false(individual))
-            {
-                individual(static_cast<Index>(rand())%genes_number) = true;
-            }
+        throw invalid_argument(buffer.str());
 
-            // Check for repetitions
+        // 0 - Get correlation values
 
-            for(Index j = 0; j < i; j++)
-            {
-                Tensor<bool,1> row = population.chip(j,0);
+        DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
-                if( are_equal(individual, row) )
-                {
-                    is_repeated = true;
-                    break;
-                }
-            }
-        }while(is_repeated);
+        Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
-        //  Add individual to population
+        Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0,1);
 
-        for(Index j = 0; j < genes_number; j++)
+        Tensor<type, 1> correlations_fitness(correlations.size());
+
+        // 1 - Fitness assignment
+
+        const Index individuals_number = get_individuals_number();
+
+        const Tensor<Index, 1> rank = calculate_rank_greater(correlations);
+
+        for(Index i = 0; i < correlations.size(); i++)
         {
-            population(i,j) = individual(j);
+            correlations_fitness(rank(i)) = type(i+1);
+        }
+
+        // 2 - Fitness cumsum
+
+        const Tensor<type, 1> cumulative_fitness = correlations_fitness.cumsum(0);
+
+        // 3 - Individual generation
+
+        Tensor<bool, 1> individual(genes_number);
+
+        individual.setConstant(false);
+
+        for(Index i = 0; i < individuals_number; i++)
+        {
+            const type inputs_number = int( (type) rand()/RAND_MAX * genes_number );
+
+            do{
+
+                is_repeated = false;
+
+                Index input_count = 0;
+
+                while(input_count < inputs_number)
+                {
+
+                    // 3.1 - Roulete Wheel
+
+                    const type pointer = ((type) rand()/RAND_MAX) * cumulative_fitness(genes_number-1); // FAILS WITH CATEGORICS BECAUSE OF GENES NUMBER != INPUTS NUMBER
+
+                    cout << "Pointer: " << pointer << endl;
+
+                    if(pointer < cumulative_fitness(0) && !individual(0))
+                    {
+                        individual(0) = true;
+                        input_count++;
+                        continue;
+                    }
+
+                    for(Index j = 0; j < individuals_number - 1; j++)
+                    {
+                        if(cumulative_fitness(j) < pointer
+                                && pointer < cumulative_fitness(j + 1)
+                                && !individual(j+1))
+                        {
+                            individual(j+1) = true;
+                            input_count++;
+                            break;
+                        }
+                    }
+
+                }
+
+                cout << individual << endl;
+
+                    // 3.2 - No repetition
+
+                    for(Index j = 0; j < i; j++)
+                    {
+                        Tensor<bool,1> row = population.chip(j,0);
+
+                        if( are_equal(individual, row) )
+                        {
+                            is_repeated = true;
+                            break;
+                        }
+                    }
+
+                    //  3.3 - Add individual to population
+
+                    for(Index j = 0; j < genes_number; j++)
+                    {
+                        population(i,j) = individual(j);
+                    }
+
+            }while(is_repeated);
+
         }
 
     }
@@ -1043,7 +1170,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         check_categorical_columns();
 
-        if(false)
+        if(true)
         {
             const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
@@ -1051,10 +1178,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             for(Index i  = 0; i < population.dimension(0); i++)
             {
                 cout << "Individual " << i+1 << " | ";
-                for(Index j = 0; j < get_genes_number(); j++)
-                {
-                    cout << population(i,j) << " ";
-                }
+//                for(Index j = 0; j < get_genes_number(); j++)
+//                {
+//                    cout << population(i,j) << " ";
+//                }
                 cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
             }
         }
@@ -1100,38 +1227,42 @@ void GeneticAlgorithm::check_categorical_columns()
 
         Index column_index = 0;
 
-        for(Index i = 0; i < variables_number; i++)
+        if(data_set_pointer->has_categorical_columns())
         {
-            const DataSet::ColumnType column_type = data_set_pointer->get_column_type(column_index);
-
-            if(column_type != DataSet::ColumnType::Categorical)
+            for(Index i = 0; i < variables_number; i++)
             {
-                column_index++;
-                continue;
-            }
+                const DataSet::ColumnType column_type = data_set_pointer->get_column_type(column_index);
 
-            const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
-
-            for(Index j = 0; j < individuals_number; j++)
-            {
-                const Tensor<bool,1> individual = population.chip(j,0);
-
-                if( !(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == (individual.data() + i + categories_number)) )
+                if(column_type != DataSet::ColumnType::Categorical)
                 {
-                    const Index random_index = rand()%categories_number;
-
-                    for(Index categories_index = 0; categories_index < categories_number;categories_index++)
-                    {
-                        population(j, i + categories_index) = false;
-                    }
-
-                    population(j, i + random_index) = true;
+                    column_index++;
+                    continue;
                 }
-            }
 
-            i += categories_number - 1;
-            column_index++;
+                const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+
+                for(Index j = 0; j < individuals_number; j++)
+                {
+                    const Tensor<bool,1> individual = population.chip(j,0);
+
+                    if( !(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == (individual.data() + i + categories_number)) )
+                    {
+                        const Index random_index = rand()%categories_number;
+
+                        for(Index categories_index = 0; categories_index < categories_number;categories_index++)
+                        {
+                            population(j, i + categories_index) = false;
+                        }
+
+                        population(j, i + random_index) = true;
+                    }
+                }
+
+                i += categories_number - 1;
+                column_index++;
+            }
         }
+
 };
 
 
@@ -1139,36 +1270,37 @@ Tensor<bool, 1> GeneticAlgorithm::transform_individual_to_indexes(Tensor<bool,1>
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
-    const Index genes_number = get_genes_number();
     const Index columns_number = data_set_pointer->get_input_columns_number();
 
-    Tensor<bool, 1> new_indexes(columns_number);
+    Tensor<bool, 1> new_indexes(individual);
 
     Index variable_index = 0;
 
-    for(Index i = 0; i < columns_number; i++)
+    if(data_set_pointer->has_categorical_columns())
     {
-        if(data_set_pointer->get_column_type(i) == DataSet::ColumnType::Categorical)
+        for(Index i = 0; i < columns_number; i++)
         {
-            const Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
-
-            if( !( find(individual.data() + variable_index, individual.data() + variable_index + categories_number, 1 ) == individual.data() + variable_index + categories_number ) )
+            if(data_set_pointer->get_column_type(i) == DataSet::ColumnType::Categorical)
             {
-                new_indexes(i) = true;
+                const Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
+
+                if( !( find(individual.data() + variable_index, individual.data() + variable_index + categories_number, 1 ) == individual.data() + variable_index + categories_number ) )
+                {
+                    new_indexes(i) = true;
+                }
+                else
+                {
+                    new_indexes(i) = false;
+                }
+                variable_index += categories_number;
             }
             else
             {
-                new_indexes(i) = false;
+                new_indexes(i) = individual(variable_index);
+                variable_index++;
             }
-            variable_index += categories_number;
-        }
-        else
-        {
-            new_indexes(i) = individual(variable_index);
-            variable_index++;
         }
     }
-
     return new_indexes;
 
 };

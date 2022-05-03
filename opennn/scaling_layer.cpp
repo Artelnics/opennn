@@ -831,10 +831,6 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const Index points_number = inputs.dimension(0);
 
-    cout << "Neurons number: "<< neurons_number<< endl;
-
-    cout << "Points number: "<< points_number<< endl;
-
     outputs.resize(points_number, neurons_number);
 
     for(Index i = 0; i < points_number; i++)
@@ -843,7 +839,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
         {
             if(abs(descriptives(j).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
-                if(display)
+                if(false)
                 {
                     cout << "OpenNN Warning: ScalingLayer class.\n"
                          << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"

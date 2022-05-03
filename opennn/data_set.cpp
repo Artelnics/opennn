@@ -8204,9 +8204,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
-cout << "columns_number: " << columns_number << endl;
-cout << "rows_number: " << rows_number << endl;
-
     cout << "Saving binary data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);

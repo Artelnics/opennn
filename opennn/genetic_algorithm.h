@@ -52,6 +52,8 @@ public:
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
+    enum class InitializationMethod{Random, WeightedCorrelations};
+
     // Get methods
 
     const Tensor<bool, 2>& get_population() const;
@@ -66,6 +68,8 @@ public:
 
     const Index& get_elitism_size() const;
 
+    const InitializationMethod& get_initialization_method() const;
+
     // Set methods
 
     virtual void set_default() final;
@@ -73,6 +77,8 @@ public:
     void set_population(const Tensor<bool, 2>&);
     void set_individuals_number(const Index& new_individuals_number=4);
     void set_genes_number(const Index&);
+
+    void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
     void set_training_errors(const Tensor<type, 1>&);
     void set_selection_errors(const Tensor<type, 1>&);
@@ -158,6 +164,10 @@ private:
     /// This is a parameter of the selection operator.
 
     Index elitism_size;
+
+    InitializationMethod initialization_method = GeneticAlgorithm::InitializationMethod::Random;
+
+
 };
 
 }
