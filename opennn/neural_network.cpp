@@ -887,6 +887,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
 
     PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 3);
+    perceptron_layer->set_name("perceptron_layer_1");
     this->add_layer(perceptron_layer);
 
     const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
