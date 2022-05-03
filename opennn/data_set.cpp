@@ -10360,18 +10360,6 @@ void DataSet::read_bmp()
         throw invalid_argument(buffer.str());
     }
 
-//    if(data_file_name.)
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void read_bmp() method.\n"
-//               << "Data file name does not exist.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-
     has_columns_names = true;
     has_rows_labels = true;
     convolutional_model = true;
@@ -10460,7 +10448,15 @@ void DataSet::read_bmp()
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
-    data.resize(images_number, image_size + classes_number);
+    if(classes_number == 2)
+    {
+        Index binary_columns_number = 1;
+        data.resize(images_number, image_size + binary_columns_number);
+    }
+    else
+    {
+        data.resize(images_number, image_size + classes_number);
+    }
 
     data.setZero();
 
@@ -10490,7 +10486,18 @@ void DataSet::read_bmp()
                 data(row_index, k) = static_cast<type>(image[k]);
             }
 
-            data(row_index, image_size + i) = 1;
+            if(classes_number == 2 && i == 0)
+            {
+                data(row_index, image_size) = 1;
+            }
+            else if(classes_number == 2 && i == 1)
+            {
+                data(row_index, image_size) = 0;
+            }
+            else
+            {
+                data(row_index, image_size + i) = 1;
+            }
 
             rows_labels(row_index) = images_paths[j];
 
