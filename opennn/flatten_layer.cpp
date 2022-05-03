@@ -115,7 +115,6 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
 {
-//    cout << "Hi i am in the flaten layter calculate outputs 4d->2d!!" << endl;
     const Index batch = inputs.dimension(3);
     const Index channels = inputs.dimension(2);
     const Index heights = inputs.dimension(0);
@@ -182,13 +181,6 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("InputVariablesDimension");
 
-    file_stream.OpenElement("BatchNumber");
-    buffer.str("");
-    buffer << get_inputs_batch_number();
-
-    file_stream.PushText(buffer.str().c_str());
-    file_stream.CloseElement();
-
     file_stream.OpenElement("InputChannels");
     buffer.str("");
     buffer << get_inputs_channels_number();
@@ -249,21 +241,6 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Input channels number
 
-    const tinyxml2::XMLElement* input_batch_number_element = input_variables_dimensions_element->NextSiblingElement("BatchNumber");
-
-    if(!input_variables_dimensions_element)
-    {
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "FlattenInputChannelsNumber element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index batch_number = static_cast<Index>(atoi(input_batch_number_element->GetText()));
-
-    // Input channels number
-
     const tinyxml2::XMLElement* input_channels_number_element = input_variables_dimensions_element->NextSiblingElement("InputChannels");
 
     if(!input_variables_dimensions_element)
@@ -309,7 +286,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     Tensor<Index,1> inputsDimensionTensor(4);
 
-    inputsDimensionTensor.setValues({batch_number, input_channels_number, input_width, input_height});
+    inputsDimensionTensor.setValues({0, input_channels_number, input_width, input_height});
 
     set(inputsDimensionTensor);
 }

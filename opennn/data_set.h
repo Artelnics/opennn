@@ -519,6 +519,7 @@ public:
    bool has_categorical_columns() const;
    bool has_time_columns() const;
    bool has_time_time_series_columns() const;
+   bool has_text_data() const;
 
    bool has_selection() const;
 
@@ -834,6 +835,10 @@ private:
    /// Image classification model
 
    bool convolutional_model = false;
+
+   /// Text classification model
+
+   bool text_data = false;
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 

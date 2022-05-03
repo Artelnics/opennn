@@ -884,9 +884,9 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     outputs_dimensions = flatten_layer->get_outputs_dimensions();
 
-    const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
+    const Tensor<Index, 0> outputs_dimensions_prod = outputs_dimensions.prod();
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 3);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_prod(0), 3);
     perceptron_layer->set_name("perceptron_layer_1");
     this->add_layer(perceptron_layer);
 
@@ -1999,8 +1999,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         buffer << layers_pointers[i]->get_type_string();
         if(i != (layers_pointers.size()-1)) buffer << " ";
-
-        cout << "Tipos de layers: " << layers_pointers[i]->get_type_string() << endl;
     }
 
     file_stream.PushText(buffer.str().c_str());
