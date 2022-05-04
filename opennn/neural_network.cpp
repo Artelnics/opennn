@@ -389,21 +389,21 @@ NeuralNetwork::ProjectType NeuralNetwork::get_project_type() const
 }
 
 
-string NeuralNetwork::get_project_type_string(const NeuralNetwork::ProjectType& newProjectType) const
+string NeuralNetwork::get_project_type_string() const
 {
-    if(newProjectType == ProjectType::Approximation)
+    if(project_type == ProjectType::Approximation)
     {
         return "Approximation";
     }
-    else if(newProjectType == ProjectType::Classification)
+    else if(project_type == ProjectType::Classification)
     {
         return "Classification";
     }
-    else if(newProjectType == ProjectType::Forecasting)
+    else if(project_type == ProjectType::Forecasting)
     {
         return "Forecasting";
     }
-    else if(newProjectType == ProjectType::ImageClassification)
+    else if(project_type == ProjectType::ImageClassification)
     {
         return "ImageClassification";
     }
