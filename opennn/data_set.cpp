@@ -6269,7 +6269,7 @@ void DataSet::set_default_columns_scalers()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Numeric)
+        if(columns(i).type == ColumnType::Numeric && project_type != ProjectType::ImageClassification)
         {
             columns(i).scaler = Scaler::MeanStandardDeviation;
         }
@@ -10517,6 +10517,7 @@ void DataSet::read_bmp()
                 columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
                 columns(column_index).type = ColumnType::Numeric;
                 columns(column_index).column_use = VariableUse::Input;
+                columns(column_index).scaler = Scaler::MinimumMaximum;
                 column_index++;
             }
         }
