@@ -434,7 +434,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
     {
         if(layers_pointers[i]->get_type() != Layer::Type::Scaling
         && layers_pointers[i]->get_type() != Layer::Type::Unscaling
-        && layers_pointers[i]->get_type() != Layer::Type::Bounding)
+        && layers_pointers[i]->get_type() != Layer::Type::Bounding
+        /*&& layers_pointers[i]->get_type() != Layer::Type::Flatten*/)
         {
             trainable_layers_pointers[index] = layers_pointers[i];
             index++;

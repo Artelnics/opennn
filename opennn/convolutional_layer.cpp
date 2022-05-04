@@ -330,7 +330,7 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
         break;
     default:
     {
-        cout << "Neural network structure not implemented" << endl;
+        cout << "Neural network structure not implemented: " << next_layer_back_propagation->layer_pointer->get_type_string() << endl;
         return;
     }
     }
@@ -504,6 +504,12 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 //        break;
 //    }
 
+    const ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
+    const ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+            static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+
     const Index images_number = inputs.dimension(0);
     const Index kernels_number = get_kernels_number();
 
@@ -516,6 +522,9 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 
     Index image_index = 0;
     Index kernel_index = 0;
+
+    cout << "delta: " << convolutional_layer_back_propagation->delta << endl;
+    system("pause");
 
     for(Index i = 0; i < images_number; i++)
     {
