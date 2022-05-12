@@ -783,7 +783,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         this->add_layer(bounding_layer_pointer);
     }
-    else if(model_type == ProjectType::Classification)
+    else if(model_type == ProjectType::Classification || model_type == ProjectType::TextClassification)
     {
         for(Index i = 0; i < size-2; i++)
         {
@@ -1962,7 +1962,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("InputsNumber");
 
     buffer.str("");
-    buffer << get_inputs_number();
+//    buffer << get_inputs_number();
+    buffer << inputs_names.size();
 
     file_stream.PushText(buffer.str().c_str());
 

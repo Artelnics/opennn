@@ -76,6 +76,18 @@ string TextAnalytics::get_language_string() const
 }
 
 
+Index TextAnalytics::get_short_words_length() const
+{
+    return short_words_length;
+}
+
+
+Index TextAnalytics::get_long_words_length() const
+{
+    return long_words_length;
+}
+
+
 /// Returns the stop words.
 
 Tensor<string, 1> TextAnalytics::get_stop_words() const
@@ -145,6 +157,18 @@ void TextAnalytics::set_language(const string& new_language_string)
 void TextAnalytics::set_stop_words(const Tensor<string, 1>& new_stop_words)
 {
     stop_words = new_stop_words;
+}
+
+
+void TextAnalytics::set_short_words_length(const Index& new_short_words_length)
+{
+    short_words_length = new_short_words_length;
+}
+
+
+void TextAnalytics::set_long_words_length(const Index& new_long_words_length)
+{
+    long_words_length = new_long_words_length;
 }
 
 
@@ -1908,7 +1932,6 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
 
     replace_substring(documents_copy,"_", " ");
     replace_substring(documents_copy,".", " ");
-//    replace_substring(documents_copy,"', ' ');
 
     delete_extra_spaces(documents_copy);
 
@@ -1916,9 +1939,9 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
 
     delete_stop_words(tokenized_documents);
 
-    delete_short_words(tokenized_documents, 3);
+    delete_short_words(tokenized_documents, short_words_length);
 
-    delete_long_words(tokenized_documents);
+    delete_long_words(tokenized_documents, long_words_length);
 
     replace_accented(tokenized_documents);
 
@@ -2203,6 +2226,30 @@ void TextAnalytics::load_documents(const string& path)
 {
     const Index original_size = documents.size();
 
+    if(path.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+               << "void load_documents() method.\n"
+               << "Data file name is empty.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    std::ifstream file(path.c_str());
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+               << "void laod_documents() method.\n"
+               << "Cannot open data file: " << path << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
     Tensor<Tensor<string,1>, 1> documents_copy(documents);
 
     documents.resize(original_size + 1);
@@ -2220,8 +2267,7 @@ void TextAnalytics::load_documents(const string& path)
     Index lines_count = 0;
     Index lines_number = 0;
 
-    std::ifstream file(path.c_str());
-    string line;
+        string line;
 
     while(file.good())
     {

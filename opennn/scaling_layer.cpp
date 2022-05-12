@@ -72,6 +72,19 @@ string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& ne
     {
         return "ImageClassification";
     }
+    else if(newProjectType == ProjectType::TextClassification)
+    {
+        return "TextClassification";
+    }
+    else
+    {
+        const string message =
+        "Neural Engine Exception:\n"
+        "void NeuralEngine::setProjectType(const QString&)\n"
+        "Unknown project type.\n";
+
+        throw logic_error(message);
+    }
 }
 
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
@@ -406,6 +419,10 @@ void ScalingLayer::set_project_type_string(const string& newLearningTask)
     else if(newLearningTask == "ImageClassification")
     {
         set_project_type(ProjectType::ImageClassification);
+    }
+    else if(newLearningTask == "TextClassification")
+    {
+        set_project_type(ProjectType::TextClassification);
     }
     else
     {

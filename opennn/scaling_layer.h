@@ -39,7 +39,7 @@ class ScalingLayer : public Layer
 
 public:
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification};
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification};
 
    // Constructors
 
