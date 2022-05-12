@@ -91,6 +91,10 @@ public:
 
     string get_language_string() const;
 
+    Index get_short_words_length() const;
+
+    Index get_long_words_length() const;
+
     Tensor<Tensor<string, 1>,1> get_documents() const;
 
     Tensor<Tensor<string, 1>, 1> get_targets() const;
@@ -110,6 +114,10 @@ public:
     void set_language(const string&);
 
     void set_stop_words(const Tensor<string ,1>&);
+
+    void set_short_words_length(const Index&);
+
+    void set_long_words_length(const Index&);
 
     // Auxiliar methods
 
@@ -198,8 +206,6 @@ public:
 
     Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&) const;
 
-
-
     Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
 
     Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&) const;
@@ -221,6 +227,10 @@ private: //change to private
     /// Words which are filtered out before or after processing of natural language data.
 
     Tensor<string, 1> stop_words;
+
+    Index short_words_length = 2;
+
+    Index long_words_length = 15;
 
     Tensor<Tensor<string,1>,1> documents;
 

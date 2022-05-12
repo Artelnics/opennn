@@ -108,7 +108,7 @@ public:
 
    /// Enumeration of the learning tasks.
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification};
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification};
 
    /// This enumeration represents the possible uses of an sample
    /// (training, selection, testing or unused).
@@ -201,6 +201,7 @@ public:
    // Project type
 
    ProjectType get_project_type() const;
+
    string get_project_type_string(const DataSet::ProjectType&) const;
 
    // Samples get methods
@@ -384,6 +385,10 @@ public:
    const string& get_time_column() const;
    Index get_time_series_time_column_index() const;
 
+   const Index& get_short_words_length() const;
+   const Index& get_long_words_length() const;
+   const Tensor<Index,1>& get_words_frequencies() const;
+
    static Tensor<string, 1> get_default_columns_names(const Index&);
 
    static Scaler get_scaling_unscaling_method(const string&);
@@ -461,7 +466,6 @@ public:
 
    void set_columns_scalers(const Scaler&);
 
-
    void set_binary_simple_columns();
 
    // Columns other methods
@@ -492,6 +496,8 @@ public:
    void set_has_columns_names(const bool&);
    void set_has_rows_label(const bool&);
 
+   void set_has_text_data(const bool&);
+
    void set_separator(const Separator&);
    void set_separator(const string&);
    void set_separator(const char&);
@@ -503,6 +509,10 @@ public:
    void set_lags_number(const Index&);
    void set_steps_ahead_number(const Index&);
    void set_time_column(const string&);
+
+   void set_short_words_length(const Index&);
+   void set_long_words_length(const Index&);
+   void set_words_frequencies(const Tensor<Index,1>&);
 
    void set_gmt(Index&);
 
@@ -519,7 +529,6 @@ public:
    bool has_categorical_columns() const;
    bool has_time_columns() const;
    bool has_time_time_series_columns() const;
-   bool has_text_data() const;
 
    bool has_selection() const;
 
@@ -765,6 +774,7 @@ public:
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
    bool get_has_rows_labels() const;
+   bool get_has_text_data() const;
 
    void shuffle();
 
@@ -783,7 +793,6 @@ public:
    void check_special_characters(const string&) const;
 
 private:
-
 
    DataSet::ProjectType project_type;
 
@@ -838,7 +847,7 @@ private:
 
    /// Text classification model
 
-   bool text_data = false;
+   bool has_text_data = false;
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
@@ -865,6 +874,14 @@ private:
    Tensor<Column, 1> time_series_columns;
 
    Index gmt = 0;
+
+   // TEXT CLASSIFICATION
+
+   Index short_words_length = 2;
+
+   Index long_words_length = 15;
+
+   Tensor<Index, 1> words_frequencies;
 
    // MISSING VALUES
 
@@ -922,7 +939,7 @@ private:
 
    Tensor<type, 1> calculate_local_outlier_factor(Tensor<list<Index>, 1>&, const Tensor<type, 1>&, const Index &) const;
 
-   //Isolation Forest
+   // Isolation Forest
 
    void calculate_min_max_indices_list(list<Index>&, const Index&, type&, type&) const;
 

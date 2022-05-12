@@ -3923,6 +3923,24 @@ Index DataSet::get_time_series_time_column_index() const
 }
 
 
+const Index& DataSet::get_short_words_length() const
+{
+    return short_words_length;
+}
+
+
+const Index& DataSet::get_long_words_length() const
+{
+    return long_words_length;
+}
+
+
+const Tensor<Index,1>& DataSet::get_words_frequencies() const
+{
+    return words_frequencies;
+}
+
+
 /// Returns a value of the scaling-unscaling method enumeration from a string containing the name of that method.
 /// @param scaling_unscaling_method String with the name of the scaling and unscaling method.
 
@@ -4907,6 +4925,10 @@ void DataSet::set_project_type_string(const string& newLearningTask)
     {
         set_project_type(ProjectType::ImageClassification);
     }
+    else if(newLearningTask == "TextClassification")
+    {
+        set_project_type(ProjectType::TextClassification);
+    }
     else
     {
         const string message =
@@ -5145,20 +5167,42 @@ void DataSet::set_time_column(const string& new_time_column)
     time_column = new_time_column;
 }
 
+
+void DataSet::set_short_words_length(const Index& new_short_words_length)
+{
+    short_words_length = new_short_words_length;
+}
+
+
+void DataSet::set_long_words_length(const Index& new_long_words_length)
+{
+    long_words_length = new_long_words_length;
+}
+
+
+void DataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies)
+{
+    words_frequencies = new_words_frequencies;
+}
+
+
 void DataSet::set_channels_number(const int& channels)
 {
     channels_number = channels;
 }
+
 
 void DataSet::set_image_width(const int& width)
 {
     image_width = width;
 }
 
+
 void DataSet::set_image_height(const int& height)
 {
     image_height = height;
 }
+
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
@@ -6802,6 +6846,29 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+    // Text classification
+    {
+        file_stream.OpenElement("ShortWordsLength");
+
+        buffer.str("");
+        buffer << get_short_words_length();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    {
+        file_stream.OpenElement("LongWordsLength");
+
+        buffer.str("");
+        buffer << get_long_words_length();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
     // Close DataFile
 
     file_stream.CloseElement();
@@ -7022,6 +7089,23 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Missing values
 
     file_stream.CloseElement();
+
+    // Frequencies
+
+    if(project_type == ProjectType::TextClassification)
+    {
+        file_stream.OpenElement("WordsFrequencies");
+
+        for(Index i = 0; i < words_frequencies.size(); i++)
+        {
+            file_stream.PushText(words_frequencies(i));
+
+            if(i != words_frequencies.size()-1) file_stream.PushText(" ");
+
+        }
+
+        file_stream.CloseElement();
+    }
 
     // Preview data
 
@@ -7317,6 +7401,44 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const string new_time_column = time_column_element->GetText();
 
         set_time_column(new_time_column);
+    }
+
+    // Text classification
+
+    const tinyxml2::XMLElement* short_words_length_element = data_file_element->FirstChildElement("ShortWordsLength");
+
+    if(!time_column_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Short words length element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(short_words_length_element->GetText())
+    {
+        const int new_short_words_length = static_cast<Index>(atoi(short_words_length_element->GetText()));
+
+        set_short_words_length(new_short_words_length);
+    }
+
+    const tinyxml2::XMLElement* long_words_length_element = data_file_element->FirstChildElement("LongWordsLength");
+
+    if(!time_column_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Long words length element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(long_words_length_element->GetText())
+    {
+        const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
+
+        set_long_words_length(new_long_words_length);
     }
 
     // Columns
@@ -7855,6 +7977,36 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
         }
+    }
+
+    // Words frequencies
+
+    if(project_type == ProjectType::TextClassification)
+    {
+        const tinyxml2::XMLElement* words_frequencies_element = data_set_element->FirstChildElement("WordsFrequencies");
+
+        if(!words_frequencies_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Words frequencies element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        if(words_frequencies_element->GetText())
+        {
+            Tensor<string, 1> new_words_frequencies = get_tokens(words_frequencies_element->GetText(), ' ');
+
+            words_frequencies.resize(new_words_frequencies.size());
+
+            for(Index i = 0; i < new_words_frequencies.size(); i++)
+            {
+                words_frequencies(i) = atoi(new_words_frequencies(i).c_str());
+            }
+
+        }
+
     }
 
     // Preview data
@@ -9839,6 +9991,8 @@ Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
     Tensor<type, 1> vector(get_columns_number() - 1);
 
     TextAnalytics text_analytics;
+    text_analytics.set_short_words_length(short_words_length);
+    text_analytics.set_short_words_length(long_words_length);
 
     Tensor<Tensor<string,1>,1> words = text_analytics.preprocess(tokens);
 
@@ -9852,9 +10006,9 @@ Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if( contains(columns_names, tokens(i)) )
+        if( contains(columns_names, word_bag.words(i)) )
         {
-            auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), tokens(i));
+            auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), word_bag.words(i));
             const Index index = it - columns_names.data();
 
             vector(index) = word_bag.frequencies(i);
@@ -9864,8 +10018,6 @@ Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
     return vector;
 
 };
-
-
 
 
 /// Generates an artificial data_set with a given number of samples and number of variables
@@ -10589,8 +10741,17 @@ void DataSet::read_txt()
     TextAnalytics text_analytics;
 
     text_analytics.load_documents(data_file_name);
+    text_analytics.set_short_words_length(short_words_length);
+    text_analytics.set_long_words_length(long_words_length);
+
+    string transformed_data_path = data_file_name;
+    replace(transformed_data_path,".txt","_data.txt");
+
+    std::ofstream file;
+    file.open(transformed_data_path);
 
     Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
+
     Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
 
     Tensor<string, 1> full_document = text_analytics.join(document);
@@ -10601,17 +10762,16 @@ void DataSet::read_txt()
 
     const Index document_words_number = document_word_bag.words.size();
 
-    const Index sentences_number = text_analytics.get_document_sentences_number(); ///@todo
-
-    data.resize(sentences_number, document_words_number + 1);
-
-    columns.resize(document_words_number + 1);
     Tensor<string, 1> columns_names = document_word_bag.words;
     columns_names = push_back(columns_names, "target");
 
-    Index rows_index = 0;
+    set_words_frequencies(document_word_bag.frequencies);
 
-    data.setZero();
+    Tensor<type, 1> row(document_words_number);
+
+    for(Index i  = 0; i < document_words_number; i++)
+        file << columns_names(i) << ";";
+    file << "target" << "\n";
 
     for(Index i = 0; i < document.size(); i++)
     {
@@ -10619,6 +10779,8 @@ void DataSet::read_txt()
 
         for(Index j = 0; j < sheet.size(); j++)
         {
+            row.setZero();
+
             string line = sheet(j);
 
             Tensor<string,1> tokens = get_tokens(line);
@@ -10628,6 +10790,7 @@ void DataSet::read_txt()
             TextAnalytics::WordBag line_word_bag = text_analytics.calculate_word_bag(processed_tokens);
 
             Tensor<string, 1> line_words = line_word_bag.words;
+
             Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
 
             for(Index k = 0; k < line_words.size(); k++)
@@ -10635,22 +10798,32 @@ void DataSet::read_txt()
                 if( contains(columns_names, line_words(k)) )
                 {
                     auto it = find(columns_names.data(), columns_names.data() + document_words_number, line_words(k));
-                    const Index index = it - columns_names.data();
 
-                    data(rows_index, index) = type(line_frequencies(k));
+                    const Index word_index = it - columns_names.data();
+
+                    row(word_index) = type(line_frequencies(k));
                 }
             }
 
-            data(rows_index, document_words_number) = type(stof(targets(i)(j)));
+            for(Index k = 0; k < document_words_number; k++)
+                file << row(k) << ";";
+            file << targets(i)(j) << "\n";
 
-            rows_index++;
         }
+
     }
 
-    set(data);
+    file.close();
 
+    data_file_name = transformed_data_path;
+    separator = Separator::Semicolon;
     has_columns_names = true;
-    set_columns_names(columns_names);
+    has_text_data = true;
+
+    read_csv();
+
+    for(Index i = 0; i < get_input_columns_number(); i++)
+        set_column_type(i,ColumnType::Numeric);
 };
 
 
@@ -11529,6 +11702,7 @@ bool DataSet::has_selection() const
 }
 
 
+
 Tensor<Index, 1> DataSet::count_nan_columns() const
 {
     const Index columns_number = get_columns_number();
@@ -11915,6 +12089,12 @@ void DataSet::shuffle()
 bool DataSet::get_has_rows_labels() const
 {
     return this->has_rows_labels;
+}
+
+
+bool DataSet::get_has_text_data() const
+{
+    return this->has_text_data;
 }
 
 }
