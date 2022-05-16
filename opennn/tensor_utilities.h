@@ -27,6 +27,7 @@ namespace opennn
 {
 
 void initialize_sequential(Tensor<type, 1>&);
+void initialize_sequential(Tensor<Index, 1>&);
 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);

@@ -20,6 +20,12 @@ void initialize_sequential(Tensor<type, 1>& vector)
 }
 
 
+void initialize_sequential(Tensor<Index, 1>& vector)
+{
+    for(Index i = 0; i < vector.size(); i++) vector(i) = i;
+}
+
+
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index columns_number = matrix.dimension(1);
