@@ -660,7 +660,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
-    forward_propagation.print();
+//    forward_propagation.print();
 
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 

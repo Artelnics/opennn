@@ -723,8 +723,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
-        cout << "Layer " << i << ": " << trainable_layers_pointers(i)->get_type_string() << endl;
-
         if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten)
         {
             continue;

@@ -85,7 +85,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     const Index batch_samples_number = batch.inputs_2d.dimension(0);
+     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
