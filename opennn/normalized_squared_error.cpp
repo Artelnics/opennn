@@ -292,15 +292,14 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);
+    sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);    
 
     const Index batch_size = batch.get_batch_size();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_used_samples_number();
 
     const type coefficient = ((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    back_propagation.error
-            = sum_squared_error(0)/coefficient;
+    back_propagation.error = sum_squared_error(0)/coefficient;
 }
 
 

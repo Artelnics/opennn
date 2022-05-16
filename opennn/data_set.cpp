@@ -9992,7 +9992,7 @@ Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
 
     TextAnalytics text_analytics;
     text_analytics.set_short_words_length(short_words_length);
-    text_analytics.set_short_words_length(long_words_length);
+    text_analytics.set_long_words_length(long_words_length);
 
     Tensor<Tensor<string,1>,1> words = text_analytics.preprocess(tokens);
 
