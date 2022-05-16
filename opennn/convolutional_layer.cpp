@@ -343,6 +343,11 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(perceptron_layer_back_propagation->layer_pointer)->get_synaptic_weights();
 
+    cout << "Activations derivatives: " << perceptron_layer_forward_propagation->activations_derivatives << endl;
+    cout << "Next synaptic weights: " << next_synaptic_weights << endl;
+    cout << "Perceptron delta: " << perceptron_layer_back_propagation->delta << endl;
+    system("pause");
+
     convolutional_layer_back_propagation->delta.device(*thread_pool_device) =
             (perceptron_layer_back_propagation->delta*perceptron_layer_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 

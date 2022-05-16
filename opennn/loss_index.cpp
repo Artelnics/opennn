@@ -723,10 +723,28 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
-        trainable_layers_pointers(i)
-                ->calculate_hidden_delta(forward_propagation.layers(i+1),
-                                         back_propagation.neural_network.layers(i+1),
-                                         back_propagation.neural_network.layers(i));
+        cout << "Layer " << i << ": " << trainable_layers_pointers(i)->get_type_string() << endl;
+
+        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten)
+        {
+            continue;
+        }
+        if(trainable_layers_pointers(i+1)->get_type() == Layer::Type::Flatten)
+        {
+            trainable_layers_pointers(i)
+                    ->calculate_hidden_delta(forward_propagation.layers(i+2), // Perceptron layer
+                                             back_propagation.neural_network.layers(i+2), // Perceptron layer
+                                             back_propagation.neural_network.layers(i));
+        }
+        else
+        {
+            trainable_layers_pointers(i)
+                    ->calculate_hidden_delta(forward_propagation.layers(i+1),
+                                             back_propagation.neural_network.layers(i+1),
+                                             back_propagation.neural_network.layers(i));
+        }
+
+
     }
 }
 
@@ -777,12 +795,16 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
-        ||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
+      /*  ||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten*/)
     {
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
                                                                forward_propagation.layers(0),
                                                                back_propagation.neural_network.layers(0));
 
+    }
+    else if( trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
+    {
+       // do nothing
     }
     else
     {
