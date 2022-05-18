@@ -119,6 +119,8 @@ public:
 
     void set_long_words_length(const Index&);
 
+    void set_separator(const string&);
+
     // Auxiliar methods
 
     void append_document(const string&);
@@ -231,6 +233,8 @@ private: //change to private
     Index short_words_length = 2;
 
     Index long_words_length = 15;
+
+    string separator = ";";
 
     Tensor<Tensor<string,1>,1> documents;
 

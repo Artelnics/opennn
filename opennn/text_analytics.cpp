@@ -172,6 +172,11 @@ void TextAnalytics::set_long_words_length(const Index& new_long_words_length)
 }
 
 
+void TextAnalytics::set_separator(const string& new_separator)
+{
+    separator = new_separator;
+}
+
 // Preprocess methods
 
 /// Deletes consecutive extra spaces in documents.
@@ -212,64 +217,74 @@ void TextAnalytics::delete_breaks_and_tabs(Tensor<string, 1>& documents) const
 
 void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
 {
+//    Tensor<string, 1> punctuation_simbols(49);
+//    punctuation_simbols.setValues( // Each row has 10 simbols
+//                {
+//                    "\"" ,"."  ,"!"  ,"#"  ,"$"  ,"~"  ,"%"  ,"&"  ,"/"  ,"("  ,
+//                    "\\" ,"="  ,"?"  ,"}"  ,"^"  ,"`"  ,"["  ,"]"  ,"*"  ,"+"  ,
+//                    ";"  ,":"  ,"-"  ,">"  ,"<"  ,"|"  ,"-"  ,"Ø"  ,"º"  ,"°"  ,
+//                    "ç"  ,"✓"  ,"|"  ,"@"  ,"#"  ,"€"  ,"¬"  ,"•"  ,"·"  ,"”"  ,
+//                    "´"  ,"§"  ,"郉" ,")"  ,","  ,"'"  ,"“"  ,"Ç"  ,"¦"  ,
+//                })  ;
+//    for(Index i = 0; i < punctuation_simbols.size(); i++)
+//    {
+//        replace_substring(documents, punctuation_simbols[0]," ");
+//    }
 
-        replace_substring(documents, "\"","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '.' ,' ');
-        replace_substring(documents, ".","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '!' ,' ');
-        replace_substring(documents, "!","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '#' ,' ');
-        replace_substring(documents, "#","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '$' ,' ');
-        replace_substring(documents, "$","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '~' ,' ');
-        replace_substring(documents, "~","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '%' ,' ');
-        replace_substring(documents, "%","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '&' ,' ');
-        replace_substring(documents, "&","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '/' ,' ');
-        replace_substring(documents, "/","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '(' ,' ');
-        replace_substring(documents, "(","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ')' ,' ');
-        replace_substring(documents, ")","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '\\' ,' ');
-        replace_substring(documents, "\\","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '=' ,' ');
-        replace_substring(documents, "=","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '?' ,' ');
-        replace_substring(documents, "?","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '}' ,' ');
-        replace_substring(documents, "}","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '^' ,' ');
-        replace_substring(documents, "^","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '`' ,' ');
-        replace_substring(documents, "`","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '[' ,' ');
-        replace_substring(documents, "[","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ']' ,' ');
-        replace_substring(documents, "]","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '*' ,' ');
-        replace_substring(documents, "*","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '+' ,' ');
-        replace_substring(documents, "+","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ',' ,' ');
-        replace_substring(documents, ",","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ';' ,' ');
-        replace_substring(documents, ";","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ':' ,' ');
-        replace_substring(documents, ":","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '-' ,' ');
-        replace_substring(documents, "-","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '>' ,' ');
-        replace_substring(documents, ">","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '<' ,' ');
-        replace_substring(documents, "<","");
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '|' ,' ');
-        replace_substring(documents, "|","");
+        replace_substring(documents, "\""," ");
+        replace_substring(documents, "."," ");
+        replace_substring(documents, "!"," ");
+        replace_substring(documents, "#"," ");
+        replace_substring(documents, "$"," ");
+        replace_substring(documents, "~"," ");
+        replace_substring(documents, "%"," ");
+        replace_substring(documents, "&"," ");
+        replace_substring(documents, "/"," ");
+        replace_substring(documents, "("," ");
+        replace_substring(documents, ")"," ");
+        replace_substring(documents, "\\", "");
+        replace_substring(documents, "="," ");
+        replace_substring(documents, "?"," ");
+        replace_substring(documents, "}"," ");
+        replace_substring(documents, "^"," ");
+        replace_substring(documents, "`"," ");
+        replace_substring(documents, "["," ");
+        replace_substring(documents, "]"," ");
+        replace_substring(documents, "*"," ");
+        replace_substring(documents, "+"," ");
+        replace_substring(documents, ","," ");
+        replace_substring(documents, ";"," ");
+        replace_substring(documents, ":"," ");
+        replace_substring(documents, "-"," ");
+        replace_substring(documents, ">"," ");
+        replace_substring(documents, "<","  ");
+        replace_substring(documents, "|"," ");
+        replace_substring(documents, "–"," ");
+        replace_substring(documents, "Ø"," ");
+        replace_substring(documents, "º", "");
+        replace_substring(documents, "°", "");
+        replace_substring(documents, "'", "");
+        replace_substring(documents, "ç", "");
+        replace_substring(documents, "✓", "");
+        replace_substring(documents, "|"," ");
+        replace_substring(documents, "@"," ");
+        replace_substring(documents, "#"," ");
+        replace_substring(documents, "^"," ");
+        replace_substring(documents, "*"," ");
+        replace_substring(documents, "€"," ");
+        replace_substring(documents, "¬"," ");
+        replace_substring(documents, "•"," ");
+        replace_substring(documents, "·"," ");
+        replace_substring(documents, "”"," ");
+        replace_substring(documents, "“"," ");
+        replace_substring(documents, "´"," ");
+        replace_substring(documents, "§"," ");
+
+
 
         // @todo another language characters
+
+//        "|@#~€¬^*"
 
 //        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
 //        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
@@ -1604,6 +1619,27 @@ void TextAnalytics::replace_accented(string& word) const
     replace(word, "í", "i");
     replace(word, "ó", "o");
     replace(word, "ú", "u");
+
+    replace(word, "ä", "a");
+    replace(word, "ë", "e");
+    replace(word, "ï", "i");
+    replace(word, "ö", "o");
+    replace(word, "ü", "u");
+
+    replace(word, "â", "a");
+    replace(word, "ê", "e");
+    replace(word, "î", "i");
+    replace(word, "ô", "o");
+    replace(word, "û", "u");
+
+    replace(word, "à", "a");
+    replace(word, "è", "e");
+    replace(word, "ì", "i");
+    replace(word, "ò", "o");
+    replace(word, "ù", "u");
+
+    replace(word, "ã", "a");
+    replace(word, "õ", "o");
 }
 
 
@@ -2220,7 +2256,7 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 
 */
 
-///@todo change loop to copy, doesnt work propperly with Tensors<>
+///@todo change loop to copy, doesnt work propperly with Tensor<Tensor<>>
 
 void TextAnalytics::load_documents(const string& path)
 {
@@ -2244,7 +2280,7 @@ void TextAnalytics::load_documents(const string& path)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TextAnalytics class.\n"
-               << "void laod_documents() method.\n"
+               << "void load_documents() method.\n"
                << "Cannot open data file: " << path << "\n";
 
         throw invalid_argument(buffer.str());
@@ -2267,7 +2303,7 @@ void TextAnalytics::load_documents(const string& path)
     Index lines_count = 0;
     Index lines_number = 0;
 
-        string line;
+    string line;
 
     while(file.good())
     {
@@ -2289,24 +2325,58 @@ void TextAnalytics::load_documents(const string& path)
 
     std::ifstream file2(path.c_str());
 
+    Index tokens_number = 0;
+
     while(file2.good())
     {
         getline(file2, line);
 
         if(line.empty()) continue;
 
-        Tensor<string,1> tokens = get_tokens(line, '\t');
+        if(line[0]=='"') line = "\""+line;
 
-        document(lines_count) = tokens(0);
-        document_target(lines_count) = tokens(1);
+        if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
 
-        lines_count++;
+        const string delimiter = (line.find("\"\"") != string::npos) ? "\"\"" : ""; // "" or blank if not found
+
+        tokens_number = count_tokens(line,delimiter + separator);
+        Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
+
+        if(tokens_number == 1)
+        {
+            if(tokens(0).find(delimiter,0) == 0) document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
+            else document(lines_count) += " " + tokens(0);
+        }
+        else
+        {
+            if(tokens_number > 2)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: TextAnalytics class.\n"
+                       << "void load_documents() method.\n"
+                       << "Found more than one separator in line: " << line << "\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            document(lines_count) += " " + tokens(0);
+            document_target(lines_count) += tokens(1);
+            lines_count++;
+
+        }
 
         if(file2.peek() == EOF) break;
     }
 
-    documents(original_size) = document;
-    targets(original_size) = document_target;
+    Tensor<string,1> document_copy(lines_count);
+    Tensor<string,1> document_target_copy(lines_count);
+
+    copy(document.data(), document.data() + lines_count, document_copy.data());
+    copy(document_target.data(), document_target.data() + lines_count, document_target_copy.data());
+
+    documents(original_size) = document_copy;
+    targets(original_size) = document_target_copy;
 
     file2.close();
 };

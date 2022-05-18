@@ -54,11 +54,11 @@ Index count_tokens(const string& s, const char& c)
 
     Index tokens_number = count(s.begin(), s.end(), c);
 
-    if(s[0] == ' ')
+    if(s[0] == c)
     {
         tokens_number--;
     }
-    if(s[s.size() - 1] == ' ')
+    if(s[s.size() - 1] == c)
     {
         tokens_number--;
     }
@@ -74,8 +74,6 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
-    //    const string new_string = get_trimmed(str);
-
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
@@ -177,6 +175,76 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 }
 
 
+/// Returns the number of strings delimited by separator.
+/// If separator does not match anywhere in the string, this method returns 0.
+/// @param str String to be tokenized.
+
+
+Index count_tokens(const string& s, const string& sep)
+{
+    Index tokens_number = 0;
+
+    std::string::size_type pos = 0;
+
+    while ( s.find(sep, pos) != std::string::npos )
+    {
+        pos = s.find(sep, pos);
+        ++ tokens_number;
+        pos += sep.length();
+    }
+
+    if(s.find(sep,0) == 0)
+    {
+        tokens_number--;
+    }
+    if(pos == s.length())
+    {
+        tokens_number--;
+    }
+
+    return (tokens_number+1);
+}
+
+
+/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
+/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
+/// @param str String to be tokenized.
+
+Tensor<string, 1> get_tokens(const string& s, const string& sep)
+{
+    const Index tokens_number = count_tokens(s, sep);
+
+    Tensor<string,1> tokens(tokens_number);
+
+    string str = s;
+    size_t pos = 0;
+    size_t last_pos = 0;
+    Index i = 0;
+
+    while ((pos = str.find(sep,pos)) != string::npos)
+    {
+        if(pos == 0) // Skip first position
+        {
+            pos += sep.length();
+            last_pos = pos;
+            continue;
+        }
+
+        tokens(i) = str.substr(last_pos, pos - last_pos);
+
+        pos += sep.length();
+        last_pos = pos;
+        i++;
+    }
+
+    if(last_pos != s.length()) // Reading last element
+    {
+        tokens(i) = str.substr(last_pos, s.length() - last_pos);
+    }
+
+    return tokens;
+}
+
 /// Returns a new vector with the elements of this string vector casted to type.
 
 Tensor<type, 1> to_type_vector(const string& str, const char& separator)
@@ -220,7 +288,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
         }
     }
 
-    return get_tokens(result);
+    return get_tokens(result,' ');
 };
 
 

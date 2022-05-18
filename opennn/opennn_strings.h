@@ -25,9 +25,11 @@ using namespace Eigen;
 namespace opennn
 {
     Index count_tokens(const string&, const char& separator = ' ');
-
     Tensor<string, 1> get_tokens(const string&, const char& delimiter=' ');
     void fill_tokens(const string&, const char&, Tensor<string, 1>&);
+
+    Index count_tokens(const string&, const string&);
+    Tensor<string, 1> get_tokens(const string&, const string&);
 
     Tensor<type, 1> to_type_vector(const string&, const char&);
 

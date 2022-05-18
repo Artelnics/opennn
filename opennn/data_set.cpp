@@ -9986,7 +9986,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
 Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
 {
-    Tensor<string, 1> tokens = get_tokens(sentence);
+    Tensor<string, 1> tokens = get_tokens(sentence,' ');
 
     Tensor<type, 1> vector(get_columns_number() - 1);
 
@@ -10744,21 +10744,22 @@ void DataSet::read_txt()
     text_analytics.set_short_words_length(short_words_length);
     text_analytics.set_long_words_length(long_words_length);
 
-    string transformed_data_path = data_file_name;
-    replace(transformed_data_path,".txt","_data.txt");
-
-    std::ofstream file;
-    file.open(transformed_data_path);
+    // Preprocess
 
     Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
+    cout << "step 1" << endl;
 
     Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
+    cout << "step 2" << endl;
 
     Tensor<string, 1> full_document = text_analytics.join(document);
+    cout << "step 3" << endl;
 
     Tensor<Tensor<string, 1>, 1> document_tokens = text_analytics.preprocess(full_document);
+    cout << "step 4" << endl;
 
     TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
+    cout << "step 5" << endl;
 
     const Index document_words_number = document_word_bag.words.size();
 
@@ -10769,9 +10770,17 @@ void DataSet::read_txt()
 
     Tensor<type, 1> row(document_words_number);
 
+    // Output
+
+    string transformed_data_path = data_file_name;
+    replace(transformed_data_path,".txt","_data.txt");
+
+    std::ofstream file;
+    file.open(transformed_data_path);
+
     for(Index i  = 0; i < document_words_number; i++)
         file << columns_names(i) << ";";
-    file << "target" << "\n";
+    file << "target_variable" << "\n";
 
     for(Index i = 0; i < document.size(); i++)
     {
@@ -10807,7 +10816,7 @@ void DataSet::read_txt()
 
             for(Index k = 0; k < document_words_number; k++)
                 file << row(k) << ";";
-            file << targets(i)(j) << "\n";
+            file << "target_" + targets(i)(j) << "\n";
 
         }
 
@@ -10897,7 +10906,7 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-        check_special_characters(line);
+//        check_special_characters(line);
 
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 
@@ -10970,20 +10979,20 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
-/*
-        || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
-                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i))
-                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
-*/
-        {
-            columns(column_index).type = ColumnType::DateTime;
-            column_index++;
-        }
-        else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+//        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+//        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+//        || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
+//        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+///*
+//        || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
+//                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i))
+//                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
+//*/
+//        {
+//            columns(column_index).type = ColumnType::DateTime;
+//            column_index++;
+//        }
+        if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
                 || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
                 || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
                 || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(lines_number-1)(i).empty()))
@@ -11002,6 +11011,8 @@ void DataSet::read_csv_1()
     {
         set_column_type(time_column, DataSet::ColumnType::DateTime);
     }
+
+
 }
 
 
@@ -11621,11 +11632,10 @@ void DataSet::check_separators(const string& line) const
 
 void DataSet::check_special_characters(const string & line) const
 {
-    if(line.find_first_of("|@#~€¬^*") != string::npos)
+    if( line.find_first_of("|@#~€¬^*") != string::npos)
     {
         const string message =
             "Error: found special characters in line: " + line + ". Please, review the file.";
-
         throw invalid_argument(message);
     }
 
