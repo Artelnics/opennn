@@ -2826,6 +2826,13 @@ Index DataSet::get_image_height() const
     return image_height;
 }
 
+/// Returns the height of the images in the data set.
+
+Index DataSet::get_image_size() const
+{
+    return image_height*image_width*channels_number;
+}
+
 /// Returns the number of columns in the time series.
 
 Index DataSet::get_time_series_columns_number() const
@@ -10825,7 +10832,6 @@ void DataSet::read_txt()
     for(Index i = 0; i < get_input_columns_number(); i++)
         set_column_type(i,ColumnType::Numeric);
 };
-
 
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)

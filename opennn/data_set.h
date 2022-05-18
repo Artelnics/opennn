@@ -677,6 +677,7 @@ public:
    Index get_channels_number() const;
    Index get_image_width() const;
    Index get_image_height() const;
+   Index get_image_size() const;
 
    void set_channels_number(const int&);
    void set_image_width(const int&);
