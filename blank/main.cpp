@@ -26,96 +26,46 @@ using namespace Eigen;
 
 #include "data_set.h"
 
+bool utf8_check_is_valid(const string& string)
+{
+    int c,i,ix,n,j;
+    for (i=0, ix=string.length(); i < ix; i++)
+    {
+        c = (unsigned char) string[i];
+        //if (c==0x09 || c==0x0a || c==0x0d || (0x20 <= c && c <= 0x7e) ) n = 0; // is_printable_ascii
+        if (0x00 <= c && c <= 0x7f) n=0; // 0bbbbbbb
+        else if ((c & 0xE0) == 0xC0) n=1; // 110bbbbb
+        else if ( c==0xed && i<(ix-1) && ((unsigned char)string[i+1] & 0xa0)==0xa0) return false; //U+d800 to U+dfff
+        else if ((c & 0xF0) == 0xE0) n=2; // 1110bbbb
+        else if ((c & 0xF8) == 0xF0) n=3; // 11110bbb
+        //else if (($c & 0xFC) == 0xF8) n=4; // 111110bb //byte 5, unnecessary in 4 byte UTF-8
+        //else if (($c & 0xFE) == 0xFC) n=5; // 1111110b //byte 6, unnecessary in 4 byte UTF-8
+        else return false;
+        for (j=0; j<n && i<ix; j++) { // n bytes matching 10bbbbbb follow ?
+            if ((++i == ix) || (( (unsigned char)string[i] & 0xC0) != 0x80))
+                return false;
+        }
+    }
+    return true;
+}
+
 int main()
 {
     try
     {
         cout << "Blank script! " << endl;
 
+        const string list = "Â°工'​​​​øøøøÉÇÃ";
 
-        stof("NA");
+        cout << "is UTF8" << utf8_check_is_valid(list) << endl;
 
-        getchar();
+        system("pause");
+
         DataSet data_set;
 
-        data_set.set_data_file_name("/home/artelnics2020/Escritorio/datasets/amazon_cells_labelled.txt");
-//        data_set.set_data_file_name("/home/artelnics2020/Escritorio/datasets/PRIMERASEGUNDA.txt");
+        data_set.set_data_file_name("C:/Users/davidgonzalez/Desktop/tt/92-COOLING PRODUCTS - copia/Neural/dataset_test_1.csv");
 
         data_set.read_txt();
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        const Tensor<type,2> data = data_set.get_data();
-        const Tensor<string,1> columns_names = data_set.get_columns_names();
-
-        std::ofstream file("/home/artelnics2020/Escritorio/datasets/text_data.csv");
-
-        for(Index i = 0; i < columns_names.size() - 1 ; i++)
-        {
-            file << columns_names(i) << ",";
-        }
-
-        file << "TARGET" << endl;
-
-        for (Index i = 0; i < data.dimension(0); i++)
-        {
-            for(Index j = 0; j < data.dimension(1) - 1; j++)
-            {
-                file << data(i,j) << ",";
-            }
-
-            file << data(i,data.dimension(1) - 1) << endl;
-        }
-
-        // Neural Network
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 10, target_variables_number});
-
-        neural_network.get_scaling_layer_pointer()->set_display(false);
-
-        ////
-
-        string prediction = "I don't like this product, it doesn't work propperly";
-
-        string prediction_2 = "I love this product! I will recommend it to all my friends, can i?";
-
-        const Tensor<type,1> prediction_vector = data_set.sentence_to_data(prediction);
-        const Tensor<type,1> prediction_vector_2 = data_set.sentence_to_data(prediction_2);
-
-        Tensor<type, 2> inputs(2,prediction_vector.dimension(0));
-
-        for(Index i = 0; i < prediction_vector.dimension(0); i++)
-        {
-            inputs(0,i) = prediction_vector(i);
-            inputs(1,i) = prediction_vector_2(i);
-        }
-
-        // Training Strategy
-
-        TrainingStrategy training_strategy(&neural_network,&data_set);
-
-//        training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
-//        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        getchar();
-
-        training_strategy.perform_training();
-
-        // Testing Analysis
-
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        TestingAnalysis::RocAnalysisResults roc_results = testing_analysis.perform_roc_analysis();
-
-        cout << "Area ander curve: " << roc_results.area_under_curve << endl;
-        cout << "Confidence limit: " << roc_results.confidence_limit << endl;
-        cout << "Optimal threshold: " << roc_results.optimal_threshold << endl;
-
-        // Calculate output
-
-        cout <<  prediction << " -> " << neural_network.calculate_outputs(inputs)(0) << endl;
-        cout <<  prediction_2 << " -> " << neural_network.calculate_outputs(inputs)(1) << endl;
 
         cout << "Goodbye!" << endl;
 
