@@ -10824,9 +10824,7 @@ void DataSet::read_txt()
             for(Index k = 0; k < document_words_number; k++)
                 file << row(k) << ";";
             file << "target_" + targets(i)(j) << "\n";
-
         }
-
     }
 
     file.close();
@@ -10841,6 +10839,38 @@ void DataSet::read_txt()
     for(Index i = 0; i < get_input_columns_number(); i++)
         set_column_type(i,ColumnType::Numeric);
 };
+
+
+void DataSet::read_ground_truth()
+{
+/*
+    Index images_number = 100;
+
+    Index bounding_boxes_number = 1000;
+
+    Index channels_number = 3;
+    Index bounding_box_height = 224;
+    Index bounding_box_width = 224;
+
+    Index pixels_number = channels_number*bounding_box_height*bounding_box_width;
+
+    Index classes_number = 10;
+
+    data.resize(bounding_boxes_number, pixels_number + classes_number);
+
+    for(Index i = 0; i < images_number; i++)
+    {
+        for(Index j = 0; j < bounding_boxes(i); j++)
+        {
+            read_bounding_box;
+            resize_bounding_box;
+            fill_data;
+        }
+    }
+*/
+}
+
+
 
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)

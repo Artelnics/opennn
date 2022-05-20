@@ -54,18 +54,43 @@ int main()
     try
     {
         cout << "Blank script! " << endl;
+/*
+        DataSet data_set("iris_flowers.csv");
+        NeuralNetwork neural_network(Classification, 4,6,3);
+        TrainingStrategy training_strategy(neural_network, data_set);
+        training_strategy.perform_training();
+        neural_network.save();
+*/
 
-        const string list = "Â°工'​​​​øøøøÉÇÃ";
+        NeuralNetwork neural_network;
 
-        cout << "is UTF8" << utf8_check_is_valid(list) << endl;
-
-        system("pause");
-
+        // Training
+/*
         DataSet data_set;
 
-        data_set.set_data_file_name("C:/Users/davidgonzalez/Desktop/tt/92-COOLING PRODUCTS - copia/Neural/dataset_test_1.csv");
+        data_set.set_data_file_name("ground_truth.json");
 
-        data_set.read_txt();
+        data_set.read_ground_truth();
+
+        NeuralNetwork neural_network;
+
+        neural_network.add_layer(ScalingLayer);
+        neural_network.add_layer(ConvolutionalLayer);
+        neural_network.add_layer(PoolingLayer);
+        neural_network.add_layer(FlattenLayer);
+        neural_network.add_layer(ProbabilisticLayer);
+
+        TrainingStrategy training_stratregy(&neural_network, &data_set);
+
+        training_strategy.perform_training();
+
+        neural_network.save(neural_network.xml);
+*/
+        // Deployment
+
+//        RegionBasedObjectDetector object_detector(&neural_network);
+
+//        Objects object_detector.detect_objects();
 
         cout << "Goodbye!" << endl;
 
