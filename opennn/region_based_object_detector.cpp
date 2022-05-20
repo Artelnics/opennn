@@ -28,17 +28,21 @@ RegionBasedObjectDetector::RegionBasedObjectDetector(NeuralNetwork* new_neural_n
 
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::detect_objects(const Tensor<Index, 1>& image) const
-{
+{/*
     Tensor<BoundingBox, 1> proposed_regions = propose_regions(image);
     Tensor<BoundingBox, 1> warped_regions = warp_regions(proposed_regions);
     Tensor<Index, 2> regions_predicted = calculate_region_outputs(warped_regions);
-    Tensor<BoundingBox, 1> image_objects = select_strongest(regions_predicted);
+    Tensor<BoundingBox, 1> image_objects;// = select_strongest(regions_predicted);
 
     return image_objects;
+*/
+    Tensor<BoundingBox, 1> image_objects;
+    return image_objects;
+
 }
 
 void RegionBasedObjectDetector::segment_image()
-{
+{/*
     Index cont = 0;
     while(true)
     {
@@ -49,11 +53,13 @@ void RegionBasedObjectDetector::segment_image()
     }
 
     regions_number = cont;
+    */
 }
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<unsigned char, 1>& image) const
 {
-    Tensor<BoundingBox, 1> proposed_regions(regions_number);
+    const Index temporal_regions_number = 50; // We select random number of regions
+    Tensor<BoundingBox, 1> proposed_regions(temporal_regions_number);
 
     DataSet data_set;
 
@@ -62,22 +68,38 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<u
     const Index channels_number = data_set.get_channels_number();
     const Index size = data_set.get_image_size();
 
-    /**/
-
-    int half_width = image_width/2;
-    int half_height = image_height/2;
-
-    int bounding_box_x;// = x;
-    int bounding_box_y;// = image_width * y + (x - image_width);
-    int bounding_box_width;// =
-    int bounding_box_height;// =
-
-    for(Index i = 0; i < data.dimension(0); i++)
+    for(Index l = 0; l < temporal_regions_number; l++) // regions_number; l++)
     {
-        for(Index j = 0; j < data.dimension(1); j++)
-        {
+        // Pick the next four values from the neuralLabeler
+        Index bounding_box_x_top_left = l;
+        Index bounding_box_y_top_left = l;
+        Index bounding_box_x_bottom_right = l + 28 ;
+        Index bounding_box_y_bottom_right = l + 28;
 
+        proposed_regions(l).x_top_left = bounding_box_x_top_left;
+        proposed_regions(l).y_top_left = bounding_box_y_top_left;
+        proposed_regions(l).x_bottom_right = bounding_box_x_bottom_right;
+        proposed_regions(l).y_bottom_right = bounding_box_y_bottom_right;
+
+        const Index bounding_box_width = bounding_box_x_top_left - bounding_box_x_bottom_right;
+        const Index bounding_box_height = bounding_box_y_top_left - bounding_box_y_bottom_right;
+
+        Index data_index = 0;
+        for(Index i = channels_number * width * (bounding_box_y_bottom_right - 1); i < channels_number * width * (bounding_box_y_top_left - 1) ; i++)
+        {
+            if((i > (bounding_box_x_top_left + i * width) * channels_number) && (i < (bounding_box_x_bottom_right + i * width) * channels_number))
+            {
+                proposed_regions(l).data(data_index) = static_cast<type>(image[i]);
+                data_index++;
+            }
         }
+
+        cout << "Bounding box size: " << data_index << endl;
+
+        proposed_regions(l).width = bounding_box_width;
+        proposed_regions(l).height = bounding_box_height;
+        proposed_regions(l).x_center = bounding_box_x_top_left + proposed_regions(l).width / 2;
+        proposed_regions(l).y_center = bounding_box_y_bottom_right + proposed_regions(l).height / 2;
     }
 
     return proposed_regions;
@@ -139,7 +161,7 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<Boun
 
 
 Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tensor<BoundingBox, 1>& warped_regions) const
-{
+{/*
     Tensor<Index, 2> region_outputs;
 
     for(Index i = 0; i < regions_number; i++)
@@ -149,11 +171,16 @@ Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tenso
     }
 
     return region_outputs;
+    */
+
+    Tensor<Index, 2> region_outputs;
+    return region_outputs;
 }
 
 
-Tensor<BoundingBox, 1> RegionBasedObjectDetector::select_strongest(Tensor<Index, 2>& region_outputs) const
+Tensor<BoundingBox, 1> RegionBasedObjectDetector::select_strongest(Tensor<BoundingBox, 1>& region_outputs) const
 {
+
     Tensor<BoundingBox, 1> final_objects;
 
     return final_objects;
@@ -162,7 +189,36 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::select_strongest(Tensor<Index,
 
 type RegionBasedObjectDetector::calculate_intersection_over_union(const BoundingBox& data_set_bouding_box, const BoundingBox& neural_network_bounding_box)
 {
-    return 0;
+    int intersection_width;
+    int intersection_height;
+
+    if((data_set_bouding_box.y_top_left > neural_network_bounding_box.y_top_left) && (data_set_bouding_box.x_bottom_right < neural_network_bounding_box.x_bottom_right))
+    {
+        intersection_width = abs((int) data_set_bouding_box.x_bottom_right - (int) neural_network_bounding_box.x_top_left);
+        intersection_height = abs((int) data_set_bouding_box.y_bottom_right - (int) neural_network_bounding_box.y_top_left);
+    }
+    else if((data_set_bouding_box.y_top_left > neural_network_bounding_box.y_top_left) && (data_set_bouding_box.x_bottom_right > neural_network_bounding_box.x_bottom_right))
+    {
+        intersection_width = abs((int) data_set_bouding_box.x_top_left - (int) neural_network_bounding_box.x_bottom_right);
+        intersection_height = abs((int) data_set_bouding_box.y_bottom_right - (int) neural_network_bounding_box.y_top_left);
+    }
+    else if((data_set_bouding_box.y_top_left < neural_network_bounding_box.y_top_left)&& (data_set_bouding_box.x_bottom_right < neural_network_bounding_box.x_bottom_right))
+    {
+        intersection_width = abs((int) data_set_bouding_box.x_bottom_right - (int) neural_network_bounding_box.x_top_left);
+        intersection_height = abs((int) data_set_bouding_box.y_top_left - (int) neural_network_bounding_box.y_bottom_right);
+    }
+    else// if((data_set_bouding_box.y_top_left < neural_network_bounding_box.y_top_left)&& (data_set_bouding_box.x_bottom_right > neural_network_bounding_box.x_bottom_right))
+    {
+        intersection_width = abs((int) data_set_bouding_box.x_top_left - (int) neural_network_bounding_box.x_bottom_right);
+        intersection_height = abs((int) data_set_bouding_box.y_top_left - (int) neural_network_bounding_box.y_bottom_right);
+    }
+
+    const int intersection_area = intersection_height * intersection_width;
+    const int union_area = data_set_bouding_box.width * data_set_bouding_box.height + neural_network_bounding_box.width * neural_network_bounding_box.height - intersection_area;
+
+    const type intersection_over_union = static_cast<type>(intersection_area / union_area);
+
+    return intersection_over_union;
 }
 
 
