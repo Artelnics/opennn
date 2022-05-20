@@ -104,7 +104,7 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-    region_based_object_detector.h \
+#    region_based_object_detector.h \
     opennn.h
 
 SOURCES += \
@@ -156,5 +156,5 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-    region_based_object_detector.cpp \
+#    region_based_object_detector.cpp \
     unit_testing.cpp

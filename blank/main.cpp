@@ -26,28 +26,8 @@ using namespace Eigen;
 
 #include "data_set.h"
 
-bool utf8_check_is_valid(const string& string)
-{
-    int c,i,ix,n,j;
-    for (i=0, ix=string.length(); i < ix; i++)
-    {
-        c = (unsigned char) string[i];
-        //if (c==0x09 || c==0x0a || c==0x0d || (0x20 <= c && c <= 0x7e) ) n = 0; // is_printable_ascii
-        if (0x00 <= c && c <= 0x7f) n=0; // 0bbbbbbb
-        else if ((c & 0xE0) == 0xC0) n=1; // 110bbbbb
-        else if ( c==0xed && i<(ix-1) && ((unsigned char)string[i+1] & 0xa0)==0xa0) return false; //U+d800 to U+dfff
-        else if ((c & 0xF0) == 0xE0) n=2; // 1110bbbb
-        else if ((c & 0xF8) == 0xF0) n=3; // 11110bbb
-        //else if (($c & 0xFC) == 0xF8) n=4; // 111110bb //byte 5, unnecessary in 4 byte UTF-8
-        //else if (($c & 0xFE) == 0xFC) n=5; // 1111110b //byte 6, unnecessary in 4 byte UTF-8
-        else return false;
-        for (j=0; j<n && i<ix; j++) { // n bytes matching 10bbbbbb follow ?
-            if ((++i == ix) || (( (unsigned char)string[i] & 0xC0) != 0x80))
-                return false;
-        }
-    }
-    return true;
-}
+
+
 
 int main()
 {
@@ -55,15 +35,39 @@ int main()
     {
         cout << "Blank script! " << endl;
 
-        const string list = "Â°工'​​​​øøøøÉÇÃ";
+//        const string list = "17";
 
-        cout << "is UTF8" << utf8_check_is_valid(list) << endl;
+        TextAnalytics text_analytics;
 
-        system("pause");
+        std::ifstream file("/home/artelnics2020/Escritorio/transformedchars.txt");
+        std::ofstream file_2("/home/artelnics2020/Escritorio/result.txt");
+
+        string line;
+
+        int line_number = 1;
+
+        while(std::getline(file, line))
+        {
+            cout << "line number: " << line_number << endl;
+            line_number++;
+            remove_non_printable_chars(line);
+//            replace(line.begin(), line.end() + line.size(), '\f' ,'-');
+//            replace(line.begin(), line.end() + line.size(), '\r' ,'-');
+            Tensor<string,1> tensor(1);
+            tensor.setValues({line});
+//            text_analytics.delete_unicode_non_printable_chars(tensor);
+            text_analytics.delete_non_printable_chars(tensor);
+//            replace(line.begin(), line.end() + line.size(), '\u007f' ,'-');
+//            replace(line, "\007f","-");
+            file_2 << tensor(0) << endl;
+//            file_2 << line << endl;
+        }
+
+        getchar();
 
         DataSet data_set;
 
-        data_set.set_data_file_name("C:/Users/davidgonzalez/Desktop/tt/92-COOLING PRODUCTS - copia/Neural/dataset_test_1.csv");
+        data_set.set_data_file_name("/home/artelnics2020/Escritorio/Untitled 1.csv");
 
         data_set.read_txt();
 
