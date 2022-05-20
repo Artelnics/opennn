@@ -3887,6 +3887,24 @@ string DataSet::get_separator_string() const
 }
 
 
+/// Returns the string which will be used as separator in the data file for Text Classification.
+
+string DataSet::get_text_separator_string() const
+{
+    switch(text_separator)
+    {
+    case Separator::Tab:
+        return "Tab";
+
+    case Separator::Semicolon:
+        return "Semicolon";
+
+    default:
+        return string();
+    }
+}
+
+
 /// Returns the string which will be used as label for the missing values in the data file.
 
 const string& DataSet::get_missing_values_label() const
@@ -5084,6 +5102,40 @@ void DataSet::set_separator(const string& new_separator_string)
     }
 }
 
+
+/// Sets a new separator.
+/// @param new_separator Separator value.
+
+void DataSet::set_text_separator(const Separator& new_separator)
+{
+    separator = new_separator;
+}
+
+
+/// Sets a new separator from a string.
+/// @param new_separator Char with the separator value.
+
+void DataSet::set_text_separator(const string& new_separator_string)
+{
+    if(new_separator_string == "Tab")
+    {
+        text_separator = Separator::Tab;
+    }
+    else if(new_separator_string == "Semicolon")
+    {
+        text_separator = Separator::Semicolon;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_text_separator(const string&) method.\n"
+               << "Unknown separator: " << new_separator_string << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
 
 
 /// Sets a new label for the missing values.
@@ -6748,6 +6800,16 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    // Text Separator
+    if(project_type == ProjectType::TextClassification)
+    {
+        file_stream.OpenElement("TextSeparator");
+
+        file_stream.PushText(get_text_separator_string().c_str());
+
+        file_stream.CloseElement();
+    }
+
     // Columns names
     {
         file_stream.OpenElement("ColumnsNames");
@@ -7228,6 +7290,27 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     else
     {
         set_separator("Comma");
+    }
+
+    // Text separator
+
+    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("TextSeparator");
+
+    if(text_separator_element)
+    {
+        if(text_separator_element->GetText())
+        {
+            const string new_separator = text_separator_element->GetText();
+
+            try
+            {
+                set_text_separator(new_separator);
+            }
+            catch(const invalid_argument& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
     }
 
     // Has columns names
@@ -10745,28 +10828,36 @@ void DataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
+    time_t beginning_time;
+    time_t current_time;
+    time(&beginning_time);
+
     TextAnalytics text_analytics;
 
-    text_analytics.load_documents(data_file_name);
+    text_analytics.set_separator(get_text_separator_string());
     text_analytics.set_short_words_length(short_words_length);
     text_analytics.set_long_words_length(long_words_length);
 
-    // Preprocess
+    cout << "Loading documents..." << endl;
+
+    text_analytics.load_documents(data_file_name);
 
     Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
-    cout << "step 1" << endl;
 
     Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
-    cout << "step 2" << endl;
 
     Tensor<string, 1> full_document = text_analytics.join(document);
-    cout << "step 3" << endl;
+
+    cout <<  time(&current_time) - beginning_time << endl;
+
+    cout << "Processing documents..." << endl;
 
     Tensor<Tensor<string, 1>, 1> document_tokens = text_analytics.preprocess(full_document);
-    cout << "step 4" << endl;
+
+    cout <<  time(&current_time) - beginning_time << endl;
+    cout << "Calculating wordbag..." << endl;
 
     TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
-    cout << "step 5" << endl;
 
     const Index document_words_number = document_word_bag.words.size();
 
@@ -10777,10 +10868,14 @@ void DataSet::read_txt()
 
     Tensor<type, 1> row(document_words_number);
 
+    cout <<  time(&current_time) - beginning_time << endl;
     // Output
+
+    cout << "Writting data file..." << endl;
 
     string transformed_data_path = data_file_name;
     replace(transformed_data_path,".txt","_data.txt");
+    replace(transformed_data_path,".csv","_data.csv");
 
     std::ofstream file;
     file.open(transformed_data_path);
@@ -10789,9 +10884,12 @@ void DataSet::read_txt()
         file << columns_names(i) << ";";
     file << "target_variable" << "\n";
 
+#pragma omp parallel for
+
     for(Index i = 0; i < document.size(); i++)
     {
         Tensor<string, 1> sheet = document(i);
+
 
         for(Index j = 0; j < sheet.size(); j++)
         {
@@ -10828,6 +10926,8 @@ void DataSet::read_txt()
     }
 
     file.close();
+
+    cout <<  time(&current_time) - beginning_time << endl;
 
     data_file_name = transformed_data_path;
     separator = Separator::Semicolon;
@@ -10942,7 +11042,7 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-//        check_special_characters(line);
+        if(project_type != DataSet::ProjectType::TextClassification) check_special_characters(line);
 
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 

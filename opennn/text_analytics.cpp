@@ -174,7 +174,24 @@ void TextAnalytics::set_long_words_length(const Index& new_long_words_length)
 
 void TextAnalytics::set_separator(const string& new_separator)
 {
-    separator = new_separator;
+    if(new_separator == "Semicolon")
+    {
+        separator = ";";
+    }
+    else if(new_separator == "Tab")
+    {
+        separator = "\t";
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+               << "void set_separator(const string&) method.\n"
+               << "Unknown separator: " << new_separator << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 // Preprocess methods
@@ -209,7 +226,53 @@ void TextAnalytics::delete_breaks_and_tabs(Tensor<string, 1>& documents) const
 
         replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n' ,' ');
         replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t' ,' ');
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\f' ,' ');
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\r' ,' ');
     }
+}
+
+
+/// Deletes unicode non printable characters
+
+void TextAnalytics::delete_non_printable_chars(Tensor<string, 1>& documents) const
+{
+
+    for(Index i = 0; i < documents.size(); i++) remove_non_printable_chars(documents(i));
+
+//    replace_substring(documents, "\u0000"," ");
+//    replace_substring(documents, "\u0001"," ");
+//    replace_substring(documents, "\u0002"," ");
+//    replace_substring(documents, "\u0003"," ");
+//    replace_substring(documents, "\u0004"," ");
+//    replace_substring(documents, "\u0005"," ");
+//    replace_substring(documents, "\u0006"," ");
+//    replace_substring(documents, "\u0007"," ");
+//    replace_substring(documents, "\u0008"," ");
+//    replace_substring(documents, "\u0009"," ");
+//    replace_substring(documents, "\u000A"," ");
+//    replace_substring(documents, "\u000B"," ");
+//    replace_substring(documents, "\u000C"," ");
+//    replace_substring(documents, "\u000D"," ");
+//    replace_substring(documents, "\u000E"," ");
+//    replace_substring(documents, "\u000F"," ");
+//    replace_substring(documents, "\u0010"," ");
+//    replace_substring(documents, "\u0011"," ");
+//    replace_substring(documents, "\u0012"," ");
+//    replace_substring(documents, "\u0013"," ");
+//    replace_substring(documents, "\u0014"," ");
+//    replace_substring(documents, "\u0015"," ");
+//    replace_substring(documents, "\u0016"," ");
+//    replace_substring(documents, "\u0017"," ");
+//    replace_substring(documents, "\u0018"," ");
+//    replace_substring(documents, "\u0019"," ");
+//    replace_substring(documents, "\u001A"," ");
+//    replace_substring(documents, "\u001B"," ");
+//    replace_substring(documents, "\u001C"," ");
+//    replace_substring(documents, "\u001D"," ");
+//    replace_substring(documents, "\u001E"," ");
+//    replace_substring(documents, "\u001F"," ");
+//    replace_substring(documents, "\u0020"," ");
+//    replace_substring(documents, "\u007f"," ");
 }
 
 
@@ -242,7 +305,7 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
         replace_substring(documents, "/"," ");
         replace_substring(documents, "("," ");
         replace_substring(documents, ")"," ");
-        replace_substring(documents, "\\", "");
+        replace_substring(documents, "\\", " ");
         replace_substring(documents, "="," ");
         replace_substring(documents, "?"," ");
         replace_substring(documents, "}"," ");
@@ -261,11 +324,11 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
         replace_substring(documents, "|"," ");
         replace_substring(documents, "–"," ");
         replace_substring(documents, "Ø"," ");
-        replace_substring(documents, "º", "");
-        replace_substring(documents, "°", "");
-        replace_substring(documents, "'", "");
-        replace_substring(documents, "ç", "");
-        replace_substring(documents, "✓", "");
+        replace_substring(documents, "º", " ");
+        replace_substring(documents, "°", " ");
+        replace_substring(documents, "'", " ");
+        replace_substring(documents, "ç", " ");
+        replace_substring(documents, "✓", " ");
         replace_substring(documents, "|"," ");
         replace_substring(documents, "@"," ");
         replace_substring(documents, "#"," ");
@@ -279,22 +342,10 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
         replace_substring(documents, "“"," ");
         replace_substring(documents, "´"," ");
         replace_substring(documents, "§"," ");
+        replace_substring(documents,"_", " ");
+        replace_substring(documents,".", " ");
 
-
-
-        // @todo another language characters
-
-//        "|@#~€¬^*"
-
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
-//        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¡' ,u' ');
-
-        //    new_documents.replace_substring("“", " ");
-        //    new_documents.replace_substring("”", " ");
-        //    new_documents.replace_substring("'", " ");
-
-    delete_extra_spaces(documents);
+        delete_extra_spaces(documents);
 }
 
 
@@ -413,6 +464,7 @@ void TextAnalytics::delete_short_words(Tensor<Tensor<string,1>,1>& documents, co
 {
     const Index documents_number = documents.size();
 
+#pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string,1> document = documents(i);
@@ -448,6 +500,7 @@ void TextAnalytics::delete_long_words(Tensor<Tensor<string,1>,1>& documents, con
 {
     const Index documents_number = documents.size();
 
+#pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string,1> document = documents(i);
@@ -634,6 +687,7 @@ Tensor<Tensor<string,1>,1> TextAnalytics::apply_english_stemmer(const Tensor<Ten
     special_words(38,0) = "succeeded";  special_words(38,1) = "succeed";
     special_words(39,0) = "succeeding"; special_words(39,1) = "succeed";
 
+#pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string,1> current_document = tokens(i);
@@ -1530,6 +1584,7 @@ void TextAnalytics::delete_numbers(Tensor<Tensor<string,1>,1>& documents) const
 {
     const Index documents_number = documents.size();
 
+#pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string, 1> document = documents(i);
@@ -1564,6 +1619,7 @@ void TextAnalytics::delete_emails(Tensor<Tensor<string,1>,1>& documents) const
 {
     const Index documents_number = documents.size();
 
+#pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
         Tensor<string, 1> document = documents(i);
@@ -1772,7 +1828,7 @@ Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents
 /// their frequencies and their percentages in descending order
 
 TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) const
-{
+{   
     const Tensor<string, 1> total = join(tokens);
 
     const Tensor<Index, 1> count = count_unique(total);
@@ -1959,15 +2015,14 @@ Index TextAnalytics::calculate_weight(const Tensor<string, 1>& document_words, c
 /// Returns the documents easier to work with them
 
 Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& documents) const
-{
+{    
     Tensor<string,1> documents_copy(documents);
 
     to_lower(documents_copy);
 
     delete_punctuation(documents_copy);
 
-    replace_substring(documents_copy,"_", " ");
-    replace_substring(documents_copy,".", " ");
+    delete_non_printable_chars(documents_copy);
 
     delete_extra_spaces(documents_copy);
 
@@ -2259,7 +2314,7 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 ///@todo change loop to copy, doesnt work propperly with Tensor<Tensor<>>
 
 void TextAnalytics::load_documents(const string& path)
-{
+{    
     const Index original_size = documents.size();
 
     if(path.empty())
@@ -2327,17 +2382,21 @@ void TextAnalytics::load_documents(const string& path)
 
     Index tokens_number = 0;
 
+    string delimiter = "";
+
     while(file2.good())
     {
         getline(file2, line);
 
         if(line.empty()) continue;
 
-        if(line[0]=='"') line = "\""+line;
+        if(line[0]=='"')
+        {
+            line = "\""+line;
+            delimiter = "\"\"";
+        }
 
         if( line.find("\"" + separator) != string::npos) replace(line,"\"" + separator, "\"\"" + separator);
-
-        const string delimiter = (line.find("\"\"") != string::npos) ? "\"\"" : ""; // "" or blank if not found
 
         tokens_number = count_tokens(line,delimiter + separator);
         Tensor<string,1> tokens = get_tokens(line, delimiter + separator);
@@ -2359,9 +2418,11 @@ void TextAnalytics::load_documents(const string& path)
 
                 throw invalid_argument(buffer.str());
             }
+            if(tokens(0).empty() && tokens(1).empty())  continue;
 
             document(lines_count) += " " + tokens(0);
             document_target(lines_count) += tokens(1);
+            delimiter = "";
             lines_count++;
 
         }
