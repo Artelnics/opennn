@@ -67,6 +67,8 @@ namespace opennn
     bool is_not_numeric(const Tensor<string, 1>&);
     bool is_mixed(const Tensor<string, 1>&);
 
+    void remove_non_printable_chars( std::string&);
+
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
 }

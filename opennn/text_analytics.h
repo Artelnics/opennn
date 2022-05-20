@@ -147,6 +147,8 @@ public:
 
     void delete_breaks_and_tabs(Tensor<string, 1>&) const;
 
+    void delete_non_printable_chars(Tensor<string, 1>&) const;
+
     void delete_punctuation(Tensor<string, 1>&) const;
 
     void delete_stop_words(Tensor<Tensor<string, 1>, 1>&) const;
@@ -234,7 +236,7 @@ private: //change to private
 
     Index long_words_length = 15;
 
-    string separator = ";";
+    string separator = "\t";
 
     Tensor<Tensor<string,1>,1> documents;
 
