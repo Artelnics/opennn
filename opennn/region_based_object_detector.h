@@ -25,8 +25,7 @@
 #include "inputs_selection.h"
 #include "config.h"
 
-namespace opennn
-{
+using namespace opennn;
 
 struct BoundingBox;
 struct GroundTruth;
@@ -125,7 +124,7 @@ struct GroundTruth
     Tensor<BoundingBox, 1> objects;
 };
 
-}
+
 
 #endif
 

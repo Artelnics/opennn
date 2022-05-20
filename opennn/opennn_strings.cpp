@@ -1023,6 +1023,21 @@ bool is_mixed(const Tensor<string, 1>& v)
 }
 
 
+/// Checks if a string is valid encoded in UTF-8 or not
+/// @param string String to be checked.
+
+void remove_non_printable_chars( std::string& wstr)
+{
+    // get the ctype facet for wchar_t (Unicode code points in pactice)
+    typedef std::ctype< wchar_t > ctype ;
+    const ctype& ct = std::use_facet<ctype>( std::locale() ) ;
+
+    // remove non printable Unicode characters
+    wstr.erase( std::remove_if( wstr.begin(), wstr.end(),
+                    [&ct]( wchar_t ch ) { return !ct.is( ctype::print, ch ) ; } ),
+                wstr.end() ) ;
+}
+
 /// Replaces a substring by another one in each element of this vector.
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.

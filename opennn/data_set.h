@@ -377,6 +377,7 @@ public:
    const Separator& get_separator() const;
    char get_separator_char() const;
    string get_separator_string() const;
+   string get_text_separator_string() const;
 
    const string& get_missing_values_label() const;
 
@@ -501,6 +502,9 @@ public:
    void set_separator(const Separator&);
    void set_separator(const string&);
    void set_separator(const char&);
+   void set_text_separator(const Separator&);
+   void set_text_separator(const string&);
+
 
    void set_missing_values_label(const string&);
    void set_missing_values_method(const MissingValuesMethod&);
@@ -851,6 +855,8 @@ private:
    bool has_text_data = false;
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
+
+   Separator text_separator = Separator::Tab;
 
    // TIME SERIES
 
