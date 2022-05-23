@@ -34,42 +34,43 @@ int main()
     try
     {
         cout << "Blank script! " << endl;
+/*
+        DataSet data_set("iris_flowers.csv");
+        NeuralNetwork neural_network(Classification, 4,6,3);
+        TrainingStrategy training_strategy(neural_network, data_set);
+        training_strategy.perform_training();
+        neural_network.save();
+*/
 
-//        const string list = "17";
+        NeuralNetwork neural_network;
 
-        TextAnalytics text_analytics;
-
-        std::ifstream file("/home/artelnics2020/Escritorio/transformedchars.txt");
-        std::ofstream file_2("/home/artelnics2020/Escritorio/result.txt");
-
-        string line;
-
-        int line_number = 1;
-
-        while(std::getline(file, line))
-        {
-            cout << "line number: " << line_number << endl;
-            line_number++;
-            remove_non_printable_chars(line);
-//            replace(line.begin(), line.end() + line.size(), '\f' ,'-');
-//            replace(line.begin(), line.end() + line.size(), '\r' ,'-');
-            Tensor<string,1> tensor(1);
-            tensor.setValues({line});
-//            text_analytics.delete_unicode_non_printable_chars(tensor);
-            text_analytics.delete_non_printable_chars(tensor);
-//            replace(line.begin(), line.end() + line.size(), '\u007f' ,'-');
-//            replace(line, "\007f","-");
-            file_2 << tensor(0) << endl;
-//            file_2 << line << endl;
-        }
-
-        getchar();
-
+        // Training
+/*
         DataSet data_set;
 
-        data_set.set_data_file_name("/home/artelnics2020/Escritorio/Untitled 1.csv");
+        data_set.set_data_file_name("ground_truth.json");
 
-        data_set.read_txt();
+        data_set.read_ground_truth();
+
+        NeuralNetwork neural_network;
+
+        neural_network.add_layer(ScalingLayer);
+        neural_network.add_layer(ConvolutionalLayer);
+        neural_network.add_layer(PoolingLayer);
+        neural_network.add_layer(FlattenLayer);
+        neural_network.add_layer(ProbabilisticLayer);
+
+        TrainingStrategy training_stratregy(&neural_network, &data_set);
+
+        training_strategy.perform_training();
+
+        neural_network.save(neural_network.xml);
+*/
+        // Deployment
+//        RegionBasedObjectDetector object_detector(&neural_network);
+
+
+//        Objects object_detector.detect_objects();
 
         cout << "Goodbye!" << endl;
 

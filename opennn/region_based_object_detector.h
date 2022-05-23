@@ -1,4 +1,4 @@
-5//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E G I O N   B A S E D   O B J E C T   D E C T E C T O R   C L A S S   H E A D E R
@@ -56,7 +56,7 @@ public:
 
     Tensor<Index, 2> calculate_region_outputs(const Tensor<BoundingBox, 1>&) const;
 
-    Tensor<BoundingBox, 1> select_strongest(Tensor<Index, 2>&) const;
+    Tensor<BoundingBox, 1> select_strongest(Tensor<BoundingBox, 1>&) const;
 
     type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
 
@@ -98,16 +98,17 @@ struct BoundingBox
 
     virtual void print() const;
 
-    Tensor<unsigned char, 1> data;
+    Tensor<type, 1> data;
+
+    Index x_center;
+    Index y_center;
+    Index width;
+    Index height;
 
     Index x_top_left;
     Index y_top_left;
-
     Index x_bottom_right;
     Index y_bottom_right;
-
-    Index width;
-    Index height;
 
     string label; // ????
     Index score; // ????

@@ -729,6 +729,7 @@ public:
    static Tensor<unsigned char,1> read_bmp_image(const string& filename);
    void read_bmp();
    void read_txt();
+   void read_ground_truth();
 
    void load_data_binary();
    void load_time_series_data_binary(const string&);
