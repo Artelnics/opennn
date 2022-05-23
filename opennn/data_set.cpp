@@ -10828,10 +10828,6 @@ void DataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
-    time_t beginning_time;
-    time_t current_time;
-    time(&beginning_time);
-
     TextAnalytics text_analytics;
 
     text_analytics.set_separator(get_text_separator_string());
@@ -10848,13 +10844,10 @@ void DataSet::read_txt()
 
     Tensor<string, 1> full_document = text_analytics.join(document);
 
-    cout <<  time(&current_time) - beginning_time << endl;
-
     cout << "Processing documents..." << endl;
 
     Tensor<Tensor<string, 1>, 1> document_tokens = text_analytics.preprocess(full_document);
 
-    cout <<  time(&current_time) - beginning_time << endl;
     cout << "Calculating wordbag..." << endl;
 
     TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
@@ -10868,7 +10861,6 @@ void DataSet::read_txt()
 
     Tensor<type, 1> row(document_words_number);
 
-    cout <<  time(&current_time) - beginning_time << endl;
     // Output
 
     cout << "Writting data file..." << endl;
@@ -10928,8 +10920,6 @@ void DataSet::read_txt()
     }
 
     file.close();
-
-    cout <<  time(&current_time) - beginning_time << endl;
 
     data_file_name = transformed_data_path;
     separator = Separator::Semicolon;
