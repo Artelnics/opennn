@@ -6,7 +6,8 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
-QT = # Do not use qt
+QT = \ # Do not use qt
+    widgets
 
 TARGET = opennn
 #DESTDIR = "$$PWD/bin"
@@ -52,6 +53,7 @@ win32:!win32-g++{
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    json_to_xml.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
@@ -108,6 +110,7 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    json_to_xml.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
     tensor_utilities.cpp \
