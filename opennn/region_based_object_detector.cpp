@@ -27,34 +27,75 @@ RegionBasedObjectDetector::RegionBasedObjectDetector(NeuralNetwork* new_neural_n
 }
 
 
-Tensor<BoundingBox, 1> RegionBasedObjectDetector::detect_objects(const Tensor<Index, 1>& image) const
-{/*
-    Tensor<BoundingBox, 1> proposed_regions = propose_regions(image);
-    Tensor<BoundingBox, 1> warped_regions = warp_regions(proposed_regions);
-    Tensor<Index, 2> regions_predicted = calculate_region_outputs(warped_regions);
-    Tensor<BoundingBox, 1> image_objects;// = select_strongest(regions_predicted);
+Tensor<BoundingBox, 1> RegionBasedObjectDetector::detect_objects(Tensor<Index, 1>& image) const
+{
+//    Tensor<BoundingBox, 1> proposed_regions = propose_regions(image);
+//    Tensor<BoundingBox, 1> warped_regions = warp_regions(proposed_regions);
+//    Tensor<Index, 2> regions_predicted = calculate_region_outputs(warped_regions);
+//    Tensor<BoundingBox, 1> image_objects;// = select_strongest(regions_predicted);
 
-    return image_objects;
-*/
+//    return image_objects;
+
+//    Tensor<BoundingBox, 1> proposed_regions = propose_regions(image);
     Tensor<BoundingBox, 1> image_objects;
     return image_objects;
 
 }
 
-void RegionBasedObjectDetector::segment_image()
-{/*
-    Index cont = 0;
-    while(true)
-    {
-        Index stop = 0;
 
-        if(stop == 1) break;
-        cont ++;
+void RegionBasedObjectDetector::segment_image()
+{
+//    Index cont = 0;
+//    while(true)
+//    {
+//        Index stop = 0;
+
+//        if(stop == 1) break;
+//        cont ++;
+//    }
+
+//    regions_number = cont;
+
+}
+
+
+BoundingBox RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsigned char, 1>& image,
+                                                                             const Index& x_top_left, const Index& y_top_left,
+                                                                             const Index& x_bottom_right, const Index& y_bottom_right) const
+{
+    DataSet data_set;
+    BoundingBox proposed_region;
+
+    proposed_region.x_top_left = x_top_left;
+    proposed_region.y_top_left = y_top_left;
+    proposed_region.x_bottom_right = x_bottom_right;
+    proposed_region.y_bottom_right = y_bottom_right;
+
+    cout << "x top left: " << x_top_left << endl;
+    cout << "y top left: " << y_top_left << endl;
+    cout << "x bottom right: " << x_bottom_right << endl;
+    cout << "y bottom right: " <<  y_bottom_right<< endl;
+
+    const Index width = data_set.get_image_width();
+    const Index channels_number = data_set.get_channels_number();
+
+    cout << "width: " <<  width << endl;
+    cout << "channels number: " <<  channels_number<< endl;
+
+    Index data_index = 0;
+
+    for(Index i = channels_number * width * (y_bottom_right - 1); i < channels_number * width * (y_top_left - 1) ; i++)
+    {
+        if((i > (x_top_left + i * width) * channels_number) && (i < (x_bottom_right + i * width) * channels_number))
+        {
+            proposed_region.data(data_index) = static_cast<type>(image[i]);
+            data_index++;
+        }
     }
 
-    regions_number = cont;
-    */
+    return proposed_region;
 }
+
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<unsigned char, 1>& image) const
 {
@@ -63,10 +104,8 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<u
 
     DataSet data_set;
 
-    const Index height = data_set.get_image_height();
     const Index width = data_set.get_image_width();
     const Index channels_number = data_set.get_channels_number();
-    const Index size = data_set.get_image_size();
 
     for(Index l = 0; l < temporal_regions_number; l++) // regions_number; l++)
     {
@@ -104,6 +143,52 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<u
 
     return proposed_regions;
 }
+
+
+BoundingBox RegionBasedObjectDetector::warp_single_region(const BoundingBox& region, const Index& newWidth, const Index& newHeight) const
+{
+    DataSet data_set;
+
+    BoundingBox warped_region;
+
+    const Index channels_number = data_set.get_channels_number();
+
+    const Index height = region.height;
+    const Index width = region.width;
+
+    //  if(region_data == NULL) return false;
+
+    // Get a new buffer to interpolate into
+
+    warped_region.data(newWidth * newHeight * channels_number);
+
+    const type scaleWidth =  (type)newWidth / (type)width;
+    const type scaleHeight = (type)newHeight / (type)height;
+
+    for(Index h = 0; h < newHeight; h++)
+    {
+        for(Index w = 0; w < newWidth; w++)
+        {
+            const int pixel = (h * (newWidth *channels_number)) + (w*channels_number);
+            const int nearestMatch =  (((int)(h / scaleHeight) * (width *channels_number)) + ((int)(w / scaleWidth) * channels_number));
+
+            if(channels_number == 3)
+            {
+                warped_region.data[pixel] =  region.data[nearestMatch];
+                warped_region.data[pixel + 1] =  region.data[nearestMatch + 1];
+                warped_region.data[pixel + 2] =  region.data[nearestMatch + 2];
+            }
+            else
+            {
+                warped_region.data[pixel] =  region.data[nearestMatch];
+            }
+        }
+    }
+
+    warped_region.width = newWidth;
+    warped_region.height = newHeight;
+}
+
 
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<BoundingBox, 1>& proposed_regions) const
@@ -161,7 +246,7 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<Boun
 
 
 Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tensor<BoundingBox, 1>& warped_regions) const
-{/*
+{
     Tensor<Index, 2> region_outputs;
 
     for(Index i = 0; i < regions_number; i++)
@@ -171,16 +256,11 @@ Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tenso
     }
 
     return region_outputs;
-    */
-
-    Tensor<Index, 2> region_outputs;
-    return region_outputs;
 }
 
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::select_strongest(Tensor<BoundingBox, 1>& region_outputs) const
 {
-
     Tensor<BoundingBox, 1> final_objects;
 
     return final_objects;
@@ -219,6 +299,7 @@ type RegionBasedObjectDetector::calculate_intersection_over_union(const Bounding
     const type intersection_over_union = static_cast<type>(intersection_area / union_area);
 
     return intersection_over_union;
+
 }
 
 
@@ -237,6 +318,12 @@ void RegionBasedObjectDetector::perform_training()
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
     training_strategy.perform_training();
+}
+
+/// Default constructor.
+
+BoundingBox::BoundingBox()
+{
 }
 
 }
