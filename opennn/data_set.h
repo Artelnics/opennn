@@ -726,10 +726,10 @@ public:
    // Data load methods
 
    void read_csv();
-   static Tensor<unsigned char,1> read_bmp_image(const string& filename);
+   Tensor<unsigned char,1> read_bmp_image(const string& filename);
    void read_bmp();
+   void read_ground_truth(const string&);
    void read_txt();
-   void read_ground_truth();
 
    void load_data_binary();
    void load_time_series_data_binary(const string&);
@@ -915,10 +915,12 @@ private:
 
    static size_t number_of_elements_in_directory(const fs::path& path);
 
-   int channels_number = 0;
-   int image_width = 0;
-   int image_height = 0;
+   Index images_number = 0;
+   Index channels_number = 0;
+   Index image_width = 0;
+   Index image_height = 0;
 
+   Index width_no_padding;
    // Local Outlier Factor
 
    Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = type(2.0), bool = true) const;

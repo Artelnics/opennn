@@ -53,7 +53,6 @@ win32:!win32-g++{
 INCLUDEPATH += ../eigen
 
 HEADERS += \
-    json_to_xml.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
@@ -106,11 +105,11 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-#    region_based_object_detector.h \
+    region_based_object_detector.h \
+    json_to_xml.h \
     opennn.h
 
 SOURCES += \
-    json_to_xml.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
     tensor_utilities.cpp \
@@ -159,5 +158,6 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-#    region_based_object_detector.cpp \
+    region_based_object_detector.cpp \
+    json_to_xml.cpp \
     unit_testing.cpp

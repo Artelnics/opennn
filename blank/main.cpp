@@ -25,9 +25,7 @@ using namespace std;
 using namespace Eigen;
 
 #include "data_set.h"
-
-
-
+#include "json_to_xml.h"
 
 int main()
 {
@@ -40,12 +38,12 @@ int main()
         TrainingStrategy training_strategy(neural_network, data_set);
         training_strategy.perform_training();
         neural_network.save();
-*/
+
 
         NeuralNetwork neural_network;
 
         // Training
-/*
+
         DataSet data_set;
 
         data_set.set_data_file_name("ground_truth.json");
@@ -65,12 +63,19 @@ int main()
         training_strategy.perform_training();
 
         neural_network.save(neural_network.xml);
+
+        Deployment
+        RegionBasedObjectDetector object_detector(&neural_network);
+
+        Objects object_detector.detect_objects();
 */
-        // Deployment
-//        RegionBasedObjectDetector object_detector(&neural_network);
+        DataSet data_set;
 
+        data_set.set_data_file_name("C:/Users/alvaromartin/Desktop/fromjson.xml");
 
-//        Objects object_detector.detect_objects();
+        string filename = data_set.get_data_file_name();
+
+        data_set.read_ground_truth("C:/Users/alvaromartin/Desktop/fromjson.xml");
 
         cout << "Goodbye!" << endl;
 

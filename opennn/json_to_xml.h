@@ -14,7 +14,6 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QMainWindow>
 #include <QObject>
 
 using namespace std;
@@ -31,6 +30,8 @@ class JsonToXml: public QJsonValue
     static void jsonArrayToXml(const QJsonArray&, const QString&, QXmlStreamWriter&);
 public:
     static QString jsonToXml(const QJsonDocument&, const QString& rootElementName = "root");
+    static QJsonDocument qstringToJson(const QString&);
 };
+
 }
 #endif
