@@ -173,6 +173,8 @@ public:
 
     void to_lower(Tensor<string, 1>&) const;
 
+    void aux_remove_non_printable_chars(Tensor<string,1>&) const;
+
     // Stemming methods
 
     /// Reduces inflected(or sometimes derived) words to their word stem, base or root form
