@@ -11009,10 +11009,6 @@ void DataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
-    time_t beginning_time;
-    time_t current_time;
-    time(&beginning_time);
-
     TextAnalytics text_analytics;
 
     text_analytics.set_separator(get_text_separator_string());
@@ -11029,27 +11025,20 @@ void DataSet::read_txt()
 
     Tensor<string, 1> full_document = text_analytics.join(document);
 
-    cout <<  time(&current_time) - beginning_time << endl;
-
     cout << "Processing documents..." << endl;
 
     Tensor<Tensor<string, 1>, 1> document_tokens = text_analytics.preprocess(full_document);
 
-    cout <<  time(&current_time) - beginning_time << endl;
     cout << "Calculating wordbag..." << endl;
 
     TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
-
-    const Index document_words_number = document_word_bag.words.size();
+    set_words_frequencies(document_word_bag.frequencies);
 
     Tensor<string, 1> columns_names = document_word_bag.words;
-    columns_names = push_back(columns_names, "target");
-
-    set_words_frequencies(document_word_bag.frequencies);
+    const Index document_words_number = document_word_bag.words.size();
 
     Tensor<type, 1> row(document_words_number);
 
-    cout <<  time(&current_time) - beginning_time << endl;
     // Output
 
     cout << "Writting data file..." << endl;
@@ -11062,7 +11051,7 @@ void DataSet::read_txt()
     file.open(transformed_data_path);
 
     for(Index i  = 0; i < document_words_number; i++)
-        file << columns_names(i) << ";";
+            file << columns_names(i) << ";";
     file << "target_variable" << "\n";
 
 #pragma omp parallel for
@@ -11070,7 +11059,6 @@ void DataSet::read_txt()
     for(Index i = 0; i < document.size(); i++)
     {
         Tensor<string, 1> sheet = document(i);
-
 
         for(Index j = 0; j < sheet.size(); j++)
         {
@@ -11107,8 +11095,6 @@ void DataSet::read_txt()
     }
 
     file.close();
-
-    cout <<  time(&current_time) - beginning_time << endl;
 
     data_file_name = transformed_data_path;
     separator = Separator::Semicolon;
@@ -11191,7 +11177,7 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-        if(project_type != DataSet::ProjectType::TextClassification) check_special_characters(line);
+//        if(project_type != DataSet::ProjectType::TextClassification) check_special_characters(line);
 
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 
