@@ -70,6 +70,8 @@ private:
 
     NeuralNetwork* neural_network_pointer;
 
+    DataSet* data_set_pointer;
+
     Index regions_number = 2000;
 
     type confidence_value = 0.2;

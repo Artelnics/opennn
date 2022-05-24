@@ -60,10 +60,9 @@ void RegionBasedObjectDetector::segment_image()
 
 
 BoundingBox RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsigned char, 1>& image,
-                                                                             const Index& x_top_left, const Index& y_top_left,
-                                                                             const Index& x_bottom_right, const Index& y_bottom_right) const
+                                                             const Index& x_top_left, const Index& y_top_left,
+                                                             const Index& x_bottom_right, const Index& y_bottom_right) const
 {
-    DataSet data_set;
     BoundingBox proposed_region;
 
     proposed_region.x_top_left = x_top_left;
@@ -76,22 +75,43 @@ BoundingBox RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsi
     cout << "x bottom right: " << x_bottom_right << endl;
     cout << "y bottom right: " <<  y_bottom_right<< endl;
 
-    const Index width = data_set.get_image_width();
-    const Index channels_number = data_set.get_channels_number();
+    const Index height = 28;//data_set_pointer->get_image_height();
+    const Index width = 28;// = data_set_pointer->get_image_width();
+    const Index channels_number = 1;// = data_set_pointer->get_channels_number();
 
     cout << "width: " <<  width << endl;
     cout << "channels number: " <<  channels_number<< endl;
+    cout << "Image size: " << image.size() << endl;
+
+    cout << "*************************" << endl;
 
     Index data_index = 0;
 
-    for(Index i = channels_number * width * (y_bottom_right - 1); i < channels_number * width * (y_top_left - 1) ; i++)
+    const Index pixel_loop_start = channels_number * ( width * (height - (y_bottom_right - 1)) + x_top_left);
+    const Index pixel_loop_end = channels_number * ( width * (height - (y_top_left - 1)) + x_bottom_right);
+
+    cout << "Pixel loop start: " << pixel_loop_start << endl;
+    cout << "Pixel loop end: " << pixel_loop_end << endl;
+
+    for(Index i = pixel_loop_start; i < pixel_loop_end; i++)
     {
-        if((i > (x_top_left + i * width) * channels_number) && (i < (x_bottom_right + i * width) * channels_number))
+        const int height_number = (int)(i/height);
+
+//        cout << "Height number: " << height_number << endl;
+//        cout << ((height_number) * width + x_top_left) * channels_number << " < " << i << " < " << ((height_number) * width + x_bottom_right) * channels_number << endl;
+
+        const Index left_margin = (height_number * width + x_top_left) * channels_number;
+        const Index right_margin = (height_number * width + x_bottom_right) * channels_number;
+
+        if(i >= left_margin && i <= right_margin)
         {
+            cout << "Pixel value: " << static_cast<type>(image[i]) << endl;
             proposed_region.data(data_index) = static_cast<type>(image[i]);
             data_index++;
         }
     }
+
+    cout << "Data index: " << data_index << endl;
 
     return proposed_region;
 }
@@ -102,10 +122,8 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<u
     const Index temporal_regions_number = 50; // We select random number of regions
     Tensor<BoundingBox, 1> proposed_regions(temporal_regions_number);
 
-    DataSet data_set;
-
-    const Index width = data_set.get_image_width();
-    const Index channels_number = data_set.get_channels_number();
+    const Index width = data_set_pointer->get_image_width();
+    const Index channels_number = data_set_pointer->get_channels_number();
 
     for(Index l = 0; l < temporal_regions_number; l++) // regions_number; l++)
     {
@@ -147,11 +165,9 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<u
 
 BoundingBox RegionBasedObjectDetector::warp_single_region(const BoundingBox& region, const Index& newWidth, const Index& newHeight) const
 {
-    DataSet data_set;
-
     BoundingBox warped_region;
 
-    const Index channels_number = data_set.get_channels_number();
+    const Index channels_number = data_set_pointer->get_channels_number();
 
     const Index height = region.height;
     const Index width = region.width;
@@ -195,9 +211,7 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<Boun
 {
     Tensor<BoundingBox, 1> warped_regions(regions_number);
 
-    DataSet data_set;
-
-    const Index channels_number = data_set.get_channels_number();
+    const Index channels_number = data_set_pointer->get_channels_number();
     Index newWidth;
     Index newHeight;
 
