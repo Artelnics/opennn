@@ -14,6 +14,12 @@
 #include <math.h>
 #include <regex>
 #include <iostream>
+#include <stdlib.h>
+#include <algorithm>
+#include <string>
+#include <string_view>
+#include <iostream>
+#include <cctype>
 
 // Eigen includes
 
@@ -71,6 +77,9 @@ namespace opennn
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
+
+    bool isNotAlnum(char &c);
+    void remove_not_alnum(string &str);
 }
 
 #endif // OPENNNSTRINGS_H

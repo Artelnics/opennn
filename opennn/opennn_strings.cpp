@@ -961,7 +961,12 @@ bool has_numbers(const Tensor<string, 1>& v)
 {
     for(Index i = 0; i < v.size(); i++)
     {
-        if(is_numeric_string(v[i])) return true;
+//        if(is_numeric_string(v[i])) return true;
+        if(is_numeric_string(v[i]))
+        {
+            cout << "The number is: " << v[i] << endl;
+            return true;
+        }
     }
 
     return false;
@@ -1071,6 +1076,20 @@ void replace(string& source, const string& find_what, const string& replace_with
         position += replace_with.length();
     }
 }
+
+
+bool isNotAlnum (char &c)
+{
+    return (c < ' ' || c > '~');
+}
+
+void remove_not_alnum(string &str)
+{
+        str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
+}
+
+
+
 }
 
 // OpenNN: Open Neural Networks Library.
