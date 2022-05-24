@@ -27,6 +27,13 @@ RegionBasedObjectDetector::RegionBasedObjectDetector(NeuralNetwork* new_neural_n
 }
 
 
+///// Destructor.
+
+RegionBasedObjectDetector::~RegionBasedObjectDetector()
+{
+}
+
+
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::detect_objects(Tensor<Index, 1>& image) const
 {
 //    Tensor<BoundingBox, 1> proposed_regions = propose_regions(image);
@@ -93,6 +100,8 @@ BoundingBox RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsi
     cout << "Pixel loop start: " << pixel_loop_start << endl;
     cout << "Pixel loop end: " << pixel_loop_end << endl;
 
+    proposed_region.data.resize(120); // Change the size
+
     for(Index i = pixel_loop_start; i < pixel_loop_end; i++)
     {
         const int height_number = (int)(i/height);
@@ -105,13 +114,12 @@ BoundingBox RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsi
 
         if(i >= left_margin && i <= right_margin)
         {
-            cout << "Pixel value: " << static_cast<type>(image[i]) << endl;
+//            cout << "Pixel value: " << static_cast<type>(image[i]) << endl;
+//            cout << "data index i: " << data_index << " proposed size: " << proposed_region.data.size() << endl;
             proposed_region.data(data_index) = static_cast<type>(image[i]);
             data_index++;
         }
     }
-
-    cout << "Data index: " << data_index << endl;
 
     return proposed_region;
 }
