@@ -10851,13 +10851,10 @@ void DataSet::read_txt()
     cout << "Calculating wordbag..." << endl;
 
     TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
-
-    const Index document_words_number = document_word_bag.words.size();
+    set_words_frequencies(document_word_bag.frequencies);
 
     Tensor<string, 1> columns_names = document_word_bag.words;
-    columns_names = push_back(columns_names, "target");
-
-    set_words_frequencies(document_word_bag.frequencies);
+    const Index document_words_number = document_word_bag.words.size();
 
     Tensor<type, 1> row(document_words_number);
 
@@ -10873,7 +10870,7 @@ void DataSet::read_txt()
     file.open(transformed_data_path);
 
     for(Index i  = 0; i < document_words_number; i++)
-        file << columns_names(i) << ";";
+            file << columns_names(i) << ";";
     file << "target_variable" << "\n";
 
 #pragma omp parallel for
@@ -10881,7 +10878,6 @@ void DataSet::read_txt()
     for(Index i = 0; i < document.size(); i++)
     {
         Tensor<string, 1> sheet = document(i);
-
 
         for(Index j = 0; j < sheet.size(); j++)
         {
@@ -11032,7 +11028,7 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-        if(project_type != DataSet::ProjectType::TextClassification) check_special_characters(line);
+//        if(project_type != DataSet::ProjectType::TextClassification) check_special_characters(line);
 
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 

@@ -128,7 +128,7 @@ void TextAnalytics::set_language(const Language& new_language)
     }
     else
     {
-//        clear_stop_words();
+        //        clear_stop_words();
     }
 }
 
@@ -146,7 +146,7 @@ void TextAnalytics::set_language(const string& new_language_string)
     }
     else
     {
-//        clear_stop_words();
+        //        clear_stop_words();
     }
 }
 
@@ -238,41 +238,6 @@ void TextAnalytics::delete_non_printable_chars(Tensor<string, 1>& documents) con
 {
 
     for(Index i = 0; i < documents.size(); i++) remove_non_printable_chars(documents(i));
-
-//    replace_substring(documents, "\u0000"," ");
-//    replace_substring(documents, "\u0001"," ");
-//    replace_substring(documents, "\u0002"," ");
-//    replace_substring(documents, "\u0003"," ");
-//    replace_substring(documents, "\u0004"," ");
-//    replace_substring(documents, "\u0005"," ");
-//    replace_substring(documents, "\u0006"," ");
-//    replace_substring(documents, "\u0007"," ");
-//    replace_substring(documents, "\u0008"," ");
-//    replace_substring(documents, "\u0009"," ");
-//    replace_substring(documents, "\u000A"," ");
-//    replace_substring(documents, "\u000B"," ");
-//    replace_substring(documents, "\u000C"," ");
-//    replace_substring(documents, "\u000D"," ");
-//    replace_substring(documents, "\u000E"," ");
-//    replace_substring(documents, "\u000F"," ");
-//    replace_substring(documents, "\u0010"," ");
-//    replace_substring(documents, "\u0011"," ");
-//    replace_substring(documents, "\u0012"," ");
-//    replace_substring(documents, "\u0013"," ");
-//    replace_substring(documents, "\u0014"," ");
-//    replace_substring(documents, "\u0015"," ");
-//    replace_substring(documents, "\u0016"," ");
-//    replace_substring(documents, "\u0017"," ");
-//    replace_substring(documents, "\u0018"," ");
-//    replace_substring(documents, "\u0019"," ");
-//    replace_substring(documents, "\u001A"," ");
-//    replace_substring(documents, "\u001B"," ");
-//    replace_substring(documents, "\u001C"," ");
-//    replace_substring(documents, "\u001D"," ");
-//    replace_substring(documents, "\u001E"," ");
-//    replace_substring(documents, "\u001F"," ");
-//    replace_substring(documents, "\u0020"," ");
-//    replace_substring(documents, "\u007f"," ");
 }
 
 
@@ -280,72 +245,59 @@ void TextAnalytics::delete_non_printable_chars(Tensor<string, 1>& documents) con
 
 void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
 {
-//    Tensor<string, 1> punctuation_simbols(49);
-//    punctuation_simbols.setValues( // Each row has 10 simbols
-//                {
-//                    "\"" ,"."  ,"!"  ,"#"  ,"$"  ,"~"  ,"%"  ,"&"  ,"/"  ,"("  ,
-//                    "\\" ,"="  ,"?"  ,"}"  ,"^"  ,"`"  ,"["  ,"]"  ,"*"  ,"+"  ,
-//                    ";"  ,":"  ,"-"  ,">"  ,"<"  ,"|"  ,"-"  ,"Ø"  ,"º"  ,"°"  ,
-//                    "ç"  ,"✓"  ,"|"  ,"@"  ,"#"  ,"€"  ,"¬"  ,"•"  ,"·"  ,"”"  ,
-//                    "´"  ,"§"  ,"郉" ,")"  ,","  ,"'"  ,"“"  ,"Ç"  ,"¦"  ,
-//                })  ;
-//    for(Index i = 0; i < punctuation_simbols.size(); i++)
-//    {
-//        replace_substring(documents, punctuation_simbols[0]," ");
-//    }
+    replace_substring(documents, "�"," ");
+    replace_substring(documents, "\""," ");
+    replace_substring(documents, "."," ");
+    replace_substring(documents, "!"," ");
+    replace_substring(documents, "#"," ");
+    replace_substring(documents, "$"," ");
+    replace_substring(documents, "~"," ");
+    replace_substring(documents, "%"," ");
+    replace_substring(documents, "&"," ");
+    replace_substring(documents, "/"," ");
+    replace_substring(documents, "("," ");
+    replace_substring(documents, ")"," ");
+    replace_substring(documents, "\\", " ");
+    replace_substring(documents, "="," ");
+    replace_substring(documents, "?"," ");
+    replace_substring(documents, "}"," ");
+    replace_substring(documents, "^"," ");
+    replace_substring(documents, "`"," ");
+    replace_substring(documents, "["," ");
+    replace_substring(documents, "]"," ");
+    replace_substring(documents, "*"," ");
+    replace_substring(documents, "+"," ");
+    replace_substring(documents, ","," ");
+    replace_substring(documents, ";"," ");
+    replace_substring(documents, ":"," ");
+    replace_substring(documents, "-"," ");
+    replace_substring(documents, ">"," ");
+    replace_substring(documents, "<","  ");
+    replace_substring(documents, "|"," ");
+    replace_substring(documents, "–"," ");
+    replace_substring(documents, "Ø"," ");
+    replace_substring(documents, "º", " ");
+    replace_substring(documents, "°", " ");
+    replace_substring(documents, "'", " ");
+    replace_substring(documents, "ç", " ");
+    replace_substring(documents, "✓", " ");
+    replace_substring(documents, "|"," ");
+    replace_substring(documents, "@"," ");
+    replace_substring(documents, "#"," ");
+    replace_substring(documents, "^"," ");
+    replace_substring(documents, "*"," ");
+    replace_substring(documents, "€"," ");
+    replace_substring(documents, "¬"," ");
+    replace_substring(documents, "•"," ");
+    replace_substring(documents, "·"," ");
+    replace_substring(documents, "”"," ");
+    replace_substring(documents, "“"," ");
+    replace_substring(documents, "´"," ");
+    replace_substring(documents, "§"," ");
+    replace_substring(documents,"_", " ");
+    replace_substring(documents,".", " ");
 
-        replace_substring(documents, "\""," ");
-        replace_substring(documents, "."," ");
-        replace_substring(documents, "!"," ");
-        replace_substring(documents, "#"," ");
-        replace_substring(documents, "$"," ");
-        replace_substring(documents, "~"," ");
-        replace_substring(documents, "%"," ");
-        replace_substring(documents, "&"," ");
-        replace_substring(documents, "/"," ");
-        replace_substring(documents, "("," ");
-        replace_substring(documents, ")"," ");
-        replace_substring(documents, "\\", " ");
-        replace_substring(documents, "="," ");
-        replace_substring(documents, "?"," ");
-        replace_substring(documents, "}"," ");
-        replace_substring(documents, "^"," ");
-        replace_substring(documents, "`"," ");
-        replace_substring(documents, "["," ");
-        replace_substring(documents, "]"," ");
-        replace_substring(documents, "*"," ");
-        replace_substring(documents, "+"," ");
-        replace_substring(documents, ","," ");
-        replace_substring(documents, ";"," ");
-        replace_substring(documents, ":"," ");
-        replace_substring(documents, "-"," ");
-        replace_substring(documents, ">"," ");
-        replace_substring(documents, "<","  ");
-        replace_substring(documents, "|"," ");
-        replace_substring(documents, "–"," ");
-        replace_substring(documents, "Ø"," ");
-        replace_substring(documents, "º", " ");
-        replace_substring(documents, "°", " ");
-        replace_substring(documents, "'", " ");
-        replace_substring(documents, "ç", " ");
-        replace_substring(documents, "✓", " ");
-        replace_substring(documents, "|"," ");
-        replace_substring(documents, "@"," ");
-        replace_substring(documents, "#"," ");
-        replace_substring(documents, "^"," ");
-        replace_substring(documents, "*"," ");
-        replace_substring(documents, "€"," ");
-        replace_substring(documents, "¬"," ");
-        replace_substring(documents, "•"," ");
-        replace_substring(documents, "·"," ");
-        replace_substring(documents, "”"," ");
-        replace_substring(documents, "“"," ");
-        replace_substring(documents, "´"," ");
-        replace_substring(documents, "§"," ");
-        replace_substring(documents,"_", " ");
-        replace_substring(documents,".", " ");
-
-        delete_extra_spaces(documents);
+    delete_extra_spaces(documents);
 }
 
 
@@ -360,6 +312,22 @@ void TextAnalytics::to_lower(Tensor<string,1>& documents) const
         transform(documents[i].begin(), documents[i].end(), documents[i].begin(), ::tolower);
     }
 
+}
+
+
+void TextAnalytics::aux_remove_non_printable_chars(Tensor<string, 1> &documents) const
+{
+    Tensor<string, 1> new_documents(documents);
+
+
+    for(Index i = 0; i < documents.size(); i++)
+    {
+
+        new_documents[i].erase(std::remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
+
+    }
+
+    documents = new_documents;
 }
 
 
@@ -563,7 +531,7 @@ void TextAnalytics::delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens) const
     {
         delete_blanks(tokens(i));
     }
- };
+};
 
 
 /// Reduces inflected(or sometimes derived) words to their word stem, base or root form.
@@ -576,7 +544,7 @@ Tensor<Tensor<string,1>,1> TextAnalytics::apply_stemmer(const Tensor<Tensor<stri
     }
     else if(lang == SPA)
     {
-//        return apply_spanish_stemmer(tokens);
+        //        return apply_spanish_stemmer(tokens);
     }
 
     return tokens;
@@ -1599,7 +1567,7 @@ void TextAnalytics::delete_numbers(Tensor<Tensor<string,1>,1>& documents) const
 
             for(Index k = 0; k < tokens.size(); k++)
             {
-                if(!is_numeric_string(tokens(k)))
+                if(!is_numeric_string(tokens(k)) )
                 {
                     result += tokens(k) + " ";
                 }
@@ -1858,7 +1826,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<str
 /// @param minimum_frequency Minimum frequency that words must have.
 
 TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
-                                                         const Index& minimum_frequency) const
+                                                                           const Index& minimum_frequency) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -1885,7 +1853,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const
 /// @param minimum_percentage Minimum percentage of occurrence that words must have.
 
 TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
-                                                         const double& minimum_percentage) const
+                                                                            const double& minimum_percentage) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -1912,7 +1880,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(cons
 /// @param minimum_ratio Minimum ratio of frequency that words must have.
 
 TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
-                                                         const double& minimum_ratio) const
+                                                                       const double& minimum_ratio) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
 
@@ -1958,7 +1926,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_total_frequency(const T
     for( i = 0; i < frequencies.size(); i++)
     {
         if(cumulative_frequencies(i) >= total_frequency)
-           break;
+            break;
     }
 
     word_bag.words = get_first(words, i);
@@ -2026,6 +1994,8 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
 
     delete_extra_spaces(documents_copy);
 
+    aux_remove_non_printable_chars(documents_copy);
+
     Tensor<Tensor<string,1>,1> tokenized_documents = tokenize(documents_copy);
 
     delete_stop_words(tokenized_documents);
@@ -2038,11 +2008,11 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
 
     delete_emails(tokenized_documents);
 
+    tokenized_documents = apply_stemmer(tokenized_documents);
+
     delete_numbers(tokenized_documents);
 
     delete_blanks(tokenized_documents);
-
-    tokenized_documents = apply_stemmer(tokenized_documents);
 
     return tokenized_documents;
 }
@@ -2055,17 +2025,17 @@ void TextAnalytics::set_english_stop_words()
     stop_words.resize(180);
 
     stop_words.setValues({"i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he",
-                                   "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
-                                   "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have",
-                                   "has", "had", "having", "do", "does", "did", "doing", "would", "shall", "should", "could", "ought", "i'm", "you're", "he's",
-                                   "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd", "she'd", "we'd", "they'd",
-                                   "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't", "haven't", "hadn't",
-                                   "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't", "let's",
-                                   "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't ", "needn't", "oughtn't",
-                                   "mightn't", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
-                                   "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
-                                   "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-                                   "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very"});
+                          "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
+                          "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have",
+                          "has", "had", "having", "do", "does", "did", "doing", "would", "shall", "should", "could", "ought", "i'm", "you're", "he's",
+                          "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd", "she'd", "we'd", "they'd",
+                          "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't", "haven't", "hadn't",
+                          "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't", "let's",
+                          "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't ", "needn't", "oughtn't",
+                          "mightn't", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
+                          "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
+                          "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
+                          "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very"});
 
 }
 
@@ -2076,30 +2046,30 @@ void TextAnalytics::set_spanish_stop_words()
     stop_words.resize(327);
 
     stop_words.setValues({"de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al",
-                                   "es", "lo", "como", "más", "mas", "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "si", "sí", "porque", "esta", "son",
-                                   "entre", "está", "cuando", "muy", "aún", "aunque", "sin", "sobre", "ser", "tiene", "también", "me", "hasta", "hay", "donde", "han", "quien",
-                                   "están", "desde", "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", "fueron", "ese", "eso", "había",
-                                   "ante", "ellos", "e", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro", "otras", "otra", "él", "tanto", "esa",
-                                   "estos", "mucho", "quienes", "nada", "muchos", "cual", "sea", "poco", "ella", "estar", "haber", "estas", "estaba", "estamos",
-                                   "algunas", "algo", "nosotros", "mi", "mis", "tú", "te", "ti", "tu", "tus", "ellas", "nosotras", "vosotros", "vosotras", "os",
-                                   "mío", "mía", "míos", "mías", "tuyo", "tuya", "tuyos", "tuyas", "suyo", "suya", "suyos", "suyas", "nuestro", "nuestra", "nuestros",
-                                   "nuestras", "vuestro", "vuestra", "vuestros", "vuestras", "esos", "esas", "estoy", "estás", "está", "estamos", "estáis", "están",
-                                   "esté", "estés", "estemos", "estéis", "estén", "estaré", "estarás", "estará", "estaremos", "estaréis", "estarán", "estaría",
-                                   "estarías", "estaríamos", "estaríais", "estarían", "estaba", "estabas", "estábamos", "estabais", "estaban", "estuve", "estuviste",
-                                   "estuvo", "estuvimos", "estuvisteis", "estuvieron", "estuviera", "estuvieras", "estuviéramos", "estuvierais", "estuvieran", "estuviese",
-                                   "estuvieses", "estuviésemos", "estuvieseis", "estuviesen", "estando", "estado", "estada", "estados", "estadas", "estad", "he",
-                                   "has", "ha", "hemos", "habéis", "han", "haya", "hayas", "hayamos", "hayáis", "hayan", "habré", "habrás", "habrá", "habremos",
-                                   "habréis", "habrán", "habría", "habrías", "habríamos", "habríais", "habrían", "había", "habías", "habíamos", "habíais", "habían",
-                                   "hube", "hubiste", "hubo", "hubimos", "hubisteis", "hubieron", "hubiera", "hubieras", "hubiéramos", "hubierais", "hubieran",
-                                   "hubiese", "hubieses", "hubiésemos", "hubieseis", "hubiesen", "habiendo", "habido", "habida", "habidos", "habidas", "soy", "eres",
-                                   "es", "somos", "sois", "son", "sea", "seas", "seamos", "seáis", "sean", "seré", "serás", "será", "seremos", "seréis", "serán",
-                                   "sería", "serías", "seríamos", "seríais", "serían", "era", "eras", "éramos", "erais", "eran", "fui", "fuiste", "fue", "fuimos",
-                                   "fuisteis", "fueron", "fuera", "fueras", "fuéramos", "fuerais", "fueran", "fuese", "fueses", "fuésemos", "fueseis", "fuesen", "siendo",
-                                   "sido", "tengo", "tienes", "tiene", "tenemos", "tenéis", "tienen", "tenga", "tengas", "tengamos", "tengáis", "tengan", "tendré",
-                                   "tendrás", "tendrá", "tendremos", "tendréis", "tendrán", "tendría", "tendrías", "tendríamos", "tendríais", "tendrían", "tenía",
-                                   "tenías", "teníamos", "teníais", "tenían", "tuve", "tuviste", "tuvo", "tuvimos", "tuvisteis", "tuvieron", "tuviera", "tuvieras",
-                                   "tuviéramos", "tuvierais", "tuvieran", "tuviese", "tuvieses", "tuviésemos", "tuvieseis", "tuviesen", "teniendo", "tenido", "tenida",
-                                   "tenidos", "tenidas", "tened"});
+                          "es", "lo", "como", "más", "mas", "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "si", "sí", "porque", "esta", "son",
+                          "entre", "está", "cuando", "muy", "aún", "aunque", "sin", "sobre", "ser", "tiene", "también", "me", "hasta", "hay", "donde", "han", "quien",
+                          "están", "desde", "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", "fueron", "ese", "eso", "había",
+                          "ante", "ellos", "e", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro", "otras", "otra", "él", "tanto", "esa",
+                          "estos", "mucho", "quienes", "nada", "muchos", "cual", "sea", "poco", "ella", "estar", "haber", "estas", "estaba", "estamos",
+                          "algunas", "algo", "nosotros", "mi", "mis", "tú", "te", "ti", "tu", "tus", "ellas", "nosotras", "vosotros", "vosotras", "os",
+                          "mío", "mía", "míos", "mías", "tuyo", "tuya", "tuyos", "tuyas", "suyo", "suya", "suyos", "suyas", "nuestro", "nuestra", "nuestros",
+                          "nuestras", "vuestro", "vuestra", "vuestros", "vuestras", "esos", "esas", "estoy", "estás", "está", "estamos", "estáis", "están",
+                          "esté", "estés", "estemos", "estéis", "estén", "estaré", "estarás", "estará", "estaremos", "estaréis", "estarán", "estaría",
+                          "estarías", "estaríamos", "estaríais", "estarían", "estaba", "estabas", "estábamos", "estabais", "estaban", "estuve", "estuviste",
+                          "estuvo", "estuvimos", "estuvisteis", "estuvieron", "estuviera", "estuvieras", "estuviéramos", "estuvierais", "estuvieran", "estuviese",
+                          "estuvieses", "estuviésemos", "estuvieseis", "estuviesen", "estando", "estado", "estada", "estados", "estadas", "estad", "he",
+                          "has", "ha", "hemos", "habéis", "han", "haya", "hayas", "hayamos", "hayáis", "hayan", "habré", "habrás", "habrá", "habremos",
+                          "habréis", "habrán", "habría", "habrías", "habríamos", "habríais", "habrían", "había", "habías", "habíamos", "habíais", "habían",
+                          "hube", "hubiste", "hubo", "hubimos", "hubisteis", "hubieron", "hubiera", "hubieras", "hubiéramos", "hubierais", "hubieran",
+                          "hubiese", "hubieses", "hubiésemos", "hubieseis", "hubiesen", "habiendo", "habido", "habida", "habidos", "habidas", "soy", "eres",
+                          "es", "somos", "sois", "son", "sea", "seas", "seamos", "seáis", "sean", "seré", "serás", "será", "seremos", "seréis", "serán",
+                          "sería", "serías", "seríamos", "seríais", "serían", "era", "eras", "éramos", "erais", "eran", "fui", "fuiste", "fue", "fuimos",
+                          "fuisteis", "fueron", "fuera", "fueras", "fuéramos", "fuerais", "fueran", "fuese", "fueses", "fuésemos", "fueseis", "fuesen", "siendo",
+                          "sido", "tengo", "tienes", "tiene", "tenemos", "tenéis", "tienen", "tenga", "tengas", "tengamos", "tengáis", "tengan", "tendré",
+                          "tendrás", "tendrá", "tendremos", "tendréis", "tendrán", "tendría", "tendrías", "tendríamos", "tendríais", "tendrían", "tenía",
+                          "tenías", "teníamos", "teníais", "tenían", "tuve", "tuviste", "tuvo", "tuvimos", "tuvisteis", "tuvieron", "tuviera", "tuvieras",
+                          "tuviéramos", "tuvierais", "tuvieran", "tuviese", "tuvieses", "tuviésemos", "tuvieseis", "tuviesen", "teniendo", "tenido", "tenida",
+                          "tenidos", "tenidas", "tened"});
 }
 
 
@@ -2351,8 +2321,8 @@ void TextAnalytics::load_documents(const string& path)
 
     for(Index i = 0; i < original_size; i++)
     {
-      documents(i) = documents_copy(i);
-      targets(i) = targets_copy(i);
+        documents(i) = documents_copy(i);
+        targets(i) = targets_copy(i);
     };
 
     Index lines_count = 0;
@@ -2392,6 +2362,7 @@ void TextAnalytics::load_documents(const string& path)
 
         if(line[0]=='"')
         {
+            replace(line,"\"\"", "\"");
             line = "\""+line;
             delimiter = "\"\"";
         }

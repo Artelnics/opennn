@@ -72,6 +72,7 @@
 #include "tensor_utilities.h"
 #include "statistics.h"
 #include "scaling.h"
+#include "text_analytics.h"
 
 #endif
 
