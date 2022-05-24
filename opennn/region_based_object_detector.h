@@ -43,6 +43,9 @@ public:
 
     explicit RegionBasedObjectDetector(NeuralNetwork*);
 
+    virtual ~RegionBasedObjectDetector();
+
+
     Tensor<BoundingBox, 1> detect_objects(Tensor<Index, 1>&) const;
 
     BoundingBox get_unique_bounding_box(const Tensor<unsigned char, 1>&,

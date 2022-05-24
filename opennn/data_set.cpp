@@ -10961,8 +10961,6 @@ void DataSet::read_ground_truth(const string& file_name)
                                                                                     x_top_left, y_top_left,
                                                                                     x_bottom_right, y_bottom_right);
 
-    cout << "Bounding box size: " << bounding_box.data.size() << endl;
-/*
     //    images_number;
 
     Index bounding_boxes_number = 1;//= 2000;
