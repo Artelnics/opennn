@@ -7171,8 +7171,10 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < words_frequencies.size(); i++)
         {
-            file_stream.PushText(words_frequencies(i));
+            buffer.str("");
+            buffer << words_frequencies(i);
 
+            file_stream.PushText(buffer.str().c_str());
             if(i != words_frequencies.size()-1) file_stream.PushText(" ");
 
         }
