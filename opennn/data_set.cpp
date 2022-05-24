@@ -10572,6 +10572,7 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 
     cout << "Channels number: " << channels_number << endl;
     cout << "Image width: " << image_width << endl;
+    cout << "**************************" << endl;
 
     Tensor<unsigned char, 1> image(size);
     image.setZero();
@@ -10950,6 +10951,9 @@ void DataSet::read_ground_truth(const string& file_name)
     const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
 
     RegionBasedObjectDetector region_based_object_detector;
+
+    cout << "Image width: " << get_image_width() << endl;
+    cout << "Channels number: " << get_channels_number() << endl;
 
     BoundingBox bounding_box = region_based_object_detector.get_unique_bounding_box(image_pixel_values,
                                                                                     x_top_left, y_top_left,
