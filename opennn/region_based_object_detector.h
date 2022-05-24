@@ -21,21 +21,16 @@
 
 // OpenNN includes
 
-#include "training_strategy.h"
-#include "inputs_selection.h"
-#include "config.h"
+#include "opennn.h"
 
-using namespace opennn;
+//using namespace opennn;
+
+namespace opennn
+{
 
 struct BoundingBox;
 struct GroundTruth;
 struct Image;
-
-
-/// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
-
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class RegionBasedObjectDetector
 {
@@ -48,9 +43,15 @@ public:
 
     explicit RegionBasedObjectDetector(NeuralNetwork*);
 
-    Tensor<BoundingBox, 1> detect_objects(const Tensor<Index, 1>&) const;
+    Tensor<BoundingBox, 1> detect_objects(Tensor<Index, 1>&) const;
+
+    BoundingBox get_unique_bounding_box(const Tensor<unsigned char, 1>&,
+                                                      const Index&, const Index&,
+                                                      const Index&, const Index&) const;
 
     Tensor<BoundingBox, 1> propose_regions(const Tensor<unsigned char, 1>&) const;
+
+    BoundingBox warp_single_region(const BoundingBox&, const Index&, const Index&) const;
 
     Tensor<BoundingBox, 1> warp_regions(const Tensor<BoundingBox, 1>&) const;
 
@@ -81,22 +82,13 @@ private:
 
 };
 
-
-struct Image
-{
-    explicit Image();
-
-    Tensor<Index, 1> image;
-};
-
-
 struct BoundingBox
 {
     /// Default constructor.
 
     explicit BoundingBox();
 
-    virtual void print() const;
+//    virtual void print() const;
 
     Tensor<type, 1> data;
 
@@ -114,6 +106,15 @@ struct BoundingBox
     Index score; // ????
 };
 
+struct Image
+{
+    explicit Image();
+
+    Tensor<Index, 1> image;
+};
+
+
+
 struct GroundTruth
 {
     explicit GroundTruth();
@@ -125,7 +126,7 @@ struct GroundTruth
     Tensor<BoundingBox, 1> objects;
 };
 
-
+}
 
 #endif
 

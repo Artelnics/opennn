@@ -72,6 +72,8 @@
 #include "tensor_utilities.h"
 #include "statistics.h"
 #include "scaling.h"
+#include "region_based_object_detector.h"
+#include "json_to_xml.h"
 
 #endif
 
