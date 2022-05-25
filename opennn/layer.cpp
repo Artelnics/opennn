@@ -786,7 +786,6 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
         y(i, maximum_index) = type(1);
     }
-
 }
 
 
@@ -800,7 +799,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     y.device(*thread_pool_device) = x.exp();
 
-    Tensor<type, 1> sums(rows_number);
+    Tensor<long double, 1> sums(rows_number);
     sums.setZero();
 
     for (Index i = 0; i < rows_number; i++)
@@ -815,7 +814,8 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         for (Index j = 0; j < columns_number; j++)
         {
-            y(i, j) = y(i, j) / sums(i);
+            if(sums(i) > NUMERIC_LIMITS_MIN && y(i,j) < numeric_limits<type>::max()) y(i, j) = static_cast<long double>(y(i, j)) / static_cast<long double>(sums(i));
+            else y(i,j)=0;
         }
     }
 }
