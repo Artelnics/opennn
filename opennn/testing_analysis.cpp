@@ -2992,7 +2992,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
 }
 
 
-Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_tests() const
+Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() const
 {
     Tensor<type, 1> multiple_classification_tests(2);
 
@@ -3068,7 +3068,7 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
 
 void TestingAnalysis::save_multiple_classification_tests(const string& classification_tests_file_name) const
 {
-    const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_tests();
+    const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_precision();
 
     std::ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
 
@@ -3910,6 +3910,8 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 }
 
 
+
+
 void TestingAnalysis::print_binary_classification_tests() const
 {
     const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
@@ -3919,6 +3921,125 @@ void TestingAnalysis::print_binary_classification_tests() const
     cout << "Error rate              : " << binary_classification_tests[1] << endl;
     cout << "Sensitivity             : " << binary_classification_tests[2] << endl;
     cout << "Specificity             : " << binary_classification_tests[3] << endl;
+}
+
+
+/// Returns the results of a multiple classification test in a single matrix.
+/// The size of that vector is 3 *(number of target variables + 1).
+/// The columns are:
+/// <ul>
+/// <li> Precision
+/// <li> Recall
+/// <li> F1-score
+/// </ul>
+/// The last row represents the average of each test.
+
+Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
+{
+#ifdef OPENNN_DEBUG
+
+    const Index inputs_number = neural_network_pointer->get_inputs_number();
+
+    if(!data_set_pointer)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class." << endl
+               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
+               << "Data set is nullptr." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index targets_number = data_set_pointer->get_target_variables_number();
+
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    // Control sentence
+
+    if(inputs_number != data_set_pointer->get_input_variables_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class." << endl
+               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
+               << "Number of inputs in neural network is not equal to number of inputs in data set." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+    }
+
+#endif
+
+    const Index targets_number = data_set_pointer->get_target_variables_number();
+
+    Tensor<type,2> multiple_classification_tests(3,targets_number + 1);
+
+    const Tensor<Index, 2> confusion = calculate_confusion();
+
+    Index true_positives = 0;
+    Index true_negatives = 0;
+    Index false_positives = 0;
+    Index false_negatives = 0;
+
+    type total_precision = 0;
+    type total_recall = 0;
+    type total_f1_score= 0;
+
+    for(Index target_index = 0; target_index < targets_number; target_index++)
+    {
+        true_positives = confusion(target_index, target_index);
+
+        Tensor<Index,0> row_sum = confusion.chip(target_index,0).sum();
+        Tensor<Index,0> column_sum = confusion.chip(target_index,1).sum();
+
+        false_negatives = row_sum(0) - true_positives;
+        false_positives= column_sum(0) - true_positives;
+
+        // Precision
+
+        type precision;
+        if(true_positives + false_positives == 0)
+            precision = type(0);
+        else
+            precision = static_cast<type>(true_positives) /static_cast<type>(true_positives + false_positives);
+
+        // Recall
+
+        type recall;
+
+        if(true_positives + false_negatives == 0)
+            recall = type(0);
+        else
+            recall = static_cast<type>(true_positives)/static_cast<type>(true_positives + false_negatives);
+
+        // F1-Score
+
+        type f1_score;
+
+        if(precision + recall == 0)
+            f1_score = type(0);
+        else
+            f1_score = static_cast<type>(2*precision*recall)/static_cast<type>(precision + recall);
+
+        // Save results
+
+        multiple_classification_tests(target_index, 0) = precision;
+        multiple_classification_tests(target_index, 1) = recall;
+        multiple_classification_tests(target_index, 2) = f1_score;
+
+        total_precision += precision;
+        total_recall += recall;
+        total_f1_score += f1_score;
+    }
+
+    // Averages
+
+    multiple_classification_tests(targets_number, 0) = total_precision/targets_number;
+    multiple_classification_tests(targets_number, 1) = total_recall/targets_number;
+    multiple_classification_tests(targets_number, 2) = total_f1_score/targets_number;
+
+    return multiple_classification_tests;
 }
 
 
