@@ -3925,14 +3925,14 @@ void TestingAnalysis::print_binary_classification_tests() const
 
 
 /// Returns the results of a multiple classification test in a single matrix.
-/// The size of that vector is 3 *(number of target variables + 1).
+/// The size of that vector is 3 *(number of target variables + 2).
 /// The columns are:
 /// <ul>
 /// <li> Precision
 /// <li> Recall
 /// <li> F1-score
 /// </ul>
-/// The last row represents the average of each test.
+/// The 2 lasts row represents the normal and weighted average of each test.
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 {
@@ -3973,7 +3973,7 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<type,2> multiple_classification_tests(3,targets_number + 1);
+    Tensor<type,2> multiple_classification_tests(targets_number + 2,3);
 
     const Tensor<Index, 2> confusion = calculate_confusion();
 
@@ -3985,6 +3985,12 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
     type total_precision = 0;
     type total_recall = 0;
     type total_f1_score= 0;
+
+    type total_weighted_precision = 0;
+    type total_weighted_recall = 0;
+    type total_weighted_f1_score= 0;
+
+    Index total_samples = 0;
 
     for(Index target_index = 0; target_index < targets_number; target_index++)
     {
@@ -4031,6 +4037,12 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
         total_precision += precision;
         total_recall += recall;
         total_f1_score += f1_score;
+
+        total_weighted_precision += precision * row_sum(0);
+        total_weighted_recall += recall * row_sum(0);
+        total_weighted_f1_score += f1_score * row_sum(0);
+
+        total_samples += row_sum(0);
     }
 
     // Averages
@@ -4038,6 +4050,10 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
     multiple_classification_tests(targets_number, 0) = total_precision/targets_number;
     multiple_classification_tests(targets_number, 1) = total_recall/targets_number;
     multiple_classification_tests(targets_number, 2) = total_f1_score/targets_number;
+
+    multiple_classification_tests(targets_number + 1, 0) = total_weighted_precision/total_samples;
+    multiple_classification_tests(targets_number + 1, 1) = total_weighted_recall/total_samples;
+    multiple_classification_tests(targets_number + 1, 2) = total_weighted_f1_score/total_samples;
 
     return multiple_classification_tests;
 }
