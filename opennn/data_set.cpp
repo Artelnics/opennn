@@ -11096,6 +11096,8 @@ void DataSet::read_txt()
 
             for(Index k = 0; k < document_words_number; k++)
                 file << row(k) << ";";
+            std::for_each(targets(i)(j).begin(), targets(i)(j).end(), [](char & c){
+                c = ::tolower(c);});
             file << "target_" + targets(i)(j) << "\n";
         }
     }
