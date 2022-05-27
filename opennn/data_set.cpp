@@ -3627,6 +3627,8 @@ void DataSet::set_binary_simple_columns()
                 columns(column_index).categories(0) = original_second_category;
                 columns(column_index).categories(1) = original_first_category;
             }
+
+            variable_index++;
         }
         else if(columns(column_index).type == ColumnType::Categorical)
         {
