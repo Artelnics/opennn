@@ -790,14 +790,25 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
+{       
     const Index columns_number = x.dimension(1);
 
     const Index rows_number = y.dimension(0);
 
+    Tensor<long double, 2> new_x(x.dimension(0),x.dimension(1));
+    Tensor<long double, 2> new_y(y.dimension(0),y.dimension(1));
+
     // Activations
 
-    y.device(*thread_pool_device) = x.exp();
+    for(int i = 0; i < x.dimension(0); i++)
+    {
+        for(int j = 0; j < x.dimension(1); j++)
+        {
+            new_x(i,j) = static_cast<long double>(x(i,j));
+        }
+    }
+
+    new_y.device(*thread_pool_device) = new_x.exp();
 
     Tensor<long double, 1> sums(rows_number);
     sums.setZero();
@@ -806,7 +817,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         for (Index j = 0; j < columns_number; j++)
         {
-            sums[i] += y(i, j);
+            sums[i] += new_y(i, j);
         }
     }
 
@@ -814,8 +825,9 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     {
         for (Index j = 0; j < columns_number; j++)
         {
-            if(sums(i) > NUMERIC_LIMITS_MIN && y(i,j) < numeric_limits<type>::max()) y(i, j) = static_cast<long double>(y(i, j)) / static_cast<long double>(sums(i));
-            else y(i,j)=0;
+            new_y(i, j) = new_y(i, j) / sums(i);
+            if(new_y(i, j) < NUMERIC_LIMITS_MIN) new_y(i, j) = NUMERIC_LIMITS_MIN;
+            y(i,j) = static_cast<type>(new_y(i,j));
         }
     }
 }
