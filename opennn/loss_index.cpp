@@ -719,6 +719,7 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                            forward_propagation,
                            back_propagation);
 
+
     // Hidden layers
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
@@ -741,8 +742,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                                              back_propagation.neural_network.layers(i+1),
                                              back_propagation.neural_network.layers(i));
         }
-
-
     }
 }
 
@@ -875,10 +874,13 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         {
             // @todo
 
-            //trainable_layers_pointers(i)->
-            //        calculate_error_gradient(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-            //                                 forward_propagation.layers(i),
-            //                                 back_propagation.neural_network.layers(i));
+            const ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+                    = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1));
+
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(convolutional_layer_forward_propagation->activations,
+                                             forward_propagation.layers(i),
+                                             back_propagation.neural_network.layers(i));
         }
             break;
 

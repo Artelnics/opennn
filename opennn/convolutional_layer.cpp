@@ -305,6 +305,34 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
 }
 
 
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs, Tensor<type,1> potential_parameters, LayerForwardPropagation* forward_propagation)
+{
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
+
+    const Index kernels_rows_number = get_kernels_rows_number();
+    const Index kernels_columns_number = get_kernels_columns_number();
+    const Index kernels_channels_number = get_kernels_channels_number();
+    const Index kernels_number = get_kernels_number();
+
+    Tensor<type, 4> potential_synaptic_weights(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
+    Tensor<type, 2> potential_biases(2,1);
+
+
+    calculate_convolutions(inputs,
+                           potential_biases,
+                           potential_synaptic_weights,
+                           convolutional_layer_forward_propagation->combinations);
+
+    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
+                                      convolutional_layer_forward_propagation->activations,
+                                      convolutional_layer_forward_propagation->activations_derivatives);
+
+}
+
+
+
 void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
                                                  LayerBackPropagation* next_layer_back_propagation,
                                                  LayerBackPropagation* layer_back_propagation) const
@@ -326,6 +354,8 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
                                           perceptron_layer_back_propagation,
                                           convolutional_layer_back_propagation);
 
+
+        cout << "convolutional layer delta: " << convolutional_layer_back_propagation->delta << endl;
     }
         break;
     default:
@@ -343,10 +373,12 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(perceptron_layer_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    cout << "Activations derivatives: " << perceptron_layer_forward_propagation->activations_derivatives << endl;
-    cout << "Next synaptic weights: " << next_synaptic_weights << endl;
-    cout << "Perceptron delta: " << perceptron_layer_back_propagation->delta << endl;
-    system("pause");
+//    cout << "Activations derivatives: " << perceptron_layer_forward_propagation->activations_derivatives << endl;
+//    cout << "Next synaptic weights: " << next_synaptic_weights << endl;
+//    cout << "Perceptron delta: " << perceptron_layer_back_propagation->delta << endl;
+//    system("pause");
+
+
 
     convolutional_layer_back_propagation->delta.device(*thread_pool_device) =
             (perceptron_layer_back_propagation->delta*perceptron_layer_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
@@ -528,8 +560,11 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
     Index image_index = 0;
     Index kernel_index = 0;
 
-    cout << "delta: " << convolutional_layer_back_propagation->delta << endl;
-    system("pause");
+    cout << "error gradient delta: " << convolutional_layer_back_propagation->delta << endl;
+
+    cout << "Inputs: " << inputs << endl;
+
+
 
     for(Index i = 0; i < images_number; i++)
     {
@@ -546,6 +581,8 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 //            Eigen::array<Index,3>({kernel_channels_number, kernels_rows_number, kernels_columns_number}));
         }
     }
+
+        system("pause");
 }
 
 

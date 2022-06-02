@@ -661,6 +661,8 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         calculate_hidden_delta_perceptron(next_perceptron_layer_forward_propagation,
                                           next_perceptron_layer_back_propagation,
                                           perceptron_layer_back_propagation);
+
+        cout << "Perceptron layer delta: " << perceptron_layer_back_propagation->delta << endl;
     }
         break;
 

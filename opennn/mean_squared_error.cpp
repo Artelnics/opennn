@@ -97,6 +97,11 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+         cout << "coefficient: " << coefficient << endl;
+         cout << "Errors: " << back_propagation.errors << endl;
+
+         cout << "output delta: " << perceptron_layer_back_propagation->delta << endl;
      }
          break;
 

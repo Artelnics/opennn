@@ -164,6 +164,8 @@ public:
 
    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
 
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type,1>, LayerForwardPropagation*);
+
 
 //   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 //   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
