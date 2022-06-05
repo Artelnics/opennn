@@ -236,7 +236,7 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation*,
     */
 }
 
-
+/*
 Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
         const Tensor<type, 4>&,
         const Tensor<type, 4>&,
@@ -303,7 +303,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
 
         return hidden_delta;
 }
-
+*/
 
 Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
         const Tensor<type, 4>& activations,
