@@ -9,7 +9,7 @@
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
 
-// System includes
+//// System includes
 
 #include <cmath>
 #include <cstdlib>
@@ -25,9 +25,7 @@
 #include "layer.h"
 
 #include "statistics.h"
-
 #include "perceptron_layer.h"
-#include "convolutional_layer.h"
 
 namespace opennn
 {
@@ -143,7 +141,7 @@ public:
                                 LayerBackPropagation*,
                                 LayerBackPropagation*) const;
 
-    Tensor<type, 4> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
+//    Tensor<type, 4> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
     Tensor<type, 4> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
     Tensor<type, 4> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
     Tensor<type, 4> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
