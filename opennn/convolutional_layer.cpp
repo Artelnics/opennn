@@ -100,13 +100,15 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
 {
 
+    const Index inputs_rows_number = inputs.dimension(0);
+    const Index inputs_columns_number = inputs.dimension(1);
+    const Index inputs_channels_number = inputs.dimension(2);
     const Index images_number = inputs.dimension(3);
-    const Index rows_input = inputs.dimension(0);
-    const Index cols_input = inputs.dimension(1);
 
+    const Index kernels_rows_number = synaptic_weights.dimension(0);
+    const Index kernels_columns_number = synaptic_weights.dimension(1);
+    const Index kernels_channels_number = synaptic_weights.dimension(2);
     const Index kernels_number = synaptic_weights.dimension(3);
-    const Index kernel_rows = synaptic_weights.dimension(0);
-    const Index kernel_cols = synaptic_weights.dimension(1);
 
 #ifdef OPENNN_DEBUG
 
@@ -135,10 +137,10 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 
 #endif
 
-    const Index next_image = inputs.dimension(0)*inputs.dimension(1)*inputs.dimension(2);
-    const Index next_kernel = synaptic_weights.dimension(0)*synaptic_weights.dimension(1)*synaptic_weights.dimension(2);
+    const Index next_image = inputs_rows_number*inputs_columns_number*kernels_channels_number;
+    const Index next_kernel = kernels_rows_number*kernels_columns_number*kernels_channels_number;
 
-    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
+    const Index output_size_rows_columns = ((inputs_rows_number-kernels_rows_number)+1)*((inputs_columns_number-kernels_columns_number)+1);
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
@@ -146,23 +148,23 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
     Tensor<type, 4> synaptic_weights_pointer = synaptic_weights;
 
     #pragma omp parallel for
-    for(int i =0; i<images_number ;i++)
+    for(int i = 0; i < images_number ;i++)
     {
         const TensorMap<Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
-                                                      inputs.dimension(0),
-                                                      inputs.dimension(1),
-                                                      inputs.dimension(2));
+                                                      inputs_rows_number,
+                                                      inputs_columns_number,
+                                                      inputs_channels_number);
         for(int j = 0; j<kernels_number; j++)
         {
             const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
-                                                           synaptic_weights.dimension(0),
-                                                           synaptic_weights.dimension(1),
-                                                           synaptic_weights.dimension(2));
+                                                           kernels_rows_number,
+                                                           kernels_columns_number,
+                                                           kernels_channels_number);
 
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + biases(j);
 
-            memcpy(combinations.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernels_number,
-                   tmp_result.data(), static_cast<size_t>(output_size_rows_cols)*sizeof(float));
+            memcpy(combinations.data() +j*output_size_rows_columns +i*output_size_rows_columns*kernels_number,
+                   tmp_result.data(), static_cast<size_t>(output_size_rows_columns)*sizeof(float));
          }
     }
 }
@@ -173,6 +175,46 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 const Tensor<type, 4>& potential_synaptic_weights,
                                                 Tensor<type, 4>& convolutions) const
 {
+    const Index inputs_rows_number = inputs.dimension(0);
+    const Index inputs_columns_number = inputs.dimension(1);
+    const Index inputs_channels_number = inputs.dimension(2);
+    const Index images_number = inputs.dimension(3);
+
+    const Index kernels_rows_number = potential_synaptic_weights.dimension(0);
+    const Index kernels_columns_number = potential_synaptic_weights.dimension(1);
+    const Index kernels_channels_number = potential_synaptic_weights.dimension(2);
+    const Index kernels_number = potential_synaptic_weights.dimension(3);
+
+    const Index next_image = inputs_rows_number*inputs_columns_number*inputs_channels_number;
+    const Index next_kernel = kernels_rows_number*kernels_columns_number*kernels_channels_number;
+
+    const Index output_size_rows_columns = ((inputs_rows_number-kernels_rows_number)+1)*((inputs_columns_number-kernels_columns_number)+1);
+
+    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+
+    Tensor<type, 4> inputs_pointer = inputs;
+    Tensor<type, 4> synaptic_weights_pointer = synaptic_weights;
+
+    #pragma omp parallel for
+    for(int i = 0; i < images_number ;i++)
+    {
+        const TensorMap<Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
+                                                      inputs_rows_number,
+                                                      inputs_columns_number,
+                                                      inputs_channels_number);
+        for(int j = 0; j<kernels_number; j++)
+        {
+            const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
+                                                           kernels_rows_number,
+                                                           kernels_columns_number,
+                                                           kernels_channels_number);
+
+            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + biases(j);
+
+            memcpy(convolutions.data() +j*output_size_rows_columns +i*output_size_rows_columns*kernels_number,
+                   tmp_result.data(), static_cast<size_t>(output_size_rows_columns)*sizeof(float));
+         }
+    }
 }
 
 
@@ -305,20 +347,20 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs, Tensor<type,1> potential_parameters, LayerForwardPropagation* forward_propagation)
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
+                                           Tensor<type,1> potential_parameters,
+                                           LayerForwardPropagation* forward_propagation)
 {
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
-
 
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
     const Index kernels_channels_number = get_kernels_channels_number();
     const Index kernels_number = get_kernels_number();
 
-    Tensor<type, 4> potential_synaptic_weights(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
-    Tensor<type, 2> potential_biases(2,1);
-
+    TensorMap<Tensor<type,2>> potential_biases(potential_parameters.data(), kernels_number, 1);
+    TensorMap<Tensor<type,4>> potential_synaptic_weights(potential_parameters.data(), kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
 
     calculate_convolutions(inputs,
                            potential_biases,
