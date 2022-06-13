@@ -145,7 +145,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 4> inputs_pointer = inputs;
-    Tensor<type, 4> synaptic_weights_pointer = synaptic_weights;
+    Tensor<type, 4> synaptic_weights_pointer = synaptic_weights; // ??
 
     #pragma omp parallel for
     for(int i = 0; i < images_number ;i++)
@@ -193,7 +193,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 4> inputs_pointer = inputs;
-    Tensor<type, 4> synaptic_weights_pointer = synaptic_weights;
+    Tensor<type, 4> synaptic_weights_pointer = potential_synaptic_weights; // ??
 
     #pragma omp parallel for
     for(int i = 0; i < images_number ;i++)
@@ -209,7 +209,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                            kernels_columns_number,
                                                            kernels_channels_number);
 
-            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + biases(j);
+            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + potential_biases(j,0);
 
             memcpy(convolutions.data() +j*output_size_rows_columns +i*output_size_rows_columns*kernels_number,
                    tmp_result.data(), static_cast<size_t>(output_size_rows_columns)*sizeof(float));
@@ -360,7 +360,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
     const Index kernels_number = get_kernels_number();
 
     TensorMap<Tensor<type,2>> potential_biases(potential_parameters.data(), kernels_number, 1);
-    TensorMap<Tensor<type,4>> potential_synaptic_weights(potential_parameters.data(), kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
+    TensorMap<Tensor<type,4>> potential_synaptic_weights(potential_parameters.data()+kernels_number, kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
 
     calculate_convolutions(inputs,
                            potential_biases,
@@ -370,7 +370,6 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
     calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
                                       convolutional_layer_forward_propagation->activations,
                                       convolutional_layer_forward_propagation->activations_derivatives);
-
 }
 
 
