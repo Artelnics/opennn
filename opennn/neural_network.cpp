@@ -1416,7 +1416,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
@@ -1500,16 +1499,24 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     Index index = parameters_number;
 
+    cout << "trainable layers number: " << trainable_layers_number << endl;
+
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+//        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
 
-        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+//        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
 
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
         {
+            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
+//            cout << "previous activations: " << static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations << endl;
+//            system("pause");
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
@@ -1519,6 +1526,10 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::Probabilistic:
         {
+            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
@@ -1528,6 +1539,10 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::Recurrent:
         {
+            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
@@ -1537,6 +1552,10 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::LongShortTermMemory:
         {
+            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
@@ -1546,8 +1565,12 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::Convolutional:
         {
+            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
             trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            potential_parameters,
+//                                                            potential_parameters,
                                                             forward_propagation.layers(i));
         }
             break;
