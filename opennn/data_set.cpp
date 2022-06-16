@@ -6850,8 +6850,10 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Channels
+    // Image classification
+    if(project_type == ProjectType::ImageClassification)
     {
+        // Channels
         file_stream.OpenElement("Channels");
 
         buffer.str("");
@@ -6860,10 +6862,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
-    }
 
-    // Width
-    {
+        // Width
         file_stream.OpenElement("Width");
 
         buffer.str("");
@@ -6872,10 +6872,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
-    }
 
-    // Height
-    {
+        // Height
         file_stream.OpenElement("Height");
 
         buffer.str("");
@@ -6921,8 +6919,12 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
     // Text classification
+
+    if(project_type == ProjectType::TextClassification)
     {
+        // Short words length
         file_stream.OpenElement("ShortWordsLength");
 
         buffer.str("");
@@ -6931,9 +6933,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
-    }
 
-    {
+        // Long words length
         file_stream.OpenElement("LongWordsLength");
 
         buffer.str("");
@@ -7379,64 +7380,48 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_label("NA");
     }
 
+    // Image classification
+
     // Channels
 
     const tinyxml2::XMLElement* channels_number_element = data_file_element->FirstChildElement("Channels");
 
-    if(!channels_number_element)
+    if(channels_number_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Channels number element is nullptr.\n";
+        if(channels_number_element->GetText())
+        {
+            const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(channels_number_element->GetText())
-    {
-        const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
-
-        set_channels_number(channels);
+            set_channels_number(channels);
+        }
     }
 
     // Width
 
     const tinyxml2::XMLElement* image_width_element = data_file_element->FirstChildElement("Width");
 
-    if(!image_width_element)
+    if(image_width_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Image width element is nullptr.\n";
+        if(image_width_element->GetText())
+        {
+            const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(image_width_element->GetText())
-    {
-        const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
-
-        set_image_width(width);
+            set_image_width(width);
+        }
     }
 
     // Height
 
     const tinyxml2::XMLElement* image_height_element = data_file_element->FirstChildElement("Height");
 
-    if(!image_height_element)
+    if(image_height_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Image height element is nullptr.\n";
+        if(image_height_element->GetText())
+        {
+            const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(image_height_element->GetText())
-    {
-        const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
-
-        set_image_height(height);
+            set_image_height(height);
+        }
     }
 
     // Forecasting
@@ -7505,38 +7490,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     const tinyxml2::XMLElement* short_words_length_element = data_file_element->FirstChildElement("ShortWordsLength");
 
-    if(!time_column_element)
+    if(short_words_length_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Short words length element is nullptr.\n";
+        if(short_words_length_element->GetText())
+        {
+            const int new_short_words_length = static_cast<Index>(atoi(short_words_length_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(short_words_length_element->GetText())
-    {
-        const int new_short_words_length = static_cast<Index>(atoi(short_words_length_element->GetText()));
-
-        set_short_words_length(new_short_words_length);
+            set_short_words_length(new_short_words_length);
+        }
     }
 
     const tinyxml2::XMLElement* long_words_length_element = data_file_element->FirstChildElement("LongWordsLength");
 
-    if(!time_column_element)
+    if(long_words_length_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Long words length element is nullptr.\n";
+        if(long_words_length_element->GetText())
+        {
+            const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(long_words_length_element->GetText())
-    {
-        const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
-
-        set_long_words_length(new_long_words_length);
+            set_long_words_length(new_long_words_length);
+        }
     }
 
     // Columns
