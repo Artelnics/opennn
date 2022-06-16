@@ -649,7 +649,6 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
 void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
-/*
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
@@ -663,7 +662,6 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     memcpy(gradient.data() + index + biases_number,
            convolutional_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-*/
 }
 
 

@@ -1515,8 +1515,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
             const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
 
-//            cout << "previous activations: " << static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations << endl;
-//            system("pause");
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
