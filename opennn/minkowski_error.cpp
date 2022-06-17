@@ -63,7 +63,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 {
     // Control sentence
 
-    if(new_Minkowski_parameter < type(1) || new_Minkowski_parameter > type(2.0))
+    if(new_Minkowski_parameter < type(1))
     {
         ostringstream buffer;
 
