@@ -1407,6 +1407,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
     || trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
+//        cout << "initial convolutional" << endl;
+
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
     else
@@ -1414,8 +1416,13 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
     }
 
+//    cout << "trainable layers number: " << trainable_layers_number << endl;
+
     for(Index i = 1; i < trainable_layers_number; i++)
     {
+//        cout << "i: " << i << ": " << trainable_layers_pointers(i)->get_type_string() << endl;
+//        cout << "type " << i-1 << ": " << trainable_layers_pointers(i-1)->get_type_string() << endl;
+
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
@@ -1499,14 +1506,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     Index index = parameters_number;
 
-    cout << "trainable layers number: " << trainable_layers_number << endl;
-
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-//        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
-
-//        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
-
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
@@ -1519,6 +1520,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                     ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
+            index += parameters_number;
         }
             break;
 
@@ -1532,6 +1534,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                     ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
+            index += parameters_number;
         }
             break;
 
@@ -1545,6 +1548,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                     ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
+            index += parameters_number;
         }
             break;
 
@@ -1558,26 +1562,28 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                     ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
+            index += parameters_number;
         }
             break;
 
         case Layer::Type::Convolutional:
         {
-            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
-
-            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
-
             trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-//                                                            potential_parameters,
                                                             forward_propagation.layers(i));
         }
             break;
         case Layer::Type::Flatten:
         {
+            const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+            const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
+
+            index += parameters_number;
         }
             break;
 
@@ -1585,7 +1591,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         }
 
-        index += parameters_number;
+//        index += parameters_number;
     }
 }
 
