@@ -24,14 +24,10 @@ using namespace opennn;
 using namespace std;
 using namespace Eigen;
 
-#include "data_set.h"
-#include "json_to_xml.h"
-
 int main()
 {
     try
     {
-        cout << "Blank script! " << endl;
 /*
         DataSet data_set("iris_flowers.csv");
         NeuralNetwork neural_network(Classification, 4,6,3);

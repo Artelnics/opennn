@@ -25,6 +25,8 @@
 #include "layer.h"
 #include "config.h"
 #include "perceptron_layer.h"
+#include "probabilistic_layer.h"
+#include "pooling_layer.h"
 
 namespace opennn
 {
@@ -32,9 +34,9 @@ namespace opennn
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
-class PoolingLayer;
-class PerceptronLayer;
-class ProbabilisticLayer;
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+#endif
 
 class ConvolutionalLayer : public Layer
 {
@@ -161,11 +163,6 @@ public:
 
    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
 
-
-//   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
-//   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
-//   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
-
    // Delta methods
 
 //   void calculate_hidden_delta(LayerForwardPropagation*,
@@ -247,9 +244,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
-#endif
-
+#else
 };
+#endif
 
 
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
