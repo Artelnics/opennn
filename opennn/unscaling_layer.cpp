@@ -129,15 +129,36 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else if(scalers(i) == Scaler::MinimumMaximum)
         {
-            buffer << outputs_names(i) << " = " << inputs_names(i) << "*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")/(" << max_range << "-" << min_range << ")+" << descriptives(i).minimum << "-" << min_range << "*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")/(" << max_range << "-" << min_range << ");\n";
+            if(abs(descriptives(i).minimum - descriptives(i).maximum) < type(NUMERIC_LIMITS_MIN))
+            {
+                buffer << outputs_names[i] << "=" << descriptives(i).minimum <<";\n";
+            }
+            else
+            {
+                const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+
+                const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+
+                buffer << outputs_names[i] << "=" << inputs_names[i] << "*" << slope << "+" << intercept<<";\n";
+            }
         }
         else if(scalers(i) == Scaler::MeanStandardDeviation)
         {
-            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ");\n";
+            const type standard_deviation = descriptives(i).standard_deviation;
+
+            const type mean = descriptives(i).mean;
+
+            buffer << outputs_names[i] << "=" << inputs_names[i] << "*" << standard_deviation<<"+"<<mean<<";\n";
+        }
+        else if(scalers(i) == Scaler::StandardDeviation)
+        {
+            const type standard_deviation = descriptives(i).standard_deviation;
+
+            buffer << outputs_names[i] <<  "=" <<  inputs_names(i) << "*" << standard_deviation<<";\n";
         }
         else if(scalers(i) == Scaler::Logarithm)
         {
-            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ");\n";
+            buffer << outputs_names[i] << "=" << "exp(" << inputs_names[i] << ");\n";
         }
         else
         {
@@ -1104,6 +1125,9 @@ string UnscalingLayer::write_expression_c() const
                 const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
                 const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+
+                buffer << "\tslope:" << slope << endl;
+                buffer << "\tintercept:" << intercept << endl;
 
                 buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
             }
