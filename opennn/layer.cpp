@@ -786,38 +786,72 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
         y(i, maximum_index) = type(1);
     }
-
 }
 
 
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
+{       
     const Index columns_number = x.dimension(1);
-
-    const Index rows_number = y.dimension(0);
-
-    // Activations
+    const Index rows_number = x.dimension(0);
 
     y.device(*thread_pool_device) = x.exp();
 
-    Tensor<type, 1> sums(rows_number);
-    sums.setZero();
+    Tensor<type, 1> inverse_sums(rows_number);
+    inverse_sums.setZero();
 
-    for (Index i = 0; i < rows_number; i++)
+    Eigen::array<int, 1> dims({1}); // Eigen reduction cols Axis
+    inverse_sums = y.sum(dims).inverse();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < columns_number; i++)
     {
-        for (Index j = 0; j < columns_number; j++)
-        {
-            sums[i] += y(i, j);
-        }
+        const TensorMap<Tensor<type, 1>> single_col(y.data()+rows_number*i, rows_number);
+
+        const Tensor<type, 1> tmp_result = single_col*inverse_sums;
+
+        memcpy(y.data() + rows_number*i,
+               tmp_result.data(), static_cast<size_t>(rows_number)*sizeof(float));
     }
 
-    for (Index i = 0; i < rows_number; i++)
-    {
-        for (Index j = 0; j < columns_number; j++)
-        {
-            y(i, j) = y(i, j) / sums(i);
-        }
-    }
+//    const Index columns_number = x.dimension(1);
+
+//    const Index rows_number = y.dimension(0);
+
+//    Tensor<long double, 2> new_x(x.dimension(0),x.dimension(1));
+//    Tensor<long double, 2> new_y(y.dimension(0),y.dimension(1));
+
+//    // Activations
+
+//    for(int i = 0; i < x.dimension(0); i++)
+//    {
+//        for(int j = 0; j < x.dimension(1); j++)
+//        {
+//            new_x(i,j) = static_cast<long double>(x(i,j));
+//        }
+//    }
+
+//    new_y.device(*thread_pool_device) = new_x.exp();
+
+//    Tensor<long double, 1> sums(rows_number);
+//    sums.setZero();
+
+//    for (Index i = 0; i < rows_number; i++)
+//    {
+//        for (Index j = 0; j < columns_number; j++)
+//        {
+//            sums[i] += new_y(i, j);
+//        }
+//    }
+
+//    for (Index i = 0; i < rows_number; i++)
+//    {
+//        for (Index j = 0; j < columns_number; j++)
+//        {
+//            new_y(i, j) = new_y(i, j) / sums(i);
+//            if(new_y(i, j) < NUMERIC_LIMITS_MIN) new_y(i, j) = NUMERIC_LIMITS_MIN;
+//            y(i,j) = static_cast<type>(new_y(i,j));
+//        }
+//    }
 }
 
 
