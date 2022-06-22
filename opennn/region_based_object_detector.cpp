@@ -66,201 +66,110 @@ void RegionBasedObjectDetector::segment_image()
 }
 
 
-BoundingBox RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsigned char, 1>& image,
+Tensor<type, 1> RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<unsigned char, 1>& image,
                                                              const Index& x_top_left, const Index& y_top_left,
                                                              const Index& x_bottom_right, const Index& y_bottom_right) const
 {
-    BoundingBox proposed_region;
-
-    proposed_region.x_top_left = x_top_left;
-    proposed_region.y_top_left = y_top_left;
-    proposed_region.x_bottom_right = x_bottom_right;
-    proposed_region.y_bottom_right = y_bottom_right;
-
-    cout << "x top left: " << x_top_left << endl;
-    cout << "y top left: " << y_top_left << endl;
-    cout << "x bottom right: " << x_bottom_right << endl;
-    cout << "y bottom right: " <<  y_bottom_right<< endl;
-
+    const Index channels_number = 1;// = data_set_pointer->get_channels_number();
     const Index height = 28;//data_set_pointer->get_image_height();
     const Index width = 28;// = data_set_pointer->get_image_width();
-    const Index channels_number = 1;// = data_set_pointer->get_channels_number();
 
-    cout << "width: " <<  width << endl;
-    cout << "channels number: " <<  channels_number<< endl;
-    cout << "Image size: " << image.size() << endl;
+    Tensor<type, 1> data;
+    data.resize(channels_number*width*height);
 
-    cout << "*************************" << endl;
+    const Index pixel_loop_start = channels_number * ( width * (y_bottom_right - 1) + x_top_left);
+    const Index pixel_loop_end = channels_number * ( width * (y_top_left - 1) + x_bottom_right);
 
     Index data_index = 0;
-
-    const Index pixel_loop_start = channels_number * ( width * (height - (y_bottom_right - 1)) + x_top_left);
-    const Index pixel_loop_end = channels_number * ( width * (height - (y_top_left - 1)) + x_bottom_right);
-
-    cout << "Pixel loop start: " << pixel_loop_start << endl;
-    cout << "Pixel loop end: " << pixel_loop_end << endl;
-
-    proposed_region.data.resize(120); // Change the size
 
     for(Index i = pixel_loop_start; i < pixel_loop_end; i++)
     {
         const int height_number = (int)(i/height);
-
-//        cout << "Height number: " << height_number << endl;
-//        cout << ((height_number) * width + x_top_left) * channels_number << " < " << i << " < " << ((height_number) * width + x_bottom_right) * channels_number << endl;
 
         const Index left_margin = (height_number * width + x_top_left) * channels_number;
         const Index right_margin = (height_number * width + x_bottom_right) * channels_number;
 
         if(i >= left_margin && i <= right_margin)
         {
-//            cout << "Pixel value: " << static_cast<type>(image[i]) << endl;
-//            cout << "data index i: " << data_index << " proposed size: " << proposed_region.data.size() << endl;
-            proposed_region.data(data_index) = static_cast<type>(image[i]);
+            data(data_index) = static_cast<type>(image[i]);
             data_index++;
         }
     }
 
-    return proposed_region;
+    return data;
 }
 
 
+BoundingBox RegionBasedObjectDetector::propose_random_region(const Tensor<unsigned char, 1>& image) const
+{
+    const Index channels_number = 1; // = data_set_pointer->get_channels_number();
+    const Index image_height = 28; //data_set_pointer->get_image_height();
+    const Index image_width = 28; // = data_set_pointer->get_image_width();
+
+    const Index half_height =  image_height / 2;
+    const Index half_width = image_width / 2;
+
+    /* initialize random seed: */
+
+    srand(time(NULL));
+
+    Index x_center = rand() % image_width;
+    Index y_center = rand() % image_height;
+
+    Index x_top_left;
+    Index y_bottom_right;
+
+    if(x_center == 0){x_top_left = 0;} else{x_top_left = rand() % x_center;}
+    if(x_center == 0){y_bottom_right = 1;} else{y_bottom_right = rand() % y_center;}
+
+    Index y_top_left = rand() % image_height + y_center;
+    Index x_bottom_right = rand() % image_width + x_center;
+
+    BoundingBox random_region(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    random_region.data = get_unique_bounding_box(image, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    return random_region;
+}
+
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<unsigned char, 1>& image) const
 {
-    const Index temporal_regions_number = 50; // We select random number of regions
-    Tensor<BoundingBox, 1> proposed_regions(temporal_regions_number);
+    const Index regions_number = 50; // We select random number of regions
+    Tensor<BoundingBox, 1> proposed_regions(regions_number);
 
-    const Index width = data_set_pointer->get_image_width();
-    const Index channels_number = data_set_pointer->get_channels_number();
-
-    for(Index l = 0; l < temporal_regions_number; l++) // regions_number; l++)
+    for(Index i = 0; i < regions_number; i++)
     {
-        // Pick the next four values from the neuralLabeler
-        Index bounding_box_x_top_left = l;
-        Index bounding_box_y_top_left = l;
-        Index bounding_box_x_bottom_right = l + 28 ;
-        Index bounding_box_y_bottom_right = l + 28;
-
-        proposed_regions(l).x_top_left = bounding_box_x_top_left;
-        proposed_regions(l).y_top_left = bounding_box_y_top_left;
-        proposed_regions(l).x_bottom_right = bounding_box_x_bottom_right;
-        proposed_regions(l).y_bottom_right = bounding_box_y_bottom_right;
-
-        const Index bounding_box_width = bounding_box_x_top_left - bounding_box_x_bottom_right;
-        const Index bounding_box_height = bounding_box_y_top_left - bounding_box_y_bottom_right;
-
-        Index data_index = 0;
-        for(Index i = channels_number * width * (bounding_box_y_bottom_right - 1); i < channels_number * width * (bounding_box_y_top_left - 1) ; i++)
-        {
-            if((i > (bounding_box_x_top_left + i * width) * channels_number) && (i < (bounding_box_x_bottom_right + i * width) * channels_number))
-            {
-                proposed_regions(l).data(data_index) = static_cast<type>(image[i]);
-                data_index++;
-            }
-        }
-
-        cout << "Bounding box size: " << data_index << endl;
-
-        proposed_regions(l).width = bounding_box_width;
-        proposed_regions(l).height = bounding_box_height;
-        proposed_regions(l).x_center = bounding_box_x_top_left + proposed_regions(l).width / 2;
-        proposed_regions(l).y_center = bounding_box_y_bottom_right + proposed_regions(l).height / 2;
+        proposed_regions(i) = propose_random_region(image);
     }
 
     return proposed_regions;
 }
 
 
-BoundingBox RegionBasedObjectDetector::warp_single_region(const BoundingBox& region, const Index& newWidth, const Index& newHeight) const
+Tensor<BoundingBox, 1> RegionBasedObjectDetector::regress_regions(Tensor<BoundingBox, 1>& proposed_regions) const
 {
-    BoundingBox warped_region;
+    Tensor<BoundingBox, 1> regressed_regions(regions_number);
 
-    const Index channels_number = data_set_pointer->get_channels_number();
-
-    const Index height = region.height;
-    const Index width = region.width;
-
-    //  if(region_data == NULL) return false;
-
-    // Get a new buffer to interpolate into
-
-    warped_region.data(newWidth * newHeight * channels_number);
-
-    const type scaleWidth =  (type)newWidth / (type)width;
-    const type scaleHeight = (type)newHeight / (type)height;
-
-    for(Index h = 0; h < newHeight; h++)
+    for(Index i = 0; i < regions_number; i++)
     {
-        for(Index w = 0; w < newWidth; w++)
-        {
-            const int pixel = (h * (newWidth *channels_number)) + (w*channels_number);
-            const int nearestMatch =  (((int)(h / scaleHeight) * (width *channels_number)) + ((int)(w / scaleWidth) * channels_number));
-
-            if(channels_number == 3)
-            {
-                warped_region.data[pixel] =  region.data[nearestMatch];
-                warped_region.data[pixel + 1] =  region.data[nearestMatch + 1];
-                warped_region.data[pixel + 2] =  region.data[nearestMatch + 2];
-            }
-            else
-            {
-                warped_region.data[pixel] =  region.data[nearestMatch];
-            }
-        }
+        regressed_regions(i) = proposed_regions(i).regression();
     }
 
-    warped_region.width = newWidth;
-    warped_region.height = newHeight;
+    return regressed_regions;
 }
-
 
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<BoundingBox, 1>& proposed_regions) const
 {
     Tensor<BoundingBox, 1> warped_regions(regions_number);
 
-    const Index channels_number = data_set_pointer->get_channels_number();
-    Index newWidth;
-    Index newHeight;
-
     // #pragma
+
+    const Index channels_number = proposed_regions(0).channels_number;
 
     for(Index i = 0; i < regions_number; i++)
     {
-        const Index height = proposed_regions(i).height;
-        const Index width = proposed_regions(i).width;
-
-        //  if(region_data == NULL) return false;
-
-        // Get a new buffer to interpolate into
-
-        warped_regions(i).data(newWidth * newHeight * channels_number);
-
-        const type scaleWidth =  (type)newWidth / (type)width;
-        const type scaleHeight = (type)newHeight / (type)height;
-
-        for(Index h = 0; h < newHeight; h++)
-        {
-            for(Index w = 0; w < newWidth; w++)
-            {
-                const int pixel = (h * (newWidth *channels_number)) + (w*channels_number);
-                const int nearestMatch =  (((int)(h / scaleHeight) * (width *channels_number)) + ((int)(w / scaleWidth) * channels_number));
-
-                if(channels_number == 3)
-                {
-                    warped_regions(i).data[pixel] =  proposed_regions(i).data[nearestMatch];
-                    warped_regions(i).data[pixel + 1] =  proposed_regions(i).data[nearestMatch + 1];
-                    warped_regions(i).data[pixel + 2] =  proposed_regions(i).data[nearestMatch + 2];
-                }
-                else
-                {
-                    warped_regions(i).data[pixel] =  proposed_regions(i).data[nearestMatch];
-                }
-            }
-        }
-
-        warped_regions(i).width = newWidth;
-        warped_regions(i).height = newHeight;
+        warped_regions(i) = proposed_regions(i).resize(channels_number, 224, 224); // Default size for the input images of the cnn (224,224)
     }
 
     return warped_regions;
@@ -309,7 +218,7 @@ type RegionBasedObjectDetector::calculate_intersection_over_union(const Bounding
         intersection_width = abs((int) data_set_bouding_box.x_bottom_right - (int) neural_network_bounding_box.x_top_left);
         intersection_height = abs((int) data_set_bouding_box.y_top_left - (int) neural_network_bounding_box.y_bottom_right);
     }
-    else// if((data_set_bouding_box.y_top_left < neural_network_bounding_box.y_top_left)&& (data_set_bouding_box.x_bottom_right > neural_network_bounding_box.x_bottom_right))
+    else
     {
         intersection_width = abs((int) data_set_bouding_box.x_top_left - (int) neural_network_bounding_box.x_bottom_right);
         intersection_height = abs((int) data_set_bouding_box.y_top_left - (int) neural_network_bounding_box.y_bottom_right);

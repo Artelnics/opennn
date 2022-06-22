@@ -726,9 +726,13 @@ public:
    // Data load methods
 
    void read_csv();
-   Tensor<unsigned char,1> read_bmp_image(const string& filename);
+
+   Tensor<unsigned char,1> read_bmp_image(const string&);
    void read_bmp();
    void read_ground_truth(const string&);
+   Index get_bounding_boxes_number_from_XML(const string&);
+   Index get_label_classes_number_from_XML(const string&);
+
    void read_txt();
 
    void load_data_binary();
@@ -919,6 +923,8 @@ private:
    Index channels_number = 0;
    Index image_width = 0;
    Index image_height = 0;
+
+   Tensor<string, 1> labels_tokens;
 
    Index width_no_padding;
    // Local Outlier Factor
