@@ -12,6 +12,7 @@ CONFIG += ordered
 
 SUBDIRS += airfoil_self_noise
 SUBDIRS += airline_passengers
+SUBDIRS += amazon_reviews
 SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
 SUBDIRS += leukemia

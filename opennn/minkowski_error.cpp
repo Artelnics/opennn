@@ -63,13 +63,13 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 {
     // Control sentence
 
-    if(new_Minkowski_parameter < type(1) || new_Minkowski_parameter > type(2.0))
+    if(new_Minkowski_parameter < type(1))
     {
         ostringstream buffer;
 
         buffer << "OpenNN Error. MinkowskiError class.\n"
                << "void set_Minkowski_parameter(const type&) method.\n"
-               << "The Minkowski parameter must be comprised between 1 and 2.\n";
+               << "The Minkowski parameter must be greater than 1.\n";
 
         throw invalid_argument(buffer.str());
     }
