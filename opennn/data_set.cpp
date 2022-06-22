@@ -10541,9 +10541,6 @@ void DataSet::read_csv()
 
 Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
-
-    cout << "Reading the files: " << endl;
-
     FILE* f = fopen(filename.data(), "rb");
 
     if(!f)
@@ -10561,7 +10558,7 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
     fread(info, sizeof(unsigned char), 54, f);
 
     const Index width_no_padding = *(int*)&info[18];
-    const Index height = *(int*)&info[22];
+    image_height = *(int*)&info[22];
     const Index bits_per_pixel = *(int*)&info[28];
     int channels;
 
@@ -10570,11 +10567,7 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 
     const int paddingAmount = (4 - (width_no_padding) % 4) % 4;
     image_width = width_no_padding + paddingAmount;
-    const size_t size = channels_number * image_width * height;
-
-    cout << "Channels number: " << channels_number << endl;
-    cout << "Image width: " << image_width << endl;
-    cout << "**************************" << endl;
+    const size_t size = channels_number * image_width * image_height;
 
     Tensor<unsigned char, 1> image(size);
     image.setZero();
@@ -10838,6 +10831,298 @@ void DataSet::read_bmp()
 
 void DataSet::read_ground_truth(const string& file_name)
 {
+    const Index classes_number = get_label_classes_number_from_XML(file_name);
+
+    const Index bounding_boxes_number = get_bounding_boxes_number_from_XML(file_name);
+
+    cout << "classes_number: " << classes_number << endl;
+    cout << "bounding_boxes_number: " << bounding_boxes_number << endl;
+
+    RegionBasedObjectDetector region_based_object_detector;
+
+    Index bounding_box_height = 224;
+    Index bounding_box_width = 224;
+
+    Index pixels_number = channels_number * bounding_box_height * bounding_box_width;
+
+    data.resize(bounding_boxes_number, pixels_number + classes_number);
+
+    data.setZero();
+
+    rows_labels.resize(bounding_boxes_number);
+
+    Index row_index = 0;
+
+    /**********************Load XML from string**************************************/
+
+    tinyxml2::XMLDocument document;
+
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    /**********************Read ground Truth XML*************************************/
+
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
+
+    if(!neural_labeler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuralLabeler element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images
+
+    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
+
+    if(!images_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "Images element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
+    // Images Number
+
+    const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
+
+    if(!images_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "ImagesNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+
+    cout << "Images number: " << images_number << endl;
+
+    const tinyxml2::XMLElement* start_images_element = images_number_element;
+
+    for(Index i = 0; i < images_number; i++)
+    {
+        // Image
+
+        const tinyxml2::XMLElement* image_element = start_images_element->NextSiblingElement("Image");
+        start_images_element = image_element;
+
+        if(!image_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                   << "Image element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        // Filename
+
+        const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
+
+        if(!file_name_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                   << "Filename element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const string image_filename = file_name_element->GetText();
+
+        // Annotations Number
+
+        const tinyxml2::XMLElement* annotations_number_element = image_element->FirstChildElement("AnnotationsNumber");
+
+        if(!annotations_number_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                   << "AnnotationsNumber element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+
+        const tinyxml2::XMLElement* start_annotatioins_element = annotations_number_element;
+
+        for(Index j = 0; j < annotations_number; j++)
+        {
+            // Annotation
+
+            const tinyxml2::XMLElement* annotation_element = start_annotatioins_element->NextSiblingElement("Annotation");
+            start_annotatioins_element = annotation_element;
+
+            if(!annotation_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                       << "Annotation element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            // Label
+
+            const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
+
+            if(!label_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                       << "Label element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            string gTruth_class = label_element->GetText();
+
+            // Points
+
+            const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
+
+            if(!points_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                       << "Points element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            string bounding_box_points = points_element->GetText();
+            Tensor<string,1> splitted_points = get_tokens(bounding_box_points, ',');
+
+            const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
+            const int y_top_left = static_cast<int>(stoi(splitted_points[1]));
+            const int x_bottom_right = static_cast<int>(stoi(splitted_points[2]));
+            const int y_bottom_right = static_cast<int>(stoi(splitted_points[3]));
+
+            /*************************************************************************/
+
+            // Check the format of the image. If is not a bmp image, convert it.
+
+
+
+            const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
+
+            BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+            bounding_box.data = region_based_object_detector.get_unique_bounding_box(image_pixel_values,
+                                                                                    x_top_left, y_top_left,
+                                                                                    x_bottom_right, y_bottom_right);
+
+            BoundingBox warped_bounding_box = bounding_box.resize(channels_number, bounding_box_width, bounding_box_height);
+
+            for(Index j = 0; j < pixels_number; j++)
+            {
+                data(row_index, j) = warped_bounding_box.data(j);
+            }
+
+            for(Index p = 0; p < labels_tokens.size(); p++)
+            {
+                if(labels_tokens(p) == gTruth_class)
+                {
+                    cout << "For the index " << p <<": " << labels_tokens(p) <<" == "<< gTruth_class << endl;
+                    data(row_index, pixels_number + p) = 1;
+                }
+            }
+
+            rows_labels(row_index) = image_filename;
+
+            row_index++;
+        }
+    }
+
+    columns.resize(pixels_number + 1);
+
+    // Input columns
+
+    Index column_index = 0;
+
+    for(Index i = 0; i < channels_number; i++)
+    {
+        for(Index j = 0; j < bounding_box_width; j++)
+        {
+            for(Index k = 0; k < bounding_box_height ; k++)
+            {
+                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                columns(column_index).type = ColumnType::Numeric;
+                columns(column_index).column_use = VariableUse::Input;
+                columns(column_index).scaler = Scaler::MinimumMaximum;
+                column_index++;
+            }
+        }
+    }
+
+    // Target columns
+
+    columns(pixels_number).name = "label";
+
+    if(classes_number == 1)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth() method.\n"
+               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+        throw invalid_argument(buffer.str());
+
+    }
+    else if(classes_number == 2)
+    {
+        columns(pixels_number).column_use = VariableUse::Target;
+        columns(pixels_number).type = ColumnType::Binary;
+        columns(pixels_number).categories = labels_tokens;
+
+        columns(pixels_number).categories_uses.resize(classes_number);
+        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+    }
+    else
+    {
+        Tensor<string, 1> categories(classes_number);
+
+        columns(pixels_number).column_use = VariableUse::Target;
+        columns(pixels_number).type = ColumnType::Categorical;
+        columns(pixels_number).categories = labels_tokens;
+
+        columns(pixels_number).categories_uses.resize(classes_number);
+        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+    }
+
+    samples_uses.resize(images_number);
+
+    split_samples_random();
+
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions.setValues({channels_number, image_width, image_height});
+}
+
+
+Index DataSet::get_bounding_boxes_number_from_XML(const string& file_name)
+{
+    Index bounding_boxes_number = 0;
+    string image_filename;
+
     /**********************Load XML from string**************************************/
 
     tinyxml2::XMLDocument document;
@@ -10862,152 +11147,270 @@ void DataSet::read_ground_truth(const string& file_name)
     if(!neural_labeler_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuralLabeler element is nullptr.\n";
 
         throw invalid_argument(buffer.str());
     }
 
-    // Image
+    // Images
 
-    const tinyxml2::XMLElement* image_element = neural_labeler_element->FirstChildElement("Image");
+    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
 
-    if(!image_element)
+    if(!images_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "Image element is nullptr.\n";
+               << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Images element is nullptr.\n";
 
         throw invalid_argument(buffer.str());
     }
 
-    // Filename
+    // Images Number
 
-    const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
+    const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
 
-    if(!file_name_element)
+    if(!images_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "Filename element is nullptr.\n";
+               << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ImagesNumber element is nullptr.\n";
 
         throw invalid_argument(buffer.str());
     }
 
-    const string image_filename = file_name_element->GetText();
+    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
 
-    // Annotation
+    const tinyxml2::XMLElement* start_image_element = images_number_element;
 
-    const tinyxml2::XMLElement* annotation_element = image_element->FirstChildElement("Annotation");
-
-    if(!annotation_element)
+    for(Index i = 0; i < images_number; i++)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "Annotation element is nullptr.\n";
+        // Image
 
-        throw invalid_argument(buffer.str());
-    }
+        const tinyxml2::XMLElement* image_element = start_image_element->NextSiblingElement("Image");
+        start_image_element = image_element;
 
-
-    // Label
-
-    const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
-
-    if(!label_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "Label element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    string gTruth_class = label_element->GetText();
-
-    // Points
-
-    const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
-
-    if(!points_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "Points element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    string bounding_box_points = points_element->GetText();
-    Tensor<string,1> splitted_points = get_tokens(bounding_box_points, ',');
-
-    const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
-    const int y_top_left = static_cast<int>(stoi(splitted_points[1]));
-    const int x_bottom_right = static_cast<int>(stoi(splitted_points[2]));
-    const int y_bottom_right = static_cast<int>(stoi(splitted_points[3]));
-
-    /********************************************************************************************/
-
-    // Firs lets try with one single image
-
-    const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
-
-    RegionBasedObjectDetector region_based_object_detector;
-
-    cout << "Image width: " << get_image_width() << endl;
-    cout << "Channels number: " << get_channels_number() << endl;
-
-    BoundingBox bounding_box = region_based_object_detector.get_unique_bounding_box(image_pixel_values,
-                                                                                    x_top_left, y_top_left,
-                                                                                    x_bottom_right, y_bottom_right);
-
-    //    images_number;
-
-    Index bounding_boxes_number = 1;//= 2000;
-
-    Index bounding_box_height = 224;
-    Index bounding_box_width = 224;
-
-    Index pixels_number = channels_number * bounding_box_height * bounding_box_width;
-
-    Index classes_number = 10;
-    Index row_index = 0;
-
-    data.resize(bounding_boxes_number, pixels_number + classes_number);
-
-    cout << "Resized dataset" << endl;
-/*
-    BoundingBox warped_bounding_box = region_based_object_detector.warp_single_region(bounding_box, bounding_box_width, bounding_box_height);
-//    for(Index i = 0; i < images_number; i++)
-//    {
-    //        for(Index j = 0; j < bounding_boxes(i); j++)
-    //        {
-                for(Index j = 0; j < pixels_number; j++)
-                {
-                    data(row_index,j) = warped_bounding_box.data(j);
-                    cout << data << endl;
-                }
-
-    //        }
-//        }
-
-        /*if(classes_number == 2 && i == 0)
+        if(!image_element)
         {
-            data(row_index, pixels_number) = 1;
-        }
-        else if(classes_number == 2 && i == 1)
-        {
-            data(row_index, pixels_number) = 0;
-        }
-        else
-        {
-            data(row_index, pixels_number + i) = 1;
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Image element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
         }
 
-        row_index++;*/
+        // Filename
 
+        const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
+
+        if(!file_name_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Filename element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        image_filename = file_name_element->GetText();
+
+        // Annotations Number
+
+        const tinyxml2::XMLElement* annotations_number_element = image_element->FirstChildElement("AnnotationsNumber");
+
+        if(!annotations_number_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "AnnotationsNumber element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+
+        const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
+
+        for(Index j = 0; j < annotations_number; j++)
+        {
+            // Annotation
+
+            const tinyxml2::XMLElement* annotation_element = start_annotations_element->NextSiblingElement("Annotation");
+            start_annotations_element = annotation_element;
+
+            if(!annotation_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Annotation element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            // Label
+
+            const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
+
+            if(!label_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Label element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            string gTruth_class = label_element->GetText();
+
+            // Points
+
+            const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
+
+            if(!points_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Points element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+        }
+
+        bounding_boxes_number += annotations_number;
+    }
+
+    read_bmp_image(image_filename); // Read an image to save initially the channels number
+
+    return bounding_boxes_number;
 }
 
+
+Index DataSet::get_label_classes_number_from_XML(const string& file_name)
+{
+    /**********************Load XML from string**************************************/
+
+    tinyxml2::XMLDocument document;
+
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    /**********************Read ground Truth XML**************************************/
+
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
+
+    if(!neural_labeler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuralLabeler element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images
+
+    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
+
+    if(!images_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Images element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Labels
+
+    const tinyxml2::XMLElement* labels_element = neural_labeler_element -> FirstChildElement("Labels");
+
+    if(!labels_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Labels element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Labels Number
+
+    const tinyxml2::XMLElement* labels_number_element = labels_element -> FirstChildElement("LabelsNumber");
+
+    if(!labels_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "LabelsNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index labels_number = static_cast<Index>(atoi(labels_number_element->GetText()));
+
+    labels_tokens.resize(labels_number);
+
+    const tinyxml2::XMLElement* start_image_element = labels_number_element;
+
+    for(Index i = 0; i < labels_number; i++)
+    {
+        // Label
+
+        const tinyxml2::XMLElement* label_element = start_image_element->NextSiblingElement("Label");
+        start_image_element = label_element;
+
+        if(!label_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Label element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        // Name
+
+        const tinyxml2::XMLElement* name_element = label_element->FirstChildElement("Name");
+
+        if(!name_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Name element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const string label_string = name_element->GetText();
+
+        labels_tokens(i) = label_string;
+
+        // Color
+
+        const tinyxml2::XMLElement* color_element = label_element->FirstChildElement("Color");
+
+        if(!color_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Color element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+    }
+
+    return labels_number;
+}
 
 void DataSet::read_txt()
 {
