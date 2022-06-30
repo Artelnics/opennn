@@ -357,7 +357,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
             }
-            else if(input_columns_number >= maximum_inputs_number || input_columns_number >= original_input_columns_number - 1)
+            else if(input_columns_number >= maximum_inputs_number || input_columns_number >= original_input_columns_number)
             {
                 stop = true;
 
@@ -365,7 +365,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             }
-            else if(column_index + 1 >= correlations_rank_descending.size() - 1 )
+            else if(column_index >= correlations_rank_descending.size() - 1 )
             {
                 stop = true;
 
