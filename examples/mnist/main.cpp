@@ -48,8 +48,8 @@ int main()
         // Data set
 
         DataSet data_set;
-//        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
-        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/cancer/");
+
+        data_set.set_data_file_name("../data/images");
 
         data_set.read_bmp();
 

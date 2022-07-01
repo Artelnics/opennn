@@ -27,7 +27,7 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Ailine passangers example." << endl;
+        cout << "OpenNN. Ailine passengers example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
 

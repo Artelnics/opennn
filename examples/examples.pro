@@ -15,7 +15,6 @@ SUBDIRS += airline_passengers
 SUBDIRS += amazon_reviews
 SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
-SUBDIRS += leukemia
 SUBDIRS += logical_operations
 SUBDIRS += mnist
 SUBDIRS += outlier_detection

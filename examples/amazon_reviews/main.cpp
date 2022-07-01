@@ -41,8 +41,6 @@ int main()
 
         data_set.read_txt();
 
-        data_set.print();
-
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
