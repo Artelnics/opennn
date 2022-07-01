@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R O S E N B R O C K   A P P L I C A T I O N
+//   A I R F O I L   S E L F   N O I S E   A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -27,21 +27,45 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Blank application." << endl;
+        cout << "OpenNN. Airfoil self noise example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Data set
+
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index targets_number = data_set.get_target_variables_number();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        // Neural network
+
         const Index neurons_number = 100;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, neurons_number, target_variables_number});
+
+        // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        // @todo
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        training_strategy.set_maximum_epochs_number(20000);
+        training_strategy.set_display_period(1000);
+
+        training_strategy.perform_training();
+
+        // Testing analysis
+
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+        testing_analysis.print_goodness_of_fit_analysis();
+
+        // Save results
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression_c("../data/airfoil_self_noise.c");
 
         cout << "Good bye!" << endl;
 

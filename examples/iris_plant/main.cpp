@@ -73,7 +73,6 @@ int main()
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
-
         // Save results
 
         neural_network.save("../data/neural_network.xml");
