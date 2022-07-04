@@ -49,7 +49,7 @@ int main()
 
         DataSet data_set;
 
-        data_set.set_data_file_name("../data/images");
+        data_set.set_data_file_name("../data/images/");
 
         data_set.read_bmp();
 
@@ -69,56 +69,20 @@ int main()
 
         const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
-        // Data set batch
-
-        const Index batch_size = 5;
-
-        DataSetBatch data_set_batch(batch_size, &data_set);
-
-        const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true); 
-
-        data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
-
         Tensor<Index, 1> input_dataset_batch_dimenison(4);
-
-        input_dataset_batch_dimenison(0) = data_set_batch.inputs_4d.dimension(0);
-        input_dataset_batch_dimenison(1) = data_set_batch.inputs_4d.dimension(1);
-        input_dataset_batch_dimenison(2) = data_set_batch.inputs_4d.dimension(2);
-        input_dataset_batch_dimenison(3) = data_set_batch.inputs_4d.dimension(3);
-
-        cout<<"input_dataset_batch_dimenison(0): "<<input_dataset_batch_dimenison(0)<<endl;
-        cout<<"input_dataset_batch_dimenison(1): "<<input_dataset_batch_dimenison(1)<<endl;
-        cout<<"input_dataset_batch_dimenison(2): "<<input_dataset_batch_dimenison(2)<<endl;
-        cout<<"input_dataset_batch_dimenison(3): "<<input_dataset_batch_dimenison(3)<<endl;
 
         // Neural network
 
         NeuralNetwork neural_network;
 
-//        ScalingLayer scaling_layer(input_dataset_batch_dimenison);
-
         ScalingLayer scaling_layer(input_dataset_batch_dimenison);
-
         neural_network.add_layer(&scaling_layer);
 
         FlattenLayer flatten_layer(input_dataset_batch_dimenison);
-
         neural_network.add_layer(&flatten_layer);
 
-        cout << "Flatten layer: " << flatten_layer.get_input_variables_dimensions() << endl;
-        cout << "Batch number: " << flatten_layer.get_inputs_batch_number() << endl;
-        cout << "Channels number: " << flatten_layer.get_inputs_channels_number() << endl;
-        cout << "Input width: " << flatten_layer.get_input_width() << endl;
-        cout << "Input height: " << flatten_layer.get_input_height() << endl;
-
-
         ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
-
         neural_network.add_layer(&probabilistic_layer);
-
-        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, &neural_network);
-
-        neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
 
         // Training strategy
 
@@ -126,24 +90,19 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-//        training_strategy.set_maximum_epochs_number(10);
         training_strategy.perform_training();
 
         // Testing analysis
-/*
-        Tensor<type, 4> inputs_4d;
-        Tensor<type, 2> outputs;
-        outputs = neural_network.calculate_outputs(data_set_batch.inputs_4d);
 
+        Tensor<type, 4> inputs_4d;
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        vector<unsigned char> zero, one;
+        Tensor<unsigned char,1> zero = data_set.read_bmp_image("../data/images/zero/0_1.bmp");
+        Tensor<unsigned char,1> one = data_set.read_bmp_image("../data/images/one/1_1.bmp");
 
-        zero = data_set.read_bmp_image("C:/Users/Artelnics/Desktop/mnist/");
-        one = data_set.read_bmp_image("C:/Users/Artelnics/Desktop/mnist/");
-
-        vector<type> zero_int, one_int;
+        vector<type> zero_int(zero.size()); ;
+        vector<type> one_int(one.size());
 
         for(Index i = 0 ; i < zero.size() ; i++ )
         {
@@ -154,8 +113,6 @@ int main()
         Tensor<type, 2> inputs(2, zero.size());
         Tensor<type, 2> outputs;
 
-        inputs.setValues({zero_int,one_int});
-
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         outputs = neural_network.calculate_outputs(inputs);
 
@@ -164,7 +121,6 @@ int main()
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        */
 
         cout << "Bye!" << endl;
 
@@ -177,121 +133,6 @@ int main()
         return 1;
     }
 }
-
-/*
-// This is an approximation application.
-
-// System includes
-
-#include <iostream>
-#include <sstream>
-#include <time.h>
-#include <stdexcept>
-
-// OpenNN includes
-
-#include "../../opennn/opennn.h"
-#include "../../opennn/opennn_strings.h"
-
-using namespace std;
-using namespace opennn;
-
-int main()
-{
-    try
-    {
-        cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
-
-        srand(static_cast<unsigned>(time(nullptr)));
-
-        // Data set
-
-        DataSet data_set;//("../data/mnist_train.csv", ',', true);
-
-        data_set.set_data_file_name("c:/mnsit");
-
-        data_set.read_images();
-
-        data_set.set_input();
-
-        data_set.set_column_use(0, DataSet::VariableUse::Target);
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        const Tensor<DataSet::Column, 1> columns = data_set.get_columns();
-
-        for(Index i = 0; i < columns.size(); i++)
-        {
-            cout << "Column " << i << ": " << endl;
-            cout << "   Name: " << columns(i).name << endl;
-
-            if(columns(i).column_use == opennn::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
-            else if(columns(i).column_use == opennn::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
-            else if(columns(i).column_use == opennn::DataSet::VariableUse::Unused) cout << "   Use: unused" << endl;
-
-            if(columns(i).type == opennn::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
-
-            cout << endl;
-        }
-
-        cout << "Input variables number: " << data_set.get_target_variables_number() << endl;
-        cout << "Target variables number: " << data_set.get_target_variables_number() << endl;
-
-        // Neural network
-
-        Index hidden_neurons_number = 50;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
-
-        PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
-        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
-
-        Tensor<Layer*, 1> layers_pointers = neural_network.get_trainable_layers_pointers();
-
-        for(Index i = 0; i < layers_pointers.size(); i++)
-        {
-            cout << "Layer " << i << ": " << endl;
-            cout << "   Type: " << layers_pointers(i)->get_type_string() << endl;
-
-            if(layers_pointers(i)->get_type_string() == "Perceptron") cout << "   Activation: " << static_cast<PerceptronLayer*>(layers_pointers(i))->write_activation_function() << endl;
-            if(layers_pointers(i)->get_type_string() == "Probabilistic") cout << "   Activation: " << static_cast<ProbabilisticLayer*>(layers_pointers(i))->write_activation_function() << endl;
-        }
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_display_period(100);
-        training_strategy.set_maximum_epochs_number(1000);
-
-        training_strategy.perform_training();
-
-        // Testing analysis
-
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        const Tensor<type, 1> multiple_classification_tests = testing_analysis.calculate_multiple_classification_tests();
-
-        cout << "Confusion matrix: " << endl;
-        cout << confusion << endl;
-
-        cout << "Accuracy: " << multiple_classification_tests(0)*type(100) << "%" << endl;
-        cout << "Error: " << multiple_classification_tests(1)*type(100) << "%" << endl;
-
-        return 0;
-    }
-    catch(exception& e)
-    {
-        cerr << e.what() << endl;
-
-        return 1;
-    }
-}
-*/
 
 
 // OpenNN: Open Neural Networks Library.
