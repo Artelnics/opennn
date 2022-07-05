@@ -31,52 +31,58 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Data set
+        // DataSet
 
         DataSet data_set;
 
         data_set.set_data_file_name("../data/amazon_cells_labelled.txt");
-
-        data_set.set_text_separator(DataSet::Separator::Semicolon);
+        data_set.set_text_separator(DataSet::Separator::Tab);
 
         data_set.read_txt();
 
-        const Index input_variables_number = data_set.get_input_variables_number();
+        data_set.split_samples_random();
+
+        const Tensor<string, 1> input_words = data_set.get_input_columns_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+
+        const Index words_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        // Neural network
+        // Neural Network
 
-        const Index hidden_neurons_number = 1;
+        const Index hidden_neurons_number = 6;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::TextClassification,
+            {words_number , hidden_neurons_number, target_variables_number});
 
-        // Training strategy
+        // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
         training_strategy.perform_training();
 
-        // Testing analysis
-
+        // Testing Analysis
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_binary_classification_tests();
 
-        // Calculate outputs
+        // Model deployment
 
-        string review_1 = "Highly recommend for any one who has a blue tooth phone.";
-        string review_2 = "You have to hold the phone at a particular angle for the other party to hear you clearly.";
-
+        string review_1 = "Highly recommend for any one who has a bluetooth phone.";
         Tensor<type,1> processed_review_1 = data_set.sentence_to_data(review_1);
+
+        string review_2 = "You have to hold the phone at a particular angle for the other party to hear you clearly.";
         Tensor<type,1> processed_review_2 = data_set.sentence_to_data(review_2);
 
-        Tensor<type,2> input_data(2, input_variables_number);
-        for(Index i = 0; i < input_variables_number; i++)
+        Tensor<type,2> input_data(2, words_number);
+
+        for(Index i = 0; i < words_number; i++)
         {
-            input_data(0,i) = processed_review_1(i);
-            input_data(1,i) = processed_review_2(i);
+          input_data(0,i) = processed_review_1(i);
+          input_data(1,i) = processed_review_2(i);
         }
 
         Tensor<type,2> outputs = neural_network.calculate_outputs(input_data);
@@ -86,8 +92,8 @@ int main()
 
         // Save results
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_python("../data/neural_network.py");
+        neural_network.save_expression_c("../data/amazon_reviews.txt");
+        neural_network.save_expression_python("../data/amazon_reviews.py");
 
         cout << "Good bye!" << endl;
 
