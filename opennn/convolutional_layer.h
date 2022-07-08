@@ -342,6 +342,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
         delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number);
 
+        convolutional_delta.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
+
 //        biases_derivatives.resize(neurons_number);
 
 //        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
@@ -362,6 +364,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     }
 
     Tensor<type, 2> delta;
+    Tensor<type, 4> convolutional_delta;
 
     Tensor<type, 4> biases_derivatives;
 

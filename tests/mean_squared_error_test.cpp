@@ -666,7 +666,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     LossIndexBackPropagation back_propagation(2, &mean_squared_error);
 
-//    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
 //    cout << "Gradient: " << back_propagation.gradient << endl;
 
