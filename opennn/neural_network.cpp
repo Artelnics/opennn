@@ -1561,8 +1561,9 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
-    || trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional||
+            trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten ||
+            trainable_layers_pointers[0]->get_type() == Layer::Type::Resnet50)
     {
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
@@ -1616,6 +1617,13 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                     ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
                                                             forward_propagation.layers(i));
         break;
+
+//        case Layer::Type::Resnet50:
+
+//                  trainable_layers_pointers(i)
+//                      ->forward_propagate(static_cast<Resnet50LayerForwardPropagation*>(forward_propagation.layers(i - 1))->activations,
+//                                                                    forward_propagation.layers(i));
+//                  break;
 
         default: break;
         }
@@ -1712,6 +1720,13 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         }
             break;
 
+//        case Layer::Type::Resnet50:
+//                {
+//                  trainable_layers_pointers(i)
+//                      ->forward_propagate(static_cast<Resnet50LayerForwardPropagation *>(forward_propagation.layers(i - 1))
+//                          ->activations, potential_parameters, forward_propagation.layers(i));
+//                } break;
+
         default: break;
 
         }
@@ -1772,34 +1787,42 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4d)
 {
     Tensor<type, 2> inputs_2d;
-    Tensor<type, 4> outputs_4d;
-    Tensor<type, 2> outputs;
+       Tensor<type, 4> outputs_4d;
+       Tensor<type, 2> outputs;
 
-    const Index layers_number = get_layers_number();   
+       const Index layers_number = get_layers_number();
 
-    if(layers_number == 0) return inputs_2d;
+       if(layers_number == 0) return inputs_2d;
 
-    // First layer output
+       if (layers_pointers(0)->get_type() != Layer::Type::Resnet50)
+       {
 
-    outputs_4d = layers_pointers(0)->calculate_outputs(inputs_4d); // Calculate outputs ScalingLayer
+         // First layer output
 
-    for(Index i = 1; i < layers_number; i++)
-    {
-        if(layers_pointers(i)->get_type() == Layer::Type::Convolutional && layers_pointers(i)->get_type() == Layer::Type::Pooling)
-        {
-            outputs_4d = layers_pointers(i)->calculate_outputs(outputs_4d);
-        }
-        else if(layers_pointers(i)->get_type() == Layer::Type::Flatten)
-        {
-            outputs = layers_pointers(i)->calculate_outputs_2d(outputs_4d);
-        }
-        else
-        {
-            outputs = layers_pointers(i)->calculate_outputs(outputs);
-        }
-    }
+         outputs_4d = layers_pointers(0)->calculate_outputs(
+             inputs_4d); // Calculate outputs ScalingLayer
 
-    return outputs;
+         for (Index i = 1; i < layers_number; i++) {
+           if (layers_pointers(i)->get_type() == Layer::Type::Convolutional &&
+               layers_pointers(i)->get_type() == Layer::Type::Pooling) {
+             outputs_4d = layers_pointers(i)->calculate_outputs(outputs_4d);
+           } else if (layers_pointers(i)->get_type() == Layer::Type::Flatten) {
+             outputs = layers_pointers(i)->calculate_outputs_2d(outputs_4d);
+           } else {
+             outputs = layers_pointers(i)->calculate_outputs(outputs);
+           }
+         }
+       }
+       else
+       {
+         // First layer output
+
+         outputs = layers_pointers(0)->calculate_outputs_2d(inputs_4d); // Resnet50
+         outputs = layers_pointers(1)->calculate_outputs(outputs); // Probabilistic
+
+       }
+
+       return outputs;
 }
 
 
