@@ -728,7 +728,12 @@ public:
    void read_csv();
 
    Tensor<unsigned char,1> read_bmp_image(const string&);
+   void read_bmp_old();
    void read_bmp();
+   Tensor<unsigned char, 3> bmp_image_to_3_channels(Tensor<unsigned char, 1> &);
+   Tensor<unsigned char, 1> channels_format_flattening(Tensor<unsigned char, 3> &);
+   Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
+
    void read_ground_truth(const string&);
    Index get_bounding_boxes_number_from_XML(const string&);
    Index get_label_classes_number_from_XML(const string&);

@@ -31,6 +31,7 @@
 #include "probabilistic_layer.h"
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
+//#include "resnet50_layer.h"
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
@@ -303,7 +304,6 @@ struct NeuralNetworkForwardPropagation
 
         for(Index i = 0; i < trainable_layers_number; i++)
         {
-
             switch (trainable_layers_pointers(i)->get_type())
             {
             case Layer::Type::Perceptron:
@@ -339,6 +339,12 @@ struct NeuralNetworkForwardPropagation
             case Layer::Type::Flatten:
             {
                 layers(i) = new FlattenLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::Resnet50:
+            {
+                //layers(i) = new Resnet50LayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
@@ -429,6 +435,12 @@ struct NeuralNetworkBackPropagation
             case Layer::Type::Flatten:
             {
                 layers(i) = new FlattenLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::Resnet50:
+            {
+                //layers(i) = new Resnet50LayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
