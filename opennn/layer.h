@@ -171,29 +171,6 @@ public:
 
     virtual string write_expression_python() const {return string();}
 
-    // General activations
-
-    void linear(type*, Tensor<Index, 1>&,
-                type*, Tensor<Index, 1>&) const;
-
-    void linear_derivatives(type*, Tensor<Index, 1>&,
-                            type*, Tensor<Index, 1>&,
-                            type*, Tensor<Index, 1>&) const;
-
-    void logistic(type*, Tensor<Index, 1>&,
-                  type*, Tensor<Index, 1>&) const;
-
-    void logistic_derivatives(type*, Tensor<Index, 1>&,
-                              type*, Tensor<Index, 1>&,
-                              type*, Tensor<Index, 1>&) const;
-
-    void hyperbolic_tangent(type*, Tensor<Index, 1>&,
-                            type*, Tensor<Index, 1>&) const;
-
-    void hyperbolic_tangent_derivatives(type*, Tensor<Index, 1>&,
-                                        type*, Tensor<Index, 1>&,
-                                        type*, Tensor<Index, 1>&) const;
-
 protected:
 
     ThreadPool* thread_pool = nullptr;
@@ -207,6 +184,33 @@ protected:
 
     Type layer_type = Type::Perceptron;
 
+    void binary(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void competitive(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hard_sigmoid(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hyperbolic_tangent(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void logistic(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void rectified_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void scaled_exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void softmax(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_plus(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_sign(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void symmetric_threshold(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void threshold(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+
+    void exponential_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hard_sigmoid_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hyperbolic_tangent_derivatives(type*, Tensor<Index, 1>&,type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void logistic_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void rectified_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void scaled_exponential_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void softmax_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_plus_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_sign_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void symmetric_threshold_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void threshold_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
 
 
     // activations 1d (Time Series)
