@@ -243,7 +243,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* input_channels_number_element = input_variables_dimensions_element->NextSiblingElement("InputChannels");
 
-    if(!input_variables_dimensions_element)
+    if(!input_channels_number_element)
     {
         buffer << "OpenNN Exception: FlattenLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -258,7 +258,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* input_width_element = input_variables_dimensions_element->NextSiblingElement("InputWidth");
 
-    if(!input_variables_dimensions_element)
+    if(!input_width_element)
     {
         buffer << "OpenNN Exception: FlattenLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -273,7 +273,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* input_height_element = input_variables_dimensions_element->NextSiblingElement("InputHeight");
 
-    if(!input_variables_dimensions_element)
+    if(!input_height_element)
     {
         buffer << "OpenNN Exception: FlattenLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
