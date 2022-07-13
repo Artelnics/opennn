@@ -886,6 +886,17 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
             break;
 
         case Layer::Type::Resnet50:
+                {
+//                  const Resnet50LayerForwardPropagation
+//                      *resnet50_layer_forward_propagation =
+//                          static_cast<Resnet50LayerForwardPropagation *>(
+//                              forward_propagation.layers(i - 1));
+
+//                  trainable_layers_pointers(i)->calculate_error_gradient(
+//                      resnet50_layer_forward_propagation->activations,
+//                      forward_propagation.layers(i),
+//                      back_propagation.neural_network.layers(i));
+                }
 
                     break;
 
