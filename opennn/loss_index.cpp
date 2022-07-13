@@ -885,10 +885,6 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Type::Resnet50:
-
-                    break;
-
         default: break;
 
         }
