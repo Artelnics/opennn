@@ -41,7 +41,7 @@ int main()
         Tensor<Index, 1> y_dimensions(2);
         y_dimensions.setValues({y.dimension(0),y.dimension(1)});
 
-        layer.logistic(x.data(), x_dimensions, y.data(), y_dimensions);
+//        layer.logistic(x.data(), x_dimensions, y.data(), y_dimensions);
 
         cout << "x:" << endl << x << endl;
         cout << "y:" << endl << y << endl;

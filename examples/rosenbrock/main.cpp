@@ -48,11 +48,11 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
-        neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
 
         PerceptronLayer* pl = static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(2));
 
-        pl->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        pl->set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
 
         // Training strategy
 
