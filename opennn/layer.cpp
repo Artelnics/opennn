@@ -202,6 +202,256 @@ void Layer::set_neurons_number(const Index& )
 }
 
 
+void Layer::linear(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const
+{
+    // Check equal sizes and ranks
+
+    Tensor<bool, 0> same_dimensions = (x_dims== y_dims).all();
+
+    if(!same_dimensions(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+            << "void Layer::linear(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const.\n"
+            << "X and Y vector must have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Apply function
+
+    const Tensor<Index, 0>  size = x_dims.prod();
+
+    memcpy(y_data, x_data, static_cast<size_t>(size(0))*sizeof(float));
+}
+
+
+void Layer::linear_derivatives(type* combinations_data,
+                               Tensor<Index, 1>& combinations_dims,
+                               type* activations_data,
+                               Tensor<Index, 1>& activations_dims,
+                               type* activations_derivatives_data,
+                               Tensor<Index, 1>& activations_derivatives_dims) const
+{
+    // Check equal sizes and ranks
+
+    Tensor<bool, 0> same_dimensions = (combinations_dims== activations_dims).all();
+
+    if(!same_dimensions(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+
+               << "void Layer::linear_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dims,"
+               << "                               type* activations_data, Tensor<Index, 1>& activations_dims,  "
+               << "                               type* activations_derivatives_data, Tensor<Index, 1>& activations_derivatives_dims) "
+               << "X and Y vector must have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Apply function
+
+    const Tensor<Index, 0>  size = combinations_dims.prod();
+
+    const Tensor<Index, 0>  derivatives_size = activations_derivatives_dims.prod();
+
+    memcpy(activations_data, combinations_data, static_cast<size_t>(size(0))*sizeof(float));
+
+    fill(activations_derivatives_data, activations_derivatives_data + derivatives_size(0), 1);
+}
+
+
+void Layer::logistic(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const
+{
+    // Check equal sizes and ranks
+
+    Tensor<bool, 0> same_dimensions = (x_dims== y_dims).all();
+
+    if(!same_dimensions(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+            << "void Layer::linear(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const.\n"
+            << "X and Y vector must have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Apply function
+
+    const Index rank = x_dims.size();
+
+    if(rank == 1)
+    {
+        TensorMap<Tensor<type, 1>> x(x_data, x_dims(0));
+        TensorMap<Tensor<type, 1>> y(y_data, y_dims(0));
+        y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+    }
+    else if(rank == 2)
+    {
+        TensorMap<Tensor<type, 2>> x(x_data, x_dims(0), x_dims(1));
+        TensorMap<Tensor<type, 2>> y(y_data, y_dims(0), y_dims(1));
+        y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+    }
+    else if(rank == 4)
+    {
+        TensorMap<Tensor<type, 4>> x(x_data, x_dims(0), x_dims(1), x_dims(2), x_dims(3));
+        TensorMap<Tensor<type, 4>> y(y_data, y_dims(0), y_dims(1), y_dims(2), y_dims(3));
+        y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+            << "void Layer::logistic(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const.\n"
+            << "Logisitic function is not implemented for rank " << rank << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
+void Layer::logistic_derivatives(type*, Tensor<Index, 1>&,
+                          type*, Tensor<Index, 1>&,
+                          type*, Tensor<Index, 1>&) const
+{
+
+}
+
+
+void Layer::hyperbolic_tangent(type* x_data, Tensor<Index, 1>& x_dims, type* y_data, Tensor<Index, 1>& y_dims) const
+{
+    // Check equal sizes and ranks
+
+    Tensor<bool, 0> same_dimensions = (x_dims== y_dims).all();
+
+    if(!same_dimensions(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+            << "void Layer::linear(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const.\n"
+            << "X and Y vector must have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Apply function
+
+    const Index rank = x_dims.size();
+
+    if(rank == 1)
+    {
+        TensorMap<Tensor<type, 1>> x(x_data, x_dims(0));
+        TensorMap<Tensor<type, 1>> y(y_data, y_dims(0));
+        y.device(*thread_pool_device) = x.tanh();
+    }
+    else if(rank == 2)
+    {
+        TensorMap<Tensor<type, 2>> x(x_data, x_dims(0), x_dims(1));
+        TensorMap<Tensor<type, 2>> y(y_data, y_dims(0), y_dims(1));
+        y.device(*thread_pool_device) = x.tanh();
+    }
+    else if(rank == 4)
+    {
+        TensorMap<Tensor<type, 4>> x(x_data, x_dims(0), x_dims(1), x_dims(2), x_dims(3));
+        TensorMap<Tensor<type, 4>> y(y_data, y_dims(0), y_dims(1), y_dims(2), y_dims(3));
+        y.device(*thread_pool_device) = x.tanh();
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+            << "void Layer::logistic(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const.\n"
+            << "Logisitic function is not implemented for rank " << rank << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
+void Layer::hyperbolic_tangent_derivatives(type* combinations_data,
+                                           Tensor<Index, 1>& combinations_dims,
+                                           type* activations_data,
+                                           Tensor<Index, 1>& activations_dims,
+                                           type* activations_derivatives_data,
+                                           Tensor<Index, 1>& activations_derivatives_dims) const
+{
+    // Check equal sizes and ranks
+
+    Tensor<bool, 0> same_dimensions = (combinations_dims== activations_dims).all();
+
+    if(!same_dimensions(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+
+               << "void Layer::linear_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dims,"
+               << "                               type* activations_data, Tensor<Index, 1>& activations_dims,  "
+               << "                               type* activations_derivatives_data, Tensor<Index, 1>& activations_derivatives_dims) "
+               << "X and Y vector must have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index rank = combinations_dims.size();
+
+    if(rank == 1)
+    {
+        TensorMap<Tensor<type, 1>> combinations(combinations_data, combinations_dims(0));
+        TensorMap<Tensor<type, 1>> activations(activations_data, activations_dims(0));
+        TensorMap<Tensor<type, 1>> activations_derivatives(activations_derivatives_data, activations_derivatives_dims(0));
+
+        activations.device(*thread_pool_device) = combinations.tanh();
+
+        // Activations Derivatives
+
+        activations_derivatives.device(*thread_pool_device) = type(1) - activations.square();
+    }
+    else if(rank == 2)
+    {
+        TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dims(0), combinations_dims(1));
+        TensorMap<Tensor<type, 2>> activations(activations_data, activations_dims(0), activations_dims(1));
+        TensorMap<Tensor<type, 2>> activations_derivatives(activations_derivatives_data, activations_derivatives_dims(0), activations_derivatives_dims(1));
+
+        activations.device(*thread_pool_device) = combinations.tanh();
+
+        // Activations Derivatives
+
+        activations_derivatives.device(*thread_pool_device) = type(1) - activations.square();
+    }
+    else if(rank == 4)
+    {
+        TensorMap<Tensor<type, 4>> combinations(combinations_data, combinations_dims(0), combinations_dims(1), combinations_dims(2), combinations_dims(3));
+        TensorMap<Tensor<type, 4>> activations(activations_data, activations_dims(0), activations_dims(1), activations_dims(2), activations_dims(3));
+        TensorMap<Tensor<type, 4>> activations_derivatives(activations_derivatives_data, activations_derivatives_dims(0), activations_derivatives_dims(1), activations_derivatives_dims(2), activations_derivatives_dims(3));
+
+        activations.device(*thread_pool_device) = combinations.tanh();
+
+        // Activations Derivatives
+
+        activations_derivatives.device(*thread_pool_device) = type(1) - activations.square();
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Layer class.\n"
+            << "void Layer::logistic(type * x_data, Tensor<Index, 1>& x_dims, type * y_data, Tensor<Index, 1>& y_dims) const.\n"
+            << "Logisitic function is not implemented for rank " << rank << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
 void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
     const Tensor<bool, 1> if_sentence = x < x.constant(type(-2.5));
