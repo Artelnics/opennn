@@ -10565,7 +10565,7 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 }
 
 
-void DataSet::read_bmp()
+void DataSet::read_bmp_old()
 {
     const fs::path path = data_file_name;
 
@@ -10802,6 +10802,273 @@ void DataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
+Tensor<unsigned char, 3> DataSet::bmp_image_to_3_channels(Tensor<unsigned char, 1> &bmp_image)
+{
+  const Index image_width = 224;
+  const Index image_height = 224;
+  const Index channels_number = 3;
+  Tensor<unsigned char, 3> channels_image_format(image_height, image_width,
+                                                 channels_number);
+  Index element_count = 0;
+
+  for (Index h = image_height - 1; h >= 0; h--) {
+    for (Index w = 0; w < image_width; w++) {
+      for (Index k = channels_number - 1; k >= 0; k--) // (B, G, R) to (R, G, B)
+      {
+        channels_image_format(h, w, k) = bmp_image(element_count);
+        element_count++;
+      }
+    }
+  }
+
+  return channels_image_format;
+}
+
+Tensor<unsigned char, 1> DataSet::channels_format_flattening(Tensor<unsigned char, 3> &channels_image_format)
+{
+  Tensor<unsigned char, 1> matlab_flatten(224 * 224 * 3);
+  Index element_count = 0;
+
+  for (Index k = 0; k < 3; k++) {
+    for (Index w = 0; w < 224; w++) {
+      for (Index h = 0; h < 224; h++) {
+        matlab_flatten(element_count) = channels_image_format(h, w, k);
+        element_count++;
+      }
+    }
+  }
+
+  return matlab_flatten;
+}
+
+Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
+                                      const Index &image_width,
+                                      const Index &image_height,
+                                      const Index &channels_number)
+{
+  const Index new_width = 224;
+  const Index new_height = 224;
+  Tensor<unsigned char, 1> new_bounding_box(channels_number * new_width * new_height);
+
+  const double scaleWidth = (double)new_width / (double)image_width;
+  const double scaleHeight = (double)new_height / (double)image_height;
+
+  for (Index i = 0; i < new_height; i++)
+  {
+    for (Index j = 0; j < new_width; j++)
+    {
+      const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
+      const int nearestMatch = (((int)(i / scaleHeight) * (image_width * channels_number)) +
+           ((int)(j / scaleWidth) * channels_number));
+
+      if (channels_number == 3)
+      {
+        new_bounding_box[pixel] = data[nearestMatch];
+        new_bounding_box[pixel + 1] = data[nearestMatch + 1];
+        new_bounding_box[pixel + 2] = data[nearestMatch + 2];
+      }
+      else
+      {
+        new_bounding_box[pixel] = data[nearestMatch];
+      }
+    }
+  }
+
+  return new_bounding_box;
+}
+
+void DataSet::read_bmp()
+{
+  const fs::path path = data_file_name;
+
+  if (data_file_name.empty())
+  {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: DataSet class.\n"
+           << "void read_bmp_channel_order_format() method.\n"
+           << "Data file name is empty.\n";
+
+    throw invalid_argument(buffer.str());
+  }
+
+  has_columns_names = true;
+  has_rows_labels = true;
+  convolutional_model = true;
+
+  separator = Separator::None;
+
+  vector<fs::path> folder_paths;
+  vector<fs::path> image_paths;
+
+  for (const auto &entry : fs::directory_iterator(path)) {
+    folder_paths.emplace_back(entry.path().string());
+  }
+
+  for (Index i = 0; i < folder_paths.size(); i++) {
+    for (const auto &entry : fs::directory_iterator(folder_paths[i])) {
+      image_paths.emplace_back(entry.path().string());
+    }
+  }
+
+  for (Index i = 0; i < image_paths.size(); i++) {
+    if (image_paths[i].extension() != ".bmp") {
+      //fs::remove_all(image_paths[i]);
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_bmp() method.\n"
+                   << "Non-bmp data file format found. Try to run the program again.\n";
+
+            throw invalid_argument(buffer.str());
+    }
+  }
+
+  Index classes_number = number_of_elements_in_directory(path);
+  Tensor<Index, 1> images_numbers(classes_number);
+
+  for (Index i = 0; i < classes_number; i++) {
+    images_number += number_of_elements_in_directory(folder_paths[i]);
+  }
+
+  string info_img;
+  Tensor<unsigned char, 1> image;
+  const Index image_size = 224 * 224 * 3;
+
+  if (classes_number == 2)
+  {
+    Index binary_columns_number = 1;
+    data.resize(images_number, image_size + binary_columns_number);
+  }
+  else
+  {
+    data.resize(images_number, image_size + classes_number);
+  }
+
+//  data.setZero();
+
+  rows_labels.resize(images_number);
+
+  Index row_index = 0;
+
+  for (Index i = 0; i < classes_number; i++) {
+    Index images_number = 0;
+
+    vector<string> images_paths;
+
+    for (const auto &entry : fs::directory_iterator(folder_paths[i])) {
+      images_paths.emplace_back(entry.path().string());
+    }
+
+    images_number = images_paths.size();
+
+    for (Index j = 0; j < images_number; j++)
+    {
+      image = read_bmp_image(images_paths[j]);
+
+      if (image_height != 224 && image_width != 224)
+      {
+        image = resize_image(image, image_width, image_height, channels_number);
+      }
+
+      Tensor<unsigned char, 3> three_channels_image_format = bmp_image_to_3_channels(image);
+
+      Tensor<unsigned char, 1> new_image = channels_format_flattening(three_channels_image_format);
+
+      for (Index k = 0; k < image_size; k++) data(row_index, k) = static_cast<type>(new_image[k]);
+
+      if (classes_number == 2 && i == 0)
+      {
+        data(row_index, image_size) = 1;
+      }
+      else if (classes_number == 2 && i == 1)
+      {
+        data(row_index, image_size) = 0;
+      }
+      else
+      {
+        data(row_index, image_size + i) = 1;
+      }
+
+      rows_labels(row_index) = images_paths[j];
+
+      row_index++;
+    }
+  }
+
+  columns.resize(image_size + 1);
+
+  // Input columns
+
+  Index column_index = 0;
+  const Index channels = 3;
+  const Index width = 224;
+  const Index height = 224;
+
+  for (Index i = 0; i < channels; i++) {
+    for (Index j = 0; j < width; j++) {
+      for (Index k = 0; k < height; k++) {
+        columns(column_index).name = "pixel_" + to_string(i + 1) + "_" +
+                                     to_string(j + 1) + "_" + to_string(k + 1);
+        columns(column_index).type = ColumnType::Numeric;
+        columns(column_index).column_use = VariableUse::Input;
+        columns(column_index).scaler = Scaler::MinimumMaximum;
+        column_index++;
+      }
+    }
+  }
+
+  // Target columns
+
+  columns(image_size).name = "class";
+
+  if (classes_number == 1) {
+    ostringstream buffer;
+
+    buffer
+        << "OpenNN Exception: DataSet class.\n"
+        << "void read_bmp_channel_order_format() method.\n"
+        << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+    throw invalid_argument(buffer.str());
+
+  } else if (classes_number == 2) {
+    Tensor<string, 1> categories(classes_number);
+
+    for (Index i = 0; i < classes_number; i++) {
+      categories(i) = folder_paths[i].filename().u8string();
+    }
+
+    columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).type = ColumnType::Binary;
+    columns(image_size).categories = categories;
+
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+  } else {
+    Tensor<string, 1> categories(classes_number);
+
+    for (Index i = 0; i < classes_number; i++) {
+      categories(i) = folder_paths[i].filename().u8string();
+    }
+
+    columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).type = ColumnType::Categorical;
+    columns(image_size).categories = categories;
+
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+  }
+
+  samples_uses.resize(images_number);
+  split_samples_random();
+
+  image_width = 224;
+  image_height = 224;
+
+  input_variables_dimensions.resize(3);
+  input_variables_dimensions.setValues({channels, width, height});
+}
 
 void DataSet::read_ground_truth(const string& file_name)
 {
@@ -12630,15 +12897,15 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         {
             index = 0;
 
-            for(Index row = 0; row < rows_number; row++)
+            for (Index row = rows_number - 1; row >= 0; row--)
             {
                 for(Index col = 0; col < columns_number; col++)
                 {
-                    for(Index channel = 0; channel < channels_number; channel++)
-                    {
+                  for (Index channel = channels_number - 1; channel >= 0 ; channel--)
+                  {
                         inputs_4d(row, col, channel, image) = data(image, index);
                         index++;
-                    }
+                  }
                 }
             }
         }
