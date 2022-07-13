@@ -28,6 +28,9 @@
 #include "statistics.h"
 #include "data_set.h"
 
+#include <tuple>
+
+
 namespace opennn {
 
 class Layer;
@@ -95,14 +98,19 @@ public:
 
     // Outputs
 
+    virtual void calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&){}
+
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const because of Recurrent and LSTM layers
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&)  {return Tensor<type, 2>();}
+
+    virtual void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*){}
 
     virtual void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
     virtual void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) {}
 
     virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*) {}
+    virtual void forward_propagate(type*,LayerForwardPropagation*){}
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
@@ -163,6 +171,29 @@ public:
 
     virtual string write_expression_python() const {return string();}
 
+    // General activations
+
+    void linear(type*, Tensor<Index, 1>&,
+                type*, Tensor<Index, 1>&) const;
+
+    void linear_derivatives(type*, Tensor<Index, 1>&,
+                            type*, Tensor<Index, 1>&,
+                            type*, Tensor<Index, 1>&) const;
+
+    void logistic(type*, Tensor<Index, 1>&,
+                  type*, Tensor<Index, 1>&) const;
+
+    void logistic_derivatives(type*, Tensor<Index, 1>&,
+                              type*, Tensor<Index, 1>&,
+                              type*, Tensor<Index, 1>&) const;
+
+    void hyperbolic_tangent(type*, Tensor<Index, 1>&,
+                            type*, Tensor<Index, 1>&) const;
+
+    void hyperbolic_tangent_derivatives(type*, Tensor<Index, 1>&,
+                                        type*, Tensor<Index, 1>&,
+                                        type*, Tensor<Index, 1>&) const;
+
 protected:
 
     ThreadPool* thread_pool = nullptr;
@@ -175,6 +206,8 @@ protected:
     /// Layer type.
 
     Type layer_type = Type::Perceptron;
+
+
 
     // activations 1d (Time Series)
 

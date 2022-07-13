@@ -1576,10 +1576,22 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
+        {
+            Tensor<Index, 1> activations_dims(2);
+            activations_dims.setValues({static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.dimension(0),
+                                        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.dimension(1)});
 
-        trainable_layers_pointers(i)
-                ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                        forward_propagation.layers(i));
+            trainable_layers_pointers(i)
+                    ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
+                                        forward_propagation.layers(i));
+
+//            trainable_layers_pointers(i)
+//                    ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+//                                        forward_propagation.layers(i));
+
+
+        }
         break;
 
         case Layer::Type::Probabilistic:

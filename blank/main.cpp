@@ -30,6 +30,50 @@ int main()
     {
         cout << "Hello OpenNN!" << endl;
 
+        Layer layer;
+
+        Tensor<type, 2> x(5,5);
+        x.setConstant(3);
+        Tensor<Index, 1> x_dimensions(2);
+        x_dimensions.setValues({5,5});
+
+        Tensor<type, 2> y(5,5);
+        Tensor<Index, 1> y_dimensions(2);
+        y_dimensions.setValues({y.dimension(0),y.dimension(1)});
+
+        layer.logistic(x.data(), x_dimensions, y.data(), y_dimensions);
+
+        cout << "x:" << endl << x << endl;
+        cout << "y:" << endl << y << endl;
+
+        getchar();
+
+        PerceptronLayer* pl = new PerceptronLayer(3,3,PerceptronLayer::ActivationFunction::HyperbolicTangent);
+
+        pl->set_parameters_constant(2);
+
+        Tensor<type, 2> inputs(3,3);
+        inputs.setConstant(2);
+
+        Tensor<Index, 1> dims(2);
+        dims.setValues({inputs.dimension(0),inputs.dimension(1)});
+
+        cout << "INPUTS: " << endl << inputs << endl;
+        cout << "OUTPUTS: " << endl << pl->calculate_outputs(inputs) << endl;
+        cout << "--------------------------" << endl;
+
+        Tensor<type, 2> outputs(3,3);
+
+        Tensor<Index, 1> output_dims(2);
+        output_dims.setValues({outputs.dimension(0),outputs.dimension(1)});
+
+        pl->calculate_outputs(inputs.data(), dims, outputs.data(), dims);
+
+        cout << "INPUTS: " << endl << inputs << endl;
+        cout << "OUTPUTS: " << endl << outputs << endl;
+        cout << "--------------------------" << endl;
+
+
         cout << "Goodbye!" << endl;
 
         return 0;
