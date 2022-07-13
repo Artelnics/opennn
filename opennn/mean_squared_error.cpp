@@ -45,7 +45,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    const Index batch_samples_number = batch.inputs_2d.dimension(0);
+    const Index batch_samples_number = batch.get_batch_size();
 
     const type coefficient = static_cast<type>(batch_samples_number);
 
@@ -61,7 +61,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    const Index batch_samples_number = batch.inputs_2d.dimension(0);
+    const Index batch_samples_number = batch.get_batch_size();
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
@@ -83,7 +83,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     const Index batch_samples_number = batch.inputs_2d.dimension(0);
+     const Index batch_samples_number = batch.get_batch_size();
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
@@ -124,6 +124,10 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
          long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
+
+     case Layer::Type::Resnet50:
+
+             break;
 
      default: break;
      }
@@ -213,7 +217,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
      check();
      #endif
 
-     const Index batch_samples_number = batch.inputs_2d.dimension(0);
+     const Index batch_samples_number = batch.get_batch_size();
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
