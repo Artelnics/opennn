@@ -15,20 +15,119 @@
 #include <string>
 #include <time.h>
 
+#include <any>
+
 // OpenNN includes
 
 #include "../opennn/opennn.h"
-#include "../opennn/text_analytics.h"
 
 using namespace opennn;
 using namespace std;
 using namespace Eigen;
+
+//template <typename T>
+//class tensor_holder
+//{
+//private:
+//    std::any _held;
+//    Index _rank;
+//public:
+//    template <int N>
+//    constexpr tensor_holder(Eigen::Tensor<T, N> tensor) :
+//        _held{std::move(tensor)},
+//        _rank{N}
+//    {
+//    }
+//    constexpr tensor_holder(const tensor_holder&) = default;
+//    constexpr tensor_holder(tensor_holder&&) = default;
+//    template <Index N>
+//    const Eigen::Tensor<T, N> get_values()
+//    {
+//        return std::any_cast<Eigen::Tensor<T, N>>(_held);
+//        return static_cast<Eigen::Tensor<T, N>&>(_held);
+//    }
+
+//    template <Index N>
+//    const Eigen::Tensor<T, N> get_values() const
+//    {
+//        return std::any_cast<Eigen::Tensor<T, N>>(_held);
+//    }
+
+//    template <Index N>
+//    const Eigen::Tensor<T, N>& get()
+//    {
+//        return std::any_cast<Eigen::Tensor<T, N>&>(_held);
+//        return static_cast<Eigen::Tensor<T, N>&>(_held);
+//    }
+
+//    template <Index N>
+//    Eigen::Tensor<T, N>* get_pointer()
+//    {
+//        return std::any_cast<Eigen::Tensor<T, N>*>(_held);
+//        return static_cast<Eigen::Tensor<T, N>&>(_held);
+//    }
+
+//    template <Index N>
+//    const Eigen::Tensor<T, N>* get_pointer() const
+//    {
+//        return std::any_cast<Eigen::Tensor<T, N>*>(_held);
+//        return static_cast<Eigen::Tensor<T, N>&>(_held);
+//    }
+
+
+//    template <Index N>
+//    const Eigen::Tensor<T, N>& get() const
+//    {
+//        return std::any_cast<Eigen::Tensor<T, N>&>(_held);
+//    }
+//    constexpr int rank() const noexcept
+//    {
+//        return _rank;
+//    }
+//};
+
+
+//void use_tensor(const tensor_holder<Index>& in)
+//{
+//    cout << "rank: " << in.rank() << endl;
+//    if (in.rank() == 1)
+//    {
+//        //        const Tensor<Index, 1>& tensor = in.get<1>();
+//        const Tensor<Index, 1>* tensor = in.get_pointer<1>();
+//        cout << "copied data:" << tensor->data() << endl;
+//        tensor = in.get<1>();
+//        cout << "1: " << copy << endl;
+//    }
+//    else
+//    {
+//        auto& tensor = in.get<3>();
+//        cout << tensor << endl;
+//        // some other logic
+//    }
+//}
+
+
 
 int main()
 {
     try
     {
         cout << "Hello OpenNN!" << endl;
+
+        Tensor<Index, 2> tensor(2,3);
+        tensor.setRandom();
+
+        cout << "first: " << tensor << endl;
+
+        for(Index i = 0; i < 15; i++)
+        {
+            cout << *tensor.data() << "\t";
+
+            if( i%5 == 0)
+            {
+                cout << "\n";
+            }
+        }
 
         cout << "Goodbye!" << endl;
 
