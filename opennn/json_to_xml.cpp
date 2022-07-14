@@ -13,7 +13,7 @@ using namespace std;
 
 namespace opennn
 {
-
+/*
 int JsonToXml::guessPrecision(double& val)
 {
     double junk;
@@ -103,5 +103,5 @@ static QJsonDocument qstringToJson(const QString& path)
 
     return doc;
 };
-
+*/
 }

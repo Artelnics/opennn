@@ -28,6 +28,9 @@
 #include "statistics.h"
 #include "data_set.h"
 
+#include <tuple>
+
+
 namespace opennn {
 
 class Layer;
@@ -55,7 +58,7 @@ public:
     /// This enumeration represents the possible types of layers.
 
     enum class Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
-              LongShortTermMemory,Recurrent, Unscaling, Bounding, Flatten};
+              LongShortTermMemory,Recurrent, Unscaling, Bounding, Flatten, Resnet50};
 
     // Constructor
 
@@ -95,16 +98,19 @@ public:
 
     // Outputs
 
-//    virtual generic_tensor calculate_outputs(generic_tensor&); // Cannot be const because of Recurrent and LSTM layers
+    virtual void calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&){}
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const because of Recurrent and LSTM layers
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
     virtual Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&)  {return Tensor<type, 2>();}
 
+    virtual void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*){}
+
     virtual void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
     virtual void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) {}
 
     virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*) {}
+    virtual void forward_propagate(type*,LayerForwardPropagation*){}
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
@@ -177,6 +183,35 @@ protected:
     /// Layer type.
 
     Type layer_type = Type::Perceptron;
+
+    void binary(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void competitive(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hard_sigmoid(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hyperbolic_tangent(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void logistic(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void rectified_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void scaled_exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void softmax(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_plus(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_sign(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void symmetric_threshold(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void threshold(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+
+    void exponential_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hard_sigmoid_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void hyperbolic_tangent_derivatives(type*, Tensor<Index, 1>&,type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void logistic_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void rectified_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void scaled_exponential_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void softmax_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_plus_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void soft_sign_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void symmetric_threshold_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void threshold_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+
 
     // activations 1d (Time Series)
 

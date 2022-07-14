@@ -136,7 +136,16 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
+   void calculate_combinations(type*,
+                               Tensor<Index,1>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               type*) const;
+
    // Perceptron layer activations
+
+   void calculate_activations(type*, Tensor<Index, 1>&,
+                              type*, Tensor<Index, 1>&) const;
 
    void calculate_activations(const Tensor<type, 2>&,
                               Tensor<type, 2>&) const;
@@ -145,15 +154,23 @@ public:
                                           Tensor<type, 2>&,
                                           Tensor<type, 2>&) const;
 
+   void calculate_activations_derivatives(type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&) const;
+
    // Perceptron layer outputs
 
-   generic_tensor calculate_outputs(generic_tensor&);
+
+   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) final;
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
 
-   void forward_propagate(const Tensor<type, 2>&,
+   void forward_propagate(type*,
+                          Tensor<Index, 1>&,
                           LayerForwardPropagation*) final;
 
+   void forward_propagate(const Tensor<type, 2>&,
+                          LayerForwardPropagation*) final;
 
    void forward_propagate(const Tensor<type, 2>&,
                           Tensor<type, 1>,
