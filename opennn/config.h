@@ -44,7 +44,7 @@
 #endif
 
 #include <omp.h>
-#include <any>
+
 using namespace std;
 
 #define	STRING(x) #x
