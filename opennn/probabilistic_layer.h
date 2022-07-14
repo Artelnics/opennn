@@ -133,17 +133,34 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
+   void calculate_combinations(type*,
+                               Tensor<Index,1>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               type*) const;
+
    // Activations
 
    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+
+   void calculate_activations(type*, Tensor<Index, 1>&,
+                              type*, Tensor<Index, 1>&) const;
 
    void calculate_activations_derivatives(const Tensor<type, 2>&,
                                           Tensor<type, 2>&,
                                           Tensor<type, 3>&) const;
 
+   void calculate_activations_derivatives(type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&) const;
+
    // Outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
+
+   void forward_propagate(type*,
+                          Tensor<Index, 1>&,
+                          LayerForwardPropagation*) final;
 
    void forward_propagate(const Tensor<type, 2>&,
                           LayerForwardPropagation*) final;

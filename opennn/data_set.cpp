@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
-#include "region_based_object_detector.h"
 
 using namespace  opennn;
 using namespace std;
@@ -10676,7 +10675,7 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 }
 
 
-void DataSet::read_bmp()
+void DataSet::read_bmp_old()
 {
     const fs::path path = data_file_name;
 
@@ -10913,293 +10912,560 @@ void DataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
+Tensor<unsigned char, 3> DataSet::bmp_image_to_3_channels(Tensor<unsigned char, 1> &bmp_image)
+{
+  const Index image_width = 224;
+  const Index image_height = 224;
+  const Index channels_number = 3;
+  Tensor<unsigned char, 3> channels_image_format(image_height, image_width,
+                                                 channels_number);
+  Index element_count = 0;
+
+  for (Index h = image_height - 1; h >= 0; h--) {
+    for (Index w = 0; w < image_width; w++) {
+      for (Index k = channels_number - 1; k >= 0; k--) // (B, G, R) to (R, G, B)
+      {
+        channels_image_format(h, w, k) = bmp_image(element_count);
+        element_count++;
+      }
+    }
+  }
+
+  return channels_image_format;
+}
+
+Tensor<unsigned char, 1> DataSet::channels_format_flattening(Tensor<unsigned char, 3> &channels_image_format)
+{
+  Tensor<unsigned char, 1> matlab_flatten(224 * 224 * 3);
+  Index element_count = 0;
+
+  for (Index k = 0; k < 3; k++) {
+    for (Index w = 0; w < 224; w++) {
+      for (Index h = 0; h < 224; h++) {
+        matlab_flatten(element_count) = channels_image_format(h, w, k);
+        element_count++;
+      }
+    }
+  }
+
+  return matlab_flatten;
+}
+
+Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
+                                      const Index &image_width,
+                                      const Index &image_height,
+                                      const Index &channels_number)
+{
+  const Index new_width = 224;
+  const Index new_height = 224;
+  Tensor<unsigned char, 1> new_bounding_box(channels_number * new_width * new_height);
+
+  const double scaleWidth = (double)new_width / (double)image_width;
+  const double scaleHeight = (double)new_height / (double)image_height;
+
+  for (Index i = 0; i < new_height; i++)
+  {
+    for (Index j = 0; j < new_width; j++)
+    {
+      const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
+      const int nearestMatch = (((int)(i / scaleHeight) * (image_width * channels_number)) +
+           ((int)(j / scaleWidth) * channels_number));
+
+      if (channels_number == 3)
+      {
+        new_bounding_box[pixel] = data[nearestMatch];
+        new_bounding_box[pixel + 1] = data[nearestMatch + 1];
+        new_bounding_box[pixel + 2] = data[nearestMatch + 2];
+      }
+      else
+      {
+        new_bounding_box[pixel] = data[nearestMatch];
+      }
+    }
+  }
+
+  return new_bounding_box;
+}
+
+void DataSet::read_bmp()
+{
+  const fs::path path = data_file_name;
+
+  if (data_file_name.empty())
+  {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: DataSet class.\n"
+           << "void read_bmp_channel_order_format() method.\n"
+           << "Data file name is empty.\n";
+
+    throw invalid_argument(buffer.str());
+  }
+
+  has_columns_names = true;
+  has_rows_labels = true;
+  convolutional_model = true;
+
+  separator = Separator::None;
+
+  vector<fs::path> folder_paths;
+  vector<fs::path> image_paths;
+
+  for (const auto &entry : fs::directory_iterator(path)) {
+    folder_paths.emplace_back(entry.path().string());
+  }
+
+  for (Index i = 0; i < folder_paths.size(); i++) {
+    for (const auto &entry : fs::directory_iterator(folder_paths[i])) {
+      image_paths.emplace_back(entry.path().string());
+    }
+  }
+
+  for (Index i = 0; i < image_paths.size(); i++) {
+    if (image_paths[i].extension() != ".bmp") {
+      //fs::remove_all(image_paths[i]);
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_bmp() method.\n"
+                   << "Non-bmp data file format found. Try to run the program again.\n";
+
+            throw invalid_argument(buffer.str());
+    }
+  }
+
+  Index classes_number = number_of_elements_in_directory(path);
+  Tensor<Index, 1> images_numbers(classes_number);
+
+  for (Index i = 0; i < classes_number; i++) {
+    images_number += number_of_elements_in_directory(folder_paths[i]);
+  }
+
+  string info_img;
+  Tensor<unsigned char, 1> image;
+  const Index image_size = 224 * 224 * 3;
+
+  if (classes_number == 2)
+  {
+    Index binary_columns_number = 1;
+    data.resize(images_number, image_size + binary_columns_number);
+  }
+  else
+  {
+    data.resize(images_number, image_size + classes_number);
+  }
+
+//  data.setZero();
+
+  rows_labels.resize(images_number);
+
+  Index row_index = 0;
+
+  for (Index i = 0; i < classes_number; i++) {
+    Index images_number = 0;
+
+    vector<string> images_paths;
+
+    for (const auto &entry : fs::directory_iterator(folder_paths[i])) {
+      images_paths.emplace_back(entry.path().string());
+    }
+
+    images_number = images_paths.size();
+
+    for (Index j = 0; j < images_number; j++)
+    {
+      image = read_bmp_image(images_paths[j]);
+
+      if (image_height != 224 && image_width != 224)
+      {
+        image = resize_image(image, image_width, image_height, channels_number);
+      }
+
+      Tensor<unsigned char, 3> three_channels_image_format = bmp_image_to_3_channels(image);
+
+      Tensor<unsigned char, 1> new_image = channels_format_flattening(three_channels_image_format);
+
+      for (Index k = 0; k < image_size; k++) data(row_index, k) = static_cast<type>(new_image[k]);
+
+      if (classes_number == 2 && i == 0)
+      {
+        data(row_index, image_size) = 1;
+      }
+      else if (classes_number == 2 && i == 1)
+      {
+        data(row_index, image_size) = 0;
+      }
+      else
+      {
+        data(row_index, image_size + i) = 1;
+      }
+
+      rows_labels(row_index) = images_paths[j];
+
+      row_index++;
+    }
+  }
+
+  columns.resize(image_size + 1);
+
+  // Input columns
+
+  Index column_index = 0;
+  const Index channels = 3;
+  const Index width = 224;
+  const Index height = 224;
+
+  for (Index i = 0; i < channels; i++) {
+    for (Index j = 0; j < width; j++) {
+      for (Index k = 0; k < height; k++) {
+        columns(column_index).name = "pixel_" + to_string(i + 1) + "_" +
+                                     to_string(j + 1) + "_" + to_string(k + 1);
+        columns(column_index).type = ColumnType::Numeric;
+        columns(column_index).column_use = VariableUse::Input;
+        columns(column_index).scaler = Scaler::MinimumMaximum;
+        column_index++;
+      }
+    }
+  }
+
+  // Target columns
+
+  columns(image_size).name = "class";
+
+  if (classes_number == 1) {
+    ostringstream buffer;
+
+    buffer
+        << "OpenNN Exception: DataSet class.\n"
+        << "void read_bmp_channel_order_format() method.\n"
+        << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+    throw invalid_argument(buffer.str());
+
+  } else if (classes_number == 2) {
+    Tensor<string, 1> categories(classes_number);
+
+    for (Index i = 0; i < classes_number; i++) {
+      categories(i) = folder_paths[i].filename().u8string();
+    }
+
+    columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).type = ColumnType::Binary;
+    columns(image_size).categories = categories;
+
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+  } else {
+    Tensor<string, 1> categories(classes_number);
+
+    for (Index i = 0; i < classes_number; i++) {
+      categories(i) = folder_paths[i].filename().u8string();
+    }
+
+    columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).type = ColumnType::Categorical;
+    columns(image_size).categories = categories;
+
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+  }
+
+  samples_uses.resize(images_number);
+  split_samples_random();
+
+  image_width = 224;
+  image_height = 224;
+
+  input_variables_dimensions.resize(3);
+  input_variables_dimensions.setValues({channels, width, height});
+}
 
 void DataSet::read_ground_truth(const string& file_name)
 {
-    const Index classes_number = get_label_classes_number_from_XML(file_name);
+//    const Index classes_number = get_label_classes_number_from_XML(file_name);
 
-    const Index bounding_boxes_number = get_bounding_boxes_number_from_XML(file_name);
+//    const Index bounding_boxes_number = get_bounding_boxes_number_from_XML(file_name);
 
-    cout << "classes_number: " << classes_number << endl;
-    cout << "bounding_boxes_number: " << bounding_boxes_number << endl;
+//    cout << "classes_number: " << classes_number << endl;
+//    cout << "bounding_boxes_number: " << bounding_boxes_number << endl;
 
-    RegionBasedObjectDetector region_based_object_detector;
+//    RegionBasedObjectDetector region_based_object_detector;
 
-    Index bounding_box_height = 224;
-    Index bounding_box_width = 224;
+//    Index bounding_box_height = 224;
+//    Index bounding_box_width = 224;
 
-    Index pixels_number = channels_number * bounding_box_height * bounding_box_width;
+//    Index pixels_number = channels_number * bounding_box_height * bounding_box_width;
 
-    data.resize(bounding_boxes_number, pixels_number + classes_number);
+//    data.resize(bounding_boxes_number, pixels_number + classes_number);
 
-    data.setZero();
+//    data.setZero();
 
-    rows_labels.resize(bounding_boxes_number);
+//    rows_labels.resize(bounding_boxes_number);
 
-    Index row_index = 0;
+//    Index row_index = 0;
 
-    /**********************Load XML from string**************************************/
+//    /**********************Load XML from string**************************************/
 
-    tinyxml2::XMLDocument document;
+//    tinyxml2::XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
+//    if(document.LoadFile(file_name.c_str()))
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void load(const string&) method.\n"
+//               << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    /**********************Read ground Truth XML*************************************/
+//    /**********************Read ground Truth XML*************************************/
 
-    ostringstream buffer;
+//    ostringstream buffer;
 
-    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
+//    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
 
-    if(!neural_labeler_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "NeuralLabeler element is nullptr.\n";
+//    if(!neural_labeler_element)
+//    {
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//               << "NeuralLabeler element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    // Images
+//    // Images
 
-    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
+//    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
 
-    if(!images_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "Images element is nullptr.\n";
+//    if(!images_element)
+//    {
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//               << "Images element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
 
-    // Images Number
+//    // Images Number
 
-    const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
+//    const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
 
-    if(!images_number_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-               << "ImagesNumber element is nullptr.\n";
+//    if(!images_number_element)
+//    {
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//               << "ImagesNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+//    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
 
-    cout << "Images number: " << images_number << endl;
+//    cout << "Images number: " << images_number << endl;
 
-    const tinyxml2::XMLElement* start_images_element = images_number_element;
+//    const tinyxml2::XMLElement* start_images_element = images_number_element;
 
-    for(Index i = 0; i < images_number; i++)
-    {
-        // Image
+//    for(Index i = 0; i < images_number; i++)
+//    {
+//        // Image
 
-        const tinyxml2::XMLElement* image_element = start_images_element->NextSiblingElement("Image");
-        start_images_element = image_element;
+//        const tinyxml2::XMLElement* image_element = start_images_element->NextSiblingElement("Image");
+//        start_images_element = image_element;
 
-        if(!image_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-                   << "Image element is nullptr.\n";
+//        if(!image_element)
+//        {
+//            buffer << "OpenNN Exception: DataSet class.\n"
+//                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Image element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
-        }
+//            throw invalid_argument(buffer.str());
+//        }
 
-        // Filename
+//        // Filename
 
-        const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
+//        const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
 
-        if(!file_name_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-                   << "Filename element is nullptr.\n";
+//        if(!file_name_element)
+//        {
+//            buffer << "OpenNN Exception: DataSet class.\n"
+//                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Filename element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
-        }
+//            throw invalid_argument(buffer.str());
+//        }
 
-        const string image_filename = file_name_element->GetText();
+//        const string image_filename = file_name_element->GetText();
 
-        // Annotations Number
+//        // Annotations Number
 
-        const tinyxml2::XMLElement* annotations_number_element = image_element->FirstChildElement("AnnotationsNumber");
+//        const tinyxml2::XMLElement* annotations_number_element = image_element->FirstChildElement("AnnotationsNumber");
 
-        if(!annotations_number_element)
-        {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-                   << "AnnotationsNumber element is nullptr.\n";
+//        if(!annotations_number_element)
+//        {
+//            buffer << "OpenNN Exception: DataSet class.\n"
+//                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//                   << "AnnotationsNumber element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
-        }
+//            throw invalid_argument(buffer.str());
+//        }
 
-        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+//        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
 
-        const tinyxml2::XMLElement* start_annotatioins_element = annotations_number_element;
+//        const tinyxml2::XMLElement* start_annotatioins_element = annotations_number_element;
 
-        for(Index j = 0; j < annotations_number; j++)
-        {
-            // Annotation
+//        for(Index j = 0; j < annotations_number; j++)
+//        {
+//            // Annotation
 
-            const tinyxml2::XMLElement* annotation_element = start_annotatioins_element->NextSiblingElement("Annotation");
-            start_annotatioins_element = annotation_element;
+//            const tinyxml2::XMLElement* annotation_element = start_annotatioins_element->NextSiblingElement("Annotation");
+//            start_annotatioins_element = annotation_element;
 
-            if(!annotation_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-                       << "Annotation element is nullptr.\n";
+//            if(!annotation_element)
+//            {
+//                buffer << "OpenNN Exception: DataSet class.\n"
+//                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//                       << "Annotation element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
-            }
+//                throw invalid_argument(buffer.str());
+//            }
 
-            // Label
+//            // Label
 
-            const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
+//            const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
 
-            if(!label_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-                       << "Label element is nullptr.\n";
+//            if(!label_element)
+//            {
+//                buffer << "OpenNN Exception: DataSet class.\n"
+//                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//                       << "Label element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
-            }
+//                throw invalid_argument(buffer.str());
+//            }
 
-            string gTruth_class = label_element->GetText();
+//            string gTruth_class = label_element->GetText();
 
-            // Points
+//            // Points
 
-            const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
+//            const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
 
-            if(!points_element)
-            {
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
-                       << "Points element is nullptr.\n";
+//            if(!points_element)
+//            {
+//                buffer << "OpenNN Exception: DataSet class.\n"
+//                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+//                       << "Points element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
-            }
+//                throw invalid_argument(buffer.str());
+//            }
 
-            string bounding_box_points = points_element->GetText();
-            Tensor<string,1> splitted_points = get_tokens(bounding_box_points, ',');
+//            string bounding_box_points = points_element->GetText();
+//            Tensor<string,1> splitted_points = get_tokens(bounding_box_points, ',');
 
-            const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
-            const int y_top_left = static_cast<int>(stoi(splitted_points[1]));
-            const int x_bottom_right = static_cast<int>(stoi(splitted_points[2]));
-            const int y_bottom_right = static_cast<int>(stoi(splitted_points[3]));
+//            const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
+//            const int y_top_left = static_cast<int>(stoi(splitted_points[1]));
+//            const int x_bottom_right = static_cast<int>(stoi(splitted_points[2]));
+//            const int y_bottom_right = static_cast<int>(stoi(splitted_points[3]));
 
-            /*************************************************************************/
+//            /*************************************************************************/
 
-            // Check the format of the image. If is not a bmp image, convert it.
+//            // Check the format of the image. If is not a bmp image, convert it.
 
 
 
-            const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
+//            const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
 
-            BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+//            BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
-            bounding_box.data = region_based_object_detector.get_unique_bounding_box(image_pixel_values,
-                                                                                    x_top_left, y_top_left,
-                                                                                    x_bottom_right, y_bottom_right);
+//            bounding_box.data = region_based_object_detector.get_unique_bounding_box(image_pixel_values,
+//                                                                                    x_top_left, y_top_left,
+//                                                                                    x_bottom_right, y_bottom_right);
 
-            BoundingBox warped_bounding_box = bounding_box.resize(channels_number, bounding_box_width, bounding_box_height);
+//            BoundingBox warped_bounding_box = bounding_box.resize(channels_number, bounding_box_width, bounding_box_height);
 
-            for(Index j = 0; j < pixels_number; j++)
-            {
-                data(row_index, j) = warped_bounding_box.data(j);
-            }
+//            for(Index j = 0; j < pixels_number; j++)
+//            {
+//                data(row_index, j) = warped_bounding_box.data(j);
+//            }
 
-            for(Index p = 0; p < labels_tokens.size(); p++)
-            {
-                if(labels_tokens(p) == gTruth_class)
-                {
-                    cout << "For the index " << p <<": " << labels_tokens(p) <<" == "<< gTruth_class << endl;
-                    data(row_index, pixels_number + p) = 1;
-                }
-            }
+//            for(Index p = 0; p < labels_tokens.size(); p++)
+//            {
+//                if(labels_tokens(p) == gTruth_class)
+//                {
+//                    cout << "For the index " << p <<": " << labels_tokens(p) <<" == "<< gTruth_class << endl;
+//                    data(row_index, pixels_number + p) = 1;
+//                }
+//            }
 
-            rows_labels(row_index) = image_filename;
+//            rows_labels(row_index) = image_filename;
 
-            row_index++;
-        }
-    }
+//            row_index++;
+//        }
+//    }
 
-    columns.resize(pixels_number + 1);
+//    columns.resize(pixels_number + 1);
 
-    // Input columns
+//    // Input columns
 
-    Index column_index = 0;
+//    Index column_index = 0;
 
-    for(Index i = 0; i < channels_number; i++)
-    {
-        for(Index j = 0; j < bounding_box_width; j++)
-        {
-            for(Index k = 0; k < bounding_box_height ; k++)
-            {
-                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                columns(column_index).type = ColumnType::Numeric;
-                columns(column_index).column_use = VariableUse::Input;
-                columns(column_index).scaler = Scaler::MinimumMaximum;
-                column_index++;
-            }
-        }
-    }
+//    for(Index i = 0; i < channels_number; i++)
+//    {
+//        for(Index j = 0; j < bounding_box_width; j++)
+//        {
+//            for(Index k = 0; k < bounding_box_height ; k++)
+//            {
+//                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+//                columns(column_index).type = ColumnType::Numeric;
+//                columns(column_index).column_use = VariableUse::Input;
+//                columns(column_index).scaler = Scaler::MinimumMaximum;
+//                column_index++;
+//            }
+//        }
+//    }
 
-    // Target columns
+//    // Target columns
 
-    columns(pixels_number).name = "label";
+//    columns(pixels_number).name = "label";
 
-    if(classes_number == 1)
-    {
-        ostringstream buffer;
+//    if(classes_number == 1)
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_ground_truth() method.\n"
-               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void read_ground_truth() method.\n"
+//               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
 
-        throw invalid_argument(buffer.str());
+//        throw invalid_argument(buffer.str());
 
-    }
-    else if(classes_number == 2)
-    {
-        columns(pixels_number).column_use = VariableUse::Target;
-        columns(pixels_number).type = ColumnType::Binary;
-        columns(pixels_number).categories = labels_tokens;
+//    }
+//    else if(classes_number == 2)
+//    {
+//        columns(pixels_number).column_use = VariableUse::Target;
+//        columns(pixels_number).type = ColumnType::Binary;
+//        columns(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(classes_number);
-        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
-    }
-    else
-    {
-        Tensor<string, 1> categories(classes_number);
+//        columns(pixels_number).categories_uses.resize(classes_number);
+//        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+//    }
+//    else
+//    {
+//        Tensor<string, 1> categories(classes_number);
 
-        columns(pixels_number).column_use = VariableUse::Target;
-        columns(pixels_number).type = ColumnType::Categorical;
-        columns(pixels_number).categories = labels_tokens;
+//        columns(pixels_number).column_use = VariableUse::Target;
+//        columns(pixels_number).type = ColumnType::Categorical;
+//        columns(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(classes_number);
-        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
-    }
+//        columns(pixels_number).categories_uses.resize(classes_number);
+//        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+//    }
 
-    samples_uses.resize(images_number);
+//    samples_uses.resize(images_number);
 
-    split_samples_random();
+//    split_samples_random();
 
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels_number, image_width, image_height});
+//    input_variables_dimensions.resize(3);
+//    input_variables_dimensions.setValues({channels_number, image_width, image_height});
 }
 
 
@@ -12756,15 +13022,15 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         {
             index = 0;
 
-            for(Index row = 0; row < rows_number; row++)
+            for (Index row = rows_number - 1; row >= 0; row--)
             {
                 for(Index col = 0; col < columns_number; col++)
                 {
-                    for(Index channel = 0; channel < channels_number; channel++)
-                    {
+                  for (Index channel = channels_number - 1; channel >= 0 ; channel--)
+                  {
                         inputs_4d(row, col, channel, image) = data(image, index);
                         index++;
-                    }
+                  }
                 }
             }
         }
