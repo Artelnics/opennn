@@ -356,6 +356,15 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
         break;
 
+    case Layer::Type::Resnet50:
+    {
+//      back_propagation.errors.device(*thread_pool_device) =
+//                static_cast<Resnet50LayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number - 1))->activations -
+//                batch.targets_2d;
+    }
+
+        break;
+
     default: break;
     }
 }
@@ -716,10 +725,13 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
-        trainable_layers_pointers(i)
-                ->calculate_hidden_delta(forward_propagation.layers(i+1),
-                                         back_propagation.neural_network.layers(i+1),
-                                         back_propagation.neural_network.layers(i));
+        if (trainable_layers_pointers(i)->get_type() != Layer::Type::Resnet50)
+        {
+            trainable_layers_pointers(i)->calculate_hidden_delta(
+                forward_propagation.layers(i + 1),
+                back_propagation.neural_network.layers(i + 1),
+                back_propagation.neural_network.layers(i));
+        }
     }
 }
 
@@ -770,7 +782,8 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
-        ||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
+            /*||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten
+                     || trainable_layers_pointers(0)->get_type() == Layer::Type::Resnet50 */)
     {
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
                                                                forward_propagation.layers(0),
@@ -871,6 +884,21 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
                                              back_propagation.neural_network.layers(i));
         }
             break;
+
+        case Layer::Type::Resnet50:
+                {
+//                  const Resnet50LayerForwardPropagation
+//                      *resnet50_layer_forward_propagation =
+//                          static_cast<Resnet50LayerForwardPropagation *>(
+//                              forward_propagation.layers(i - 1));
+
+//                  trainable_layers_pointers(i)->calculate_error_gradient(
+//                      resnet50_layer_forward_propagation->activations,
+//                      forward_propagation.layers(i),
+//                      back_propagation.neural_network.layers(i));
+                }
+
+                    break;
 
         default: break;
 

@@ -55,15 +55,6 @@ namespace opennn
 {
 
     using type = float;
-//    typedef float type;
-#ifndef GENERIC_TENSOR_H
-#define GENERIC_TENSOR_H
-    struct generic_tensor
-    {
-        type* data;
-//        Eigen::Tensor<Eigen::Index,1> dims;
-    };
-#endif
 
 }
 
