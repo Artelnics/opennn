@@ -32,12 +32,12 @@ QMAKE_CXXFLAGS += -d2ReducedOptimizeHugeFunctions
 
 win32:!win32-g++{
 QMAKE_CXXFLAGS += -d2ReducedOptimizeHugeFunctions
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{
 QMAKE_CXXFLAGS += -d2ReducedOptimizeHugeFunctions
-QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
 }else: macx{
