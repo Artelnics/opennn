@@ -570,6 +570,38 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 }
 
 
+generic_tensor PerceptronLayer::calculate_outputs(generic_tensor& tensor)
+{
+//    if(tensor.dims.size() != 2)
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+//               << "generic_tensor calculate_outputs(generic_tensor& tensor).\n"
+//               << "Number of columns in delta (" << tensor.dims.size() << ") must be equal to 2.\n";
+
+//        throw invalid_argument(buffer.str());
+//    }
+
+//    const Index batch_size = tensor.dims(0);
+
+//    const Index outputs_number = get_neurons_number();
+
+//    Tensor<type, 2> outputs(batch_size, outputs_number);
+
+//    calculate_combinations(inputs, biases, synaptic_weights, outputs);
+
+//    calculate_activations(outputs, outputs);
+
+    generic_tensor outputs_gt;
+//    outputs_gt.data = outputs.data();
+//    outputs_gt.dims = outputs.dimensions();
+
+    return outputs_gt;
+
+}
+
+
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 #ifdef OPENNN_DEBUG

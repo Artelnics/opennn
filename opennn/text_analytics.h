@@ -24,7 +24,7 @@
 
 #include "tensor_utilities.h"
 #include "opennn_strings.h"
-#include "data_set.h"
+
 // TinyXml includes
 
 #include "tinyxml2.h"

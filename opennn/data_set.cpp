@@ -6943,6 +6943,24 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
+
+        // Stop words list
+        file_stream.OpenElement("StopWordsList");
+
+        const Index stop_words_number = stop_words.dimension(0);
+
+        buffer.str("");
+
+        for(Index i = 0; i < stop_words_number; i++)
+        {
+            buffer << stop_words(i);
+
+            if(i != stop_words_number-1) buffer << ",";
+        }
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
     }
 
     // Close DataFile
@@ -7192,29 +7210,63 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("PreviewSize");
 
     buffer.str("");
-    buffer << data_file_preview.size();
 
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    for(Index i = 0; i < data_file_preview.size(); i++)
+    if(project_type != ProjectType::TextClassification)
     {
-        file_stream.OpenElement("Row");
+        buffer << data_file_preview.size();
 
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-        for(Index j = 0; j < data_file_preview(i).size(); j++)
-        {
-            file_stream.PushText(data_file_preview(i)(j).c_str());
-
-            if(j != data_file_preview(i).size()-1)
-            {
-                file_stream.PushText(",");
-            }
-        }
+        file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
+
+        for(Index i = 0; i < data_file_preview.size(); i++)
+        {
+            file_stream.OpenElement("Row");
+
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+            for(Index j = 0; j < data_file_preview(i).size(); j++)
+            {
+                file_stream.PushText(data_file_preview(i)(j).c_str());
+
+                if(j != data_file_preview(i).size()-1)
+                {
+                    file_stream.PushText(",");
+                }
+            }
+
+            file_stream.CloseElement();
+        }
+    }
+    else
+    {
+        buffer << text_data_file_preview.dimension(0);
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        for(Index i = 0; i < text_data_file_preview.dimension(0); i++)
+        {
+            file_stream.OpenElement("Row");
+
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+            file_stream.PushText(text_data_file_preview(i,0).c_str());
+
+            file_stream.CloseElement();
+        }
+
+        for(Index i = 0; i < text_data_file_preview.dimension(0); i++)
+        {
+            file_stream.OpenElement("Target");
+
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+            file_stream.PushText(text_data_file_preview(i,1).c_str());
+
+            file_stream.CloseElement();
+        }
     }
 
     // Close preview data
@@ -7509,6 +7561,18 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
 
             set_long_words_length(new_long_words_length);
+        }
+    }
+
+    const tinyxml2::XMLElement* stop_words_list_element = data_file_element->FirstChildElement("StopWordsList");
+
+    if(stop_words_list_element)
+    {
+        if(stop_words_list_element->GetText())
+        {
+            const string new_stop_words_list = stop_words_list_element->GetText();
+
+            stop_words = get_tokens(new_stop_words_list,",");
         }
     }
 
@@ -8113,29 +8177,75 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
+        if(new_preview_size > 0) text_data_file_preview.resize(new_preview_size, 2);
     }
 
     // Preview data
 
     start_element = preview_size_element;
 
-    for(Index i = 0; i < new_preview_size; i++)
+    if(project_type != ProjectType::TextClassification)
     {
-        const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
-        start_element = row_element;
-
-        if(row_element->Attribute("Item") != to_string(i+1))
+        for(Index i = 0; i < new_preview_size; i++)
         {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            start_element = row_element;
 
-            throw invalid_argument(buffer.str());
+            if(row_element->Attribute("Item") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(row_element->GetText())
+            {
+                data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+            }
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < new_preview_size; i++)
+        {
+            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            start_element = row_element;
+
+            if(row_element->Attribute("Item") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(row_element->GetText())
+            {
+                text_data_file_preview(i,0) = row_element->GetText();
+            }
         }
 
-        if(row_element->GetText())
+        for(Index i = 0; i < new_preview_size; i++)
         {
-            data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Target");
+            start_element = row_element;
+
+            if(row_element->Attribute("Item") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Target item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(row_element->GetText())
+            {
+                text_data_file_preview(i,1) = row_element->GetText();
+            }
         }
     }
 
@@ -11396,6 +11506,7 @@ void DataSet::read_txt()
     text_analytics.set_separator(get_text_separator_string());
     text_analytics.set_short_words_length(short_words_length);
     text_analytics.set_long_words_length(long_words_length);
+    text_analytics.set_stop_words(stop_words);
 
     cout << "Loading documents..." << endl;
 
@@ -11435,6 +11546,21 @@ void DataSet::read_txt()
     for(Index i  = 0; i < document_words_number; i++)
             file << columns_names(i) << ";";
     file << "target_variable" << "\n";
+
+    // Data file preview
+
+    Index preview_size = 4;
+
+    text_data_file_preview.resize(preview_size,2);
+
+    for(Index i = 0; i < preview_size - 1; i++)
+    {
+        text_data_file_preview(i,0) = document(0)(i);
+        text_data_file_preview(i,1) = targets(0)(i);
+    }
+
+    text_data_file_preview(preview_size - 1, 0) = document(0)(document(0).size()-1);
+    text_data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size()-1);
 
 #pragma omp parallel for
 
@@ -11483,7 +11609,6 @@ void DataSet::read_txt()
     data_file_name = transformed_data_path;
     separator = Separator::Semicolon;
     has_columns_names = true;
-    has_text_data = true;
 
     read_csv();
 
@@ -12754,12 +12879,6 @@ void DataSet::shuffle()
 bool DataSet::get_has_rows_labels() const
 {
     return this->has_rows_labels;
-}
-
-
-bool DataSet::get_has_text_data() const
-{
-    return this->has_text_data;
 }
 
 }

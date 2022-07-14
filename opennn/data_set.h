@@ -855,13 +855,7 @@ private:
 
    bool convolutional_model = false;
 
-   /// Text classification model
-
-   bool has_text_data = false;
-
    Tensor<Tensor<string, 1>, 1> data_file_preview;
-
-   Separator text_separator = Separator::Tab;
 
    // TIME SERIES
 
@@ -889,11 +883,19 @@ private:
 
    // TEXT CLASSIFICATION
 
+   Separator text_separator = Separator::Tab;
+
    Index short_words_length = 2;
 
    Index long_words_length = 15;
 
    Tensor<Index, 1> words_frequencies;
+
+   TextAnalytics text_analytics;
+
+   Tensor<string, 1> stop_words = text_analytics.get_stop_words();
+
+   Tensor<string, 2> text_data_file_preview;
 
    // MISSING VALUES
 

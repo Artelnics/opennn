@@ -15,7 +15,7 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++11
+#CONFIG += c++17
 
 CONFIG(debug, debug|release) {
     DEFINES += OPENNN_DEBUG
@@ -29,7 +29,7 @@ DEFINES += __Cpp17__
 # OpenMP library
 
 win32:!win32-g++{
-#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+#QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
