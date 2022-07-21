@@ -476,7 +476,6 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(3) >= type(-1), LOG);
     assert_true(results->optimal_variables(3) <= 0.0, LOG);
 
-
 };
 
 

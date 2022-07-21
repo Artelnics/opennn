@@ -128,8 +128,7 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
-   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
+   void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&) final;
 
    // Expression methods
 

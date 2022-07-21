@@ -131,28 +131,15 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>&,
+   void calculate_combinations(type*, Tensor<Index,1>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
-
-   void calculate_combinations(type*,
-                               Tensor<Index,1>&,
-                               const Tensor<type, 2>&,
-                               const Tensor<type, 2>&,
-                               type*) const;
+                               type*, Tensor<Index, 1>&) const;
 
    // Perceptron layer activations
 
    void calculate_activations(type*, Tensor<Index, 1>&,
                               type*, Tensor<Index, 1>&) const;
-
-   void calculate_activations(const Tensor<type, 2>&,
-                              Tensor<type, 2>&) const;
-
-   void calculate_activations_derivatives(const Tensor<type, 2>&,
-                                          Tensor<type, 2>&,
-                                          Tensor<type, 2>&) const;
 
    void calculate_activations_derivatives(type*, Tensor<Index, 1>&,
                                           type*, Tensor<Index, 1>&,
@@ -163,17 +150,13 @@ public:
 
    void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) final;
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
-
    void forward_propagate(type*,
                           Tensor<Index, 1>&,
                           LayerForwardPropagation*) final;
 
-   void forward_propagate(const Tensor<type, 2>&,
-                          LayerForwardPropagation*) final;
-
-   void forward_propagate(const Tensor<type, 2>&,
-                          Tensor<type, 1>,
+   void forward_propagate(type*,
+                          Tensor<Index, 1>&,
+                          Tensor<type, 1>&,
                           LayerForwardPropagation*) final;
 
    // Delta methods
@@ -246,6 +229,14 @@ public:
 protected:
 
    // MEMBERS
+
+   /// Inputs
+
+   Tensor<type, 2> inputs;
+
+   /// Outputs
+
+   Tensor<type, 2> outputs;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's transfer function to generate the neuron's output.

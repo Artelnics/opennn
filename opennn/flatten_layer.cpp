@@ -128,7 +128,7 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 }
 
 
-void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForwardPropagation* forward_propagation)
+void FlattenLayer::forward_propagate(type* inputs_data, Tensor<Index, 1>& inputs_dims, LayerForwardPropagation* forward_propagation)
 {
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
@@ -159,12 +159,24 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForward
 
 #endif
 
-    const Index batch = inputs.dimension(3);
-    const Index channels = inputs.dimension(2);
-    const Index heights = inputs.dimension(0);
-    const Index width = inputs.dimension(1);
+    if(inputs_dims.size() != 4)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
+               << "Inputs rank must be equal to 4.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index batch = inputs_dims(3);
+    const Index channels = inputs_dims(2);
+    const Index heights = inputs_dims(0);
+    const Index width = inputs_dims(1);
 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
+
+    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dims(0), inputs_dims(1), inputs_dims(2), inputs_dims(3));
 
     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }

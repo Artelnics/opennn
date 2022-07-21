@@ -199,9 +199,13 @@ public:
 
    // Output 
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(type *, Tensor<Index, 1>&);
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
+   void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&){ cout << "INSIDE THIS" << endl;};
+
+//   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+
+//   Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
@@ -237,11 +241,11 @@ public:
    void save_expression_c(const string&) const;
    void save_expression_python(const string&) const;
 
-   void save_outputs(const Tensor<type, 2>&, const string&);
+   void save_outputs(Tensor<type, 2>&, const string&);
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
 protected:
@@ -547,6 +551,8 @@ struct NeuralNetworkBackPropagationLM
 };
 
 }
+
+
 
 #endif
 

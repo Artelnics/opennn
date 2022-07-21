@@ -454,13 +454,16 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
+    Tensor<Index, 1> inputs_dims;
 
     long_short_term_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
     LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation(1, &long_short_term_layer);
 
-    long_short_term_layer.forward_propagate(inputs, &long_short_term_layer_forward_propagation);
+    inputs_dims = get_dimensions(inputs);
+
+    long_short_term_layer.forward_propagate(inputs.data(), inputs_dims, &long_short_term_layer_forward_propagation);
 
     assert_true(long_short_term_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(long_short_term_layer_forward_propagation.combinations.dimension(0) == 1, LOG);

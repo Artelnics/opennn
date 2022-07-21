@@ -204,7 +204,10 @@ void ProbabilisticLayerTest::test_calculate_combinations()
     Tensor<type, 1> parameters(1);
 
     Tensor<type, 2> inputs(1,1);
+    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+
     Tensor<type, 2> combinations(1,1);
+    Tensor<Index, 1> combinations_dims = get_dimensions(combinations);
 
     biases.setConstant(type(1));
     synaptic_weights.setConstant(type(2));
@@ -212,7 +215,7 @@ void ProbabilisticLayerTest::test_calculate_combinations()
     probabilistic_layer.set(1,1);
     inputs.setConstant(type(3));
 
-    probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -233,6 +236,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
 
+    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+    Tensor<Index, 1> combinations_dims = get_dimensions(combinations);
+    Tensor<Index, 1> activations_dims = get_dimensions(activations);
+
     // Test
 
     inputs_number = 1;
@@ -244,15 +251,26 @@ void ProbabilisticLayerTest::test_calculate_activations()
     probabilistic_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
+    inputs_dims = get_dimensions(inputs);
     inputs.setConstant(type(-1));
 
     combinations.resize(samples_number, neurons_number);
-    probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
+    combinations_dims = get_dimensions(combinations);
+
+    biases.resize(1,2);
+    biases.setZero();
+
+    synaptic_weights.resize(1,2);
+    synaptic_weights.setZero();
+
+    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Binary);
 
     activations.resize(samples_number, neurons_number);
-    probabilistic_layer.calculate_activations(combinations, activations);
+    activations_dims = get_dimensions(activations);
+
+    probabilistic_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == samples_number, LOG);
@@ -263,7 +281,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
-    probabilistic_layer.calculate_activations(combinations, activations);
+    probabilistic_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == samples_number, LOG);
@@ -275,20 +293,29 @@ void ProbabilisticLayerTest::test_calculate_activations()
     probabilistic_layer.set(2, 2);
     probabilistic_layer.set_parameters_constant(2);
 
+    inputs.resize(1,2);
+    inputs_dims = get_dimensions(inputs);
+    inputs.setConstant(2);
+
     combinations.resize(1,2);
+    combinations_dims = get_dimensions(combinations);
     combinations.setZero();
 
     activations.resize(1,2);
+    activations_dims = get_dimensions(activations);
     activations.setZero();
 
-    inputs.resize(1,2);
-    inputs.setConstant(2);
+    biases.resize(2,2);
+    biases.setZero();
 
-    probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
+    synaptic_weights.resize(2,2);
+    synaptic_weights.setZero();
+
+    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
-    probabilistic_layer.calculate_activations(combinations, activations);
+    probabilistic_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == 1, LOG);
@@ -297,34 +324,44 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
     // Test
 
-//    probabilistic_layer.set(3, 3);
+    probabilistic_layer.set(3, 3);
 
-//    combinations.resize(1,3);
-//    combinations.setValues({{1,0,-1}});
+    inputs.resize(1,3);
+    inputs.setZero();
+    inputs_dims = get_dimensions(inputs);
 
-//    activations.resize(1,3);
-//    activations.setZero();
+    combinations.resize(1,3);
+    combinations.setValues({{1,0,-1}});
+    combinations_dims = get_dimensions(combinations);
 
-//    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
+    activations.resize(1,3);
+    activations.setZero();
+    activations_dims = get_dimensions(activations);
 
-//    probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
-//    probabilistic_layer.calculate_activations(combinations, activations);
+    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dims, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations.data(), combinations_dims);
 
-//    assert_true(activations.rank() == 2, LOG);
-//    assert_true(activations.dimension(0) == 1, LOG);
-//    assert_true(activations.dimension(1) == 3, LOG);
-//    assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
-//    assert_true(static_cast<Index>(activations(0,1)) == 0, LOG);
-//    assert_true(static_cast<Index>(activations(0,2)) == 0, LOG);
+    probabilistic_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
 
-//    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    assert_true(activations.rank() == 2, LOG);
+    assert_true(activations.dimension(0) == 1, LOG);
+    assert_true(activations.dimension(1) == 3, LOG);
+    assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
+    assert_true(static_cast<Index>(activations(0,1)) == 0, LOG);
+    assert_true(static_cast<Index>(activations(0,2)) == 0, LOG);
 
-//    probabilistic_layer.calculate_activations(combinations, activations);
+    // Test
 
-//    assert_true(abs(activations(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
-//    assert_true(abs(activations(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
-//    assert_true(abs(activations(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+
+    combinations.setValues({{1,0,-1}});
+
+    probabilistic_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+
+    assert_true(abs(activations(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 
 }
 
@@ -336,6 +373,10 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
     Tensor<type, 3> activations_derivatives;
+
+    Tensor<Index, 1> combinations_dims;
+    Tensor<Index, 1> activations_dims;
+    Tensor<Index, 1> activations_derivatives_dims;
 
     // Test
 
@@ -351,7 +392,12 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     activations_derivatives.resize(samples_number * inputs_number, neurons_number, neurons_number);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
-    probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+
+    combinations_dims = get_dimensions(combinations);
+    activations_dims = get_dimensions(activations);
+    activations_derivatives_dims = get_dimensions(activations_derivatives);
+
+    probabilistic_layer.calculate_activations_derivatives(combinations.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims);
 
     assert_true(abs(activations(0,0) - static_cast<type>(0.175)) < static_cast<type>(1e-2), LOG);
 
@@ -376,7 +422,12 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     activations_derivatives.resize(samples_number * inputs_number, neurons_number, neurons_number);
     
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+
+    combinations_dims = get_dimensions(combinations);
+    activations_dims = get_dimensions(activations);
+    activations_derivatives_dims = get_dimensions(activations_derivatives);
+
+    probabilistic_layer.calculate_activations_derivatives(combinations.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
     assert_true(activations_derivatives.dimension(0) == samples_number * inputs_number, LOG);
@@ -402,7 +453,11 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     activations.resize(samples_number * inputs_number, neurons_number);
     activations_derivatives.resize(samples_number * inputs_number,neurons_number, neurons_number);
 
-    probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+    combinations_dims = get_dimensions(combinations);
+    activations_dims = get_dimensions(activations);
+    activations_derivatives_dims = get_dimensions(activations_derivatives);
+
+    probabilistic_layer.calculate_activations_derivatives(combinations.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
     assert_true(activations_derivatives.dimension(0) == samples_number * inputs_number, LOG);
@@ -424,9 +479,11 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     Tensor<type, 2> biases;
 
     Tensor<type, 2> inputs;
+    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
     Tensor<type, 1> parameters;
 
     Tensor<type,2> outputs;
+    Tensor<Index, 1> outputs_dims = get_dimensions(outputs);
 
     // Test
     
@@ -435,8 +492,10 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     synaptic_weights.resize(3, 4);
     biases.resize(1, 4);
     inputs.resize(1, 3);
+    inputs_dims = get_dimensions(inputs);
 
     inputs.setConstant(type(1));
+
     biases.setConstant(type(1));
     synaptic_weights.setValues({
                                    {type(1),type(-1),type(0),type(1)},
@@ -448,7 +507,10 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-    outputs = probabilistic_layer.calculate_outputs(inputs);
+    outputs.resize(1,4);
+    outputs_dims = get_dimensions(outputs);
+
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     Tensor<type, 1> perceptron_sol(4);
     perceptron_sol.setValues({ type(7),type(-5),type(1),type(7)});
@@ -467,7 +529,9 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
-    outputs = probabilistic_layer.calculate_outputs(inputs);
+    outputs_dims = get_dimensions(outputs);
+
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -493,12 +557,15 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     probabilistic_layer.set_biases(biases);
 
     inputs.resize(1, 2);
+    inputs_dims = get_dimensions(inputs);
     inputs.setConstant(type(1));
+
+    outputs.resize(1,4);
+    outputs_dims = get_dimensions(outputs);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-    outputs = probabilistic_layer.calculate_outputs(inputs);
-
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
     Tensor<type, 1>perceptron_sol_3(4);
     perceptron_sol.setValues({type(7),type(-5),type(1),type(7)});
 
@@ -519,8 +586,12 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     inputs.resize(1,3);
     inputs.setConstant(type(0));
+    inputs_dims = get_dimensions(inputs);
 
-    outputs = probabilistic_layer.calculate_outputs(inputs);
+    outputs.resize(1,2);
+    outputs_dims = get_dimensions(outputs);
+
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -543,6 +614,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type, 2> inputs(samples_number,inputs_number);
     inputs.setConstant(type(1));
+    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
@@ -550,7 +622,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(samples_number, &probabilistic_layer);
 
-    probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
+    probabilistic_layer.forward_propagate(inputs.data(), inputs_dims, &probabilistic_layer_forward_propagation);
 
     Tensor<type,3> activations_derivatives;
     activations_derivatives = probabilistic_layer_forward_propagation.activations_derivatives;

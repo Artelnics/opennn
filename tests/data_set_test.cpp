@@ -1907,6 +1907,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
+    cout << "Calculating input corrs " << endl;
+
     inputs_correlations = data_set.calculate_input_columns_correlations();
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -2308,7 +2310,7 @@ void DataSetTest::test_fill()
 void DataSetTest::run_test_case()
 {
     cout << "Running data set test case...\n";
-
+/*
     // Constructor and destructor methods
 
     test_constructor();
@@ -2358,8 +2360,8 @@ void DataSetTest::run_test_case()
     test_scale_data();
 
     // Correlations
-
-    test_calculate_input_target_correlations();
+*/
+//    test_calculate_input_target_correlations();
     test_calculate_input_columns_correlations();
 /*
     // Classification methods

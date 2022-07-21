@@ -326,6 +326,8 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     {
     case Layer::Type::Perceptron:
     {
+//        cout << "Activations in calculate errors: " << endl << static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations << endl;
+
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
                 batch.targets_2d;
@@ -428,6 +430,8 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
                                LossIndexBackPropagation& back_propagation) const
 {
     // Loss index
+
+
 
     calculate_errors(batch, forward_propagation, back_propagation);
 
@@ -1101,13 +1105,17 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
        parameters_backward(i) -= h;
 
        neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
+
        calculate_errors(batch, forward_propagation, back_propagation);
+
        calculate_error(batch, forward_propagation, back_propagation);
+
        error_backward = back_propagation.error;
 
        parameters_backward(i) += h;
 
        gradient_numerical_differentiation(i) = (error_forward - error_backward)/(type(2)*h);
+
     }
 
     return gradient_numerical_differentiation;

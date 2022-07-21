@@ -50,22 +50,28 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
 
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<type, 2> inputs(3, 4);
-        Tensor<type, 2> outputs;
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+
+        Tensor<type, 2> inputs(3, neural_network.get_inputs_number());
+        Tensor<type, 2> outputs(3, neural_network.get_outputs_number());
+
+        Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+        Tensor<Index, 1> outputs_dims = get_dimensions(outputs);
 
         inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
                           {type(6.4),type(3.2),type(4.5),type(1.5)},
                           {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        outputs = neural_network.calculate_outputs(inputs);
+
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
 
         cout << "\nInputs:\n" << inputs << endl;
 

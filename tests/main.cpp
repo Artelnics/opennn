@@ -468,7 +468,6 @@ int main()
           tests_passed_count += data_set_test.get_tests_passed_count();
           tests_failed_count += data_set_test.get_tests_failed_count();
 
-
           // N E U R A L   N E T W O R K   T E S T S
 
           // perceptron layer

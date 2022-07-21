@@ -400,7 +400,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 /// Calculates the outputs from the bounding layer for a set of inputs to that layer.
 /// @param inputs Set of inputs to the bounding layer.
 
-Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
+void BoundingLayer::calculate_outputs(type * inputs_data , Tensor<Index, 1>& inputs_dims, type * outputs_data, Tensor<Index, 1>& outputs_dims)
 {
 #ifdef OPENNN_DEBUG
 check_columns_number(inputs, get_inputs_number(), LOG);
@@ -408,10 +408,22 @@ check_columns_number(inputs, get_inputs_number(), LOG);
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const Index rows_number = inputs.dimension(0);
-        const Index columns_number = inputs.dimension(1);
+        TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dims(0), inputs_dims(1));
+        TensorMap<Tensor<type,2>> outputs(outputs_data, outputs_dims(0), outputs_dims(1));
 
-        Tensor<type, 2> outputs(rows_number, columns_number);
+        const Index rows_number = inputs_dims(0);
+        const Index columns_number = inputs_dims(1);
+
+        if(outputs_dims(0) != rows_number || outputs_dims(1) != columns_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: BoundingLayer class.\n"
+                   << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&)"
+                   << "Inputs and outputs dimensions must be the same.\n";
+
+            throw invalid_argument(buffer.str());
+        }
 
         for(Index i = 0; i < rows_number; i++)
         {
@@ -422,14 +434,12 @@ check_columns_number(inputs, get_inputs_number(), LOG);
                 else outputs(i,j) = inputs(i,j);
             }
         }
-
-        return outputs;
     }
     else
     {
-        return inputs;
+        Tensor<Index, 0> inputs_size = inputs_dims.prod();
+        copy(outputs_data, outputs_data + inputs_size(0), inputs_data);
     }
-
 }
 
 
