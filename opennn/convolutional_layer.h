@@ -35,7 +35,7 @@ struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+    struct ConvolutionalLayerForwardPropagationCuda;
 #endif
 
 class ConvolutionalLayer : public Layer
@@ -345,6 +345,9 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     Tensor<type, 4> synaptic_weights_derivatives;
 };
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+#endif
 
 }
 
