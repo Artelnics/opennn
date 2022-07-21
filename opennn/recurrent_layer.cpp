@@ -611,7 +611,7 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
 }
 
 
-void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1d,
+void RecurrentLayer::calculate_activations(Tensor<type, 1>& combinations_1d,
                                            Tensor<type, 1>& activations_1d) const
 {
 #ifdef OPENNN_DEBUG
@@ -619,150 +619,125 @@ void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1
     check_size(activations_1d, get_neurons_number(), LOG);
 #endif
 
+    Tensor<Index, 1> combinations_dims = get_dimensions(combinations_1d);
+    Tensor<Index, 1> activations_dims = get_dimensions(activations_1d);
+
     switch(activation_function)
     {
-        case ActivationFunction::Linear:  linear(combinations_1d, activations_1d); return;
+        case ActivationFunction::Linear:  linear(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::Logistic: logistic(combinations_1d, activations_1d); return;
+        case ActivationFunction::Logistic: logistic(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::Threshold: threshold(combinations_1d, activations_1d); return;
+        case ActivationFunction::Threshold: threshold(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); return;
+        case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(combinations_1d, activations_1d); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(combinations_1d, activations_1d); return;
+        case ActivationFunction::SoftPlus: soft_plus(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::SoftSign: soft_sign(combinations_1d, activations_1d); return;
+        case ActivationFunction::SoftSign: soft_sign(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d.data(), combinations_dims, activations_1d.data(), activations_dims); return;
 
         default: return;
     }
 }
 
 
-void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& combinations_1d,
-                                                       Tensor<type, 1>& activations_1d,
-                                                       Tensor<type, 1>& activations_derivatives_1d) const
+void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dims,
+                                       type* activations_data, Tensor<Index, 1>& activations_dims,
+                                       type* activations_derivatives_data, Tensor<Index, 1>& activations_derivatives_dims)
 {
-     #ifdef OPENNN_DEBUG
-
-     const Index neurons_number = get_neurons_number();
-
-     const Index combinations_columns_number = combinations_1d.dimension(1);
-
-     if(combinations_columns_number != neurons_number)
-     {
+    if(combinations_dims.size() != 1 && combinations_dims.size() != 2)
+    {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: RecurrentLayer class.\n"
-               << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-               << "Number of combinations_1d columns (" << combinations_columns_number
-               << ") must be equal to number of neurons (" << neurons_number << ").\n";
+               << "void calculate_activations_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
+               << "Combinations rank must be equal to 1 or 2.\n";
 
         throw invalid_argument(buffer.str());
-     }
+    }
 
-     #endif
+    const Index neurons_number = get_neurons_number();
 
-     switch(activation_function)
-     {
-         case ActivationFunction::Linear: linear_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+    const Index combinations_columns_number = combinations_dims(combinations_dims.size() - 1);
 
-         case ActivationFunction::Logistic: logistic_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+    if(combinations_columns_number != neurons_number)
+    {
+       ostringstream buffer;
 
-         case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+       buffer << "OpenNN Exception: RecurrentLayer class.\n"
+              << "void calculate_activations_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&).\n"
+              << "Number of combinations_1d columns (" << combinations_columns_number
+              << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
-         case ActivationFunction::Threshold: threshold_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+       throw invalid_argument(buffer.str());
+    }
 
-         case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+    switch(activation_function)
+    {
+        case ActivationFunction::Linear: linear_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+        case ActivationFunction::Logistic: logistic_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+        case ActivationFunction::Threshold: threshold_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+        case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-         default: return;
-     }
-}
+        case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
-                                                       Tensor<type, 2>& activations_2d,
-                                                       Tensor<type, 2>& activations_derivatives_2d) const
-{
-     #ifdef OPENNN_DEBUG
+        case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-     const Index neurons_number = get_neurons_number();
+        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-     const Index combinations_columns_number = combinations_2d.dimension(1);
+        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_data, combinations_dims, activations_data, activations_dims, activations_derivatives_data, activations_derivatives_dims); return;
 
-     if(combinations_columns_number != neurons_number)
-     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-               << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-               << "Number of combinations_2d columns (" << combinations_columns_number
-               << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-        throw invalid_argument(buffer.str());
-     }
-
-     #endif
-
-     switch(activation_function)
-     {
-         case ActivationFunction::Linear: linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::Logistic: logistic_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::Threshold: threshold_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
-
-         default: return;
-     }
+        default: return;
+    }
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(type * inputs_data, Tensor<Index, 1>& inputs_dims, LayerForwardPropagation * forward_propagation)
 {
 #ifdef OPENNN_DEBUG
 check_columns_number(inputs, get_inputs_number(), LOG);
 #endif
 
+    if(inputs_dims.size() != 2)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: RecurrentLayer class.\n"
+               << "void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
+               << "Inputs rank must be equal to 2.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const Index samples_number = inputs.dimension(0);
+    const Index samples_number = inputs_dims(0);
     const Index neurons_number = get_neurons_number();
+
+    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dims(0), inputs_dims(1));
+
+    Tensor<Index, 1> combinations_dims;
+    Tensor<Index, 1> activations_dims;
+    Tensor<Index, 1> activations_derivatives_dims;
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -776,9 +751,17 @@ check_columns_number(inputs, get_inputs_number(), LOG);
                                biases,
                                recurrent_layer_forward_propagation->current_combinations);
 
-        calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations,
-                                          hidden_states,
-                                          recurrent_layer_forward_propagation->current_activations_derivatives);
+        combinations_dims = get_dimensions(recurrent_layer_forward_propagation->current_combinations);
+        activations_dims = get_dimensions(hidden_states);
+        activations_derivatives_dims = get_dimensions(recurrent_layer_forward_propagation->current_activations_derivatives);
+
+
+        calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
+                                          combinations_dims,
+                                          hidden_states.data(),
+                                          activations_dims,
+                                          recurrent_layer_forward_propagation->current_activations_derivatives.data(),
+                                          activations_derivatives_dims);
 
         for(Index j = 0; j < neurons_number; j++)
         {
@@ -790,12 +773,23 @@ check_columns_number(inputs, get_inputs_number(), LOG);
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2>&inputs,
-                                       Tensor<type, 1> parameters,
+void RecurrentLayer::forward_propagate(type * inputs_data, Tensor<Index, 1>& inputs_dims,
+                                       Tensor<type, 1>&parameters,
                                        LayerForwardPropagation* forward_propagation)
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
             = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+
+    if(inputs_dims.size() != 2)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: RecurrentLayer class.\n"
+               << "void forward_propagate(type*, Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final.\n"
+               << "Inputs rank must be equal to 2.\n";
+
+        throw invalid_argument(buffer.str());
+    }
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -803,8 +797,13 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>&inputs,
     const TensorMap<Tensor<type, 1>> biases(parameters.data(), neurons_number);
     const TensorMap<Tensor<type, 2>> input_weights(parameters.data()+neurons_number, inputs_number, neurons_number);
     const TensorMap<Tensor<type, 2>> recurrent_weights(parameters.data()+neurons_number+inputs_number*neurons_number, neurons_number, neurons_number);
+    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dims(0), inputs_dims(1));
 
-    const Index samples_number = inputs.dimension(0);
+    Tensor<Index, 1> combinations_dims;
+    Tensor<Index, 1> activations_dims;
+    Tensor<Index, 1> activations_derivatives_dims;
+
+    const Index samples_number = inputs_dims(0);
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -818,9 +817,12 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>&inputs,
                                biases,
                                recurrent_layer_forward_propagation->current_combinations);
 
-        calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations,
-                                          hidden_states,
-                                          recurrent_layer_forward_propagation->current_activations_derivatives);
+        calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
+                                          combinations_dims,
+                                          hidden_states.data(),
+                                          activations_dims,
+                                          recurrent_layer_forward_propagation->current_activations_derivatives.data(),
+                                          activations_derivatives_dims);
 
         for(Index j = 0; j < neurons_number; j++)
         {
@@ -836,27 +838,39 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>&inputs,
 }
 
 
-Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
+void RecurrentLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& input_dims,  type * output_data, Tensor<Index, 1>& output_dims)
 {
-#ifdef OPENNN_DEBUG
+    if(input_dims.size() != 2)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void RecurrentLayer::calculate_outputs(type *, Tensor<Index, 1>&,  type *, Tensor<Index, 1>&).\n"
+               << "Inputs dimensions must be equal to 2.\n";
+        throw invalid_argument(buffer.str());
+    }
 
-    const Index inputs_number = get_inputs_number();
+    if(output_dims.size() != 2)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void RecurrentLayer::calculate_outputs(type *, Tensor<Index, 1>&,  type *, Tensor<Index, 1>&).\n"
+               << "Outputs dimensions must be equal to 2.\n";
+        throw invalid_argument(buffer.str());
+    }
 
-    const Index inputs_columns_number = inputs.dimension(1);
-
-    if(inputs_columns_number != inputs_number)
+    if(input_dims(1) != get_inputs_number())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: RecurrentLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs("<<inputs_number<<").\n";
+               << "void RecurrentLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& input_dims,  type * output_data, Tensor<Index, 1>&).\n"
+               << "Number of columns("<< input_dims(1) <<") of inputs matrix must be equal to number of inputs("<< input_dims(1) <<").\n";
 
         throw invalid_argument(buffer.str());
     }
-#endif
 
-    const Index samples_number = inputs.dimension(0);
+
+    const Index samples_number = input_dims(0);
 
     const Index neurons_number = get_neurons_number();
 
@@ -864,9 +878,10 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     Tensor<type, 1> current_outputs(neurons_number);
 
-    Tensor<type, 2> outputs(samples_number, neurons_number);
+    TensorMap<Tensor<type, 2>> inputs(input_data, input_dims(0), input_dims(1));
+    TensorMap<Tensor<type, 2>> outputs(output_data, output_dims(0), output_dims(1));
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; i++) /// @todo use vector maps instead of chipping
     {
         if(i%timesteps == 0) hidden_states.setZero();
 
@@ -880,7 +895,6 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
             outputs(i,j) = hidden_states(j);
     }
 
-    return outputs;
 }
 
 

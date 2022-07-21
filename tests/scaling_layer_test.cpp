@@ -344,6 +344,9 @@ void ScalingLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
+    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> outputs_dims;
+
     Tensor<Descriptives,1> input_descriptives;
 
     // Test
@@ -356,8 +359,12 @@ void ScalingLayerTest::test_calculate_outputs()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setZero();
+    inputs_dims = get_dimensions(inputs);
 
-    outputs = scaling_layer.calculate_outputs(inputs);
+    outputs.resize(samples_number, inputs_number);
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -374,8 +381,12 @@ void ScalingLayerTest::test_calculate_outputs()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setZero();
+    inputs_dims = get_dimensions(inputs);
 
-    outputs = scaling_layer.calculate_outputs(inputs);
+    outputs.resize(samples_number, inputs_number);
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -394,8 +405,12 @@ void ScalingLayerTest::test_calculate_outputs()
 
     inputs.resize(samples_number,inputs_number);
     inputs.setRandom();
+    inputs_dims = get_dimensions(inputs);
 
-    outputs = scaling_layer.calculate_outputs(inputs);
+    outputs.resize({samples_number, inputs_number});
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -417,7 +432,14 @@ void ScalingLayerTest::test_calculate_outputs()
 
     input_descriptives = data_set.calculate_input_variables_descriptives();
     scaling_layer.set_descriptives(input_descriptives);
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dims = get_dimensions(inputs);
+
+    outputs.resize({samples_number, inputs_number});
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -440,7 +462,14 @@ void ScalingLayerTest::test_calculate_outputs()
 
     input_descriptives = data_set.calculate_input_variables_descriptives();
     scaling_layer.set_descriptives(input_descriptives);
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dims = get_dimensions(inputs);
+
+    outputs.resize({samples_number, inputs_number});
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -460,7 +489,14 @@ void ScalingLayerTest::test_calculate_outputs()
     data_set.set(data);
 
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dims = get_dimensions(inputs);
+
+    outputs.resize({samples_number, inputs_number});
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == inputs_number, LOG);
     assert_true(outputs.dimension(1) == samples_number, LOG);
@@ -480,7 +516,14 @@ void ScalingLayerTest::test_calculate_outputs()
     data_set.set_data(data);
 
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dims = get_dimensions(inputs);
+
+    outputs.resize({samples_number, inputs_number});
+    outputs_dims = get_dimensions(outputs);
+
+    scaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);

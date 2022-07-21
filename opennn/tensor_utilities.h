@@ -72,8 +72,6 @@ void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 Tensor<string, 1> get_first(const Tensor<string,1>&, const Index& );
 Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index& );
 
-//
-
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 
 Index count_between(Tensor<type,1>&, const type&, const type&);
@@ -129,6 +127,14 @@ Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&);
 Tensor<type, 1> push_back(const Tensor<type, 1>&, const type&);
 
 Tensor<string, 1> to_string_tensor(const Tensor<type,1>&);
+
+template<class T, int N>
+Tensor<Index, 1> get_dimensions(const Tensor<T, N>&tensor)
+{
+    Tensor<Index, 1> dims(N);
+    memcpy(dims.data(), tensor.dimensions().data(), static_cast<size_t>(N)*sizeof(Index));
+    return dims;
+}
 
 }
 

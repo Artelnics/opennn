@@ -64,18 +64,20 @@ int main()
 
         // Calculate outputs
 
-        Tensor<type, 2> input_data(4,3);
-
-        input_data.setValues({
+        Tensor<type, 2> input(4,3);
+        Tensor<Index, 1> input_dims = get_dimensions(input);
+        input.setValues({
                                  {150,146,135},
                                  {124,253,352},
                                  {124,253,352},
                                  {124,253,352}
                              });
 
-        Tensor<type, 2> output_data = neural_network.calculate_outputs(input_data);
+        Tensor<type, 2> output;
 
-        cout << "Input data:\n" << input_data << "\nPredictions:\n" << output_data << endl;
+        output = neural_network.calculate_outputs(input.data(), input_dims);
+
+        cout << "Input data:\n" << input << "\nPredictions:\n" << output << endl;
 
         // Save results
 

@@ -257,14 +257,10 @@ void TestingAnalysisTest::test_linear_regression()
     data_set.set_data_constant(type(0));
     data_set.set_testing();
     /// @todo
-    //   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
     neural_network.set_parameters_constant(type(0));
 
     linear_correlation = testing_analysis.linear_correlation();
-
-    cout << linear_correlation(0).a << endl;
-    cout << linear_correlation(0).b << endl;
-    cout << linear_correlation(0).r << endl;
 
     assert_true(linear_correlation.size() == 1, LOG);
     assert_true(isnan(linear_correlation(0).a), LOG);
@@ -1182,23 +1178,23 @@ void TestingAnalysisTest::run_test_case()
     test_calculate_Wilcoxon_parameter();
     test_calculate_roc_curve();
 //    test_calculate_area_under_curve();
-//    test_calculate_optimal_threshold();
+    test_calculate_optimal_threshold();
 
-//    // Lift chart methods
+    // Lift chart methods
 
-//    test_calculate_cumulative_gain();
-//    test_calculate_lift_chart();
+    test_calculate_cumulative_gain();
+    test_calculate_lift_chart();
 
-//    // Calibration plot
+    // Calibration plot
 
-//    test_calculate_calibration_plot();
+    test_calculate_calibration_plot();
 
-//    // Binary classification rates
+    // Binary classification rates
 
-//    test_calculate_true_positive_samples();
-//    test_calculate_false_positive_samples();
-//    test_calculate_false_negative_samples();
-//    test_calculate_true_negative_samples();
+    test_calculate_true_positive_samples();
+    test_calculate_false_positive_samples();
+    test_calculate_false_negative_samples();
+    test_calculate_true_negative_samples();
 
 
     // Multiple classification rates

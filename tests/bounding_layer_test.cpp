@@ -49,6 +49,9 @@ void BoundingLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
+    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> outputs_dims;
+
     // Test
 
     bounding_layer.set(1);
@@ -58,7 +61,12 @@ void BoundingLayerTest::test_calculate_outputs()
 
     inputs.resize(1, 1);
     inputs(0) = type(-2.0);
-    outputs = bounding_layer.calculate_outputs(inputs);
+    inputs_dims = get_dimensions(inputs);
+
+    outputs.resize(1,1);
+    outputs_dims = get_dimensions(outputs);
+
+    bounding_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -66,7 +74,9 @@ void BoundingLayerTest::test_calculate_outputs()
     // Test
 
     inputs(0) = type(2.0);
-    outputs = bounding_layer.calculate_outputs(inputs);
+
+    bounding_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }

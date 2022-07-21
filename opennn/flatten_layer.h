@@ -83,7 +83,7 @@ public:
 
     Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
 
-    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) final;
+    void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
     // Serialization methods
 

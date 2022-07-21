@@ -98,20 +98,10 @@ public:
 
     // Outputs
 
-    virtual void calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&){}
+    virtual void calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&);
 
-    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const because of Recurrent and LSTM layers
-    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
-    virtual Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&)  {return Tensor<type, 2>();}
-
-    virtual void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*){}
-
-    virtual void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
-    virtual void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) {}
-
-    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*) {}
-    virtual void forward_propagate(type*,LayerForwardPropagation*){}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
 
@@ -184,6 +174,8 @@ protected:
 
     Type layer_type = Type::Perceptron;
 
+    /// Activation functions
+
     void binary(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
     void competitive(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
     void exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
@@ -214,7 +206,7 @@ protected:
 
 
     // activations 1d (Time Series)
-
+/*
     void hard_sigmoid(const Tensor<type, 1>&, Tensor<type, 1>&) const;
     void hyperbolic_tangent(const Tensor<type, 1>&, Tensor<type, 1>&) const;
     void logistic(const Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -299,7 +291,7 @@ protected:
     void soft_sign_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
     void hard_sigmoid_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
     void exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-
+*/
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};

@@ -9,17 +9,11 @@
       <ScalingLayer>
          <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
-            <Minimum>0.186207</Minimum>
-            <Maximum>0.868056</Maximum>
-            <Mean>0.497146</Mean>
-            <StandardDeviation>0.190358</StandardDeviation>
+            <Descriptives>0.186207\0.868056\0.497146\0.190358</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
-            <Minimum>0.149351</Minimum>
-            <Maximum>0.875</Maximum>
-            <Mean>0.488018</Mean>
-            <StandardDeviation>0.198204</StandardDeviation>
+            <Descriptives>0.149351\0.875\0.488018\0.198204</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
       </ScalingLayer>
@@ -28,13 +22,13 @@
          <InputsNumber>2</InputsNumber>
          <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.296804 0.3031 -0.277971 0.318156 0.289379 0.313975 0.315903 0.268993 -0.311001 0.28485 -0.954437 0.885734 -0.971211 0.901309 0.904248 -0.839228 -1.01146 0.938595 -0.934634 0.867385 -1.00031 0.92816 -1.00549 0.932938 -0.88033 0.817097 0.992423 -0.920825 -0.922566 0.856198</Parameters>
+         <Parameters>0.00238452 -0.00456767 0.000673228 0.00403211 -0.00673104 -0.00398696 -0.00223028 0.003009 0.00516576 0.0120367 -0.364511 0.450243 0.366057 -0.45232 0.362297 -0.447277 -0.365687 0.451815 0.367579 -0.454366 0.365649 -0.451769 0.364388 -0.450079 -0.364955 0.450832 -0.366472 0.452885 -0.371196 0.459323</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
          <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Logistic</ActivationFunction>
-         <Parameters>0.11943 1.35157 1.37691 -1.27634 1.43747 1.32187 1.42081 1.42853 1.24052 -1.40855 1.30378</Parameters>
+         <Parameters>-0.465869 0.726045 -0.729723 -0.720411 0.728907 -0.733134 -0.728764 -0.725726 0.727096 0.73067 0.740099</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

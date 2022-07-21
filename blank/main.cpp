@@ -15,21 +15,34 @@
 #include <string>
 #include <time.h>
 
-#include <any>
+#include <variant>
 
 // OpenNN includes
 
 #include "../opennn/opennn.h"
+#include "../opennn/tensor_utilities.h"
 
 using namespace opennn;
 using namespace std;
 using namespace Eigen;
+
 
 int main()
 {
     try
     {
         cout << "Hello OpenNN!" << endl;
+
+        NeuralNetwork nn;
+
+        Tensor<type, 2> inputs(3,3);
+        Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+
+        inputs.setConstant(1);
+
+        nn.set_parameters_constant(0);
+
+        cout << nn.calculate_outputs(inputs.data(), inputs_dims) << endl;
 
         cout << "Goodbye!" << endl;
 
