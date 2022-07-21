@@ -136,6 +136,8 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, N>&tensor)
     return dims;
 }
 
+void print_tensor(const float* vector, const int dims[]);
+
 }
 
 #endif
