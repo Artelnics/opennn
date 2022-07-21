@@ -93,7 +93,7 @@ public:
 
    // Lower and upper bounds
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
+   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) final;
 
    // Expression methods
 

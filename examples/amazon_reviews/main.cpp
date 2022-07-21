@@ -55,6 +55,8 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::TextClassification,
             {words_number , hidden_neurons_number, target_variables_number});
 
+        neural_network.print();
+
         // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -78,6 +80,9 @@ int main()
         Tensor<type,1> processed_review_2 = data_set.sentence_to_data(review_2);
 
         Tensor<type,2> input_data(2, words_number);
+        Tensor<Index, 1> input_dims = get_dimensions(input_data);
+
+        Tensor<type, 2> output_data;
 
         for(Index i = 0; i < words_number; i++)
         {
@@ -85,10 +90,10 @@ int main()
           input_data(1,i) = processed_review_2(i);
         }
 
-        Tensor<type,2> outputs = neural_network.calculate_outputs(input_data);
+        output_data = neural_network.calculate_outputs(input_data.data(), input_dims);
 
-        cout << "\n\n" << review_1 << endl << "\nBad:" << outputs(0,0) << "%\tGood:" << (1 - outputs(0,0)) << "%" << endl;
-        cout << "\n" << review_2 << endl << "\nBad:" << outputs(1,0) << "%\tGood:" << (1 - outputs(1,0)) << "%\n" << endl;
+        cout << "\n\n" << review_1 << endl << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
+        cout << "\n" << review_2 << endl << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
 
         // Save results
 

@@ -840,6 +840,8 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const init
     Tensor<Index, 1> architecture(architecture_list.size());
     architecture.setValues(architecture_list);
 
+    set_project_type(model_type);
+
     set(model_type, architecture);
 }
 
@@ -1554,23 +1556,31 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
+void NeuralNetwork::forward_propagate(DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
+    Tensor<Index, 1> inputs_dims;
+
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional||
             trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten ||
-            trainable_layers_pointers[0]->get_type() == Layer::Type::Resnet50)
+            trainable_layers_pointers(0)->get_type() == Layer::Type::Resnet50)
     {
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
+        inputs_dims = get_dimensions(batch.inputs_4d);
+
+        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d.data(), inputs_dims, forward_propagation.layers(0));
     }
     else
     {
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+        inputs_dims = get_dimensions(batch.inputs_2d);
+
+        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d.data(), inputs_dims, forward_propagation.layers(0));
     }
+
+    Tensor<Index, 1> activations_dims(2);
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
@@ -1578,48 +1588,45 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         {
         case Layer::Type::Perceptron:
         {
-            Tensor<Index, 1> activations_dims(2);
-            activations_dims.setValues({static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.dimension(0),
-                                        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.dimension(1)});
+            activations_dims = get_dimensions(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
 
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
                                         activations_dims,
                                         forward_propagation.layers(i));
-
-//                        trainable_layers_pointers(i)
-//                                ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-//                                                    forward_propagation.layers(i));
             break;
         }
         case Layer::Type::Probabilistic:
         {
-            Tensor<Index, 1> activations_dims(2);
-            activations_dims.setValues({static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.dimension(0),
-                                        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.dimension(1)});
+            activations_dims = get_dimensions(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
 
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
                                         activations_dims,
                                         forward_propagation.layers(i));
 
-//                        trainable_layers_pointers(i)
-//                                ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-//                                                                        forward_propagation.layers(i));
+
             break;
         }
         case Layer::Type::Recurrent:
         {
+            activations_dims = get_dimensions(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
                                         forward_propagation.layers(i));
             break;
         }
         case Layer::Type::LongShortTermMemory:
         {
+            activations_dims = get_dimensions(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
                                         forward_propagation.layers(i));
+
             break;
         }
         case Layer::Type::Pooling: /// @todo
@@ -1632,8 +1639,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         }
         case Layer::Type::Flatten: /// @todo
         {
+            activations_dims = get_dimensions(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
+                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs.data(),
+                                        activations_dims,
                                         forward_propagation.layers(i));
             break;
         }
@@ -1665,16 +1675,27 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
 
-    const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
+    Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data(), parameters_number);
+
+    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> activations_dims;
 
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional ||
             trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, potential_parameters, forward_propagation.layers(0));
+        Tensor<type, 4> inputs = batch.inputs_4d;
+
+        inputs_dims = get_dimensions(inputs);
+
+        trainable_layers_pointers(0)->forward_propagate(inputs.data(), inputs_dims,  potential_parameters, forward_propagation.layers(0));
     }
     else
     {
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+        Tensor<type, 2> inputs = batch.inputs_2d;
+
+        inputs_dims = get_dimensions(inputs);
+
+        trainable_layers_pointers(0)->forward_propagate(inputs.data(), inputs_dims, potential_parameters, forward_propagation.layers(0));
     }
 
     Index index = parameters_number;
@@ -1683,14 +1704,17 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     {
         const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
 
-        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+        Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data() + index, parameters_number);
 
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
         {
+            activations_dims = get_dimensions(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
                                         potential_parameters,
                                         forward_propagation.layers(i));
         }
@@ -1698,8 +1722,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::Probabilistic:
         {
+            activations_dims = get_dimensions(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
                                         potential_parameters,
                                         forward_propagation.layers(i));
         }
@@ -1707,8 +1734,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::Recurrent:
         {
+            activations_dims = get_dimensions(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
                                         potential_parameters,
                                         forward_propagation.layers(i));
         }
@@ -1716,8 +1746,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::LongShortTermMemory:
         {
+            activations_dims = get_dimensions(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
+                                        activations_dims,
                                         potential_parameters,
                                         forward_propagation.layers(i));
         }
@@ -1725,6 +1758,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         case Layer::Type::Convolutional:
         {
+            //activations_dims = get_dimensions(static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
+
             //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
             //                                                potential_parameters,
             //                                                forward_propagation.layers(i));
@@ -1732,8 +1767,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
             break;
         case Layer::Type::Flatten:
         {
+            activations_dims = get_dimensions(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs);
+
             trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
+                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs.data(),
+                                        activations_dims,
                                         potential_parameters,
                                         forward_propagation.layers(i));
         }
@@ -1767,82 +1805,143 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
+
+Tensor<type, 2> NeuralNetwork::calculate_outputs(type * inputs_data, Tensor<Index, 1>& inputs_dims)
 {
-#ifdef OPENNN_DEBUG
+    const Index inputs_dimensions_number = inputs_dims.size();
 
-    const Index inputs_dimensions_number = inputs.rank();
+    if(inputs_dimensions_number == 2)
+    {
+        Tensor<type, 2> outputs;
+        Tensor<type, 2> last_layer_outputs;
 
-    if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
+        Tensor<Index, 1> outputs_dims;
+        Tensor<Index, 1> last_layer_outputs_dims;
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0)
+        {
+            const Tensor<Index, 0> inputs_size = inputs_dims.prod();
+            outputs = TensorMap<Tensor<type,2>>(inputs_data, inputs_dims(0), inputs_dims(1));
+            return outputs;
+        }
+
+        outputs.resize(inputs_dims(0),layers_pointers(0)->get_neurons_number());
+        outputs_dims = get_dimensions(outputs);
+
+        layers_pointers(0)->calculate_outputs(inputs_data, inputs_dims, outputs.data(), outputs_dims);
+
+        last_layer_outputs = outputs;
+        last_layer_outputs_dims = get_dimensions(last_layer_outputs);
+
+        for(Index i = 1; i < layers_number; i++)
+        {
+            outputs.resize(inputs_dims(0),layers_pointers(i)->get_neurons_number());
+            outputs_dims = get_dimensions(outputs);
+
+            layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dims, outputs.data(), outputs_dims);
+
+            last_layer_outputs = outputs;
+            last_layer_outputs_dims = get_dimensions(last_layer_outputs);
+        }
+
+        return outputs;
+    }
+    else if(inputs_dimensions_number == 4)
+    {
+        /// @todo
+    }
+    else
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+               << "void calculate_outputs(type * inputs_data, Tensor<Index, 1>& inputs_dims, type * outputs_data, Tensor<Index, 1>& outputs_dims).\n"
                << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
         throw invalid_argument(buffer.str());
     }
 
-#endif
-
-    Tensor<type, 2> outputs;
-
-    const Index layers_number = get_layers_number();
-
-    if(layers_number == 0) return inputs;
-
-    outputs = layers_pointers(0)->calculate_outputs(inputs);
-
-    for(Index i = 1; i < layers_number; i++)
-    {
-        outputs = layers_pointers(i)->calculate_outputs(outputs);
-    }
-
-    return outputs;
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4d)
-{
-    Tensor<type, 2> inputs_2d;
-    Tensor<type, 4> outputs_4d;
-    Tensor<type, 2> outputs;
+//Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
+//{
+//#ifdef OPENNN_DEBUG
 
-    const Index layers_number = get_layers_number();
+//    const Index inputs_dimensions_number = inputs.rank();
 
-    if(layers_number == 0) return inputs_2d;
+//    if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
+//    {
+//        ostringstream buffer;
 
-    if (layers_pointers(0)->get_type() != Layer::Type::Resnet50)
-    {
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+//               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
-        // First layer output
+//        throw invalid_argument(buffer.str());
+//    }
 
-        outputs_4d = layers_pointers(0)->calculate_outputs(
-                    inputs_4d); // Calculate outputs ScalingLayer
+//#endif
 
-        for (Index i = 1; i < layers_number; i++) {
-            if (layers_pointers(i)->get_type() == Layer::Type::Convolutional &&
-                    layers_pointers(i)->get_type() == Layer::Type::Pooling) {
-                outputs_4d = layers_pointers(i)->calculate_outputs(outputs_4d);
-            } else if (layers_pointers(i)->get_type() == Layer::Type::Flatten) {
-                outputs = layers_pointers(i)->calculate_outputs_2d(outputs_4d);
-            } else {
-                outputs = layers_pointers(i)->calculate_outputs(outputs);
-            }
-        }
-    }
-    else
-    {
-        // First layer output
+//    Tensor<type, 2> outputs;
 
-        outputs = layers_pointers(0)->calculate_outputs_2d(inputs_4d); // Resnet50
-        outputs = layers_pointers(1)->calculate_outputs(outputs); // Probabilistic
+//    const Index layers_number = get_layers_number();
 
-    }
+//    if(layers_number == 0) return inputs;
 
-    return outputs;
-}
+//    outputs = layers_pointers(0)->calculate_outputs(inputs);
+
+//    for(Index i = 1; i < layers_number; i++)
+//    {
+//        outputs = layers_pointers(i)->calculate_outputs(outputs);
+//    }
+
+//    return outputs;
+//}
+
+
+//Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4d)
+//{
+//    Tensor<type, 2> inputs_2d;
+//    Tensor<type, 4> outputs_4d;
+//    Tensor<type, 2> outputs;
+
+//    const Index layers_number = get_layers_number();
+
+//    if(layers_number == 0) return inputs_2d;
+
+//    if (layers_pointers(0)->get_type() != Layer::Type::Resnet50)
+//    {
+
+//        // First layer output
+
+//        outputs_4d = layers_pointers(0)->calculate_outputs(
+//                    inputs_4d); // Calculate outputs ScalingLayer
+
+//        for (Index i = 1; i < layers_number; i++) {
+//            if (layers_pointers(i)->get_type() == Layer::Type::Convolutional &&
+//                    layers_pointers(i)->get_type() == Layer::Type::Pooling) {
+//                outputs_4d = layers_pointers(i)->calculate_outputs(outputs_4d);
+//            } else if (layers_pointers(i)->get_type() == Layer::Type::Flatten) {
+//                outputs = layers_pointers(i)->calculate_outputs_2d(outputs_4d);
+//            } else {
+//                outputs = layers_pointers(i)->calculate_outputs(outputs);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        // First layer output
+
+//        outputs = layers_pointers(0)->calculate_outputs_2d(inputs_4d); // Resnet50
+//        outputs = layers_pointers(1)->calculate_outputs(outputs); // Probabilistic
+
+//    }
+
+//    return outputs;
+//}
 
 
 /// Calculates the input data necessary to compute the output data from the neural network in some direction.
@@ -3028,9 +3127,15 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
 /// @param inputs Inputs to calculate the outputs.
 /// @param file_name Name of the data file
 
-void NeuralNetwork::save_outputs(const Tensor<type, 2>& inputs, const string & file_name)
+void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
 {
-    const Tensor<type, 2> outputs = calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+
+    Tensor<type, 2> outputs(inputs_dims(0), get_outputs_number());
+
+    Tensor<Index, 1> outputs_dims = get_dimensions(outputs);
+
+    calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 
     std::ofstream file(file_name.c_str());
 

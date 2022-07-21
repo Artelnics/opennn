@@ -175,29 +175,35 @@ public:
 
    // Long short-term memory layer combinations
 
-   void calculate_combinations(const Tensor<type, 1>&,
+   void calculate_combinations(type *,
+                               Tensor<Index, 1>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 1>&,
-                               Tensor<type, 1>&) const;
+                               type *,
+                               Tensor<Index, 1>&);
 
    // Long short-term memory layer activations
 
-   void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-   void calculate_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;
-   void calculate_recurrent_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-   void calculate_recurrent_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_activations(type *, Tensor<Index,1>&, type *, Tensor<Index,1>&);
+
+   Tensor<type, 1> calculate_activations(Tensor<type, 1>&) const;
+
+   void calculate_recurrent_activations(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&);
 
    // Long short-term memory layer derivatives
 
-   void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-   void calculate_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void calculate_recurrent_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_activations_derivatives(type *, Tensor<Index, 1>&,
+                                          type *, Tensor<Index, 1>&,
+                                          type *, Tensor<Index, 1>&);
+
+   void calculate_recurrent_activations_derivatives(type *, Tensor<Index, 1>&,
+                                          type *, Tensor<Index, 1>&,
+                                          type *, Tensor<Index, 1>&);
 
    // Long short-term memory layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
+   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) final;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
@@ -215,9 +221,9 @@ public:
 
    // Forward propagate
 
-   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) final;
+   void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) final;
+   void forward_propagate(type*, Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
    // Eror gradient
 

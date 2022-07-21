@@ -68,8 +68,12 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     Tensor<type, 2> inputs;
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
-
     Tensor<type, 2> activations_derivatives;
+
+    Tensor<Index, 1> combinations_dims;
+    Tensor<Index, 1> activations_dims;
+    Tensor<Index, 1> activations_derivatives_dims;
+
     Tensor<type, 2> numerical_activation_derivative;
     Tensor<type, 0> maximum_difference;
 
@@ -81,8 +85,12 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     activations.resize(1,1);
     activations_derivatives.resize(1,1);
 
+    combinations_dims = get_dimensions(combinations);
+    activations_dims = get_dimensions(activations);
+    activations_derivatives_dims = get_dimensions(activations_derivatives);
+
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
-    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims);
 
     assert_true(activations_derivatives.rank() == 2, LOG);
     assert_true(activations_derivatives.dimension(0) == 1, LOG);
@@ -90,7 +98,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     assert_true(activations_derivatives(0) - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
-    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims);
 
     assert_true(activations_derivatives.rank() == 2, LOG);
     assert_true(activations_derivatives.dimension(0) == 1, LOG);
@@ -98,7 +106,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     assert_true(activations_derivatives(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Linear);
-    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims);
 
     assert_true(activations_derivatives.rank() == 2, LOG);
     assert_true(activations_derivatives.dimension(0) == 1, LOG);
@@ -196,6 +204,9 @@ void RecurrentLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
+    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> outputs_dims;
+
     Tensor<type, 1> parameters;
 
     Index samples;
@@ -212,6 +223,10 @@ void RecurrentLayerTest::test_calculate_outputs()
 
     inputs.resize(samples,2);
     inputs.setConstant(type(1));
+    inputs_dims = get_dimensions(inputs);
+
+    outputs.resize(samples, 2);
+    outputs_dims = get_dimensions(outputs);
 
     recurrent_layer.set_activation_function("SoftPlus");
 
@@ -230,7 +245,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
     parameters = recurrent_layer.get_parameters();
 
-    outputs = recurrent_layer.calculate_outputs(inputs);
+    recurrent_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
 }
 
 
@@ -247,13 +262,14 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 2> inputs(samples_number, inputs_number);
+    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
 
     recurrent_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
     RecurrentLayerForwardPropagation recurrent_layer_forward_propagation(samples_number, &recurrent_layer);
 
-    recurrent_layer.forward_propagate(inputs, &recurrent_layer_forward_propagation);
+    recurrent_layer.forward_propagate(inputs.data(), inputs_dims, &recurrent_layer_forward_propagation);
 
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);
