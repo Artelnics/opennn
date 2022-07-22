@@ -256,6 +256,10 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         activations.resize(batch_samples_number, neurons_number);
 
         activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
+
+        outputs_ptr = activations.data();
+
+        outputs_dims = get_dimensions(activations);
     }
 
 

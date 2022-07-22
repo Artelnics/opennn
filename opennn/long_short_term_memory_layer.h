@@ -399,6 +399,10 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
         combinations.resize(batch_samples_number, neurons_number);
         activations.resize(batch_samples_number, neurons_number);
+
+        outputs_ptr = activations.data();
+
+        outputs_dims = get_dimensions(activations);
     }
 
     void print() const

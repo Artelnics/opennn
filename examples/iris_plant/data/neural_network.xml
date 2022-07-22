@@ -32,13 +32,13 @@
          <InputsNumber>4</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.836903 -0.773159 -1.72744 0.0228438 0.310151 -0.668909 -0.934187 -0.376566 0.526933 -0.796412 -0.773003 -0.128538 -0.266714 1.0819 1.58526</Parameters>
+         <Parameters>2.03152 0.498525 -0.48892 -0.163463 0.235884 -1.71467 -1.44454 0.265835 -0.412258 0.606512 0.594869 -0.254071 0.408867 -0.596042 -0.602519</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
          <InputsNumber>3</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Softmax</ActivationFunction>
-         <Parameters>0.112739 -0.31271 0.201397 0.95622 1.87046 -0.540365 0.534358 -1.72803 -1.64448 -1.50008 -0.356771 1.93944</Parameters>
+         <Parameters>0.246363 -0.378698 0.136317 0.575254 -1.33713 1.32539 1.99051 0.899771 -0.881827 -2.56027 0.432245 -0.441508</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

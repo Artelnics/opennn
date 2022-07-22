@@ -127,6 +127,10 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
        batch_samples_number = new_batch_samples_number;
 
        outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
+
+       outputs_ptr = outputs.data();
+
+       outputs_dims = get_dimensions(outputs);
    }
 
 
