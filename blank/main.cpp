@@ -31,6 +31,26 @@ int main()
     {
         cout << "Hello OpenNN!" << endl;
 
+        const int rows = 2;
+        const int cols = 4;
+        const int channels = 3;
+        const int batch = 2;
+
+        const int dims[] = {rows, cols, channels, batch};
+        Tensor<float,4> test(rows,cols,channels,batch);
+
+        test.setConstant(0.);
+
+        test.chip(0,3).chip(0,2).setConstant(1.);
+        test.chip(0,3).chip(1,2).setConstant(2.);
+
+        test.chip(1,3).chip(0,2).setConstant(3.);
+        test.chip(1,3).chip(1,2).setConstant(4.);
+
+        print_tensor(test.data(), dims);
+
+        cout << "Goodbye!" << endl;
+
 
         return 0;
     }
