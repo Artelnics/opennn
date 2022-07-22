@@ -1238,6 +1238,7 @@ Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_val
     return new_vector;
 }
 
+
 Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 {
     Tensor<string, 1> vector(x.size());
@@ -1250,6 +1251,35 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 };
 
 
+void print_tensor(const float* vector, const int dims[])
+{
+    cout<<"Tensor"<<endl;
+
+    const int rows_number = dims[0];
+    const int cols_number = dims[1];
+    const int channels = dims[2];
+    const int batch = dims[3];
+
+    for (int l=0; l<batch; l++)
+    {
+        for (int k=0; k<channels; k++)
+        {
+            for (int i=0; i<rows_number; i++)
+            {
+                for (int j=0; j<cols_number; j++)
+                {
+                    if (i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+                        cout<< "<--Batch-->"<<endl;
+                    if (i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+                        cout<< "*--Channel--*"<<endl;
+
+                   cout<<*(vector + i + j*rows_number + k*rows_number*cols_number+ l*channels*rows_number*cols_number)<< " ";
+                }
+               cout<<" "<<endl;
+            }
+        }
+    }
+}
 
 }
 
