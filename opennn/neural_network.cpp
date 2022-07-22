@@ -1580,82 +1580,11 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d.data(), inputs_dims, forward_propagation.layers(0));
     }
 
-    Tensor<Index, 1> activations_dims(2);
-
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-        switch(trainable_layers_pointers(i-1)->get_type())
-        {
-        case Layer::Type::Perceptron:
-        {
-            activations_dims = get_dimensions(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        forward_propagation.layers(i));
-            break;
-        }
-        case Layer::Type::Probabilistic:
-        {
-            activations_dims = get_dimensions(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        forward_propagation.layers(i));
-
-
-            break;
-        }
-        case Layer::Type::Recurrent:
-        {
-            activations_dims = get_dimensions(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        forward_propagation.layers(i));
-            break;
-        }
-        case Layer::Type::LongShortTermMemory:
-        {
-            activations_dims = get_dimensions(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        forward_propagation.layers(i));
-
-            break;
-        }
-        case Layer::Type::Pooling: /// @todo
-        {
-            break;
-        }
-        case Layer::Type::Convolutional: /// @todo
-        {
-            break;
-        }
-        case Layer::Type::Flatten: /// @todo
-        {
-            activations_dims = get_dimensions(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs.data(),
-                                        activations_dims,
-                                        forward_propagation.layers(i));
-            break;
-        }
-            //        case Layer::Type::Resnet50:
-
-            //                  trainable_layers_pointers(i)
-            //                      ->forward_propagate(static_cast<Resnet50LayerForwardPropagation*>(forward_propagation.layers(i - 1))->activations,
-            //                                                                    forward_propagation.layers(i));
-            //                  break;
-
-        default: break;
-        }
+        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_ptr,
+                                                        forward_propagation.layers(i-1)->outputs_dims,
+                                                        forward_propagation.layers(i));
     }
 }
 
@@ -1706,87 +1635,10 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data() + index, parameters_number);
 
-        switch(trainable_layers_pointers(i-1)->get_type())
-        {
-        case Layer::Type::Perceptron:
-        {
-            activations_dims = get_dimensions(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        potential_parameters,
-                                        forward_propagation.layers(i));
-        }
-            break;
-
-        case Layer::Type::Probabilistic:
-        {
-            activations_dims = get_dimensions(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        potential_parameters,
-                                        forward_propagation.layers(i));
-        }
-            break;
-
-        case Layer::Type::Recurrent:
-        {
-            activations_dims = get_dimensions(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        potential_parameters,
-                                        forward_propagation.layers(i));
-        }
-            break;
-
-        case Layer::Type::LongShortTermMemory:
-        {
-            activations_dims = get_dimensions(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations.data(),
-                                        activations_dims,
-                                        potential_parameters,
-                                        forward_propagation.layers(i));
-        }
-            break;
-
-        case Layer::Type::Convolutional:
-        {
-            //activations_dims = get_dimensions(static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations);
-
-            //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-            //                                                potential_parameters,
-            //                                                forward_propagation.layers(i));
-        }
-            break;
-        case Layer::Type::Flatten:
-        {
-            activations_dims = get_dimensions(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs);
-
-            trainable_layers_pointers(i)
-                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs.data(),
-                                        activations_dims,
-                                        potential_parameters,
-                                        forward_propagation.layers(i));
-        }
-            break;
-
-            //        case Layer::Type::Resnet50:
-            //                {
-            //                  trainable_layers_pointers(i)
-            //                      ->forward_propagate(static_cast<Resnet50LayerForwardPropagation *>(forward_propagation.layers(i - 1))
-            //                          ->activations, potential_parameters, forward_propagation.layers(i));
-            //                } break;
-
-        default: break;
-
-        }
+        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_ptr,
+                                                        forward_propagation.layers(i-1)->outputs_dims,
+                                                        potential_parameters,
+                                                        forward_propagation.layers(i));
 
         index += parameters_number;
     }

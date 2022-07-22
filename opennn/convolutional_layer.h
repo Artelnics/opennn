@@ -280,6 +280,9 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         combinations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
+
+        outputs_ptr = activations.data();
+        outputs_dims = get_dimensions(activations);
     }
 
     void print() const
