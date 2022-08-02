@@ -113,7 +113,7 @@ class EventCount {
       uint64_t newstate = state - kWaiterInc;
       // We don't know if the thread was also notified or not,
       // so we should not consume a signal unconditionaly.
-      // Only if number of waiters is equal to number of _signals,
+      // Only if number of waiters is equal to number of signals,
       // we know that the thread was notified and we must take away the signal.
       if (((state & kWaiterMask) >> kWaiterShift) ==
           ((state & kSignalMask) >> kSignalShift))
@@ -133,15 +133,15 @@ class EventCount {
     for (;;) {
       CheckState(state);
       const uint64_t waiters = (state & kWaiterMask) >> kWaiterShift;
-      const uint64_t _signals = (state & kSignalMask) >> kSignalShift;
+      const uint64_t signals = (state & kSignalMask) >> kSignalShift;
       // Easy case: no waiters.
-      if ((state & kStackMask) == kStackMask && waiters == _signals) return;
+      if ((state & kStackMask) == kStackMask && waiters == signals) return;
       uint64_t newstate;
       if (notifyAll) {
         // Empty wait stack and set signal to number of pre-wait threads.
         newstate =
             (state & kWaiterMask) | (waiters << kSignalShift) | kStackMask;
-      } else if (_signals < waiters) {
+      } else if (signals < waiters) {
         // There is a thread in pre-wait state, unblock it.
         newstate = state + kSignalInc;
       } else {
@@ -153,7 +153,7 @@ class EventCount {
       CheckState(newstate);
       if (state_.compare_exchange_weak(state, newstate,
                                        std::memory_order_acq_rel)) {
-        if (!notifyAll && (_signals < waiters))
+        if (!notifyAll && (signals < waiters))
           return;  // unblocked pre-wait thread
         if ((state & kStackMask) == kStackMask) return;
         Waiter* w = &waiters_[state & kStackMask];
@@ -186,7 +186,7 @@ class EventCount {
   //   (indexes in waiters_ array are used as stack elements,
   //   kStackMask means empty stack).
   // - next kWaiterBits is count of waiters in prewait state.
-  // - next kWaiterBits is count of pending _signals.
+  // - next kWaiterBits is count of pending signals.
   // - remaining bits are ABA counter for the stack.
   //   (stored in Waiter node and incremented on push).
   static const uint64_t kWaiterBits = 14;
@@ -209,12 +209,12 @@ class EventCount {
   static void CheckState(uint64_t state, bool waiter = false) {
     static_assert(kEpochBits >= 20, "not enough bits to prevent ABA problem");
     const uint64_t waiters = (state & kWaiterMask) >> kWaiterShift;
-    const uint64_t _signals = (state & kSignalMask) >> kSignalShift;
-    eigen_plain_assert(waiters >= _signals);
+    const uint64_t signals = (state & kSignalMask) >> kSignalShift;
+    eigen_plain_assert(waiters >= signals);
     eigen_plain_assert(waiters < (1 << kWaiterBits) - 1);
     eigen_plain_assert(!waiter || waiters > 0);
     (void)waiters;
-    (void)_signals;
+    (void)signals;
   }
 
   void Park(Waiter* w) {
