@@ -105,10 +105,13 @@ public:
    const Tensor<type, 2>& get_synaptic_weights() const;
 
    Tensor<type, 2> get_biases(Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;
+   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;   
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
+
+   Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_parameters() final;
+
 
    // Display messages
 
@@ -128,36 +131,36 @@ public:
 
    // Combinations
 
-   void calculate_combinations(type*, Tensor<Index,1>&,
+   void calculate_combinations(type*, const Tensor<Index,1>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               type*, Tensor<Index,1>&) const;
+                               type*, const Tensor<Index,1>&) const;
 
    // Activations
 
-   void calculate_activations(type*, Tensor<Index, 1>&,
-                              type*, Tensor<Index, 1>&) const;
+   void calculate_activations(type*, const Tensor<Index, 1>&,
+                              type*, const Tensor<Index, 1>&) const;
 
-   void calculate_activations_derivatives(type*, Tensor<Index, 1>&,
-                                          type*, Tensor<Index, 1>&,
-                                          type*, Tensor<Index, 1>&) const;
+   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&) const;
 
    // Outputs
 
-   void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&) final;
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    void forward_propagate(type*,
-                          Tensor<Index, 1>&,
+                          const Tensor<Index, 1>&,
                           LayerForwardPropagation*) final;
 
    void forward_propagate(type*,
-                          Tensor<Index, 1>&,
+                          const Tensor<Index, 1>&,
                           Tensor<type, 1>&,
                           LayerForwardPropagation*) final;
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 2>&,
+   void calculate_error_gradient(type*,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -237,13 +240,13 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit ProbabilisticLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ProbabilisticLayerForwardPropagation(const Index new_batch_samples_number, Layer* new_layer_pointer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer_pointer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
 
@@ -251,32 +254,36 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
         const Index neurons_number = layer_pointer->get_neurons_number();
 
+        // Outputs
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete outputs_data;
+
+        outputs_data = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+
+        // Rest of quantities
+
         combinations.resize(batch_samples_number, neurons_number);
 
-        activations.resize(batch_samples_number, neurons_number);
-
         activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
-
-        outputs_ptr = activations.data();
-
-        outputs_dims = get_dimensions(activations);
     }
 
 
     void print() const
     {
+        cout << "Outputs:" << endl;
+        //cout << outputs << endl;
+
         cout << "Combinations:" << endl;
         cout << combinations << endl;
-
-        cout << "Activations:" << endl;
-        cout << activations << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
     }
 
     Tensor<type, 2> combinations;
-    Tensor<type, 2> activations;
     Tensor<type, 3> activations_derivatives;
 };
 
@@ -305,7 +312,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index parameters_number = layer_pointer->get_parameters_number();
 
-        delta.resize(batch_samples_number, neurons_number);
+        deltas.resize(batch_samples_number, neurons_number);
         delta_row.resize(neurons_number);
 
         squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
@@ -315,14 +322,13 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
     void print() const
     {
-        cout << "Delta:" << endl;
-        cout << delta << endl;
+        cout << "Deltas:" << endl;
+        cout << deltas << endl;
 
         cout << "Squared errors Jacobian: " << endl;
         cout << squared_errors_Jacobian << endl;
     }
 
-    Tensor<type, 2> delta;
     Tensor<type, 1> delta_row;
 
     Tensor<type, 2> error_combinations_derivatives;
@@ -356,11 +362,16 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
+        deltas_dimensions.resize(2);
+        deltas_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete deltas_data;
+        deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-        delta.resize(batch_samples_number, neurons_number);
         delta_row.resize(neurons_number);
 
         error_combinations_derivatives.resize(batch_samples_number, neurons_number);
@@ -368,8 +379,8 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Delta:" << endl;
-        cout << delta << endl;
+        cout << "Deltas:" << endl;
+        //cout << deltas << endl;
 
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
@@ -378,7 +389,6 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 2> delta;
     Tensor<type, 1> delta_row;
 
     Tensor<type, 2> error_combinations_derivatives;

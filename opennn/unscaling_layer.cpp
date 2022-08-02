@@ -703,14 +703,15 @@ bool UnscalingLayer::is_empty() const
 /// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
 /// @param inputs Set of inputs to the unscaling layer.
 
-void UnscalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& input_dims, type * output_data, Tensor<Index, 1>& output_dims)
+void UnscalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                       type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    const Index input_rank = input_dims.size();
+    const Index input_rank = inputs_dimensions.size();
 
     if(input_rank == 2) /// @todo optimize with TensorMap and tensor options
     {
-        TensorMap<Tensor<type,2>> inputs(input_data, input_dims(0), input_dims(1));
-        TensorMap<Tensor<type,2>> outputs(output_data, output_dims(0), output_dims(1));
+        TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type,2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
         const Index neurons_number = get_neurons_number();
 
@@ -730,15 +731,15 @@ void UnscalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& inpu
         }
 
     #endif
-        const Index points_number = input_dims(0);
+        const Index points_number = inputs_dimensions(0);
 
-        if(output_dims(0) != points_number || output_dims(1) != neurons_number)
+        if(outputs_dimensions(0) != points_number || outputs_dimensions(1) != neurons_number)
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&)\n"
-                   << "Size of outputs (" << output_dims << ") must be equal to (" << points_number << ", " << neurons_number<< ").\n";
+                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
+                   << "Size of outputs (" << outputs_dimensions << ") must be equal to (" << points_number << ", " << neurons_number<< ").\n";
 
             throw invalid_argument(buffer.str());
         }
@@ -752,7 +753,7 @@ void UnscalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& inpu
                     if(display)
                     {
                         cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&)\n"
+                             << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
                              << "Standard deviation of variable " << i << " is zero.\n"
                              << "Those variables won't be scaled.\n";
                     }
@@ -798,7 +799,7 @@ void UnscalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& inpu
                         ostringstream buffer;
 
                         buffer << "OpenNN Exception: ScalingLayer class\n"
-                               << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&)\n"
+                               << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
                                << "Unknown scaling method.\n";
 
                         throw invalid_argument(buffer.str());
@@ -812,7 +813,7 @@ void UnscalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& inpu
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&)\n"
+               << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
                << "Input dimension must be 2.\n";
 
         throw invalid_argument(buffer.str());

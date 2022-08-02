@@ -109,95 +109,22 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
+    TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+
     const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
     const Index batch_size = batch.get_batch_size();
 
-    switch(output_layer_back_propagation->layer_pointer->get_type())
+    if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
-    case Layer::Type::Perceptron:
-    {
-        PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-                = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
-
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            perceptron_layer_back_propagation->delta.setZero();
-        }
-        else
-        {
-            perceptron_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*perceptron_layer_back_propagation->delta/p_norm_derivative();
-        }
+        deltas.setZero();
     }
-        break;
-
-    case Layer::Type::Probabilistic:
+    else
     {
-        ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-                = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            probabilistic_layer_back_propagation->delta.setZero();
-
-        }
-        else
-        {
-            probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
-        }
-    }
-        break;
-
-    case Layer::Type::Recurrent:
-    {
-        RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-                = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
-
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            recurrent_layer_back_propagation->delta.setZero();
-        }
-        else
-        {
-            recurrent_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*recurrent_layer_back_propagation->delta/p_norm_derivative();
-        }
-    }
-        break;
-
-    case Layer::Type::LongShortTermMemory:
-    {
-        LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-                = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
-
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            long_short_term_memory_layer_back_propagation->delta.setZero();
-        }
-        else
-        {
-            long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
-        }
-    }
-        break;
-
-    default: break;
+        deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
     }
 }
 

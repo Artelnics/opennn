@@ -175,35 +175,33 @@ public:
 
    // Long short-term memory layer combinations
 
-   void calculate_combinations(type *,
-                               Tensor<Index, 1>&,
+   void calculate_combinations(type*, const Tensor<Index, 1>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 1>&,
-                               type *,
-                               Tensor<Index, 1>&);
+                               type*, const Tensor<Index, 1>&);
 
    // Long short-term memory layer activations
 
-   void calculate_activations(type *, Tensor<Index,1>&, type *, Tensor<Index,1>&);
+   void calculate_activations(type*, Tensor<Index,1>&, type*, Tensor<Index,1>&);
 
    Tensor<type, 1> calculate_activations(Tensor<type, 1>&) const;
 
-   void calculate_recurrent_activations(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&);
+   void calculate_recurrent_activations(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&);
 
    // Long short-term memory layer derivatives
 
-   void calculate_activations_derivatives(type *, Tensor<Index, 1>&,
-                                          type *, Tensor<Index, 1>&,
-                                          type *, Tensor<Index, 1>&);
+   void calculate_activations_derivatives(type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&);
 
-   void calculate_recurrent_activations_derivatives(type *, Tensor<Index, 1>&,
-                                          type *, Tensor<Index, 1>&,
-                                          type *, Tensor<Index, 1>&);
+   void calculate_recurrent_activations_derivatives(type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&,
+                                          type*, Tensor<Index, 1>&);
 
    // Long short-term memory layer outputs
 
-   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) final;
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
@@ -221,15 +219,15 @@ public:
 
    // Forward propagate
 
-   void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
-   void forward_propagate(type*, Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
    // Eror gradient
 
    void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const final;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const final;
+   void calculate_error_gradient(type*, LayerForwardPropagation*, LayerBackPropagation*) const final;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 LongShortTermMemoryLayerForwardPropagation*,
@@ -360,6 +358,16 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
         batch_samples_number = new_batch_samples_number;
 
+        // Outputs
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete outputs_data;
+        outputs_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+
+        // Rest of quantities
+
         previous_hidden_state_activations.resize(neurons_number);
         previous_cell_state_activations.resize(neurons_number);
 
@@ -398,11 +406,6 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
 
         combinations.resize(batch_samples_number, neurons_number);
-        activations.resize(batch_samples_number, neurons_number);
-
-        outputs_ptr = activations.data();
-
-        outputs_dims = get_dimensions(activations);
     }
 
     void print() const
@@ -411,7 +414,6 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     }
 
     Tensor<type, 2> combinations;
-    Tensor<type, 2> activations;
 
     Tensor<type, 1> previous_hidden_state_activations;
     Tensor<type, 1> previous_cell_state_activations;
@@ -470,10 +472,17 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
+
+        deltas_dimensions.resize(2);
+        deltas_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete deltas_data;
+        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
         current_layer_deltas.resize(neurons_number);
 
@@ -491,8 +500,6 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
         input_biases_derivatives.resize(neurons_number);
         state_biases_derivatives.resize(neurons_number);
         output_biases_derivatives.resize(neurons_number);
-
-        delta.resize(batch_samples_number, neurons_number);
 
         input_combinations_biases_derivatives.resize(neurons_number, neurons_number);
         forget_combinations_biases_derivatives.resize(neurons_number, neurons_number);
@@ -525,8 +532,6 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     }
 
     Tensor<type, 1> current_layer_deltas;
-
-    Tensor<type, 2> delta;
 
     Tensor<type, 1> forget_weights_derivatives;
     Tensor<type, 1> input_weights_derivatives;

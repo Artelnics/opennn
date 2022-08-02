@@ -634,13 +634,13 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.perform_training();
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     // Logistic correlation
 
@@ -717,13 +717,13 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     // Logistic correlation
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set.get_target_data();
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
@@ -805,13 +805,13 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     // Logistic correlation
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set.get_target_data();
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 

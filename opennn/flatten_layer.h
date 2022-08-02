@@ -83,7 +83,7 @@ public:
 
     Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
 
-    void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*) final;
+    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
     // Serialization methods
 
@@ -128,9 +128,9 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
        outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
 
-       outputs_ptr = outputs.data();
+       outputs_data = outputs.data();
 
-       outputs_dims = get_dimensions(outputs);
+       outputs_dimensions = get_dimensions(outputs);
    }
 
 
@@ -157,18 +157,18 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     }
 
 
-    explicit FlattenLayerBackPropagation(const Index& new_batch_size, Layer* new_layer_pointer)
+    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
     {
-        set(new_batch_size, new_layer_pointer);
+        set(new_batch_samples_number, new_layer_pointer);
     }
 
 
-    void set(const Index& new_batch_size, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
 
-        batch_samples_number = new_batch_size;
+        batch_samples_number = new_batch_samples_number;
 
         const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 

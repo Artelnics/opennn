@@ -155,7 +155,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + biases(j);
 
             memcpy(combinations.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernels_number,
-                   tmp_result.data(), static_cast<size_t>(output_size_rows_cols)*sizeof(float));
+                   tmp_result.data(), static_cast<size_t>(output_size_rows_cols)*sizeof(type));
          }
     }
 }
@@ -174,32 +174,32 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 
 void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& inputs, Tensor<type, 4>& activations) const
 {
-    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
-    Tensor<Index, 1> activations_dims = get_dimensions(activations);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
 
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::Linear: linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::Logistic: logistic(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::Logistic: logistic(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::Threshold: threshold(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::Threshold: threshold(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::SymmetricThreshold: symmetric_threshold(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::SymmetricThreshold: symmetric_threshold(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::SoftPlus: soft_plus(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::SoftSign: soft_sign(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::SoftSign: soft_sign(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(inputs.data(), inputs_dims, activations.data(), activations_dims); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
     }
 }
 
@@ -208,33 +208,33 @@ void ConvolutionalLayer::calculate_activations_derivatives(Tensor<type, 4>& comb
                                                            Tensor<type, 4>& activations,
                                                            Tensor<type, 4>& activations_derivatives) const
 {
-    Tensor<Index, 1> combinations_dims = get_dimensions(combinations_4d);
-    Tensor<Index, 1> activations_dims = get_dimensions(activations);
-    Tensor<Index, 1> activations_derivatives_dims = get_dimensions(activations_derivatives);
+    Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations_4d);
+    Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
+    Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(activations_derivatives);
 
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::Linear: linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::Logistic: logistic_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::Logistic: logistic_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::Threshold: threshold_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::Threshold: threshold_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_4d.data(), combinations_dims, activations.data(), activations_dims, activations_derivatives.data(), activations_derivatives_dims); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
     }
 }
 
@@ -318,7 +318,10 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
     const Index output_rows_number = convolutional_layer->get_outputs_rows_number();
     const Index output_columns_number = convolutional_layer->get_outputs_columns_number();
 
-    const Index size = back_propagation->delta.size();
+    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));;
+    TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
+
+    const Index size = deltas.size();
 
     // Next layer's values
 
@@ -342,14 +345,14 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
 
         for(Index sum_index = 0; sum_index < neurons_perceptron; sum_index++)
         {
-            const type delta_element = next_back_propagation->delta(image_index, sum_index);
+            const type delta_element = next_deltas(image_index, sum_index);
 
             const type weight = synaptic_weights_perceptron (hidden_input, sum_index);
             sum += delta_element * weight;
 
         }
 
-        back_propagation->delta(image_index,
+        deltas(image_index,
                                 row_index +
                                 column_index*output_rows_number +
                                 channel_index*output_rows_number*output_columns_number) = sum;
@@ -386,22 +389,22 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
 {
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
-    convolutional_layer_forward_propagation->combinations.resize(output_dimensions(0),
-                                                                    output_dimensions(1),
-                                                                    output_dimensions(2),
-                                                                    output_dimensions(3));
+    convolutional_layer_forward_propagation->combinations.resize(outputs_dimensions(0),
+                                                                    outputs_dimensions(1),
+                                                                    outputs_dimensions(2),
+                                                                    outputs_dimensions(3));
 
-    convolutional_layer_forward_propagation->activations.resize(output_dimensions(0),
-                                                                   output_dimensions(1),
-                                                                   output_dimensions(2),
-                                                                   output_dimensions(3));
+    convolutional_layer_forward_propagation->activations.resize(outputs_dimensions(0),
+                                                                   outputs_dimensions(1),
+                                                                   outputs_dimensions(2),
+                                                                   outputs_dimensions(3));
 
-    convolutional_layer_forward_propagation->activations_derivatives.resize(output_dimensions(0),
-                                                                               output_dimensions(1),
-                                                                               output_dimensions(2),
-                                                                               output_dimensions(3));
+    convolutional_layer_forward_propagation->activations_derivatives.resize(outputs_dimensions(0),
+                                                                               outputs_dimensions(1),
+                                                                               outputs_dimensions(2),
+                                                                               outputs_dimensions(3));
 
     const Index kernels_number = synaptic_weights.dimension(0);
 
@@ -898,10 +901,11 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 }
 
 
-void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
+void ConvolutionalLayer::calculate_error_gradient(type* inputs_data,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
-{
+{   
+/*
     Tensor<type, 4> layers_inputs;
 
     switch(convolution_type) {
@@ -957,24 +961,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 //            Eigen::array<Index,3>({kernel_channels_number, kernels_rows_number, kernels_columns_number}));
         }
     }
-}
-
-
-void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  LayerForwardPropagation* forward_propagation,
-                                                  LayerBackPropagation* back_propagation) const
-{
-    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
-                                                     input_variables_dimensions(2), // rows number
-                                                     input_variables_dimensions(1), // channels number
-                                                     inputs.dimension(0)}; // images number
-
-    const Eigen::array<Eigen::Index, 2> shuffle_dims_2D = {1, 0};
-    const Eigen::array<Eigen::Index, 4> shuffle_dims_4D = {3, 2, 1, 0};
-
-    const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
-
-    calculate_error_gradient(inputs_4d, forward_propagation, back_propagation);
+*/
 }
 
 

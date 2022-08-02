@@ -109,7 +109,7 @@ public:
 
    bool is_empty() const;
   
-   void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&) final;
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    void check_range(const Tensor<type, 1>&) const;
 
