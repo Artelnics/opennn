@@ -120,6 +120,8 @@ public:
    Layer* get_last_trainable_layer_pointer() const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
+   Index get_batch_samples_number() const;
+
    const bool& get_display() const;
 
    // Set methods
@@ -180,6 +182,8 @@ public:
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
+   Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> get_layers_parameters();
+
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
    Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
@@ -199,9 +203,9 @@ public:
 
    // Output 
 
-   Tensor<type, 2> calculate_outputs(type *, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
 
-   void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>&){ cout << "INSIDE THIS" << endl;};
+   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){ cout << "INSIDE THIS" << endl;};
 
 //   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
@@ -283,7 +287,7 @@ struct NeuralNetworkForwardPropagation
 
     NeuralNetworkForwardPropagation() {}
 
-    NeuralNetworkForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    NeuralNetworkForwardPropagation(const Index& new_batch_samples_number,NeuralNetwork* new_neural_network_pointer)
     {
         set(new_batch_samples_number, new_neural_network_pointer);
     }
@@ -293,9 +297,7 @@ struct NeuralNetworkForwardPropagation
     virtual ~NeuralNetworkForwardPropagation() {}
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
-    {
-        if(new_batch_samples_number == 0) return;
-
+    {        
         batch_samples_number = new_batch_samples_number;
 
         neural_network_pointer = new_neural_network_pointer;
@@ -312,43 +314,43 @@ struct NeuralNetworkForwardPropagation
             {
             case Layer::Type::Perceptron:
             {
-                layers(i) = new PerceptronLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Probabilistic:
             {
-                layers(i) = new ProbabilisticLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Recurrent:
             {
-                layers(i) = new RecurrentLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new RecurrentLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::LongShortTermMemory:
             {
-                layers(i) = new LongShortTermMemoryLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new LongShortTermMemoryLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Flatten:
             {
-                layers(i) = new FlattenLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Resnet50:
             {
-                //layers(i) = new Resnet50LayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                //layers(i) = new Resnet50LayerForwardPropagation(trainable_layers_pointers(i));
             }
             break;
 
@@ -383,10 +385,8 @@ struct NeuralNetworkBackPropagation
 {
     NeuralNetworkBackPropagation() {}
 
-    NeuralNetworkBackPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network_pointer)
     {
-        batch_samples_number = new_batch_samples_number;
-
         neural_network_pointer = new_neural_network_pointer;
     }
 
@@ -408,43 +408,43 @@ struct NeuralNetworkBackPropagation
             {
             case Layer::Type::Perceptron:
             {
-                layers(i) = new PerceptronLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PerceptronLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Probabilistic:
             {
-                layers(i) = new ProbabilisticLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Recurrent:
             {
-                layers(i) = new RecurrentLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new RecurrentLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::LongShortTermMemory:
             {
-                layers(i) = new LongShortTermMemoryLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new LongShortTermMemoryLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Flatten:
             {
-                layers(i) = new FlattenLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Type::Resnet50:
             {
-                //layers(i) = new Resnet50LayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                //layers(i) = new Resnet50LayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
@@ -481,14 +481,12 @@ struct NeuralNetworkBackPropagationLM
 {
     NeuralNetworkBackPropagationLM() {}
 
-    NeuralNetworkBackPropagationLM(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network_pointer)
     {
-        batch_samples_number = new_batch_samples_number;
-
         neural_network_pointer = new_neural_network_pointer;
     }
 
-    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
         batch_samples_number = new_batch_samples_number;
 
@@ -506,13 +504,13 @@ struct NeuralNetworkBackPropagationLM
             {
             case Layer::Type::Perceptron:
 
-            layers(i) = new PerceptronLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
+            layers(i) = new PerceptronLayerBackPropagationLM(batch_samples_number, trainable_layers_pointers(i));
 
             break;
 
             case Layer::Type::Probabilistic:
 
-            layers(i) = new ProbabilisticLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
+            layers(i) = new ProbabilisticLayerBackPropagationLM(batch_samples_number, trainable_layers_pointers(i));
 
             break;
 

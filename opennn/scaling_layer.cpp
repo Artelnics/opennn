@@ -824,28 +824,27 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 /// @param inputs Set of inputs to the scaling layer.
 
 
-void ScalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& input_dims, type * output_data, Tensor<Index, 1>& output_dims)
+void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    const Index input_rank = input_dims.size();
+    const Index input_rank = inputs_dimensions.size();
 
     if(input_rank == 2) /// @todo optimize with TensorMap and tensor options
     {
-        const Index points_number = input_dims(0);
+        const Index points_number = inputs_dimensions(0);
         const Index neurons_number = get_neurons_number();
 
-        const Tensor<Index, 0> input_size = input_dims.prod();
+        const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
-        output_dims.setValues({points_number, get_neurons_number()});
+        const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
-        TensorMap<Tensor<type, 2>> inputs(input_data, input_dims(0), input_dims(1));
-        TensorMap<Tensor<type, 2>> outputs(output_data, output_dims(0), output_dims(1));
-
-        if(output_dims(0) != points_number || output_dims(1) != neurons_number)
+        if(outputs_dimensions(0) != points_number || outputs_dimensions(1) != neurons_number)
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>& ).\n"
+                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
                    << "Outputs dimensions must be equal to " << points_number << " and " << neurons_number << ".\n";
 
             throw invalid_argument(buffer.str());
@@ -916,22 +915,22 @@ void ScalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& input_
     }
     else if(input_rank == 4)
     {
-        const Tensor<bool, 0> equal_dimensions = (input_dims == output_dims).any().all();
+        const Tensor<bool, 0> equal_dimensions = (inputs_dimensions == outputs_dimensions).any().all();
 
         if(!equal_dimensions(0))
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>& ).\n"
+                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
                    << "Input and output data must have the same dimensions.\n";
 
             throw invalid_argument(buffer.str());
         }
 
-        TensorMap<Tensor<type, 4>> input(input_data, input_dims(0), input_dims(1), input_dims(2), input_dims(3));
+        TensorMap<Tensor<type, 4>> input(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-        TensorMap<Tensor<type, 4>> output(output_data, input_dims(0), input_dims(1), input_dims(2), input_dims(3));
+        TensorMap<Tensor<type, 4>> output(outputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
         for(Index i = 0; i < input.size(); i++)
         {
@@ -943,7 +942,7 @@ void ScalingLayer::calculate_outputs(type * input_data, Tensor<Index, 1>& input_
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void ScalingLayer::calculate_outputs(type *, Tensor<Index, 1>&, type *, Tensor<Index, 1>& ).\n"
+               << "void ScalingLayer::calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
                << "Input dimension must be 2 or 4.\n";
 
         throw invalid_argument(buffer.str());

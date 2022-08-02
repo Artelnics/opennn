@@ -307,12 +307,18 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
+//    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+//    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+
     // Loss index
 
     loss_index_pointer->set_normalization_coefficient();
 
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+
+//    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+//    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     type training_error = type(0);
     type training_loss = type(0);
@@ -357,7 +363,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-
             // Data set
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
@@ -372,8 +377,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
-
-//            training_back_propagation.print();
 
             update_parameters(training_back_propagation, optimization_data);
 
@@ -583,7 +586,6 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
     // Update parameters
 
     back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
-
 }
 
 

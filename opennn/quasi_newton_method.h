@@ -237,14 +237,16 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
     // Neural network data
 
+//    Tensor<type, 1> potential_parameters;
+//    Tensor<type, 1> training_direction;
+//    type initial_learning_rate = type(0);
+
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> parameters_difference;
 
     Tensor<type, 1> parameters_increment;
 
     // Loss index data
-
-//    type old_loss = 0;
 
     Tensor<type, 1> old_gradient;
     Tensor<type, 1> gradient_difference;

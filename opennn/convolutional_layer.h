@@ -202,11 +202,7 @@ public:
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 4>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const;
-
-   void calculate_error_gradient(const Tensor<type, 2>&,
+   void calculate_error_gradient(type*,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const;
 
@@ -281,8 +277,8 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         activations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
 
-        outputs_ptr = activations.data();
-        outputs_dims = get_dimensions(activations);
+        outputs_data = activations.data();
+        outputs_dimensions = get_dimensions(activations);
     }
 
     void print() const
@@ -314,13 +310,18 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
 
         const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
 
-        delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number);
+        deltas_dimensions.resize(4);
+        deltas_dimensions.setValues({batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number});
+
+        //delete deltas_data;
+        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
 //        biases_derivatives.resize(neurons_number);
 
@@ -330,8 +331,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Delta:" << endl;
-        cout << delta << endl;
+        cout << "Deltas:" << endl;
+        //cout << deltas << endl;
 
 //        cout << "Biases derivatives:" << endl;
 //        cout << biases_derivatives << endl;
@@ -340,8 +341,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 //        cout << synaptic_weights_derivatives << endl;
 
     }
-
-    Tensor<type, 2> delta;
 
     Tensor<type, 4> biases_derivatives;
 

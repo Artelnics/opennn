@@ -204,8 +204,8 @@ void RecurrentLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
-    Tensor<Index, 1> inputs_dims;
-    Tensor<Index, 1> outputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
+    Tensor<Index, 1> outputs_dimensions;
 
     Tensor<type, 1> parameters;
 
@@ -223,10 +223,10 @@ void RecurrentLayerTest::test_calculate_outputs()
 
     inputs.resize(samples,2);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(samples, 2);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
     recurrent_layer.set_activation_function("SoftPlus");
 
@@ -245,7 +245,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
     parameters = recurrent_layer.get_parameters();
 
-    recurrent_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    recurrent_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 }
 
 
@@ -262,14 +262,14 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 2> inputs(samples_number, inputs_number);
-    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     recurrent_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
     RecurrentLayerForwardPropagation recurrent_layer_forward_propagation(samples_number, &recurrent_layer);
 
-    recurrent_layer.forward_propagate(inputs.data(), inputs_dims, &recurrent_layer_forward_propagation);
+    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation);
 
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);

@@ -112,9 +112,9 @@ public:
 
 //    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
 
-    void calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&) final;
+    void calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&) final;
 
-    void calculate_activations(const Tensor<type, 4>&,  Tensor<type, 4>&) {}
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) {}
 
     Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
 
@@ -149,10 +149,6 @@ public:
     Tensor<type, 4> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
 
     // Gradient methods
-
-    void calculate_error_gradient(const Tensor<type, 2>&,
-                                  LayerForwardPropagation*,
-                                  LayerBackPropagation*) const final;
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void write_XML(tinyxml2::XMLPrinter&) const final;
