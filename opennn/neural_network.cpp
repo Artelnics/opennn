@@ -1216,6 +1216,22 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 }
 
 
+Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> NeuralNetwork::get_layers_parameters()
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters(trainable_layers_number);
+
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        layers_parameters(i) = trainable_layers_pointers(i)->get_layer_parameters();
+    }
+
+    return layers_parameters;
+}
+
+
 Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
@@ -1563,28 +1579,16 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
-    Tensor<Index, 1> inputs_dims;
-
-    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional||
-            trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten ||
-            trainable_layers_pointers(0)->get_type() == Layer::Type::Resnet50)
-    {
-        inputs_dims = get_dimensions(batch.inputs_4d);
-
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d.data(), inputs_dims, forward_propagation.layers(0));
-    }
-    else
-    {
-        inputs_dims = get_dimensions(batch.inputs_2d);
-
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d.data(), inputs_dims, forward_propagation.layers(0));
-    }
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_ptr,
-                                                        forward_propagation.layers(i-1)->outputs_dims,
+        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
+                                                        forward_propagation.layers(i-1)->outputs_dimensions,
                                                         forward_propagation.layers(i));
+
+
+
     }
 }
 
@@ -1606,26 +1610,10 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data(), parameters_number);
 
-    Tensor<Index, 1> inputs_dims;
-    Tensor<Index, 1> activations_dims;
+//    Tensor<Index, 1> inputs_dimensions;
+//    Tensor<Index, 1> activations_dimensions;
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional ||
-            trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
-    {
-        Tensor<type, 4> inputs = batch.inputs_4d;
-
-        inputs_dims = get_dimensions(inputs);
-
-        trainable_layers_pointers(0)->forward_propagate(inputs.data(), inputs_dims,  potential_parameters, forward_propagation.layers(0));
-    }
-    else
-    {
-        Tensor<type, 2> inputs = batch.inputs_2d;
-
-        inputs_dims = get_dimensions(inputs);
-
-        trainable_layers_pointers(0)->forward_propagate(inputs.data(), inputs_dims, potential_parameters, forward_propagation.layers(0));
-    }
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions,  potential_parameters, forward_propagation.layers(0));
 
     Index index = parameters_number;
 
@@ -1635,8 +1623,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data() + index, parameters_number);
 
-        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_ptr,
-                                                        forward_propagation.layers(i-1)->outputs_dims,
+        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
+                                                        forward_propagation.layers(i-1)->outputs_dimensions,
                                                         potential_parameters,
                                                         forward_propagation.layers(i));
 
@@ -1658,44 +1646,44 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// @param inputs Set of inputs to the neural network.
 
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(type * inputs_data, Tensor<Index, 1>& inputs_dims)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
-    const Index inputs_dimensions_number = inputs_dims.size();
+    const Index inputs_dimensions_number = inputs_dimensions.size();
 
     if(inputs_dimensions_number == 2)
     {
         Tensor<type, 2> outputs;
         Tensor<type, 2> last_layer_outputs;
 
-        Tensor<Index, 1> outputs_dims;
-        Tensor<Index, 1> last_layer_outputs_dims;
+        Tensor<Index, 1> outputs_dimensions;
+        Tensor<Index, 1> last_layer_outputs_dimensions;
 
         const Index layers_number = get_layers_number();
 
         if(layers_number == 0)
         {
-            const Tensor<Index, 0> inputs_size = inputs_dims.prod();
-            outputs = TensorMap<Tensor<type,2>>(inputs_data, inputs_dims(0), inputs_dims(1));
+            const Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
+            outputs = TensorMap<Tensor<type,2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
             return outputs;
         }
 
-        outputs.resize(inputs_dims(0),layers_pointers(0)->get_neurons_number());
-        outputs_dims = get_dimensions(outputs);
+        outputs.resize(inputs_dimensions(0),layers_pointers(0)->get_neurons_number());
+        outputs_dimensions = get_dimensions(outputs);
 
-        layers_pointers(0)->calculate_outputs(inputs_data, inputs_dims, outputs.data(), outputs_dims);
+        layers_pointers(0)->calculate_outputs(inputs_data, inputs_dimensions, outputs.data(), outputs_dimensions);
 
         last_layer_outputs = outputs;
-        last_layer_outputs_dims = get_dimensions(last_layer_outputs);
+        last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
 
         for(Index i = 1; i < layers_number; i++)
         {
-            outputs.resize(inputs_dims(0),layers_pointers(i)->get_neurons_number());
-            outputs_dims = get_dimensions(outputs);
+            outputs.resize(inputs_dimensions(0),layers_pointers(i)->get_neurons_number());
+            outputs_dimensions = get_dimensions(outputs);
 
-            layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dims, outputs.data(), outputs_dims);
+            layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, outputs.data(), outputs_dimensions);
 
             last_layer_outputs = outputs;
-            last_layer_outputs_dims = get_dimensions(last_layer_outputs);
+            last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
         }
 
         return outputs;
@@ -1709,7 +1697,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type * inputs_data, Tensor<Inde
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void calculate_outputs(type * inputs_data, Tensor<Index, 1>& inputs_dims, type * outputs_data, Tensor<Index, 1>& outputs_dims).\n"
+               << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions).\n"
                << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
         throw invalid_argument(buffer.str());
@@ -2981,13 +2969,13 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
 
 void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
 {
-    Tensor<Index, 1> inputs_dims = get_dimensions(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    Tensor<type, 2> outputs(inputs_dims(0), get_outputs_number());
+    Tensor<type, 2> outputs(inputs_dimensions(0), get_outputs_number());
 
-    Tensor<Index, 1> outputs_dims = get_dimensions(outputs);
+    Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
-    calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     std::ofstream file(file_name.c_str());
 

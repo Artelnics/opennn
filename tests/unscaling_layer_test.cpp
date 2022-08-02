@@ -267,8 +267,8 @@ void UnscalingLayerTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
-    Tensor<Index, 1> inputs_dims;
-    Tensor<Index, 1> outputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
+    Tensor<Index, 1> outputs_dimensions;
 
     Tensor<type, 2> minimums_maximums;
     Tensor<type, 2> mean_standard_deviation;
@@ -284,12 +284,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,1);
     inputs.setRandom();
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,1);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 1, LOG);
@@ -302,12 +302,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,3);
     inputs.setConstant(type(0));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,3);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 3, LOG);
@@ -322,12 +322,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,1);
     inputs.setRandom();
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,1);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) - 1 < NUMERIC_LIMITS_MIN, LOG);
     assert_true(outputs.dimension(1) - 1 < NUMERIC_LIMITS_MIN, LOG);
@@ -345,12 +345,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,2);
     inputs.setValues({{type(0.1f),type(0)}});
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,2);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
@@ -364,12 +364,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,1);
     inputs.setRandom();
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,1);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 1, LOG);
@@ -388,12 +388,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,2);
     inputs.setValues({{type(-1),type(1)}});
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,2);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
@@ -407,12 +407,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,1);
     inputs.setValues({{type(1)}});
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,1);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 1, LOG);
@@ -426,12 +426,12 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     inputs.resize(1,2);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     outputs.resize(1,2);
-    outputs_dims = get_dimensions(outputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    unscaling_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);

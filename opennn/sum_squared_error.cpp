@@ -70,50 +70,11 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
-
      const type coefficient = static_cast<type>(2.0);
 
-     switch(output_layer_pointer->get_type())
-     {
-     case Layer::Type::Perceptron:
-     {
-         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
 
-         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     case Layer::Type::Probabilistic:
-     {
-         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
-
-         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     case Layer::Type::Recurrent:
-     {
-         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
-
-         recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     case Layer::Type::LongShortTermMemory:
-     {
-         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
-
-         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     default: break;
-     }
+     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 
@@ -133,35 +94,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
-    switch(output_layer_pointer->get_type())
-    {
-    case Layer::Type::Perceptron:
-    {
-        PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
-                = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
-
-        copy(loss_index_back_propagation.errors.data(),
-             loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-             perceptron_layer_back_propagation->delta.data());
-
-        divide_columns(perceptron_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
-    }
-        break;
-
-    case Layer::Type::Probabilistic:
-    {
-        ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
-                = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
-
-        copy(loss_index_back_propagation.errors.data(),
-             loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-             probabilistic_layer_back_propagation->delta.data());
-
-        divide_columns(probabilistic_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
-    }
-        break;
-
-    default:
+    if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
@@ -170,7 +103,12 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
         throw invalid_argument(buffer.str());
     }
-    }
+
+    copy(loss_index_back_propagation.errors.data(),
+         loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
+         output_layer_back_propagation->deltas.data());
+
+    divide_columns(output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
 }
 
 

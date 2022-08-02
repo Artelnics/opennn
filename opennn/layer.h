@@ -87,8 +87,10 @@ public:
 
     // Architecture
 
-    virtual Index get_parameters_number() const ;
+    virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
+
+    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_parameters() {}
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -98,10 +100,10 @@ public:
 
     // Outputs
 
-    virtual void calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&);
+    virtual void calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&);
 
-    virtual void forward_propagate(type*, Tensor<Index, 1>&, LayerForwardPropagation*);
-    virtual void forward_propagate(type*, Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
 
@@ -115,11 +117,7 @@ public:
 
     // Error gradient
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagation*) const {}
-
-    virtual void calculate_error_gradient(const Tensor<type, 4>&,
+    virtual void calculate_error_gradient(type*,
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*) const {}
 
@@ -176,37 +174,39 @@ protected:
 
     /// Activation functions
 
-    void binary(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void competitive(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void hard_sigmoid(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void hyperbolic_tangent(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void logistic(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void rectified_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void scaled_exponential_linear(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void softmax(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void soft_plus(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void soft_sign(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void symmetric_threshold(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void threshold(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void binary(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void competitive(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void exponential_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void hard_sigmoid(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void hyperbolic_tangent(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void logistic(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void scaled_exponential_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void softmax(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void soft_plus(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void soft_sign(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void symmetric_threshold(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void threshold(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
 
-    void exponential_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void hard_sigmoid_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void hyperbolic_tangent_derivatives(type*, Tensor<Index, 1>&,type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void logistic_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void rectified_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void scaled_exponential_linear_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void softmax_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void soft_plus_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void soft_sign_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void symmetric_threshold_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
-    void threshold_derivatives(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&) const;
+    void exponential_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void hard_sigmoid_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void hyperbolic_tangent_derivatives(type*, const Tensor<Index, 1>&,type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void logistic_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void scaled_exponential_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void softmax_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void soft_plus_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void soft_sign_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void symmetric_threshold_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void threshold_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
@@ -227,13 +227,12 @@ struct LayerForwardPropagation
 
     virtual void print() const {}
 
-    Index batch_samples_number = 0;
+    Index batch_samples_number;
 
     Layer* layer_pointer = nullptr;
 
-    type *outputs_ptr;
-
-    Tensor<Index, 1> outputs_dims;
+    type* outputs_data = nullptr;
+    Tensor<Index, 1> outputs_dimensions;
 };
 
 
@@ -247,11 +246,17 @@ struct LayerBackPropagation
 
     virtual void set(const Index&, Layer*) {}
 
-    virtual void print() const {}
+    virtual void print() const {}   
 
-    Index batch_samples_number = 0;
+    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() {}
 
-    Layer* layer_pointer = nullptr;
+    Index batch_samples_number;
+
+    Layer* layer_pointer = nullptr;       
+
+    Tensor<Index, 1> deltas_dimensions;
+
+    type* deltas_data = nullptr;
 };
 
 
@@ -267,9 +272,11 @@ struct LayerBackPropagationLM
 
     virtual void print() const {}
 
-    Index batch_samples_number = 0;
+    Index batch_samples_number;
 
     Layer* layer_pointer = nullptr;
+
+    Tensor<type, 2> deltas;
 };
 
 }

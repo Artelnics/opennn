@@ -752,7 +752,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
-    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
 
     Index parameters_number;
 
@@ -770,9 +770,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs.resize(batch_size, inputs_number);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.dimension(0) == batch_size, LOG);
     assert_true(outputs.dimension(1) == outputs_number, LOG);
@@ -793,9 +793,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs.resize(batch_size, inputs_number);
     inputs.setConstant(type(0));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.size() == batch_size * outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -813,9 +813,9 @@ void NeuralNetworkTest::test_calculate_outputs()
     inputs.resize(1, 1);
     inputs.setConstant(2);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.size() == 2, LOG);
     assert_true(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -830,9 +830,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     neural_network.set_parameters_constant(type(1));
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.size() == 3, LOG);
 
@@ -856,9 +856,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     neural_network.set_parameters(parameters);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.size() == outputs_number, LOG);
     assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-3), LOG);
@@ -877,9 +877,9 @@ void NeuralNetworkTest::test_calculate_outputs()
     inputs.resize(1, 1);
     inputs.setZero();
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.size() == 1, LOG);
     assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-3), LOG);
@@ -893,9 +893,9 @@ void NeuralNetworkTest::test_calculate_outputs()
     inputs.resize(1, 1);
     inputs.setZero();
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.size() == 1, LOG);
     assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
@@ -917,9 +917,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     neural_network.set_parameters(parameters);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dims);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     assert_true(outputs.dimension(1) == outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -1070,6 +1070,7 @@ void NeuralNetworkTest::test_forward_propagate()
     target_variables_indices = data_set.get_target_variables_indices();
 
     batch.set(batch_size, &data_set);
+
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
@@ -1080,13 +1081,11 @@ void NeuralNetworkTest::test_forward_propagate()
 
     perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
 
-
     Tensor<type, 2> biases_perceptron(neurons_number, 1);
 
     biases_perceptron.setConstant(type(1));
 
     perceptron_layer->set_biases(biases_perceptron);
-
 
     Tensor<type, 2> synaptic_weights_perceptron(inputs_number, neurons_number);
 
@@ -1103,7 +1102,9 @@ void NeuralNetworkTest::test_forward_propagate()
 
     Tensor<type, 2> perceptron_combinations = perceptron_layer_forward_propagation->combinations;
 
-    Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->activations;
+    TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data, perceptron_layer_forward_propagation->outputs_dimensions(0), perceptron_layer_forward_propagation->outputs_dimensions(1));
+
+//    Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3), LOG);
@@ -1173,13 +1174,19 @@ void NeuralNetworkTest::test_forward_propagate()
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation_3.layers[0]);
 
     Tensor<type, 2> perceptron_combinations_3_0 = perceptron_layer_forward_propagation_3->combinations;
-    Tensor<type, 2> perceptron_activations_3_0 = perceptron_layer_forward_propagation_3->activations;
+
+    TensorMap<Tensor<type, 2>> perceptron_activations_3_0(perceptron_layer_forward_propagation_3->outputs_data, perceptron_layer_forward_propagation_3->outputs_dimensions(0), perceptron_layer_forward_propagation_3->outputs_dimensions(1));
+
+    //Tensor<type, 2> perceptron_activations_3_0 = perceptron_layer_forward_propagation_3->outputs;
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation_3
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation_3.layers[1]);
 
     Tensor<type, 2> probabilistic_combinations_3_1 = probabilistic_layer_forward_propagation_3->combinations;
-    Tensor<type, 2> probabilistic_activations_3_1= probabilistic_layer_forward_propagation_3->activations;
+
+    TensorMap<Tensor<type, 2>> probabilistic_activations_3_1(probabilistic_layer_forward_propagation_3->outputs_data, probabilistic_layer_forward_propagation_3->outputs_dimensions(0), probabilistic_layer_forward_propagation_3->outputs_dimensions(1));
+
+//    Tensor<type, 2> probabilistic_activations_3_1= probabilistic_layer_forward_propagation_3->outputs;
 
     assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
 

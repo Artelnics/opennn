@@ -495,7 +495,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     Tensor<type, 2> inputs;
     Tensor<type, 2> combinations;
 
-    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
     Tensor<Index, 1> combinations_dims;
 
     // Test
@@ -516,10 +516,10 @@ void PerceptronLayerTest::test_calculate_combinations()
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     // Test
 
@@ -528,10 +528,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.setConstant(type(3));
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -548,7 +548,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     combinations.resize(samples_number, neurons_number);
     combinations.setZero();
@@ -556,10 +556,10 @@ void PerceptronLayerTest::test_calculate_combinations()
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == samples_number, LOG);
@@ -580,15 +580,15 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.resize(2,3);
     inputs.setConstant(type(0.5));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 2, LOG);
@@ -613,15 +613,15 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setValues({{type(0.5), type(0.5)}});
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     combinations.resize(samples_number, neurons_number);
     combinations.setZero();
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == samples_number, LOG);
@@ -672,7 +672,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setZero();
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     biases.resize(1, neurons_number);
     biases.setZero();
@@ -682,10 +682,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     combinations.resize(samples_number, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -707,7 +707,7 @@ void PerceptronLayerTest::test_calculate_activations()
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
 
-    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
     Tensor<Index, 1> combinations_dims;
     Tensor<Index, 1> activations_dims;
 
@@ -725,17 +725,17 @@ void PerceptronLayerTest::test_calculate_activations()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     combinations.resize(samples_number, neurons_number);
 
     activations.resize(samples_number, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
@@ -762,14 +762,14 @@ void PerceptronLayerTest::test_calculate_activations()
 
     activations.resize(samples_number, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, biases, synaptic_weights, combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
     perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
@@ -795,7 +795,7 @@ void PerceptronLayerTest::test_calculate_activations()
 
     activations.resize(samples_number, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
@@ -825,7 +825,7 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(samples_number, neurons_number);
     activations.setConstant(type(0));
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
@@ -854,7 +854,7 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(samples_number, neurons_number);
     activations.setConstant(type(0));
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
@@ -878,7 +878,7 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(2,2);
     activations.setZero();
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
@@ -906,11 +906,11 @@ void PerceptronLayerTest::test_calculate_activations()
     combinations.resize(1,2);
     activations.resize(1,2);
 
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
-    perceptron_layer.calculate_combinations(inputs.data(), inputs_dims, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations.data(), combinations_dims);
+    perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -1166,8 +1166,8 @@ void PerceptronLayerTest::test_calculate_outputs()
     Tensor<type, 2> outputs;
     Tensor<type, 1> parameters;
 
-    Tensor<Index, 1> inputs_dims;
-    Tensor<Index, 1> outputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
+    Tensor<Index, 1> outputs_dimensions;
 
     // Test
 
@@ -1188,16 +1188,15 @@ void PerceptronLayerTest::test_calculate_outputs()
                                    {type(2),type(-2),type(0),type(2)},
                                    {type(3),type(-3),type(0),type(3)}});
 
-
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
-    inputs_dims = get_dimensions(inputs);
-    outputs_dims = get_dimensions(outputs);
+    inputs_dimensions = get_dimensions(inputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    perceptron_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    perceptron_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -1235,10 +1234,10 @@ void PerceptronLayerTest::test_calculate_outputs()
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
 
-    inputs_dims = get_dimensions(inputs);
-    outputs_dims = get_dimensions(outputs);
+    inputs_dimensions = get_dimensions(inputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    perceptron_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    perceptron_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -1260,10 +1259,10 @@ void PerceptronLayerTest::test_calculate_outputs()
 
     outputs.resize(1, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
-    outputs_dims = get_dimensions(outputs);
+    inputs_dimensions = get_dimensions(inputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    perceptron_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    perceptron_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -1287,10 +1286,10 @@ void PerceptronLayerTest::test_calculate_outputs()
 
     outputs.resize(1, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
-    outputs_dims = get_dimensions(outputs);
+    inputs_dimensions = get_dimensions(inputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    perceptron_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    perceptron_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -1310,10 +1309,10 @@ void PerceptronLayerTest::test_calculate_outputs()
 
     outputs.resize(1, neurons_number);
 
-    inputs_dims = get_dimensions(inputs);
-    outputs_dims = get_dimensions(outputs);
+    inputs_dimensions = get_dimensions(inputs);
+    outputs_dimensions = get_dimensions(outputs);
 
-    perceptron_layer.calculate_outputs(inputs.data(), inputs_dims, outputs.data(), outputs_dims);
+    perceptron_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     parameters.resize(2);
     parameters.setConstant(type(1));
@@ -1336,7 +1335,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
-    Tensor<Index, 1> inputs_dims;
+    Tensor<Index, 1> inputs_dimensions;
 
     Tensor<type, 1> potential_parameters;
 
@@ -1351,11 +1350,11 @@ void PerceptronLayerTest::test_forward_propagate()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     forward_propagation.set(samples_number, &perceptron_layer);
 
-    perceptron_layer.forward_propagate(inputs.data(), inputs_dims, &forward_propagation);
+    perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &forward_propagation);
 
     assert_true(forward_propagation.combinations.rank() == 2, LOG);
     assert_true(forward_propagation.combinations.dimension(0) == samples_number, LOG);
@@ -1363,13 +1362,18 @@ void PerceptronLayerTest::test_forward_propagate()
 
     assert_true(abs(forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+
+    TensorMap<Tensor<type, 2>> outputs(forward_propagation.outputs_data, forward_propagation.outputs_dimensions(0), forward_propagation.outputs_dimensions(1));
+
+    assert_true(abs(outputs(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+
+    assert_true(abs(outputs(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+
     assert_true(abs(forward_propagation.activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
     // Test
-/*
+
     samples_number = 2;
     inputs_number = 2;
     neurons_number = 2;
@@ -1379,24 +1383,26 @@ void PerceptronLayerTest::test_forward_propagate()
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
-    inputs_dims = get_dimensions(inputs);
+    inputs_dimensions = get_dimensions(inputs);
 
     potential_parameters = perceptron_layer.get_parameters();
 
     forward_propagation.set(samples_number, &perceptron_layer);
 
-    perceptron_layer.forward_propagate(inputs, potential_parameters, &forward_propagation);
+    perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, potential_parameters, &forward_propagation);
+
+    TensorMap< Tensor<type, 2>> outputs_2(forward_propagation.outputs_data, forward_propagation.outputs_dimensions(0), forward_propagation.outputs_dimensions(1));
 
     assert_true(forward_propagation.combinations.rank() == 2, LOG);
     assert_true(forward_propagation.combinations.dimension(0) == samples_number, LOG);
     assert_true(forward_propagation.combinations.dimension(1) == neurons_number, LOG);
     assert_true(abs(forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,0) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(outputs_2(0,0) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(outputs_2(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives(0,0) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives(0,1) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
-*/
+
 }
 
 

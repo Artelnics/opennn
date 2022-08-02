@@ -8852,7 +8852,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     if(has_columns_name) input_samples_count--;
 
-    Tensor<type, 2> input_data(input_samples_count, variables_number);
+    Tensor<type, 2> inputs_data(input_samples_count, variables_number);
 
     // Fill input data
 
@@ -8934,15 +8934,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
+                    inputs_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = type(stof(tokens(token_index)));
+                    inputs_data(line_number, variable_index) = type(stof(tokens(token_index)));
                 }
 
                 variable_index++;
@@ -8952,15 +8952,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label)
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(columns(i).categories.size() > 0 && tokens(token_index) == columns(i).categories(0))
                 {
-                    input_data(line_number, variable_index) = type(1);
+                    inputs_data(line_number, variable_index) = type(1);
                 }
                 else if(tokens(token_index) == columns(i).name)
                 {
-                    input_data(line_number, variable_index) = type(1);
+                    inputs_data(line_number, variable_index) = type(1);
                 }
 
                 variable_index++;
@@ -8972,11 +8972,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                     if(tokens(token_index) == missing_values_label)
                     {
                         has_missing_values = true;
-                        input_data(line_number, variable_index) = static_cast<type>(NAN);
+                        inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                     }
                     else if(tokens(token_index) == columns(i).categories(k))
                     {
-                        input_data(line_number, variable_index) = type(1);
+                        inputs_data(line_number, variable_index) = type(1);
                     }
 
                     variable_index++;
@@ -8987,11 +8987,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = static_cast<type>(date_to_timestamp(tokens(token_index), gmt));
+                    inputs_data(line_number, variable_index) = static_cast<type>(date_to_timestamp(tokens(token_index), gmt));
                 }
 
                 variable_index++;
@@ -9001,15 +9001,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
+                    inputs_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = type(stof(tokens(token_index)));
+                    inputs_data(line_number, variable_index) = type(stof(tokens(token_index)));
                 }
 
                 variable_index++;
@@ -9025,7 +9025,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     if(!has_missing_values)
     {
-        return input_data;
+        return inputs_data;
     }
     else
     {
@@ -9035,10 +9035,10 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(missing_values_method == MissingValuesMethod::Unuse || missing_values_method == MissingValuesMethod::Mean)
         {
-            const Tensor<type, 1> means = mean(input_data);
+            const Tensor<type, 1> means = mean(inputs_data);
 
-            const Index samples_number = input_data.dimension(0);
-            const Index variables_number = input_data.dimension(1);
+            const Index samples_number = inputs_data.dimension(0);
+            const Index variables_number = inputs_data.dimension(1);
 
             #pragma omp parallel for schedule(dynamic)
 
@@ -9046,19 +9046,19 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 for(Index i = 0; i < samples_number; i++)
                 {
-                    if(isnan(input_data(i, j)))
+                    if(isnan(inputs_data(i, j)))
                     {
-                        input_data(i,j) = means(j);
+                        inputs_data(i,j) = means(j);
                     }
                 }
             }
         }
         else
         {
-            const Tensor<type, 1> medians = median(input_data);
+            const Tensor<type, 1> medians = median(inputs_data);
 
-            const Index samples_number = input_data.dimension(0);
-            const Index variables_number = input_data.dimension(1);
+            const Index samples_number = inputs_data.dimension(0);
+            const Index variables_number = inputs_data.dimension(1);
 
             #pragma omp parallel for schedule(dynamic)
 
@@ -9066,15 +9066,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 for(Index i = 0; i < samples_number; i++)
                 {
-                    if(isnan(input_data(i, j)))
+                    if(isnan(inputs_data(i, j)))
                     {
-                        input_data(i,j) = medians(j);
+                        inputs_data(i,j) = medians(j);
                     }
                 }
             }
         }
 
-        return input_data;
+        return inputs_data;
     }
 }
 
@@ -13008,13 +13008,15 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_2d.data());
+        fill_submatrix(data, samples, inputs, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
+
+        TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
 
         Index index = 0;
 
@@ -13028,7 +13030,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 {
                   for (Index channel = channels_number - 1; channel >= 0 ; channel--)
                   {
-                        inputs_4d(row, col, channel, image) = data(image, index);
+                        inputs(row, col, channel, image) = data(image, index);
                         index++;
                   }
                 }
@@ -13036,7 +13038,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-    fill_submatrix(data, samples, targets, targets_2d.data());
+    fill_submatrix(data, samples, targets, targets_data);
 
 }
 
@@ -13060,7 +13062,11 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     if(input_variables_dimensions.size() == 1)
     {
-        inputs_2d.resize(batch_size, input_variables_number);
+        inputs_dimensions.resize(2);
+        inputs_dimensions.setValues({batch_size, input_variables_number});
+
+        //delete inputs_data;
+        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -13068,10 +13074,18 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(rows_number, columns_number, channels_number,batch_size);
+        inputs_dimensions.resize(4);
+        inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});
+
+        //delete inputs_data;
+        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
    }
 
-    targets_2d.resize(batch_size, target_variables_number);
+    targets_dimensions.resize(2);
+    targets_dimensions.setValues({batch_size, target_variables_number});
+
+    //delete targets_data;
+    targets_data = (type*)malloc(static_cast<size_t>(batch_size*target_variables_number*sizeof(type)));
 }
 
 
@@ -13085,24 +13099,20 @@ void DataSetBatch::print() const
 {
     cout << "Batch" << endl;
 
-    if(inputs_2d.size() != 0)
-    {
-        cout << "Inputs 2D:" << endl;
-        cout << inputs_2d << endl;
-    }
+    cout << "Inputs dimensions:" << endl;
+    cout << inputs_dimensions << endl;
 
-    if(inputs_4d.size() != 0)
-    {
-        cout << "Inputs dimensions:" << endl;
-        cout << inputs_4d.dimensions() << endl;
+    cout << "Inputs:" << endl;
+    if(inputs_dimensions.size() == 2)
+        cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
+    else if(inputs_dimensions.size() == 4)
+        cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
 
-        cout << "Inputs 4D:" << endl;
-        cout << inputs_4d << endl;
-    }
+    cout << "Targets dimensions:" << endl;
+    cout << targets_dimensions << endl;
 
-    cout << endl;
     cout << "Targets:" << endl;
-    cout << targets_2d << endl;
+    cout << TensorMap<Tensor<type,2>>(targets_data, targets_dimensions(0), targets_dimensions(1)) << endl;
 }
 
 

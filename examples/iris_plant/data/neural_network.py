@@ -51,9 +51,9 @@ class NeuralNetwork:
 
 		combinations = [None] * 3
 
-		combinations[0] = 2.03152 -0.163463*inputs[0] +0.235884*inputs[1] -1.71467*inputs[2] -1.44454*inputs[3] 
-		combinations[1] = 0.498525 +0.265835*inputs[0] -0.412258*inputs[1] +0.606512*inputs[2] +0.594869*inputs[3] 
-		combinations[2] = -0.48892 -0.254071*inputs[0] +0.408867*inputs[1] -0.596042*inputs[2] -0.602519*inputs[3] 
+		combinations[0] = 0.171232 +0.127784*inputs[0] +0.156159*inputs[1] -0.0116542*inputs[2] -0.192001*inputs[3] 
+		combinations[1] = -0.100386 +0.0459516*inputs[0] -0.127511*inputs[1] +0.158615*inputs[2] -0.187598*inputs[3] 
+		combinations[2] = -0.0988517 +0.158462*inputs[0] -0.161392*inputs[1] +0.0213799*inputs[2] +0.125907*inputs[3] 
 		
 		activations = [None] * 3
 
@@ -68,9 +68,9 @@ class NeuralNetwork:
 
 		combinations = [None] * 3
 
-		combinations[0] = 0.246363 +0.575254*inputs[0] -1.33713*inputs[1] +1.32539*inputs[2] 
-		combinations[1] = -0.378698 +1.99051*inputs[0] +0.899771*inputs[1] -0.881827*inputs[2] 
-		combinations[2] = 0.136317 -2.56027*inputs[0] +0.432245*inputs[1] -0.441508*inputs[2] 
+		combinations[0] = 0.0739868 -0.172685*inputs[0] -0.10595*inputs[1] +0.00743201*inputs[2] 
+		combinations[1] = 0.0420353 +0.0467598*inputs[0] +0.189647*inputs[1] +0.191713*inputs[2] 
+		combinations[2] = -0.0777208 +0.145562*inputs[0] +0.170601*inputs[1] -0.0659442*inputs[2] 
 		
 		activations = [None] * 3
 

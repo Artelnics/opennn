@@ -81,10 +81,11 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(trainable_layers_number-1)->outputs_dimensions;
 
-    const Tensor<type, 2>& targets = batch.targets_2d;
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(trainable_layers_number-1)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
     Tensor<type, 0> cross_entropy_error;
 
@@ -102,10 +103,11 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(trainable_layers_number-1)->outputs_dimensions;
 
-    const Tensor<type, 2>& targets = batch.targets_2d;
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(trainable_layers_number-1)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
     Tensor<type, 0> cross_entropy_error;
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum();
@@ -143,19 +145,24 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
+
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1));
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
+    TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
+
     const Index batch_samples_number = batch.get_batch_size();
 
-    const Tensor<type, 2>& targets = batch.targets_2d;
+    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
-    const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(trainable_layers_number-1)->outputs_dimensions;
 
-    probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
+    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    deltas.device(*thread_pool_device)
             = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
             (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
 }
@@ -172,13 +179,15 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 
     const Index batch_samples_number = batch.get_batch_size();
 
-    const Tensor<type, 2>& targets = batch.targets_2d;
+    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
-    const Tensor<type, 2>& outputs =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(trainable_layers_number-1)->outputs_dimensions;
 
-    probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-            = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(trainable_layers_number-1)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
+
+    deltas.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
 }
 
 

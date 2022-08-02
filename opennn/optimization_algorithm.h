@@ -176,19 +176,20 @@ struct OptimizationAlgorithmData
 
     void print() const
     {
-        cout << "Potential parameters:" << endl;
-        cout << potential_parameters << endl;
+//        cout << "Potential parameters:" << endl;
+//        cout << potential_parameters << endl;
 
-        cout << "Training direction:" << endl;
-        cout << training_direction << endl;
+//        cout << "Training direction:" << endl;
+//        cout << training_direction << endl;
 
-        cout << "Initial learning rate:" << endl;
-        cout << initial_learning_rate << endl;
+//        cout << "Initial learning rate:" << endl;
+//        cout << initial_learning_rate << endl;
     }
 
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
     type initial_learning_rate = type(0);
+
 };
 
 

@@ -47,22 +47,23 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
 
-void PoolingLayer::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dims,  type* outputs_data, Tensor<Index, 1>& outputs_dims)
+void PoolingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    if(inputs_dims.size() != 4)
+    if(inputs_dimensions.size() != 4)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
-               << "Number of inputs dimensions (" << inputs_dims.size() << ") must be 4: (batch, filters, rows, columns).\n";
+               << "Number of inputs dimensions (" << inputs_dimensions.size() << ") must be 4: (batch, filters, rows, columns).\n";
 
         throw invalid_argument(buffer.str());
     }
     /// @todo Change everything
 
-    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dims(0), inputs_dims(1), inputs_dims(2), inputs_dims(3));
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dims(0), outputs_dims(1), outputs_dims(2), outputs_dims(3));
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
     switch(pooling_method)
     {
@@ -564,12 +565,6 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
     return hidden_delta;
 }
 
-
-void PoolingLayer::calculate_error_gradient(const Tensor<type, 2>&,
-                              LayerForwardPropagation*,
-                              LayerBackPropagation*) const
-{
-}
 
 
 /// Returns the number of neurons the layer applies to an image.
