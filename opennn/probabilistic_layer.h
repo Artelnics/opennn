@@ -110,8 +110,7 @@ public:
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
 
-   Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_parameters() final;
-
+   Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
 
    // Display messages
 
@@ -274,13 +273,22 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     void print() const
     {
         cout << "Outputs:" << endl;
-        //cout << outputs << endl;
+        cout << outputs_dimensions << endl;
 
         cout << "Combinations:" << endl;
-        cout << combinations << endl;
+        cout << combinations.dimensions() << endl;
 
         cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
+        cout << activations_derivatives.dimensions() << endl;
+
+//        cout << "Outputs:" << endl;
+//        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+
+//        cout << "Combinations:" << endl;
+//        cout << combinations << endl;
+
+//        cout << "Activations derivatives:" << endl;
+//        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 2> combinations;
@@ -377,10 +385,23 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         error_combinations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
+    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+    {
+        Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
+
+        const Index inputs_number = layer_pointer->get_inputs_number();
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), inputs_number);
+        layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
+
+        return layer_gradient;
+    }
+
     void print() const
     {
         cout << "Deltas:" << endl;
-        //cout << deltas << endl;
+        cout << TensorMap<Tensor<type,2>>(deltas_data, deltas_dimensions(0), deltas_dimensions(1)) << endl;
 
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;

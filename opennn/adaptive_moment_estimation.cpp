@@ -256,7 +256,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();    
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
@@ -307,18 +307,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
-//    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-//    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
-
     // Loss index
 
     loss_index_pointer->set_normalization_coefficient();
 
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
-
-//    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-//    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     type training_error = type(0);
     type training_loss = type(0);
@@ -407,7 +401,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 // Loss
 
-                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
+                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);               
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
@@ -560,7 +554,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
                               AdaptiveMomentEstimationData& optimization_data) const
 {
-
     const type learning_rate =
         type(initial_learning_rate*
             sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/

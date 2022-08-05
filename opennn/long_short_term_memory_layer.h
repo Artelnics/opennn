@@ -84,6 +84,8 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const final;
 
+   Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_parameters() final;
+
    // Activation functions
 
    const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
@@ -364,6 +366,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         outputs_dimensions.setValues({batch_samples_number, neurons_number});
 
         //delete outputs_data;
+
         outputs_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
         // Rest of quantities
@@ -410,8 +413,21 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
+        cout << "Combinations: " << endl;
+        cout << combinations << endl;
 
-    }
+        cout << "Current inputs: " << endl;
+        cout << current_inputs << endl;
+
+        cout << "Current input combinations: " << endl;
+        cout << current_input_combinations << endl;
+
+        cout << "Current input activations: " << endl;
+        cout << current_input_activations << endl;
+
+        cout << "Current input activations derivatives: " << endl;
+        cout << current_input_activations_derivatives << endl;
+     }
 
     Tensor<type, 2> combinations;
 
@@ -528,7 +544,52 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
+    }
 
+    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+    {
+        Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(30);
+
+        layer_gradient(0) = new TensorMap<Tensor<type, 1>>(input_biases_derivatives.data(), input_biases_derivatives.size());
+        layer_gradient(1) = new TensorMap<Tensor<type, 1>>(forget_biases_derivatives.data(), forget_biases_derivatives.size());
+        layer_gradient(2) = new TensorMap<Tensor<type, 1>>(state_biases_derivatives.data(), state_biases_derivatives.size());
+        layer_gradient(3) = new TensorMap<Tensor<type, 1>>(output_biases_derivatives.data(), output_biases_derivatives.size());
+
+        layer_gradient(4) = new TensorMap<Tensor<type, 1>>(input_weights_derivatives.data(), input_weights_derivatives.size());
+        layer_gradient(5) = new TensorMap<Tensor<type, 1>>(forget_weights_derivatives.data(), forget_weights_derivatives.size());
+        layer_gradient(6) = new TensorMap<Tensor<type, 1>>(state_weights_derivatives.data(), state_weights_derivatives.size());
+        layer_gradient(7) = new TensorMap<Tensor<type, 1>>(output_weights_derivatives.data(), output_weights_derivatives.size());
+
+        layer_gradient(8) = new TensorMap<Tensor<type, 1>>(input_recurrent_weights_derivatives.data(), input_recurrent_weights_derivatives.size());
+        layer_gradient(9) = new TensorMap<Tensor<type, 1>>(forget_recurrent_weights_derivatives.data(), forget_recurrent_weights_derivatives.size());
+        layer_gradient(10) = new TensorMap<Tensor<type, 1>>(state_recurrent_weights_derivatives.data(), state_recurrent_weights_derivatives.size());
+        layer_gradient(11) = new TensorMap<Tensor<type, 1>>(output_recurrent_weights_derivatives.data(), output_recurrent_weights_derivatives.size());
+
+        layer_gradient(12) = new TensorMap<Tensor<type, 1>>(input_combinations_biases_derivatives.data(), input_combinations_biases_derivatives.size());
+        layer_gradient(13) = new TensorMap<Tensor<type, 1>>(forget_combinations_biases_derivatives.data(), forget_combinations_biases_derivatives.size());
+        layer_gradient(14) = new TensorMap<Tensor<type, 1>>(state_combinations_biases_derivatives.data(), state_combinations_biases_derivatives.size());
+        layer_gradient(15) = new TensorMap<Tensor<type, 1>>(output_combinations_biases_derivatives.data(), output_combinations_biases_derivatives.size());
+
+        layer_gradient(16) = new TensorMap<Tensor<type, 1>>(hidden_states_biases_derivatives.data(), hidden_states_biases_derivatives.size());
+        layer_gradient(17) = new TensorMap<Tensor<type, 1>>(cell_state_biases_derivatives.data(), cell_state_biases_derivatives.size());
+
+        layer_gradient(18) = new TensorMap<Tensor<type, 1>>(input_combinations_weights_derivatives.data(), input_combinations_weights_derivatives.size());
+        layer_gradient(19) = new TensorMap<Tensor<type, 1>>(forget_combinations_weights_derivatives.data(), forget_combinations_weights_derivatives.size());
+        layer_gradient(20) = new TensorMap<Tensor<type, 1>>(state_combinations_weights_derivatives.data(), state_combinations_weights_derivatives.size());
+        layer_gradient(21) = new TensorMap<Tensor<type, 1>>(output_combinations_weights_derivatives.data(), output_combinations_weights_derivatives.size());
+
+        layer_gradient(22) = new TensorMap<Tensor<type, 1>>(hidden_states_weights_derivatives.data(), hidden_states_weights_derivatives.size());
+        layer_gradient(23) = new TensorMap<Tensor<type, 1>>(cell_state_weights_derivatives.data(), cell_state_weights_derivatives.size());
+
+        layer_gradient(24) = new TensorMap<Tensor<type, 1>>(input_combinations_recurrent_weights_derivatives.data(), input_combinations_recurrent_weights_derivatives.size());
+        layer_gradient(25) = new TensorMap<Tensor<type, 1>>(forget_combinations_recurrent_weights_derivatives.data(), forget_combinations_recurrent_weights_derivatives.size());
+        layer_gradient(26) = new TensorMap<Tensor<type, 1>>(state_combinations_recurrent_weights_derivatives.data(), state_combinations_recurrent_weights_derivatives.size());
+        layer_gradient(27) = new TensorMap<Tensor<type, 1>>(output_combinations_recurrent_weights_derivatives.data(), output_combinations_recurrent_weights_derivatives.size());
+
+        layer_gradient(28) = new TensorMap<Tensor<type, 1>>(hidden_states_recurrent_weights_derivatives.data(), hidden_states_recurrent_weights_derivatives.size());
+        layer_gradient(29) = new TensorMap<Tensor<type, 1>>(cell_state_recurrent_weights_derivatives.data(), cell_state_recurrent_weights_derivatives.size());
+
+        return layer_gradient;
     }
 
     Tensor<type, 1> current_layer_deltas;

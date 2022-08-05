@@ -348,6 +348,9 @@ struct LossIndexBackPropagation
         cout << "Error:" << endl;
         cout << error << endl;
 
+        cout << "Regularization:" << endl;
+        cout << regularization << endl;
+
         cout << "Loss:" << endl;
         cout << loss << endl;
 

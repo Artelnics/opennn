@@ -513,10 +513,9 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
     }
 
-    TensorMap<Tensor<type,2>> combinations(combinations_data, batch_samples_number, synaptic_weights.dimension(1));
+    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
 
     combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
-
 }
 
 
@@ -642,7 +641,6 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                            biases,
                            synaptic_weights,
                            perceptron_layer_forward_propagation->combinations.data());
-
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
