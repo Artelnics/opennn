@@ -1586,9 +1586,6 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                                         forward_propagation.layers(i-1)->outputs_dimensions,
                                                         forward_propagation.layers(i));
-
-
-
     }
 }
 
@@ -2518,7 +2515,7 @@ void NeuralNetwork::print() const
     {
         cout << "Layer " << i+1 << ": " << layers_pointers[i]->get_neurons_number()
              << " " << layers_pointers[i]->get_type_string() << " neurons" << endl;
-    }
+        }
 }
 
 

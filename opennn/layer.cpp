@@ -68,7 +68,7 @@ string Layer::get_type_string() const
         return "Resnet50";
 
     default:
-        return string();
+        return "Unkown type";
     }
 }
 
@@ -113,6 +113,18 @@ void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
 
     buffer << "OpenNN Exception: Layer class.\n"
            << "set_parameters(const Tensor<type, 1>&) method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
+
+    throw invalid_argument(buffer.str());
+}
+
+
+Tensor< TensorMap< Tensor<type, 1>>*, 1> Layer::get_layer_parameters()
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "virtual Tensor< TensorMap< Tensor<type, 1> >, 1> get_layer_parameters() method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw invalid_argument(buffer.str());

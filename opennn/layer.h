@@ -90,7 +90,7 @@ public:
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
 
-    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_parameters() {}
+    virtual Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters();
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -248,7 +248,17 @@ struct LayerBackPropagation
 
     virtual void print() const {}   
 
-    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() {}
+    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() {
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Layer class.\n"
+                   << "virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() method.\n"
+                   << "This method is not implemented in the layer type (" << layer_pointer->get_type_string() << ").\n";
+
+            throw invalid_argument(buffer.str());
+        }
+    }
 
     Index batch_samples_number;
 

@@ -1007,13 +1007,13 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-    Tensor<Index, 1> inputs_dimensions;
-
     type* inputs_data;
 
-    Tensor<Index, 1> targets_dimensions;
+    Tensor<Index, 1> inputs_dimensions;
 
     type* targets_data;
+
+    Tensor<Index, 1> targets_dimensions;
 
 };
 
