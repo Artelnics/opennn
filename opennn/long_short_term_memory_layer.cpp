@@ -290,6 +290,28 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 }
 
 
+Tensor< TensorMap< Tensor<type, 1> >*, 1> LongShortTermMemoryLayer::get_layer_parameters()
+{
+    Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_parameters(12);
+
+    layer_parameters(0) = new TensorMap<Tensor<type, 1>>(input_biases.data(), input_biases.size());
+    layer_parameters(1) = new TensorMap<Tensor<type, 1>>(forget_biases.data(), input_biases.size());
+    layer_parameters(2) = new TensorMap<Tensor<type, 1>>(state_biases.data(), state_biases.size());
+    layer_parameters(3) = new TensorMap<Tensor<type, 1>>(output_biases.data(), output_biases.size());
+    layer_parameters(4) = new TensorMap<Tensor<type, 1>>(input_weights.data(), input_weights.size());
+    layer_parameters(5) = new TensorMap<Tensor<type, 1>>(forget_weights.data(), forget_weights.size());
+    layer_parameters(6) = new TensorMap<Tensor<type, 1>>(state_weights.data(), state_weights.size());
+    layer_parameters(7) = new TensorMap<Tensor<type, 1>>(output_weights.data(), output_weights.size());
+    layer_parameters(8) = new TensorMap<Tensor<type, 1>>(input_recurrent_weights.data(), input_recurrent_weights.size());
+    layer_parameters(9) = new TensorMap<Tensor<type, 1>>(forget_recurrent_weights.data(), forget_recurrent_weights.size());
+    layer_parameters(10) = new TensorMap<Tensor<type, 1>>(state_recurrent_weights.data(), state_recurrent_weights.size());
+    layer_parameters(11) = new TensorMap<Tensor<type, 1>>(output_recurrent_weights.data(), output_recurrent_weights.size());
+
+    return layer_parameters;
+}
+
+
+
 /// Returns the activation function of the layer.
 
 const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::get_activation_function() const
@@ -1183,11 +1205,36 @@ void LongShortTermMemoryLayer::set_parameters_random()
 
 
 void LongShortTermMemoryLayer::calculate_combinations(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                            const Tensor<type, 2>& weights,
-                            const Tensor<type, 2>& recurrent_weights,
-                            const Tensor<type, 1>& biases,
-                            type* combinations_data, const Tensor<Index, 1>& combinations_dimensions)
+                                                      const Tensor<type, 2>& weights,
+                                                      const Tensor<type, 2>& recurrent_weights,
+                                                      const Tensor<type, 1>& biases,
+                                                      type* combinations_data, const Tensor<Index, 1>& combinations_dimensions)
 {
+
+/// @todo check just in Debug
+    if(inputs_dimensions.size() != 1)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void calculate_combinations(type*, const Tensor<Index, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&, type*, const Tensor<Index, 1>&) method"
+               << "Inputs rank must be equal to 1.\n";
+
+        throw invalid_argument(buffer.str());
+
+    }
+    if(inputs_dimensions(0) != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void calculate_combinations(type*, const Tensor<Index, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&, type*, const Tensor<Index, 1>&) method"
+               << "Inputs dimensions must be equal to inputs number, " << get_inputs_number() << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+///
+
     TensorMap<Tensor<type, 1>> inputs(inputs_data, inputs_dimensions(0));
 
     TensorMap<Tensor<type, 1>> combinations(combinations_data, combinations_dimensions(0));
@@ -1682,7 +1729,9 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Probabilisti
 
 // Forward propagate functions
 
-void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation)
+void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
+                                                 const Tensor<Index, 1>& inputs_dimensions,
+                                                 LayerForwardPropagation* forward_propagation)
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -1696,7 +1745,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
-               << "Inputs rank must be equal to 1.\n";
+               << "Inputs rank must be equal to 2.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -1751,7 +1800,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
         combinations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_combinations);
 
         calculate_combinations(long_short_term_memory_layer_forward_propagation->current_inputs.data(),
-                               inputs_dimensions,
+                               current_inputs_dimensions,
                                input_weights,
                                input_recurrent_weights,
                                input_biases,
@@ -1886,8 +1935,6 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
         copy(long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
              long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data() + neurons_number,
              long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index);
-
-
 
         copy_index += neurons_number;
     }

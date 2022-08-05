@@ -598,20 +598,20 @@ string LossIndex::write_regularization_method() const
 
 void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) const
 {
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
+    const Tensor< Tensor< TensorMap< Tensor<type, 1>>*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
+
+    Tensor<type, 0> norm;
+    norm.setZero();
 
     switch(regularization_method)
     {
         case RegularizationMethod::NoRegularization:
         {
-            back_propagation.regularization = type(0);
+        break;
         }
 
         case RegularizationMethod::L1:
         {
-            Tensor<type, 0> norm;
-            norm.setZero();
-
             for(Index i = 0; i < layers_parameters.size(); i++)
             {
                 for(Index j = 0; j < layers_parameters(i).size(); j++)
@@ -619,14 +619,10 @@ void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) c
                     norm.device(*thread_pool_device) += (*layers_parameters(i)(j)).abs().sum();
                 }
             }
-
-            back_propagation.regularization = norm(0);
+            break;
          }
-
         case RegularizationMethod::L2:
         {
-            Tensor<type, 0> norm;
-            norm.setZero();
 
             for(Index i = 0; i < layers_parameters.size(); i++)
             {
@@ -646,8 +642,11 @@ void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) c
                 throw invalid_argument(buffer.str());
             }
             back_propagation.regularization = sqrt(norm(0));
+        break;
         }
     }
+
+    back_propagation.regularization = norm(0);
 
     back_propagation.loss = back_propagation.error + regularization_weight*back_propagation.regularization;
 
@@ -670,7 +669,7 @@ void LossIndex::add_regularization_gradient(LossIndexBackPropagation& back_propa
                 for(Index j = 0; j < layers_parameters(i).size(); j++)
                 {
                     (*layers_gradient(i)(j)).device(*thread_pool_device)
-                            += (*layers_parameters(i)(j)).sign()*regularization_weight;
+                        += (*layers_parameters(i)(j)).sign()*regularization_weight;
                 }
             }
 
@@ -767,8 +766,6 @@ type LossIndex::calculate_regularization() const
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
-    Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-
     switch(regularization_method)
     {
         case RegularizationMethod::NoRegularization: return type(0);

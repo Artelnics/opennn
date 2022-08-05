@@ -228,7 +228,7 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 }
 
 
-Tensor< TensorMap< Tensor<type, 1> >*, 1> ProbabilisticLayer::get_layer_parameters()
+Tensor< TensorMap< Tensor<type, 1>>*, 1> ProbabilisticLayer::get_layer_parameters()
 {
     Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_parameters(2);
 
@@ -240,6 +240,7 @@ Tensor< TensorMap< Tensor<type, 1> >*, 1> ProbabilisticLayer::get_layer_paramete
 
     return layer_parameters;
 }
+
 
 
 /// Sets a probabilistic layer with zero probabilistic neurons.

@@ -205,7 +205,7 @@ public:
 
    Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
 
-   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){ cout << "INSIDE THIS" << endl;};
+   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){};
 
 //   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
@@ -367,7 +367,7 @@ struct NeuralNetworkForwardPropagation
 
         for(Index i = 0; i < layers_number; i++)
         {
-            cout << "Layer " << i + 1 << ": " << neural_network_pointer->get_layer_pointer(i)->get_type_string() << endl;
+            cout << "Layer " << i + 1 << ": " << neural_network_pointer->get_trainable_layers_pointers()(i)->get_type_string() << endl;
 
             layers(i)->print();
         }
