@@ -36,7 +36,6 @@ probabilistic_layer.cpp
 pruning_inputs.cpp
 quasi_newton_method.cpp
 recurrent_layer.cpp
-region_based_object_detector.cpp
 response_optimization.cpp
 scaling.cpp
 scaling_layer.cpp
@@ -45,7 +44,6 @@ stochastic_gradient_descent.cpp
 sum_squared_error.cpp
 tensor_utilities.cpp
 testing_analysis.cpp
-text_analytics.cpp
 tinyxml2.cpp
 training_strategy.cpp
 unit_testing.cpp
