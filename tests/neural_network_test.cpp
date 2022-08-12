@@ -484,29 +484,11 @@ void NeuralNetworkTest::test_set_inputs_number()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {1,0,1});
-
-    inputs_number = 0;
-
-    neural_network.set_inputs_number(inputs_number);
-
-    assert_true(neural_network.get_inputs_number() == 0, LOG);
-    assert_true(neural_network.get_layer_pointer(0)->get_inputs_number() == 0, LOG); //CC -> Scaling layer nmb assert
-
-    // Test
-
     inputs_number = 3;
 
     neural_network.set_inputs_number(inputs_number);
     assert_true(neural_network.get_inputs_number() == 3, LOG);
     assert_true(neural_network.get_layer_pointer(0)->get_inputs_number() == 3, LOG); //CC -> Scaling layer nmb assert
-
-    // Test
-
-    inputs.resize(0);
-    neural_network.set_inputs_number(inputs);
-
-    assert_true(neural_network.get_inputs_number() == 0, LOG);
 
     // Test
 
@@ -1027,12 +1009,6 @@ void NeuralNetworkTest::test_load()
 
     const string file_name = "../data/neural_network.xml";
 
-    // Empty neural network
-
-    neural_network.set();
-    neural_network.save(file_name);
-    neural_network.load(file_name);
-
     // Test
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {2, 4, 3});
@@ -1123,12 +1099,21 @@ void NeuralNetworkTest::test_forward_propagate()
     // Test
 
     inputs_number = 4;
-    outputs_number = 1;
+    outputs_number = 2;
 
     data.resize(3, inputs_number + outputs_number);
-    data.setValues({{-1,1,-1,1,0},{-2,2,3,1,0},{-3,3,5,1,0}});
+    data.setValues({{-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0}});
     data_set.set(data);
+    data_set.set_target();
     data_set.set_training();
+
+    Tensor<Index, 1> input_columns_indices(4);
+    input_columns_indices.setValues({0,1,2,3});
+
+    Tensor<bool, 1> input_columns_use(4);
+    input_columns_use.setConstant(true);
+
+    data_set.set_input_columns(input_columns_indices, input_columns_use);
 
     training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
@@ -1147,7 +1132,7 @@ void NeuralNetworkTest::test_forward_propagate()
     probabilistic_layer_3->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     const Index neurons_number_3_1 = probabilistic_layer_3->get_neurons_number();
 
-    Tensor<type, 2> biases_pl(neurons_number, 1);
+    Tensor<type, 2> biases_pl(neurons_number, outputs_number);
     biases_pl.setConstant(5);
     perceptron_layer_3->set_biases(biases_pl);
 
@@ -1155,7 +1140,7 @@ void NeuralNetworkTest::test_forward_propagate()
     synaptic_weights_pl.setConstant(type(-1));
     perceptron_layer_3->set_synaptic_weights(synaptic_weights_pl);
 
-    Tensor<type, 2> biases_pbl(neurons_number, 1);
+    Tensor<type, 2> biases_pbl(neurons_number, outputs_number);
     biases_pbl.setConstant(3);
     probabilistic_layer_3->set_biases(biases_pbl);
 
@@ -1168,6 +1153,7 @@ void NeuralNetworkTest::test_forward_propagate()
     neural_network.set_layers_pointers(layers_pointers);
 
     NeuralNetworkForwardPropagation forward_propagation_3(data_set.get_training_samples_number(), &neural_network);
+
     neural_network.forward_propagate(batch, forward_propagation_3);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation_3
@@ -1177,16 +1163,12 @@ void NeuralNetworkTest::test_forward_propagate()
 
     TensorMap<Tensor<type, 2>> perceptron_activations_3_0(perceptron_layer_forward_propagation_3->outputs_data, perceptron_layer_forward_propagation_3->outputs_dimensions(0), perceptron_layer_forward_propagation_3->outputs_dimensions(1));
 
-    //Tensor<type, 2> perceptron_activations_3_0 = perceptron_layer_forward_propagation_3->outputs;
-
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation_3
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation_3.layers[1]);
 
     Tensor<type, 2> probabilistic_combinations_3_1 = probabilistic_layer_forward_propagation_3->combinations;
 
     TensorMap<Tensor<type, 2>> probabilistic_activations_3_1(probabilistic_layer_forward_propagation_3->outputs_data, probabilistic_layer_forward_propagation_3->outputs_dimensions(0), probabilistic_layer_forward_propagation_3->outputs_dimensions(1));
-
-//    Tensor<type, 2> probabilistic_activations_3_1= probabilistic_layer_forward_propagation_3->outputs;
 
     assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
 
@@ -1200,15 +1182,14 @@ void NeuralNetworkTest::test_forward_propagate()
                 && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
 
     assert_true(probabilistic_combinations_3_1.dimension(0) == 3, LOG);
-    assert_true(abs(probabilistic_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
-                && abs(probabilistic_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
-                && abs(probabilistic_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_combinations_3_1(0,0) - static_cast<type>(4.98661)) < static_cast<type>(1e-3)
+                && abs(probabilistic_combinations_3_1(1,0) - static_cast<type>(4.46212)) < static_cast<type>(1e-3)
+                && abs(probabilistic_combinations_3_1(2,0) - static_cast<type>(3.53788)) < static_cast<type>(1e-3), LOG);
 
     assert_true(probabilistic_activations_3_1.dimension(0) == 3, LOG);
-    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
-                && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
-                && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
-
+    assert_true(abs(probabilistic_activations_3_1(0,0) - 0.5) < static_cast<type>(1e-3)
+                && abs(probabilistic_activations_3_1(1,0) - 0.5) < static_cast<type>(1e-3)
+                && abs(probabilistic_activations_3_1(2,0) - 0.5) < static_cast<type>(1e-3), LOG);
 }
 
 

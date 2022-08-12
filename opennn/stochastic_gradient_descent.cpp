@@ -276,54 +276,23 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data) const
 {
-/*
-    const type learning_rate =
-        type(initial_learning_rate*
-            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
-            (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
+    back_propagation.assemble = true;
 
-    optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.gradient_exponential_decay*beta_1
-            + back_propagation.gradient*(type(1) - beta_1);
+    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
 
-    optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
 
-    //back_propagation.parameters.device(*thread_pool_device) -=
-    //        optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
+    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient = back_propagation.get_layers_gradient();
 
-    auto tmp = optimization_data.square_gradient_exponential_decay.sqrt();
-
-    back_propagation.parameters.device(*thread_pool_device) -= learning_rate * optimization_data.gradient_exponential_decay / (tmp + epsilon);
-
-    optimization_data.iteration++;
-
-    // Update parameters
-
-    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
-*/
-
-//    back_propagation.assemble = true;
-
-//    cout << "BACK PROPAGATION PARAMETERS: " << endl << back_propagation.parameters << endl;
-//    cout << "size: " << back_propagation.parameters.size() << endl;
-
-//    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-
-//    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
-
-//    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-//    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient = back_propagation.get_layers_gradient();
-
-//    for(Index i = 0; i < layers_parameters.size(); i++)
-//    {
-//        for(Index j = 0; j < layers_parameters(i).size(); j++)
-//        {
-//            (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-learning_rate);
-//        }
-//    }
-
+    for(Index i = 0; i < layers_parameters.size(); i++)
+    {
+        for(Index j = 0; j < layers_parameters(i).size(); j++)
+        {
+            (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-learning_rate);
+        }
+    }
+/* /// OLD UPDATE PARAMETERS
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -356,7 +325,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
     // Update parameters
 
     back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
-
+*/
 }
 
 

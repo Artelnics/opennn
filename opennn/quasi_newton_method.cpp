@@ -695,11 +695,23 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);        
+        cout << "nn" << endl;
+
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+
+        // Loss index
+
+        cout << "lindex" << endl;
+
+//        cout << neural_network_pointer->get_parameters() << endl;
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error;
+
+        // Update parameters
+
+        cout << "selection" << endl;
 
         // Selection error
 
@@ -789,7 +801,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(stop_training) break;
 
+        cout << "parameters" << endl;
+
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
+        cout << "all done" << endl;
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);

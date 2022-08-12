@@ -281,14 +281,14 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
-//        cout << "Outputs:" << endl;
-//        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+        cout << "Outputs:" << endl;
+        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
-//        cout << "Combinations:" << endl;
-//        cout << combinations << endl;
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
 
-//        cout << "Activations derivatives:" << endl;
-//        cout << activations_derivatives << endl;
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 2> combinations;
@@ -392,7 +392,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         const Index inputs_number = layer_pointer->get_inputs_number();
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), inputs_number);
+        layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
         layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
 
         return layer_gradient;

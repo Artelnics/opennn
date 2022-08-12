@@ -1226,6 +1226,7 @@ Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> NeuralNetwork::get_layers_
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         layers_parameters(i) = trainable_layers_pointers(i)->get_layer_parameters();
+
     }
 
     return layers_parameters;
@@ -1607,9 +1608,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data(), parameters_number);
 
-//    Tensor<Index, 1> inputs_dimensions;
-//    Tensor<Index, 1> activations_dimensions;
-
     trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions,  potential_parameters, forward_propagation.layers(0));
 
     Index index = parameters_number;
@@ -1645,6 +1643,19 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
+#ifdef OPENNN_DEBUG
+    if(inputs_dimensions(1) != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions) method.\n"
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+#endif
+
     const Index inputs_dimensions_number = inputs_dimensions.size();
 
     if(inputs_dimensions_number == 2)
@@ -1694,7 +1705,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions).\n"
+               << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions) method.\n"
                << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
         throw invalid_argument(buffer.str());

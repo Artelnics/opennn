@@ -139,7 +139,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 #ifdef OPENNN_DEBUG
 
     const Index individuals_number = get_individuals_number();
-    const Index new_individuals_number = new_population.dimension(2);
+    const Index new_individuals_number = new_population.dimension(1);
 
     // Optimization algorithm
 
@@ -186,8 +186,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_population(const Tensor<type, 2>&) method.\n"
-               << "Population rows("<<new_individuals_number
-               << ") must be equal to population size("<<individuals_number<<").\n";
+               << "Population rows("<< new_individuals_number << ") must be equal to population size(" << individuals_number << ").\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -263,7 +262,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_individuals_number(const Index&) method.\n"
-               << "Population size must be greater than 4.\n";
+               << "Population size (" << new_individuals_number << ") must be greater than 4.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -807,9 +806,9 @@ void GeneticAlgorithm::perform_crossover()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-#ifdef OPENNN_DEBUG
+    const Index selected_individuals_number = std::count(selection.data(), selection.data() + selection.size(), 1);
 
-    const Index selected_individuals_number = individuals_number/2;
+#ifdef OPENNN_DEBUG
 
     Index count_selected_individuals = 0;
     for(Index i = 0; i < individuals_number; i++) if(selection(i)) count_selected_individuals++;
@@ -842,8 +841,6 @@ void GeneticAlgorithm::perform_crossover()
     bool is_repeated = false;
 
     // Take selected individuals in perform_selection()
-
-    const Index selected_individuals_number = std::count(selection.data(), selection.data() + selection.size(), 1);
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -1170,19 +1167,19 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         check_categorical_columns();
 
-        if(true)
+        if(display)
         {
             const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
-            cout << "-----------------------------" << endl;
+//            cout << "-----------------------------" << endl;4
             for(Index i  = 0; i < population.dimension(0); i++)
             {
-                cout << "Individual " << i+1 << " | ";
+//                cout << "Individual " << i+1 << " | ";
 //                for(Index j = 0; j < get_genes_number(); j++)
 //                {
 //                    cout << population(i,j) << " ";
 //                }
-                cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
+//                cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
             }
         }
     }

@@ -181,16 +181,10 @@ void QuasiNewtonMethodTest::test_perform_training()
 
     neural_network.set_parameters_constant(type(3.1415927));
 
-//    type old_loss = sum_squared_error.calculate_training_loss();
-
     quasi_newton_method.set_maximum_epochs_number(2);
     quasi_newton_method.set_display(false);
 
     quasi_newton_method.perform_training();
-
-//    type loss = sum_squared_error.calculate_training_loss();
-
-//    assert_true(loss < old_loss, LOG);
 
     // Loss goal
 
@@ -205,13 +199,9 @@ void QuasiNewtonMethodTest::test_perform_training()
 
     quasi_newton_method.perform_training();
 
-//    loss = sum_squared_error.calculate_training_loss();
-
-//    assert_true(loss < training_loss_goal, LOG);
-
     // Minimum loss decrease
 
-//    neural_network.set_parameters_constant(3.1415927);
+    neural_network.set_parameters_constant(3.1415927);
 
     type minimum_loss_decrease = 100.0;
 
@@ -222,19 +212,6 @@ void QuasiNewtonMethodTest::test_perform_training()
 
     quasi_newton_method.perform_training();
 
-    // Gradient norm goal
-
-    neural_network.set_parameters_constant(type(3.1415927));
-
-    quasi_newton_method.set_loss_goal(type(0));
-    quasi_newton_method.set_minimum_loss_decrease(0.0);
-    quasi_newton_method.set_maximum_epochs_number(10);
-    quasi_newton_method.set_maximum_time(1000.0);
-
-    quasi_newton_method.perform_training();
-
-//    type gradient_norm = sum_squared_error.calculate_training_loss_gradient().calculate_norm();
-//    assert_true(gradient_norm < gradient_norm_goal, LOG);
 }
 
 

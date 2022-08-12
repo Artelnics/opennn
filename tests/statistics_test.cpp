@@ -593,7 +593,8 @@ void StatisticsTest::test_standard_deviation()
 {
     cout << "test_standard_deviation\n";
 
-    Tensor<type, 1> vector;
+    Tensor<type, 1> vector(1);
+    vector.setZero();
 
     type standard_deviation;
 
@@ -1301,9 +1302,11 @@ void StatisticsTest::test_percentiles()
 
     // Test
 
-    Tensor<type, 1> empty_vector;
+    Tensor<type, 1> empty_vector(10);
+    empty_vector.setConstant(NAN);
     Tensor<type, 1> percentiles_empty = opennn::percentiles(empty_vector);
-    assert_true(isnan(percentiles_empty[0]), LOG);
+
+    assert_true(isnan(percentiles_empty(0)), LOG);
 
     // Test
 

@@ -232,6 +232,20 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>& target, const Tensor<type, 2>& output) const
 {
+#ifdef OPENNN_DEBUG
+
+    if(target.dimension(0) != output.dimension(0) || target.dimension(1) != output.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Targets and outputs dimensions must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
     const Index outputs_number = data_set_pointer->get_target_variables_number();
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
@@ -4053,9 +4067,14 @@ void TestingAnalysis::print_binary_classification_tests() const
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 {
-#ifdef OPENNN_DEBUG
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
+
+    const Index targets_number = data_set_pointer->get_target_variables_number();
+
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+#ifdef OPENNN_DEBUG
 
     if(!data_set_pointer)
     {
@@ -4068,12 +4087,6 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
         throw invalid_argument(buffer.str());
     }
 
-    const Index targets_number = data_set_pointer->get_target_variables_number();
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    // Control sentence
-
     if(inputs_number != data_set_pointer->get_input_variables_number())
     {
         ostringstream buffer;
@@ -4084,11 +4097,8 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
         throw invalid_argument(buffer.str());
     }
-    }
 
 #endif
-
-    const Index targets_number = data_set_pointer->get_target_variables_number();
 
     Tensor<type,2> multiple_classification_tests(targets_number + 2,3);
 

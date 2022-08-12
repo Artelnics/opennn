@@ -181,11 +181,15 @@ void ProbabilisticLayerTest::test_set_activation_function()
 {
     cout << "test_set_activation_function\n";
 
+    probabilistic_layer.set_neurons_number(1);
+
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
     assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Logistic, LOG);
 
     probabilistic_layer.set_activation_function("Logistic");
     assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Logistic, LOG);
+
+    probabilistic_layer.set_neurons_number(3);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Softmax, LOG);
@@ -243,7 +247,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
     // Test
 
     inputs_number = 1;
-    neurons_number = 2;
+    neurons_number = 1;
     samples_number = 1;
 
     probabilistic_layer.set(inputs_number, neurons_number);
@@ -257,10 +261,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
     combinations.resize(samples_number, neurons_number);
     combinations_dims = get_dimensions(combinations);
 
-    biases.resize(1,2);
+    biases.resize(1,neurons_number);
     biases.setZero();
 
-    synaptic_weights.resize(1,2);
+    synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setZero();
 
     probabilistic_layer.calculate_combinations(inputs.data(), inputs_dimensions, biases, synaptic_weights, combinations.data(), combinations_dims);
