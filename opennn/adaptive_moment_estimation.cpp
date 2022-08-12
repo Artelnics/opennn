@@ -358,21 +358,28 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             // Data set
+//            cout << "ds" << endl;
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
+//            cout << "nn" << endl;
 
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
             // Loss index
+//            cout << "li" << endl;
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
+//            cout << "ud" << endl;
+
             update_parameters(training_back_propagation, optimization_data);
+
+//            cout << "fd" << endl;
 
         }
 

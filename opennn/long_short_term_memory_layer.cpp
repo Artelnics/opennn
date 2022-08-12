@@ -1211,7 +1211,7 @@ void LongShortTermMemoryLayer::calculate_combinations(type* inputs_data, const T
                                                       type* combinations_data, const Tensor<Index, 1>& combinations_dimensions)
 {
 
-/// @todo check just in Debug
+#ifdef OPENNN_DEBUG
     if(inputs_dimensions.size() != 1)
     {
         ostringstream buffer;
@@ -1233,7 +1233,7 @@ void LongShortTermMemoryLayer::calculate_combinations(type* inputs_data, const T
 
         throw invalid_argument(buffer.str());
     }
-///
+#endif
 
     TensorMap<Tensor<type, 1>> inputs(inputs_data, inputs_dimensions(0));
 

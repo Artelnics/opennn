@@ -404,7 +404,16 @@ void BoundingLayer::calculate_outputs(type* inputs_data , const Tensor<Index, 1>
                                       type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
 #ifdef OPENNN_DEBUG
-check_columns_number(inputs, get_inputs_number(), LOG);
+    if(inputs_dimensions(1) != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final method.\n"
+               << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
 #endif
 
     if(bounding_method == BoundingMethod::Bounding)

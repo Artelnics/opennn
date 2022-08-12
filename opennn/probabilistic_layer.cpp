@@ -235,12 +235,11 @@ Tensor< TensorMap< Tensor<type, 1>>*, 1> ProbabilisticLayer::get_layer_parameter
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
 
-    layer_parameters(0) = new TensorMap<Tensor<type, 1>>(biases.data(), inputs_number);
+    layer_parameters(0) = new TensorMap<Tensor<type, 1>>(biases.data(), neurons_number);
     layer_parameters(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights.data(), inputs_number*neurons_number);
 
     return layer_parameters;
 }
-
 
 
 /// Sets a probabilistic layer with zero probabilistic neurons.
@@ -725,7 +724,16 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            LayerForwardPropagation* forward_propagation)
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number(), LOG);
+    if(inputs_dimensions(1) != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final method.\n"
+               << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
 #endif
 
     ProbabilisticLayerForwardPropagation* perceptron_layer_forward_propagation
@@ -767,7 +775,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
-               << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
+               << "Number of inputs columns (" << inputs_dimensions(1) << ") must be equal to number of inputs ("
                << inputs_number << ").\n";
 
         throw invalid_argument(buffer.str());

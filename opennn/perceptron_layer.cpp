@@ -160,7 +160,7 @@ Tensor< TensorMap< Tensor<type, 1> >*, 1> PerceptronLayer::get_layer_parameters(
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
 
-    layer_parameters(0) = new TensorMap<Tensor<type, 1>>(biases.data(), inputs_number);
+    layer_parameters(0) = new TensorMap<Tensor<type, 1>>(biases.data(), neurons_number);
     layer_parameters(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights.data(), inputs_number*neurons_number);
 
     return layer_parameters;
@@ -499,9 +499,10 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 {
 #ifdef OPENNN_DEBUG
     check_columns_number(inputs, get_inputs_number(), LOG);
+
     check_dimensions(biases, 1, get_neurons_number(), LOG);
+
     check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
-    check_dimensions(combinations, inputs.dimension(0), get_neurons_number(), LOG);
 #endif
 
     const Index batch_samples_number = inputs.dimension(0);
@@ -523,8 +524,25 @@ void PerceptronLayer::calculate_activations(type* combinations, const Tensor<Ind
                                             type* activations, const Tensor<Index, 1>& activations_dimensions) const
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(combinations, get_neurons_number(), LOG);
-    check_dimensions(activations, combinations.dimension(0), get_neurons_number(), LOG);
+    if(combinations_dimensions(1) != get_neurons_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Combinations columns number must be equal to " << get_neurons_number() <<" (neurons number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(activations_dimensions(0) != combinations_dimensions(0) || activations_dimensions(1) != get_neurons_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Activations dimensions must be the same as combinations dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
 #endif
 
     switch(activation_function)
@@ -560,10 +578,36 @@ void PerceptronLayer::calculate_activations_derivatives(type* combinations, cons
                                                         type* activations, const Tensor<Index, 1>& activations_dimensions,
                                                         type* activations_derivatives, const Tensor<Index, 1>& activations_derivatives_dimensions) const
 {
-#ifdef OPENNN_DEBUG
-    check_columns_number(combinations, get_neurons_number(), LOG);
-    check_dimensions(activations, combinations.dimension(0), get_neurons_number(), LOG);
-    check_dimensions(activations_derivatives, combinations.dimension(0), get_neurons_number(), LOG);
+#ifdef OPENNN_DEBUG    
+    if(combinations_dimensions(1) != get_neurons_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Combinations columns number must be equal to " << get_neurons_number() <<" (neurons number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(activations_dimensions(0) != combinations_dimensions(0) || activations_dimensions(1) != combinations_dimensions(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Activations dimensions must be equal to combinations dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(activations_derivatives_dimensions(0) != combinations_dimensions(0) || activations_derivatives_dimensions(1) != combinations_dimensions(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Activations derivatives dimensions must be equal to combinations dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
 #endif
 
     switch(activation_function)
@@ -620,17 +664,16 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                         LayerForwardPropagation* forward_propagation)
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number(), LOG);
-#endif
-
     if(inputs_dimensions(1) != get_inputs_number())
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: PerceptronLayer class.\n"
                << "void PerceptronLayer::forward_propagate(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ".\n";
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
         throw invalid_argument(buffer.str());
     }
+
+#endif
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
@@ -660,7 +703,16 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                         LayerForwardPropagation* forward_propagation)
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number(), LOG);
+    if(inputs_dimensions(1) != get_inputs_number())
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception:" << LOG << endl
+               << "void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final method.\n"
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
     check_size(potential_parameters, get_parameters_number(), LOG);
 #endif
 
@@ -670,7 +722,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     const Index inputs_number = get_inputs_number();
 
-    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), 1, neurons_number);
 
     const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
 

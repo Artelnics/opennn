@@ -320,11 +320,6 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                  LossIndexBackPropagation& back_propagation) const
 {
-
-#ifndef OPENNN_DEBUG
-    //// @todo check outputs dimensions and targets dimensions
-#endif
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
@@ -335,8 +330,20 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
-    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+#ifdef OPENNN_DEBUG
+    if(outputs_dimensions(0) != batch.targets_dimensions(0) || outputs_dimensions(1) != batch.targets_dimensions(1))
+    {
+        ostringstream buffer;
 
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void calculate_errors(const DataSetBatch&, const NeuralNetworkForwardPropagation&, LossIndexBackPropagation&) const method.\n"
+               << "Outputs and targets dimensions must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+#endif
+
+    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
 
 
@@ -386,14 +393,30 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     // Regularization
 
+//    cout << "regularization" << endl;
+
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
+//        cout << "regularization" << endl;
         add_regularization(back_propagation);
-
+//        cout << "regularization gradient" << endl;
         add_regularization_gradient(back_propagation);
     }
+//    if(regularization_method != RegularizationMethod::NoRegularization)
+//    {
+//        const type regularization = calculate_regularization(back_propagation.parameters);
+
+//        back_propagation.loss += regularization_weight*back_propagation.regularization;
+
+//        Tensor<type, 1> regularization_gradient(back_propagation.regularization);
+
+//        calculate_regularization_gradient(back_propagation.parameters, regularization_gradient);
+
+//        back_propagation.gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
+//    }
 
 }
+
 
 
 /// This method calculates the second-order loss.
@@ -620,10 +643,10 @@ void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) c
                 }
             }
             break;
-         }
+        }
+
         case RegularizationMethod::L2:
         {
-
             for(Index i = 0; i < layers_parameters.size(); i++)
             {
                 for(Index j = 0; j < layers_parameters(i).size(); j++)
@@ -641,10 +664,13 @@ void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) c
 
                 throw invalid_argument(buffer.str());
             }
-            back_propagation.regularization = sqrt(norm(0));
+
+            norm(0) = sqrt(norm(0));
+
         break;
         }
     }
+
 
     back_propagation.regularization = norm(0);
 

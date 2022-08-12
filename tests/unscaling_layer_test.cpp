@@ -66,10 +66,10 @@ void UnscalingLayerTest::test_set()
     assert_true(unscaling_layer.get_descriptives().size() == 0, LOG);
 
     descriptives.resize(4);
+    unscaling_layer.set(4);
     unscaling_layer.set_descriptives(descriptives);
-    unscaling_layer.set();
 
-    assert_true(unscaling_layer.get_descriptives().size() == 0, LOG);
+    assert_true(unscaling_layer.get_descriptives().size() == 4, LOG);
 
     // Test
 
