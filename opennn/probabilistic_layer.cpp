@@ -833,8 +833,6 @@ void ProbabilisticLayer::calculate_error_gradient(type* inputs_data,
 
     const TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), batch_samples_number, neurons_number);
 
-    probabilistic_layer_back_propagation->synaptic_weights_derivatives.resize({inputs_number, neurons_number});
-
     if(neurons_number == 1) // Binary classification
     {
         probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
