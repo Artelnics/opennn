@@ -334,17 +334,19 @@ void GeneticAlgorithmTest::test_perform_mutation()
 {
     cout << "test_perform_mutation\n";
 
-    Tensor<bool, 2> population(2,1);
-    Tensor<bool, 1> individual(1);
+    Tensor<bool, 2> population;
+    Tensor<bool, 1> individual;
     Tensor<bool, 2> mutated_population;
 
     // Test 1
 
-    genetic_algorithm.set_individuals_number(2);
+    genetic_algorithm.set_individuals_number(4);
 
-    population.resize(2,2);
-    population.setValues({{true, false},
-                          {false, true}});
+    population.resize(4,4);
+    population.setValues({{true, false, true, false},
+                          {false, true, true, false},
+                          {true, false, false, true},
+                          {false, true, false, true}});
 
     genetic_algorithm.set_population(population);
 
@@ -439,7 +441,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     data_set.set_default_columns_uses();
 
     genetic_algorithm.set_display(false);
-    genetic_algorithm.set_individuals_number(2);
+    genetic_algorithm.set_individuals_number(4);
     genetic_algorithm.set_selection_error_goal(type(0.0));
     genetic_algorithm.set_maximum_epochs_number(1);
 
@@ -473,10 +475,6 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     genetic_algorithm.set_maximum_epochs_number(10);
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
-
-    cout << "Results: " << endl;
-
-    inputs_selection_results.print();
 
     assert_true(inputs_selection_results.get_epochs_number() <= 100, LOG);
 

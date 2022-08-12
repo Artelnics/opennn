@@ -59,14 +59,14 @@ void ScalingLayerTest::test_set()
     // Test
 
     scaling_layer.set();
-
     assert_true(scaling_layer.get_descriptives().size() == 0, LOG);
 
     descriptives.resize(4);
-    scaling_layer.set_descriptives(descriptives);
-    scaling_layer.set();
 
-    assert_true(scaling_layer.get_descriptives().size() == 0, LOG);
+    scaling_layer.set(4);
+    scaling_layer.set_descriptives(descriptives);
+
+    assert_true(scaling_layer.get_descriptives().size() == 4, LOG);
 
     // Test
 
@@ -173,6 +173,7 @@ void ScalingLayerTest::test_set_descriptives()
     descriptives.resize(1);
     descriptives.setValues({item_0});
 
+    scaling_layer.set(1);
     scaling_layer.set_descriptives(descriptives);
 
     assert_true(abs(scaling_layer.get_descriptives(0).minimum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -185,6 +186,7 @@ void ScalingLayerTest::test_set_descriptives()
     descriptives.resize(2);
     descriptives.setValues({item_0, item_1});
 
+    scaling_layer.set(2);
     scaling_layer.set_descriptives(descriptives);
 
     assert_true(abs(scaling_layer.get_descriptives(1).minimum - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);

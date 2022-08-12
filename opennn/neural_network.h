@@ -207,10 +207,6 @@ public:
 
    void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){};
 
-//   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-
-//   Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
-
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    // Serialization methods

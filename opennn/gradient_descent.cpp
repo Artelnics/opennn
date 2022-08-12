@@ -263,21 +263,12 @@ void GradientDescent::update_parameters(
         LossIndexBackPropagation& back_propagation,
         GradientDescentData& optimization_data) const
 {
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
+
+    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
+    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient = back_propagation.get_layers_gradient();
+
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
-
-    ostringstream buffer;
-
-    if(is_zero(optimization_data.training_direction))
-    {
-//        buffer << "OpenNN Exception: GradientDescent class.\n"
-//               << "void GradientDescent::update_parameters(const DataSetBatch& batch, \n"
-//               << "NeuralNetworkForwardPropagation& forward_propagation,LossIndexBackPropagation& back_propagation, \n"
-//               << "GradientDescentData& optimization_data) const method.\n"
-//               << "Training direction is zero.\n";
-
-//        throw invalid_argument(buffer.str());
-        return;
-    }
 
     // Get initial learning_rate
 
@@ -296,14 +287,25 @@ void GradientDescent::update_parameters(
 
     if(abs(optimization_data.learning_rate) > type(0))
     {
+//        for(Index i = 0; i < layers_parameters.size(); i++)
+//        {
+//            for(Index j = 0; j < layers_parameters(i).size(); j++)
+//            {
+//                (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-optimization_data.learning_rate);
+//            }
+//        }
+
+        cout << "1" << endl;
         optimization_data.parameters_increment.device(*thread_pool_device)
                 = optimization_data.training_direction*optimization_data.learning_rate;
 
         back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+
+        cout << "2" << endl;
     }
     else
     {
-        const Index parameters_number = back_propagation.parameters.size();
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
 
         for(Index i = 0; i < parameters_number; i++)
         {
@@ -333,6 +335,22 @@ void GradientDescent::update_parameters(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
+
+    // Stochastic gradient descent
+
+//    back_propagation.assemble = true;
+
+//    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
+
+
+
+//    for(Index i = 0; i < layers_parameters.size(); i++)
+//    {
+//        for(Index j = 0; j < layers_parameters(i).size(); j++)
+//        {
+//            (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-learning_rate);
+//        }
+//    }
 
 }
 
@@ -450,6 +468,8 @@ TrainingResults GradientDescent::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -542,8 +562,6 @@ TrainingResults GradientDescent::perform_training()
         }
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);

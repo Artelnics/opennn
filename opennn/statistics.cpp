@@ -3196,7 +3196,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
         buffer << "OpenNN Exception: Statistics.\n"
                << "Tensor<type, 1> percentiles(const Tensor<type, 1>& vector) method.\n"
-               << "Size must be greater than 10.\n";
+               << "Size must be greater or equal than 10.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -3237,8 +3237,8 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
       sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
-
-      /// Aempirical method
+      /// Aempirical
+      ///
 
       Tensor<type, 1> percentiles(10);
 

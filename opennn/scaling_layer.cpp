@@ -374,6 +374,8 @@ void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 
     scalers.setConstant(Scaler::MeanStandardDeviation);
 
+    set_neurons_number(new_descriptives.size());
+
     set_default();
 }
 
@@ -496,6 +498,7 @@ void ScalingLayer::set_min_max_range(const type& min, const type& max)
 
 void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
+
 #ifdef OPENNN_DEBUG
 
     const Index new_descriptives_size = new_descriptives.size();

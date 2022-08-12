@@ -793,6 +793,10 @@ TrainingResults ConjugateGradient::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        // Update parameters
+
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -883,8 +887,6 @@ TrainingResults ConjugateGradient::perform_training()
         // Update stuff
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
