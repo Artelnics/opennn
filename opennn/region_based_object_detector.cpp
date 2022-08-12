@@ -178,7 +178,7 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<Boun
 
 Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tensor<BoundingBox, 1>& warped_regions) const
 {
-//    Tensor<Index, 2> region_outputs;
+    Tensor<Index, 2> region_outputs;
 
 //    for(Index i = 0; i < regions_number; i++)
 //    {
@@ -186,7 +186,7 @@ Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tenso
 //        Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 //    }
 
-//    return region_outputs;
+    return region_outputs;
 }
 
 
