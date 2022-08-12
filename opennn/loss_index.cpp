@@ -393,28 +393,11 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     // Regularization
 
-//    cout << "regularization" << endl;
-
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-//        cout << "regularization" << endl;
         add_regularization(back_propagation);
-//        cout << "regularization gradient" << endl;
         add_regularization_gradient(back_propagation);
     }
-//    if(regularization_method != RegularizationMethod::NoRegularization)
-//    {
-//        const type regularization = calculate_regularization(back_propagation.parameters);
-
-//        back_propagation.loss += regularization_weight*back_propagation.regularization;
-
-//        Tensor<type, 1> regularization_gradient(back_propagation.regularization);
-
-//        calculate_regularization_gradient(back_propagation.parameters, regularization_gradient);
-
-//        back_propagation.gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
-//    }
-
 }
 
 
