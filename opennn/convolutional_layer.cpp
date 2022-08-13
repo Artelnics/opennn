@@ -1625,6 +1625,14 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 }
 
 
+/// Returns the number of images of the input.
+
+Index ConvolutionalLayer::get_inputs_images_number() const
+{
+    return input_variables_dimensions[3];
+}
+
+
 /// Returns the number of channels of the input.
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
