@@ -40,6 +40,7 @@
 #include "cross_entropy_error_test.h"
 
 #include "learning_rate_algorithm_test.h"
+#include "adaptive_moment_estimation_test.h"
 #include "gradient_descent_test.h"
 #include "stochastic_gradient_descent_test.h"
 #include "conjugate_gradient_test.h"

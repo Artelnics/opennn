@@ -463,28 +463,17 @@ TrainingResults StochasticGradientDescent::perform_training()
             optimization_data.iteration++;
 
             // Data set
-//            cout << "ds" << endl;
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
-//            batch_training.print();
-//            getchar();
-
             // Neural network
-//            cout << "nn" << endl;
 
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
-//            training_forward_propagation.print();
-//            getchar();
-
             // Loss index
-//            cout << "li" << endl;
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
-
-//            training_back_propagation.print();
-//            getchar();
+            results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
@@ -492,9 +481,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             // Gradient
 
             update_parameters(training_back_propagation, optimization_data);
-//            cout << "update parameters" << endl;
         }
-//        cout << "end loop" << endl;
 
         // Loss
 
@@ -513,17 +500,15 @@ TrainingResults StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-//                cout << "ds"  << endl;
                 batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
-//                cout << "nn"  << en/dl;
                 neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+                results.selection_error_history(epoch) = selection_error;
 
                 // Loss
 
-//                cout << "li"  << endl;
                 loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
@@ -589,7 +574,11 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(stop_training)
         {
-            results.resize_training_error_history(epoch + 1);
+            results.loss = training_back_propagation.loss;
+
+            results.selection_failures = selection_failures;
+
+            results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);

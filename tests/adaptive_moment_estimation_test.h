@@ -1,26 +1,31 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   Q U A S I - N E W T O N   M E T H O D   T E S T   C L A S S   H E A D E R      
+//   A D A P T I V E   M O M E N T   E S T I M A T I O N   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef QUASINEWTONMETHODTEST_H
-#define QUASINEWTONMETHODTEST_H
+#ifndef ADAPTIVEMOMENTESTIMATIONTEST_H
+#define ADAPTIVEMOMENTESTIMATIONTEST_H
 
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
 
-class QuasiNewtonMethodTest : public UnitTesting 
+namespace opennn
+{
+
+class AdaptiveMomentEstimationTest : public UnitTesting
 {
 
 public:
 
-    explicit QuasiNewtonMethodTest();
+    explicit AdaptiveMomentEstimationTest();
 
-    virtual ~QuasiNewtonMethodTest();
+    virtual ~AdaptiveMomentEstimationTest();
+
+    // Constructor and destructor methods
 
     // Constructor and destructor methods
 
@@ -28,16 +33,7 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set_inverse_hessian_approximation_method();
-
     // Training methods
-
-    void test_calculate_DFP_inverse_hessian_approximation();
-    void test_calculate_BFGS_inverse_hessian_approximation();
-
-    void test_calculate_inverse_hessian_approximation();
 
     void test_perform_training();
 
@@ -60,12 +56,13 @@ private:
 
     QuasiNewtonMethod quasi_newton_method;
 
-    QuasiNewtonMehtodData quasi_newton_method_data;
+    AdaptiveMomentEstimation adaptive_moment_estimation;
 
     TrainingResults training_results;
 
 };
 
+}
 
 #endif
 

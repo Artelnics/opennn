@@ -365,6 +365,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Loss index
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
+            results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
@@ -464,6 +465,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation.loss;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
