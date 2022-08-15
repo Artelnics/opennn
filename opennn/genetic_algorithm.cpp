@@ -762,21 +762,6 @@ void GeneticAlgorithm::perform_selection()
         }
     }
 
-    if(false)
-    {
-        cout << endl << "-----------------------------" << endl;
-        for(Index i  = 0; i < population.dimension(0); i++)
-        {
-
-            cout << "Individual " << i+1 << " | ";
-            for(Index j = 0; j < get_genes_number(); j++)
-            {
-                cout << population(i,j) << " ";
-            }
-            cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
-        }
-    }
-
 
 #ifdef OPENNN_DEBUG
 
@@ -973,14 +958,14 @@ void GeneticAlgorithm::perform_mutation()
 
         // Check if its repeated
 
-//        for(Index j = 0; j < individuals_number; j++)
-//        {
-//            Tensor<bool, 1> row = population.chip(j,0);
-//            if(i!=j && are_equal(row,individual))
-//            {
-//                (is_repeated = true);
-//            }
-//        }
+        for(Index j = 0; j < individuals_number; j++)
+        {
+            Tensor<bool, 1> row = population.chip(j,0);
+            if(i!=j && are_equal(row,individual))
+            {
+                (is_repeated = true);
+            }
+        }
 
         // Perform mutation
 
@@ -1167,21 +1152,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         check_categorical_columns();
 
-        if(display)
-        {
-            const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
-
-//            cout << "-----------------------------" << endl;4
-            for(Index i  = 0; i < population.dimension(0); i++)
-            {
-//                cout << "Individual " << i+1 << " | ";
-//                for(Index j = 0; j < get_genes_number(); j++)
-//                {
-//                    cout << population(i,j) << " ";
-//                }
-//                cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
-            }
-        }
     }
 
     // Set data set stuff
@@ -1204,8 +1174,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
     if(display) inputs_selection_results.print();
-
-    inputs_selection_results.print();
 
     return inputs_selection_results;
 }

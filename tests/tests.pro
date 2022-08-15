@@ -17,6 +17,7 @@ TEMPLATE = app
 DESTDIR = "$$PWD/bin"
 
 SOURCES += \
+    adaptive_moment_estimation_test.cpp \
     tensor_utilities_test.cpp \
     data_set_test.cpp \
     growing_neurons_test.cpp \
@@ -57,6 +58,7 @@ SOURCES += \
     main.cpp
 
 HEADERS += \
+    adaptive_moment_estimation_test.h \
     tensor_utilities_test.h \
     growing_neurons_test.h \
     growing_neurons_test.h \

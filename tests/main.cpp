@@ -27,6 +27,7 @@ int main()
    
    "Individual Tests:\n\n"
    
+   "adaptive_moment_estimation | adam\n"
    "bounding_layer | bl\n"
    "conjugate_gradient | cg\n"
    "correlations | cr\n"
@@ -88,7 +89,16 @@ int main()
       Index tests_passed_count = 0;
       Index tests_failed_count = 0;
 
-      if(test == "correlations" || test == "cr")
+      if(test == "adaptive_moment_estimation" || test == "adam")
+      {
+         AdaptiveMomentEstimationTest adaptive_moment_estimation_test;
+         adaptive_moment_estimation_test.run_test_case();
+         tests_count += adaptive_moment_estimation_test.get_tests_count();
+         tests_passed_count += adaptive_moment_estimation_test.get_tests_passed_count();
+         tests_failed_count += adaptive_moment_estimation_test.get_tests_failed_count();
+      }
+
+      else if(test == "correlations" || test == "cr")
       {
          CorrelationsTest correlations_test;
          correlations_test.run_test_case();
@@ -609,6 +619,14 @@ int main()
           tests_count += learning_rate_algorithm_test.get_tests_count();
           tests_passed_count += learning_rate_algorithm_test.get_tests_passed_count();
           tests_failed_count += learning_rate_algorithm_test.get_tests_failed_count();
+
+          // adaptive moment estimation
+
+          AdaptiveMomentEstimationTest adaptive_moment_estimation_test;
+          adaptive_moment_estimation_test.run_test_case();
+          tests_count += adaptive_moment_estimation_test.get_tests_count();
+          tests_passed_count += adaptive_moment_estimation_test.get_tests_passed_count();
+          tests_failed_count += adaptive_moment_estimation_test.get_tests_failed_count();
 
           // gradient descent
 

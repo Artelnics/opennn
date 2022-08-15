@@ -1,58 +1,57 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   G R A D I E N T   D E S C E N T   T E S T   C L A S S                 
+//   G R A D I E N T   D E S C E N T   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "gradient_descent_test.h"
+#include "adaptive_moment_estimation_test.h"
 
 
-GradientDescentTest::GradientDescentTest() : UnitTesting()
+AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    gradient_descent.set_loss_index_pointer(&sum_squared_error);
+    adaptive_moment_estimation.set_loss_index_pointer(&sum_squared_error);
 }
 
 
-GradientDescentTest::~GradientDescentTest()
+AdaptiveMomentEstimationTest::~AdaptiveMomentEstimationTest()
 {
 }
 
 
-void GradientDescentTest::test_constructor()
+void AdaptiveMomentEstimationTest::test_constructor()
 {
     cout << "test_constructor\n";
 
     // Default constructor
 
-    GradientDescent gradient_descent_1;
-    assert_true(!gradient_descent_1.has_loss_index(), LOG);
+    GradientDescent adaptive_moment_estimation_1;
+    assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
 
     // Loss index constructor
 
-    GradientDescent gradient_descent_2(&sum_squared_error);
-    assert_true(gradient_descent_2.has_loss_index(), LOG);
+    GradientDescent adaptive_moment_estimation_2(&sum_squared_error);
+    assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
 }
 
-void GradientDescentTest::test_destructor()
+void AdaptiveMomentEstimationTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GradientDescent* gradient_descent = new GradientDescent;
+    GradientDescent* adaptive_moment_estimation = new GradientDescent;
 
-    delete gradient_descent;
+    delete adaptive_moment_estimation;
 }
 
 
-void GradientDescentTest::test_perform_training()
+void AdaptiveMomentEstimationTest::test_perform_training()
 {
     cout << "test_perform_training\n";
 
     type old_error = std::numeric_limits<float>::max();
-
     type error;
 
     // Test
@@ -67,9 +66,9 @@ void GradientDescentTest::test_perform_training()
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(type(1));
 
-    gradient_descent.set_maximum_epochs_number(1);
-    gradient_descent.set_display(false);
-    training_results = gradient_descent.perform_training();
+    adaptive_moment_estimation.set_maximum_epochs_number(1);
+    adaptive_moment_estimation.set_display(false);
+    training_results = adaptive_moment_estimation.perform_training();
 
     assert_true(training_results.get_epochs_number() <= 1, LOG);
 
@@ -81,9 +80,9 @@ void GradientDescentTest::test_perform_training()
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(-1);
 
-    gradient_descent.set_maximum_epochs_number(1);
+    adaptive_moment_estimation.set_maximum_epochs_number(1);
 
-    training_results = gradient_descent.perform_training();
+    training_results = adaptive_moment_estimation.perform_training();
     error = training_results.get_training_error();
 
     assert_true(error < old_error, LOG);
@@ -92,10 +91,10 @@ void GradientDescentTest::test_perform_training()
 
     old_error = error;
 
-    gradient_descent.set_maximum_epochs_number(2);
+    adaptive_moment_estimation.set_maximum_epochs_number(2);
     neural_network.set_parameters_constant(-1);
 
-    training_results = gradient_descent.perform_training();
+    training_results = adaptive_moment_estimation.perform_training();
     error = training_results.get_training_error();
 
     assert_true(error < old_error, LOG);
@@ -106,33 +105,17 @@ void GradientDescentTest::test_perform_training()
 
     type training_loss_goal = type(0.1);
 
-    gradient_descent.set_loss_goal(training_loss_goal);
-    gradient_descent.set_minimum_loss_decrease(0.0);
-    gradient_descent.set_maximum_epochs_number(1000);
-    gradient_descent.set_maximum_time(1000.0);
+    adaptive_moment_estimation.set_loss_goal(training_loss_goal);
+    adaptive_moment_estimation.set_maximum_epochs_number(10000);
+    adaptive_moment_estimation.set_maximum_time(1000.0);
 
-    training_results = gradient_descent.perform_training();
+    training_results = adaptive_moment_estimation.perform_training();
 
     assert_true(training_results.get_loss() <= training_loss_goal, LOG);
-
-    // Minimum loss decrease
-
-    neural_network.set_parameters_constant(type(-1));
-
-    type minimum_loss_decrease = type(0.1);
-
-    gradient_descent.set_loss_goal(type(0));
-    gradient_descent.set_minimum_loss_decrease(minimum_loss_decrease);
-    gradient_descent.set_maximum_epochs_number(1000);
-    gradient_descent.set_maximum_time(1000.0);
-
-    training_results = gradient_descent.perform_training();
-
-    assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
 }
 
 
-void GradientDescentTest::run_test_case()
+void AdaptiveMomentEstimationTest::run_test_case()
 {
     cout << "Running gradient descent test case...\n";
 
