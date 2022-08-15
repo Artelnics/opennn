@@ -43,6 +43,10 @@ public:
 
 private:
 
+   Index samples_number;
+   Index inputs_number;
+   Index outputs_number;
+
    DataSet data_set;
 
    NeuralNetwork neural_network;
@@ -51,6 +55,7 @@ private:
 
    ConjugateGradient conjugate_gradient;
 
+   TrainingResults training_results;
 };
 
 

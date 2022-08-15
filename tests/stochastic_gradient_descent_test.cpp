@@ -49,72 +49,72 @@ void StochasticGradientDescentTest::test_destructor()
 
 
 void StochasticGradientDescentTest::test_perform_training()
-{
+{   
     cout << "test_perform_training\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
+    type old_error = std::numeric_limits<float>::max();
 
-    TrainingResults training_results;
+    type error;
 
     // Test
 
     samples_number = 1;
     inputs_number = 1;
-    targets_number = 1;
+    outputs_number = 1;
 
-    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set(1,1,1);
+    data_set.set_data_constant(type(1));
+
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(type(1));
+
+    stochastic_gradient_descent.set_maximum_epochs_number(1);
+    stochastic_gradient_descent.set_display(false);
+    training_results = stochastic_gradient_descent.perform_training();
+
+    assert_true(training_results.get_epochs_number() <= 1, LOG);
+
+    // Test
+
+    data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_random();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(-1);
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
 
     training_results = stochastic_gradient_descent.perform_training();
+    error = training_results.get_training_error();
 
-    // Minimum parameters increment norm
+    assert_true(error < old_error, LOG);
 
-    neural_network.set_parameters_constant(type(-1.0));
+    // Test
 
-    stochastic_gradient_descent.set_loss_goal(type(0.0));
-    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-    stochastic_gradient_descent.set_maximum_time(type(1000.0));
+    old_error = error;
+
+    stochastic_gradient_descent.set_maximum_epochs_number(2);
+    neural_network.set_parameters_constant(-1);
 
     training_results = stochastic_gradient_descent.perform_training();
+    error = training_results.get_training_error();
+
+    assert_true(error <= old_error, LOG);
 
     // Loss goal
 
-    neural_network.set_parameters_constant(type(-1.0));
+    neural_network.set_parameters_constant(type(-1));
 
     type training_loss_goal = type(0.1);
 
     stochastic_gradient_descent.set_loss_goal(training_loss_goal);
     stochastic_gradient_descent.set_maximum_epochs_number(1000);
-    stochastic_gradient_descent.set_maximum_time(type(1000.0));
+    stochastic_gradient_descent.set_maximum_time(1000.0);
 
     training_results = stochastic_gradient_descent.perform_training();
 
-    // Minimum loss increase
+    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
 
-    neural_network.set_parameters_constant(type(-1));
-
-    stochastic_gradient_descent.set_loss_goal(type(0));
-    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-    stochastic_gradient_descent.set_maximum_time(type(1000.0));
-
-    training_results = stochastic_gradient_descent.perform_training();
-
-    // Gradient norm goal
-
-    neural_network.set_parameters_constant(type(-1));
-
-    stochastic_gradient_descent.set_loss_goal(type(0));
-    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-    stochastic_gradient_descent.set_maximum_time(type(1000.0));
-
-    training_results = stochastic_gradient_descent.perform_training();
 }
 
 

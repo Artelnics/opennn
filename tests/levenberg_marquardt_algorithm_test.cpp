@@ -64,100 +64,90 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
     cout << "test_perform_training\n";
 
+    type old_error = std::numeric_limits<float>::max();
+
+    TrainingResults training_results;
+
     Index samples_number;
     Index inputs_number;
-    Index targets_number;
+    Index outputs_number;
 
-    Index neurons_number;
-
-    Tensor<type, 1> gradient;
-
-    type old_loss;
-    type loss;
-
-    type training_loss_goal;
-    type minimum_loss_decrease;
+    type error;
 
     // Test
 
-//    samples_number = 1;
-//    inputs_number = 1;
-//    targets_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+    outputs_number = 1;
 
-//    data_set.set(1, 1, 1);
-//    data_set.set_data_random();
+    data_set.set(1,1,1);
+    data_set.set_data_constant(type(1));
 
-//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-//    neural_network.set_parameters_random();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(type(1));
 
-//    //   old_loss = sum_squared_error.calculate_training_loss();
+    levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
+    levenberg_marquardt_algorithm.set_display(false);
+    training_results = levenberg_marquardt_algorithm.perform_training();
 
-//    levenberg_marquardt_algorithm.perform_training();
+    assert_true(training_results.get_epochs_number() <= 1, LOG);
 
-//    //   loss = sum_squared_error.calculate_training_loss();
+    // Test
 
-//    //   assert_true(loss < old_loss, LOG);
+    data_set.set(1,1,1);
+    data_set.set_data_random();
 
-//    // Minimum parameters increment norm
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(-1);
 
-//    neural_network.set_parameters_random();
+    levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
 
-//    minimum_parameters_increment_norm = 100.0;
+    training_results = levenberg_marquardt_algorithm.perform_training();
+    error = training_results.get_training_error();
 
-//    levenberg_marquardt_algorithm.set_loss_goal(type(0));
-//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
+    assert_true(error < old_error, LOG);
 
-//    levenberg_marquardt_algorithm.perform_training();
+    // Test
 
-//    // Loss goal
+    old_error = error;
 
-//    neural_network.set_parameters_random();
+    levenberg_marquardt_algorithm.set_maximum_epochs_number(2);
+    neural_network.set_parameters_constant(-1);
 
-//    training_loss_goal = 100.0;
+    training_results = levenberg_marquardt_algorithm.perform_training();
+    error = training_results.get_training_error();
 
-//    levenberg_marquardt_algorithm.set_loss_goal(training_loss_goal);
-//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
+    assert_true(error <= old_error, LOG);
 
-//    levenberg_marquardt_algorithm.perform_training();
+    // Loss goal
 
-//    //   loss = sum_squared_error.calculate_training_loss();
+    neural_network.set_parameters_constant(type(-1));
 
-//    assert_true(loss < training_loss_goal, LOG);
+    type training_loss_goal = type(0.1);
 
-//    // Minimum loss increas
+    levenberg_marquardt_algorithm.set_loss_goal(training_loss_goal);
+    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+    levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
+    levenberg_marquardt_algorithm.set_maximum_time(1000.0);
 
-//    neural_network.set_parameters_random();
+    training_results = levenberg_marquardt_algorithm.perform_training();
 
-//    minimum_loss_decrease = 100.0;
+    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
 
-//    levenberg_marquardt_algorithm.set_loss_goal(type(0));
-//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
-//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
+    // Minimum loss decrease
 
-//    levenberg_marquardt_algorithm.perform_training();
+    neural_network.set_parameters_constant(type(-1));
 
-//    // Gradient norm goal
+    type minimum_loss_decrease = type(0.1);
 
-//    neural_network.set_parameters_random();
+    levenberg_marquardt_algorithm.set_loss_goal(type(0));
+    levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
+    levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
+    levenberg_marquardt_algorithm.set_maximum_time(1000.0);
 
-//    gradient_norm_goal = 1.0e6;
+    training_results = levenberg_marquardt_algorithm.perform_training();
 
-//    levenberg_marquardt_algorithm.set_loss_goal(type(0));
-//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
-
-//    levenberg_marquardt_algorithm.perform_training();
-
-//    //   gradient = sum_squared_error.calculate_training_loss_gradient();
-//    //   gradient_norm = l2_norm(gradient);
-
-//    assert_true(gradient_norm < gradient_norm_goal, LOG);
+    assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
 }
 
 

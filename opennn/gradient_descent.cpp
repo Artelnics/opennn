@@ -295,13 +295,11 @@ void GradientDescent::update_parameters(
 //            }
 //        }
 
-        cout << "1" << endl;
         optimization_data.parameters_increment.device(*thread_pool_device)
                 = optimization_data.training_direction*optimization_data.learning_rate;
 
         back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
 
-        cout << "2" << endl;
     }
     else
     {
@@ -335,22 +333,6 @@ void GradientDescent::update_parameters(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-
-    // Stochastic gradient descent
-
-//    back_propagation.assemble = true;
-
-//    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-
-
-
-//    for(Index i = 0; i < layers_parameters.size(); i++)
-//    {
-//        for(Index j = 0; j < layers_parameters(i).size(); j++)
-//        {
-//            (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-learning_rate);
-//        }
-//    }
 
 }
 
@@ -460,14 +442,13 @@ TrainingResults GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        // Update parameters
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         if(has_selection)
@@ -551,6 +532,12 @@ TrainingResults GradientDescent::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation.loss;
+
+            results.loss_decrease = loss_decrease;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
