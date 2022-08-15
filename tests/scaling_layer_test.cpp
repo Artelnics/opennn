@@ -409,7 +409,7 @@ void ScalingLayerTest::test_calculate_outputs()
     inputs.setRandom();
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs.resize({samples_number, inputs_number});
+    outputs.resize(samples_number, inputs_number);
     outputs_dimensions = get_dimensions(outputs);
 
     scaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -438,7 +438,7 @@ void ScalingLayerTest::test_calculate_outputs()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs.resize({samples_number, inputs_number});
+    outputs.resize(samples_number, inputs_number);
     outputs_dimensions = get_dimensions(outputs);
 
     scaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -468,7 +468,7 @@ void ScalingLayerTest::test_calculate_outputs()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs.resize({samples_number, inputs_number});
+    outputs.resize(samples_number, inputs_number);
     outputs_dimensions = get_dimensions(outputs);
 
     scaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -495,7 +495,7 @@ void ScalingLayerTest::test_calculate_outputs()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs.resize({samples_number, inputs_number});
+    outputs.resize(samples_number, inputs_number);
     outputs_dimensions = get_dimensions(outputs);
 
     scaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -522,7 +522,7 @@ void ScalingLayerTest::test_calculate_outputs()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs.resize({samples_number, inputs_number});
+    outputs.resize(samples_number, inputs_number);
     outputs_dimensions = get_dimensions(outputs);
 
     scaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
