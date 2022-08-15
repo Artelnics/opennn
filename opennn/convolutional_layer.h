@@ -95,6 +95,7 @@ public:
     Index get_padding_width() const;
     Index get_padding_height() const;
 
+    Index get_inputs_images_number() const;
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
     Index get_inputs_columns_number() const;
