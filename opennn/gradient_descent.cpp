@@ -736,7 +736,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            cout << "MinimumLossDecrease" << endl;
             const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
