@@ -106,7 +106,7 @@ HEADERS += \
     flatten_layer.h \
     text_analytics.h \
     region_based_object_detector.h \
-#    json_to_xml.h \
+    json_to_xml.h \
     opennn.h
 
 SOURCES += \
@@ -159,5 +159,5 @@ SOURCES += \
     flatten_layer.cpp \
     text_analytics.cpp \
     region_based_object_detector.cpp \
-#    json_to_xml.cpp \
+    json_to_xml.cpp \
     unit_testing.cpp
