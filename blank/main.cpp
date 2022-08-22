@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 // System includes
+#include <QApplication>
+#include <QLabel>
+
 
 #include <cstring>
 #include <iostream>
@@ -18,41 +21,96 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/layer.h"
 
 using namespace opennn;
 using namespace std;
 using namespace Eigen;
 
+#include "data_set.h"
 
-int main()
+
+void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>&sorted, const int& cols_number)
 {
+    unsigned char* aux_row = nullptr;
+
+    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
+
+    const int rows_number = static_cast<int>(original.size()/cols_number);
+
+    for(int i = 0; i <rows_number; i++)
+    {
+        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
+
+//        reverse(aux_row, aux_row + cols_number); uncomment this if the lower right corner px should be in the upper left corner.
+
+        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
+    }
+
+}
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
     try
     {
-        cout << "Hello OpenNN!" << endl;
+        DataSet dataset;
 
-        const int rows = 2;
-        const int cols = 4;
-        const int channels = 3;
-        const int batch = 2;
+        const string filename = "E:/opennn/blank/data/test.bmp";
+        Tensor<unsigned char, 1> data = dataset.read_bmp_image(filename);
 
-        const int dims[] = {rows, cols, channels, batch};
-        Tensor<float,4> test(rows,cols,channels,batch);
+        const int channels = static_cast<int>(dataset.get_channels_number());
+        const int rows_number = static_cast<int>(dataset.get_image_height());
+        const int cols_number = static_cast<int>(dataset.get_image_width());
 
-        test.setConstant(0.);
+        cout<<"channels"<<channels<<endl;
+        cout<<"rows_number"<<rows_number<<endl;
+        cout<<"cols_number"<<cols_number<<endl;
 
-        test.chip(0,3).chip(0,2).setConstant(1.);
-        test.chip(0,3).chip(1,2).setConstant(2.);
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, cols_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*cols_number};
 
-        test.chip(1,3).chip(0,2).setConstant(3.);
-        test.chip(1,3).chip(1,2).setConstant(4.);
+        Tensor<unsigned char,1> red_channel_flatted = data.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
+        Tensor<unsigned char,1> green_channel_flatted = data.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
+        Tensor<unsigned char,1> blue_channel_flatted = data.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
 
-        print_tensor(test.data(), dims);
+        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
+        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
+        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
 
-        cout << "Goodbye!" << endl;
+        red_channel_flatted_sorted.setZero();
+        green_channel_flatted_sorted.setZero();
+        blue_channel_flatted_sorted.setZero();
+
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, cols_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, cols_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,cols_number);
+
+        uint color = 0;
+        QImage img(cols_number, rows_number , QImage::Format_RGB32);
+
+        int row=0;
+        int col=0;
+
+        for(int i=0;i<rows_number*cols_number;i++) // move this to neuraldesigner for plotting images.
+        {
+            row = i/cols_number ;
+            col = i%cols_number ;
+
+            color = qRgb(static_cast<int>(red_channel_flatted_sorted(i)),
+                         static_cast<int>(green_channel_flatted_sorted(i)),
+                         static_cast<int>(blue_channel_flatted_sorted(i)));
+
+            img.setPixel(col, row, color);
+
+        }
+
+        QLabel myLabel;
+        myLabel.setPixmap(QPixmap::fromImage(img));
+        myLabel.show();
+        return a.exec();
 
 
-        return 0;
     }
     catch(const exception& e)
     {
