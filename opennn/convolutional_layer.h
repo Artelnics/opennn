@@ -111,8 +111,9 @@ public:
     // Set methods
 
     void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-
     void set(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 1>&);
+
+    void set_name(const string&);
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
