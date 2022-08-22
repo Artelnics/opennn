@@ -1247,6 +1247,7 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
     {
         vector(i) = std::to_string(x(i));
     }
+    return vector;
 
 };
 

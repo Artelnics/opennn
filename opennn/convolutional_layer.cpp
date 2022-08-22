@@ -1369,6 +1369,12 @@ void ConvolutionalLayer::set(const Tensor<type, 4>& new_inputs, const Tensor<typ
 }
 
 
+void ConvolutionalLayer::set_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
+}
+
+
 /// Initializes the layer's biases to a given value.
 /// @param value The desired value.
 
