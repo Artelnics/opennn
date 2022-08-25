@@ -625,11 +625,11 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
 
     training_strategy.perform_training();
 
@@ -656,6 +656,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.b = coefficients(1);
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
+
+    correlation.print();
 
     return correlation;
 }
