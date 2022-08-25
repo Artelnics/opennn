@@ -629,7 +629,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.perform_training();
 
