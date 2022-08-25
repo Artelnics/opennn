@@ -657,8 +657,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
 
-    correlation.print();
-
     return correlation;
 }
 
