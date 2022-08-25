@@ -6,15 +6,6 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
-#QT = core
-#QT += core widgets
-
-QT += \
-    core \
-    widgets
-
-
-
 TARGET = blank
 
 TEMPLATE = app
