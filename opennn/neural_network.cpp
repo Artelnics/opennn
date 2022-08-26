@@ -1640,7 +1640,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-
 Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
 #ifdef OPENNN_DEBUG
@@ -1695,6 +1694,90 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
         }
 
         return outputs;
+    }
+    else if(inputs_dimensions_number == 4)
+    {
+        /// @todo
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions) method.\n"
+               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
+Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
+{
+#ifdef OPENNN_DEBUG
+    if(inputs_dimensions(1) != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions) method.\n"
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+#endif
+
+    const Index inputs_dimensions_number = inputs_dimensions.size();
+
+    if(inputs_dimensions_number == 2)
+    {
+        Tensor<type, 2> scaled_outputs;
+        Tensor<type, 2> last_layer_outputs;
+
+        Tensor<Index, 1> outputs_dimensions;
+        Tensor<Index, 1> last_layer_outputs_dimensions;
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0)
+        {
+            const Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
+            scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+            return scaled_outputs;
+        }
+
+        scaled_outputs.resize(inputs_dimensions(0),layers_pointers(0)->get_neurons_number());
+
+        outputs_dimensions = get_dimensions(scaled_outputs);
+
+        if(layers_pointers(0)->get_type_string() != "Scaling")
+        {
+            layers_pointers(0)->calculate_outputs(scaled_inputs_data, inputs_dimensions, scaled_outputs.data(), outputs_dimensions);
+        }
+        else
+        {
+            scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        }
+
+        last_layer_outputs = scaled_outputs;
+
+        last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
+
+        for(Index i = 1; i < layers_number; i++)
+        {
+            if(layers_pointers(i)->get_type_string() != "Unscaling" || layers_pointers(i)->get_type_string() != "Scaling")
+            {
+                scaled_outputs.resize(inputs_dimensions(0),layers_pointers(i)->get_neurons_number());
+                outputs_dimensions = get_dimensions(scaled_outputs);
+
+                layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, scaled_outputs.data(), outputs_dimensions);
+
+                last_layer_outputs = scaled_outputs;
+                last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
+            }
+        }
+
+        return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
     {
