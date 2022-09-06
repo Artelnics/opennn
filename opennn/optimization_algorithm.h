@@ -26,10 +26,6 @@
 #include "tensor_utilities.h"
 #include "loss_index.h"
 
-using namespace std;
-using namespace Eigen;
-
-
 namespace opennn
 {
 

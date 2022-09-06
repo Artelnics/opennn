@@ -14,29 +14,28 @@
 #include <sstream>
 #include <string>
 #include <time.h>
+#include <stdio.h>
 
 // OpenNN includes
 
 #include "../opennn/opennn.h"
 
 using namespace opennn;
-using namespace std;
 using namespace Eigen;
 
 int main(int argc, char *argv[])
 {
-    cout << "Hello OpenNN!" << endl;
-
-
-    cout << "Goodbye!" << endl;
-
-    return 0;
-
-    }
-    catch(const exception& e)
+    try
     {
-        cerr << e.what() << endl;
+        std::cout << "Hello OpenNN!" << std::endl;
 
+        std::cout << "Goodbye!" << std::endl;
+
+        return 0;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 }

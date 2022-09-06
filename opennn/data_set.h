@@ -59,8 +59,6 @@ namespace fs = std::filesystem;
 namespace fs = ghc::filesystem;
 #endif
 
-using namespace std;
-using namespace Eigen;
 using namespace fs;
 
 namespace opennn
