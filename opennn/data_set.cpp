@@ -9,7 +9,6 @@
 #include "data_set.h"
 
 using namespace  opennn;
-using namespace std;
 using namespace fs;
 
 
