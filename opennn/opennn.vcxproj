@@ -63,6 +63,7 @@
     <ClInclude Include="sum_squared_error.h" />
     <ClInclude Include="tensor_utilities.h" />
     <ClInclude Include="testing_analysis.h" />
+    <ClInclude Include="text_analytics.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="training_strategy.h" />
     <ClInclude Include="unit_testing.h" />
@@ -111,6 +112,7 @@
     <ClCompile Include="sum_squared_error.cpp" />
     <ClCompile Include="tensor_utilities.cpp" />
     <ClCompile Include="testing_analysis.cpp" />
+    <ClCompile Include="text_analytics.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="training_strategy.cpp" />
     <ClCompile Include="unit_testing.cpp" />
@@ -133,7 +135,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>Intel C++ Compiler 2021</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseInteloneMKL>Parallel</UseInteloneMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
