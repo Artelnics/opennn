@@ -815,7 +815,7 @@ void TrainingStrategy::fix_forecasting()
     }
     else
     {
-        const Index constant = static_cast<Index>(batch_samples_number/timesteps);
+        const Index constant = timesteps > batch_samples_number ? 1 : static_cast<Index>(batch_samples_number/timesteps);
 
         if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         {
