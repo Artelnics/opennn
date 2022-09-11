@@ -9,6 +9,7 @@
 #include "data_set.h"
 
 using namespace  opennn;
+using namespace std;
 using namespace fs;
 
 
@@ -2833,6 +2834,13 @@ Index DataSet::get_image_height() const
 Index DataSet::get_image_size() const
 {
     return image_height*image_width*channels_number;
+}
+
+/// Returns the padding set in the BMP file.
+
+Index DataSet::get_padding() const
+{
+    return padding;
 }
 
 /// Returns the number of columns in the time series.
@@ -10649,8 +10657,12 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
     channels_number = channels;
 
     const int paddingAmount = (4 - (width_no_padding) % 4) % 4;
+
     image_width = width_no_padding + paddingAmount;
+
     const size_t size = channels_number * image_width * image_height;
+
+    cout<<"image_width"<<image_width<<endl;
 
     Tensor<unsigned char, 1> image(size);
     image.setZero();
@@ -10663,6 +10675,102 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 
     return image;
 }
+
+
+Tensor<unsigned char,1> DataSet::read_bmp_image_optimized(const string& filename)
+{
+    FILE* f = fopen(filename.data(), "rb");
+
+    if(!f)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp_image() method.\n"
+               << "Couldn't open the file.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    unsigned char info[54];
+    fread(info, sizeof(unsigned char), 54, f);
+
+    const Index width_no_padding = *(int*)&info[18];
+    image_height = *(int*)&info[22];
+    const Index bits_per_pixel = *(int*)&info[28];
+    int channels;
+
+    bits_per_pixel == 24 ? channels = 3 : channels = 1;
+    channels_number = channels;
+    padding = 0;
+
+    image_width = width_no_padding;
+
+    while((channels*image_width + padding)% 4 != 0)
+        padding++;
+
+    const size_t size = image_height*(channels_number*image_width + padding);
+
+    Tensor<unsigned char, 1> image(size);
+    image.setZero();
+
+    int data_offset = *(int*)(&info[0x0A]);
+    fseek(f, (long int)(data_offset - 54), SEEK_CUR);
+
+    fread(image.data(), sizeof(unsigned char), size, f);
+    fclose(f);
+
+    return image;
+}
+
+
+Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
+{
+   Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
+
+   const int channels = 3;
+
+   if (rows_number % 4 ==0)
+   {
+       memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
+   }
+   else
+   {
+       for (int i = 0; i<rows_number; i++)
+       {
+           if(i==0)
+           {
+               memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+           }
+           else
+           {
+               memcpy(data_without_padding.data() + channels*cols_number*i, img.data() + channels*cols_number*i + padding*i, static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+            }
+       }
+    }
+   return data_without_padding;
+}
+
+
+void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>&sorted, const int& cols_number)
+{
+    unsigned char* aux_row = nullptr;
+
+    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
+
+    const int rows_number = static_cast<int>(original.size()/cols_number);
+
+    for(int i = 0; i <rows_number; i++)
+    {
+        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
+
+//        reverse(aux_row, aux_row + cols_number); //uncomment this if the lower right corner px should be in the upper left corner.
+
+        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
+    }
+
+}
+
 
 size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 {
@@ -10875,7 +10983,7 @@ void DataSet::read_bmp_old()
 
         for(Index i = 0 ; i < classes_number; i++)
         {
-            categories(i) = folder_paths[i].filename().string();
+           categories(i) = folder_paths[i].filename().u8string();
         }
 
         columns(image_size).column_use = VariableUse::Target;
@@ -10890,7 +10998,7 @@ void DataSet::read_bmp_old()
 
         for(Index i = 0 ; i < classes_number ; i++)
         {
-           categories(i) = folder_paths[i].filename().string();
+           categories(i) = folder_paths[i].filename().u8string();
         }
 
         columns(image_size).column_use = VariableUse::Target;
@@ -11145,7 +11253,7 @@ void DataSet::read_bmp()
     Tensor<string, 1> categories(classes_number);
 
     for (Index i = 0; i < classes_number; i++) {
-      categories(i) = folder_paths[i].filename().string();
+      categories(i) = folder_paths[i].filename().u8string();
     }
 
     columns(image_size).column_use = VariableUse::Target;
@@ -11158,7 +11266,7 @@ void DataSet::read_bmp()
     Tensor<string, 1> categories(classes_number);
 
     for (Index i = 0; i < classes_number; i++) {
-      categories(i) = folder_paths[i].filename().string();
+      categories(i) = folder_paths[i].filename().u8string();
     }
 
     columns(image_size).column_use = VariableUse::Target;
