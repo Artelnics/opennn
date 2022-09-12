@@ -737,6 +737,7 @@ public:
    Tensor<unsigned char, 1> channels_format_flattening(Tensor<unsigned char, 3> &);
    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
 
+   void read_ground_truth();
    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
    Index get_bounding_boxes_number_from_XML(const string&);
