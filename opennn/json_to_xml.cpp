@@ -9,7 +9,6 @@
 #include "json_to_xml.h"
 
 using namespace  opennn;
-using namespace std;
 
 namespace opennn
 {

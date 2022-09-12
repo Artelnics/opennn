@@ -36,6 +36,7 @@ QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{
+-fopenmp=libomp
 QMAKE_CXXFLAGS += -d2ReducedOptimizeHugeFunctions
 QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
 QMAKE_LFLAGS += -fopenmp -lgomp

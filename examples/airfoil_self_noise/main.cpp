@@ -20,8 +20,7 @@
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
-using namespace std;
-using namespace Eigen;
+
 
 int main()
 {
@@ -71,9 +70,9 @@ int main()
 
         return 0;
     }
-    catch(exception& e)
+    catch(std::exception& e)
     {
-        cerr << e.what() << endl;
+        std::cerr << e.what() << endl;
 
         return 1;
     }
