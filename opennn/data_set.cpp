@@ -11289,7 +11289,7 @@ void DataSet::read_bmp()
 }
 
 void DataSet::read_ground_truth()
-{
+{/*
     const Index classes_number = get_label_classes_number_from_XML(data_file_name);
 
     const Index bounding_boxes_number = get_bounding_boxes_number_from_XML(data_file_name);
@@ -11564,6 +11564,7 @@ void DataSet::read_ground_truth()
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({channels_number, bounding_box_width, bounding_box_height});
+    */
 }
 
 
