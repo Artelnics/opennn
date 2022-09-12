@@ -141,6 +141,8 @@ public:
 
     Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&) const;
 
+    string read_txt_file(const string&) const;
+
     // Preprocess methods
 
     void delete_extra_spaces(Tensor<string, 1>&) const;
@@ -218,7 +220,7 @@ public:
 
     Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&) const;
 
-private: //change to private
+private: 
 
     void set_english_stop_words();
     void set_spanish_stop_words();
@@ -246,7 +248,61 @@ private: //change to private
 
 };
 
+class TextGenerationAlphabet
+{
+public:
+
+    // DEFAULT CONSTRUCTOR
+
+    explicit TextGenerationAlphabet();
+
+    explicit TextGenerationAlphabet(const string&);
+
+    virtual ~TextGenerationAlphabet();
+
+    // Get methods
+
+    string get_text() const;
+
+    Tensor<type, 2> get_data_tensor() const;
+
+    Tensor<char, 1> get_alphabet() const;
+
+    Index get_alphabet_length() const;
+
+    Index get_alphabet_index(const char&) const;
+
+    // Set methods
+
+    void set();
+
+    void set_text(const string&);
+    
+    void set_data_tensor(const Tensor<type, 2>&);
+
+    void set_alphabet(const Tensor<char, 1>&);
+
+    // Other methods
+
+    void print() const; 
+
+    void create_alphabet();
+
+    void encode_alphabet();
+
+private:
+
+    string text;
+
+    Tensor<type, 2> data_tensor;
+
+    Tensor<char, 1> alphabet;
+
+};
+
 }
+
+
 
 #endif
 

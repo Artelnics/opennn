@@ -10984,7 +10984,7 @@ void DataSet::read_bmp_old()
 
         for(Index i = 0 ; i < classes_number; i++)
         {
-           categories(i) = folder_paths[i].filename().u8string();
+           categories(i) = folder_paths[i].filename().string();
         }
 
         columns(image_size).column_use = VariableUse::Target;
@@ -10999,7 +10999,7 @@ void DataSet::read_bmp_old()
 
         for(Index i = 0 ; i < classes_number ; i++)
         {
-           categories(i) = folder_paths[i].filename().u8string();
+           categories(i) = folder_paths[i].filename().string();
         }
 
         columns(image_size).column_use = VariableUse::Target;
@@ -11254,7 +11254,7 @@ void DataSet::read_bmp()
     Tensor<string, 1> categories(classes_number);
 
     for (Index i = 0; i < classes_number; i++) {
-      categories(i) = folder_paths[i].filename().u8string();
+      categories(i) = folder_paths[i].filename().string();
     }
 
     columns(image_size).column_use = VariableUse::Target;
@@ -11267,7 +11267,7 @@ void DataSet::read_bmp()
     Tensor<string, 1> categories(classes_number);
 
     for (Index i = 0; i < classes_number; i++) {
-      categories(i) = folder_paths[i].filename().u8string();
+      categories(i) = folder_paths[i].filename().string();
     }
 
     columns(image_size).column_use = VariableUse::Target;
