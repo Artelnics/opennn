@@ -158,8 +158,6 @@ struct BoundingBox
         const type scaleWidth =  (type)new_width / (type)width;
         const type scaleHeight = (type)new_height / (type)height;
 
-        cout << "channels_number: " << channels_number << endl;
-
         for(Index i = 0; i < new_height; i++)
         {
             for(Index j = 0; j < new_width; j++)

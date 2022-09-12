@@ -42,17 +42,23 @@ Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
     return input_variables_dimensions;
 }
 
-
 /// @todo
+/// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
+
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
-    return input_variables_dimensions;
+    Tensor<Index, 1> outputs_dimensions(2);
+
+    outputs_dimensions(0) = input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+    outputs_dimensions(1) = 1; //input_variables_dimensions(3); // Number of batches
+
+    return outputs_dimensions;
 }
 
 /// @todo
 Index FlattenLayer::get_inputs_number() const
 {
-    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2)*input_variables_dimensions(3);
+    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2) * input_variables_dimensions(3);
 }
 
 Index FlattenLayer::get_input_height() const
