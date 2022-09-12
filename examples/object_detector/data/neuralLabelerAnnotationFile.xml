@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NeuralLabeler>
+	<Images>
+		<ImagesNumber>2</ImagesNumber>
+		<Image>
+			<Filename>C:/Users/alvaromartin/Documents/mnist/four/48.bmp</Filename>
+			<AnnotationsNumber>2</AnnotationsNumber>
+			<Annotation>
+				<Label>car</Label>
+				<Points>5,22,21,7</Points>
+			</Annotation>
+			<Annotation>
+				<Label>signal</Label>
+				<Points>10,15,25,2</Points>
+			</Annotation>
+		</Image>
+		<Image>
+			<Filename>C:/Users/alvaromartin/Documents/mnist/four/1111.bmp</Filename>
+			<AnnotationsNumber>1</AnnotationsNumber>
+			<Annotation>
+				<Label>car</Label>
+				<Points>5,22,15,2</Points>
+			</Annotation>
+		</Image>	
+	</Images>
+	<Labels>
+		<LabelsNumber>3</LabelsNumber>
+		<Label>
+			<Name>car</Name>
+			<Color>0,253,255</Color>
+		</Label>
+		<Label>
+			<Name>signal</Name>
+			<Color>255,183,0</Color>
+		</Label>
+		<Label>
+			<Name>truck</Name>
+			<Color>21,210,60</Color>
+		</Label>
+	</Labels>
+</NeuralLabeler>

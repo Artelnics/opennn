@@ -74,22 +74,25 @@ Tensor<type, 1> RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<
     const Index height = 28;//data_set_pointer->get_image_height();
     const Index width = 28;// = data_set_pointer->get_image_width();
 
-    Tensor<type, 1> data;
-    data.resize(channels_number*width*height);
+    const Index bounding_box_width = abs(x_top_left - x_bottom_right);
+    const Index bounding_box_height = abs(y_top_left - y_bottom_right);
 
-    const Index pixel_loop_start = channels_number * ( width * (y_bottom_right - 1) + x_top_left);
-    const Index pixel_loop_end = channels_number * ( width * (y_top_left - 1) + x_bottom_right);
+    Tensor<type, 1> data;
+    data.resize(channels_number * bounding_box_width * bounding_box_height);
+
+    const Index pixel_loop_start = channels_number * (width * (y_bottom_right - 1) + (x_top_left - 1));
+    const Index pixel_loop_end = channels_number * (width * (y_top_left - 2) + (x_bottom_right - 1));
 
     Index data_index = 0;
 
-    for(Index i = pixel_loop_start; i < pixel_loop_end; i++)
+    for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
     {
         const int height_number = (int)(i/height);
 
-        const Index left_margin = (height_number * width + x_top_left) * channels_number;
-        const Index right_margin = (height_number * width + x_bottom_right) * channels_number;
+        const Index left_margin = (height_number * width + (x_top_left - 1)) * channels_number;
+        const Index right_margin = (height_number * width + (x_bottom_right - 1)) * channels_number;
 
-        if(i >= left_margin && i <= right_margin)
+        if(i >= left_margin && i < right_margin)
         {
             data(data_index) = static_cast<type>(image[i]);
             data_index++;
@@ -99,6 +102,9 @@ Tensor<type, 1> RegionBasedObjectDetector::get_unique_bounding_box(const Tensor<
     return data;
 }
 
+// Object detector deploy pipeline
+
+// 1. Propose random regions
 
 BoundingBox RegionBasedObjectDetector::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {
@@ -132,6 +138,8 @@ BoundingBox RegionBasedObjectDetector::propose_random_region(const Tensor<unsign
     return random_region;
 }
 
+// 2. Propose random regions
+
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::propose_regions(const Tensor<unsigned char, 1>& image) const
 {
     const Index regions_number = 50; // We select random number of regions
@@ -158,6 +166,7 @@ Tensor<BoundingBox, 1> RegionBasedObjectDetector::regress_regions(Tensor<Boundin
     return regressed_regions;
 }
 
+// 3. Warp proposed regions
 
 Tensor<BoundingBox, 1> RegionBasedObjectDetector::warp_regions(const Tensor<BoundingBox, 1>& proposed_regions) const
 {

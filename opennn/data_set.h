@@ -734,7 +734,7 @@ public:
    Tensor<unsigned char, 1> channels_format_flattening(Tensor<unsigned char, 3> &);
    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
 
-   void read_ground_truth(const string&);
+   void read_ground_truth();
    Index get_bounding_boxes_number_from_XML(const string&);
    Index get_label_classes_number_from_XML(const string&);
 

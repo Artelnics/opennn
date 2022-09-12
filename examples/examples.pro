@@ -17,6 +17,7 @@ SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
 SUBDIRS += logical_operations
 SUBDIRS += mnist
+SUBDIRS += object_detector
 SUBDIRS += outlier_detection
 SUBDIRS += rosenbrock
 SUBDIRS += simple_approximation
