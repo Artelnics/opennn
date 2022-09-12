@@ -45,16 +45,14 @@
 
 #include <omp.h>
 
-using namespace std;
-
 #define	STRING(x) #x
 #define TOSTRING(x) STRING(x)
 #define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
 
 namespace opennn
 {
-
+    using namespace std;
+    using namespace Eigen;
     using type = float;
-
 }
 
