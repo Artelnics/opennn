@@ -22,8 +22,6 @@
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
-using namespace std;
-using namespace Eigen;
 
 int main()
 {

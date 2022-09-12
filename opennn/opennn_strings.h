@@ -25,9 +25,6 @@
 
 #include "config.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn
 {
     Index count_tokens(const string&, const char& separator = ' ');

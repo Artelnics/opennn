@@ -20,8 +20,6 @@
 
 #include "../eigen/Eigen/Dense"
 
-using namespace std;
-using namespace Eigen;
 
 namespace opennn
 {

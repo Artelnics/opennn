@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="adaptive_moment_estimation_test.cpp" />
     <ClCompile Include="bounding_layer_test.cpp" />
     <ClCompile Include="conjugate_gradient_test.cpp" />
     <ClCompile Include="convolutional_layer_test.cpp" />
@@ -44,9 +45,9 @@
     <ClCompile Include="perceptron_layer_test.cpp" />
     <ClCompile Include="pooling_layer_test.cpp" />
     <ClCompile Include="probabilistic_layer_test.cpp" />
-    <ClCompile Include="pruning_inputs_test.cpp" />
     <ClCompile Include="quasi_newton_method_test.cpp" />
     <ClCompile Include="recurrent_layer_test.cpp" />
+    <ClCompile Include="response_optimization_test.cpp" />
     <ClCompile Include="scaling_layer_test.cpp" />
     <ClCompile Include="scaling_test.cpp" />
     <ClCompile Include="statistics_test.cpp" />
@@ -59,6 +60,7 @@
     <ClCompile Include="weighted_squared_error_test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="adaptive_moment_estimation_test.h" />
     <ClInclude Include="bounding_layer_test.h" />
     <ClInclude Include="conjugate_gradient_test.h" />
     <ClInclude Include="convolutional_layer_test.h" />
@@ -84,9 +86,9 @@
     <ClInclude Include="perceptron_layer_test.h" />
     <ClInclude Include="pooling_layer_test.h" />
     <ClInclude Include="probabilistic_layer_test.h" />
-    <ClInclude Include="pruning_inputs_test.h" />
     <ClInclude Include="quasi_newton_method_test.h" />
     <ClInclude Include="recurrent_layer_test.h" />
+    <ClInclude Include="response_optimization_test.h" />
     <ClInclude Include="scaling_layer_test.h" />
     <ClInclude Include="scaling_test.h" />
     <ClInclude Include="statistics_test.h" />
@@ -97,6 +99,9 @@
     <ClInclude Include="training_strategy_test.h" />
     <ClInclude Include="unscaling_layer_test.h" />
     <ClInclude Include="weighted_squared_error_test.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="tests.vcxproj.user" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A3656628-2646-4F45-887A-DF284ED6A11B}</ProjectGuid>
@@ -114,7 +119,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>Intel C++ Compiler 2021</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
