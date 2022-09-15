@@ -2839,7 +2839,7 @@ Index DataSet::get_image_size() const
 
 /// Returns the padding set in the BMP file.
 
-Index DataSet::get_padding() const
+Index DataSet::get_image_padding() const
 {
     return padding;
 }
@@ -5258,21 +5258,27 @@ void DataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies
 }
 
 
-void DataSet::set_channels_number(const int& channels)
+void DataSet::set_channels_number(const int& new_channels_number)
 {
-    channels_number = channels;
+    channels_number = new_channels_number;
 }
 
 
-void DataSet::set_image_width(const int& width)
+void DataSet::set_image_width(const int& new_width)
 {
-    image_width = width;
+    image_width = new_width;
 }
 
 
-void DataSet::set_image_height(const int& height)
+void DataSet::set_image_height(const int& new_height)
 {
-    image_height = height;
+    image_height = new_height;
+}
+
+
+void DataSet::set_image_padding(const int& new_padding)
+{
+    padding = new_padding;
 }
 
 
@@ -6889,6 +6895,16 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
+
+        // Padding
+        file_stream.OpenElement("Padding");
+
+        buffer.str("");
+        buffer << get_image_padding();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
     }
 
     // Lags number
@@ -7480,6 +7496,20 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
 
             set_image_height(height);
+        }
+    }
+
+    // Padding
+
+    const tinyxml2::XMLElement* image_padding_element = data_file_element->FirstChildElement("Padding");
+
+    if(image_padding_element)
+    {
+        if(image_padding_element->GetText())
+        {
+            const Index padding = static_cast<Index>(atoi(image_padding_element->GetText()));
+
+            set_image_padding(padding);
         }
     }
 
@@ -10631,7 +10661,7 @@ void DataSet::read_csv()
 }
 
 
-Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
+/*Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
     FILE* f = fopen(filename.data(), "rb");
 
@@ -10675,7 +10705,7 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
     fclose(f);
 
     return image;
-}
+}*/
 
 
 Tensor<unsigned char,1> DataSet::read_bmp_image_optimized(const string& filename)
@@ -10852,8 +10882,8 @@ void DataSet::read_bmp_old()
 
     for(Index i = 0; i < image_paths.size(); i++)
     {
-        info_img = image_paths[i].string();
-        image = read_bmp_image(info_img);
+        info_img = image_paths[i].string();        
+        image = read_bmp_image_optimized(info_img);
         image_size = image.size();
         size_comprobation += image_size;
     }
@@ -10916,7 +10946,7 @@ void DataSet::read_bmp_old()
 
         for(Index j = 0;  j < images_number; j++)
         {
-            image = read_bmp_image(images_paths[j]);
+            image = read_bmp_image_optimized(images_paths[j]);
 
             for(Index k = 0; k < image_size; k++)
             {
@@ -11182,7 +11212,7 @@ void DataSet::read_bmp()
 
     for (Index j = 0; j < images_number; j++)
     {
-      image = read_bmp_image(images_paths[j]);
+      image = read_bmp_image_optimized(images_paths[j]);
 
       if (image_height != 224 && image_width != 224)
       {
@@ -11729,7 +11759,7 @@ Index DataSet::get_bounding_boxes_number_from_XML(const string& file_name)
         bounding_boxes_number += annotations_number;
     }
 
-    read_bmp_image(image_filename); // Read an image to save initially the channels number
+    read_bmp_image_optimized(image_filename); // Read an image to save initially the channels number
 
     return bounding_boxes_number;
 }

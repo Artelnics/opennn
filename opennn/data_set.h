@@ -681,13 +681,14 @@ public:
    Index get_channels_number() const;
    Index get_image_width() const;
    Index get_image_height() const;
+   Index get_image_padding() const;
    Index get_image_size() const;
 
    void set_channels_number(const int&);
    void set_image_width(const int&);
    void set_image_height(const int&);
+   void set_image_padding(const int&);
 
-   Index get_padding() const;
 
    // Text classification methods
 
@@ -729,8 +730,8 @@ public:
 
    void read_csv();
 
-   Tensor<unsigned char,1> read_bmp_image(const string&);
-   Tensor<unsigned char,1> read_bmp_image_optimized(const string&);
+//   Tensor<unsigned char,1> read_bmp_image(const string&);
+   Tensor<unsigned char, 1> read_bmp_image_optimized(const string&);
    void read_bmp_old();
    void read_bmp();
    Tensor<unsigned char, 3> bmp_image_to_3_channels(Tensor<unsigned char, 1> &);
