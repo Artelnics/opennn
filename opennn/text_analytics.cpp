@@ -1667,7 +1667,6 @@ void TextAnalytics::replace_accented(string& word) const
 }
 
 
-
 Tensor<string,1> TextAnalytics::get_r1_r2(const string& word, const Tensor<string,1>& vowels) const
 {
     const Index word_length = word.length();
@@ -1745,7 +1744,6 @@ string TextAnalytics::get_rv(const string& word, const Tensor<string,1>& vowels)
 }
 
 
-
 /// Calculate the total number of tokens in the documents.
 
 Index TextAnalytics::count(const Tensor<Tensor<string,1>,1>& documents) const
@@ -1789,6 +1787,54 @@ Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents
     }
 
     return words_list;
+}
+
+
+/// Returns a string with all the text of a file
+/// @param path Path of the file to be read
+
+string TextAnalytics::read_txt_file(const string& path) const
+{
+    if (path.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+            << "void load_documents() method.\n"
+            << "Data file name is empty.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    std::ifstream file(path.c_str());
+
+    if (!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextAnalytics class.\n"
+            << "void load_documents() method.\n"
+            << "Cannot open data file: " << path << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    string result="", line;
+
+    while (file.good())
+    {
+        getline(file, line);
+        trim(line);
+        erase(line, '"');
+
+        if (line.empty()) continue;
+
+        result += line;
+
+        if (file.peek() == EOF) break;
+    }
+
+    return result;
 }
 
 
@@ -2411,11 +2457,133 @@ void TextAnalytics::load_documents(const string& path)
     targets(original_size) = document_target_copy;
 
     file2.close();
-};
-
-
 }
 
+
+/// @todo Explain.
+
+TextGenerationAlphabet::TextGenerationAlphabet()
+{
+}
+
+
+TextGenerationAlphabet::TextGenerationAlphabet(const string& new_text)
+{
+    text = new_text;
+
+    set();
+}
+
+TextGenerationAlphabet::~TextGenerationAlphabet()
+{
+}
+
+
+string TextGenerationAlphabet::get_text() const
+{
+    return text;
+}
+
+
+Tensor<type, 2> TextGenerationAlphabet::get_data_tensor() const
+{
+    return data_tensor;
+}
+
+
+Tensor<char, 1> TextGenerationAlphabet::get_alphabet() const
+{
+    return alphabet;
+}
+
+
+Index TextGenerationAlphabet::get_alphabet_length() const
+{
+    return alphabet.size();
+}
+
+
+void TextGenerationAlphabet::set() 
+{
+    create_alphabet();
+
+    encode_alphabet();
+}
+
+
+void TextGenerationAlphabet::set_text(const string& new_text) 
+{
+    text = new_text;
+}
+
+
+void TextGenerationAlphabet::set_data_tensor(const Tensor<type, 2>& new_data_tensor) 
+{
+    data_tensor = new_data_tensor;
+}
+
+
+void TextGenerationAlphabet::set_alphabet(const Tensor<char, 1>& new_alphabet) 
+{
+    alphabet = new_alphabet;
+}
+
+
+void TextGenerationAlphabet::print() const 
+{
+    cout << "Alphabet characters number: " << get_alphabet_length() << endl;
+
+    cout << "Alphabet characters:\n" << alphabet << endl;
+
+    cout << "Data tensor:\n" << data_tensor << endl;
+}
+
+
+void TextGenerationAlphabet::create_alphabet()
+{
+    // @todo
+    // Get unique elements of a string c++
+}
+
+
+void TextGenerationAlphabet::encode_alphabet()
+{
+    const Index rows_number = text.length();
+
+    const Index columns_number = alphabet.size();
+
+    data_tensor.resize(rows_number, columns_number);
+    data_tensor.setZero();
+
+#pragma parallel for
+    for (Index i = 0; i < text.length(); i++)
+    {
+        const int word_index = get_alphabet_index(text[i]); 
+        data_tensor(i, word_index) = 1;
+    }
+}
+
+
+Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
+{
+
+    auto alphabet_begin = alphabet.data();
+    auto alphabet_end = alphabet.data() + alphabet.size();
+
+    auto it = find(alphabet_begin, alphabet_end, ch);
+
+    if (it != alphabet_end)
+    {
+        Index index = it - alphabet_begin;
+        return index;
+    }
+    else 
+    {
+        return -1;
+    }
+}
+
+}
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
