@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
         const string filename = "C:/Users/alvaromartin/Documents/opennn/blank/data/test_padding.bmp";
 
-        Tensor<unsigned char, 1> data = dataset.read_bmp_image_optimized(filename);
+        Tensor<unsigned char, 1> data = dataset.read_bmp_image(filename);
 
         const int channels = static_cast<int>(dataset.get_channels_number());
         const int rows_number = static_cast<int>(dataset.get_image_height());
