@@ -10660,52 +10660,52 @@ void DataSet::read_csv()
     }
 }
 
-
-/*Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
+Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
 {
-    FILE* f = fopen(filename.data(), "rb");
+   Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
 
-    if(!f)
+   const int channels = 3;
+
+   if (rows_number % 4 ==0)
+   {
+       memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
+   }
+   else
+   {
+       for (int i = 0; i<rows_number; i++)
+       {
+           if(i==0)
+           {
+               memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+           }
+           else
+           {
+               memcpy(data_without_padding.data() + channels*cols_number*i, img.data() + channels*cols_number*i + padding*i, static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+            }
+       }
+    }
+   return data_without_padding;
+}
+
+
+void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
+{
+    unsigned char* aux_row = nullptr;
+
+    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
+
+    const int rows_number = static_cast<int>(original.size()/cols_number);
+
+    for(int i = 0; i <rows_number; i++)
     {
-        ostringstream buffer;
+        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp_image() method.\n"
-               << "Couldn't open the file.\n";
+//        reverse(aux_row, aux_row + cols_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
-        throw invalid_argument(buffer.str());
+        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
     }
 
-    unsigned char info[54];
-    fread(info, sizeof(unsigned char), 54, f);
-
-    const Index width_no_padding = *(int*)&info[18];
-    image_height = *(int*)&info[22];
-    const Index bits_per_pixel = *(int*)&info[28];
-    int channels;
-
-    bits_per_pixel == 24 ? channels = 3 : channels = 1;
-    channels_number = channels;
-
-    const int paddingAmount = (4 - (width_no_padding) % 4) % 4;
-
-    image_width = width_no_padding + paddingAmount;
-
-    const size_t size = channels_number * image_width * image_height;
-
-    cout<<"image_width"<<image_width<<endl;
-
-    Tensor<unsigned char, 1> image(size);
-    image.setZero();
-
-    int data_offset = *(int*)(&info[0x0A]);
-    fseek(f, (long int)(data_offset - 54), SEEK_CUR);
-
-    fread(image.data(), sizeof(unsigned char), size, f);
-    fclose(f);
-
-    return image;
-}*/
+}
 
 
 Tensor<unsigned char,1> DataSet::read_bmp_image_optimized(const string& filename)
@@ -10751,57 +10751,40 @@ Tensor<unsigned char,1> DataSet::read_bmp_image_optimized(const string& filename
     fread(image.data(), sizeof(unsigned char), size, f);
     fclose(f);
 
+    if(channels_number == 3)
+    {
+        const int rows_number = static_cast<int>(get_image_height());
+        const int cols_number = static_cast<int>(get_image_width());
+
+        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, cols_number, padding);
+
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, cols_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*cols_number};
+
+        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
+        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
+        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
+
+        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
+        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
+        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
+
+        red_channel_flatted_sorted.setZero();
+        green_channel_flatted_sorted.setZero();
+        blue_channel_flatted_sorted.setZero();
+
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, cols_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, cols_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,cols_number);
+
+        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
+        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
+
+        image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
+    }
+
     return image;
 }
-
-
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
-{
-   Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
-
-   const int channels = 3;
-
-   if (rows_number % 4 ==0)
-   {
-       memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
-   }
-   else
-   {
-       for (int i = 0; i<rows_number; i++)
-       {
-           if(i==0)
-           {
-               memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
-           }
-           else
-           {
-               memcpy(data_without_padding.data() + channels*cols_number*i, img.data() + channels*cols_number*i + padding*i, static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
-            }
-       }
-    }
-   return data_without_padding;
-}
-
-
-void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>&sorted, const int& cols_number)
-{
-    unsigned char* aux_row = nullptr;
-
-    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
-
-    const int rows_number = static_cast<int>(original.size()/cols_number);
-
-    for(int i = 0; i <rows_number; i++)
-    {
-        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
-
-//        reverse(aux_row, aux_row + cols_number); //uncomment this if the lower right corner px should be in the upper left corner.
-
-        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
-    }
-
-}
-
 
 size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 {
@@ -10813,7 +10796,7 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 }
 
 
-void DataSet::read_bmp_old()
+void DataSet::read_bmp()
 {
     const fs::path path = data_file_name;
 
@@ -11050,44 +11033,6 @@ void DataSet::read_bmp_old()
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
-Tensor<unsigned char, 3> DataSet::bmp_image_to_3_channels(Tensor<unsigned char, 1> &bmp_image)
-{
-  const Index image_width = 224;
-  const Index image_height = 224;
-  const Index channels_number = 3;
-  Tensor<unsigned char, 3> channels_image_format(image_height, image_width,
-                                                 channels_number);
-  Index element_count = 0;
-
-  for (Index h = image_height - 1; h >= 0; h--) {
-    for (Index w = 0; w < image_width; w++) {
-      for (Index k = channels_number - 1; k >= 0; k--) // (B, G, R) to (R, G, B)
-      {
-        channels_image_format(h, w, k) = bmp_image(element_count);
-        element_count++;
-      }
-    }
-  }
-
-  return channels_image_format;
-}
-
-Tensor<unsigned char, 1> DataSet::channels_format_flattening(Tensor<unsigned char, 3> &channels_image_format)
-{
-  Tensor<unsigned char, 1> matlab_flatten(224 * 224 * 3);
-  Index element_count = 0;
-
-  for (Index k = 0; k < 3; k++) {
-    for (Index w = 0; w < 224; w++) {
-      for (Index h = 0; h < 224; h++) {
-        matlab_flatten(element_count) = channels_image_format(h, w, k);
-        element_count++;
-      }
-    }
-  }
-
-  return matlab_flatten;
-}
 
 Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
                                       const Index &image_width,
@@ -11125,198 +11070,6 @@ Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
   return new_bounding_box;
 }
 
-void DataSet::read_bmp()
-{
-  const fs::path path = data_file_name;
-
-  if (data_file_name.empty())
-  {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: DataSet class.\n"
-           << "void read_bmp_channel_order_format() method.\n"
-           << "Data file name is empty.\n";
-
-    throw invalid_argument(buffer.str());
-  }
-
-  has_columns_names = true;
-  has_rows_labels = true;
-  convolutional_model = true;
-
-  separator = Separator::None;
-
-  vector<fs::path> folder_paths;
-  vector<fs::path> image_paths;
-
-  for (const auto &entry : fs::directory_iterator(path)) {
-    folder_paths.emplace_back(entry.path().string());
-  }
-
-  for (Index i = 0; i < folder_paths.size(); i++) {
-    for (const auto &entry : fs::directory_iterator(folder_paths[i])) {
-      image_paths.emplace_back(entry.path().string());
-    }
-  }
-
-  for (Index i = 0; i < image_paths.size(); i++) {
-    if (image_paths[i].extension() != ".bmp") {
-      //fs::remove_all(image_paths[i]);
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_bmp() method.\n"
-                   << "Non-bmp data file format found. Try to run the program again.\n";
-
-            throw invalid_argument(buffer.str());
-    }
-  }
-
-  Index classes_number = number_of_elements_in_directory(path);
-  Tensor<Index, 1> images_numbers(classes_number);
-
-  for (Index i = 0; i < classes_number; i++) {
-    images_number += number_of_elements_in_directory(folder_paths[i]);
-  }
-
-  string info_img;
-  Tensor<unsigned char, 1> image;
-  const Index image_size = 224 * 224 * 3;
-
-  if (classes_number == 2)
-  {
-    Index binary_columns_number = 1;
-    data.resize(images_number, image_size + binary_columns_number);
-  }
-  else
-  {
-    data.resize(images_number, image_size + classes_number);
-  }
-
-//  data.setZero();
-
-  rows_labels.resize(images_number);
-
-  Index row_index = 0;
-
-  for (Index i = 0; i < classes_number; i++) {
-    Index images_number = 0;
-
-    vector<string> images_paths;
-
-    for (const auto &entry : fs::directory_iterator(folder_paths[i])) {
-      images_paths.emplace_back(entry.path().string());
-    }
-
-    images_number = images_paths.size();
-
-    for (Index j = 0; j < images_number; j++)
-    {
-      image = read_bmp_image_optimized(images_paths[j]);
-
-      if (image_height != 224 && image_width != 224)
-      {
-        image = resize_image(image, image_width, image_height, channels_number);
-      }
-
-      Tensor<unsigned char, 3> three_channels_image_format = bmp_image_to_3_channels(image);
-
-      Tensor<unsigned char, 1> new_image = channels_format_flattening(three_channels_image_format);
-
-      for (Index k = 0; k < image_size; k++) data(row_index, k) = static_cast<type>(new_image[k]);
-
-      if (classes_number == 2 && i == 0)
-      {
-        data(row_index, image_size) = 1;
-      }
-      else if (classes_number == 2 && i == 1)
-      {
-        data(row_index, image_size) = 0;
-      }
-      else
-      {
-        data(row_index, image_size + i) = 1;
-      }
-
-      rows_labels(row_index) = images_paths[j];
-
-      row_index++;
-    }
-  }
-
-  columns.resize(image_size + 1);
-
-  // Input columns
-
-  Index column_index = 0;
-  const Index channels = 3;
-  const Index width = 224;
-  const Index height = 224;
-
-  for (Index i = 0; i < channels; i++) {
-    for (Index j = 0; j < width; j++) {
-      for (Index k = 0; k < height; k++) {
-        columns(column_index).name = "pixel_" + to_string(i + 1) + "_" +
-                                     to_string(j + 1) + "_" + to_string(k + 1);
-        columns(column_index).type = ColumnType::Numeric;
-        columns(column_index).column_use = VariableUse::Input;
-        columns(column_index).scaler = Scaler::MinimumMaximum;
-        column_index++;
-      }
-    }
-  }
-
-  // Target columns
-
-  columns(image_size).name = "class";
-
-  if (classes_number == 1) {
-    ostringstream buffer;
-
-    buffer
-        << "OpenNN Exception: DataSet class.\n"
-        << "void read_bmp_channel_order_format() method.\n"
-        << "Invalid number of categories. The minimum is 2 and you have 1.\n";
-
-    throw invalid_argument(buffer.str());
-
-  } else if (classes_number == 2) {
-    Tensor<string, 1> categories(classes_number);
-
-    for (Index i = 0; i < classes_number; i++) {
-      categories(i) = folder_paths[i].filename().string();
-    }
-
-    columns(image_size).column_use = VariableUse::Target;
-    columns(image_size).type = ColumnType::Binary;
-    columns(image_size).categories = categories;
-
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
-  } else {
-    Tensor<string, 1> categories(classes_number);
-
-    for (Index i = 0; i < classes_number; i++) {
-      categories(i) = folder_paths[i].filename().string();
-    }
-
-    columns(image_size).column_use = VariableUse::Target;
-    columns(image_size).type = ColumnType::Categorical;
-    columns(image_size).categories = categories;
-
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
-  }
-
-  samples_uses.resize(images_number);
-  split_samples_random();
-
-  image_width = 224;
-  image_height = 224;
-
-  input_variables_dimensions.resize(3);
-  input_variables_dimensions.setValues({channels, width, height});
-}
 
 void DataSet::read_ground_truth()
 {/*

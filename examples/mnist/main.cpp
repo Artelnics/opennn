@@ -97,8 +97,8 @@ int main()
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<unsigned char,1> zero = data_set.read_bmp_image("../data/images/zero/0_1.bmp");
-        Tensor<unsigned char,1> one = data_set.read_bmp_image("../data/images/one/1_1.bmp");
+        Tensor<unsigned char,1> zero = data_set.read_bmp_image_optimized("../data/images/zero/0_1.bmp");
+        Tensor<unsigned char,1> one = data_set.read_bmp_image_optimized("../data/images/one/1_1.bmp");
 
         vector<type> zero_int(zero.size()); ;
         vector<type> one_int(one.size());
