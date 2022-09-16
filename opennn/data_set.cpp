@@ -10708,7 +10708,7 @@ void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned ch
 }
 
 
-Tensor<unsigned char,1> DataSet::read_bmp_image_optimized(const string& filename)
+Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
     FILE* f = fopen(filename.data(), "rb");
 
@@ -10866,7 +10866,7 @@ void DataSet::read_bmp()
     for(Index i = 0; i < image_paths.size(); i++)
     {
         info_img = image_paths[i].string();        
-        image = read_bmp_image_optimized(info_img);
+        image = read_bmp_image(info_img);
         image_size = image.size();
         size_comprobation += image_size;
     }
@@ -10929,7 +10929,7 @@ void DataSet::read_bmp()
 
         for(Index j = 0;  j < images_number; j++)
         {
-            image = read_bmp_image_optimized(images_paths[j]);
+            image = read_bmp_image(images_paths[j]);
 
             for(Index k = 0; k < image_size; k++)
             {
@@ -11512,7 +11512,7 @@ Index DataSet::get_bounding_boxes_number_from_XML(const string& file_name)
         bounding_boxes_number += annotations_number;
     }
 
-    read_bmp_image_optimized(image_filename); // Read an image to save initially the channels number
+    read_bmp_image(image_filename); // Read an image to save initially the channels number
 
     return bounding_boxes_number;
 }
