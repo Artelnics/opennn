@@ -22,6 +22,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "tensor_utilities.h"
 #include "opennn_strings.h"
 
@@ -266,7 +267,7 @@ public:
 
     Tensor<type, 2> get_data_tensor() const;
 
-    Tensor<char, 1> get_alphabet() const;
+    Tensor<string, 1> get_alphabet() const;
 
     Index get_alphabet_length() const;
 
@@ -280,7 +281,7 @@ public:
     
     void set_data_tensor(const Tensor<type, 2>&);
 
-    void set_alphabet(const Tensor<char, 1>&);
+    void set_alphabet(const Tensor<string, 1>&);
 
     // Other methods
 
@@ -290,13 +291,23 @@ public:
 
     void encode_alphabet();
 
+    void preprocess();
+
+    Tensor<type, 1> one_hot_encode(const string &) const;
+
+    Tensor<type, 2> multiple_one_hot_encode(const string &) const;
+
+    string one_hot_decode(const Tensor<type, 1>&) const;
+
+    string multiple_one_hot_decode(const Tensor<type, 2>&) const;
+
 private:
 
     string text;
 
     Tensor<type, 2> data_tensor;
 
-    Tensor<char, 1> alphabet;
+    Tensor<string, 1> alphabet;
 
 };
 

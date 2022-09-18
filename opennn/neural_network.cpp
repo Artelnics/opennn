@@ -1797,84 +1797,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 }
 
 
-//Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
-//{
-//#ifdef OPENNN_DEBUG
-
-//    const Index inputs_dimensions_number = inputs.rank();
-
-//    if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-//               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//#endif
-
-//    Tensor<type, 2> outputs;
-
-//    const Index layers_number = get_layers_number();
-
-//    if(layers_number == 0) return inputs;
-
-//    outputs = layers_pointers(0)->calculate_outputs(inputs);
-
-//    for(Index i = 1; i < layers_number; i++)
-//    {
-//        outputs = layers_pointers(i)->calculate_outputs(outputs);
-//    }
-
-//    return outputs;
-//}
-
-
-//Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4d)
-//{
-//    Tensor<type, 2> inputs_2d;
-//    Tensor<type, 4> outputs_4d;
-//    Tensor<type, 2> outputs;
-
-//    const Index layers_number = get_layers_number();
-
-//    if(layers_number == 0) return inputs_2d;
-
-//    if (layers_pointers(0)->get_type() != Layer::Type::Resnet50)
-//    {
-
-//        // First layer output
-
-//        outputs_4d = layers_pointers(0)->calculate_outputs(
-//                    inputs_4d); // Calculate outputs ScalingLayer
-
-//        for (Index i = 1; i < layers_number; i++) {
-//            if (layers_pointers(i)->get_type() == Layer::Type::Convolutional &&
-//                    layers_pointers(i)->get_type() == Layer::Type::Pooling) {
-//                outputs_4d = layers_pointers(i)->calculate_outputs(outputs_4d);
-//            } else if (layers_pointers(i)->get_type() == Layer::Type::Flatten) {
-//                outputs = layers_pointers(i)->calculate_outputs_2d(outputs_4d);
-//            } else {
-//                outputs = layers_pointers(i)->calculate_outputs(outputs);
-//            }
-//        }
-//    }
-//    else
-//    {
-//        // First layer output
-
-//        outputs = layers_pointers(0)->calculate_outputs_2d(inputs_4d); // Resnet50
-//        outputs = layers_pointers(1)->calculate_outputs(outputs); // Probabilistic
-
-//    }
-
-//    return outputs;
-//}
-
-
 /// Calculates the input data necessary to compute the output data from the neural network in some direction.
 /// @param direction Input index (must be between 0 and number of inputs - 1).
 /// @param point Input point through the directional input passes.
@@ -1907,6 +1829,120 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
     }
 
     return directional_inputs;
+}
+
+
+/// Generates a text output based on the neural network and some input letters given by the user.
+/// @param text_generation_alphabet TextGenerationAlphabet object used for the text generation model
+/// @param input_string Input string given by the user
+/// @param max_length Maximum length of the returned string
+/// @param one_word Boolean, if true returns just one word, if false returns a phrase
+
+string NeuralNetwork::calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet, const string& input_string, const Index& max_length, const bool& one_word)
+{
+    string result = one_word ? generate_word(text_generation_alphabet, input_string, max_length) : generate_phrase(text_generation_alphabet, input_string, max_length);
+
+    return result;
+}
+
+
+/// @todo
+
+string NeuralNetwork::generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+           << "This method is not implemented yet.\n";
+
+    throw invalid_argument(buffer.str());
+
+    return string();
+
+    // Under development
+
+//    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+
+//    if(first_letters.length()*alphabet_length != get_inputs_number())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+//               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+
+//        throw invalid_argument(buffer.str());
+//    }
+
+
+//    string result = first_letters;
+
+//    // 1. Input letters to one hot encode
+
+//    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+
+//    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
+//    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+
+//    punctuation_signs.setValues({" ",",",".","\n",":",";"});
+
+//    // 2. Loop for forecasting the following letter in function of the last letters
+
+//    do{
+//        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+
+//        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+
+//        if(!contains(punctuation_signs, letter))
+//        {
+//            result += letter;
+
+//            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+//        }
+
+//    }while(result.length() < length);
+
+//    return result;
+}
+
+
+/// @todo
+
+string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
+{
+    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+
+    if(first_letters.length()*alphabet_length != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    string result = first_letters;
+
+    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+
+    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
+    do{
+        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+
+        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+
+        result += letter;
+
+        input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+
+    }while(result.length() < length);
+
+    return result;
 }
 
 
@@ -2609,7 +2645,7 @@ void NeuralNetwork::print() const
     {
         cout << "Layer " << i+1 << ": " << layers_pointers[i]->get_neurons_number()
              << " " << layers_pointers[i]->get_type_string() << " neurons" << endl;
-        }
+    }
 }
 
 
