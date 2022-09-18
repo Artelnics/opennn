@@ -1640,9 +1640,15 @@ void TextAnalytics::replace_accented(string& word) const
 {
     replace(word, "á", "a");
     replace(word, "é", "e");
-    replace(word, "í", "i");
+    replace(word, "í", "i");
     replace(word, "ó", "o");
     replace(word, "ú", "u");
+
+    replace(word, "Á", "A");
+    replace(word, "É", "E");
+    replace(word, "Í", "I");
+    replace(word, "Ó", "O");
+    replace(word, "Ú", "U");
 
     replace(word, "ä", "a");
     replace(word, "ë", "e");
@@ -2491,7 +2497,7 @@ Tensor<type, 2> TextGenerationAlphabet::get_data_tensor() const
 }
 
 
-Tensor<char, 1> TextGenerationAlphabet::get_alphabet() const
+Tensor<string, 1> TextGenerationAlphabet::get_alphabet() const
 {
     return alphabet;
 }
@@ -2505,6 +2511,8 @@ Index TextGenerationAlphabet::get_alphabet_length() const
 
 void TextGenerationAlphabet::set() 
 {
+    preprocess();
+
     create_alphabet();
 
     encode_alphabet();
@@ -2523,7 +2531,7 @@ void TextGenerationAlphabet::set_data_tensor(const Tensor<type, 2>& new_data_ten
 }
 
 
-void TextGenerationAlphabet::set_alphabet(const Tensor<char, 1>& new_alphabet) 
+void TextGenerationAlphabet::set_alphabet(const Tensor<string, 1>& new_alphabet)
 {
     alphabet = new_alphabet;
 }
@@ -2541,8 +2549,17 @@ void TextGenerationAlphabet::print() const
 
 void TextGenerationAlphabet::create_alphabet()
 {
-    // @todo
-    // Get unique elements of a string c++
+    string text_copy = text;
+
+    sort(text_copy.begin(), text_copy.end());
+
+    auto ip = std::unique(text_copy.begin(), text_copy.end());
+
+    text_copy.resize(std::distance(text_copy.begin(), ip));
+
+    alphabet.resize(text_copy.length());
+
+    std::copy(text_copy.begin(), text_copy.end(), alphabet.data());
 }
 
 
@@ -2555,22 +2572,33 @@ void TextGenerationAlphabet::encode_alphabet()
     data_tensor.resize(rows_number, columns_number);
     data_tensor.setZero();
 
-#pragma parallel for
+#pragma omp parallel for
     for (Index i = 0; i < text.length(); i++)
     {
-        const int word_index = get_alphabet_index(text[i]); 
+        const int word_index = get_alphabet_index(text[i]);
         data_tensor(i, word_index) = 1;
     }
 }
 
 
+void TextGenerationAlphabet::preprocess()
+{
+    TextAnalytics ta;
+
+    ta.replace_accented(text);
+
+    transform(text.begin(), text.end(), text.begin(), ::tolower); // To lower
+}
+
+
 Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
 {
-
     auto alphabet_begin = alphabet.data();
     auto alphabet_end = alphabet.data() + alphabet.size();
 
-    auto it = find(alphabet_begin, alphabet_end, ch);
+    const string str(1, ch);
+
+    auto it = find(alphabet_begin, alphabet_end, str);
 
     if (it != alphabet_end)
     {
@@ -2583,7 +2611,94 @@ Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
     }
 }
 
+
+Tensor<type, 1> TextGenerationAlphabet::one_hot_encode(const string &ch) const
+{
+    Tensor<type, 1> result(alphabet.size());
+
+    result.setZero();
+
+    const int word_index = get_alphabet_index(ch[0]);
+
+    result(word_index) = 1;
+
+    return result;
 }
+
+
+Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &phrase) const
+{
+    const Index phrase_length = phrase.length();
+
+    const Index alphabet_length = get_alphabet_length();
+
+    Tensor<type, 2> result(alphabet_length, phrase_length);
+
+    result.setZero();
+
+    for(Index i = 0; i < phrase_length; i++)
+    {
+        const Index index = get_alphabet_index(phrase[i]);
+
+        result(index, i) = 1;
+    }
+
+    return result;
+}
+
+
+string TextGenerationAlphabet::one_hot_decode(const Tensor<type, 1>& tensor) const
+{
+    const Index length = alphabet.size();
+
+    if(tensor.size() != length)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextGenerationAlphabet class.\n"
+               << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
+               << "Tensor length must be equal to alphabet length.";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    auto index = max_element(tensor.data(), tensor.data() + tensor.size()) - tensor.data();
+
+    return alphabet(index);
+}
+
+
+string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& tensor) const
+{
+    const Index length = alphabet.size();
+
+    if(tensor.dimension(0) != length)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TextGenerationAlphabet class.\n"
+               << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
+               << "Tensor length must be equal to alphabet length.";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    string result = "";
+
+    for(Index i = 0; i < tensor.dimension(1); i++)
+    {
+        auto index = max_element(tensor.data() + i*tensor.dimension(0), tensor.data() + (i+1)*tensor.dimension(0)) - (tensor.data() + i*tensor.dimension(0));
+
+        result += alphabet(index);
+
+    }
+
+    return result;
+}
+
+
+}
+
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //

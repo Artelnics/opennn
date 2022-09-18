@@ -35,6 +35,7 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
+#include "text_analytics.h"
 
 namespace opennn
 {
@@ -205,12 +206,19 @@ public:
 
    Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
 
-
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
    void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){};
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
+
+   // Text generation
+
+   string calculate_text_outputs(TextGenerationAlphabet&, const string&, const Index&, const bool&);
+
+   string generate_word(TextGenerationAlphabet&, const string&, const Index&);
+
+   string generate_phrase(TextGenerationAlphabet&, const string&, const Index&);
 
    // Serialization methods
 
