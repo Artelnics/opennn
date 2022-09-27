@@ -75,6 +75,7 @@
 #include "region_based_object_detector.h"
 #include "json_to_xml.h"
 #include "text_analytics.h"
+#include "codification.h"
 
 #endif
 
