@@ -5219,7 +5219,7 @@ void DataSet::set_codification(const string& new_codification_string)
     {
         codification = Codification::UTF8;
     }
-    else if(new_codification_string == "SHIFT-JIS")
+    else if(new_codification_string == "SHIFT_JIS")
     {
         codification = Codification::SHIFT_JIS;
     }
@@ -5230,7 +5230,7 @@ void DataSet::set_codification(const string& new_codification_string)
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_codification(const string&) method.\n"
                << "Unknown codification: " << new_codification_string << ".\n"
-               << "Available codifications: UTF-8, SHIFT-JIS.\n";
+               << "Available codifications: UTF-8, SHIFT_JIS.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -7072,6 +7072,17 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    // Codification
+
+    file_stream.OpenElement("Codification");
+
+    buffer.str("");
+    buffer << get_codification_string();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     // Close DataFile
 
     file_stream.CloseElement();
@@ -7696,6 +7707,20 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const string new_stop_words_list = stop_words_list_element->GetText();
 
             stop_words = get_tokens(new_stop_words_list,",");
+        }
+    }
+
+    // Codification
+
+    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+
+    if(codification_element)
+    {
+        if(codification_element->GetText())
+        {
+            const string new_codification = codification_element->GetText();
+
+            set_codification(new_codification);
         }
     }
 
@@ -11935,6 +11960,8 @@ void DataSet::read_csv_1()
     {
         getline(file, line);
 
+        line = decode(line);
+
         trim(line);
 
         erase(line, '"');
@@ -12321,6 +12348,8 @@ void DataSet::read_csv_2_complete()
     {
         getline(file, line);
 
+        line = decode(line);
+
         trim(line);
 
         if(line.empty()) continue;
@@ -12458,9 +12487,9 @@ void DataSet::read_csv_3_complete()
     {
         getline(file, line);
 
-        trim(line);
-
         line = decode(line);
+
+        trim(line);
 
         erase(line, '"');
 
