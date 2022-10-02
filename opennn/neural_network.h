@@ -36,6 +36,7 @@
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 #include "text_analytics.h"
+#include "batch_normalization_layer.h"
 
 namespace opennn
 {
@@ -352,6 +353,12 @@ struct NeuralNetworkForwardPropagation
             case Layer::Type::Flatten:
             {
                 layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::BatchNormalization:
+            {
+                layers(i) = new BatchNormalizationLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));;
             }
             break;
 
