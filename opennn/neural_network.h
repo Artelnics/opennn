@@ -51,7 +51,7 @@ class NeuralNetwork
 
 public:
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification};
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, TextGeneration};
 
    // Constructors
 
