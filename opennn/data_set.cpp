@@ -4320,7 +4320,9 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
     Tensor<type, 2> inputs(1, input_variables_number);
 
     for(Index i = 0; i < input_variables_number; i++)
+    {
         inputs(0, i) = data(sample_index, input_variables_indices(i));
+    }
 
     return inputs;
 }
@@ -4748,7 +4750,6 @@ void DataSet::set()
     time_series_data.resize(0,0);
 
     time_series_columns.resize(0);
-
 
     columns_missing_values_number.resize(0);
 }
@@ -12352,6 +12353,8 @@ void DataSet::read_csv_2_complete()
 
         trim(line);
 
+        erase(line, '"');
+
         if(line.empty()) continue;
 
         tokens = get_tokens(line, separator_char);
@@ -12371,8 +12374,6 @@ void DataSet::read_csv_2_complete()
         for(unsigned j = 0; j < raw_columns_number; j++)
         {
             if(has_rows_labels && j == 0) continue;
-
-            trim(tokens(j));
 
             if(columns(column_index).type == ColumnType::Categorical)
             {
@@ -12572,11 +12573,11 @@ void DataSet::read_csv_3_complete()
                 trim(lower_case_token);
                 transform(lower_case_token.begin(), lower_case_token.end(), lower_case_token.begin(), ::tolower);
 
-                Tensor<string,1> positive_words(4);
-                Tensor<string,1> negative_words(4);
+                Tensor<string,1> positive_words(5);
+                Tensor<string,1> negative_words(5);
 
-                positive_words.setValues({"yes","positive","+","true"});
-                negative_words.setValues({"no","negative","-","false"});
+                positive_words.setValues({"yes","positive","+","true","si"});
+                negative_words.setValues({"no","negative","-","false","no"});
 
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
