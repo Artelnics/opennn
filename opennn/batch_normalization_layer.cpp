@@ -15,6 +15,10 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
+BatchNormalizationLayer::BatchNormalizationLayer() : Layer()
+{
+}
+
 BatchNormalizationLayer::BatchNormalizationLayer(const Index& new_inputs_number) : Layer()
 {
     set(new_inputs_number);
@@ -30,7 +34,6 @@ void BatchNormalizationLayer::set(const Index& new_inputs_number)
 
     set_default();
 }
-
 
 void BatchNormalizationLayer::set_parameters_random()
 {
@@ -55,6 +58,56 @@ void BatchNormalizationLayer::set_default()
     layer_type = Type::BatchNormalization;
 }
 
+
+Index BatchNormalizationLayer::get_inputs_number() const
+{
+    return normalization_weights.dimension(1);
+}
+
+void BatchNormalizationLayer::perform_normalization(const Tensor<type, 2>& inputs, BatchNormalizationLayerForwardPropagation* batch_norm_forward_propagation) const
+{
+    const int rows_number = static_cast<int>(inputs.dimension(0));
+    const int cols_number = static_cast<int>(inputs.dimension(1));
+
+    Tensor<float,1>batch_size(cols_number);
+    batch_size.setConstant(rows_number);
+
+    const Eigen::array<ptrdiff_t, 1> dims = {0};
+    const Eigen::array<Index, 2> dims_2D = {1, cols_number};
+    const Eigen::array<Index, 2> bcast({rows_number, 1});
+
+    batch_norm_forward_propagation->mean = inputs.mean(dims);
+    batch_norm_forward_propagation->variance = ((batch_norm_forward_propagation->mean.reshape(dims_2D).broadcast(bcast) - inputs).square()).sum(dims)/batch_size;
+
+    cout<<"batch_norm_forward_propagation->mean"<<endl;
+    cout<<batch_norm_forward_propagation->mean<<endl;
+    cout<<"batch_norm_forward_propagation->variance"<<endl;
+    cout<<batch_norm_forward_propagation->variance<<endl;
+
+//    Tensor<type,2>inputs_normalized(rows_number,cols_number);
+}
+
+
+void BatchNormalizationLayer::forward_propagate(type* inputs_data,
+                                        const Tensor<Index,1>& inputs_dimensions,
+                                        LayerForwardPropagation* forward_propagation)
+{
+    BatchNormalizationLayerForwardPropagation* batch_norm_layer_forward_propagation
+            = static_cast<BatchNormalizationLayerForwardPropagation*>(forward_propagation);
+
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+    perform_normalization(inputs, batch_norm_layer_forward_propagation);
+
+//    calculate_combinations(inputs,
+//                           biases,
+//                           synaptic_weights,
+//                           perceptron_layer_forward_propagation->combinations.data());
+
+//    const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
+//    const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
+
+}
 
 void BatchNormalizationLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                      const Tensor<type, 2>& weights,

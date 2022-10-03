@@ -26,6 +26,8 @@
 
 namespace opennn
 {
+struct BatchNormalizationLayerForwardPropagation;
+
 class BatchNormalizationLayer : public Layer
 
 {
@@ -37,60 +39,25 @@ public:
 
    explicit BatchNormalizationLayer(const Index&);
 
-//   explicit BatchNormalizationLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
    // Get methods
 
-//   Index get_inputs_number() const override;
-//   Index get_neurons_number() const final;
+    Index get_inputs_number() const;
 
    // Parameters
 
-//   const Tensor<type, 2>& get_biases() const;
-//   const Tensor<type, 2>& get_synaptic_weights() const;
-
-//   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-//   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
-
-//   Index get_biases_number() const;
-//   Index get_synaptic_weights_number() const;
-//   Index get_parameters_number() const final;
-//   Tensor<type, 1> get_parameters() const final;
-
-//   Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
-
-//   string write_activation_function() const;
-
    // Display messages
-
-//   const bool& get_display() const;
 
    // Set methods
 
    void set(const Index&);
-//   void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
    void set_default();
-//   void set_name(const string&);
 
    // Architecture
 
-//   void set_inputs_number(const Index&) final;
-//   void set_neurons_number(const Index&) final;
-
    // Parameters
 
-//   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
-
-//   // Display messages
-
-//   void set_display(const bool&);
-
-//   // Parameters initialization methods
-//   void set_biases_constant(const type&);
-//   void set_synaptic_weights_constant(const type&);
-   
-//   void set_parameters_constant(const type&) final;
+   // Display messages
 
    void set_parameters_random();
 
@@ -100,37 +67,15 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&);
 
-
+    void perform_normalization(const Tensor<type, 2>&, BatchNormalizationLayerForwardPropagation*)const;
    // Perceptron layer outputs
 
-
-//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
-
-//   void forward_propagate(type*, const Tensor<Index, 1>&,
-//                          LayerForwardPropagation*) final;
-
-//   void forward_propagate(type*,
-//                          const Tensor<Index, 1>&,
-//                          Tensor<type, 1>&,
-//                          LayerForwardPropagation*) final;
-
+   void forward_propagate(type*, const Tensor<Index, 1>&,
+                          LayerForwardPropagation*);
 
    // Gradient methods
 
-//   void calculate_error_gradient(type*,
-//                                 LayerForwardPropagation*,
-//                                 LayerBackPropagation*) const final;
-
-//   void insert_gradient(LayerBackPropagation*,
-//                        const Index&,
-//                        Tensor<type, 1>&) const final;
-
-
-
    // Serialization methods
-
-//   void from_XML(const tinyxml2::XMLDocument&) final;
-//   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -142,8 +87,8 @@ protected:
 
    /// Fixed parameters
 
-   Tensor<type, 2> mean;
-   Tensor<type, 2> std;
+//   Tensor<type, 2> mean;
+//   Tensor<type, 2> std;
 
    /// Outputs
 
@@ -158,8 +103,47 @@ protected:
    bool display = true;
 };
 
-#endif
+
+struct BatchNormalizationLayerForwardPropagation : LayerForwardPropagation
+{
+    // Default constructor
+
+    explicit BatchNormalizationLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    explicit BatchNormalizationLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        // Outputs
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, inputs_number});
+        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * inputs_number*sizeof(type)) );
+
+        // fixed parameters
+
+        mean.resize(inputs_number);
+        variance.resize(inputs_number);
+    }
+
+    Tensor<type,1> mean;
+    Tensor<type,1> variance;
+};
+
 }
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
