@@ -407,6 +407,10 @@ string NeuralNetwork::get_project_type_string() const
     {
         return "ImageClassification";
     }
+    else if(project_type == ProjectType::TextGeneration)
+    {
+        return "TextGeneration";
+    }
 }
 
 /// Returns a string vector with the names of the variables used as outputs.
@@ -800,12 +804,12 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::Forecasting)
     {
-        //        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        //        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+//                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        //        this->add_layer(long_short_term_memory_layer_pointer);
+//                this->add_layer(long_short_term_memory_layer_pointer);
 
-        for(Index i = 0; i < size-1; i++)
+        for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -827,6 +831,15 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     else if(model_type == ProjectType::ImageClassification)
     {
         // Use the set mode build specifically for image classification
+    }
+    else if(model_type == ProjectType::TextGeneration)
+    {
+        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+
+        ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
+
+        this->add_layer(long_short_term_memory_layer_pointer);
+        this->add_layer(probabilistic_layer_pointer);
     }
 
     outputs_names.resize(outputs_number);
@@ -1643,13 +1656,15 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
 #ifdef OPENNN_DEBUG
+    cout << "inputs dimensions: " << inputs_dimensions << endl;
+
     if(inputs_dimensions(1) != get_inputs_number())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions) method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (" << inputs_dimensions(1) << ").\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -1932,6 +1947,10 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
     Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
     do{
+        Tensor<type, 2> input_data(get_inputs_number(), 1);
+        input_data.setZero();
+        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
         Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
         string letter = text_generation_alphabet.multiple_one_hot_decode(output);
