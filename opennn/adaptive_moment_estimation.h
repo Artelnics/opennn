@@ -51,7 +51,7 @@ struct AdaptiveMomentEstimationData;
 
 class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {
-
+    
 public:
 
    // Constructors
