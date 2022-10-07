@@ -463,11 +463,50 @@ namespace opennn
         for (Index i = 0; i < num_individuals; i++)
         {
             bool is_repeated;
-            
+            Tensor <bool, 1> individual(num_genes);
+            individual.setConstant(false);
 
+
+            do {
+                type genes_activados = rand() % 100 + 1;
+                Index genes_count = 0;
+                while (genes_count < genes_activados)
+                {
+                    const type pointer = type(rand() / RAND_MAX);
+                    if (pointer < sumprob(0) && !individual(0))
+                    {
+                        individual(0) = true;
+                        genes_count++;
+                    }
+                    for (Index j = 0; j < num_genes - 1; j++)
+                    {
+                        if (pointer > sumprob(j) && pointer < sumprob(j + 1) && !individual(j))
+                        {
+                            individual(j) = true;
+                            genes_count++;
+                        }
+                    }
+                }
+                //Individual repetition
+                for (Index j = 0; j <i ; j++)
+                {
+                    Tensor<bool, 1> row = population.chip(j, 0);
+                    if (are_equal(individual, row)) 
+                    {
+                        is_repeated = true;
+                        break;
+                    }
+                }
+                
+            } while (is_repeated);
+
+            for (Index j = 0; j < 100; j++)
+            {
+                population(i, j) = individual(j);
+            }
         }
+}
  
-    }
 
 
 
