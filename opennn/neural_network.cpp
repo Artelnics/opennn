@@ -2936,6 +2936,7 @@ string NeuralNetwork::write_expression_api() const
         //const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
         //const Tensor<string, 1> layers_names = get_layers_names();
 
+        vector<std::string> found_tokens;
         ostringstream buffer;
 
         buffer << "<!DOCTYPE html>" << endl;
@@ -2953,17 +2954,20 @@ string NeuralNetwork::write_expression_api() const
         buffer << "" << endl;
         buffer << "\tInputs Names: \t" << endl;
 
+
         const Tensor<string, 1> inputs = get_inputs_names();
 
         for (int i = 0; i < inputs.dimension(0); i++)
         {
             if (inputs[i] == "")
             {
-                buffer << "\t" << to_string(1 + i) + " )" << "input_" + to_string(1 + i) << endl;
+                buffer << "\t" << to_string(i) + " )" << "input_" + to_string(i) << endl;
+                found_tokens.push_back("input_" + to_string(i));
             }
             else
             {
-                buffer << "\t" << to_string(1 + i) + " )" << inputs[i] << endl;
+                buffer << "\t" << to_string(i) + " )" << inputs[i] << endl;
+                found_tokens.push_back(inputs[i]);
             }
         }
 
@@ -3009,86 +3013,92 @@ string NeuralNetwork::write_expression_api() const
         buffer << "$url_components = parse_url($url);" << endl;
         buffer << "parse_str($url_components['query'], $params);" << endl;
 
-        /**
-        buffer << "class NeuralNetwork:\n " << endl;
-        buffer << "\tdef __init__(self):\n " << endl;
+        /***/
 
-        if (has_recurrent_layer())
+        for (int i = 0; i < inputs.dimension(0); i++)
         {
-            buffer << "\t\tself.timestep = " + to_string(get_recurrent_layer_pointer()->get_timesteps()) + "\n " << endl;
-            buffer << "\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+            string param ="";
+            param = "$num" + to_string(i);
+
+            if (inputs[i] == "")
+            {
+                buffer << param << " = " << "$params['" + param << "];" << endl;
+                buffer << "input_" + to_string(i) << " = intval(" << param << ");" << endl;
+
+            }
+            else
+            {
+                buffer << param << " = " << "$params['" + param << "];" << endl;
+                buffer << "$" << inputs[i] << " = intval(" << param << ");" << endl;
+
+            }
         }
 
-        if (has_long_short_term_memory_layer())
-        {
-            buffer << "\t\tself.timestep = " + to_string(get_long_short_term_memory_layer_pointer()->get_timesteps()) + "\n " << endl;
-            buffer << "\t\tself.hidden_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
-            buffer << "\t\tself.cell_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+        /***/
+
+        //Faltaria el if sobre el status en función de las variables
+
+        /***/
+
+        //const string writed_expression = write_expression();
+        string expression = write_expression();
+        string expression_api = write_expression();
+        string phpVAR = "$";
+
+        vector<std::string> tokens;
+        vector<std::string> tokens_output;
+        std::string token;
+        std::stringstream ss(expression);
+        while (getline(ss, token, '\n')) {
+            tokens.push_back(token);
+        }
+        for (auto& s : tokens) {
+            string word = "";
+            for (char& c : s) {
+                if (c != ' ') {
+                    word += c;
+                }
+                else {
+                    break;
+                }
+            }
+            found_tokens.push_back(word);
+
         }
 
-        buffer << "\t\tself.parameters_number = " + to_string(get_parameters_number()) + "\n " << endl;
+        for (auto& key_word : found_tokens) {
+            string new_word = "";
+            new_word = phpVAR + key_word;
 
-        for (Index i = 0; i < layers_number; i++)
-        {
-            buffer << layers_pointers[i]->write_expression_python() << endl;
+            replace_all_appearances(expression_api, key_word, new_word);
         }
+        buffer << expression_api;
 
-        buffer << "\tdef calculate_output(self, inputs):\n" << endl;
+        /***/
 
-        buffer << "\t\toutput_" + layers_pointers[0]->get_name() + " = self." + layers_pointers[0]->get_name() + "(inputs)\n" << endl;
+        //Faltaria la preparación del JSON en función de las variables
 
-        for (Index i = 1; i < layers_number; i++)
-        {
-            buffer << "\t\toutput_" + layers_pointers[i]->get_name() + " = self." + layers_pointers[i]->get_name() + "(output_" + layers_pointers[i - 1]->get_name() + ")\n" << endl;
-        }
+        /***/
 
-        buffer << "\t\treturn output_" + layers_pointers[layers_number - 1]->get_name() << endl;
+        buffer << "$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl;
+        buffer << "echo nl2br(\"\n\" . $json_response_pretty . \"\n\");" << endl;
+        buffer << "}else{" << endl;
+        buffer << "echo \"New page\";" << endl;
+        buffer << "}" << endl;
+        buffer << "$_SESSION['lastpage'] = __FILE__;" << endl;
+        buffer << "?>" << endl;
+        buffer << "</h4>" << endl;
+        buffer << "/div" << endl;
+        buffer << "/body" << endl;
+        buffer << "/html" << endl;
 
-        buffer << "\n\n\tdef calculate_batch_output(self, input_batch):\n" << endl;
-
-        buffer << "\t\toutput = []\n" << endl;
-
-        buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
-
-        if (has_recurrent_layer())
-        {
-            buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
-
-            buffer << "\t\t\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n" << endl;
-        }
-
-        if (has_long_short_term_memory_layer())
-        {
-            buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
-
-            buffer << "\t\t\t\tself.hidden_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n" << endl;
-
-            buffer << "\t\t\t\tself.cell_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n" << endl;
-        }
+        string out = buffer.str();
 
 
-        buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
-
-        buffer << "\t\t\toutput_" + layers_pointers[0]->get_name() + " = self." + layers_pointers[0]->get_name() + "(inputs)\n" << endl;
-
-        for (Index i = 1; i < layers_number; i++)
-        {
-            buffer << "\t\t\toutput_" + layers_pointers[i]->get_name() + " = self." + layers_pointers[i]->get_name() + "(output_" + layers_pointers[i - 1]->get_name() + ")\n" << endl;
-        }
-
-        buffer << "\t\t\toutput = np.append(output,output_" + layers_pointers[layers_number - 1]->get_name() + ", axis=0)\n" << endl;
-
-        buffer << "\t\treturn output" << endl;
-
-        string expression = buffer.str();
-
-        replace(expression, "+-", "-");
-        replace(expression, "-+", "-");
-        replace(expression, "--", "+");
-
-        return expression;
-    */
+        return out;
     }
+
+}
 
 /// Returns a string with the python function of the expression represented by the neural network.
 string NeuralNetwork::write_expression_python() const
