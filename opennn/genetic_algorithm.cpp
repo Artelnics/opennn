@@ -11,535 +11,464 @@
 namespace opennn
 {
 
-/// Default constructor.
+    /// Default constructor.
 
-GeneticAlgorithm::GeneticAlgorithm()
-    : InputsSelection()
-{
-    set_default();
-}
-
-
-/// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
-
-GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy_pointer)
-    : InputsSelection(new_training_strategy_pointer)
-{
-    set_default();
-}
-
-/// Returns the population matrix.
-
-const Tensor<bool, 2>& GeneticAlgorithm::get_population() const
-{
-    return population;
-}
-
-
-/// Returns the fitness of the population.
-
-const Tensor<type, 1>& GeneticAlgorithm::get_fitness() const
-{
-    return fitness;
-}
-
-
-const Tensor<bool, 1>& GeneticAlgorithm::get_selection() const
-{
-    return selection;
-}
-
-
-/// Returns the size of the population.
-
-Index GeneticAlgorithm::get_individuals_number() const
-{
-    return population.dimension(0);
-}
-
-
-Index GeneticAlgorithm::get_genes_number() const
-{
-    return population.dimension(1);
-}
-
-
-/// Returns the rate used in the mutation.
-
-const type& GeneticAlgorithm::get_mutation_rate() const
-{
-    return mutation_rate;
-}
-
-
-/// Returns the size of the elite in the selection.
-
-const Index& GeneticAlgorithm::get_elitism_size() const
-{
-    return elitism_size;
-}
-
-
-/// Returns the method used for initalizating the population
-
-const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
-{
-    return initialization_method;
-}
-
-
-/// Sets the members of the genetic algorithm object to their default values.
-
-void GeneticAlgorithm::set_default()
-{
-    Index genes_number;
-
-    if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
+    GeneticAlgorithm::GeneticAlgorithm()
+        : InputsSelection()
     {
-        genes_number = 0;
-    }
-    else
-    {
-        genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
+        set_default();
     }
 
-    Index individuals_number = 10;
 
-    maximum_epochs_number = 100;
+    /// Training strategy constructor.
+    /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
-    mutation_rate = static_cast<type>(0.01);
+    GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy_pointer)
+        : InputsSelection(new_training_strategy_pointer)
+    {
+        set_default();
+    }
 
-    // Population stuff
+    /// Returns the population matrix.
 
-    population.resize(individuals_number, genes_number);
-
-    parameters.resize(individuals_number);
-    for(Index i = 0; i < individuals_number; i++) parameters(i).resize(genes_number);
-
-    training_errors.resize(individuals_number);
-    selection_errors.resize(individuals_number);
-
-    fitness.resize(individuals_number);
-    fitness.setConstant(type(-1.0));
-
-    selection.resize(individuals_number);
-
-    // Training operators
-
-    elitism_size = 2;
-}
+    const Tensor<bool, 2>& GeneticAlgorithm::get_population() const
+    {
+        return population;
+    }
 
 
-/// Sets a new popualtion.
-/// @param new_population New population matrix.
+    /// Returns the fitness of the population.
 
-void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
-{
+    const Tensor<type, 1>& GeneticAlgorithm::get_fitness() const
+    {
+        return fitness;
+    }
+
+
+    const Tensor<bool, 1>& GeneticAlgorithm::get_selection() const
+    {
+        return selection;
+    }
+
+
+    /// Returns the size of the population.
+
+    Index GeneticAlgorithm::get_individuals_number() const
+    {
+        return population.dimension(0);
+    }
+
+
+    Index GeneticAlgorithm::get_genes_number() const
+    {
+        return population.dimension(1);
+    }
+
+
+    /// Returns the rate used in the mutation.
+
+    const type& GeneticAlgorithm::get_mutation_rate() const
+    {
+        return mutation_rate;
+    }
+
+
+    /// Returns the size of the elite in the selection.
+
+    const Index& GeneticAlgorithm::get_elitism_size() const
+    {
+        return elitism_size;
+    }
+
+
+    /// Returns the method used for initalizating the population
+
+    const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
+    {
+        return initialization_method;
+    }
+
+
+    /// Sets the members of the genetic algorithm object to their default values.
+
+    void GeneticAlgorithm::set_default()
+    {
+        Index genes_number;
+
+        if (training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
+        {
+            genes_number = 0;
+        }
+        else
+        {
+            genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
+        }
+
+        Index individuals_number = 10;
+
+        maximum_epochs_number = 100;
+
+        mutation_rate = static_cast<type>(0.01);
+
+        // Population stuff
+
+        population.resize(individuals_number, genes_number);
+
+        parameters.resize(individuals_number);
+        for (Index i = 0; i < individuals_number; i++) parameters(i).resize(genes_number);
+
+        training_errors.resize(individuals_number);
+        selection_errors.resize(individuals_number);
+
+        fitness.resize(individuals_number);
+        fitness.setConstant(type(-1.0));
+
+        selection.resize(individuals_number);
+
+        // Training operators
+
+        elitism_size = 2;
+    }
+
+
+    /// Sets a new popualtion.
+    /// @param new_population New population matrix.
+
+    void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
+    {
 #ifdef OPENNN_DEBUG
 
-    const Index individuals_number = get_individuals_number();
-    const Index new_individuals_number = new_population.dimension(1);
+        const Index individuals_number = get_individuals_number();
+        const Index new_individuals_number = new_population.dimension(1);
 
-    // Optimization algorithm
+        // Optimization algorithm
 
-    ostringstream buffer;
-
-    if(!training_strategy_pointer)
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to training strategy is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    // Loss index
-
-    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
-
-    if(!loss_index_pointer)
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    // Neural network
-
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    if(!neural_network_pointer)
-    {
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(new_individuals_number  != individuals_number)
-    {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_population(const Tensor<type, 2>&) method.\n"
-               << "Population rows("<< new_individuals_number << ") must be equal to population size(" << individuals_number << ").\n";
+        if (!training_strategy_pointer)
+        {
+            buffer << "OpenNN Exception: InputsSelection class.\n"
+                << "void check() const method.\n"
+                << "Pointer to training strategy is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+            throw invalid_argument(buffer.str());
+        }
 
-#endif
+        // Loss index
 
-    population = new_population;
-}
+        const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
+        if (!loss_index_pointer)
+        {
+            buffer << "OpenNN Exception: InputsSelection class.\n"
+                << "void check() const method.\n"
+                << "Pointer to loss index is nullptr.\n";
 
-void GeneticAlgorithm::set_training_errors(const Tensor<type, 1>& new_training_errors)
-{
-    training_errors = new_training_errors;
-}
+            throw invalid_argument(buffer.str());
+        }
 
+        // Neural network
 
-void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errors)
-{
-    selection_errors = new_selection_errors;
-}
+        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+        if (!neural_network_pointer)
+        {
+            buffer << "OpenNN Exception: InputsSelection class.\n"
+                << "void check() const method.\n"
+                << "Pointer to neural network is nullptr.\n";
 
-/// Sets a new fitness for the population.
-/// @param new_fitness New fitness values.
+            throw invalid_argument(buffer.str());
+        }
 
-void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
-{
-#ifdef OPENNN_DEBUG
-
-    const Index individuals_number = get_individuals_number();
-
-    if(new_fitness.size() != individuals_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_fitness(const Tensor<type, 1>&) method.\n"
-               << "Fitness size ("<<new_fitness.size()
-               << ") must be equal to population size ("<< individuals_number <<").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    for(Index i = 0; i < individuals_number; i++)
-    {
-        if(new_fitness[i] < 0)
+        if (new_individuals_number != individuals_number)
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-                   << "void set_fitness(const Tensor<type, 2>&) method.\n"
-                   << "Fitness must be greater than 0.\n";
+                << "void set_population(const Tensor<type, 2>&) method.\n"
+                << "Population rows(" << new_individuals_number << ") must be equal to population size(" << individuals_number << ").\n";
 
             throw invalid_argument(buffer.str());
         }
-    }
 
 #endif
 
-    fitness = new_fitness;
-}
+        population = new_population;
+    }
 
-/// Sets a new population size. It must be greater than 4.
-/// @param new_population_size Size of the population
 
-void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
-{
+    void GeneticAlgorithm::set_training_errors(const Tensor<type, 1>& new_training_errors)
+    {
+        training_errors = new_training_errors;
+    }
+
+
+    void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errors)
+    {
+        selection_errors = new_selection_errors;
+    }
+
+
+    /// Sets a new fitness for the population.
+    /// @param new_fitness New fitness values.
+
+    void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
+    {
 #ifdef OPENNN_DEBUG
 
-    if(new_individuals_number < 4)
-    {
-        ostringstream buffer;
+        const Index individuals_number = get_individuals_number();
 
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_individuals_number(const Index&) method.\n"
-               << "Population size (" << new_individuals_number << ") must be greater than 4.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
-
-    population.resize(new_individuals_number, new_genes_number);
-
-    parameters.resize(new_individuals_number);
-
-    training_errors.resize(new_individuals_number);
-    selection_errors.resize(new_individuals_number);
-
-    fitness.resize(new_individuals_number);
-    fitness.setConstant(type(-1.0));
-
-    selection.resize(new_individuals_number);
-
-    if(elitism_size > new_individuals_number) elitism_size = new_individuals_number;
-}
-
-
-/// Sets a new initalization method.
-/// @param new_initializatio_method New initalization method (Random or WeigthedCorrelations).
-
-void GeneticAlgorithm::set_initialization_method(const GeneticAlgorithm::InitializationMethod& new_initialization_method)
-{
-    initialization_method = new_initialization_method;
-}
-
-
-/// Sets a new rate used in the mutation.
-/// It is a number between 0 and 1.
-/// @param new_mutation_rate Rate used for the mutation.
-
-void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_mutation_rate < 0 || new_mutation_rate > 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_mutation_rate(const type&) method.\n"
-               << "Mutation rate must be between 0 and 1.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    mutation_rate = new_mutation_rate;
-}
-
-
-/// Sets the number of individuals with the greatest fitness selected.
-/// @param new_elitism_size Size of the elitism.
-
-void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
-{
-#ifdef OPENNN_DEBUG
-
-    const Index individuals_number = get_individuals_number();
-
-    if(new_elitism_size > individuals_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_elitism_size(const Index&) method.\n"
-               << "Elitism size("<< new_elitism_size
-               <<") must be lower than the population size("<<individuals_number<<").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    elitism_size = new_elitism_size;
-}
-
-
-/// Initialize the population depending on the intialization method.
-
-void GeneticAlgorithm::initialize_population()
-{
-    const Index individuals_number = get_individuals_number();
-
-    if(individuals_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void initialize_population() method.\n"
-               << "Population size must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index genes_number = get_genes_number();
-
-    if(individuals_number > pow(2,genes_number))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void initialize_population() method.\n"
-               << "Individuals number must be less than 2 to the power of genes number.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    Tensor<bool, 1> individual(genes_number);
-
-    bool is_repeated;
-
-    if(initialization_method == GeneticAlgorithm::InitializationMethod::Random)
-    {
-        for(Index i = 0; i < individuals_number; i++)
+        if (new_fitness.size() != individuals_number)
         {
-            // Do-while for preventing repetition of samples
+            ostringstream buffer;
 
-            do{
+            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                << "void set_fitness(const Tensor<type, 1>&) method.\n"
+                << "Fitness size (" << new_fitness.size()
+                << ") must be equal to population size (" << individuals_number << ").\n";
 
+            throw invalid_argument(buffer.str());
+        }
+
+        for (Index i = 0; i < individuals_number; i++)
+        {
+            if (new_fitness[i] < 0)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                    << "void set_fitness(const Tensor<type, 2>&) method.\n"
+                    << "Fitness must be greater than 0.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+        }
+
+#endif
+
+        fitness = new_fitness;
+    }
+
+    /// Sets a new population size. It must be greater than 4.
+    /// @param new_population_size Size of the population
+
+    void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
+    {
+#ifdef OPENNN_DEBUG
+
+        if (new_individuals_number < 4)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                << "void set_individuals_number(const Index&) method.\n"
+                << "Population size (" << new_individuals_number << ") must be greater than 4.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+#endif
+
+        Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
+
+        population.resize(new_individuals_number, new_genes_number);
+
+        parameters.resize(new_individuals_number);
+
+        training_errors.resize(new_individuals_number);
+        selection_errors.resize(new_individuals_number);
+
+        fitness.resize(new_individuals_number);
+        fitness.setConstant(type(-1.0));
+
+        selection.resize(new_individuals_number);
+
+        if (elitism_size > new_individuals_number) elitism_size = new_individuals_number;
+    }
+
+
+    /// Sets a new initalization method.
+    /// @param new_initializatio_method New initalization method (Random or WeigthedCorrelations).
+
+    void GeneticAlgorithm::set_initialization_method(const GeneticAlgorithm::InitializationMethod& new_initialization_method)
+    {
+        initialization_method = new_initialization_method;
+    }
+
+
+    /// Sets a new rate used in the mutation.
+    /// It is a number between 0 and 1.
+    /// @param new_mutation_rate Rate used for the mutation.
+
+    void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
+    {
+#ifdef OPENNN_DEBUG
+
+        if (new_mutation_rate < 0 || new_mutation_rate > 1)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                << "void set_mutation_rate(const type&) method.\n"
+                << "Mutation rate must be between 0 and 1.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+#endif
+
+        mutation_rate = new_mutation_rate;
+    }
+
+
+    /// Sets the number of individuals with the greatest fitness selected.
+    /// @param new_elitism_size Size of the elitism.
+
+    void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
+    {
+#ifdef OPENNN_DEBUG
+
+        const Index individuals_number = get_individuals_number();
+
+        if (new_elitism_size > individuals_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                << "void set_elitism_size(const Index&) method.\n"
+                << "Elitism size(" << new_elitism_size
+                << ") must be lower than the population size(" << individuals_number << ").\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+#endif
+
+        elitism_size = new_elitism_size;
+    }
+
+
+    /// Initialize the population depending on the intialization method.
+
+    void GeneticAlgorithm::initialize_population()
+    {
+        const Index individuals_number = get_individuals_number();
+
+        if (individuals_number == 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                << "void initialize_population() method.\n"
+                << "Population size must be greater than 0.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const Index genes_number = get_genes_number();
+
+        if (individuals_number > pow(2, genes_number))
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                << "void initialize_population() method.\n"
+                << "Individuals number must be less than 2 to the power of genes number.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        if (initialization_method == GeneticAlgorithm::InitializationMethod::Random)
+        {
+            initialize_population_random();
+        }
+        else
+        {
+            initialize_population_correlations();
+        }
+
+    }
+
+    void GeneticAlgorithm::initialize_population_random()
+    {
+        const Index num_individuals = get_individuals_number();
+        const Index num_genes = get_genes_number();
+
+        for (Index i = 0; i < num_individuals; i++)
+        {
+            bool is_repeated;
+            Tensor <bool, 1> individual(num_genes);
+            individual.setConstant(false);
+
+            do
+            {
                 is_repeated = false;
-
-                // Individual generation
-
-                for(Index j = 0; j < genes_number; j++)
+                type active_genes = rand() % num_genes + 1;
+                Index genes_count = 0;
+                do
                 {
-                    rand()%2 == 0 ? individual[j] = false : individual[j] = true;
-                }
+                    Index random_gene = rand() % 100;
+                    if (!individual(random_gene))
+                    {
+                        individual(random_gene) = true;
+                        genes_count++;
+                    }
+                } while (genes_count < active_genes);
 
-                // Prevent no inputs
-
-                if(is_false(individual))
+                for (Index j = 0; j < i; j++)
                 {
-                    individual(static_cast<Index>(rand())%genes_number) = true;
-                }
+                    Tensor<bool, 1> row = population.chip(j, 0);
 
-                // Check for repetitions
-
-                for(Index j = 0; j < i; j++)
-                {
-                    Tensor<bool,1> row = population.chip(j,0);
-
-                    if( are_equal(individual, row) )
+                    if (are_equal(individual, row))
                     {
                         is_repeated = true;
                         break;
                     }
                 }
-            }while(is_repeated);
 
-            //  Add individual to population
 
-            for(Index j = 0; j < genes_number; j++)
+            } while (is_repeated);
+
+            for (Index j = 0; j < individual.size(); j++)
             {
-                population(i,j) = individual(j);
+                population(i, j) = individual(j);
             }
         }
     }
-    else if(initialization_method == GeneticAlgorithm::InitializationMethod::WeightedCorrelations)
+
+    void GeneticAlgorithm::initialize_population_correlations()
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void initialize_population() method.\n"
-               << "Weigthed correlations method is not implemented yet.\n";
-
-        throw invalid_argument(buffer.str());
-
-        // 0 - Get correlation values
+        const Index num_individuals = get_individuals_number();
+        const Index num_genes = get_genes_number();
+        //Probabilities calculations
 
         DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
         Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
-        Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0,1);
+        Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
-        Tensor<type, 1> correlations_fitness(correlations.size());
-
-        // 1 - Fitness assignment
-
-        const Index individuals_number = get_individuals_number();
+        Tensor<type, 1> probability(correlations.size());
 
         const Tensor<Index, 1> rank = calculate_rank_greater(correlations);
 
-        for(Index i = 0; i < correlations.size(); i++)
+        const type sum = (num_genes * (num_genes + 1)) / 2;
+
+        for (Index i = 0; i < correlations.size(); i++)
         {
-            correlations_fitness(rank(i)) = type(i+1);
+            type prob = (num_genes - (rank(i))) / sum;
+            probability(i) = prob;
         }
-
-        // 2 - Fitness cumsum
-
-        const Tensor<type, 1> cumulative_fitness = correlations_fitness.cumsum(0);
-
-        // 3 - Individual generation
-
-        Tensor<bool, 1> individual(genes_number);
-
-        individual.setConstant(false);
-
-        for(Index i = 0; i < individuals_number; i++)
+        const Tensor <type, 1> sumprob = probability.cumsum(0);
+        for (Index i = 0; i < num_individuals; i++)
         {
-            const type inputs_number = int( (type) rand()/RAND_MAX * genes_number );
-
-            do{
-
-                is_repeated = false;
-
-                Index input_count = 0;
-
-                while(input_count < inputs_number)
-                {
-
-                    // 3.1 - Roulete Wheel
-
-                    const type pointer = ((type) rand()/RAND_MAX) * cumulative_fitness(genes_number-1); // FAILS WITH CATEGORICS BECAUSE OF GENES NUMBER != INPUTS NUMBER
-
-                    cout << "Pointer: " << pointer << endl;
-
-                    if(pointer < cumulative_fitness(0) && !individual(0))
-                    {
-                        individual(0) = true;
-                        input_count++;
-                        continue;
-                    }
-
-                    for(Index j = 0; j < individuals_number - 1; j++)
-                    {
-                        if(cumulative_fitness(j) < pointer
-                                && pointer < cumulative_fitness(j + 1)
-                                && !individual(j+1))
-                        {
-                            individual(j+1) = true;
-                            input_count++;
-                            break;
-                        }
-                    }
-
-                }
-
-                cout << individual << endl;
-
-                    // 3.2 - No repetition
-
-                    for(Index j = 0; j < i; j++)
-                    {
-                        Tensor<bool,1> row = population.chip(j,0);
-
-                        if( are_equal(individual, row) )
-                        {
-                            is_repeated = true;
-                            break;
-                        }
-                    }
-
-                    //  3.3 - Add individual to population
-
-                    for(Index j = 0; j < genes_number; j++)
-                    {
-                        population(i,j) = individual(j);
-                    }
-
-            }while(is_repeated);
+            bool is_repeated;
+            
 
         }
-
+ 
     }
 
-    check_categorical_columns();
-
-}
 
 
 /// Evaluate the population loss.

@@ -52,7 +52,7 @@ public:
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
-    enum class InitializationMethod{Random, WeightedCorrelations};
+    enum class InitializationMethod{Random, Correlations};
 
     // Get methods
 
@@ -94,6 +94,10 @@ public:
     // Population methods
 
     void initialize_population();
+
+    void initialize_population_random();
+    
+    void initialize_population_correlations();
 
     void evaluate_population();
 
