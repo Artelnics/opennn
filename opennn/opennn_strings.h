@@ -55,6 +55,8 @@ namespace opennn
 
     bool contains_substring(const string&, const string&);
 
+    void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith);
+
     void trim(string&);
     void erase(string&, const char&);
 
