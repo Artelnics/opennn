@@ -1576,7 +1576,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
     Tensor<type, 1> parameters = get_parameters();
 
-    parameters = parameters + perturbation;
+    parameters = parameters+perturbation;
 
     set_parameters(parameters);
 }
@@ -2929,6 +2929,166 @@ string NeuralNetwork::write_expression() const
     return expression;
 }
 
+string NeuralNetwork::write_expression_api() const
+{
+    {
+        //const Index layers_number = get_layers_number();
+        //const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+        //const Tensor<string, 1> layers_names = get_layers_names();
+
+        ostringstream buffer;
+
+        buffer << "<!DOCTYPE html>" << endl;
+        buffer << "<!--" << endl;
+        buffer << "Artificial Intelligence Techniques SL\t" << endl;
+        buffer << "artelnics@artelnics.com\t" << endl;
+        buffer << "" << endl;
+        buffer << "Your model has been exported to this php file." << endl;
+        buffer << "You can manage it writting your parameters in the url of your browser.\t" << endl;
+        buffer << "Example:" << endl;
+        buffer << "" << endl;
+        buffer << "\turl = http://localhost/API_example/\t" << endl;
+        buffer << "\tparameters in the url = http://localhost/API_example/?input0=5&input1=2&...\t" << endl;
+        buffer << "\tTo see the ouput refresh the page" << endl;
+        buffer << "" << endl;
+        buffer << "\tInputs Names: \t" << endl;
+
+        const Tensor<string, 1> inputs = get_inputs_names();
+
+        for (int i = 0; i < inputs.dimension(0); i++)
+        {
+            if (inputs[i] == "")
+            {
+                buffer << "\t" << to_string(1 + i) + " )" << "input_" + to_string(1 + i) << endl;
+            }
+            else
+            {
+                buffer << "\t" << to_string(1 + i) + " )" << inputs[i] << endl;
+            }
+        }
+
+        buffer << "" << endl;
+        buffer << "-->\t" << endl;
+        
+        buffer << "" << endl;
+        buffer << "<html lang = \"en\">\n" << endl;
+        buffer << "<head>\n" << endl;
+        buffer << "<title>Rest API Client Side Demo</title>\n " << endl;
+        buffer << "<meta charset = \"utf-8\">" << endl;
+        buffer << "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">" << endl;
+        buffer << "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">" << endl;
+        buffer << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl;
+        buffer << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl;
+        buffer << "</head>" << endl;
+        buffer << "<body>" << endl;
+        buffer << "<div class = \"container\">" << endl;
+        buffer << "<br></br>" << endl;
+        buffer << "<div class = \"form-group\">" << endl;
+        buffer << "<p>" << endl;
+        buffer << "Write your input on the URL using this format: https://.../?input0=value0&input1=value1&..." << endl;
+        buffer << "</p>" << endl;
+        buffer << "<p>" << endl;
+        buffer << "value0, value1 ... are the values you must enter.Then, refresh the pageand your answer will be shown" << endl;
+        buffer << "</p>" << endl;
+        buffer << "<p>" << endl;
+        buffer << "Refresh the page to see the prediction" << endl;
+        buffer << "</p>" << endl;
+        buffer << "</div>" << endl;
+        buffer << "<h4>" << endl;
+
+        buffer << "<? php" << endl;
+        buffer << "session_start();" << endl;
+        buffer << "if (isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl;
+        buffer << "if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == = 'on') " << endl;
+        buffer << "\t$url = \"https://\"; " << endl;
+        buffer << "else" << endl;
+        buffer << "\t$url = \"http://\"; " << endl;
+
+        buffer << "$url. = $_SERVER['HTTP_HOST'];" << endl;
+        buffer << "$url. = $_SERVER['REQUEST_URI'];" << endl;
+        buffer << "$url_components = parse_url($url);" << endl;
+        buffer << "parse_str($url_components['query'], $params);" << endl;
+
+        /**
+        buffer << "class NeuralNetwork:\n " << endl;
+        buffer << "\tdef __init__(self):\n " << endl;
+
+        if (has_recurrent_layer())
+        {
+            buffer << "\t\tself.timestep = " + to_string(get_recurrent_layer_pointer()->get_timesteps()) + "\n " << endl;
+            buffer << "\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+        }
+
+        if (has_long_short_term_memory_layer())
+        {
+            buffer << "\t\tself.timestep = " + to_string(get_long_short_term_memory_layer_pointer()->get_timesteps()) + "\n " << endl;
+            buffer << "\t\tself.hidden_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+            buffer << "\t\tself.cell_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+        }
+
+        buffer << "\t\tself.parameters_number = " + to_string(get_parameters_number()) + "\n " << endl;
+
+        for (Index i = 0; i < layers_number; i++)
+        {
+            buffer << layers_pointers[i]->write_expression_python() << endl;
+        }
+
+        buffer << "\tdef calculate_output(self, inputs):\n" << endl;
+
+        buffer << "\t\toutput_" + layers_pointers[0]->get_name() + " = self." + layers_pointers[0]->get_name() + "(inputs)\n" << endl;
+
+        for (Index i = 1; i < layers_number; i++)
+        {
+            buffer << "\t\toutput_" + layers_pointers[i]->get_name() + " = self." + layers_pointers[i]->get_name() + "(output_" + layers_pointers[i - 1]->get_name() + ")\n" << endl;
+        }
+
+        buffer << "\t\treturn output_" + layers_pointers[layers_number - 1]->get_name() << endl;
+
+        buffer << "\n\n\tdef calculate_batch_output(self, input_batch):\n" << endl;
+
+        buffer << "\t\toutput = []\n" << endl;
+
+        buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
+
+        if (has_recurrent_layer())
+        {
+            buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
+
+            buffer << "\t\t\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n" << endl;
+        }
+
+        if (has_long_short_term_memory_layer())
+        {
+            buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
+
+            buffer << "\t\t\t\tself.hidden_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n" << endl;
+
+            buffer << "\t\t\t\tself.cell_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n" << endl;
+        }
+
+
+        buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
+
+        buffer << "\t\t\toutput_" + layers_pointers[0]->get_name() + " = self." + layers_pointers[0]->get_name() + "(inputs)\n" << endl;
+
+        for (Index i = 1; i < layers_number; i++)
+        {
+            buffer << "\t\t\toutput_" + layers_pointers[i]->get_name() + " = self." + layers_pointers[i]->get_name() + "(output_" + layers_pointers[i - 1]->get_name() + ")\n" << endl;
+        }
+
+        buffer << "\t\t\toutput = np.append(output,output_" + layers_pointers[layers_number - 1]->get_name() + ", axis=0)\n" << endl;
+
+        buffer << "\t\treturn output" << endl;
+
+        string expression = buffer.str();
+
+        replace(expression, "+-", "-");
+        replace(expression, "-+", "-");
+        replace(expression, "--", "+");
+
+        return expression;
+    */
+    }
 
 /// Returns a string with the python function of the expression represented by the neural network.
 string NeuralNetwork::write_expression_python() const
