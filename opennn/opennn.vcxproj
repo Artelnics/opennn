@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="adaptive_moment_estimation.h" />
     <ClInclude Include="bounding_layer.h" />
-    <ClInclude Include="codification.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
     <ClInclude Include="convolutional_layer.h" />
@@ -74,7 +73,6 @@
   <ItemGroup>
     <ClCompile Include="adaptive_moment_estimation.cpp" />
     <ClCompile Include="bounding_layer.cpp" />
-    <ClCompile Include="codification.cpp" />
     <ClCompile Include="conjugate_gradient.cpp" />
     <ClCompile Include="convolutional_layer.cpp" />
     <ClCompile Include="correlations.cpp" />
@@ -196,6 +194,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -220,6 +219,7 @@
       <OpenMP>GenerateParallelCode</OpenMP>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -236,6 +236,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -263,6 +264,7 @@
       <OpenMP>GenerateParallelCode</OpenMP>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
