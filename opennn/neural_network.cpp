@@ -804,10 +804,10 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::Forecasting)
     {
-//                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-//                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+        //                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        //                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-//                this->add_layer(long_short_term_memory_layer_pointer);
+        //                this->add_layer(long_short_term_memory_layer_pointer);
 
         for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
         {
@@ -834,11 +834,13 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::TextGeneration)
     {
+//        PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[0], architecture[1]);
+//        this->add_layer(perceptron_layer_pointer);
+
         LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        this->add_layer(long_short_term_memory_layer_pointer);
 
         ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
-
-        this->add_layer(long_short_term_memory_layer_pointer);
         this->add_layer(probabilistic_layer_pointer);
     }
 
@@ -1689,7 +1691,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
             return outputs;
         }
 
-        outputs.resize(inputs_dimensions(0),layers_pointers(0)->get_neurons_number());
+        outputs.resize(inputs_dimensions(0), layers_pointers(0)->get_neurons_number());
         outputs_dimensions = get_dimensions(outputs);
 
         layers_pointers(0)->calculate_outputs(inputs_data, inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -1699,7 +1701,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
 
         for(Index i = 1; i < layers_number; i++)
         {
-            outputs.resize(inputs_dimensions(0),layers_pointers(i)->get_neurons_number());
+            outputs.resize(inputs_dimensions(0), layers_pointers(i)->get_neurons_number());
             outputs_dimensions = get_dimensions(outputs);
 
             layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, outputs.data(), outputs_dimensions);
@@ -1877,49 +1879,49 @@ string NeuralNetwork::generate_word(TextGenerationAlphabet& text_generation_alph
 
     // Under development
 
-//    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+    //    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
-//    if(first_letters.length()*alphabet_length != get_inputs_number())
-//    {
-//        ostringstream buffer;
+    //    if(first_letters.length()*alphabet_length != get_inputs_number())
+    //    {
+    //        ostringstream buffer;
 
-//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
-//               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+    //               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+    //               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
 
-//        throw invalid_argument(buffer.str());
-//    }
+    //        throw invalid_argument(buffer.str());
+    //    }
 
 
-//    string result = first_letters;
+    //    string result = first_letters;
 
-//    // 1. Input letters to one hot encode
+    //    // 1. Input letters to one hot encode
 
-//    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+    //    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
 
-//    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+    //    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-//    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+    //    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
 
-//    punctuation_signs.setValues({" ",",",".","\n",":",";"});
+    //    punctuation_signs.setValues({" ",",",".","\n",":",";"});
 
-//    // 2. Loop for forecasting the following letter in function of the last letters
+    //    // 2. Loop for forecasting the following letter in function of the last letters
 
-//    do{
-//        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+    //    do{
+    //        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
-//        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+    //        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
-//        if(!contains(punctuation_signs, letter))
-//        {
-//            result += letter;
+    //        if(!contains(punctuation_signs, letter))
+    //        {
+    //            result += letter;
 
-//            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
-//        }
+    //            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+    //        }
 
-//    }while(result.length() < length);
+    //    }while(result.length() < length);
 
-//    return result;
+    //    return result;
 }
 
 
