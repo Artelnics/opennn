@@ -434,6 +434,7 @@ namespace opennn
                 population(i, j) = individual(j);
             }
         }
+        check_categorical_columns();
     }
 
     void GeneticAlgorithm::initialize_population_correlations()
@@ -462,7 +463,7 @@ namespace opennn
         const Tensor <type, 1> sumprob = probability.cumsum(0);
         for (Index i = 0; i < num_individuals; i++)
         {
-            bool is_repeated;
+            bool is_repeated=true;
             Tensor <bool, 1> individual(num_genes);
             individual.setConstant(false);
 
@@ -505,6 +506,8 @@ namespace opennn
                 population(i, j) = individual(j);
             }
         }
+
+        check_categorical_columns();
 }
  
 
@@ -567,11 +570,15 @@ void GeneticAlgorithm::evaluate_population()
 
         const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
+        
+
         Tensor<Index, 1> input_columns_indices(input_columns_number(0));
 
         Index index = 0;
 
         Index column_index = 0;
+
+        //Categorical variables filter
 
         for(Index j = 0; j < genes_number; j++)
         {
