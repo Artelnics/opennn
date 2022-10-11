@@ -469,9 +469,9 @@ namespace opennn
 
 
             do {
-                type genes_activados = rand() % 100 + 1;
+                type activated_genes = rand() % 100 + 1;
                 Index genes_count = 0;
-                while (genes_count < genes_activados)
+                while (genes_count < activated_genes)
                 {
                     const type pointer = type(rand() / RAND_MAX);
                     if (pointer < sumprob(0) && !individual(0))
