@@ -27,73 +27,7 @@ using namespace opennn;
 
 using namespace std;
 
-/*
-void replace_all(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
-    std::string buf;
-    std::size_t pos = 0;
-    std::size_t prevPos;
 
-    // Reserves rough estimate of final size of string.
-    buf.reserve(s.size());
-
-    while (true) {
-        prevPos = pos;
-        pos = s.find(toReplace, pos);
-        if (pos == std::string::npos)
-            break;
-        buf.append(s, prevPos, pos - prevPos);
-        buf += replaceWith;
-        pos += toReplace.size();
-    }
-
-    buf.append(s, prevPos, s.size() - prevPos);
-    s.swap(buf);
-}
-*/
-
-/**
-string get_output(string& input)
-{
-    std::string output = input;
-    string phpVAR = "$";
-    std::vector<std::string> found_tokens;
-
-    std::vector<std::string> tokens;
-    std::vector<std::string> tokens_output;
-    std::string token;
-    std::stringstream ss(input);
-
-    while (getline(ss, token, '\n')) {
-        tokens.push_back(token);
-    }
-    for (auto& s : tokens) {
-        string word = "";
-        for (char& c : s) {
-            if (c != ' ') {
-                word += c;
-            }
-            else {
-                break;
-            }
-        }
-        found_tokens.push_back(word);
-
-    }
-
-    //AT THIS POINT, WE KNOW WHICH THE INPUTS ARE, WHICH THE LEFT SIDE VARIABLES ARE    
-    //AND WE HAVE A VECTOR WHERE EACH INDEX IS A LINE 
-
-    for (auto& key_word : found_tokens) {
-        string new_word = "";
-        new_word = phpVAR + key_word;
-        replace_all(output, key_word, new_word);
-    }
-
-    //std::cout << output << std::endl;
-
-    return output;
-}
-*/
 
 int main(int argc, char* argv[])
 {
@@ -129,18 +63,27 @@ int main(int argc, char* argv[])
 
         ///THREE INPUTS AND TWO OUTPUTS TEST
         //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {3,4,2});
+        //Error in Aproximation, forecasting and
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Forecasting, {3,7,4,2});
+
         Eigen::Tensor<string, 1> t2(3);
         t2(0) = "input1";
         t2(1) = "input2";
         t2(2) = "input3";
 
         Eigen::Tensor<string, 1> t(2);
-        t(0) = "jadnlk";
-        t(1) = "aksdasdl";
+        t(0) = "output1";
+        t(1) = "output2";
         neural_network.set_inputs_names(t2);
         neural_network.set_outputs_names(t);
 
+        //LongShortTermMemoryLayer lstm;
+        //const string s = "layer0";
+        //lstm.set_name(s);
+        //lstm.set_inputs_number(20);
+        //lstm.set_activation_function("Logistic");
+        //lstm.set_recurrent_activation_function("RectifiedLinear");
+        //neural_network.add_layer(lstm);
 
         string expression_api = neural_network.write_expression_api();
         cout << expression_api << endl;
