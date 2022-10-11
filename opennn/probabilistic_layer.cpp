@@ -1508,7 +1508,7 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 
         case ActivationFunction::Logistic:
         {
-            buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ");\n";
+            buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ") );\n";
         }
             break;
 

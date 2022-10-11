@@ -2917,7 +2917,6 @@ string NeuralNetwork::write_expression() const
                 }
             }
             buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
-
             inputs_names_vector = outputs_names_vector;
         }
     }
@@ -2946,7 +2945,7 @@ string NeuralNetwork::write_expression_api() const
         buffer << "Example:" << endl;
         buffer << "" << endl;
         buffer << "\turl = http://localhost/API_example/\t" << endl;
-        buffer << "\tparameters in the url = http://localhost/API_example/?input0=5&input1=2&...\t" << endl;
+        buffer << "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\t" << endl;
         buffer << "\tTo see the ouput refresh the page" << endl;
         buffer << "" << endl;
         buffer << "\tInputs Names: \t" << endl;
@@ -2954,6 +2953,8 @@ string NeuralNetwork::write_expression_api() const
 
         const Tensor<string, 1> inputs = get_inputs_names();
         const Tensor<string, 1> outputs = get_outputs_names();
+        int  outputs_num = get_outputs_number();
+        cout << outputs_num;
 
         for (int i = 0; i < inputs.dimension(0); i++)
         {
@@ -2988,10 +2989,7 @@ string NeuralNetwork::write_expression_api() const
         buffer << "<br></br>" << endl;
         buffer << "<div class = \"form-group\">" << endl;
         buffer << "<p>" << endl;
-        buffer << "Write your input on the URL using this format: https://.../?num0=value0&num1=value1&..." << endl;
-        buffer << "</p>" << endl;
-        buffer << "<p>" << endl;
-        buffer << "value0, value1 ... are the values you must enter." << endl;
+        buffer << "follow the steps defined in the \"index.php\" file" << endl;
         buffer << "</p>" << endl;
         buffer << "<p>" << endl;
         buffer << "Refresh the page to see the prediction" << endl;
@@ -3021,7 +3019,7 @@ string NeuralNetwork::write_expression_api() const
             string param ="";
             string vpara ="";
             param = "$num" + to_string(i);
-            vpara = "num" + to_string(i);
+            vpara= "num" + to_string(i);
 
             if (inputs[i] == "")
             {
@@ -3039,26 +3037,30 @@ string NeuralNetwork::write_expression_api() const
         buffer << "if(" << endl;
         for (int i = 0; i < inputs.dimension(0); i++)
         {
-            if (i != inputs.dimension(0)-1){
+            if (i != inputs.dimension(0)-1)
+            {
                 if (inputs[i] == "")
                 {
-                    buffer << "$" << "input_" + to_string(i) << " > 0 &&" << endl;
+                    buffer << "$" << "input_" + to_string(i) << " >= 0 &&" << endl;
                 }
                 else
                 {
-                    buffer << "$" << inputs[i] << " > 0 &&" << endl;
+                    buffer << "$" << inputs[i] << " >= 0 &&" << endl;
                 }
-            }else{
+            }
+            else
+            {
                 if (inputs[i] == "")
                 {
-                    buffer << "$" << "input_" + to_string(i) << " > 0 )" << endl;
+                    buffer << "$" << "input_" + to_string(i) << " >= 0 )" << endl;
                 }
                 else
                 {
-                    buffer << "$" << inputs[i] << " > 0 )" << endl;
+                    buffer << "$" << inputs[i] << " >= 0 )" << endl;
                 }
             }
         }
+
         buffer << "{" << endl;
         buffer << "$status=200;" << endl;
         buffer << "$status_msg = 'valid parameters';" << endl;
@@ -3080,10 +3082,23 @@ string NeuralNetwork::write_expression_api() const
         std::string token;
         std::stringstream ss(expression);
 
-        while (getline(ss, token, '\n')) {
-            if (token.size() > 1 && token.back() != ';'){
-                token += ';';
+        while (getline(ss, token, '\n'))
+        {
+            if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+            int count_l=0;
+            int count_r=0;
+            for (char& c : token)
+            {
+                if (c == '(')
+                {
+                    count_l+=1;
+                }
+                else if (c == ')')
+                {
+                    count_r+=1;
+                }
             }
+            if (count_l>count_r){ token.replace(token.find(";"), 1, ");"); }
             tokens.push_back(token);
         }
 
@@ -3092,38 +3107,27 @@ string NeuralNetwork::write_expression_api() const
             string word = "";
             for (char& c : s)
             {
-                if (c != ' '){ word += c; }
+                if ( c!=' ' && c!='=' ){ word += c; }
                 else { break; }
             }
             if (word.size() > 1)
             {
                 found_tokens.push_back(word);
-                //cout << word + "\n";
             }
         }
 
-        ///Writed_expression to PHP_expression transcription
-        //for (auto& key_word : found_tokens) {
-        //    string new_word = "";
-        //    new_word = phpVAR + key_word;
-        //    //cout << key_word + " " + new_word + "\n";
-        //    replace_all_appearances(expression, key_word, new_word);
-        //}
-        //buffer << expression;
-
-        ///Writed_expression to PHP_expression transcription
-        /// NOW THIS HAS TO WORK WITH TOKENS INSTEAD OF WORKING WITH ESPRESSIOn
+        ///Writed_expression to PHP_expression transcription using 'tokens' array
         for (auto& t:tokens){
             for (auto& key_word : found_tokens) {
                 string new_word = "";
                 new_word = phpVAR + key_word;
-                //cout << key_word + " " + new_word + "\n";
                 replace_all_appearances(t, key_word, new_word);
             }
             buffer << t << endl;
         }
 
         ///JSON preparation
+        buffer << "if ($status === 200){" << endl;
         buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
         for (int i = 0; i < outputs.dimension(0); i++)
         {
@@ -3137,6 +3141,11 @@ string NeuralNetwork::write_expression_api() const
             }
         }
         buffer << "];" << endl;
+        buffer << "}" << endl;
+        buffer << "else" << endl;
+        buffer << "{" << endl;
+        buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << "];" << endl;
+        buffer << "}" << endl;
         buffer << "\n" << endl;
 
         ///Last php paragraph
@@ -3154,9 +3163,10 @@ string NeuralNetwork::write_expression_api() const
 
         ///Output preparation
         //cout << expression;
-        string out = buffer.str();
         //cout << out;
         //string out ="";
+        string out = buffer.str();
+        replace_all_appearances(out, "$$", "$");
         return out;
     }
 
