@@ -330,7 +330,7 @@ struct LossIndexBackPropagation
 
         errors.resize(batch_samples_number, outputs_number);
 
-        if(assemble)
+        if(true)
         {
             parameters = neural_network_pointer->get_parameters();
 
