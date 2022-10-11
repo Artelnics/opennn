@@ -2717,16 +2717,15 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
 string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_output_data) const
 {
-//    const Index alphabet_length = get_alphabet_length();
+    const Index alphabet_length = get_alphabet_length();
 
-//    const Index tensor_size = Index(flatten_output_data.size()/alphabet_length);
+    const Index tensor_size = Index(flatten_output_data.size()/alphabet_length);
 
-//    Tensor<type, 2> output_data(tensor_size, alphabet_length);
+    Tensor<type, 2> output_data(tensor_size, alphabet_length);
 
-//    std::copy(output_data.data(), output_data.data() + tensor_size, flatten_output_data.data());
+    std::copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
 
-//    cout << "output_data: " << endl << output_data << endl;
-    return "";
+    return multiple_one_hot_decode(output_data);
 }
 
 
