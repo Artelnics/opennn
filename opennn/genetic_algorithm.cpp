@@ -865,7 +865,10 @@ void GeneticAlgorithm::perform_crossover()
         for(Index j = 0; j < i; j++)
         {
             Tensor<bool, 1> row = new_population.chip(j,0);
-            if(are_equal(row,descendent)) (is_repeated = true);
+            if (are_equal(row, descendent)) 
+            {
+                is_repeated = true;
+            }
         }
 
         // Prevent repetition and infinite loop
@@ -919,6 +922,7 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_mutation()
 {
+    
     const Index individuals_number = get_individuals_number();
 
     const Index genes_number = get_genes_number();
@@ -936,6 +940,7 @@ void GeneticAlgorithm::perform_mutation()
         for(Index j = 0; j < individuals_number; j++)
         {
             Tensor<bool, 1> row = population.chip(j,0);
+
             if(i!=j && are_equal(row,individual))
             {
                 (is_repeated = true);
@@ -973,7 +978,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     check();
 
 #endif
-
+    
+    
+    
     if(display) cout << "Performing genetic inputs selection..." << endl << endl;
 
     if(population.dimension(1) == 0)
@@ -1062,7 +1069,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         if(display)
-        {            
+        {
             cout << endl;
 
             cout << "Generation mean training error: " << training_errors.mean() << endl;
@@ -1151,6 +1158,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     if(display) inputs_selection_results.print();
 
     return inputs_selection_results;
+    
 }
 
 
@@ -1205,6 +1213,17 @@ void GeneticAlgorithm::check_categorical_columns()
 
 };
 
+
+void GeneticAlgorithm::comprobation()
+{
+    cout<< endl <<" Performing genetic inputs selection..." << endl << endl;
+
+    if (population.dimension(1) == 0)
+    {
+        set_individuals_number();
+    }
+    print();
+}
 
 Tensor<bool, 1> GeneticAlgorithm::transform_individual_to_indexes(Tensor<bool,1> &individual)
 {

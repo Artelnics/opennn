@@ -119,13 +119,17 @@ public:
 
     void check_categorical_columns();
 
+    //Comprobation methods
+
+    void comprobation();
+
     Tensor<bool, 1> transform_individual_to_indexes(Tensor<bool,1> &);
 
     // Inputs selection methods
 
     InputsSelectionResults perform_inputs_selection()  final;
 
-    // Serialization methods
+    // Serialization method
 
     Tensor<string, 2> to_string_matrix() const;
 

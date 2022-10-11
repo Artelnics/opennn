@@ -28,6 +28,29 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN!" << endl;
 
         DataSet data_set("C:/Users/rodrigo ingelmo/Downloads/sum.csv", ';', false);
+        type input_variables_number = data_set.get_input_variables_number();
+        cout << input_variables_number << endl;
+        type target_variables_number = data_set.get_target_variables_number();
+        cout << target_variables_number << endl;
+
+        Index hidden_neurons_number = 3;
+
+        cout << Index(target_variables_number);
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, { Index(input_variables_number), hidden_neurons_number,Index(target_variables_number) });
+
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_default();
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        GeneticAlgorithm gen_alg(&training_strategy);
+
+        gen_alg.set_default();
+
+        gen_alg.comprobation();
+
+        /*DataSet data_set("C:/Users/rodrigo ingelmo/Downloads/sum.csv", ';', false);
 
         //El problema era que el get_input_variables_number es un float y no un Index, por eso no iba
         type input_variables_number = data_set.get_input_variables_number();
@@ -82,11 +105,56 @@ int main(int argc, char* argv[])
 
         NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+        Tensor<bool, 1> individual;
+
+        const Index individuals_number = gen_alg.get_individuals_number();
+        const Index genes_number = gen_alg.get_genes_number();
+
+        for (Index i = 0; i < individuals_number; i++)
+        {
+            individual = population.chip(i, 0);
+
+            cout << "Individual " << i + 1 << endl;
+
+            const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
+
+            //Tenemos un tensor con los índices que tien
+
+            Tensor<Index, 1> input_columns_indices(input_columns_number(0));
+
+            Index index = 0;
+
+            Index column_index = 0;
+
+            for (Index j = 0; j < genes_number; j++)
+            {
+                if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
+                {
+                    const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+
+                    if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
+                    {
+                        input_columns_indices(index)= original_input_columns_indices(column_index);
+                        index++;
+                    }
+                    j += categories_number - 1;
+                }
+                else
+                {
+                    if (individual(j))
+                    {
+                        input_columns_indices(index) = original_input_columns_indices(column_index);
+                        index++;
+                    }
+                }
+
+                column_index++;
+            }
 
 
-        
+        }
 
-
+        */
         cout << "Bye OpenNN!" << endl;
     }
     catch (const exception& e)
