@@ -834,11 +834,11 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::TextGeneration)
     {
-//        PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[0], architecture[1]);
-//        this->add_layer(perceptron_layer_pointer);
+        PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[0], architecture[1]);
+        this->add_layer(perceptron_layer_pointer);
 
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        this->add_layer(long_short_term_memory_layer_pointer);
+//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        this->add_layer(long_short_term_memory_layer_pointer);
 
         ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
         this->add_layer(probabilistic_layer_pointer);
@@ -1944,26 +1944,42 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
     string result = first_letters;
 
-    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+    Tensor<type, 2> input_data = text_generation_alphabet.str_to_input(first_letters);
 
     Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-    do{
-        Tensor<type, 2> input_data(get_inputs_number(), 1);
-        input_data.setZero();
-        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+    string input_string = first_letters;
 
+    do{
         Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
-        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+        string letter = text_generation_alphabet.output_to_str(output);
 
         result += letter;
 
-        input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+        cout << "Result: " << result << "\\" << endl;
+
+        input_data = text_generation_alphabet.str_to_input(result.substr(result.length() - first_letters.length()));
 
     }while(result.length() < length);
 
     return result;
+
+    /*
+
+    Tensor<type, 2> input_text_codificated = tga.str_to_input(input_text);
+
+    Tensor<Index, 1> input_dimensions = get_dimensions(input_text_codificated);
+
+    const Tensor<type, 2> output_data_codificated = neural_network.calculate_outputs(input_text_codificated.data(), input_dimensions);
+
+    cout << "output data: " << endl << output_data_codificated << endl;
+
+    const string output_text = tga.output_to_str(output_data_codificated);
+
+    cout << "Input string: " << input_text << " generates: " << input_text + output_text << endl;
+
+    */
 }
 
 
