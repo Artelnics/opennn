@@ -657,10 +657,6 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-#ifdef OPENNN_DEBUG
-check_size(new_parameters, get_parameters_number(), LOG);
-#endif
-
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 

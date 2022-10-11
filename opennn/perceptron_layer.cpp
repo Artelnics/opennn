@@ -669,7 +669,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
         ostringstream buffer;
         buffer << "OpenNN Exception: PerceptronLayer class.\n"
                << "void PerceptronLayer::forward_propagate(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (" << inputs_dimensions(1) << ").\n";
         throw invalid_argument(buffer.str());
     }
 
