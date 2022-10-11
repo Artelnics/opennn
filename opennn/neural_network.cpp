@@ -2932,13 +2932,10 @@ string NeuralNetwork::write_expression() const
 string NeuralNetwork::write_expression_api() const
 {
     {
-        //const Index layers_number = get_layers_number();
-        //const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
-        //const Tensor<string, 1> layers_names = get_layers_names();
-
         vector<std::string> found_tokens;
         ostringstream buffer;
 
+        ///First PHP paragraph
         buffer << "<!DOCTYPE html>" << endl;
         buffer << "<!--" << endl;
         buffer << "Artificial Intelligence Techniques SL\t" << endl;
@@ -2956,24 +2953,26 @@ string NeuralNetwork::write_expression_api() const
 
 
         const Tensor<string, 1> inputs = get_inputs_names();
+        const Tensor<string, 1> outputs = get_outputs_names();
 
         for (int i = 0; i < inputs.dimension(0); i++)
         {
             if (inputs[i] == "")
             {
-                buffer << "\t" << to_string(i) + " )" << "input_" + to_string(i) << endl;
+                buffer << "\t" << to_string(i) + ") " << "input_" + to_string(i) << endl;
                 found_tokens.push_back("input_" + to_string(i));
             }
             else
             {
-                buffer << "\t" << to_string(i) + " )" << inputs[i] << endl;
+                buffer << "\t" << to_string(i) + ") " << inputs[i] << endl;
                 found_tokens.push_back(inputs[i]);
             }
         }
 
         buffer << "" << endl;
         buffer << "-->\t" << endl;
-        
+
+        ///Second PHP paragraph
         buffer << "" << endl;
         buffer << "<html lang = \"en\">\n" << endl;
         buffer << "<head>\n" << endl;
@@ -2989,10 +2988,10 @@ string NeuralNetwork::write_expression_api() const
         buffer << "<br></br>" << endl;
         buffer << "<div class = \"form-group\">" << endl;
         buffer << "<p>" << endl;
-        buffer << "Write your input on the URL using this format: https://.../?input0=value0&input1=value1&..." << endl;
+        buffer << "Write your input on the URL using this format: https://.../?num0=value0&num1=value1&..." << endl;
         buffer << "</p>" << endl;
         buffer << "<p>" << endl;
-        buffer << "value0, value1 ... are the values you must enter.Then, refresh the pageand your answer will be shown" << endl;
+        buffer << "value0, value1 ... are the values you must enter." << endl;
         buffer << "</p>" << endl;
         buffer << "<p>" << endl;
         buffer << "Refresh the page to see the prediction" << endl;
@@ -3000,101 +2999,164 @@ string NeuralNetwork::write_expression_api() const
         buffer << "</div>" << endl;
         buffer << "<h4>" << endl;
 
-        buffer << "<? php" << endl;
+        buffer << "<?php" << endl;
         buffer << "session_start();" << endl;
         buffer << "if (isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl;
-        buffer << "if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == = 'on') " << endl;
+        buffer << "if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') " << endl;
         buffer << "\t$url = \"https://\"; " << endl;
         buffer << "else" << endl;
         buffer << "\t$url = \"http://\"; " << endl;
 
-        buffer << "$url. = $_SERVER['HTTP_HOST'];" << endl;
-        buffer << "$url. = $_SERVER['REQUEST_URI'];" << endl;
+        buffer << "\n" << endl;
+
+        buffer << "$url.= $_SERVER['HTTP_HOST'];" << endl;
+        buffer << "$url.= $_SERVER['REQUEST_URI'];" << endl;
         buffer << "$url_components = parse_url($url);" << endl;
         buffer << "parse_str($url_components['query'], $params);" << endl;
 
-        /***/
+        buffer << "\n" << endl;
 
         for (int i = 0; i < inputs.dimension(0); i++)
         {
             string param ="";
+            string vpara ="";
             param = "$num" + to_string(i);
+            vpara = "num" + to_string(i);
 
             if (inputs[i] == "")
             {
-                buffer << param << " = " << "$params['" + param << "];" << endl;
-                buffer << "input_" + to_string(i) << " = intval(" << param << ");" << endl;
-
+                buffer << param << " = " << "$params['" + vpara << "'];" << endl;
+                buffer << "$input_" + to_string(i) << " = intval(" << param << ");" << endl;
             }
             else
             {
-                buffer << param << " = " << "$params['" + param << "];" << endl;
+                buffer << param << " = " << "$params['" + vpara << "'];" << endl;
                 buffer << "$" << inputs[i] << " = intval(" << param << ");" << endl;
-
             }
         }
 
-        /***/
+        ///if condition to control the status and status message
+        buffer << "if(" << endl;
+        for (int i = 0; i < inputs.dimension(0); i++)
+        {
+            if (i != inputs.dimension(0)-1){
+                if (inputs[i] == "")
+                {
+                    buffer << "$" << "input_" + to_string(i) << " > 0 &&" << endl;
+                }
+                else
+                {
+                    buffer << "$" << inputs[i] << " > 0 &&" << endl;
+                }
+            }else{
+                if (inputs[i] == "")
+                {
+                    buffer << "$" << "input_" + to_string(i) << " > 0 )" << endl;
+                }
+                else
+                {
+                    buffer << "$" << inputs[i] << " > 0 )" << endl;
+                }
+            }
+        }
+        buffer << "{" << endl;
+        buffer << "$status=200;" << endl;
+        buffer << "$status_msg = 'valid parameters';" << endl;
+        buffer << "}" << endl;
+        buffer << "else" << endl;
+        buffer << "{" << endl;
+        buffer << "$status =400;" << endl;
+        buffer << "$status_msg = 'invalid parameters';" << endl;
+        buffer << "}"   << endl;
+        buffer << "\n" << endl;
 
-        //Faltaria el if sobre el status en función de las variables
-
-        /***/
-
+        ///KeyWord detection (this will be used in the next block);
         //const string writed_expression = write_expression();
         string expression = write_expression();
-        string expression_api = write_expression();
+        //string expression_api = write_expression();
         string phpVAR = "$";
-
         vector<std::string> tokens;
         vector<std::string> tokens_output;
         std::string token;
         std::stringstream ss(expression);
+
         while (getline(ss, token, '\n')) {
+            if (token.size() > 1 && token.back() != ';'){
+                token += ';';
+            }
             tokens.push_back(token);
         }
-        for (auto& s : tokens) {
+
+        for (auto& s : tokens)
+        {
             string word = "";
-            for (char& c : s) {
-                if (c != ' ') {
-                    word += c;
-                }
-                else {
-                    break;
-                }
+            for (char& c : s)
+            {
+                if (c != ' '){ word += c; }
+                else { break; }
             }
-            found_tokens.push_back(word);
-
+            if (word.size() > 1)
+            {
+                found_tokens.push_back(word);
+                //cout << word + "\n";
+            }
         }
 
-        for (auto& key_word : found_tokens) {
-            string new_word = "";
-            new_word = phpVAR + key_word;
+        ///Writed_expression to PHP_expression transcription
+        //for (auto& key_word : found_tokens) {
+        //    string new_word = "";
+        //    new_word = phpVAR + key_word;
+        //    //cout << key_word + " " + new_word + "\n";
+        //    replace_all_appearances(expression, key_word, new_word);
+        //}
+        //buffer << expression;
 
-            replace_all_appearances(expression_api, key_word, new_word);
+        ///Writed_expression to PHP_expression transcription
+        /// NOW THIS HAS TO WORK WITH TOKENS INSTEAD OF WORKING WITH ESPRESSIOn
+        for (auto& t:tokens){
+            for (auto& key_word : found_tokens) {
+                string new_word = "";
+                new_word = phpVAR + key_word;
+                //cout << key_word + " " + new_word + "\n";
+                replace_all_appearances(t, key_word, new_word);
+            }
+            buffer << t << endl;
         }
-        buffer << expression_api;
 
-        /***/
+        ///JSON preparation
+        buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
+        for (int i = 0; i < outputs.dimension(0); i++)
+        {
+            if (outputs[i] == "")
+            {
+                buffer << ", 'output" << to_string(i) + "' => " << "$out" + to_string(i) << endl;
+            }
+            else
+            {
+                buffer << ", '" << outputs_names[i] << "' => " << "$" << outputs[i] << endl;
+            }
+        }
+        buffer << "];" << endl;
+        buffer << "\n" << endl;
 
-        //Faltaria la preparación del JSON en función de las variables
-
-        /***/
-
+        ///Last php paragraph
         buffer << "$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl;
-        buffer << "echo nl2br(\"\n\" . $json_response_pretty . \"\n\");" << endl;
+        buffer << "echo nl2br(\"\\n\" . $json_response_pretty . \"\\n\");" << endl;
         buffer << "}else{" << endl;
         buffer << "echo \"New page\";" << endl;
         buffer << "}" << endl;
         buffer << "$_SESSION['lastpage'] = __FILE__;" << endl;
         buffer << "?>" << endl;
         buffer << "</h4>" << endl;
-        buffer << "/div" << endl;
-        buffer << "/body" << endl;
-        buffer << "/html" << endl;
+        buffer << "</div>" << endl;
+        buffer << "</body>" << endl;
+        buffer << "</html>" << endl;
 
+        ///Output preparation
+        //cout << expression;
         string out = buffer.str();
-
-
+        //cout << out;
+        //string out ="";
         return out;
     }
 
