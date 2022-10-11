@@ -969,6 +969,30 @@ void GeneticAlgorithm::perform_mutation()
 }
 
 
+//Hay que generar un metodo para generar una salida que de la población 
+void GeneticAlgorithm::comprobation()
+{
+    cout << endl << " Performing genetic inputs selection..." << endl << endl;
+
+    set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
+    initialize_population();
+    
+    set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+
+    if (population.dimension(1) == 0)
+    {
+        set_individuals_number();
+    }
+
+    
+    print();
+
+
+   
+
+    
+}
+
 /// Select the inputs with the best generalization properties using the genetic algorithm.
 
 InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
@@ -1214,16 +1238,7 @@ void GeneticAlgorithm::check_categorical_columns()
 };
 
 
-void GeneticAlgorithm::comprobation()
-{
-    cout<< endl <<" Performing genetic inputs selection..." << endl << endl;
 
-    if (population.dimension(1) == 0)
-    {
-        set_individuals_number();
-    }
-    print();
-}
 
 Tensor<bool, 1> GeneticAlgorithm::transform_individual_to_indexes(Tensor<bool,1> &individual)
 {
