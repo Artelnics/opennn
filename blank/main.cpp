@@ -62,6 +62,7 @@ string get_output(string& input)
     std::vector<std::string> tokens_output;
     std::string token;
     std::stringstream ss(input);
+
     while (getline(ss, token, '\n')) {
         tokens.push_back(token);
     }
@@ -98,19 +99,51 @@ int main(int argc, char* argv[])
 {
     try
     {
-        cout << "Hello OpenNN!" << endl;
-        /*
-        string input = "scaled_glcm = (glcm-127.2750015)/10.34020042;\nscaled_green = (green - 208.875) / 73.70839691;\nscaled_red = (red - 109.0800018) / 67.42389679;\nscaled_nir = (nir - 449.0880127) / 151.2619934;\nscaled_pan_band = (pan_band - 20.60160065) / 6.621739864;\nperceptron_layer_1_output_0 = tanh(-1.0725 + (scaled_glcm * 0.375452) + (scaled_green * 3.50946) + (scaled_red * 0.578346) + (scaled_nir * -0.695273) + (scaled_pan_band * -0.170702));\nperceptron_layer_1_output_1 = tanh(-0.224889 + (scaled_glcm * 0.0303833) + (scaled_green * -2.72553) + (scaled_red * 1.48712) + (scaled_nir * 0.458527) + (scaled_pan_band * -0.0243582));\nperceptron_layer_1_output_2 = tanh(-0.472289 + (scaled_glcm * -0.126885) + (scaled_green * 1.35568) + (scaled_red * -4.50396) + (scaled_nir * 0.533323) + (scaled_pan_band * -0.0159912));\nprobabilistic_layer_combinations_0 = -2.61513 - 3.37299 * perceptron_layer_1_output_0 + 3.29145 * perceptron_layer_1_output_1 - 5.03247 * perceptron_layer_1_output_2;\nwilt = 1.0 / (1.0 + exp(-probabilistic_layer_combinations_0);\n";
-        string output = get_output(input);
+        //=======================================================//
+        //                                                       //
+        //         1) prepare input names in a tensor            //
+        //         2) prepare output names in a tensor           //
+        //         3) set the model, and start it                //
+        //         4) set input names in the model               //
+        //         5) set output names in the model              //
+        //         6) call network.write_expression_api          //
+        //                                                       //
+        //=======================================================//
 
-        cout << output << endl;
-*/
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {3,4,5});
+
+
+//        ///THREE INPUTS AND TWO OUTPUTS TEST
+//        //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
+//        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {4,4,1});
+//        Eigen::Tensor<string, 1> t2(4);
+//        t2(0) = "input1";
+//        t2(1) = "input2";
+//        t2(2) = "input3";
+//        t2(3) = "input4";
+//
+//        Eigen::Tensor<string, 1> t(1);
+//        t(0) = "output1";
+//        neural_network.set_inputs_names(t2);
+//        neural_network.set_outputs_names(t);
+
+
+        ///THREE INPUTS AND TWO OUTPUTS TEST
+        //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {3,4,2});
+        Eigen::Tensor<string, 1> t2(3);
+        t2(0) = "input1";
+        t2(1) = "input2";
+        t2(2) = "input3";
+
+        Eigen::Tensor<string, 1> t(2);
+        t(0) = "jadnlk";
+        t(1) = "aksdasdl";
+        neural_network.set_inputs_names(t2);
+        neural_network.set_outputs_names(t);
+
 
         string expression_api = neural_network.write_expression_api();
-
         cout << expression_api << endl;
-
     }
     catch (const exception& e)
     {

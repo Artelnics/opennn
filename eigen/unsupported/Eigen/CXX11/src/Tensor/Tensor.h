@@ -23,8 +23,10 @@ namespace Eigen {
   * The %Tensor class encompasses only dynamic-size objects so far.
   *
   * The first two template parameters are required:
+  *
   * \tparam Scalar_  Numeric type, e.g. float, double, int or `std::complex<float>`.
   *                 User defined scalar types are supported as well (see \ref user_defined_scalars "here").
+  *
   * \tparam NumIndices_ Number of indices (i.e. rank of the tensor)
   *
   * The remaining template parameters are optional -- in most cases you don't have to worry about them.
