@@ -892,6 +892,7 @@ bool contains_substring(const string& str, const string& sub_str)
 
 void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
     std::string buf;
+
     std::size_t pos = 0;
     std::size_t prevPos;
 
@@ -899,13 +900,25 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
     buf.reserve(s.size());
 
     while (true) {
-        prevPos = pos;
+
+        prevPos =    pos;
         pos = s.find(toReplace, pos);
+
         if (pos == std::string::npos)
             break;
+
         buf.append(s, prevPos, pos - prevPos);
-        buf += replaceWith;
-        pos += toReplace.size();
+        if (buf.back() == '_')
+        {
+            buf += toReplace;
+            pos += toReplace.size();
+
+        }else
+        {
+            buf += replaceWith;
+            pos += toReplace.size();
+
+        }
     }
 
     buf.append(s, prevPos, s.size() - prevPos);
