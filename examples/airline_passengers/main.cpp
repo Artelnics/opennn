@@ -44,6 +44,9 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
+        cout << "Input variables number: " << input_variables_number << endl;
+        cout << "Target variables number: " << target_variables_number << endl;
+
         // Neural network
 
         const Index hidden_neurons_number = 10;
@@ -56,19 +59,21 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        neural_network.print();
 
         const TrainingResults training_results = training_strategy.perform_training();
 
         // Calculate outputs
 
-        Tensor<type, 2> input(4,3);
+        Tensor<type, 2> input(4,2);
         Tensor<Index, 1> input_dims = get_dimensions(input);
         input.setValues({
-                                 {150,146,135},
-                                 {124,253,352},
-                                 {124,253,352},
-                                 {124,253,352}
+                                 {150,146},
+                                 {124,253},
+                                 {124,264},
+                                 {124,221}
                              });
 
         Tensor<type, 2> output;
