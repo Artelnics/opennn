@@ -61,37 +61,54 @@ int main(int argc, char* argv[])
 //        neural_network.set_outputs_names(t);
 
 
+        //=======================//
+        //       TEST 1          //
+        //=======================//
+
         ///THREE INPUTS AND TWO OUTPUTS TEST
         //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
         //Error in Aproximation, forecasting and
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Forecasting, {3,7,4,2});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {3,5,1});
 
         Eigen::Tensor<string, 1> t2(3);
         t2(0) = "input1";
         t2(1) = "input2";
         t2(2) = "input3";
 
-        Eigen::Tensor<string, 1> t(2);
+        Eigen::Tensor<string, 1> t(1);
         t(0) = "output1";
-        t(1) = "output2";
+        //t(1) = "output2";
+
         neural_network.set_inputs_names(t2);
         neural_network.set_outputs_names(t);
 
-        //LongShortTermMemoryLayer lstm;
-        //const string s = "layer0";
-        //lstm.set_name(s);
-        //lstm.set_inputs_number(20);
-        //lstm.set_activation_function("Logistic");
-        //lstm.set_recurrent_activation_function("RectifiedLinear");
-        //neural_network.add_layer(lstm);
-
         string expression_api = neural_network.write_expression_api();
+
+        //=======================//
+        //       TEST 2          //
+        //=======================//
+
+        ///THREE INPUTS AND TWO OUTPUTS TEST
+        //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
+        //Error in Aproximation, forecasting and
+        //(NeuralNetwork::ProjectType::Classification, {4, 6, 3});
+        //NeuralNetwork nn;
+        //
+        ////nn.set_project_type(NeuralNetwork::ProjectType::Forecasting);
+        //
+        //LongShortTermMemoryLayer p2(1,1);
+        //nn.add_layer(&p2);
+        //
+        //PerceptronLayer p(1,1);
+        //nn.add_layer(&p);
+        //
+        //
+        //string expression_api = nn.write_expression_api();
         cout << expression_api << endl;
     }
     catch (const exception& e)
     {
         cerr << e.what() << endl;
-
         return 1;
     }
 }
