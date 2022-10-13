@@ -2928,13 +2928,17 @@ string NeuralNetwork::write_expression() const
     return expression;
 }
 
+/// Returns a string that conatins an API composed by an html script (the index page), and a php scipt
+/// that contains a function of the expression represented by the neural network.
+
 string NeuralNetwork::write_expression_api() const
 {
     {
         vector<std::string> found_tokens;
         ostringstream buffer;
+        bool logistic = false;
+        bool ReLU = false;
 
-        ///First PHP paragraph
         buffer << "<!DOCTYPE html>" << endl;
         buffer << "<!--" << endl;
         buffer << "Artificial Intelligence Techniques SL\t" << endl;
@@ -2950,11 +2954,8 @@ string NeuralNetwork::write_expression_api() const
         buffer << "" << endl;
         buffer << "\tInputs Names: \t" << endl;
 
-
         const Tensor<string, 1> inputs = get_inputs_names();
         const Tensor<string, 1> outputs = get_outputs_names();
-        int  outputs_num = get_outputs_number();
-        cout << outputs_num;
 
         for (int i = 0; i < inputs.dimension(0); i++)
         {
@@ -2973,7 +2974,6 @@ string NeuralNetwork::write_expression_api() const
         buffer << "" << endl;
         buffer << "-->\t" << endl;
 
-        ///Second PHP paragraph
         buffer << "" << endl;
         buffer << "<html lang = \"en\">\n" << endl;
         buffer << "<head>\n" << endl;
@@ -3017,23 +3017,22 @@ string NeuralNetwork::write_expression_api() const
         for (int i = 0; i < inputs.dimension(0); i++)
         {
             string param ="";
-            string vpara ="";
+            string param_index ="";
             param = "$num" + to_string(i);
-            vpara= "num" + to_string(i);
+            param_index= "num" + to_string(i);
 
             if (inputs[i] == "")
             {
-                buffer << param << " = " << "$params['" + vpara << "'];" << endl;
+                buffer << param << " = " << "$params['" + param_index << "'];" << endl;
                 buffer << "$input_" + to_string(i) << " = intval(" << param << ");" << endl;
             }
             else
             {
-                buffer << param << " = " << "$params['" + vpara << "'];" << endl;
+                buffer << param << " = " << "$params['" + param_index << "'];" << endl;
                 buffer << "$" << inputs[i] << " = intval(" << param << ");" << endl;
             }
         }
 
-        ///if condition to control the status and status message
         buffer << "if(" << endl;
         for (int i = 0; i < inputs.dimension(0); i++)
         {
@@ -3072,33 +3071,16 @@ string NeuralNetwork::write_expression_api() const
         buffer << "}"   << endl;
         buffer << "\n" << endl;
 
-        ///KeyWord detection (this will be used in the next block);
-        //const string writed_expression = write_expression();
         string expression = write_expression();
-        //string expression_api = write_expression();
         string phpVAR = "$";
         vector<std::string> tokens;
-        vector<std::string> tokens_output;
         std::string token;
         std::stringstream ss(expression);
 
         while (getline(ss, token, '\n'))
         {
+            if (token.size() > 1 && token.back() == '{'){ break; }
             if (token.size() > 1 && token.back() != ';'){ token += ';'; }
-            int count_l=0;
-            int count_r=0;
-            for (char& c : token)
-            {
-                if (c == '(')
-                {
-                    count_l+=1;
-                }
-                else if (c == ')')
-                {
-                    count_r+=1;
-                }
-            }
-            if (count_l>count_r){ token.replace(token.find(";"), 1, ");"); }
             tokens.push_back(token);
         }
 
@@ -3116,9 +3098,19 @@ string NeuralNetwork::write_expression_api() const
             }
         }
 
-        ///Writed_expression to PHP_expression transcription using 'tokens' array
-        for (auto& t:tokens){
-            for (auto& key_word : found_tokens) {
+        std::string target_string0("Logistic");
+        std::string target_string1("ReLU");
+
+        for (auto& t:tokens)
+        {
+            size_t substring_length0 = t.find(target_string0);
+            size_t substring_length1 = t.find(target_string1);
+
+            if (substring_length0 != 0){ logistic = true; }
+            if (substring_length1 == 0){ ReLU = true; }
+
+            for (auto& key_word : found_tokens)
+            {
                 string new_word = "";
                 new_word = phpVAR + key_word;
                 replace_all_appearances(t, key_word, new_word);
@@ -3126,9 +3118,9 @@ string NeuralNetwork::write_expression_api() const
             buffer << t << endl;
         }
 
-        ///JSON preparation
         buffer << "if ($status === 200){" << endl;
         buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
+
         for (int i = 0; i < outputs.dimension(0); i++)
         {
             if (outputs[i] == "")
@@ -3140,6 +3132,7 @@ string NeuralNetwork::write_expression_api() const
                 buffer << ", '" << outputs_names[i] << "' => " << "$" << outputs[i] << endl;
             }
         }
+
         buffer << "];" << endl;
         buffer << "}" << endl;
         buffer << "else" << endl;
@@ -3148,7 +3141,6 @@ string NeuralNetwork::write_expression_api() const
         buffer << "}" << endl;
         buffer << "\n" << endl;
 
-        ///Last php paragraph
         buffer << "$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl;
         buffer << "echo nl2br(\"\\n\" . $json_response_pretty . \"\\n\");" << endl;
         buffer << "}else{" << endl;
@@ -3156,16 +3148,39 @@ string NeuralNetwork::write_expression_api() const
         buffer << "}" << endl;
         buffer << "$_SESSION['lastpage'] = __FILE__;" << endl;
         buffer << "?>" << endl;
+        buffer << "\n" << endl;
+
+        if(logistic)
+        {
+            buffer << "<?php" << endl;
+            buffer << "function logistic(int $x) {" << endl;
+            buffer << "$z = 1/(1+exp(-$x));" << endl;
+            buffer << "return $z;" << endl;
+            buffer << "}" << endl;
+            buffer << "?>" << endl;
+            buffer << "\n" << endl;
+        }
+
+        if(ReLU)
+        {
+            buffer << "<?php" << endl;
+            buffer << "function ReLU(int $x) {" << endl;
+            buffer << "$z = max(0, $x);" << endl;
+            buffer << "return $z;" << endl;
+            buffer << "}" << endl;
+            buffer << "?>" << endl;
+            buffer << "\n" << endl;
+        }
+
         buffer << "</h4>" << endl;
         buffer << "</div>" << endl;
         buffer << "</body>" << endl;
         buffer << "</html>" << endl;
 
-        ///Output preparation
-        //cout << expression;
+        cout << expression;
         //cout << out;
-        //string out ="";
-        string out = buffer.str();
+        string out ="";
+        //string out = buffer.str();
         replace_all_appearances(out, "$$", "$");
         return out;
     }
