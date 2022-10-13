@@ -52,7 +52,7 @@ public:
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
-    enum class InitializationMethod{Random, Correlations};
+    enum class InitializationMethod{Random,Correlations};
 
     // Get methods
 
@@ -115,6 +115,8 @@ public:
 
     void perform_mutation();
 
+    void print_population();
+
     // Check  methods
 
     void check_categorical_columns();
@@ -173,7 +175,7 @@ private:
 
     Index elitism_size;
 
-    InitializationMethod initialization_method = GeneticAlgorithm::InitializationMethod::Random;
+    InitializationMethod initialization_method ;
 
 
 };

@@ -19,6 +19,7 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
+#include "../tests/genetic_algorithm_test.h"
 using namespace opennn;
 
 int main(int argc, char* argv[])
@@ -27,134 +28,66 @@ int main(int argc, char* argv[])
     {
         cout << "Hello OpenNN!" << endl;
 
-        DataSet data_set("C:/Users/rodrigo ingelmo/Downloads/sum.csv", ';', false);
-        type input_variables_number = data_set.get_input_variables_number();
-        cout << input_variables_number << endl;
-        type target_variables_number = data_set.get_target_variables_number();
-        cout << target_variables_number << endl;
+        //DataSet data_set("C:/Users/rodrigo ingelmo/Documents/opennn - genetic/opennn/opennn/blank/data/sum.csv", ';', false);
+        try {
 
-        Index hidden_neurons_number = 3;
+            DataSet data_set("D:/sum.csv", ';', false);
+            try {
+                Index input_variables_number = data_set.get_input_variables_number();
+                cout << input_variables_number << endl;
+                Index target_variables_number = data_set.get_target_variables_number();
+                cout << target_variables_number << endl;
 
-        cout << Index(target_variables_number);
+                const Index neurons_number = Index(0);
+                cout << neurons_number << endl;
+                NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, { input_variables_number, neurons_number, target_variables_number });
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, { Index(input_variables_number), hidden_neurons_number,Index(target_variables_number) });
-
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_default();
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        GeneticAlgorithm gen_alg(&training_strategy);
-
-        gen_alg.set_default();
-
-        gen_alg.comprobation();
-
-        /*DataSet data_set("C:/Users/rodrigo ingelmo/Downloads/sum.csv", ';', false);
-
-        //El problema era que el get_input_variables_number es un float y no un Index, por eso no iba
-        type input_variables_number = data_set.get_input_variables_number();
-        cout << input_variables_number<<endl;
-        type target_variables_number = data_set.get_target_variables_number();
-        cout << target_variables_number<< endl;
-
-        Index hidden_neurons_number=3;
-
-        cout << Index(target_variables_number);
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, { Index(input_variables_number), hidden_neurons_number,Index(target_variables_number) });
-
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_default();
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        GeneticAlgorithm gen_alg(&training_strategy);
-
-        gen_alg.set_default();
-        gen_alg.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
-        gen_alg.initialize_population();
-        Tensor<bool, 2 > population= gen_alg.get_population();
-        Index genes = gen_alg.get_genes_number();
-        Index individuals = gen_alg.get_individuals_number();
-        //Presento los individuos
-        for (Index i = 0; i < individuals; i++)
-        {
-            cout << "\n Individuo num: " << i + 1<<"\n";
-            for (Index j = 0; j < genes; j++)
-
-            {
-                if (population(i,j))
+                neural_network.print();
+                
+                TrainingStrategy training_strategy(&neural_network, &data_set);
+                training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+                TrainingStrategy* training_strategy_pointer = &training_strategy;
+                cout << "\n";
+                training_strategy.print();
+                try
                 {
-                    cout << "X_" <<j<< " esta activado\n";
+                    GeneticAlgorithmTest::UnitTesting;
+
+                    //GeneticAlgorithm genetic_algorithm(training_strategy_pointer);
+
+                    GeneticAlgorithm* genetic_algorithm_pointer = nullptr;
+                    GeneticAlgorithm genetic_algorithm(training_strategy_pointer);
+                    genetic_algorithm_pointer = &genetic_algorithm;
+                    genetic_algorithm_pointer->check();
+                    genetic_algorithm_pointer->set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+                    genetic_algorithm_pointer->initialize_population();
+                    genetic_algorithm_pointer->perform_selection();
+
+                    
                 }
+                catch (const exception& e)
+                {
+                    cerr << e.what() << endl;
+
+                    return 1;
+                }
+
+                
+            }catch (const exception& e)
+            {
+                cerr << e.what() << endl;
+
+                return 1;
             }
+                        
         }
-        //No se como hacer esto para que no falle
+        catch (const exception& e)
+        {
+            cerr << e.what() << endl;
 
-        //Hagamos una prueba de evaluar la población
-
-
-        TrainingStrategy* training_strategy_pointer = gen_alg.get_training_strategy_pointer();
-
-        TrainingResults training_results;
-
-        const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer(); 
+            return 1;
+        }
         
-        DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-        Tensor<bool, 1> individual;
-
-        const Index individuals_number = gen_alg.get_individuals_number();
-        const Index genes_number = gen_alg.get_genes_number();
-
-        for (Index i = 0; i < individuals_number; i++)
-        {
-            individual = population.chip(i, 0);
-
-            cout << "Individual " << i + 1 << endl;
-
-            const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
-
-            //Tenemos un tensor con los índices que tien
-
-            Tensor<Index, 1> input_columns_indices(input_columns_number(0));
-
-            Index index = 0;
-
-            Index column_index = 0;
-
-            for (Index j = 0; j < genes_number; j++)
-            {
-                if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
-                {
-                    const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
-
-                    if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
-                    {
-                        input_columns_indices(index)= original_input_columns_indices(column_index);
-                        index++;
-                    }
-                    j += categories_number - 1;
-                }
-                else
-                {
-                    if (individual(j))
-                    {
-                        input_columns_indices(index) = original_input_columns_indices(column_index);
-                        index++;
-                    }
-                }
-
-                column_index++;
-            }
-
-
-        }
-
-        */
         cout << "Bye OpenNN!" << endl;
     }
     catch (const exception& e)

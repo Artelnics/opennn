@@ -16,7 +16,7 @@ namespace opennn
     GeneticAlgorithm::GeneticAlgorithm()
         : InputsSelection()
     {
-        set_default();
+       set_default();
     }
 
 
@@ -352,6 +352,8 @@ namespace opennn
 
     void GeneticAlgorithm::initialize_population()
     {
+#ifdef OPENNN_DEBUG
+
         const Index individuals_number = get_individuals_number();
 
         if (individuals_number == 0)
@@ -378,6 +380,9 @@ namespace opennn
             throw invalid_argument(buffer.str());
         }
 
+#endif
+        
+
         if (initialization_method == GeneticAlgorithm::InitializationMethod::Random)
         {
             initialize_population_random();
@@ -387,7 +392,7 @@ namespace opennn
             initialize_population_correlations();
         }
 
-    }
+}
 
     void GeneticAlgorithm::initialize_population_random()
     {
@@ -453,7 +458,7 @@ namespace opennn
 
         const Tensor<Index, 1> rank = calculate_rank_greater(correlations);
 
-        const type sum = (num_genes * (num_genes + 1)) / 2;
+        const type sum = type((num_genes * (num_genes + 1)) / 2);
 
         for (Index i = 0; i < correlations.size(); i++)
         {
@@ -461,51 +466,39 @@ namespace opennn
             probability(i) = prob;
         }
         const Tensor <type, 1> sumprob = probability.cumsum(0);
-        for (Index i = 0; i < num_individuals; i++)
+        for (Index i = 0; i < sumprob.size(); i++)
         {
-            bool is_repeated=true;
+            
+            cout <<type((srand(i)%num_genes)/num_genes) << "\t" << sumprob(i) << endl;
+        }
+        
+        
+        /*for (Index i = 0; i < num_individuals; i++)
+        {
+            bool is_repeated = true;
             Tensor <bool, 1> individual(num_genes);
             individual.setConstant(false);
+            Index activated_genes = 1 + rand() % num_genes;
+            type pointer;
+            Index genes_count = 0;
 
-
-            do {
-                type activated_genes = rand() % 100 + 1;
-                Index genes_count = 0;
-                while (genes_count < activated_genes)
+            //Check
+            pointer = type((rand() % num_genes) / num_genes);
+            for (Index j = 0; j <activated_genes ; j++)
+            {
+                if (pointer<)
                 {
-                    const type pointer = type(rand() / RAND_MAX);
-                    if (pointer < sumprob(0) && !individual(0))
-                    {
-                        individual(0) = true;
-                        genes_count++;
-                    }
-                    for (Index j = 0; j < num_genes - 1; j++)
-                    {
-                        if (pointer > sumprob(j) && pointer < sumprob(j + 1) && !individual(j))
-                        {
-                            individual(j) = true;
-                            genes_count++;
-                        }
-                    }
-                }
-                //Individual repetition
-                for (Index j = 0; j <i ; j++)
-                {
-                    Tensor<bool, 1> row = population.chip(j, 0);
-                    if (are_equal(individual, row)) 
-                    {
-                        is_repeated = true;
-                        break;
-                    }
-                }
-                
-            } while (is_repeated);
 
+                }
+
+            }
+        }*/
+            /*
             for (Index j = 0; j < 100; j++)
             {
                 population(i, j) = individual(j);
             }
-        }
+        }*/
 
         check_categorical_columns();
 }
@@ -968,30 +961,30 @@ void GeneticAlgorithm::perform_mutation()
     }
 }
 
-
-//Hay que generar un metodo para generar una salida que de la población 
-void GeneticAlgorithm::comprobation()
+void GeneticAlgorithm::print_population() 
 {
-    cout << endl << " Performing genetic inputs selection..." << endl << endl;
+    Tensor <bool, 2 > population = get_population();
+    Index individuals_number = get_individuals_number();
+    Index genes_number = get_genes_number();
 
-    set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
-    initialize_population();
-    
-    set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
-
-    if (population.dimension(1) == 0)
+    for (Index i = 0; i < individuals_number; i++)
     {
-        set_individuals_number();
+        cout << "\n Individuo " << i+1 << " \n";
+        for (Index j = 0; j < genes_number; j++)
+        {
+            if (population(i, j)) 
+            {
+                cout << "La input X_"<< j+1<< "esta seleccionada"<<endl;
+            }
+            else
+            {
+                cout << "La input X_" << j + 1 << " no esta seleccionada"<<endl;
+            }
+
+        }
     }
-
-    
-    print();
-
-
-   
-
-    
 }
+
 
 /// Select the inputs with the best generalization properties using the genetic algorithm.
 
