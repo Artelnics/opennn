@@ -388,7 +388,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 
 bool is_date_time_string(const string& str)
 {
-    if(is_numeric_string(str))return false;
+    if(is_numeric_string(str)) return false;
 
     const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
@@ -407,14 +407,7 @@ bool is_date_time_string(const string& str)
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
 
-    if(regex_match(str, regular_expression))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return regex_match(str, regular_expression);
 }
 
 
