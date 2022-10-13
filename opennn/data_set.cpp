@@ -12044,20 +12044,18 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        //        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-        //        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-        //        || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-        //        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
-        ///*
-        //        || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
-        //                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i))
-        //                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
-        //*/
-        //        {
-        //            columns(column_index).type = ColumnType::DateTime;
-        //            column_index++;
-        //        }
-        if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
+                || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
+                                                                         && is_numeric_string(data_file_preview(lines_number-2)(i))
+                                                                         && is_numeric_string(data_file_preview(lines_number-2)(i))))
+                {
+                    columns(column_index).type = ColumnType::DateTime;
+                    column_index++;
+                }
+        else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
                 || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
                 || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
                 || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(lines_number-1)(i).empty()))
@@ -12076,7 +12074,6 @@ void DataSet::read_csv_1()
     {
         set_column_type(time_column, DataSet::ColumnType::DateTime);
     }
-
 
 }
 
