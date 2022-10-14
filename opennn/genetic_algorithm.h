@@ -121,10 +121,6 @@ public:
 
     void check_categorical_columns();
 
-    //Comprobation methods
-
-    void comprobation();
-
     Tensor<bool, 1> transform_individual_to_indexes(Tensor<bool,1> &);
 
     // Inputs selection methods
@@ -163,6 +159,9 @@ private:
     Tensor<type, 1> training_errors;
     Tensor<type, 1> selection_errors;
 
+    Tensor<type, 1> mean_training_error_history;
+    Tensor<type, 1> mean_selection_error_history;
+
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
     /// This is a parameter of the mutation operator.
@@ -176,8 +175,6 @@ private:
     Index elitism_size;
 
     InitializationMethod initialization_method ;
-
-
 };
 
 }

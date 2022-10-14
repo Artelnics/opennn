@@ -465,7 +465,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 			type prob = (num_genes - (rank(i))) / sum;
 			probability(i) = prob;
 		}
-		const Tensor <type, 1> cummulative_probability = probability.cumsum(0);
+		const Tensor <type, 1> cumulative_probability = probability.cumsum(0);
 
 		
 
@@ -477,28 +477,24 @@ void GeneticAlgorithm::initialize_population_correlations()
 				is_repeated = false;
 				individual.setConstant(false);
 				Index activated_genes = Index(1 + rand() % num_genes);
-				cout << "Number of activated_genes for this individual="<<activated_genes<<endl;
 				Index genes_count = 0;
 				do
 				{
 					type pointer = static_cast <type> (rand()) / static_cast <type> (RAND_MAX);
-					cout << "Pointer is " << pointer << endl;
-					if (pointer <= cummulative_probability(0) && !individual(0))
+					if (pointer <= cumulative_probability(0) && !individual(0))
 					{
 						individual(0) = true;
 						genes_count++;
 					}
 					else
 					{
-						for (Index j = 0; j < cummulative_probability.size() - 1; j++)
+						for (Index j = 0; j < cumulative_probability.size() - 1; j++)
 						{
 							
-							if (pointer > cummulative_probability(j) && pointer <= cummulative_probability(j + 1) && !individual(j))
+							if (pointer > cumulative_probability(j) && pointer <= cumulative_probability(j + 1) && !individual(j))
 							{
-								cout << "The lower limit is " << cummulative_probability(j) << "and the upper limit is " << cummulative_probability(j + 1) << endl;
 								individual(j) = true;
 								genes_count++;
-								cout << "Gene number " <<j+1<< "is activated"<< endl;
 								break;
 								
 							}
@@ -523,112 +519,104 @@ void GeneticAlgorithm::initialize_population_correlations()
 			{
 				population(i, j) = individual(j);
 			}
-			cout << "The individual number "<<i+1<<" is created"<< endl;
+
 		}
-		cout << "The loop is finished"<< endl;
 
+		
 
-	check_categorical_columns();
-	//print_population();
 }
-
-
-
 
 	/// Evaluate the population loss.
 	/// Training all the neural networks in the population and calculate their fitness.
 
-	void GeneticAlgorithm::evaluate_population()
-	{
+void GeneticAlgorithm::evaluate_population()
+{
 #ifdef OPENNN_DEBUG
 
-		check();
+	check();
 
-		if (population.size() == 0)
-		{
-			ostringstream buffer;
+	if (population.size() == 0)
+	{
+		ostringstream buffer;
 
-			buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-				<< "void evaluate_population() method.\n"
-				<< "Population size must be greater than 0.\n";
+		buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+			<< "void evaluate_population() method.\n"
+			<< "Population size must be greater than 0.\n";
 
-			throw invalid_argument(buffer.str());
-		}
+		throw invalid_argument(buffer.str());
+	}
 
 #endif
 
-		// Training strategy
+	// Training strategy
 
-		TrainingResults training_results;
+	TrainingResults training_results;
 
-		// Loss index
+	// Loss index
 
-		const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+	const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-		// Data set
+	// Data set
 
-		DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+	DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-		Tensor<string, 1> inputs_names;
+	Tensor<string, 1> inputs_names;
 
-		// Neural network
+	// Neural network
 
-		NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+	NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-		// Optimization algorithm
+	// Optimization algorithm
 
-		Tensor<bool, 1> individual;
+	Tensor<bool, 1> individual;
 
-		// Model selection
+	// Model selection
 
-		const Index individuals_number = get_individuals_number();
-		const Index genes_number = get_genes_number();
+	const Index individuals_number = get_individuals_number();
+	const Index genes_number = get_genes_number();
+	for (Index i = 0; i < individuals_number; i++)
+	{
+		individual = population.chip(i, 0);
 
-		for (Index i = 0; i < individuals_number; i++)
+		if (display) cout << "Individual " << i + 1 << endl;
+
+		const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
+
+		Tensor<Index, 1> input_columns_indices(input_columns_number(0));
+
+		Index index = 0;
+
+		Index column_index = 0;
+
+		for (Index j = 0; j < genes_number; j++)
 		{
-			individual = population.chip(i, 0);
-
-			if (display) cout << "Individual " << i + 1 << endl;
-
-			const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
-
-
-
-			Tensor<Index, 1> input_columns_indices(input_columns_number(0));
-
-			Index index = 0;
-
-			Index column_index = 0;
-
-			//Categorical variables filter
-
-			for (Index j = 0; j < genes_number; j++)
+			if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
 			{
-				if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
-				{
-					const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+				const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
 
-					if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
-					{
-						input_columns_indices(index) = original_input_columns_indices(column_index);
-						index++;
-					}
-					j += categories_number - 1;
-				}
-				else
+				if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
 				{
-					if (individual(j))
-					{
-						input_columns_indices(index) = original_input_columns_indices(column_index);
-						index++;
-					}
+					input_columns_indices(index) = original_input_columns_indices(column_index);
+					index++;
 				}
-
-				column_index++;
+				j += categories_number - 1;
+			}
+			else
+			{
+				if (individual(j))
+				{
+					input_columns_indices(index) = original_input_columns_indices(column_index);
+					index++;
+				}
 			}
 
-			data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
+			column_index++;
+		}
 
+
+			
+			data_set_pointer->set_input_target_columns(input_columns_indices,genes_number+1);
+			
 			inputs_names = data_set_pointer->get_input_variables_names();
 
 			neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
@@ -656,7 +644,10 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 				cout << "Training error: " << training_results.get_training_error() << endl;
 				cout << "Selection error: " << training_results.get_selection_error() << endl;
+
 			}
+			
+
 		}
 
 	}
@@ -1015,6 +1006,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 	}
 
 
+
 	/// Select the inputs with the best generalization properties using the genetic algorithm.
 
 	InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
@@ -1076,6 +1068,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 			if (display) cout << "Generation: " << epoch + 1 << endl;
 
 			evaluate_population();
+
 
 			optimal_individual_index = minimal_index(selection_errors);
 
@@ -1691,6 +1684,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 		from_XML(document);
 	}
+	
 
 }
 
