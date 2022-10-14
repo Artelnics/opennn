@@ -68,21 +68,22 @@ int main(int argc, char* argv[])
         ///THREE INPUTS AND TWO OUTPUTS TEST
         //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
         //Error in Aproximation, forecasting and
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {3,5,1});
+        //NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {3,5,1});
+        //
+        //Eigen::Tensor<string, 1> t2(3);
+        //t2(0) = "input1";
+        //t2(1) = "input2";
+        //t2(2) = "input3";
+        //
+        //Eigen::Tensor<string, 1> t(1);
+        //t(0) = "output1";
+        ////t(1) = "output2";
+        //
+        //neural_network.set_inputs_names(t2);
+        //neural_network.set_outputs_names(t);
+        //
+        //string expression_api = neural_network.write_expression_api();
 
-        Eigen::Tensor<string, 1> t2(3);
-        t2(0) = "input1";
-        t2(1) = "input2";
-        t2(2) = "input3";
-
-        Eigen::Tensor<string, 1> t(1);
-        t(0) = "output1";
-        //t(1) = "output2";
-
-        neural_network.set_inputs_names(t2);
-        neural_network.set_outputs_names(t);
-
-        string expression_api = neural_network.write_expression_api();
 
         //=======================//
         //       TEST 2          //
@@ -91,6 +92,7 @@ int main(int argc, char* argv[])
         ///THREE INPUTS AND TWO OUTPUTS TEST
         //                                          ({inputs_number, hidden_neurons_number, outputs_number}).
         //Error in Aproximation, forecasting and
+
         //(NeuralNetwork::ProjectType::Classification, {4, 6, 3});
         //NeuralNetwork nn;
         //
@@ -104,7 +106,31 @@ int main(int argc, char* argv[])
         //
         //
         //string expression_api = nn.write_expression_api();
-        cout << expression_api << endl;
+        //cout << expression_api << endl;
+
+
+        //=======================//
+        //       TEST 2          //
+        //=======================//
+
+        NeuralNetwork nn;
+
+        LongShortTermMemoryLayer lstm (1,1);
+        lstm.set_activation_function("SoftSign");
+        nn.add_layer(&lstm);
+
+        Eigen::Tensor<string, 1> t2(1);
+        t2(0) = "input1";
+        Eigen::Tensor<string, 1> t(1);
+        t(0) = "output1";
+        nn.set_inputs_names(t2);
+        nn.set_outputs_names(t);
+
+        nn.print();
+
+        cout << nn.write_expression_api();
+
+        cout << "bye world" << endl;
     }
     catch (const exception& e)
     {
