@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
         //DataSet data_set("C:/Users/rodrigo ingelmo/Documents/opennn - genetic/opennn/opennn/blank/data/sum.csv", ';', false);
         try {
-
+            
             DataSet data_set("D:/sum.csv", ';', false);
             try {
                 Index input_variables_number = data_set.get_input_variables_number();
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
                     genetic_algorithm_pointer->check();
                     genetic_algorithm_pointer->set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
                     genetic_algorithm_pointer->initialize_population();
-                    genetic_algorithm_pointer->perform_selection();
+                    genetic_algorithm_pointer->print_population();
 
                     
                 }
