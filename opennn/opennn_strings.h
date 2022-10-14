@@ -74,6 +74,7 @@ namespace opennn
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
+    void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith);
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
