@@ -4019,7 +4019,6 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
     ostringstream buffer;
 
         // Forget gate
-
         for(Index i = 0; i < neurons_number; i++)
         {
             buffer << "forget_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[i] << " + ";
@@ -4038,7 +4037,6 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
         }
 
        // Input gate
-
        for(Index i = 0; i < neurons_number; i++)
        {
            buffer << "input_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[i] << " + ";
@@ -4054,10 +4052,10 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
            }
 
            buffer << "hidden_state_" << to_string(neurons_number-1) << "(t-1) * (" << input_recurrent_weights(neurons_number-1,i) << ") );\n";
-       }
+
+        }
 
        // State gate
-
        for(Index i = 0; i < neurons_number; i++)
        {
            buffer << "state_gate_" << to_string(i) << " = " << write_activation_function_expression() << " (" << state_biases[i] << " + ";
@@ -4095,7 +4093,6 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        }
 
        // Cell state
-
        for(Index i = 0; i < neurons_number; i++)
        {
             buffer << "cell_state_" << to_string(i) << "(t) = forget_gate_" << to_string(i) << " * cell_state_" << to_string(i) << "(t-1)+input_gate_" << to_string(i) << " * state_gate_" << to_string(i) << ";\n";
@@ -4114,6 +4111,9 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        {
            buffer << outputs_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
        }
+
+       /**
+       */
 
        return buffer.str();
 }
