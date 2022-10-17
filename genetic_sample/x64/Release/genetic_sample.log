@@ -1,0 +1,6 @@
+﻿  Source.cpp
+  The contents of <filesystem> are available only with C++17 or later.
+C:\Users\rodrigo ingelmo\Documents\opennn-genetic\opennn\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: "&": compruebe la prioridad de operador para posibles errores; utilice paréntesis para indicar la prioridad
+C:\Users\rodrigo ingelmo\Documents\opennn-genetic\opennn\opennn\opennn\statistics.h(184): message : Vea la referencia a la creación de una instancia de clase plantilla "Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>" que se está compilando
+  The contents of <string_view> are available only with C++17 or later.
+C:\Users\rodrigo ingelmo\Documents\opennn-genetic\opennn\opennn\opennn\region_based_object_detector.h(85,27): warning C4305: 'inicializando': truncamiento de 'double' a 'opennn::type'

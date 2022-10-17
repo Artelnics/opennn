@@ -631,8 +631,10 @@ void GeneticAlgorithm::evaluate_population()
 
 			parameters(i) = neural_network_pointer->get_parameters();
 
-			training_errors(i) = training_results.get_training_error();
-			selection_errors(i) = training_results.get_selection_error();
+			training_errors(i) =type( training_results.get_training_error());
+			selection_errors(i) =type( training_results.get_selection_error());
+
+			
 
 			if (display)
 			{
@@ -649,6 +651,21 @@ void GeneticAlgorithm::evaluate_population()
 			
 
 		}
+		
+		//Mean generational selection and training error calculation (primitive way)
+
+		type sum1 = 0;
+
+		type sum2 = 0;
+
+		for (Index i = 0; i < individuals_number; i++)
+		{
+			sum1 += training_errors(i);
+			sum2 += selection_errors(i);
+			
+		}
+		mean_generational_training_error = (sum1 / type(training_errors.size()));
+		mean_generational_selection_error = (sum2 / type(selection_errors.size()));
 
 	}
 
@@ -1068,9 +1085,14 @@ void GeneticAlgorithm::evaluate_population()
 			if (display) cout << "Generation: " << epoch + 1 << endl;
 
 			evaluate_population();
+			
+			mean_training_error_history(epoch) = mean_generational_training_error;
 
+			mean_selection_error_history(epoch) = mean_generational_selection_error;
 
 			optimal_individual_index = minimal_index(selection_errors);
+
+			optimal_individuals_history(epoch) = population(optimal_individual_index);
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);

@@ -159,6 +159,11 @@ private:
     Tensor<type, 1> training_errors;
     Tensor<type, 1> selection_errors;
 
+    type mean_generational_training_error;
+    type mean_generational_selection_error;
+    
+    Tensor <type, 2> optimal_individuals_history;
+
     Tensor<type, 1> mean_training_error_history;
     Tensor<type, 1> mean_selection_error_history;
 
@@ -175,6 +180,8 @@ private:
     Index elitism_size;
 
     InitializationMethod initialization_method ;
+
+    
 };
 
 }
