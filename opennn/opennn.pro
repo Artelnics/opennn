@@ -110,6 +110,7 @@ HEADERS += \
     region_based_object_detector.h \
     json_to_xml.h \
     batch_normalization_layer.h\
+    region_proposal_layer.h \
     opennn.h
 
 SOURCES += \
@@ -165,4 +166,5 @@ SOURCES += \
     region_based_object_detector.cpp \
     json_to_xml.cpp \
     batch_normalization_layer.cpp\
+    region_proposal_layer.cpp \
     unit_testing.cpp
