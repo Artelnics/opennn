@@ -878,6 +878,47 @@ bool contains_substring(const string& str, const string& sub_str)
 }
 
 
+ ///Replaces all apprearances of a substring with another string
+ ///@param s
+ ///@param toReplace
+ ///@param replaceWith
+
+void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
+    std::string buf;
+
+    std::size_t pos = 0;
+    std::size_t prevPos;
+
+    // Reserves rough estimate of final size of string.
+    buf.reserve(s.size());
+
+    while (true) {
+
+        prevPos =    pos;
+        pos = s.find(toReplace, pos);
+
+        if (pos == std::string::npos)
+            break;
+
+        buf.append(s, prevPos, pos - prevPos);
+        if (buf.back() == '_')
+        {
+            buf += toReplace;
+            pos += toReplace.size();
+
+        }else
+        {
+            buf += replaceWith;
+            pos += toReplace.size();
+
+        }
+    }
+
+    buf.append(s, prevPos, s.size() - prevPos);
+    s.swap(buf);
+}
+
+
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
