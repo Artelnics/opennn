@@ -48,9 +48,10 @@ int main(int argc, char* argv[])
         genetic_algorithm_pointer->set_individuals_number(5);
         genetic_algorithm_pointer->set_maximum_epochs_number(5);
         genetic_algorithm_pointer->set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
-        genetic_algorithm_pointer->initialize_population();
-        genetic_algorithm_pointer->print_population();
-        genetic_algorithm_pointer->evaluate_population();
+        //genetic_algorithm_pointer->initialize_population();
+        //genetic_algorithm_pointer->print_population();
+        //genetic_algorithm_pointer->evaluate_population();
+        genetic_algorithm_pointer->perform_inputs_selection();
 
     }
     catch (const exception& e)

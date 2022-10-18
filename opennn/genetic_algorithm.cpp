@@ -396,23 +396,23 @@ namespace opennn
 
 	void GeneticAlgorithm::initialize_population_random()
 	{
-		const Index num_individuals = get_individuals_number();
-		const Index num_genes = get_genes_number();
+		const Index individuals_number = get_individuals_number();
+		const Index genes_number = get_genes_number();
 
-		for (Index i = 0; i < num_individuals; i++)
+		for (Index i = 0; i < individuals_number; i++)
 		{
 			bool is_repeated;
-			Tensor <bool, 1> individual(num_genes);
+			Tensor <bool, 1> individual(genes_number);
 			individual.setConstant(false);
 
 			do
 			{
 				is_repeated = false;
-				type active_genes = rand() % num_genes + 1;
+				Index active_genes = rand() % genes_number + 1;
 				Index genes_count = 0;
 				do
 				{
-					Index random_gene = rand() % 100;
+					Index random_gene = rand() % genes_number;
 					if (!individual(random_gene))
 					{
 						individual(random_gene) = true;
@@ -575,6 +575,9 @@ void GeneticAlgorithm::evaluate_population()
 
 	const Index individuals_number = get_individuals_number();
 	const Index genes_number = get_genes_number();
+
+	original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+	original_target_columns_indices = data_set_pointer->get_target_columns_indices();
 	for (Index i = 0; i < individuals_number; i++)
 	{
 		individual = population.chip(i, 0);
@@ -584,8 +587,7 @@ void GeneticAlgorithm::evaluate_population()
 		const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
 		Tensor<Index, 1> input_columns_indices(input_columns_number(0));
-		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
+
 
 		Index index = 0;
 
@@ -1088,14 +1090,8 @@ void GeneticAlgorithm::evaluate_population()
 			if (display) cout << "Generation: " << epoch + 1 << endl;
 
 			evaluate_population();
-			
-			mean_training_error_history(epoch) = mean_generational_training_error;
-
-			mean_selection_error_history(epoch) = mean_generational_selection_error;
-
+	
 			optimal_individual_index = minimal_index(selection_errors);
-
-			optimal_individuals_history(epoch) = population(optimal_individual_index);
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
