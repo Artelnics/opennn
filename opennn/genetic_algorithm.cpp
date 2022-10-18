@@ -446,6 +446,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 {
 		const Index num_individuals = get_individuals_number();
 		const Index num_genes = get_genes_number();
+		TrainingStrategy* training_strategy_pointer=get_training_strategy_pointer();
 		//Probabilities calculations
 
 		DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
@@ -583,6 +584,8 @@ void GeneticAlgorithm::evaluate_population()
 		const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
 		Tensor<Index, 1> input_columns_indices(input_columns_number(0));
+		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
 
 		Index index = 0;
 
