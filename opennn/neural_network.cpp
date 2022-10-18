@@ -2778,107 +2778,8 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 }
 
 
-/// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_c() const
-{
-    const Index layers_number = get_layers_number();
-
-    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
-    const Tensor<string, 1> layers_names = get_layers_names();
-
-    ostringstream buffer;
-
-    buffer <<"// Artificial Intelligence Techniques SL\t"<<endl;
-    buffer <<"// artelnics@artelnics.com\t"<<endl;
-    buffer <<"// "<<endl;
-    buffer <<"// Your model has been exported to this file." <<endl;
-    buffer <<"// You can manage it with the 'neural network' method.\t"<<endl;
-    buffer <<"// Example:"<<endl;
-    buffer <<"// "<<endl;
-    buffer <<"// \tvector<float> sample(n);\t"<<endl;
-    buffer <<"// \tsample[0] = 1;\t"<<endl;
-    buffer <<"// \tsample[1] = 2;\t"<<endl;
-    buffer <<"// \tsample[n] = 10;\t"<<endl;
-    buffer <<"// \tvector<float> outputs = neural_network(sample);"<<endl;
-    buffer <<"// "<<endl;
-    buffer <<"// Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
-    buffer <<"// however you can loop through neural network function to get multiple outputs.\t"<<endl;
-    buffer <<""<<endl;
-
-    buffer << "#include <vector>\n" << endl;
-
-    buffer << "using namespace std;\n" << endl;
-
-    if(has_long_short_term_memory_layer())
-    {
-        const LongShortTermMemoryLayer* long_short_term_memory_pointer = get_long_short_term_memory_layer_pointer();
-        Index timestep = long_short_term_memory_pointer->get_timesteps();
-        Index neurons_number = long_short_term_memory_pointer->get_neurons_number();
-
-        buffer << "class LSTMNetwork\n";
-        buffer << "{\n" << endl;
-        buffer << "public:\n" << endl;
-        buffer << "    LSTMNetwork()\n";
-        buffer << "    {\n";
-        buffer << "        hidden_states.resize(" << neurons_number << ");\n";
-        buffer << "        cell_states.resize(" << neurons_number << ");\n";
-        buffer << "    }\n" << endl;
-        buffer << "    vector<vector<float>> neural_network_batch(const vector<vector<float>>& inputs)\n";
-        buffer << "    {\n";
-        buffer << "        vector<vector<float>> outputs(inputs.size());\n" << endl;
-        buffer << "        for(size_t i = 0; i < inputs.size(); i++)\n";
-        buffer << "        {\n";
-        buffer << "            if(i % " << timestep << " == 0)\n";
-        buffer << "            {\n";
-        buffer << "                fill(hidden_states.begin(), hidden_states.end(), 0.0);\n";
-        buffer << "                fill(cell_states.begin(), cell_states.end(), 0.0);\n";
-        buffer << "            }\n" << endl;
-        buffer << "            outputs[i] = neural_network(inputs[i]);\n";
-        buffer << "        }\n" << endl;
-        buffer << "        return outputs;\n";
-        buffer << "    }\n" << endl << endl;
-        buffer << "private:\n" << endl;
-        buffer << "    vector<float> hidden_states;\n";
-        buffer << "    vector<float> cell_states;\n" << endl << endl;
-    }
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        buffer << layers_pointers[i]->write_expression_c() << endl;
-    }
-
-    buffer << "vector<float> neural_network(const vector<float>& inputs)\n{" << endl;
-
-    buffer << "\tvector<float> outputs;\n" << endl;
-
-    if(layers_number > 0)
-    {
-        buffer << "\toutputs = " << layers_names[0] << "(inputs);\n";
-    }
-
-    for(Index i = 1; i < layers_number; i++)
-    {
-        buffer << "\toutputs = " << layers_names[i] << "(outputs);\n";
-    }
-
-    buffer << "\n\treturn outputs;\n}" << endl;
-
-    if(has_long_short_term_memory_layer()) buffer << "\n};\n" << endl;
-
-    buffer << "int main(){return 0;}" << endl;
-
-    string expression = buffer.str();
-
-    replace(expression, "+-", "-");
-    replace(expression, "-+", "-");
-    replace(expression, "--", "+");
-
-    return expression;
-}
-
-///Once its finsihed, replace write_expression_c()
-string NeuralNetwork::write_expression_c2() const{
+string NeuralNetwork::write_expression_c() const{
 
     //vector<std::string> found_tokens;
     ostringstream buffer;
@@ -3028,8 +2929,8 @@ string NeuralNetwork::write_expression_c2() const{
     {
         buffer << "float ExponentialLinear(float x) {" << endl;
         buffer << "float z;" << endl;
-        buffer << "float alpha = 1.6732632423543772848170429916717;" << endl;
-        buffer << "if ($x>0){" << endl;
+        buffer << "float alpha = 1.67326;" << endl;
+        buffer << "if (x>0){" << endl;
         buffer << "z = x;" << endl;
         buffer << "}else{" << endl;
         buffer << "z = alpha*(exp(x)-1);" << endl;
@@ -3043,8 +2944,8 @@ string NeuralNetwork::write_expression_c2() const{
     {
         buffer << "float ScaledExponentialLinear(float x) {" << endl;
         buffer << "float z;" << endl;
-        buffer << "float alpha  = 1.6732632423543772848170429916717;" << endl;
-        buffer << "float lambda = 1.0507009873554804934193349852946;" << endl;
+        buffer << "float alpha  = 1.67326;" << endl;
+        buffer << "float lambda = 1.05070;" << endl;
         buffer << "if (x > 0){" << endl;
         buffer << "z = lambda*x;" << endl;
         buffer << "}else{" << endl;
@@ -3531,8 +3432,8 @@ string NeuralNetwork::write_expression_api() const
         {
             buffer << "<?php" << endl;
             buffer << "function ScaledExponentialLinear(int $x) {" << endl;
-            buffer << "$alpha  = 1.6732632423543772848170429916717;" << endl;
-            buffer << "$lambda = 1.0507009873554804934193349852946;" << endl;
+            buffer << "$alpha  = 1.67326;" << endl;
+            buffer << "$lambda = 1.05070;" << endl;
             buffer << "if ($x>0){" << endl;
             buffer << "$z=$lambda*$x;" << endl;
             buffer << "}else{" << endl;
@@ -3717,6 +3618,8 @@ string NeuralNetwork::write_expression_python() const
 
     return expression;
 }
+
+
 
 
 /// Saves the mathematical expression represented by the neural network to a text file.
