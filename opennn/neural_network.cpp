@@ -2848,7 +2848,6 @@ string NeuralNetwork::write_expression_c() const{
     buffer << "using namespace std;" << endl;
     buffer << "\n" << endl;
 
-    // Do stuff
     string expression = write_expression();
     vector<std::string> tokens;
     std::string token;
@@ -2861,7 +2860,6 @@ string NeuralNetwork::write_expression_c() const{
         tokens.push_back(token);
     }
 
-    // Do more stuff
     std::string target_string0("Logistic");
     std::string target_string1("ReLU");
     std::string target_string2("Threshold");
