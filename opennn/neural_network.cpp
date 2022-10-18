@@ -2795,106 +2795,299 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
     set_parameters(new_parameters);
 }
 
+string NeuralNetwork::write_expression_c() const{
 
-/// Returns a string with the c function of the expression represented by the neural network.
-
-string NeuralNetwork::write_expression_c() const
-{
-    const Index layers_number = get_layers_number();
-
-    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
-    const Tensor<string, 1> layers_names = get_layers_names();
-
+    //vector<std::string> found_tokens;
     ostringstream buffer;
 
-    buffer <<"// Artificial Intelligence Techniques SL\t"<<endl;
-    buffer <<"// artelnics@artelnics.com\t"<<endl;
-    buffer <<"// "<<endl;
-    buffer <<"// Your model has been exported to this file." <<endl;
-    buffer <<"// You can manage it with the 'neural network' method.\t"<<endl;
-    buffer <<"// Example:"<<endl;
-    buffer <<"// "<<endl;
-    buffer <<"// \tvector<float> sample(n);\t"<<endl;
-    buffer <<"// \tsample[0] = 1;\t"<<endl;
-    buffer <<"// \tsample[1] = 2;\t"<<endl;
-    buffer <<"// \tsample[n] = 10;\t"<<endl;
-    buffer <<"// \tvector<float> outputs = neural_network(sample);"<<endl;
-    buffer <<"// "<<endl;
-    buffer <<"// Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
-    buffer <<"// however you can loop through neural network function to get multiple outputs.\t"<<endl;
-    buffer <<""<<endl;
+    bool logistic     = false;
+    bool ReLU         = false;
+    bool Threshold    = false;
+    bool SymThreshold = false;
+    bool ExpLinear    = false;
+    bool SExpLinear   = false;
+    bool HSigmoid     = false;
+    bool SoftPlus     = false;
+    bool SoftSign     = false;
 
-    buffer << "#include <vector>\n" << endl;
+    //Finish this text
+    buffer << "/**" << endl;
+    buffer << "Artificial Intelligence Techniques SL\t" << endl;
+    buffer << "artelnics@artelnics.com\t" << endl;
+    buffer << "" << endl;
+    buffer << "Your model has been exported to this c file." << endl;
+    buffer << "You can manage it... \t" << endl;
+    buffer << "Example:" << endl;
+    buffer << "" << endl;
+    buffer << "\tInputs Names: \t" << endl;
 
-    buffer << "using namespace std;\n" << endl;
+    const Tensor<string, 1> inputs = get_inputs_names();
+    const Tensor<string, 1> outputs = get_outputs_names();
 
-    if(has_long_short_term_memory_layer())
+    for (int i = 0; i < inputs.dimension(0); i++)
     {
-        const LongShortTermMemoryLayer* long_short_term_memory_pointer = get_long_short_term_memory_layer_pointer();
-        Index timestep = long_short_term_memory_pointer->get_timesteps();
-        Index neurons_number = long_short_term_memory_pointer->get_neurons_number();
-
-        buffer << "class LSTMNetwork\n";
-        buffer << "{\n" << endl;
-        buffer << "public:\n" << endl;
-        buffer << "    LSTMNetwork()\n";
-        buffer << "    {\n";
-        buffer << "        hidden_states.resize(" << neurons_number << ");\n";
-        buffer << "        cell_states.resize(" << neurons_number << ");\n";
-        buffer << "    }\n" << endl;
-        buffer << "    vector<vector<float>> neural_network_batch(const vector<vector<float>>& inputs)\n";
-        buffer << "    {\n";
-        buffer << "        vector<vector<float>> outputs(inputs.size());\n" << endl;
-        buffer << "        for(size_t i = 0; i < inputs.size(); i++)\n";
-        buffer << "        {\n";
-        buffer << "            if(i % " << timestep << " == 0)\n";
-        buffer << "            {\n";
-        buffer << "                fill(hidden_states.begin(), hidden_states.end(), 0.0);\n";
-        buffer << "                fill(cell_states.begin(), cell_states.end(), 0.0);\n";
-        buffer << "            }\n" << endl;
-        buffer << "            outputs[i] = neural_network(inputs[i]);\n";
-        buffer << "        }\n" << endl;
-        buffer << "        return outputs;\n";
-        buffer << "    }\n" << endl << endl;
-        buffer << "private:\n" << endl;
-        buffer << "    vector<float> hidden_states;\n";
-        buffer << "    vector<float> cell_states;\n" << endl << endl;
+        if (inputs[i] == "")
+        {
+            buffer << "\t" << to_string(i) + ") " << "input_" + to_string(i) << endl;
+            //found_tokens.push_back("input_" + to_string(i));
+        }
+        else
+        {
+            buffer << "\t" << to_string(i) + ") " << inputs[i] << endl;
+            //found_tokens.push_back(inputs[i]);
+        }
     }
 
-    for(Index i = 0; i < layers_number; i++)
+    buffer << "*/" << endl;
+    buffer << "\n" << endl;
+    buffer << "#include <iostream>" << endl;
+    buffer << "#include <vector>" << endl;
+    buffer << "#include <math.h>" << endl;
+    buffer << "#include <stdio.h>" << endl;
+    buffer << "\n" << endl;
+    buffer << "using namespace std;" << endl;
+    buffer << "\n" << endl;
+
+    // Do stuff
+    string expression = write_expression();
+    vector<std::string> tokens;
+    std::string token;
+    std::stringstream ss(expression);
+
+    while (getline(ss, token, '\n'))
     {
-        buffer << layers_pointers[i]->write_expression_c() << endl;
+        if (token.size() > 1 && token.back() == '{'){ break; }
+        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+        tokens.push_back(token);
     }
 
-    buffer << "vector<float> neural_network(const vector<float>& inputs)\n{" << endl;
+    // Do more stuff
+    std::string target_string0("Logistic");
+    std::string target_string1("ReLU");
+    std::string target_string2("Threshold");
+    std::string target_string3("SymmetricThreshold");
+    std::string target_string4("ExponentialLinear");
+    std::string target_string5("ScaledExponentialLinear");
+    std::string target_string6("HardSigmoid");
+    std::string target_string7("SoftPlus");
+    std::string target_string8("SoftSign");
 
-    buffer << "\tvector<float> outputs;\n" << endl;
-
-    if(layers_number > 0)
+    for (auto& t:tokens)
     {
-        buffer << "\toutputs = " << layers_names[0] << "(inputs);\n";
+        size_t substring_length0 = t.find(target_string0);
+        size_t substring_length1 = t.find(target_string1);
+        size_t substring_length2 = t.find(target_string2);
+        size_t substring_length3 = t.find(target_string3);
+        size_t substring_length4 = t.find(target_string4);
+        size_t substring_length5 = t.find(target_string5);
+        size_t substring_length6 = t.find(target_string6);
+        size_t substring_length7 = t.find(target_string7);
+        size_t substring_length8 = t.find(target_string8);
+
+        if (substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
+        if (substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
+        if (substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
+        if (substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
+        if (substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
+        if (substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
+        if (substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
+        if (substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
+        if (substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
     }
 
-    for(Index i = 1; i < layers_number; i++)
+    if(logistic)
     {
-        buffer << "\toutputs = " << layers_names[i] << "(outputs);\n";
+        buffer << "float Logistic (float x) {" << endl;
+        buffer << "float z = 1/(1+exp(-x));" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
     }
 
-    buffer << "\n\treturn outputs;\n}" << endl;
+    if(ReLU)
+    {
+        buffer << "float ReLU(float x) {" << endl;
+        buffer << "float z = max(0, x);" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
 
-    if(has_long_short_term_memory_layer()) buffer << "\n};\n" << endl;
+    if(Threshold)
+    {
+        buffer << "float Threshold(float x) {" << endl;
+        buffer << "float z;" << endl;
+        buffer << "if (x < 0) {" << endl;
+        buffer << "z = 0;" << endl;
+        buffer << "}else{" << endl;
+        buffer << "z = 1;" << endl;
+        buffer << "}" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
 
-    buffer << "int main(){return 0;}" << endl;
+    if(SymThreshold)
+    {
+        buffer << "float SymmetricThreshold(float x) {" << endl;
+        buffer << "float z" << endl;
+        buffer << "if (x < 0) {" << endl;
+        buffer << "z = -1;" << endl;
+        buffer << "}else{" << endl;
+        buffer << "z=1;" << endl;
+        buffer << "}" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
 
-    string expression = buffer.str();
+    if(ExpLinear)
+    {
+        buffer << "float ExponentialLinear(float x) {" << endl;
+        buffer << "float z;" << endl;
+        buffer << "float alpha = 1.67326;" << endl;
+        buffer << "if (x>0){" << endl;
+        buffer << "z = x;" << endl;
+        buffer << "}else{" << endl;
+        buffer << "z = alpha*(exp(x)-1);" << endl;
+        buffer << "}" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
 
-    replace(expression, "+-", "-");
-    replace(expression, "-+", "-");
-    replace(expression, "--", "+");
+    if(SExpLinear)
+    {
+        buffer << "float ScaledExponentialLinear(float x) {" << endl;
+        buffer << "float z;" << endl;
+        buffer << "float alpha  = 1.67326;" << endl;
+        buffer << "float lambda = 1.05070;" << endl;
+        buffer << "if (x > 0){" << endl;
+        buffer << "z = lambda*x;" << endl;
+        buffer << "}else{" << endl;
+        buffer << "z = lambda*alpha*(exp(x)-1);" << endl;
+        buffer << "}" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
 
-    return expression;
+    if(HSigmoid)
+    {
+        buffer << "float HardSigmoid(float x) {" << endl;
+        buffer << "float z = 1/(1+exp(-x));" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
+
+    if(SoftPlus)
+    {
+        buffer << "float SoftPlus(float x) {" << endl;
+        buffer << "float z = log(1+exp(x));" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
+
+    if(SoftSign)
+    {
+        buffer << "float SoftSign(float x) {" << endl;
+        buffer << "float z = x/(1+abs(x));" << endl;
+        buffer << "return z;" << endl;
+        buffer << "}" << endl;
+        buffer << "\n" << endl;
+    }
+
+    buffer << "vector<float> calculate_outputs(vector<float> inputs)" << endl;
+    buffer << "{" << endl;
+
+    for (int i = 0; i < inputs.dimension(0); i++)
+    {
+        if (inputs[i] == "")
+        {
+            buffer << "\t" << "const float " << "input_" << to_string(i) << " = " << "inputs[" << to_string(i) << "];" << endl;
+        }
+        else
+        {
+            buffer << "\t" << "const float " << inputs[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
+        }
+    }
+
+    buffer << "" << endl;
+
+    for (auto& t:tokens)
+    {
+        if (t.size()<=1)
+        {
+            buffer << "" << endl;
+        }
+        else
+        {
+            buffer << "\t" << "const float " << t << endl;
+        }
+    }
+
+    buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
+    for (int i = 0; i < outputs.dimension(0); i++)
+    {
+        if (outputs[i] == "")
+        {
+            buffer << "\t" << "out[" << to_string(i) << "] = " << "output" << to_string(i) << ";"<< endl;
+        }
+        else
+        {
+            buffer << "\t" << "out[" << to_string(i) << "] = " << outputs[i] << ";" << endl;
+        }
+    }
+
+    buffer << "\n\t" << "return out;" << endl;
+    buffer << "}"  << endl;
+    buffer << "\n" << endl;
+
+    buffer << "int main(){ \n" << endl;
+    buffer << "\t" << "vector<float> inputs(" << to_string(inputs.size()) << "); \n" << endl;
+
+    for (int i = 0; i < inputs.dimension(0); i++)
+    {
+        if (inputs[i] == "")
+        {
+            buffer << "\t" << "const float " << "input_" << to_string(i) <<" =" << " /*enter your value here*/; " << endl;
+            buffer << "\t" << "inputs[" << to_string(i) << "] = " << "input_" << to_string(i) << ";" << endl;
+        }
+        else
+        {
+            buffer << "\t" << "const float " << inputs[i] << " =" << " /*enter your value here*/; " << endl;
+            buffer << "\t" << "inputs[" << to_string(i) << "] = " << inputs[i] << ";" << endl;
+        }
+    }
+
+    buffer << "" << endl;
+    buffer << "\t" << "vector<float> outputs(" << outputs.size() <<");" << endl;
+    buffer << "\t" << "outputs = calculate_outputs(inputs);" << endl;
+    buffer << "" << endl;
+
+    buffer << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
+
+    for (int i = 0; i < outputs.dimension(0); i++)
+    {
+        if (outputs[i] == "")
+        {
+            buffer << "\t" << "printf( \"output" << to_string(i) << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
+        }
+        else
+        {
+            buffer << "\t" << "printf( \""<< outputs_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
+        }
+    }
+
+    buffer << "\n\t" << "return 0;" << endl;
+    buffer << "} \n" << endl;
+
+    string out = buffer.str();
+    replace_all_appearances(out, "$$", "$");
+    return out;
 }
-
 
 string NeuralNetwork::write_expression() const
 {
