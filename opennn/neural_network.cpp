@@ -3187,7 +3187,7 @@ string NeuralNetwork::write_expression_api() const
         if(logistic)
         {
             buffer << "<?php" << endl;
-            buffer << "function logistic(int $x) {" << endl;
+            buffer << "function Logistic(int $x) {" << endl;
             buffer << "$z = 1/(1+exp(-$x));" << endl;
             buffer << "return $z;" << endl;
             buffer << "}" << endl;
