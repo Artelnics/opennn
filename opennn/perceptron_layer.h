@@ -216,7 +216,6 @@ public:
 
    string write_combinations_python() const;
    string write_activations_python() const;
-   string write_expression_python() const final;
 
    // Serialization methods
 

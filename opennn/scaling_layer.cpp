@@ -1087,66 +1087,6 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
 }
 
 
-string ScalingLayer::write_expression_python() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
-
-    buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(scalers(i) == Scaler::NoScaling)
-        {
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]\n" << endl;
-        }
-        else if(scalers(i) == Scaler::MinimumMaximum)
-        {
-            const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
-
-            const type intercept = -(descriptives(i).minimum*(max_range-min_range))/(descriptives(i).maximum - descriptives(i).minimum) + min_range;
-
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
-        }
-        else if(scalers(i) == Scaler::MeanStandardDeviation)
-        {
-            const type standard_deviation = descriptives(i).standard_deviation;
-
-            const type mean = descriptives(i).mean;
-
-            buffer << "\t\toutputs[" << i << "] = (inputs[" << i << "]-"<<mean<<")/"<<standard_deviation<<"\n";
-        }
-        else if(scalers(i) == Scaler::StandardDeviation)
-        {
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << "\n " << endl;
-        }
-        else if(scalers(i) == Scaler::Logarithm)
-        {
-            buffer << "\t\toutputs[" << i << "] = np.log(inputs[" << i << "])\n"<< endl;
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "string write_expression() const method.\n"
-                   << "Unknown inputs scaling method.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-    }
-
-    buffer << "\n\t\treturn outputs;\n" << endl;
-
-    return buffer.str();
-}
-
-
 void ScalingLayer::print() const
 {
     cout << "Scaling layer" << endl;

@@ -1475,22 +1475,6 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 }
 
 
-string ProbabilisticLayer::write_expression_python() const
-{
-    ostringstream buffer;
-
-    buffer << "\tdef " << layer_name << "(self, inputs):\n" << endl;
-
-    buffer << write_combinations_python();
-
-    buffer << write_activations_python();
-
-    buffer << "\n\t\treturn activations;\n" << endl;
-
-    return buffer.str();
-}
-
-
 string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_names,
                                             const Tensor<string, 1>& outputs_names) const
 {

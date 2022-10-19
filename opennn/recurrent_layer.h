@@ -206,7 +206,6 @@ public:
 
    string write_activation_function_expression() const;
 
-   string write_expression_python() const final;
    string write_combinations_python() const;
    string write_activations_python() const;
 
