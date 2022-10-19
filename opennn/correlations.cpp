@@ -672,6 +672,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     Tensor<type,1> x_filtered = filtered_elements.first;
     Tensor<type,2> y_filtered = filtered_elements.second;
 
+//    cout << "x filtered: " << endl << x_filtered << endl;
+//    cout << "y filtered: " << endl << y_filtered << endl;
+
     if(x_filtered.size() == 0)
     {
         correlation.r = static_cast<type>(NAN);
@@ -681,13 +684,13 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
-    const Tensor<type, 2> data = opennn::assemble_matrix_vector(y_filtered, x_filtered);
+    const Tensor<type, 2> data = opennn::assemble_vector_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_columns_indices(y_filtered.dimension(1));
-    for(Index i = 0; i < y_filtered.dimension(1); i++) input_columns_indices(i) = i;
+    Tensor<Index, 1> input_columns_indices(1);
+    input_columns_indices(0) = 0;
 
-    Tensor<Index, 1> target_columns_indices(1);
-    target_columns_indices(0) = y_filtered.dimension(1);
+    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
+    for(Index i = 0; i < y_filtered.dimension(1); i++) target_columns_indices(i) = i + 1;
 
     DataSet data_set(data);
 
@@ -704,13 +707,17 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.set_display(false);
+
+//    training_strategy.set_maximum_epochs_number(10000);
+
+    training_strategy.set_display_period(1000);
 
     training_strategy.perform_training();
 
@@ -725,11 +732,19 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
+//    cout << "inputs:" << endl << inputs << endl;
+//    cout << "outputs:" << endl << outputs << endl;
+//    cout << "targets:" << endl << targets << endl;
+
     const Eigen::array<Index, 1> vector{{targets.size()}};
+
+//    cout << "warning!" << endl;
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     correlation.correlation_type = CorrelationMethod::Logistic;
+
+//    getchar();
 
     return correlation;
 }
