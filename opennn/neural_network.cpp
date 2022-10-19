@@ -3083,7 +3083,6 @@ string NeuralNetwork::write_expression_c() const{
     buffer << "} \n" << endl;
 
     string out = buffer.str();
-    replace_all_appearances(out, "$$", "$");
     return out;
 }
 
