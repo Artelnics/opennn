@@ -123,8 +123,6 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   string write_expression_python() const final;
-
 
 protected:
 

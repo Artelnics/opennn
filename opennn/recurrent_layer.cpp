@@ -1619,21 +1619,6 @@ string RecurrentLayer::write_activations_python() const
 }
 
 
-string RecurrentLayer::write_expression_python() const
-{
-    ostringstream buffer;
-
-    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
-
-    buffer << write_combinations_python();
-
-    buffer << write_activations_python();
-
-    buffer << "\n\t\treturn activations;\n" << endl;
-
-    return buffer.str();
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.
