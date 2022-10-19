@@ -506,53 +506,6 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
 
 ///
-/// \brief BoundingLayer::write_expression_c
-/// \return
-
-string BoundingLayer::write_expression_c() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
-
-    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
-
-
-    if(bounding_method == BoundingMethod::Bounding)
-    {
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << "\tif(inputs[" << i << "] < " << lower_bounds[i] << ")" << endl;
-            buffer << "\t{" << endl;
-            buffer << "\t    outputs[" << i << "] = " << lower_bounds[i] << endl;
-            buffer << "\t}" << endl;
-            buffer << "\telse if(inputs[" << i << "] > " << upper_bounds[i] << ")" << endl;
-            buffer << "\t{" << endl;
-            buffer << "\t    outputs[" << i << "] = " << upper_bounds[i] << endl;
-            buffer << "\t}" << endl;
-            buffer << "\telse" << endl;
-            buffer << "\t{" << endl;
-            buffer << "\t    outputs[" << i << "] = inputs[" << i << "];" << endl;
-            buffer << "\t}" << endl;
-        }
-    }
-    else
-    {
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
-        }
-    }
-
-    buffer << "\n\treturn outputs;\n}" << endl;
-
-    return buffer.str();
-}
-
-
-///
 /// \brief BoundingLayer::write_expression_python
 /// \return
 
