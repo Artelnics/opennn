@@ -620,7 +620,7 @@ void GeneticAlgorithm::evaluate_population()
 
 
 			
-			data_set_pointer->set_input_target_columns(input_columns_indices,genes_number+1);
+			data_set_pointer->set_input_target_columns(input_columns_indices,original_target_columns_indices);
 			
 			inputs_names = data_set_pointer->get_input_variables_names();
 
@@ -669,8 +669,8 @@ void GeneticAlgorithm::evaluate_population()
 			sum2 += selection_errors(i);
 			
 		}
-		mean_generational_training_error = (sum1 / type(training_errors.size()));
-		mean_generational_selection_error = (sum2 / type(selection_errors.size()));
+		mean_generational_training_error = (type(sum1) / type(training_errors.size()));
+		mean_generational_selection_error = (type(sum2) / type(selection_errors.size()));
 
 	}
 
@@ -1039,8 +1039,6 @@ void GeneticAlgorithm::evaluate_population()
 
 #endif
 
-
-
 		if (display) cout << "Performing genetic inputs selection..." << endl << endl;
 
 		if (population.dimension(1) == 0)
@@ -1076,6 +1074,7 @@ void GeneticAlgorithm::evaluate_population()
 		// Optimization algorithm
 
 		Index optimal_individual_index;
+		Index minimal_training_error_index;
 
 		bool stop = false;
 
@@ -1088,14 +1087,25 @@ void GeneticAlgorithm::evaluate_population()
 		for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
 		{
 			if (display) cout << "Generation: " << epoch + 1 << endl;
+			
+			set_display(false);
+
+			
 
 			evaluate_population();
+
+			
 	
 			optimal_individual_index = minimal_index(selection_errors);
 
-			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
-			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+			minimal_training_error_index = minimal_index(training_errors);
+			
+			
 
+			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
+			
+			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+			
 			if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
 			{
 				data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
@@ -1127,6 +1137,8 @@ void GeneticAlgorithm::evaluate_population()
 			time(&current_time);
 
 			elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+			
 
 			if (display)
 			{
@@ -1183,7 +1195,37 @@ void GeneticAlgorithm::evaluate_population()
 
 				break;
 			}
+			if (!stop) 
+			{
+				mean_selection_error_history.resize(epoch + 1);
 
+				mean_training_error_history.resize(epoch + 1);
+
+				minimal_training_error_history.resize(epoch + 1);
+
+				minimal_selection_error_history.resize(epoch + 1);
+
+				minimal_training_error_history(epoch) = training_errors(minimal_training_error_index);
+
+				minimal_selection_error_history(epoch) = selection_errors(optimal_individual_index);
+
+				mean_selection_error_history(epoch) = mean_generational_selection_error;
+
+				mean_training_error_history(epoch) = mean_generational_training_error;
+
+				if (!display)
+				{
+					cout << "\n Generation" << epoch + 1;
+					cout << "\n MSE: " << mean_selection_error_history(epoch);
+					cout << "\n MTE: " << mean_training_error_history(epoch);
+					cout << "\n Minimal Selection Error: " << minimal_selection_error_history(epoch);
+					cout << "\n Minimal Training Error: " << minimal_training_error_history(epoch);
+
+
+				}
+				
+			}
+			//inputs_selection_results.print();
 			perform_fitness_assignment();
 
 			perform_selection();
