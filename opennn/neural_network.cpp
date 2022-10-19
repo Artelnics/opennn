@@ -804,10 +804,10 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::Forecasting)
     {
-        //                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        //                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+//                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        //                this->add_layer(long_short_term_memory_layer_pointer);
+//                this->add_layer(long_short_term_memory_layer_pointer);
 
         for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
         {
@@ -834,13 +834,11 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::TextGeneration)
     {
-        PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[0], architecture[1]);
-        this->add_layer(perceptron_layer_pointer);
-
-//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-//        this->add_layer(long_short_term_memory_layer_pointer);
+        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
         ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
+
+        this->add_layer(long_short_term_memory_layer_pointer);
         this->add_layer(probabilistic_layer_pointer);
     }
 
@@ -1578,7 +1576,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
     Tensor<type, 1> parameters = get_parameters();
 
-    parameters = parameters + perturbation;
+    parameters = parameters+perturbation;
 
     set_parameters(parameters);
 }
@@ -1691,7 +1689,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
             return outputs;
         }
 
-        outputs.resize(inputs_dimensions(0), layers_pointers(0)->get_neurons_number());
+        outputs.resize(inputs_dimensions(0),layers_pointers(0)->get_neurons_number());
         outputs_dimensions = get_dimensions(outputs);
 
         layers_pointers(0)->calculate_outputs(inputs_data, inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -1701,7 +1699,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
 
         for(Index i = 1; i < layers_number; i++)
         {
-            outputs.resize(inputs_dimensions(0), layers_pointers(i)->get_neurons_number());
+            outputs.resize(inputs_dimensions(0),layers_pointers(i)->get_neurons_number());
             outputs_dimensions = get_dimensions(outputs);
 
             layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, outputs.data(), outputs_dimensions);
@@ -1879,49 +1877,49 @@ string NeuralNetwork::generate_word(TextGenerationAlphabet& text_generation_alph
 
     // Under development
 
-    //    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+//    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
-    //    if(first_letters.length()*alphabet_length != get_inputs_number())
-    //    {
-    //        ostringstream buffer;
+//    if(first_letters.length()*alphabet_length != get_inputs_number())
+//    {
+//        ostringstream buffer;
 
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
-    //               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+//               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
 
-    //        throw invalid_argument(buffer.str());
-    //    }
+//        throw invalid_argument(buffer.str());
+//    }
 
 
-    //    string result = first_letters;
+//    string result = first_letters;
 
-    //    // 1. Input letters to one hot encode
+//    // 1. Input letters to one hot encode
 
-    //    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+//    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
 
-    //    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+//    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-    //    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+//    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
 
-    //    punctuation_signs.setValues({" ",",",".","\n",":",";"});
+//    punctuation_signs.setValues({" ",",",".","\n",":",";"});
 
-    //    // 2. Loop for forecasting the following letter in function of the last letters
+//    // 2. Loop for forecasting the following letter in function of the last letters
 
-    //    do{
-    //        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+//    do{
+//        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
-    //        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+//        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
-    //        if(!contains(punctuation_signs, letter))
-    //        {
-    //            result += letter;
+//        if(!contains(punctuation_signs, letter))
+//        {
+//            result += letter;
 
-    //            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
-    //        }
+//            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+//        }
 
-    //    }while(result.length() < length);
+//    }while(result.length() < length);
 
-    //    return result;
+//    return result;
 }
 
 
@@ -1944,42 +1942,26 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
     string result = first_letters;
 
-    Tensor<type, 2> input_data = text_generation_alphabet.str_to_input(first_letters);
+    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
 
     Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-    string input_string = first_letters;
-
     do{
+        Tensor<type, 2> input_data(get_inputs_number(), 1);
+        input_data.setZero();
+        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
         Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
-        string letter = text_generation_alphabet.output_to_str(output);
+        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
         result += letter;
 
-        cout << "Result: " << result << "\\" << endl;
-
-        input_data = text_generation_alphabet.str_to_input(result.substr(result.length() - first_letters.length()));
+        input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
 
     }while(result.length() < length);
 
     return result;
-
-    /*
-
-    Tensor<type, 2> input_text_codificated = tga.str_to_input(input_text);
-
-    Tensor<Index, 1> input_dimensions = get_dimensions(input_text_codificated);
-
-    const Tensor<type, 2> output_data_codificated = neural_network.calculate_outputs(input_text_codificated.data(), input_dimensions);
-
-    cout << "output data: " << endl << output_data_codificated << endl;
-
-    const string output_text = tga.output_to_str(output_data_codificated);
-
-    cout << "Input string: " << input_text << " generates: " << input_text + output_text << endl;
-
-    */
 }
 
 
@@ -2777,7 +2759,7 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
         throw invalid_argument(buffer.str());
     }
 
-    streamsize size = sizeof(double);
+    streamsize size = sizeof(float);
 
     const Index parameters_number = get_parameters_number();
 
@@ -2795,9 +2777,11 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
     set_parameters(new_parameters);
 }
 
+
+/// Returns a string with the c function of the expression represented by the neural network.
+
 string NeuralNetwork::write_expression_c() const{
 
-    //vector<std::string> found_tokens;
     ostringstream buffer;
 
     bool logistic     = false;
@@ -2810,16 +2794,32 @@ string NeuralNetwork::write_expression_c() const{
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    //Finish this text
     buffer << "/**" << endl;
     buffer << "Artificial Intelligence Techniques SL\t" << endl;
     buffer << "artelnics@artelnics.com\t" << endl;
     buffer << "" << endl;
     buffer << "Your model has been exported to this c file." << endl;
-    buffer << "You can manage it... \t" << endl;
-    buffer << "Example:" << endl;
+    buffer << "You can manage it with the main method, where you \t" << endl;
+    buffer << "can change the values of your inputs. For example:" << endl;
     buffer << "" << endl;
-    buffer << "\tInputs Names: \t" << endl;
+
+    buffer << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
+    buffer << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
+    buffer << "main program has to look like this:" << endl;
+    buffer << "\t" << endl;
+    buffer << "int main(){ " << endl;
+	buffer << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer << "\t" << endl;
+	buffer << "\t" << "const float asdas  = 0.3;" << endl;
+	buffer << "\t" << "inputs[0] = asdas;"        << endl;
+	buffer << "\t" << "const float input2 = 2.5;" << endl;
+	buffer << "\t" << "inputs[1] = input2;"       << endl;
+	buffer << "\t" << "const float input3 = 1.8;" << endl;
+	buffer << "\t" << "inputs[2] = input3;"       << endl;
+	buffer << "\t" << ". . ." << endl;
+    buffer << "\n" << endl;
+
+    buffer << "Inputs Names:" <<endl;
 
     const Tensor<string, 1> inputs = get_inputs_names();
     const Tensor<string, 1> outputs = get_outputs_names();
@@ -3126,7 +3126,6 @@ string NeuralNetwork::write_expression() const
                 }
             }
             buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
-
             inputs_names_vector = outputs_names_vector;
         }
     }
@@ -3447,8 +3446,8 @@ string NeuralNetwork::write_expression_api() const
         {
             buffer << "<?php" << endl;
             buffer << "function ScaledExponentialLinear(int $x) {" << endl;
-            buffer << "$alpha  = 1.6732632423543772848170429916717;" << endl;
-            buffer << "$lambda = 1.0507009873554804934193349852946;" << endl;
+            buffer << "$alpha  = 1.67326;" << endl;
+            buffer << "$lambda = 1.05070;" << endl;
             buffer << "if ($x>0){" << endl;
             buffer << "$z=$lambda*$x;" << endl;
             buffer << "}else{" << endl;
@@ -3504,134 +3503,293 @@ string NeuralNetwork::write_expression_api() const
     }
 }
 
+
 /// Returns a string with the python function of the expression represented by the neural network.
-string NeuralNetwork::write_expression_python() const
-{
-    const Index layers_number = get_layers_number();
 
-    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
-    const Tensor<string, 1> layers_names = get_layers_names();
+string NeuralNetwork::write_expression_python() const{
 
+    vector<std::string> found_tokens;
     ostringstream buffer;
 
-    buffer <<"'''"<<endl;
-    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
-    buffer <<"artelnics@artelnics.com\t"<<endl;
-    buffer <<""<<endl;
-    buffer <<"Your model has been exported to this python file." <<endl;
-    buffer <<"You can manage it with the 'NeuralNetwork' class.\t"<<endl;
-    buffer <<"Example:"<<endl;
-    buffer <<""<<endl;
-    buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
-    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...]\t"<<endl;
-    buffer <<"\toutputs = model.calculate_output(sample)"<<endl;
-    buffer <<""<<endl;
-    buffer <<"\tInputs Names: \t"<<endl;
+    bool logistic     = false;
+    bool ReLU         = false;
+    bool Threshold    = false;
+    bool SymThreshold = false;
+    bool ExpLinear    = false;
+    bool SExpLinear   = false;
+    bool HSigmoid     = false;
+    bool SoftPlus     = false;
+    bool SoftSign     = false;
 
-    const Tensor<string, 1> inputs =  get_inputs_names();
+    buffer << "\'\'\' " << endl;
+    buffer << "Artificial Intelligence Techniques SL\t" << endl;
+    buffer << "artelnics@artelnics.com\t" << endl;
+    buffer << "" << endl;
+    buffer << "Your model has been exported to this python file." << endl;
+    buffer << "You can manage it with the main method where you \t" << endl;
+    buffer << "can change the values of your inputs. For example:" << endl;
+    buffer << "" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
+    buffer << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
+    buffer << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
+    buffer << "main program has to look like this:" << endl;
+    buffer << "" << endl;
+    buffer << "def main ():" << endl;
+	buffer << "\t" << "#default_val = 3.1416" << endl;
+	buffer << "\t" << "inputs = [None]*3" << endl;
+    buffer << "\t" <<  "" << endl;
+	buffer << "\t" << "Id_1 = 0.3" << endl;
+    buffer << "\t" << "Id_1 = 2.5" << endl;
+    buffer << "\t" << "Id_1 = 1.8" << endl;
+	buffer << "\t" << "" << endl;
+    buffer << "\t" << "inputs[0] = Input_1" << endl;
+    buffer << "\t" << "inputs[1] = Input_2" << endl;
+	buffer << "\t" << "inputs[2] = Input_3" << endl;
+	buffer << "\t" << ". . ." << endl;
+    buffer << "\n" << endl;
+
+    buffer << "Inputs Names: \t" << endl;
+    const Tensor<string, 1> inputs = get_inputs_names();
+    const Tensor<string, 1> outputs = get_outputs_names();
+
+    for (int i = 0; i < inputs.dimension(0); i++)
     {
-        if(inputs[i] == "")
+        if (inputs[i] == "")
         {
-            buffer <<"\t" << to_string(1+i) + " )" << "input_"+ to_string(1+i) << endl;
+            buffer << "   " << to_string(i) + ") " << "input_" + to_string(i) << endl;
         }
         else
         {
-            buffer <<"\t" << to_string(1+i) + " )" << inputs[i] << endl;
+            buffer << "   " << to_string(i) + ") " << inputs[i] << endl;
         }
     }
 
-    buffer <<""<<endl;
-    buffer <<"You can predict with a batch of samples using calculate_batch_output method\t" <<endl;
-    buffer <<"IMPORTANT: input batch must be <class 'numpy.ndarray'> type\t" <<endl;
-    buffer <<"Example_1:\t" <<endl;
-    buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
-    buffer <<"\tinput_batch = np.array([[1, 2], [4, 5]], np.int32)\t" <<endl;
-    buffer <<"\toutputs = model.calculate_batch_output(input_batch)"<<endl;
-    buffer <<"Example_2:\t" <<endl;
-    buffer <<"\tinput_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})\t" <<endl;
-    buffer <<"\toutputs = model.calculate_batch_output(input_batch.values)"<<endl;
-    buffer <<"'''"<<endl;
-    buffer <<""<<endl;
-    buffer << "import numpy as np\n" << endl;
-    buffer << "class NeuralNetwork:\n " << endl;
-    buffer << "\tdef __init__(self):\n " << endl;
+    buffer << "\n" << endl;
+    buffer << "\'\'\' " << endl;
+    buffer << "\n" << endl;
+    buffer << "import math" << endl;
+    buffer << "import numpy as np" << endl;
+    buffer << "\n" << endl;
 
-    if(has_recurrent_layer())
+    string expression = write_expression();
+    vector<std::string> tokens;
+    std::string token;
+    std::stringstream ss(expression);
+
+    while (getline(ss, token, '\n'))
     {
-        buffer << "\t\tself.timestep = "+to_string(get_recurrent_layer_pointer()->get_timesteps())+"\n " << endl;
-        buffer << "\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+        if (token.size() > 1 && token.back() == '{'){ break; }
+        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+        tokens.push_back(token);
     }
 
-    if(has_long_short_term_memory_layer())
+    std::string target_string0("Logistic");
+    std::string target_string1("ReLU");
+    std::string target_string2("Threshold");
+    std::string target_string3("SymmetricThreshold");
+    std::string target_string4("ExponentialLinear");
+    std::string target_string5("ScaledExponentialLinear");
+    std::string target_string6("HardSigmoid");
+    std::string target_string7("SoftPlus");
+    std::string target_string8("SoftSign");
+
+    for (auto& t:tokens)
     {
-        buffer << "\t\tself.timestep = "+to_string(get_long_short_term_memory_layer_pointer()->get_timesteps())+"\n " << endl;
-        buffer << "\t\tself.hidden_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
-        buffer << "\t\tself.cell_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+        size_t substring_length0 = t.find(target_string0);
+        size_t substring_length1 = t.find(target_string1);
+        size_t substring_length2 = t.find(target_string2);
+        size_t substring_length3 = t.find(target_string3);
+        size_t substring_length4 = t.find(target_string4);
+        size_t substring_length5 = t.find(target_string5);
+        size_t substring_length6 = t.find(target_string6);
+        size_t substring_length7 = t.find(target_string7);
+        size_t substring_length8 = t.find(target_string8);
+
+        if (substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
+        if (substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
+        if (substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
+        if (substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
+        if (substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
+        if (substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
+        if (substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
+        if (substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
+        if (substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
     }
 
-    buffer << "\t\tself.parameters_number = " + to_string(get_parameters_number()) + "\n " << endl;
-
-    for(Index i = 0; i  < layers_number; i++)
+    if(logistic)
     {
-        buffer << layers_pointers[i]->write_expression_python() << endl;
+        buffer << "def Logistic (x):" << endl;
+        buffer << "\t" << "z = 1/(1+np.exp(-x))" << endl;
+        buffer << "\t" << "return z" << endl;
+        buffer << "\n" << endl;
     }
 
-    buffer << "\tdef calculate_output(self, inputs):\n" << endl;
-
-    buffer << "\t\toutput_" + layers_pointers[0]->get_name() + " = self." +layers_pointers[0]->get_name() + "(inputs)\n" << endl;
-
-    for(Index i = 1; i  < layers_number; i++)
+    if(ReLU)
     {
-        buffer << "\t\toutput_" + layers_pointers[i]->get_name() + " = self." +layers_pointers[i]->get_name() + "(output_"+layers_pointers[i-1]->get_name() + ")\n" << endl;
+        buffer << "def ReLU (x):" << endl;
+        buffer << "\t" << "z = max(0, x)" << endl;
+        buffer << "\t" << "return z" << endl;
+        buffer << "\n" << endl;
     }
 
-    buffer << "\t\treturn output_" + layers_pointers[layers_number-1]->get_name()<<endl;
-
-    buffer << "\n\n\tdef calculate_batch_output(self, input_batch):\n" << endl;
-
-    buffer << "\t\toutput = []\n" << endl;
-
-    buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
-
-    if(has_recurrent_layer())
+    if(Threshold)
     {
-        buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
-
-        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
+        buffer << "def Threshold (x):" << endl;
+        buffer << "\t"   << "if (x < 0):" << endl;
+        buffer << "\t\t" << "z = 0" << endl;
+        buffer << "\t"   << "else:" << endl;
+        buffer << "\t\t" << "z = 1" << endl;
+        buffer << "\t"   << "return z" << endl;
+        buffer << "\n" << endl;
     }
 
-    if(has_long_short_term_memory_layer())
+    if(SymThreshold)
     {
-        buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
-
-        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
-
-        buffer << "\t\t\t\tself.cell_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
+        buffer << "def SymmetricThreshold (x):" << endl;
+        buffer << "\t"   << "if (x < 0):" << endl;
+        buffer << "\t\t" << "z = -1" << endl;
+        buffer << "\t"   << "else:" << endl;
+        buffer << "\t\t" << "z = 1" << endl;
+        buffer << "\t"   << "return z" << endl;
+        buffer << "\n" << endl;
     }
 
-
-    buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
-
-    buffer << "\t\t\toutput_" + layers_pointers[0]->get_name() + " = self." +layers_pointers[0]->get_name() + "(inputs)\n" << endl;
-
-    for(Index i = 1; i  < layers_number; i++)
+    if(ExpLinear)
     {
-        buffer << "\t\t\toutput_" + layers_pointers[i]->get_name() + " = self." +layers_pointers[i]->get_name() + "(output_"+layers_pointers[i-1]->get_name() + ")\n" << endl;
+        buffer << "def ExponentialLinear (x):" << endl;
+        buffer << "\t"   << "float alpha = 1.67326" << endl;
+        buffer << "\t"   << "if (x>0):" << endl;
+        buffer << "\t\t" << "z = x" << endl;
+        buffer << "\t"   << "else:" << endl;
+        buffer << "\t\t" << "z = alpha*(np.exp(x)-1)" << endl;
+        buffer << "\t"   << "return z" << endl;
+        buffer << "\n" << endl;
     }
 
-    buffer << "\t\t\toutput = np.append(output,output_" + layers_pointers[layers_number-1]->get_name()+ ", axis=0)\n"<< endl;
+    if(SExpLinear)
+    {
+        buffer << "def ExponentialLinear (x):" << endl;
+        buffer << "\t"   << "float alpha = 1.67326" << endl;
+        buffer << "\t"   << "float lambda = 1.05070" << endl;
+        buffer << "\t"   << "if (x>0):" << endl;
+        buffer << "\t\t" << "z = lambda*x" << endl;
+        buffer << "\t"   << "else:" << endl;
+        buffer << "\t\t" << "z = lambda*alpha*(np.exp(x)-1)" << endl;
+        buffer << "\t"   << "return z" << endl;
+        buffer << "\n" << endl;
+    }
 
-    buffer << "\t\treturn output"<<endl;
+    if(HSigmoid)
+    {
+        buffer << "def HardSigmoid (x):" << endl;
+        buffer << "\t"   <<  "z = 1/(1+np.exp(-x))" << endl;
+        buffer << "\t"   <<  "return z" << endl;
+        buffer << "\n" << endl;
+    }
 
-    string expression = buffer.str();
+    if(SoftPlus)
+    {
+        buffer << "def SoftPlus (x):" << endl;
+        buffer << "\t"   << "z = log(1+np.exp(x))" << endl;
+        buffer << "\t"   << "return z" << endl;
+        buffer << "\n" << endl;
+    }
 
-    replace(expression, "+-", "-");
-    replace(expression, "-+", "-");
-    replace(expression, "--", "+");
+    if(SoftSign)
+    {
+        buffer << "def SoftSign (x):" << endl;
+        buffer << "\t"   << "z = x/(1+abs(x))" << endl;
+        buffer << "\t"   << "return z" << endl;
+        buffer << "\n" << endl;
+    }
 
-    return expression;
+    buffer << "class NeuralNetwork:" << endl;
+    buffer << "\t" << "def __init__(self):" << endl;
+    buffer << "\t\t" << "self.parameter_number = " << to_string(inputs.size()) << endl;
+    buffer << "\n" << endl;
+    buffer << "\t" << "def calculate_outputs(inputs):" << endl;
+
+    for (int i = 0; i < inputs.dimension(0); i++)
+    {
+        if (inputs[i] == "")
+        {
+            buffer << "\t\t" << "input_" << to_string(i) << " = " << "inputs[" << to_string(i) << "]" << endl;
+        }
+        else
+        {
+            buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
+        }
+    }
+
+    buffer << "" << endl;
+    found_tokens.push_back("exp");
+    found_tokens.push_back("tanh");
+    string sufix = "np.";
+
+    for (auto& t:tokens)
+    {
+        for (auto& key_word : found_tokens)
+        {
+            string new_word = "";
+            new_word = sufix + key_word;
+            replace_all_appearances(t, key_word, new_word);
+        }
+        buffer << "\t\t" << t << endl;
+    }
+
+    buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "" << endl;
+    for (int i = 0; i < outputs.dimension(0); i++)
+    {
+        if (outputs[i] == "")
+        {
+            buffer << "\t\t" << "out[" << to_string(i) << "] = " << "output" << to_string(i) << endl;
+        }
+        else
+        {
+            buffer << "\t\t" << "out[" << to_string(i) << "] = " << outputs[i] << endl;
+        }
+    }
+
+    buffer << "\n\t\t" << "return out;" << endl;
+    buffer << "\n" << endl;
+    buffer << "\t"   << "def main ():" << endl;
+    buffer << "\t\t" << "default_val = 3.1416" << endl;
+    buffer << "\t\t" << "inputs = [None]*" << to_string(inputs.size()) << "\n" << endl;
+
+    for (int i = 0; i < inputs.dimension(0); i++)
+    {
+        if (inputs[i] == "")
+        {
+            buffer << "\t\t" << "input_"  << to_string(i) << " = "  << "default_val" << "\t" << "#Change this value" << endl;
+            buffer << "\t\t" << "inputs[" << to_string(i) << "] = " << "input_" << to_string(i) << "\n" << endl;
+        }
+        else
+        {
+            buffer << "\t\t" << inputs[i] << " = " << "default_val" << "\t" << "#Change this value" << endl;
+            buffer << "\t\t" << "inputs[" << to_string(i) << "] = " << inputs[i] << "\n" << endl;
+        }
+    }
+
+    buffer << "" << endl;
+    buffer << "\t\t" << "outputs = NeuralNetwork.calculate_outputs(inputs)" << endl;
+    buffer << "" << endl;
+    buffer << "\t\t" << "print(\"\\nThese are your outputs:\\n\")" << endl;
+
+    for (int i = 0; i < outputs.dimension(0); i++)
+    {
+        if (outputs[i] == "")
+        {
+            buffer << "\t\t" << "print( \""<< "\\t " << "output" << to_string(i) << ":\" "<< "+ " << "str(outputs[" << to_string(i) << "])" << " + " << "\"\\n\" )" << endl;
+        }
+        else
+        {
+            buffer << "\t\t" << "print( \""<< "\\t " << outputs_names[i] << ":\" "<< "+ " << "str(outputs[" << to_string(i) << "])" << " + " << "\"\\n\" )" << endl;
+        }
+    }
+
+    buffer << "\n" << "NeuralNetwork.main()" << endl;
+    string out = buffer.str();
+    return out;
 }
 
 
