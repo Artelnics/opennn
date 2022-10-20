@@ -5,6 +5,7 @@ project(opennn)
 add_library(opennn 
 adaptive_moment_estimation.cpp
 bounding_layer.cpp
+codification.cpp
 conjugate_gradient.cpp
 convolutional_layer.cpp
 correlations.cpp
