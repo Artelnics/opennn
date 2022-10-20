@@ -25,8 +25,40 @@ int main(int argc, char *argv[])
 {
     try
     {
+        srand(time(NULL));
+
         cout << "Hello OpenNN!" << endl;
 
+        DataSet data_set;
+
+        data_set.set_data_file_name("Z:/Images/DatasetRedDots-bmp/ground_truth.xml");
+
+        data_set.read_ground_truth();
+
+        data_set.print_data();
+/*
+        Index categories_number = 10;
+
+        Index regions_number = 2000;
+        Index channels_number = 227;
+        Index region_rows = 227;
+        Index region_columns = 227;
+
+        Index inputs_number = regions_number*channels_number*region_rows*region_columns;
+
+        Tensor<type, 3> image;
+
+        NeuralNetwork neural_network;
+/*
+        RegionProposalLayer region_proposal_layer;
+        neural_network.add_layer(&region_proposal_layer);
+
+        FlattenLayer flatten_layer;
+        neural_network.add_layer(&flatten_layer);
+
+        ProbabilisticLayer probabilistric_layer(inputs_number, categories_number);
+        neural_network.add_layer(&probabilistric_layer);
+*/
         cout << "Bye OpenNN!" << endl;
     }
     catch(const exception& e)
