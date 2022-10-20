@@ -180,6 +180,12 @@ struct InputsSelectionResults
 
         selection_error_history.resize(maximum_epochs_number);
         selection_error_history.setConstant(type(-1));
+
+        mean_selection_error_history.resize(maximum_epochs_number);
+        mean_selection_error_history.setConstant(type(-1));
+
+        mean_training_error_history.resize(maximum_epochs_number);
+        mean_training_error_history.setConstant(type(-1));
     }
 
    virtual ~InputsSelectionResults() {}
@@ -233,6 +239,13 @@ struct InputsSelectionResults
    /// Final selection errors of the different neural networks.
 
    Tensor<type, 1> selection_error_history;
+
+
+    // Mean Selection Error of different neural networks
+   Tensor < type, 1 >  mean_selection_error_history;
+   Tensor < type, 1 >  mean_training_error_history;
+    
+    // Mean Training Error of different neural networks
 
    /// Value of training for the neural network with minimum selection error.
 

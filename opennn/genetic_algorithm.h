@@ -88,6 +88,7 @@ public:
     void set_mutation_rate(const type&);
 
     void set_elitism_size(const Index&);
+    void set_maximum_epochs_number(const Index&);
 
     // GENETIC METHODS
 
@@ -165,10 +166,8 @@ private:
     
     Tensor <type, 2> optimal_individuals_history;
 
-    Tensor <type,1> mean_training_error_history;
-    Tensor <type,1> mean_selection_error_history;
-    Tensor <type, 1> minimal_selection_error_history;
-    Tensor <type, 1> minimal_training_error_history;
+
+    
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.

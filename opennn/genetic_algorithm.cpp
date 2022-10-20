@@ -119,6 +119,8 @@ namespace opennn
 
 		training_errors.resize(individuals_number);
 		selection_errors.resize(individuals_number);
+		
+
 
 		fitness.resize(individuals_number);
 		fitness.setConstant(type(-1.0));
@@ -196,11 +198,19 @@ namespace opennn
 		population = new_population;
 	}
 
+	void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+	{
+		maximum_epochs_number = new_maximum_epochs_number;
+
+	
+	}
+
 
 	void GeneticAlgorithm::set_training_errors(const Tensor<type, 1>& new_training_errors)
 	{
 		training_errors = new_training_errors;
 	}
+
 
 
 	void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errors)
@@ -442,11 +452,11 @@ namespace opennn
 		check_categorical_columns();
 	}
 
-void GeneticAlgorithm::initialize_population_correlations()
-{
+	void GeneticAlgorithm::initialize_population_correlations()
+	{
 		const Index num_individuals = get_individuals_number();
 		const Index num_genes = get_genes_number();
-		TrainingStrategy* training_strategy_pointer=get_training_strategy_pointer();
+		TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
 		//Probabilities calculations
 
 		DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
@@ -468,7 +478,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 		}
 		const Tensor <type, 1> cumulative_probability = probability.cumsum(0);
 
-		
+
 
 		for (Index i = 0; i < num_individuals; i++)
 		{
@@ -491,20 +501,20 @@ void GeneticAlgorithm::initialize_population_correlations()
 					{
 						for (Index j = 0; j < cumulative_probability.size() - 1; j++)
 						{
-							
+
 							if (pointer > cumulative_probability(j) && pointer <= cumulative_probability(j + 1) && !individual(j))
 							{
 								individual(j) = true;
 								genes_count++;
 								break;
-								
+
 							}
 						}
 
 					}
 
 
-				}while (genes_count <= activated_genes);
+				} while (genes_count <= activated_genes);
 				//Check for repetion
 				for (Index j = 0; j < i; j++)
 				{
@@ -523,105 +533,105 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 		}
 
-		
 
-}
+
+	}
 
 	/// Evaluate the population loss.
 	/// Training all the neural networks in the population and calculate their fitness.
 
-void GeneticAlgorithm::evaluate_population()
-{
+	void GeneticAlgorithm::evaluate_population()
+	{
 #ifdef OPENNN_DEBUG
 
-	check();
+		check();
 
-	if (population.size() == 0)
-	{
-		ostringstream buffer;
+		if (population.size() == 0)
+		{
+			ostringstream buffer;
 
-		buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-			<< "void evaluate_population() method.\n"
-			<< "Population size must be greater than 0.\n";
+			buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+				<< "void evaluate_population() method.\n"
+				<< "Population size must be greater than 0.\n";
 
-		throw invalid_argument(buffer.str());
-	}
+			throw invalid_argument(buffer.str());
+		}
 
 #endif
 
-	// Training strategy
+		// Training strategy
 
-	TrainingResults training_results;
+		TrainingResults training_results;
 
-	// Loss index
+		// Loss index
 
-	const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+		const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-	// Data set
+		// Data set
 
-	DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+		DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-	Tensor<string, 1> inputs_names;
+		Tensor<string, 1> inputs_names;
 
-	// Neural network
+		// Neural network
 
-	NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+		NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-	// Optimization algorithm
+		// Optimization algorithm
 
-	Tensor<bool, 1> individual;
+		Tensor<bool, 1> individual;
 
-	// Model selection
+		// Model selection
 
-	const Index individuals_number = get_individuals_number();
-	const Index genes_number = get_genes_number();
+		const Index individuals_number = get_individuals_number();
+		const Index genes_number = get_genes_number();
 
-	original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-	original_target_columns_indices = data_set_pointer->get_target_columns_indices();
-	for (Index i = 0; i < individuals_number; i++)
-	{
-		individual = population.chip(i, 0);
-
-		if (display) cout << "Individual " << i + 1 << endl;
-
-		const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
-
-		Tensor<Index, 1> input_columns_indices(input_columns_number(0));
-
-
-		Index index = 0;
-
-		Index column_index = 0;
-
-		for (Index j = 0; j < genes_number; j++)
+		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
+		for (Index i = 0; i < individuals_number; i++)
 		{
-			if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
+			individual = population.chip(i, 0);
+
+			if (display) cout << "Individual " << i + 1 << endl;
+
+			const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
+
+			Tensor<Index, 1> input_columns_indices(input_columns_number(0));
+
+
+			Index index = 0;
+
+			Index column_index = 0;
+
+			for (Index j = 0; j < genes_number; j++)
 			{
-				const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
-
-				if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
+				if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
 				{
-					input_columns_indices(index) = original_input_columns_indices(column_index);
-					index++;
+					const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+
+					if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
+					{
+						input_columns_indices(index) = original_input_columns_indices(column_index);
+						index++;
+					}
+					j += categories_number - 1;
 				}
-				j += categories_number - 1;
-			}
-			else
-			{
-				if (individual(j))
+				else
 				{
-					input_columns_indices(index) = original_input_columns_indices(column_index);
-					index++;
+					if (individual(j))
+					{
+						input_columns_indices(index) = original_input_columns_indices(column_index);
+						index++;
+					}
 				}
+
+				column_index++;
 			}
 
-			column_index++;
-		}
 
 
-			
-			data_set_pointer->set_input_target_columns(input_columns_indices,original_target_columns_indices);
-			
+			data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
+
 			inputs_names = data_set_pointer->get_input_variables_names();
 
 			neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
@@ -636,10 +646,10 @@ void GeneticAlgorithm::evaluate_population()
 
 			parameters(i) = neural_network_pointer->get_parameters();
 
-			training_errors(i) =type( training_results.get_training_error());
-			selection_errors(i) =type( training_results.get_selection_error());
+			training_errors(i) = type(training_results.get_training_error());
+			selection_errors(i) = type(training_results.get_selection_error());
 
-			
+
 
 			if (display)
 			{
@@ -653,10 +663,10 @@ void GeneticAlgorithm::evaluate_population()
 				cout << "Selection error: " << training_results.get_selection_error() << endl;
 
 			}
-			
+
 
 		}
-		
+
 		//Mean generational selection and training error calculation (primitive way)
 
 		type sum1 = 0;
@@ -667,7 +677,7 @@ void GeneticAlgorithm::evaluate_population()
 		{
 			sum1 += training_errors(i);
 			sum2 += selection_errors(i);
-			
+
 		}
 		mean_generational_training_error = (type(sum1) / type(training_errors.size()));
 		mean_generational_selection_error = (type(sum2) / type(selection_errors.size()));
@@ -1031,13 +1041,15 @@ void GeneticAlgorithm::evaluate_population()
 
 	/// Select the inputs with the best generalization properties using the genetic algorithm.
 
-	InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
+	InputsSelectionResults GeneticAlgorithm::perform_inputs_selection() 
 	{
 #ifdef OPENNN_DEBUG
 
 		check();
 
 #endif
+
+
 
 		if (display) cout << "Performing genetic inputs selection..." << endl << endl;
 
@@ -1047,9 +1059,6 @@ void GeneticAlgorithm::evaluate_population()
 		}
 
 		initialize_population();
-		
-		mean_selection_error_history.resize(1);
-		Tensor <type, 1> aux(1);
 
 		// Selection algorithm
 
@@ -1077,7 +1086,6 @@ void GeneticAlgorithm::evaluate_population()
 		// Optimization algorithm
 
 		Index optimal_individual_index;
-		Index minimal_training_error_index;
 
 		bool stop = false;
 
@@ -1087,68 +1095,21 @@ void GeneticAlgorithm::evaluate_population()
 
 		time(&beginning_time);
 
-		ofstream FileMSEH("../blank/data/MSEH.csv");
-		ofstream FileMTEH("../blank/data/MTEH.csv");
-		ofstream FileMinSEH("../blank/data/MinSEH.csv");
-		ofstream FileMinTEH("../blank/data/MinTEH.csv");
-
-		mean_selection_error_history.resize(1);
-		Tensor <type, 1> auxiliar_selection(1);
-		mean_training_error_history.resize(1);
-		Tensor <type, 1> auxiliar_training(1);
-		minimal_selection_error_history.resize(1);
-		Tensor<type, 1> auxiliar_minimal_selection(1);
-		minimal_training_error_history.resize(1);
-		Tensor<type, 1> auxiliar_minimal_training(1);
-
-
-
-
-
 		for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
 		{
 			if (display) cout << "Generation: " << epoch + 1 << endl;
-			
 
 			evaluate_population();
+
 			optimal_individual_index = minimal_index(selection_errors);
 
-			minimal_training_error_index = minimal_index(training_errors);
-
-
+			//optimal_individuals_history(epoch) = population(optimal_individual_index);
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
-
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
-			
-			//Copy of mean_selection_error_history()
-			auxiliar_selection(epoch) = mean_generational_selection_error;
-			mean_selection_error_history.resize(mean_selection_error_history.size() + 1);
-			
-			for (Index j = 0; j < auxiliar_selection.size(); j++)
-			{
-				mean_selection_error_history(j) = auxiliar_selection(j);
-			}
+			inputs_selection_results.mean_selection_error_history(epoch) = mean_generational_selection_error;
+			inputs_selection_results.mean_training_error_history(epoch)= mean_generational_training_error;
 
-			mean_selection_error_history(epoch) = mean_generational_selection_error;
-			auxiliar_selection.resize(auxiliar_selection.size() + 1);
-			auxiliar_selection = mean_selection_error_history;
-		
-			////Copy of mean_training_error_history()
-			auxiliar_training(epoch) = mean_generational_training_error;
-			mean_training_error_history.resize(mean_training_error_history.size() + 1);
-			cout << "\n" << mean_training_error_history << endl;
-			for (Index j = 0; j < auxiliar_training.size(); j++)
-			{
-				mean_selection_error_history(j) = auxiliar_training(j);
-			}
-			mean_training_error_history(epoch) = mean_generational_training_error;
-			auxiliar_training.resize(auxiliar_training.size() + 1);
-			auxiliar_training = mean_training_error_history;
-			cout << "\n" << mean_training_error_history << endl;
-
-			
-			
 			if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
 			{
 				data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
@@ -1181,8 +1142,6 @@ void GeneticAlgorithm::evaluate_population()
 
 			elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-			
-
 			if (display)
 			{
 				cout << endl;
@@ -1190,7 +1149,7 @@ void GeneticAlgorithm::evaluate_population()
 				cout << "Generation mean training error: " << training_errors.mean() << endl;
 
 				cout << "Epoch number: " << epoch << endl;
-				cout << "Generation mean selection error: " << selection_errors.mean() << endl;
+				cout << "Generation mean selection error: " << inputs_selection_results.mean_selection_error_history(epoch) << endl;
 
 				cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
 				cout << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl;
@@ -1239,12 +1198,6 @@ void GeneticAlgorithm::evaluate_population()
 				break;
 			}
 
-			//inputs_selection_results.print();
-			FileMSEH << ";" << selection_errors.mean();
-			FileMTEH << epoch + 1 << ";" << training_errors.mean() << endl;
-			FileMinSEH << epoch + 1 << ";" << selection_errors(optimal_individual_index) << endl;
-			FileMinTEH << epoch + 1 << ";" << training_errors(minimal_training_error_index)<<endl;
-
 			perform_fitness_assignment();
 
 			perform_selection();
@@ -1276,17 +1229,9 @@ void GeneticAlgorithm::evaluate_population()
 
 		neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
-		FileMinSEH.close();
-		FileMinTEH.close();
-		FileMSEH.close();
-		FileMTEH.close();
-
-		/*store_mean_selection_error_history();*/
-		
-		
+		if (display) inputs_selection_results.print();
 
 		return inputs_selection_results;
-
 	}
 
 
@@ -1774,21 +1719,14 @@ void GeneticAlgorithm::evaluate_population()
 		from_XML(document);
 	}
 
-	/*void GeneticAlgorithm::store_mean_selection_error_to_csv(const string& file)
+	void GeneticAlgorithm::export_mean_selection_error_to_csv(const string& file)
 	{
-		ifstream File(file);
-		string line;
-		char delimitator = ';';
-		getline(File,line);
-		while (getline(File, line)) 
-		{
-			stringstream stream(line);
-			
-		}
-		
-		File.close();
-	}*/
-	
+
+		ofstream File(file);
+
+	}
+
+
 
 }
 
