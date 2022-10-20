@@ -203,6 +203,62 @@ public:
         void print() const;
     };
 
+    struct BoundingBox
+    {
+        /// Default constructor.
+
+        explicit BoundingBox() {}
+
+        explicit BoundingBox(const Index&, const Index&, const Index&);
+
+        explicit BoundingBox(const Index&,
+                             const Tensor<Index, 1>&,
+                             const Index&,
+                             const Index&);
+
+        explicit BoundingBox(const Index&,
+                             const Index&,
+                             const Index&,
+                             const Index&,
+                             const Index&);
+
+        /// Destructor.
+
+        virtual ~BoundingBox() {}
+
+
+//        BoundingBox regression()
+//        {
+//            /// todo
+//            BoundingBox regressed_bounging_box;
+//            return regressed_bounging_box;
+//        }
+
+
+        Index get_bounding_box_size(const BoundingBox&) const;
+
+        BoundingBox resize(const Index&, const Index&, const Index&) const;
+
+        void print() const;
+
+        Tensor<type, 1> data;
+
+        Index x_center;
+        Index y_center;
+        Index channels_number;
+        Index width;
+        Index height;
+
+        Index x_top_left;
+        Index y_top_left;
+        Index x_bottom_right;
+        Index y_bottom_right;
+
+        string label; // ????
+        Index score; // ????
+    };
+
+
     // Project type
 
     ProjectType get_project_type() const;
@@ -478,6 +534,8 @@ public:
 
     void set_binary_simple_columns();
 
+    void set_categories_number(const Index&);
+
     // Columns other methods
 
     void check_constant_columns();
@@ -699,7 +757,9 @@ public:
     void set_image_width(const int&);
     void set_image_height(const int&);
     void set_image_padding(const int&);
+    void set_images_number(const Index&);
 
+    type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
 
     // Text classification methods
 
@@ -768,9 +828,17 @@ public:
 
     Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
 
+    BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
+
     Index get_bounding_boxes_number_from_XML(const string&);
 
     Index get_label_classes_number_from_XML(const string&);
+
+    Tensor<type, 1> get_bounding_box(const Tensor<unsigned char, 1>&,
+                                     const Index&, const Index&,
+                                     const Index&, const Index&) const;
+
+//    Tensor<unsigned char, 1> slicing(Tensor<unsigned char, 1>&, int&, int&);
 
     // Trasform methods
 
@@ -890,6 +958,9 @@ private:
 
     Codification codification = Codification::UTF8;
 
+    // OBJECT DETECTION
+
+    Index categories_number = 0;
 
     Tensor<Tensor<string, 1>, 1> data_file_preview;
 

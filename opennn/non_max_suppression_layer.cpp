@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "non_max_supression_layer.h"
+#include "non_max_suppression_layer.h"
 
 namespace opennn
 {
@@ -39,10 +39,9 @@ void NonMaxSupressionLayer::forward_propagate(type* inputs_data,
 
     Tensor<type, 4> inputs(regions_number, channels_number, region_rows, region_columns);
 
-    const Index detections_number;
+//    const Index detections_number = 20;
 
-    Tensor<type, 4> outputs(detections_number*(1+1+2+1+1));
-
+//    Tensor<type, 4> outputs(detections_number*(1+1+2+1+1));
 
 //    BatchNormalizationLayerForwardPropagation* batch_norm_layer_forward_propagation
 //            = static_cast<BatchNormalizationLayerForwardPropagation*>(forward_propagation);

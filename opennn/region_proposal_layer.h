@@ -66,8 +66,19 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
-        layer_pointer = new_layer_pointer;
+        layer_pointer = new_layer_pointer;      
 
+        const Index regions_number = 2000;
+        const Index region_rows = 227;
+        const Index region_columns = 227;
+
+        outputs_dimensions.resize(4);
+        outputs_dimensions(0) = regions_number;
+        outputs_dimensions(1) = 3;
+        outputs_dimensions(2) = region_rows;
+        outputs_dimensions(3) = region_columns;
+
+//        outputs_data = (float*) malloc(outputs_dimensions.prod() * sizeof(float));
     }
 
     void print() const

@@ -8,6 +8,7 @@
 
 #include "region_proposal_layer.h"
 
+
 namespace opennn
 {
 
@@ -24,6 +25,23 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation)
 {
+
+    const Index channels_number = 2000;
+
+    const Index images_number = 1;
+    const Index input_rows = 0;
+    const Index input_columns = 0;
+
+
+    const Index regions_number = 2000;
+    const Index region_rows = 227;
+    const Index region_columns = 227;
+
+    Tensor<type, 4> inputs(images_number, channels_number, region_rows, region_columns);
+
+    Tensor<type, 4> outputs(regions_number, channels_number, region_rows, region_columns);
+
+
 //    BatchNormalizationLayerForwardPropagation* batch_norm_layer_forward_propagation
 //            = static_cast<BatchNormalizationLayerForwardPropagation*>(forward_propagation);
 
