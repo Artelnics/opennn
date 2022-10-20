@@ -4115,19 +4115,6 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 }
 
 
-string LongShortTermMemoryLayer::write_expression_python() const
-{
-    ostringstream buffer;
-
-    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
-
-    buffer << write_combinations_python();
-
-    buffer << "\n\t\treturn long_short_term_memory_output;\n" << endl;
-
-    return buffer.str();
-}
-
 string LongShortTermMemoryLayer::write_combinations_python() const
 {
     ostringstream buffer;

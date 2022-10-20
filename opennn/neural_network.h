@@ -248,7 +248,6 @@ public:
 
    string write_expression() const;
    string write_expression_python() const;
-   string write_expression_python2() const;
    string write_expression_c() const;
    string write_expression_api() const;
 
