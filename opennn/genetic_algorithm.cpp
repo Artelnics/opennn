@@ -1047,6 +1047,9 @@ void GeneticAlgorithm::evaluate_population()
 		}
 
 		initialize_population();
+		
+		mean_selection_error_history.resize(1);
+		Tensor <type, 1> aux(1);
 
 		// Selection algorithm
 
@@ -1084,27 +1087,67 @@ void GeneticAlgorithm::evaluate_population()
 
 		time(&beginning_time);
 
+		ofstream FileMSEH("../blank/data/MSEH.csv");
+		ofstream FileMTEH("../blank/data/MTEH.csv");
+		ofstream FileMinSEH("../blank/data/MinSEH.csv");
+		ofstream FileMinTEH("../blank/data/MinTEH.csv");
+
+		mean_selection_error_history.resize(1);
+		Tensor <type, 1> auxiliar_selection(1);
+		mean_training_error_history.resize(1);
+		Tensor <type, 1> auxiliar_training(1);
+		minimal_selection_error_history.resize(1);
+		Tensor<type, 1> auxiliar_minimal_selection(1);
+		minimal_training_error_history.resize(1);
+		Tensor<type, 1> auxiliar_minimal_training(1);
+
+
+
+
+
 		for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
 		{
 			if (display) cout << "Generation: " << epoch + 1 << endl;
 			
-			set_display(false);
-
-			
 
 			evaluate_population();
-
-			
-	
 			optimal_individual_index = minimal_index(selection_errors);
 
 			minimal_training_error_index = minimal_index(training_errors);
-			
-			
+
+
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
-			
+
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+			
+			//Copy of mean_selection_error_history()
+			auxiliar_selection(epoch) = mean_generational_selection_error;
+			mean_selection_error_history.resize(mean_selection_error_history.size() + 1);
+			
+			for (Index j = 0; j < auxiliar_selection.size(); j++)
+			{
+				mean_selection_error_history(j) = auxiliar_selection(j);
+			}
+
+			mean_selection_error_history(epoch) = mean_generational_selection_error;
+			auxiliar_selection.resize(auxiliar_selection.size() + 1);
+			auxiliar_selection = mean_selection_error_history;
+		
+			////Copy of mean_training_error_history()
+			auxiliar_training(epoch) = mean_generational_training_error;
+			mean_training_error_history.resize(mean_training_error_history.size() + 1);
+			cout << "\n" << mean_training_error_history << endl;
+			for (Index j = 0; j < auxiliar_training.size(); j++)
+			{
+				mean_selection_error_history(j) = auxiliar_training(j);
+			}
+			mean_training_error_history(epoch) = mean_generational_training_error;
+			auxiliar_training.resize(auxiliar_training.size() + 1);
+			auxiliar_training = mean_training_error_history;
+			cout << "\n" << mean_training_error_history << endl;
+
+			
 			
 			if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
 			{
@@ -1195,37 +1238,13 @@ void GeneticAlgorithm::evaluate_population()
 
 				break;
 			}
-			if (!stop) 
-			{
-				mean_selection_error_history.resize(epoch + 1);
 
-				mean_training_error_history.resize(epoch + 1);
-
-				minimal_training_error_history.resize(epoch + 1);
-
-				minimal_selection_error_history.resize(epoch + 1);
-
-				minimal_training_error_history(epoch) = training_errors(minimal_training_error_index);
-
-				minimal_selection_error_history(epoch) = selection_errors(optimal_individual_index);
-
-				mean_selection_error_history(epoch) = mean_generational_selection_error;
-
-				mean_training_error_history(epoch) = mean_generational_training_error;
-
-				if (!display)
-				{
-					cout << "\n Generation" << epoch + 1;
-					cout << "\n MSE: " << mean_selection_error_history(epoch);
-					cout << "\n MTE: " << mean_training_error_history(epoch);
-					cout << "\n Minimal Selection Error: " << minimal_selection_error_history(epoch);
-					cout << "\n Minimal Training Error: " << minimal_training_error_history(epoch);
-
-
-				}
-				
-			}
 			//inputs_selection_results.print();
+			FileMSEH << ";" << selection_errors.mean();
+			FileMTEH << epoch + 1 << ";" << training_errors.mean() << endl;
+			FileMinSEH << epoch + 1 << ";" << selection_errors(optimal_individual_index) << endl;
+			FileMinTEH << epoch + 1 << ";" << training_errors(minimal_training_error_index)<<endl;
+
 			perform_fitness_assignment();
 
 			perform_selection();
@@ -1257,7 +1276,14 @@ void GeneticAlgorithm::evaluate_population()
 
 		neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
-		if (display) inputs_selection_results.print();
+		FileMinSEH.close();
+		FileMinTEH.close();
+		FileMSEH.close();
+		FileMTEH.close();
+
+		/*store_mean_selection_error_history();*/
+		
+		
 
 		return inputs_selection_results;
 
@@ -1747,6 +1773,21 @@ void GeneticAlgorithm::evaluate_population()
 
 		from_XML(document);
 	}
+
+	/*void GeneticAlgorithm::store_mean_selection_error_to_csv(const string& file)
+	{
+		ifstream File(file);
+		string line;
+		char delimitator = ';';
+		getline(File,line);
+		while (getline(File, line)) 
+		{
+			stringstream stream(line);
+			
+		}
+		
+		File.close();
+	}*/
 	
 
 }

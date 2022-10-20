@@ -123,6 +123,7 @@ protected:
     /// Display messages to screen.
 
     bool display = true;
+   
 
     // Stopping criteria
 

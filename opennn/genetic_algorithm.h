@@ -139,6 +139,7 @@ public:
     
     void save(const string&) const;
     void load(const string&);
+    void export_mean_selection_error_to_csv(const string& file);
 
 private:
 
