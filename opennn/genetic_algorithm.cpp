@@ -408,48 +408,53 @@ namespace opennn
 	{
 		const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
-
+		bool is_repeated;
+		Tensor <bool, 1 > individual(genes_number);
+		
 		for (Index i = 0; i < individuals_number; i++)
-		{
-			bool is_repeated;
-			Tensor <bool, 1> individual(genes_number);
-			individual.setConstant(false);
-
-			do
 			{
-				is_repeated = false;
-				Index active_genes = rand() % genes_number + 1;
-				Index genes_count = 0;
-				do
-				{
-					Index random_gene = rand() % genes_number;
-					if (!individual(random_gene))
-					{
-						individual(random_gene) = true;
-						genes_count++;
-					}
-				} while (genes_count < active_genes);
+				individual.setConstant(false);
+				// Do-while for preventing repetition of samples
 
-				for (Index j = 0; j < i; j++)
-				{
-					Tensor<bool, 1> row = population.chip(j, 0);
+				do {
 
-					if (are_equal(individual, row))
+					is_repeated = false;
+
+					// Individual generation
+
+					for (Index j = 0; j < genes_number; j++)
 					{
-						is_repeated = true;
-						break;
+						rand() % 2 == 0 ? individual[j] = false : individual[j] = true;
 					}
+
+					// Prevent no inputs
+
+					if (is_false(individual))
+					{
+						individual(static_cast<Index>(rand()) % genes_number) = true;
+					}
+
+					// Check for repetitions
+
+					for (Index j = 0; j < i; j++)
+					{
+						Tensor<bool, 1> row = population.chip(j, 0);
+
+						if (are_equal(individual, row))
+						{
+							is_repeated = true;
+							break;
+						}
+					}
+				} while (is_repeated);
+
+				//  Add individual to population
+
+				for (Index j = 0; j < genes_number; j++)
+				{
+					population(i, j) = individual(j);
 				}
-
-
-			} while (is_repeated);
-
-			for (Index j = 0; j < individual.size(); j++)
-			{
-				population(i, j) = individual(j);
 			}
-		}
-		check_categorical_columns();
 	}
 
 	void GeneticAlgorithm::initialize_population_correlations()
@@ -469,6 +474,8 @@ namespace opennn
 
 		const Tensor<Index, 1> rank = calculate_rank_greater(correlations);
 
+		//
+
 		const type sum = type((num_genes * (num_genes + 1)) / 2);
 
 		for (Index i = 0; i < correlations.size(); i++)
@@ -478,43 +485,49 @@ namespace opennn
 		}
 		const Tensor <type, 1> cumulative_probability = probability.cumsum(0);
 
-
+		Index activated_genes = 0;
+		Index activated_genes_count;
+		type pointer;
 
 		for (Index i = 0; i < num_individuals; i++)
 		{
+			cout << "Individual "<< i<< endl;
 			bool is_repeated;
 			Tensor <bool, 1> individual(num_genes);
 			do {
 				is_repeated = false;
 				individual.setConstant(false);
-				Index activated_genes = Index(1 + rand() % num_genes);
-				Index genes_count = 0;
-				do
+				activated_genes = Index(1 + rand() % num_genes);
+				activated_genes_count = 0;
+				
+				while(activated_genes_count <= activated_genes)
 				{
-					type pointer = static_cast <type> (rand()) / static_cast <type> (RAND_MAX);
+					pointer = static_cast <type> (rand()) / static_cast <type> (RAND_MAX);
 					if (pointer <= cumulative_probability(0) && !individual(0))
 					{
-						individual(0) = true;
-						genes_count++;
+						individual[0] = true;
+						activated_genes_count++;
+						cout << "Gene 0 activated"<<endl; 
 					}
 					else
 					{
-						for (Index j = 0; j < cumulative_probability.size() - 1; j++)
+						for (Index j = 0; j < cumulative_probability.size()-1; j++)
 						{
 
-							if (pointer > cumulative_probability(j) && pointer <= cumulative_probability(j + 1) && !individual(j))
+							if (pointer > cumulative_probability[j] && pointer <= cumulative_probability[j + 1] && !individual(j))
 							{
-								individual(j) = true;
-								genes_count++;
+								individual[j] = true;
+								activated_genes_count++;
+								cout << "Gene" << j << " activated" << endl;
 								break;
-
+								
 							}
 						}
 
 					}
 
 
-				} while (genes_count <= activated_genes);
+				} 
 				//Check for repetion
 				for (Index j = 0; j < i; j++)
 				{
@@ -532,7 +545,7 @@ namespace opennn
 			}
 
 		}
-
+		cout << "población generada";
 
 
 	}
