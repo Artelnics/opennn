@@ -197,13 +197,21 @@ struct InputsSelectionResults
        const Tensor<type, 1> old_training_error_history = training_error_history;
        const Tensor<type, 1> old_selection_error_history = selection_error_history;
 
+       const Tensor<type, 1> old_mean_selection_history = mean_selection_error_history;
+       const Tensor<type, 1> old_mean_training_history = mean_training_error_history;
+
        training_error_history.resize(new_size);
        selection_error_history.resize(new_size);
+       mean_training_error_history.resize(new_size);
+       mean_selection_error_history.resize(new_size);
+
 
        for(Index i = 0; i < new_size; i++)
        {
            training_error_history(i) = old_training_error_history(i);
            selection_error_history(i) = old_selection_error_history(i);
+           mean_selection_error_history(i) = old_mean_selection_history(i);
+           mean_training_error_history(i) = old_mean_training_history(i);
        }
    }
 
@@ -240,12 +248,13 @@ struct InputsSelectionResults
 
    Tensor<type, 1> selection_error_history;
 
-
     // Mean Selection Error of different neural networks
+
    Tensor < type, 1 >  mean_selection_error_history;
-   Tensor < type, 1 >  mean_training_error_history;
-    
+
     // Mean Training Error of different neural networks
+
+   Tensor < type, 1 >  mean_training_error_history;
 
    /// Value of training for the neural network with minimum selection error.
 
