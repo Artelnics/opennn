@@ -53,18 +53,18 @@ int main(int argc, char* argv[])
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
 
-        genetic_algorithm_pointer->set_individuals_number(30);
+        genetic_algorithm_pointer->set_individuals_number(300);
 
-        genetic_algorithm_pointer->set_maximum_epochs_number(2);
+        genetic_algorithm_pointer->set_maximum_epochs_number(7);
 
-        genetic_algorithm_pointer->set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+        genetic_algorithm_pointer->set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
 
         genetic_algorithm_pointer->initialize_population();
 
-        genetic_algorithm_pointer->print_population();
+        //genetic_algorithm_pointer->print_population();
 
-        //genetic_algorithm_pointer->perform_inputs_selection();
+        genetic_algorithm_pointer->perform_inputs_selection();
 
 
         

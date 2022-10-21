@@ -401,6 +401,8 @@ namespace opennn
 		{
 			initialize_population_correlations();
 		}
+		
+		//check_categorical_columns();
 
 	}
 
@@ -527,7 +529,7 @@ namespace opennn
 							{ 
 								if (individual(j)) 
 								{
-									break;
+									continue;
 								}
 								else 
 								{
