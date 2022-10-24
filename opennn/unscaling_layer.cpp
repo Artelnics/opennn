@@ -1115,6 +1115,8 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+}
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
