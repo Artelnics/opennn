@@ -493,7 +493,7 @@ void PerceptronLayer::set_parameters_random()
 }
 
 
-void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
+void PerceptronLayer::calculate_combinations(type* inputs_data,
                                              const Tensor<type, 2>& biases,
                                              const Tensor<type, 2>& synaptic_weights,
                                              type* combinations_data) const
@@ -506,16 +506,20 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
 #endif
 
-    const Index batch_samples_number = inputs.dimension(0);
+    const Index batch_samples_number = 1000;//get_batch_samples_number();// inputs.dimension(0);
 
     const Index neurons_number = get_neurons_number();
 
-    for(Index i = 0; i < neurons_number; i++)
+   /* for (Index i = 0; i < neurons_number; i++)
     {
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
-    }
+    }*/
 
+    Eigen::array<int, 2> bcast({(int)batch_samples_number,1});
 
+    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
+
+ combinations = biases.broadcast(bcast);  
     //broadcast
 
 #ifdef OPENNN_MKL
@@ -523,17 +527,17 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
     CBLAS_TRANSPOSE::CblasNoTrans,
     CBLAS_TRANSPOSE::CblasNoTrans,
-    inputs.dimension(0),
+    (int)batch_samples_number,
     synaptic_weights.dimension(1),
-    inputs.dimension(1),
+    (int)neurons_number,
     static_cast<type>(1.0),
-    inputs.data(),
-    inputs.dimension(0),
+    inputs_data,
+    (int)batch_samples_number,
     synaptic_weights.data(),
     synaptic_weights.dimension(0),
     static_cast<type>(1.0),
     combinations_data,
-    inputs.dimension(0));
+    (int)batch_samples_number);
 #else
 
 TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
@@ -541,7 +545,6 @@ combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_
 
 #endif
 
-  
 }
 
 
@@ -676,9 +679,9 @@ void PerceptronLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1
         throw invalid_argument(buffer.str());
     }
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+  //  const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
-    calculate_combinations(inputs, biases, synaptic_weights, outputs_data);
+    calculate_combinations(inputs_data, biases, synaptic_weights, outputs_data);
 
     calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
 }
@@ -703,12 +706,12 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
-    calculate_combinations(inputs,
+    //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    type* combinations_data = perceptron_layer_forward_propagation->get_combinations_data();
+    calculate_combinations(inputs_data,
                            biases,
                            synaptic_weights,
-                           perceptron_layer_forward_propagation->combinations.data());
+                           combinations_data);
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
@@ -760,10 +763,10 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
 
-    calculate_combinations(inputs,
+    calculate_combinations(inputs_data,
                            potential_biases,
                            potential_synaptic_weights,
-                           perceptron_layer_forward_propagation->combinations.data());
+                           perceptron_layer_forward_propagation->get_combinations_data());
 
     calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
                                       combinations_dimensions,

@@ -133,7 +133,7 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>&,
+   void calculate_combinations(type*,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                type*) const;
@@ -319,6 +319,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 //        cout << "Activations derivatives:" << endl;
 //        cout << activations_derivatives << endl;
+    }
+    type* get_combinations_data()
+    {
+        return combinations.data();
     }
 
     Tensor<type, 2> combinations;
