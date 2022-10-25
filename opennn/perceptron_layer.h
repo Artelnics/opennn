@@ -136,7 +136,8 @@ public:
    void calculate_combinations(type*,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               type*) const;
+                               type*,
+                               const Tensor<Index, 1>&) const;
 
    // Perceptron layer activations
 
