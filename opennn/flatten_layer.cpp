@@ -272,7 +272,6 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const Index input_height = static_cast<Index>(atoi(input_height_element->GetText()));
 
-
     // Input width
 
     const tinyxml2::XMLElement* input_width_element = input_variables_dimensions_element->NextSiblingElement("InputWidth");
@@ -305,7 +304,7 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     Tensor<Index,1> inputsDimensionTensor(4);
 
-    inputsDimensionTensor.setValues({0, input_channels_number, input_width, input_height});
+    inputsDimensionTensor.setValues({input_height, input_width, input_channels_number, 0});
 
     set(inputsDimensionTensor);
 }
