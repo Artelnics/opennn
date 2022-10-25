@@ -23,46 +23,78 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Breast Cancer Application." << endl;
-
-        srand(static_cast<unsigned>(time(nullptr)));
-       
-        // Data set
-
-        DataSet data_set("../data/breast_cancer.csv", ';', true);
+        DataSet data_set("../breast_cancer/data/sum.csv", ';', false);
 
         const Index input_variables_number = data_set.get_input_variables_number();
+
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        // Neural network
+        const Index hidden_neurons_number = 1;
 
-        const Index neurons_number = 6;
+        // Neural Network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation,
+            { input_variables_number, hidden_neurons_number, target_variables_number });
 
-        // Training strategy
+        // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
-        training_strategy.perform_training();
+        training_strategy.set_display_period(1000);
+        // training_strategy.perform_training();
 
-        // Testing analysis
+        ModelSelection model_selection(&training_strategy);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GENETIC_ALGORITHM);
 
-        testing_analysis.print_binary_classification_tests();
+        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
 
-        // Save results
+        genetic_algorithm_pointer->set_individuals_number(80);
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_python("../data/breast_cancer.py");
+        genetic_algorithm_pointer->set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
-        cout << "End breast cancer application" << endl;
+        genetic_algorithm_pointer->initialize_population();
+        genetic_algorithm_pointer->print_population();
 
-        return 0;
+        //genetic_algorithm_pointer->set_maximum_epochs_number(1);
+
+        //genetic_algorithm_pointer->set_default();
+
+        /*for (Index i = 0; i < genetic_algorithm_pointer->get_maximum_iterations_number(); i++)
+        {
+            genetic_algorithm_pointer->initialize_population();
+
+            genetic_algorithm_pointer->print_population();
+
+            genetic_algorithm_pointer->evaluate_population();
+
+            cout << i + 1<<endl;
+        }*/
+        
+
+        //InputsSelectionResults input_selection_results = genetic_algorithm_pointer->perform_inputs_selection();
+
+       /* std::ofstream MyFile("../blank/data/MeanSEH.csv");
+        for (Index i = 0; i < input_selection_results.mean_selection_error_history.size(); i++)
+        {
+            MyFile << i + 1 << ";" << input_selection_results.mean_selection_error_history(i) << "\n";
+
+        }
+        MyFile.close();
+
+        std::ofstream MyFileMean_training_error_history("../blank/data/MeanTEH.csv");
+        for (Index i = 0; i < input_selection_results.mean_training_error_history.size(); i++)
+        {
+            MyFileMean_training_error_history << i + 1 << ";" << input_selection_results.mean_training_error_history(i) << "\n";
+
+        }
+        MyFileMean_training_error_history.close();
+
+
+*/      system("pause");
+       
     }
     catch(const exception& e)
     {

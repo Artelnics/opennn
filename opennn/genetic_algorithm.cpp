@@ -411,51 +411,57 @@ namespace opennn
 		const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
 		bool is_repeated;
-		Tensor <bool, 1 > individual(genes_number);
-		
+		Tensor<bool, 1> individual(genes_number);
+
 		for (Index i = 0; i < individuals_number; i++)
+		{
+			individual.setConstant(false);
+			
+			do 
 			{
-				individual.setConstant(false);
-				// Do-while for preventing repetition of samples
-
-				do {
-
-					is_repeated = false;
-
-					// Individual generation
-
-					for (Index j = 0; j < genes_number; j++)
-					{
-						rand() % 2 == 0 ? individual[j] = false : individual[j] = true;
-					}
-
-					// Prevent no inputs
-
-					if (is_false(individual))
-					{
-						individual(static_cast<Index>(rand()) % genes_number) = true;
-					}
-
-					// Check for repetitions
-
-					for (Index j = 0; j < i; j++)
-					{
-						Tensor<bool, 1> row = population.chip(j, 0);
-
-						if (are_equal(individual, row))
-						{
-							is_repeated = true;
-							break;
-						}
-					}
-				} while (is_repeated);
-
-				//  Add individual to population
-
 				for (Index j = 0; j < genes_number; j++)
 				{
-					population(i, j) = individual(j);
+					rand() % 2 == 0 ? individual[j] = false : individual[j] = true;
+					
 				}
+				if (is_false(individual)) 
+				{
+					individual(static_cast<Index>(rand()) % genes_number) = true;
+				}
+			
+			} while (is_repeated);
+
+			//Add individual to population
+			
+			
+			for (Index j = 0; j < genes_number; j++)
+			{
+				population(i, j) = individual(j);
+			}
+
+			cout << population;
+			
+
+			//		// Check for repetitions
+
+			//		for (Index j = 0; j < i; j++)
+			//		{
+			//			Tensor<bool, 1> row = population.chip(j, 0);
+
+			//			if (are_equal(individual, row))
+			//			{
+			//				is_repeated = true;
+			//				break;
+			//			}
+			//		}
+			//	} while (is_repeated);
+
+			//	//  Add individual to population
+
+			//	for (Index j = 0; j < genes_number; j++)
+			//	{
+			//		population(i, j) = individual(j);
+			//	}
 			}
 	}
 
@@ -597,6 +603,9 @@ namespace opennn
 
 		DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
+
 		Tensor<string, 1> inputs_names;
 
 		// Neural network
@@ -612,8 +621,7 @@ namespace opennn
 		const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
 
-		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
+		
 		for (Index i = 0; i < individuals_number; i++)
 		{
 			individual = population.chip(i, 0);
@@ -629,7 +637,7 @@ namespace opennn
 
 			Index column_index = 0;
 
-			for (Index j = 0; j < genes_number; j++)
+			/*for (Index j = 0; j < genes_number; j++)
 			{
 				if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
 				{
@@ -652,11 +660,11 @@ namespace opennn
 				}
 
 				column_index++;
-			}
+			}*/
 
 
 
-			data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
+			//data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
 
 			inputs_names = data_set_pointer->get_input_variables_names();
 
@@ -1102,9 +1110,6 @@ namespace opennn
 
 		DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
-
 		// Neural network
 
 		NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -1121,9 +1126,12 @@ namespace opennn
 
 		time(&beginning_time);
 
+		
+
 		for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
 		{
 			if (display) cout << "Generation: " << epoch + 1 << endl;
+			inputs_selection_results.resize_history(inputs_selection_results.mean_training_error_history.size()+1);
 
 			evaluate_population();
 
