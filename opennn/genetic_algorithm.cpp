@@ -419,15 +419,26 @@ namespace opennn
 			
 			do 
 			{
+				is_repeated = false;
 				for (Index j = 0; j < genes_number; j++)
 				{
-					rand() % 2 == 0 ? individual[j] = false : individual[j] = true;
+					rand() % 2 == 0 ? individual(j) = false : individual(j) = true;
 					
 				}
 				if (is_false(individual)) 
 				{
 					individual(static_cast<Index>(rand()) % genes_number) = true;
 				}
+				for (Index j = 0; j < i; j++)
+						{
+							Tensor<bool, 1> row = population.chip(j, 0);
+
+							if (are_equal(individual, row))
+							{
+									is_repeated = true;
+									break;
+							}
+						}
 			
 			} while (is_repeated);
 
@@ -439,30 +450,10 @@ namespace opennn
 				population(i, j) = individual(j);
 			}
 
-			cout << population;
 			
-
-			//		// Check for repetitions
-
-			//		for (Index j = 0; j < i; j++)
-			//		{
-			//			Tensor<bool, 1> row = population.chip(j, 0);
-
-			//			if (are_equal(individual, row))
-			//			{
-			//				is_repeated = true;
-			//				break;
-			//			}
-			//		}
-			//	} while (is_repeated);
-
-			//	//  Add individual to population
-
-			//	for (Index j = 0; j < genes_number; j++)
-			//	{
-			//		population(i, j) = individual(j);
-			//	}
 			}
+
+		check_categorical_columns();
 	}
 
 	void GeneticAlgorithm::initialize_population_correlations()
