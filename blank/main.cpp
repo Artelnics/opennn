@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
         cout << "Hello OpenNN!" << endl;
 
         cout << "Bye OpenNN!" << endl;
+
+        //hola
     }
     catch(const exception& e)
     {
