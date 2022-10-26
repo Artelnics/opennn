@@ -1653,7 +1653,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions)
 {
 #ifdef OPENNN_DEBUG
     cout << "inputs dimensions: " << inputs_dimensions << endl;
