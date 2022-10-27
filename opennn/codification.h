@@ -22,7 +22,7 @@ namespace opennn
 
 // Codification methods
 
-std::string sj2utf8(const std::string &);
+string sj2utf8(const string &);
 
 // Auxiliar variables
 

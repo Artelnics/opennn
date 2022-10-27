@@ -2797,7 +2797,7 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 
 string NeuralNetwork::write_expression_c() const{
 
-    //vector<std::string> found_tokens;
+    //vector<string> found_tokens;
     ostringstream buffer;
 
     bool logistic     = false;
@@ -2849,9 +2849,9 @@ string NeuralNetwork::write_expression_c() const{
     buffer << "\n" << endl;
 
     string expression = write_expression();
-    vector<std::string> tokens;
-    std::string token;
-    std::stringstream ss(expression);
+    vector<string> tokens;
+    string token;
+    stringstream ss(expression);
 
     while (getline(ss, token, '\n'))
     {
@@ -2860,15 +2860,15 @@ string NeuralNetwork::write_expression_c() const{
         tokens.push_back(token);
     }
 
-    std::string target_string0("Logistic");
-    std::string target_string1("ReLU");
-    std::string target_string2("Threshold");
-    std::string target_string3("SymmetricThreshold");
-    std::string target_string4("ExponentialLinear");
-    std::string target_string5("ScaledExponentialLinear");
-    std::string target_string6("HardSigmoid");
-    std::string target_string7("SoftPlus");
-    std::string target_string8("SoftSign");
+    string target_string0("Logistic");
+    string target_string1("ReLU");
+    string target_string2("Threshold");
+    string target_string3("SymmetricThreshold");
+    string target_string4("ExponentialLinear");
+    string target_string5("ScaledExponentialLinear");
+    string target_string6("HardSigmoid");
+    string target_string7("SoftPlus");
+    string target_string8("SoftSign");
 
     for (auto& t:tokens)
     {
@@ -3143,7 +3143,7 @@ string NeuralNetwork::write_expression() const
 string NeuralNetwork::write_expression_api() const
 {
     {
-        vector<std::string> found_tokens;
+        vector<string> found_tokens;
         ostringstream buffer;
         bool logistic     = false;
         bool ReLU         = false;
@@ -3275,9 +3275,9 @@ string NeuralNetwork::write_expression_api() const
 
         string expression = write_expression();
         string phpVAR = "$";
-        vector<std::string> tokens;
-        std::string token;
-        std::stringstream ss(expression);
+        vector<string> tokens;
+        string token;
+        stringstream ss(expression);
 
         while (getline(ss, token, '\n'))
         {
@@ -3300,15 +3300,15 @@ string NeuralNetwork::write_expression_api() const
             }
         }
 
-        std::string target_string0("Logistic");
-        std::string target_string1("ReLU");
-        std::string target_string2("Threshold");
-        std::string target_string3("SymmetricThreshold");
-        std::string target_string4("ExponentialLinear");
-        std::string target_string5("ScaledExponentialLinear");
-        std::string target_string6("HardSigmoid");
-        std::string target_string7("SoftPlus");
-        std::string target_string8("SoftSign");
+        string target_string0("Logistic");
+        string target_string1("ReLU");
+        string target_string2("Threshold");
+        string target_string3("SymmetricThreshold");
+        string target_string4("ExponentialLinear");
+        string target_string5("ScaledExponentialLinear");
+        string target_string6("HardSigmoid");
+        string target_string7("SoftPlus");
+        string target_string8("SoftSign");
 
         for (auto& t:tokens)
         {

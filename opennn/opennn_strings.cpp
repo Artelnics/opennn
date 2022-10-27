@@ -184,9 +184,9 @@ Index count_tokens(const string& s, const string& sep)
 {
     Index tokens_number = 0;
 
-    std::string::size_type pos = 0;
+    string::size_type pos = 0;
 
-    while ( s.find(sep, pos) != std::string::npos )
+    while ( s.find(sep, pos) != string::npos )
     {
         pos = s.find(sep, pos);
         ++ tokens_number;
@@ -883,8 +883,8 @@ bool contains_substring(const string& str, const string& sub_str)
  ///@param toReplace
  ///@param replaceWith
 
-void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
-    std::string buf;
+void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
+    string buf;
 
     std::size_t pos = 0;
     std::size_t prevPos;
@@ -897,7 +897,7 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
         prevPos =    pos;
         pos = s.find(toReplace, pos);
 
-        if (pos == std::string::npos)
+        if (pos == string::npos)
             break;
 
         buf.append(s, prevPos, pos - prevPos);
@@ -1065,7 +1065,7 @@ bool is_mixed(const Tensor<string, 1>& v)
 /// Checks if a string is valid encoded in UTF-8 or not
 /// @param string String to be checked.
 
-void remove_non_printable_chars( std::string& wstr)
+void remove_non_printable_chars( string& wstr)
 {
     // get the ctype facet for wchar_t (Unicode code points in pactice)
     typedef std::ctype< wchar_t > ctype ;
@@ -1116,9 +1116,9 @@ void replace(string& source, const string& find_what, const string& replace_with
  ///@param s
  ///@param toReplace
  ///@param replaceWith
-
-void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
-    std::string buf;
+/*
+void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
+    string buf;
 
     std::size_t pos = 0;
     std::size_t prevPos;
@@ -1131,7 +1131,7 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
         prevPos =    pos;
         pos = s.find(toReplace, pos);
 
-        if (pos == std::string::npos)
+        if (pos == string::npos)
             break;
 
         buf.append(s, prevPos, pos - prevPos);
@@ -1151,7 +1151,7 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
     buf.append(s, prevPos, s.size() - prevPos);
     s.swap(buf);
 }
-
+*/
 
 bool isNotAlnum (char &c)
 {
