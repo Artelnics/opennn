@@ -209,7 +209,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 
     exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
 
-    exponential_correlation.correlation_type = CorrelationMethod::Exponential;
+    exponential_correlation.correlation_type = CorrelationType::Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
     exponential_correlation.b = exponential_correlation.b;
@@ -412,7 +412,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
+Correlation linear_correlation_pearson(const ThreadPoolDevice* thread_pool_device,
                                const Tensor<type, 1>& x,
                                const Tensor<type, 1>& y)
 {
@@ -435,7 +435,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     Correlation linear_correlation;
 
-    linear_correlation.correlation_type = CorrelationMethod::Linear;
+    linear_correlation.correlation_type = CorrelationType::Linear;
 
     if(is_constant(x) && !is_constant(y))
     {
@@ -535,13 +535,65 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 
+Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+{
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
+
+    const Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
+    const Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
+
+    const Tensor<type, 1> x_rank = calculate_rank_greater(x_filter).cast<type>();
+    const Tensor<type, 1> y_rank = calculate_rank_greater(y_filter).cast<type>();
+
+    return linear_correlation_pearson(thread_pool_device, x_rank, y_rank);
+}
+
+
+/// Calculate the coefficients of a goodness-of-fit (a, b) and the correlation among the variables.
+/// @param x Vector of the independent variable.
+/// @param y Vector of the dependent variable.
+
+Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
+                               const Tensor<type, 1>& x,
+                               const Tensor<type, 1>& y,
+                               const CorrelationMethod correlation_method)
+{
+#ifdef OPENNN_DEBUG
+
+    const Index x_size = x.size();
+
+    ostringstream buffer;
+
+    if(x_size != y.size())
+    {
+        buffer << "OpenNN Exception: Vector Template.\n"
+               << "Correlation linear_correlation(const Tensor<type, 1>&) const method.\n"
+               << "Y size must be equal to X size.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
+    if(correlation_method == CorrelationMethod::Pearson)
+    {
+        return linear_correlation_pearson(thread_pool_device, x, y);
+    }
+    else if(correlation_method == CorrelationMethod::Spearman)
+    {
+        return linear_correlation_spearman(thread_pool_device, x, y);
+    }
+}
+
+
 /// Calculate the coefficients of a logarithmic regression (a, b) and the correlation among the variables
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
 Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                                     const Tensor<type, 1>& x,
-                                    const Tensor<type, 1>& y)
+                                    const Tensor<type, 1>& y,
+                                    const CorrelationMethod correlation_method)
 {
 #ifdef OPENNN_DEBUG
 
@@ -578,9 +630,9 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
         }
     }
 
-    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y);
+    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y, correlation_method);
 
-    logarithmic_correlation.correlation_type = CorrelationMethod::Logarithmic;
+    logarithmic_correlation.correlation_type = CorrelationType::Logarithmic;
 
     return logarithmic_correlation;
 }
@@ -605,7 +657,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationMethod::Logistic;
+        correlation.correlation_type = CorrelationType::Logistic;
 
         return correlation;
     }
@@ -648,7 +700,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    correlation.correlation_type = CorrelationMethod::Logistic;
+    correlation.correlation_type = CorrelationType::Logistic;
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
@@ -676,7 +728,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationMethod::Logistic;
+        correlation.correlation_type = CorrelationType::Logistic;
 
         return correlation;
     }
@@ -729,7 +781,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    correlation.correlation_type = CorrelationMethod::Logistic;
+    correlation.correlation_type = CorrelationType::Logistic;
 
     return correlation;
 }
@@ -758,7 +810,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationMethod::Logistic;
+        correlation.correlation_type = CorrelationType::Logistic;
 
         return correlation;
     }
@@ -817,7 +869,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    correlation.correlation_type = CorrelationMethod::Logistic;
+    correlation.correlation_type = CorrelationType::Logistic;
 
     return correlation;
 }
@@ -871,7 +923,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 
     power_correlation = linear_correlation(thread_pool_device, x.log(), y.log());
 
-    power_correlation.correlation_type = CorrelationMethod::Power;
+    power_correlation.correlation_type = CorrelationType::Power;
 
     power_correlation.a = exp(power_correlation.a);
 

@@ -235,7 +235,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
     for (int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
-    
+
     return result;
 }
 
@@ -278,7 +278,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
 }
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
-{        
+{
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -836,7 +836,7 @@ Index count_NAN(const Tensor<type, 1>& x)
 Index count_NAN(const Tensor<type, 2>& x)
 {
     const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);   
+    const Index columns_number = x.dimension(1);
 
     Index count = 0;
 
