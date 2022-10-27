@@ -314,6 +314,7 @@ bool sortbysec(const pair<int,int> &a, const pair<int,int> &b)
     return (a.first < b.first);
 }
 
+/*
 void rankify_improved(int A[] , int n) {
 
     // Rank Vector
@@ -362,7 +363,7 @@ void rankify_improved(int A[] , int n) {
     for (int i = 0; i < n; i++)
         cout << (double)R[i] << ' ';
 
-    }
+}*/
 
 
 
