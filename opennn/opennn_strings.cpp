@@ -878,6 +878,7 @@ bool contains_substring(const string& str, const string& sub_str)
 }
 
 
+<<<<<<< HEAD
  ///Replaces all apprearances of a substring with another string
  ///@param s
  ///@param toReplace
@@ -919,6 +920,8 @@ void replace_all_appearances(string& s, string const& toReplace, string const& r
 }
 
 
+=======
+>>>>>>> 9110d5312738c6216c4ca81f02bd66f288b371e5
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
