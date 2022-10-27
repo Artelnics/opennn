@@ -6306,15 +6306,14 @@ void DataSet::print_missing_values_information() const
 void DataSet::print_input_target_columns_correlations() const
 {
     const Index inputs_number = get_input_variables_number();
-    const Index columns_number = get_columns_number();
-    const Index targets_number = get_target_variables_number();
+    const Index targets_number = get_target_columns_number();
 
     const Tensor<string, 1> inputs_names = get_input_columns_names();
     const Tensor<string, 1> targets_name = get_target_columns_names();
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < targets_number; j++)
     {
         for(Index i = 0; i < inputs_number; i++)
         {

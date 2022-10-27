@@ -53,11 +53,10 @@ void CorrelationsTest::test_linear_correlation()
     const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
 
 
-    cout << "X: " << y << endl;
-    cout << "X rank: " << y1 << endl;
+    cout << "X: " << x1 << endl;
+    cout << "Y: " << y1 << endl;
 
-    system("pause");
-//    cout << "Y: " << y1 << endl;
+
 
 
     // Test
