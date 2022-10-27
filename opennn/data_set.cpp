@@ -12376,7 +12376,7 @@ void DataSet::read_csv_2_complete()
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
-                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != std::string::npos)
+                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                     {
                         column_index++;
                         continue;
