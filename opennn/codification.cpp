@@ -14,9 +14,9 @@ namespace opennn
 /// This method parses a string codificated by shift_jis codification to UTF-8.
 /// @param input_string String to be parsed.
 
-std::string sj2utf8(const std::string &input_string)
+string sj2utf8(const string &input_string)
 {
-    std::string output(3 * input_string.length(), ' '); //ShiftJis won't give 4byte UTF8, so max. 3 byte per input char are needed
+    string output(3 * input_string.length(), ' '); //ShiftJis won't give 4byte UTF8, so max. 3 byte per input char are needed
     size_t indexInput = 0, indexOutput = 0;
 
     while(indexInput < input_string.length())

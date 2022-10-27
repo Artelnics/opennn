@@ -107,6 +107,7 @@ HEADERS += \
     text_analytics.h \
     region_based_object_detector.h \
     json_to_xml.h \
+    batch_normalization_layer.h\
     opennn.h
 
 SOURCES += \
@@ -160,6 +161,7 @@ SOURCES += \
     text_analytics.cpp \
     region_based_object_detector.cpp \
     json_to_xml.cpp \
+    batch_normalization_layer.cpp\
     unit_testing.cpp
     win32:{
 

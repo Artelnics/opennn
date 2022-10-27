@@ -385,8 +385,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    if(back_propagation.assemble) assemble_layers_error_gradient(back_propagation);
-
     // Loss
 
     back_propagation.loss = back_propagation.error;
@@ -398,6 +396,8 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
         add_regularization(back_propagation);
         add_regularization_gradient(back_propagation);
     }
+
+    if(back_propagation.assemble) assemble_layers_error_gradient(back_propagation);
 }
 
 

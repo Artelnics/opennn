@@ -55,6 +55,8 @@ namespace opennn
 
     bool contains_substring(const string&, const string&);
 
+    void replace_all_appearances(string&, string const&, string const& replaceWith);
+
     void trim(string&);
     void erase(string&, const char&);
 
@@ -70,7 +72,7 @@ namespace opennn
     bool is_not_numeric(const Tensor<string, 1>&);
     bool is_mixed(const Tensor<string, 1>&);
 
-    void remove_non_printable_chars( std::string&);
+    void remove_non_printable_chars( string&);
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);

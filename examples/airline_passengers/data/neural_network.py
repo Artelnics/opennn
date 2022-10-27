@@ -47,16 +47,16 @@ class NeuralNetwork:
 
 		combinations = [None] * 10
 
-		combinations[0] = 0.14122 -0.182705*inputs[0] -0.206823*inputs[1] 
-		combinations[1] = -0.164227 +0.221125*inputs[0] +0.0921721*inputs[1] 
-		combinations[2] = -0.123684 -0.0911117*inputs[0] -0.0462765*inputs[1] 
-		combinations[3] = -0.0082476 +0.154298*inputs[0] +0.00951754*inputs[1] 
-		combinations[4] = 0.101263 +0.114064*inputs[0] +0.287481*inputs[1] 
-		combinations[5] = 0.125717 +0.132671*inputs[0] +0.230353*inputs[1] 
-		combinations[6] = -0.134883 -0.504073*inputs[0] -0.428432*inputs[1] 
-		combinations[7] = -0.0479741 +0.0972213*inputs[0] +0.491557*inputs[1] 
-		combinations[8] = -0.0235664 +0.136482*inputs[0] -0.0892608*inputs[1] 
-		combinations[9] = -0.0368696 -0.190251*inputs[0] -0.0165799*inputs[1] 
+		combinations[0] = -0.136524 -0.18759*inputs[0] +0.263137*inputs[1] 
+		combinations[1] = -0.602783 -0.256299*inputs[0] -0.556332*inputs[1] 
+		combinations[2] = 0.203363 +0.219422*inputs[0] -0.309509*inputs[1] 
+		combinations[3] = -0.442103 -0.204843*inputs[0] -0.377829*inputs[1] 
+		combinations[4] = -0.181952 +0.0189888*inputs[0] -0.27534*inputs[1] 
+		combinations[5] = -0.286766 -0.151463*inputs[0] -0.208432*inputs[1] 
+		combinations[6] = -0.0751686 -0.192901*inputs[0] +0.268802*inputs[1] 
+		combinations[7] = 0.193406 +0.282964*inputs[0] -0.421903*inputs[1] 
+		combinations[8] = -0.0823634 -0.18008*inputs[0] +0.259467*inputs[1] 
+		combinations[9] = 0.158052 +0.264705*inputs[0] -0.381678*inputs[1] 
 		
 		activations = [None] * 10
 
@@ -78,7 +78,7 @@ class NeuralNetwork:
 
 		combinations = [None] * 1
 
-		combinations[0] = -0.159178 -0.0859112*inputs[0] +0.0105446*inputs[1] -0.210578*inputs[2] +0.0689023*inputs[3] +0.365389*inputs[4] +0.427273*inputs[5] -0.654416*inputs[6] +0.369509*inputs[7] -0.00577036*inputs[8] -0.119732*inputs[9] 
+		combinations[0] = -0.256116 +0.35846*inputs[0] -0.549723*inputs[1] -0.34595*inputs[2] -0.429958*inputs[3] -0.165212*inputs[4] -0.0895895*inputs[5] +0.317934*inputs[6] -0.354081*inputs[7] +0.420682*inputs[8] -0.51796*inputs[9] 
 		
 		activations = [None] * 1
 

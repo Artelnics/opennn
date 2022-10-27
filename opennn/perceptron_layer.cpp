@@ -719,7 +719,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
         ostringstream buffer;
         buffer << "OpenNN Exception: PerceptronLayer class.\n"
                << "void PerceptronLayer::forward_propagate(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (" << inputs_dimensions(1) << ").\n";
         throw invalid_argument(buffer.str());
     }
 
@@ -1521,97 +1521,6 @@ string PerceptronLayer::write_activation_function_expression() const
 }
 
 
-string PerceptronLayer::write_combinations_c() const
-{
-    ostringstream buffer;
-
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    buffer << "\tvector<float> combinations(" << neurons_number << ");\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\tcombinations[" << i << "] = " << biases(i);
-
-        for(Index j = 0; j < inputs_number; j++)
-        {
-            buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
-        }
-
-        buffer << ";" << endl;
-    }
-
-    return buffer.str();
-}
-
-
-string PerceptronLayer::write_activations_c() const
-{
-    ostringstream buffer;
-
-    const Index neurons_number = get_neurons_number();
-
-    buffer << "\n\tvector<float> activations(" << neurons_number << ");\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\tactivations[" << i << "] = ";
-
-        switch(activation_function)
-        {
-        case ActivationFunction::HyperbolicTangent:
-            buffer << "tanh(combinations[" << i << "]);\n";
-            break;
-
-        case ActivationFunction::RectifiedLinear:
-            buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "];\n";
-            break;
-
-        case ActivationFunction::Logistic:
-            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
-            break;
-
-        case ActivationFunction::Threshold:
-            buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
-            break;
-
-        case ActivationFunction::SymmetricThreshold:
-            buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
-            break;
-
-        case ActivationFunction::Linear:
-            buffer << "combinations[" << i << "];\n";
-            break;
-
-        case ActivationFunction::ScaledExponentialLinear:
-            buffer << "combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(combinations[" << i << "]) - 1.0) : 1.0507*combinations[" << i << "];\n";
-            break;
-
-        case ActivationFunction::SoftPlus:
-            buffer << "log(1.0 + exp(combinations[" << i << "]));\n";
-            break;
-
-        case ActivationFunction::SoftSign:
-            buffer << "combinations[" << i << "] < 0.0 ? combinations[" << i << "]/(1.0 - combinations[" << i << "] ) : combinations[" << i << "]/(1.0 + combinations[" << i << "] );\n";
-            break;
-
-        case ActivationFunction::ExponentialLinear:
-            buffer << "combinations[" << i << "] < 0.0 ? 1.0*(exp(combinations[" << i << "]) - 1.0) : combinations[" << i << "];\n";
-            break;
-
-        case ActivationFunction::HardSigmoid:
-            ///@todo
-            break;
-
-        default:
-            break;
-        }
-    }
-    return buffer.str();
-}
-
-
 string PerceptronLayer::write_combinations_python() const
 {
     ostringstream buffer;
@@ -1706,37 +1615,6 @@ string PerceptronLayer::write_activations_python() const
     return buffer.str();
 }
 
-
-string PerceptronLayer::write_expression_c() const
-{
-    ostringstream buffer;
-
-    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
-
-    buffer << write_combinations_c();
-
-    buffer << write_activations_c();
-
-    buffer << "\n\treturn activations;\n}" << endl;
-
-    return buffer.str();
-}
-
-
-string PerceptronLayer::write_expression_python() const
-{
-    ostringstream buffer;
-
-    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
-
-    buffer << write_combinations_python();
-
-    buffer << write_activations_python();
-
-    buffer << "\n\t\treturn activations;\n" << endl;
-
-    return buffer.str();
-}
 
 }
 

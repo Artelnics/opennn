@@ -53,7 +53,7 @@ public:
 #endif
 
 
-// OpenNN: Open Neural Networks Library.
+// OpenNN: Open Neural Networksc Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or

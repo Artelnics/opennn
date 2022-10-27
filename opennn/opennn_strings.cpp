@@ -184,9 +184,9 @@ Index count_tokens(const string& s, const string& sep)
 {
     Index tokens_number = 0;
 
-    std::string::size_type pos = 0;
+    string::size_type pos = 0;
 
-    while ( s.find(sep, pos) != std::string::npos )
+    while ( s.find(sep, pos) != string::npos )
     {
         pos = s.find(sep, pos);
         ++ tokens_number;
@@ -388,7 +388,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 
 bool is_date_time_string(const string& str)
 {
-    if(is_numeric_string(str))return false;
+    if(is_numeric_string(str)) return false;
 
     const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
@@ -407,14 +407,7 @@ bool is_date_time_string(const string& str)
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
 
-    if(regex_match(str, regular_expression))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return regex_match(str, regular_expression);
 }
 
 
@@ -885,6 +878,50 @@ bool contains_substring(const string& str, const string& sub_str)
 }
 
 
+<<<<<<< HEAD
+ ///Replaces all apprearances of a substring with another string
+ ///@param s
+ ///@param toReplace
+ ///@param replaceWith
+
+void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
+    string buf;
+
+    std::size_t pos = 0;
+    std::size_t prevPos;
+
+    // Reserves rough estimate of final size of string.
+    buf.reserve(s.size());
+
+    while (true) {
+
+        prevPos =    pos;
+        pos = s.find(toReplace, pos);
+
+        if (pos == string::npos)
+            break;
+
+        buf.append(s, prevPos, pos - prevPos);
+        if (buf.back() == '_')
+        {
+            buf += toReplace;
+            pos += toReplace.size();
+
+        }else
+        {
+            buf += replaceWith;
+            pos += toReplace.size();
+
+        }
+    }
+
+    buf.append(s, prevPos, s.size() - prevPos);
+    s.swap(buf);
+}
+
+
+=======
+>>>>>>> 9110d5312738c6216c4ca81f02bd66f288b371e5
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
@@ -1031,7 +1068,7 @@ bool is_mixed(const Tensor<string, 1>& v)
 /// Checks if a string is valid encoded in UTF-8 or not
 /// @param string String to be checked.
 
-void remove_non_printable_chars( std::string& wstr)
+void remove_non_printable_chars( string& wstr)
 {
     // get the ctype facet for wchar_t (Unicode code points in pactice)
     typedef std::ctype< wchar_t > ctype ;
@@ -1077,6 +1114,47 @@ void replace(string& source, const string& find_what, const string& replace_with
     }
 }
 
+
+///Replaces all apprearances of a substring with another string
+ ///@param s
+ ///@param toReplace
+ ///@param replaceWith
+/*
+void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
+    string buf;
+
+    std::size_t pos = 0;
+    std::size_t prevPos;
+
+    // Reserves rough estimate of final size of string.
+    buf.reserve(s.size());
+
+    while (true) {
+
+        prevPos =    pos;
+        pos = s.find(toReplace, pos);
+
+        if (pos == string::npos)
+            break;
+
+        buf.append(s, prevPos, pos - prevPos);
+        if (buf.back() == '_')
+        {
+            buf += toReplace;
+            pos += toReplace.size();
+
+        }else
+        {
+            buf += replaceWith;
+            pos += toReplace.size();
+
+        }
+    }
+
+    buf.append(s, prevPos, s.size() - prevPos);
+    s.swap(buf);
+}
+*/
 
 bool isNotAlnum (char &c)
 {

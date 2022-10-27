@@ -38,17 +38,32 @@ void CorrelationsTest::test_linear_correlation()
     x.setValues({type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10)});
 
     y.resize(size);
-    y.setValues({type(1), type(2), type(3),type( 4),type( 5),type( 6),type( 7),type( 8),type( 9),type( 10)});
+    y.setValues({type(333), type(222), type(8),type( 4),type( 6),type( 5),type( 4),type( 3),type( 2),type( 50)});
 
     solution = type(1);
 
-    assert_true(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(linear_correlation(thread_pool_device, x, y, CorrelationMethod::Pearson).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(linear_correlation(thread_pool_device, x, y, CorrelationMethod::Spearman).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
+
+    cout << "Pearson: " << linear_correlation(thread_pool_device, x, y, CorrelationMethod::Pearson).r << endl;
+    cout << "Spearman: " << linear_correlation(thread_pool_device, x, y, CorrelationMethod::Spearman).r << endl;
+
+    /* puesto asi el mas grande es el primero, osea 0, el mas pequeño el ultimo, osea 1*/
+    const Tensor<type, 1> x1 = calculate_rank_greater(x).cast<type>();
+    const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
+
+
+    cout << "X: " << x1 << endl;
+    cout << "Y: " << y1 << endl;
+
+
+
 
     // Test
 
     y.setValues({type(10), type(9), type(8),type( 7),type( 6),type( 5),type( 4),type( 3),type( 2),type( 1)});
 
-    assert_true(linear_correlation(thread_pool_device, x, y).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(linear_correlation(thread_pool_device, x, y, CorrelationMethod::Pearson).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -60,7 +75,7 @@ void CorrelationsTest::test_linear_correlation()
     y.resize(size);
     y = type(2)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y).r;
+    correlation = linear_correlation(thread_pool_device, x, y, CorrelationMethod::Pearson).r;
 
     assert_true(abs(correlation - static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -70,7 +85,7 @@ void CorrelationsTest::test_linear_correlation()
 
     y = type(-1.0)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y).r;
+    correlation = linear_correlation(thread_pool_device, x, y, CorrelationMethod::Pearson).r;
     assert_true(abs(correlation + static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
@@ -194,7 +209,7 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     for(Index i = 0; i < size; i++) y[i] = type(4)*log(x[i]);
 
-    correlation = logarithmic_correlation(thread_pool_device, x, y);
+    correlation = logarithmic_correlation(thread_pool_device, x, y, CorrelationMethod::Pearson);
 
     solution = type(1);
 

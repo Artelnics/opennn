@@ -28,7 +28,7 @@ BatchNormalizationLayer::BatchNormalizationLayer(const Index& new_inputs_number)
 
 void BatchNormalizationLayer::set(const Index& new_inputs_number)
 {
-    normalization_weights.resize(2, new_inputs_number);
+    synaptic_weights.resize(2, new_inputs_number);
 
     set_parameters_random();
 
@@ -40,11 +40,11 @@ void BatchNormalizationLayer::set_parameters_random()
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
 
-    for(Index i = 0; i < normalization_weights.size(); i++)
+    for(Index i = 0; i < synaptic_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        normalization_weights(i) = minimum + (maximum - minimum)*random;
+        synaptic_weights(i) = minimum + (maximum - minimum)*random;
     }
 }
 
@@ -61,16 +61,19 @@ void BatchNormalizationLayer::set_default()
 
 Index BatchNormalizationLayer::get_inputs_number() const
 {
-    return normalization_weights.dimension(1);
+    return synaptic_weights.dimension(1);
 }
 
-void BatchNormalizationLayer::perform_normalization(const Tensor<type, 2>& inputs, BatchNormalizationLayerForwardPropagation* batch_norm_forward_propagation) const
+Tensor<type, 2> BatchNormalizationLayer::perform_inputs_normalization(const Tensor<type, 2>& inputs, BatchNormalizationLayerForwardPropagation* batch_norm_forward_propagation) const
 {
     const int rows_number = static_cast<int>(inputs.dimension(0));
     const int cols_number = static_cast<int>(inputs.dimension(1));
 
     Tensor<float,1>batch_size(cols_number);
+    Tensor<float,2>epsilon(rows_number, cols_number);
+
     batch_size.setConstant(rows_number);
+    epsilon.setConstant(numeric_limits<type>::epsilon());
 
     const Eigen::array<ptrdiff_t, 1> dims = {0};
     const Eigen::array<Index, 2> dims_2D = {1, cols_number};
@@ -79,12 +82,10 @@ void BatchNormalizationLayer::perform_normalization(const Tensor<type, 2>& input
     batch_norm_forward_propagation->mean = inputs.mean(dims);
     batch_norm_forward_propagation->variance = ((batch_norm_forward_propagation->mean.reshape(dims_2D).broadcast(bcast) - inputs).square()).sum(dims)/batch_size;
 
-    cout<<"batch_norm_forward_propagation->mean"<<endl;
-    cout<<batch_norm_forward_propagation->mean<<endl;
-    cout<<"batch_norm_forward_propagation->variance"<<endl;
-    cout<<batch_norm_forward_propagation->variance<<endl;
+    Tensor<type,2> outputs = (inputs - inputs.mean(dims).reshape(dims_2D).broadcast(bcast))/
+          (batch_norm_forward_propagation->variance.reshape(dims_2D).broadcast(bcast) + epsilon).sqrt();
 
-//    Tensor<type,2>inputs_normalized(rows_number,cols_number);
+    return outputs;
 }
 
 
@@ -97,24 +98,37 @@ void BatchNormalizationLayer::forward_propagate(type* inputs_data,
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
-    perform_normalization(inputs, batch_norm_layer_forward_propagation);
+    Tensor<type, 2> inputs_normalized = perform_inputs_normalization(inputs, batch_norm_layer_forward_propagation);
 
-//    calculate_combinations(inputs,
-//                           biases,
-//                           synaptic_weights,
-//                           perceptron_layer_forward_propagation->combinations.data());
-
-//    const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-//    const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
+    calculate_combinations(inputs_normalized,
+                           synaptic_weights,
+                           batch_norm_layer_forward_propagation->outputs_data);
 
 }
 
 void BatchNormalizationLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                      const Tensor<type, 2>& weights,
-                                                     Tensor<type, 2>& outputs)
+                                                     type* outputs)
 {
+    const Index batch_number = inputs.dimension(0);
+    const Index input_number = inputs.dimension(1);
 
+    float* subtensor_inputs = nullptr;
+    float* subtensor_weights = nullptr;
 
+    subtensor_inputs = (float*) malloc(static_cast<size_t>(inputs.size()*sizeof(type)));
+    subtensor_weights = (float*) malloc(static_cast<size_t>(weights.size()*sizeof(type)));
+
+    for(int i = 0; i<input_number; i++)
+    {
+        memcpy(subtensor_inputs, inputs.data() + i* batch_number , static_cast<size_t>(batch_number*sizeof(float)));
+        memcpy(subtensor_weights, weights.data() + i* 2 , static_cast<size_t>(2*sizeof(float)));
+
+        for(int j=0; j<batch_number; j++)
+        {
+            outputs[i*batch_number + j] = subtensor_inputs[j] * subtensor_weights[0] + subtensor_weights[1];
+        }
+    }
 }
 
 }

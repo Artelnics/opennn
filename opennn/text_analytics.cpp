@@ -2539,11 +2539,16 @@ void TextGenerationAlphabet::set_alphabet(const Tensor<string, 1>& new_alphabet)
 
 void TextGenerationAlphabet::print() const 
 {
-    cout << "Alphabet characters number: " << get_alphabet_length() << endl;
+    const Index alphabet_length = get_alphabet_length();
+
+    cout << "Alphabet characters number: " << alphabet_length << endl;
 
     cout << "Alphabet characters:\n" << alphabet << endl;
 
-    cout << "Data tensor:\n" << data_tensor << endl;
+    if(alphabet_length <= 10 && data_tensor.dimension(1) <= 20)
+    {
+        cout << "Data tensor:\n" << data_tensor << endl;
+    }
 }
 
 
@@ -2632,7 +2637,7 @@ Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &ph
 
     const Index alphabet_length = get_alphabet_length();
 
-    Tensor<type, 2> result(alphabet_length, phrase_length);
+    Tensor<type, 2> result(phrase_length, alphabet_length);
 
     result.setZero();
 
@@ -2640,7 +2645,7 @@ Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &ph
     {
         const Index index = get_alphabet_index(phrase[i]);
 
-        result(index, i) = 1;
+        result(i, index) = 1;
     }
 
     return result;
@@ -2672,7 +2677,7 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
 {
     const Index length = alphabet.size();
 
-    if(tensor.dimension(0) != length)
+    if(tensor.dimension(1) != length)
     {
         ostringstream buffer;
 
@@ -2685,15 +2690,42 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
 
     string result = "";
 
-    for(Index i = 0; i < tensor.dimension(1); i++)
+    for(Index i = 0; i < tensor.dimension(0); i++)
     {
-        auto index = max_element(tensor.data() + i*tensor.dimension(0), tensor.data() + (i+1)*tensor.dimension(0)) - (tensor.data() + i*tensor.dimension(0));
+        Tensor<type, 1> row = tensor.chip(i,0);
+
+        auto index = max_element(row.data(), row.data() + row.size()) - row.data();
 
         result += alphabet(index);
-
     }
 
     return result;
+}
+
+
+Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string) const
+{
+    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
+
+    Tensor<type, 2> flatten_input_data(1, input_data.size());
+
+    std::copy(input_data.data(), input_data.data() + input_data.size(), flatten_input_data.data());
+
+    return flatten_input_data;
+}
+
+
+string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_output_data) const
+{
+    const Index alphabet_length = get_alphabet_length();
+
+    const Index tensor_size = Index(flatten_output_data.size()/alphabet_length);
+
+    Tensor<type, 2> output_data(tensor_size, alphabet_length);
+
+    std::copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
+
+    return multiple_one_hot_decode(output_data);
 }
 
 
