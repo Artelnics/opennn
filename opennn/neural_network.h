@@ -204,7 +204,7 @@ public:
 
    // Output 
 
-   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
@@ -248,6 +248,7 @@ public:
    string write_expression() const;
    string write_expression_python() const;
    string write_expression_c() const;
+   string write_expression_api() const;
 
    void save_expression_c(const string&) const;
    void save_expression_python(const string&) const;

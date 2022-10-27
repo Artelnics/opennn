@@ -314,6 +314,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
+    Index parameters_size = training_back_propagation.parameters.size();
+
     type training_error = type(0);
     type training_loss = type(0);
 
@@ -343,6 +345,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        parameters_size = training_back_propagation.parameters.size();
 
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
@@ -354,6 +357,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_error = type(0);
 
         optimization_data.iteration = 1;
+
+        parameters_size = training_back_propagation.parameters.size();
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
@@ -370,8 +375,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
+            parameters_size = training_back_propagation.parameters.size();
+
             update_parameters(training_back_propagation, optimization_data);
 
+            parameters_size = training_back_propagation.parameters.size();
         }
 
         // Loss

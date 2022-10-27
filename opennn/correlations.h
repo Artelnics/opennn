@@ -30,9 +30,12 @@
 namespace opennn
 {
 
+enum class CorrelationMethod{Pearson, Spearman};
+
 /// This enumeration represents the different regression methods provided by OpenNN.
 
-enum class CorrelationMethod{Linear, Logistic, Logarithmic, Exponential, Power};
+enum class CorrelationType{Linear, Logistic, Logarithmic, Exponential, Power};
+
 
 /// This structure provides the results obtained from the regression analysis.
 
@@ -40,15 +43,15 @@ struct Correlation
 {
     explicit Correlation() {}
 
-    string write_correlation_type() const
+    string write_correlation_method() const
     {
         switch(correlation_type)
         {
-        case CorrelationMethod::Linear: return "linear";
-        case CorrelationMethod::Logistic: return "logistic";
-        case CorrelationMethod::Logarithmic: return "logarithmic";
-        case CorrelationMethod::Exponential: return "exponential";
-        case CorrelationMethod::Power: return "power";
+        case CorrelationType::Linear: return "linear";
+        case CorrelationType::Logistic: return "logistic";
+        case CorrelationType::Logarithmic: return "logarithmic";
+        case CorrelationType::Exponential: return "exponential";
+        case CorrelationType::Power: return "power";
         default:
             return string();
         }
@@ -57,7 +60,7 @@ struct Correlation
     void print() const
     {
         cout << "Correlation" << endl;
-        cout << "Type: " << write_correlation_type() << endl;
+        cout << "Type: " << write_correlation_method() << endl;
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
         cout << "r: " << r << endl;
@@ -77,14 +80,19 @@ struct Correlation
 
     /// Regression method type.
 
-    CorrelationMethod correlation_type = CorrelationMethod::Linear;
+    CorrelationMethod correlation_method = CorrelationMethod::Pearson;
+    CorrelationType correlation_type = CorrelationType::Linear;
 };
+
 
     // Correlation methods
 
-    Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Correlation linear_correlation_pearson(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const CorrelationMethod = CorrelationMethod::Pearson);
+
+    Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const CorrelationMethod = CorrelationMethod::Pearson);
 
     Correlation exponential_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
