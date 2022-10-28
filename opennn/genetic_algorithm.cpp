@@ -470,6 +470,7 @@ namespace opennn
 
 		Tensor<Index, 1> rank(genes_number);
 
+        //cambiar calculate_rank_greater(vector) por
 		rank= calculate_rank_greater(correlations);
 
 		//Cumulative probability tensor calculation
