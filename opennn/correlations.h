@@ -76,23 +76,24 @@ struct Correlation
 
     /// Correlation coefficient of the  regression.
 
-    type r =  static_cast<type>(NAN);
+    type r = static_cast<type>(NAN);
 
-    /// Regression method type.
+    type lower_confidence_interval = static_cast<type>(NAN);
+    type upper_confidence_interval = static_cast<type>(NAN);
+
+    /// Regression method type
 
     CorrelationMethod correlation_method = CorrelationMethod::Pearson;
     CorrelationType correlation_type = CorrelationType::Linear;
+
 };
 
 
-    // Correlation methods
+    // Pearson correlation methods
 
-    Correlation linear_correlation_pearson(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
-    Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const CorrelationMethod = CorrelationMethod::Pearson);
-
-    Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const CorrelationMethod = CorrelationMethod::Pearson);
+    Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Correlation exponential_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -107,6 +108,15 @@ struct Correlation
     Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     Correlation correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    // Spearman correlation methods
+
+    Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1>&);
+
+    Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    Correlation correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     // Time series correlation methods
 
