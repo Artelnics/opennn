@@ -457,12 +457,16 @@ namespace opennn
 	}
 
 	void GeneticAlgorithm::initialize_population_correlations()
-	{
+    {
+        //Needed parameters obtentions
+
 		Index individuals_number = get_individuals_number();
 
 		Index genes_number = get_genes_number();
 		
 		DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+
+        //
 
 		Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
@@ -470,8 +474,14 @@ namespace opennn
 
 		Tensor<Index, 1> rank(genes_number);
 
-        //cambiar calculate_rank_greater(vector) por
 		rank= calculate_rank_greater(correlations);
+
+        Tensor<type, 1 > fitness_correlations(genes_number);
+
+        for(Index i=0;i<genes_number;i++)
+        {
+            fitness_correlations(rank(i))=type(i);
+        }
 
 		//Cumulative probability tensor calculation
 		
@@ -482,12 +492,13 @@ namespace opennn
 
 		for (Index i = 0; i <genes_number ; i++)
 		{
-			probabilities_vector[i] = type(genes_number - rank[i]) / sum; 
+            probabilities_vector[i] = type(genes_number - fitness_correlations(i)) / sum;
 
 		}
 
 		Tensor <type, 1> cumulative_probabilities = probabilities_vector.cumsum(0);
-		cout << cumulative_probabilities;
+
+        cout<< cumulative_probabilities;
 
 		//Population Generation
 		for (Index i = 0; i < individuals_number; i++)

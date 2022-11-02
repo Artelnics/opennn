@@ -27,42 +27,6 @@ int main(int argc, char* argv[])
     {
         cout << "Hello OpenNN" << endl;
 
-        DataSet data_set("C:/Users/rodrigo ingelmo/Desktop/Nueva carpeta/opennn/blank/data/sum.csv",';',false);
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        const Index hidden_neurons_number = 1;
-
-        // Neural Network
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation,
-            { input_variables_number, hidden_neurons_number, target_variables_number });
-
-        // Training Strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-
-        training_strategy.set_display_period(1000);
-
-        training_strategy.perform_training();
-
-        GeneticAlgorithm genetic_algorithm(&training_strategy);
-
-        genetic_algorithm.set_individuals_number(10);
-
-        genetic_algorithm.set_maximum_epochs_number(1000);
-
-        InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
-
-        cout<<"MTEH"<<endl;
-        cout<<inputs_selection_results.mean_training_error_history<<endl;
-        cout<<"MSEH"<<endl;
-        cout<<inputs_selection_results.mean_selection_error_history<<endl;
-
         cout << "Bye OpenNN" << endl;
     }
     catch (const exception& e)
