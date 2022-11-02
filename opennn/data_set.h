@@ -822,11 +822,11 @@ public:
 
     // Image methods
 
-    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
+//    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
 
-    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
+//    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
 
-    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
+//    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
 
     BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
