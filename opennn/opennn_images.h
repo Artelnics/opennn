@@ -33,7 +33,7 @@ using namespace Eigen;
 namespace opennn
 {
 
-    Tensor<Tensor<type, 1>, 1> read_bmp_image(const string& filename);
+    Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename);
 
     Tensor<type, 1> resize_image(Tensor<type, 1>&);
 
