@@ -6226,15 +6226,43 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
             const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_column_data, target_column_data);
-
-            //            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
-
         }
     }
 
     return correlations;
 }
 
+
+Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations_spearman() const
+{
+    const Index input_columns_number = get_input_columns_number();
+    const Index target_columns_number = get_target_columns_number();
+
+    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+
+    Tensor<Correlation, 2> correlations(input_columns_number, target_columns_number);
+
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        const Index input_index = input_columns_indices(i);
+
+        const Tensor<type, 2> input_column_data = get_column_data(input_index, used_samples_indices);
+
+        for(Index j = 0; j < target_columns_number; j++)
+        {
+            const Index target_index = target_columns_indices(j);
+
+            const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
+
+            correlations(i,j) = opennn::correlation_spearman(thread_pool_device, input_column_data, target_column_data);
+        }
+    }
+
+    return correlations;
+}
 
 /// Returns true if the data contain missing values.
 

@@ -126,6 +126,65 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 
+Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
+                        const Tensor<type, 2>& x,
+                        const Tensor<type, 2>& y)
+{
+    Correlation correlation;
+
+
+    const Index x_rows = x.dimension(0);
+    const Index x_columns = x.dimension(1);
+    const Index y_columns = y.dimension(1);
+
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
+
+    const Eigen::array<Index, 1> vector{{x_rows}};
+
+    if(x_columns == 1 && y_columns == 1)
+    {
+        if(!x_binary && !y_binary)
+        {
+            const Correlation linear_correlation
+                    = opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
+
+            return linear_correlation;
+        }
+        else if(!x_binary && y_binary)
+        {
+            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
+        }
+        else if(x_binary && !y_binary)
+        {
+            return opennn::logistic_correlation_vector_vector_spearman(thread_pool_device, y.reshape(vector), x.reshape(vector));
+        }
+        else if(x_binary && y_binary)
+        {
+            return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
+        }
+    }
+    else if(x_columns != 1 && y_columns == 1)
+    {
+        return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+    }
+    else if(x_columns == 1 && y_columns != 1)
+    {
+        return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+    }
+    else if(x_columns != 1 && y_columns != 1)
+    {
+        return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+    }
+    else
+    {
+        throw invalid_argument("Correlations Exception: Unknown case.");
+    }
+
+    return correlation;
+}
+
+
 /// Calculates the cross-correlation between two vectors.
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with this vector.
@@ -412,7 +471,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-Correlation linear_correlation_pearson(const ThreadPoolDevice* thread_pool_device,
+Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
                                const Tensor<type, 1>& x,
                                const Tensor<type, 1>& y)
 {
@@ -531,7 +590,55 @@ Correlation linear_correlation_pearson(const ThreadPoolDevice* thread_pool_devic
         }
     }
 
+    // Confidence intervals
+
+    linear_correlation.lower_confidence_interval = static_cast<type>(NAN);
+    linear_correlation.upper_confidence_interval = static_cast<type>(NAN);
+
+    // 1 //ToDo:
+
+
+
+    // 2
+
+    // 3
+
     return linear_correlation;
+}
+
+
+Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
+{
+    const int n = x.size();
+
+    Tensor<type,1> rank_x(n);
+
+    for(int i = 0; i < n; i++)
+    {
+        int r = 1, s = 1;
+
+        // Count no of smaller elements in 0 to i-1
+
+        for(int j = 0; j < i; j++)
+        {
+            if (x[j] < x[i] ) r++;
+            if (x[j] == x[i] ) s++;
+        }
+
+        // Count no of smaller elements in i+1 to N-1
+
+        for(int j = i+1; j < n; j++)
+        {
+            if (x[j] < x[i] ) r++;
+            if (x[j] == x[i] ) s++;
+        }
+
+        // Use Fractional Rank formula fractional_rank = r + (n-1)/2
+
+        rank_x[i] = r + (s-1) * 0.5;
+    }
+
+    return rank_x;
 }
 
 
@@ -539,50 +646,13 @@ Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_devi
 {
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
-    const Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
-    const Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
+    Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
+    Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
 
-    const Tensor<type, 1> x_rank = calculate_rank_greater(x_filter).cast<type>();
-    const Tensor<type, 1> y_rank = calculate_rank_greater(y_filter).cast<type>();
+    const Tensor<type, 1> x_rank = calculate_spearman_ranks(x_filter);
+    const Tensor<type, 1> y_rank = calculate_spearman_ranks(y_filter);
 
-    return linear_correlation_pearson(thread_pool_device, x_rank, y_rank);
-}
-
-
-/// Calculate the coefficients of a goodness-of-fit (a, b) and the correlation among the variables.
-/// @param x Vector of the independent variable.
-/// @param y Vector of the dependent variable.
-
-Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
-                               const Tensor<type, 1>& x,
-                               const Tensor<type, 1>& y,
-                               const CorrelationMethod correlation_method)
-{
-#ifdef OPENNN_DEBUG
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != y.size())
-    {
-        buffer << "OpenNN Exception: Vector Template.\n"
-               << "Correlation linear_correlation(const Tensor<type, 1>&) const method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    if(correlation_method == CorrelationMethod::Pearson)
-    {
-        return linear_correlation_pearson(thread_pool_device, x, y);
-    }
-    else if(correlation_method == CorrelationMethod::Spearman)
-    {
-        return linear_correlation_spearman(thread_pool_device, x, y);
-    }
+    return linear_correlation(thread_pool_device, x_rank, y_rank);
 }
 
 
@@ -592,8 +662,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                                     const Tensor<type, 1>& x,
-                                    const Tensor<type, 1>& y,
-                                    const CorrelationMethod correlation_method)
+                                    const Tensor<type, 1>& y)
 {
 #ifdef OPENNN_DEBUG
 
@@ -630,7 +699,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
         }
     }
 
-    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y, correlation_method);
+    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y);
 
     logarithmic_correlation.correlation_type = CorrelationType::Logarithmic;
 
@@ -711,6 +780,81 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     return correlation;
 }
+
+
+
+Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* thread_pool_device,
+                                                        const Tensor<type, 1>& x,
+                                                        const Tensor<type, 1>& y)
+{
+    Correlation correlation;
+
+    pair<Tensor<type,1>, Tensor<type,1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+
+    Tensor<type,1> x_filtered = filtered_elements.first;
+    Tensor<type,1> y_filtered = filtered_elements.second;
+
+    if(x_filtered.size() == 0)
+    {
+        correlation.r = static_cast<type>(NAN);
+
+        correlation.correlation_type = CorrelationType::Logistic;
+
+        return correlation;
+    }
+
+    Tensor<type,1> x_rank = calculate_spearman_ranks(x_filtered);
+
+    const Tensor<type, 2> data = opennn::assemble_vector_vector(x_rank, y_filtered);
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    data_set.set_columns_scalers(Scaler::MinimumMaximum);
+
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {1,1});
+    neural_network.get_scaling_layer_pointer()->set_display(false);
+
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+    training_strategy.set_display(false);
+
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+    training_strategy.perform_training();
+
+    Tensor<type, 2> inputs = data_set.get_input_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    const Tensor<type, 2> targets = data_set.get_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+
+    // Logistic correlation
+
+    const Eigen::array<Index, 1> vector{{x_filtered.size()}};
+
+    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+
+    correlation.correlation_type = CorrelationType::Logistic;
+
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
+
+    correlation.a = coefficients(0);
+    correlation.b = coefficients(1);
+
+    if(correlation.b < type(0)) correlation.r *= type(-1);
+
+    return correlation;
+}
+
 
 
 Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
