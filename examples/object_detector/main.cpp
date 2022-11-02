@@ -43,75 +43,73 @@ int main()
     {
         cout << "OpenNN. Region Based Object Detector Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
-
-        // Data set
+        srand(time(NULL));
 
         DataSet data_set;
 
-        data_set.set_data_file_name("../data/neuralLabelerAnnotationFile.xml");
+        data_set.set_data_file_name("Z:/Images/DatasetRedDots-bmp/ground_truth.xml");
 
         data_set.read_ground_truth();
 
-//        data_set.scale_input_variables();
-
-//        data_set.print_data();
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        cout << "Input variables number: " << input_variables_number << endl;
-        cout << "Number of categories: " << target_variables_number << endl;
-
         data_set.set_training();
 
-        const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-
-        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
-
-        const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
-
-        Tensor<Index, 1> input_dataset_batch_dimenison(4);
+        Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
         NeuralNetwork neural_network;
-        Tensor<Index, 1> filters_dimensions(4);
-        filters_dimensions.setValues({3,3,1,3});
-
-//        NeuralNetwork neural_network(input_variables_dimensions, 0, filters_dimensions, target_variables_number);
-
-        ScalingLayer scaling_layer(input_variables_dimensions);
-        neural_network.add_layer(&scaling_layer);
-
-        cout << "Scaling layer inputs dimensions: " << scaling_layer.get_inputs_number() << endl;
-
-        Tensor<Index, 1> scaling_outputs_dimensions = scaling_layer.get_outputs_dimensions();
-
-        cout << "Scaling layer outputs dimensions: " << scaling_outputs_dimensions << endl;
-
-        FlattenLayer flatten_layer(scaling_outputs_dimensions);
+/*
+        RegionProposalLayer region_proposal_layer;
+        neural_network.add_layer(&region_proposal_layer);
+*/
+        FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
 
-        cout << "flatten input variables dimensions: " << flatten_layer.get_input_variables_dimensions() << endl;
-
-        cout << "flatten output variables dimensions: " << flatten_layer.get_outputs_dimensions() << endl;
-
-        ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
+        ProbabilisticLayer probabilistic_layer(108, 1);
         neural_network.add_layer(&probabilistic_layer);
+/*
+        NonMaxSupressionLayer non_max_supression_layer;
+        neural_network.add_layer(&non_max_supression_layer);
+*/
+        Tensor<type, 4> inputs(6,6,3,1);
+        inputs.setRandom();
 
-        cout << "Probabilistic layer inputs number: " << probabilistic_layer.get_inputs_number() << endl;
+        Tensor<Index, 1> inputs_dimensions(4);
+        inputs_dimensions(0) = 6;
+        inputs_dimensions(1) = 6;
+        inputs_dimensions(2) = 3;
+        inputs_dimensions(3) = 1;
 
-        cout << "Neural network architecture: " << neural_network.get_architecture() << endl;
+//        Tensor<type, 2> outputs(1, 108);
 
-        system("pause");
+//        Tensor<Index, 1> outputs_dimensions(2);
+//        outputs_dimensions(0) = 1;
+//        outputs_dimensions(1) = 108;
+
+//        flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+
+//        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+
+//        cout << "inputs: " << endl;
+//        cout << inputs << endl;
+//        cout << endl << endl << endl << endl << endl;
+//        cout << "outputs: " << endl;
+//        cout << outputs << endl;
+//        cout << "outputs_dimension: " << endl;
+//        cout << outputs.dimensions() << endl;
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(128);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);
         training_strategy.perform_training();
+
+//        training_strategy.get_mean_squared_error_pointer()->calculate_regularization();
 
         // Testing analysis
 /*

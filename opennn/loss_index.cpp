@@ -625,6 +625,7 @@ void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) c
                     norm.device(*thread_pool_device) += (*layers_parameters(i)(j)).abs().sum();
                 }
             }
+
             break;
         }
 
@@ -654,11 +655,9 @@ void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) c
         }
     }
 
-
     back_propagation.regularization = norm(0);
 
     back_propagation.loss = back_propagation.error + regularization_weight*back_propagation.regularization;
-
 }
 
 
@@ -702,7 +701,6 @@ void LossIndex::add_regularization_gradient(LossIndexBackPropagation& back_propa
         default: return;
     }
 }
-
 
 
 type LossIndex::calculate_regularization() const
@@ -763,6 +761,8 @@ type LossIndex::calculate_regularization() const
 
         default: return type(0);
     }
+
+    cout << "Done!!" << endl;
 
     return type(0);
 }

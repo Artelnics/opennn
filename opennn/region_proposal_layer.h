@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 #include "opennn_strings.h"
+//#include "opennn_images.h"
 
 namespace opennn
 {
@@ -35,7 +36,9 @@ public:
 
    explicit RegionProposalLayer();
 
-   // Perceptron layer outputs
+//   BoundingBox propose_random_region(const Tensor<unsigned char, 1>&, const string&);
+
+   // Region proposal layer outputs
 
    void forward_propagate(type*, const Tensor<Index, 1>&,
                           LayerForwardPropagation*);
@@ -69,14 +72,15 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         layer_pointer = new_layer_pointer;      
 
         const Index regions_number = 2000;
-        const Index region_rows = 227;
-        const Index region_columns = 227;
+        const Index region_rows = 6;
+        const Index region_columns = 6;
+        const Index channels_number = 3;
 
         outputs_dimensions.resize(4);
-        outputs_dimensions(0) = regions_number;
-        outputs_dimensions(1) = 3;
-        outputs_dimensions(2) = region_rows;
-        outputs_dimensions(3) = region_columns;
+        outputs_dimensions(0) = region_rows;
+        outputs_dimensions(1) = region_columns;
+        outputs_dimensions(2) = channels_number;
+        outputs_dimensions(3) = regions_number;
 
 //        outputs_data = (float*) malloc(outputs_dimensions.prod() * sizeof(float));
     }
