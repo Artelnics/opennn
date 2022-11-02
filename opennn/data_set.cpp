@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
+#include "opennn_images.h"
 
 using namespace  opennn;
 using namespace std;
@@ -10913,6 +10914,7 @@ void DataSet::read_csv()
     }
 }
 
+/*
 Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
 {
     Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
@@ -10939,8 +10941,9 @@ Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, 
     }
     return data_without_padding;
 }
+*/
 
-
+/*
 void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
 {
     unsigned char* aux_row = nullptr;
@@ -10959,7 +10962,7 @@ void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned ch
     }
 
 }
-
+*/
 
 Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
@@ -11286,7 +11289,7 @@ void DataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
-
+/*
 Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
                                                const Index &image_width,
                                                const Index &image_height,
@@ -11322,6 +11325,7 @@ Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
 
     return new_bounding_box;
 }
+*/
 
 DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {

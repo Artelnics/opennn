@@ -71,6 +71,7 @@
 #include "correlations.h"
 #include "response_optimization.h"
 #include "opennn_strings.h"
+#include "opennn_images.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
 #include "scaling.h"

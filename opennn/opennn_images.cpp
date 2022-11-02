@@ -2,7 +2,7 @@
 
 namespace opennn
 {
-    Tensor<Tensor<type, 1>, 1> read_bmp_image(const string& filename)
+    Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     {
         FILE* f = fopen(filename.data(), "rb");
 
@@ -39,14 +39,14 @@ namespace opennn
         Tensor<Tensor<type, 1>, 1> image_data(2); // One tensor is pixel data and the other one is [height, width, channels]
 
         Tensor<unsigned char, 1> image(size);
-
-/// todo
-///
-//        Tensor<int, 1> image_dimensions({static_cast<int>(image_height),
-//                                         static_cast<int>(image_width),
-//                                         static_cast<int>(channels_number)});
-
         image.setZero();
+
+        Tensor<type, 1> image_dimensions(3);
+        image_dimensions(0) = static_cast<type>(image_height);
+        image_dimensions(1) = static_cast<type>(image_width);
+        image_dimensions(2) = static_cast<type>(channels_number);
+
+        image_data(1) = image_dimensions;
 
         int data_offset = *(int*)(&info[0x0A]);
         fseek(f, (long int)(data_offset - 54), SEEK_CUR);
@@ -85,8 +85,14 @@ namespace opennn
 
             image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
 
-//            image_data(0) = image;
-//            image_data(1) = image_dimensions;
+            Tensor<type, 1> image_type(image.size());
+
+            for(Index i = 0; i < image_type.size(); i++)
+            {
+                image_type(i) = (type)image(i);
+            }
+
+            image_data(0) = image_type;
         }
 
         return image_data;

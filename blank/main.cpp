@@ -28,7 +28,10 @@ int main()
         srand(time(NULL));
 
         cout << "Hello OpenNN!" << endl;
-/*
+
+        Tensor<Tensor<type, 1>, 1> image_test = read_bmp_image_data("Z:/Images/DatasetRedDots-bmp/3.bmp");
+
+        /*
         DataSet data_set;
 
         data_set.set_data_file_name("Z:/Images/DatasetRedDots-bmp/ground_truth.xml");
