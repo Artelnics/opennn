@@ -52,6 +52,7 @@ void save_csv(const Tensor<type,2>&, const string&);
 
 // Rank and indices methods
 
+
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
@@ -67,8 +68,8 @@ void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
 void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
 void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 
-Tensor<string, 1> get_first(const Tensor<string,1>&, const Index& );
-Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index& );
+Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
+Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
 
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 

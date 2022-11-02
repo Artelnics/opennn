@@ -2780,12 +2780,10 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 
 /// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_c() const{
-
-<<<<<<< HEAD
+string NeuralNetwork::write_expression_c() const
+{
     //vector<string> found_tokens;
-=======
->>>>>>> 9110d5312738c6216c4ca81f02bd66f288b371e5
+
     ostringstream buffer;
 
     bool logistic     = false;
