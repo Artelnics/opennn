@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "region_proposal_layer.h"
+#include "region_proposal_layer.h"
 
 
 namespace opennn
@@ -16,10 +17,43 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-    RegionProposalLayer::RegionProposalLayer() : Layer()
+RegionProposalLayer::RegionProposalLayer() : Layer()
 {
 }
 
+/*
+BoundingBox RegionProposalLayer::propose_random_region(const Tensor<unsigned char, 1>& image, const string& filename)
+{
+    const Index channels_number = get_channels_number();
+    const Index image_height = get_image_height();
+    const Index image_width = get_image_width();
+
+    Index x_center = rand() % image_width;
+    Index y_center = rand() % image_height;
+
+    Index x_top_left;
+    Index y_top_left;
+
+    if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
+    if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
+
+    Index x_bottom_right;
+
+    if(x_top_left == 0){x_bottom_right = rand()%(image_width - (x_center + 1) + 1) + (x_center + 1);}
+    else{x_bottom_right = rand()%(image_width - x_center + 1) + x_center;}
+
+    Index y_bottom_right;
+
+    if(y_top_left == 0){y_bottom_right = rand()%(image_height - (y_center + 1) + 1) + (y_center + 1);}
+    else{y_bottom_right = rand() % (image_height - y_center + 1) + y_center;}
+
+    BoundingBox random_region(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    random_region.data = get_bounding_box(image, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    return random_region;
+}
+*/
 
 void RegionProposalLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
@@ -38,6 +72,8 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
     const Index region_columns = 227;
 
     Tensor<type, 4> inputs(images_number, channels_number, region_rows, region_columns);
+
+    // Propose random region for each image
 
     Tensor<type, 4> outputs(regions_number, channels_number, region_rows, region_columns);
 

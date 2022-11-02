@@ -11338,8 +11338,15 @@ DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 
     if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
     if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
 
-    Index x_bottom_right = rand()%(image_width - x_center + 1) + x_center;
-    Index y_bottom_right = rand() % (image_height - y_center + 1) + y_center;
+    Index x_bottom_right;
+
+    if(x_top_left == 0){x_bottom_right = rand()%(image_width - (x_center + 1) + 1) + (x_center + 1);}
+    else{x_bottom_right = rand()%(image_width - x_center + 1) + x_center;}
+
+    Index y_bottom_right;
+
+    if(y_top_left == 0){y_bottom_right = rand()%(image_height - (y_center + 1) + 1) + (y_center + 1);}
+    else{y_bottom_right = rand() % (image_height - y_center + 1) + y_center;}
 
     BoundingBox random_region(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
@@ -11351,17 +11358,12 @@ DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 
 
 void DataSet::read_ground_truth()
 {
-    /* initialize random seed: */
-
     srand(time(NULL));
 
     const Index classes_number = get_label_classes_number_from_XML(data_file_name);
     const Index annotations_number = get_bounding_boxes_number_from_XML(data_file_name); // This function also save channels, width and height
 
-    const Index image_width = get_image_width();
-    const Index image_height = get_image_height();
-
-    const Index regions_number = 2; // Number of region proposals per image
+    const Index regions_number = 1000; // Number of region proposals per image
     const Index region_width = 6; // Final region width to warp
     const Index region_height = 6; // Final region height to warp
 
@@ -11373,6 +11375,7 @@ void DataSet::read_ground_truth()
     const Index pixels_number = channels_number * region_width * region_height;
 
     set(samples_number, variables_number);
+
     data.setZero();
 
     rows_labels.resize(samples_number);
@@ -11491,7 +11494,6 @@ void DataSet::read_ground_truth()
 
         for(Index j = 0; j < annotations_number; j++)
         {
-
             // Annotation
 
             const tinyxml2::XMLElement* annotation_element = start_annotations_element->NextSiblingElement("Annotation");
@@ -11554,13 +11556,12 @@ void DataSet::read_ground_truth()
 
                 type intersection_over_union = calculate_intersection_over_union(gTruth_bounding_box, random_bounding_box(region_index));
 
-                cout << "intersection_over_union: " << intersection_over_union << endl;
+//                cout << "intersection_over_union: " << intersection_over_union << endl;
 
                 if(intersection_over_union >= 0.3) // If IoU > 0.3 -> object class
                 {
                     for(Index p = 1; p < labels_tokens.size() + 1; p++)
                     {
-
                         if(labels_tokens(p - 1) == gTruth_class)
                         {
                             if(classes_number == 1)
@@ -11584,7 +11585,6 @@ void DataSet::read_ground_truth()
                     {
                         data(row_index, pixels_number) = 1;
                     }
-
                 }
 
                 BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_width, region_height);
@@ -11600,6 +11600,8 @@ void DataSet::read_ground_truth()
             }
         }
     }
+
+//    cout << data << endl;
 
     // Input columns
 
@@ -11641,27 +11643,25 @@ void DataSet::read_ground_truth()
         columns(pixels_number).type = ColumnType::Binary;
         columns(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(classes_number + 1); // classes_number + Background
+        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
         columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
     }
     else
     {
-        Tensor<string, 1> categories(classes_number + 1);
+        Tensor<string, 1> categories(target_variables_number);
 
         columns(pixels_number).column_use = VariableUse::Target;
         columns(pixels_number).type = ColumnType::Categorical;
         columns(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(classes_number + 1); // classes_number + Background
+        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
         columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
     }
-
-    samples_uses.resize(images_number);
 
     split_samples_random();
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels_number, region_width, region_height});
+    input_variables_dimensions.setValues({region_height, region_width, channels_number});
 }
 
 
@@ -11903,7 +11903,7 @@ Index DataSet::get_label_classes_number_from_XML(const string& file_name)
                << "LabelsNumber element is nullptr.\n";
 
         throw invalid_argument(buffer.str());
-    }    
+    }
 
     if(labels_number_element->GetText())
     {
@@ -13320,7 +13320,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         fill_submatrix(data, samples, inputs, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
-    {
+    {        
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
@@ -13416,7 +13416,6 @@ void DataSetBatch::print() const
         cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
     else if(inputs_dimensions.size() == 4)
         cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
-
     cout << "Targets dimensions:" << endl;
     cout << targets_dimensions << endl;
 

@@ -230,9 +230,11 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    TrainingResults results(maximum_epochs_number+1);
+    TrainingResults results(maximum_epochs_number + 1);
 
     check();
+
+    display = true;
 
     // Start training
 
@@ -251,7 +253,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();    
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
@@ -272,7 +274,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     selection_samples_number < batch_samples_number && selection_samples_number != 0
             ? batch_size_selection = selection_samples_number
-            : batch_size_selection = batch_samples_number;
+            : batch_size_selection = batch_samples_number;   
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -302,7 +304,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
-    }
+    }    
 
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
@@ -372,14 +374,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
             results.training_error_history(epoch) = training_back_propagation.error;
 
+            parameters_size = training_back_propagation.parameters.size();
+
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
-            parameters_size = training_back_propagation.parameters.size();
-
             update_parameters(training_back_propagation, optimization_data);
-
-            parameters_size = training_back_propagation.parameters.size();
         }
 
         // Loss
@@ -497,6 +497,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         data_set_pointer->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
+
+    cout << "End training" << endl;
 
     return results;
 }

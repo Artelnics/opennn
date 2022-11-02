@@ -1082,23 +1082,35 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
+
+cout << "Perceptron layer calculate_error_gradient" << endl;
+
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
+cout << "1" << endl;
     const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
+cout << "2" << endl;
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
+cout << "3" << endl;
     const TensorMap<Tensor<type, 2>> inputs(inputs_data, batch_samples_number, get_inputs_number());
 
+cout << "4" << endl;
     const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
+cout << "5" << endl;
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
             (deltas * perceptron_layer_forward_propagation->activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
+cout << "6" << endl;
     perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
             inputs.contract(deltas * perceptron_layer_forward_propagation->activations_derivatives, AT_B);
+
+cout << "Perceptron layer calculate_error_gradient done *******************" << endl;
+
 }
 
 
