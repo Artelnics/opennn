@@ -35,6 +35,7 @@ int main()
    "convulational_layer | cl\n"
    "descriptives | dsc\n"
    "data_set | ds\n"
+   "flatten_layer | fl\n"
    "genetic_algorithm | ga\n"
    "gradient_descent | gd\n"
    "growing_inputs | gi\n"
@@ -161,6 +162,7 @@ int main()
          tests_failed_count += long_short_memory_layer_test.get_tests_failed_count();
 
       }
+
       else if(test == "recurrent_layer" || test == "rl")
       {
          RecurrentLayerTest recurrent_layer_test;
@@ -169,6 +171,7 @@ int main()
          tests_passed_count += recurrent_layer_test.get_tests_passed_count();
          tests_failed_count += recurrent_layer_test.get_tests_failed_count();
       }
+
       else if(test == "scaling_layer" || test == "sl")
       {
          ScalingLayerTest scaling_layer_test;
@@ -177,6 +180,7 @@ int main()
          tests_passed_count += scaling_layer_test.get_tests_passed_count();
          tests_failed_count += scaling_layer_test.get_tests_failed_count();
       }
+
       else if(test == "unscaling_layer" || test == "ul")
       {
          UnscalingLayerTest unscaling_layer_test;
@@ -185,6 +189,7 @@ int main()
          tests_passed_count += unscaling_layer_test.get_tests_passed_count();
          tests_failed_count += unscaling_layer_test.get_tests_failed_count();
       }
+
       else if(test == "bounding_layer" || test == "bl")
       {
          BoundingLayerTest bounding_layer_test;
@@ -193,6 +198,7 @@ int main()
          tests_passed_count += bounding_layer_test.get_tests_passed_count();
          tests_failed_count += bounding_layer_test.get_tests_failed_count();
       }
+
       else if(test == "probabilistic_layer" || test == "pbl")
       {
          ProbabilisticLayerTest probabilistic_layer_test;
@@ -204,15 +210,25 @@ int main()
 
       else if(test == "convolutional_layer" || test == "cl")
       {
-         ConvolutionalLayerTest layer_test;
+         ConvolutionalLayerTest layer_test;         
          layer_test.run_test_case();
          tests_count += layer_test.get_tests_count();
          tests_passed_count += layer_test.get_tests_passed_count();
          tests_failed_count += layer_test.get_tests_failed_count();
       }
+
       else if(test == "pooling_layer" || test == "pll")
       {
-         PoolingLayerTest layer_test;
+         PoolingLayerTest layer_test;         
+         layer_test.run_test_case();
+         tests_count += layer_test.get_tests_count();
+         tests_passed_count += layer_test.get_tests_passed_count();
+         tests_failed_count += layer_test.get_tests_failed_count();
+      }
+
+      else if(test == "flatten_layer" || test == "fl")
+      {
+         FlattenLayerTest layer_test;
          layer_test.run_test_case();
          tests_count += layer_test.get_tests_count();
          tests_passed_count += layer_test.get_tests_passed_count();
@@ -552,9 +568,17 @@ int main()
           tests_passed_count += pooling_layer_test.get_tests_passed_count();
           tests_failed_count += pooling_layer_test.get_tests_failed_count();
 
+          // Flatten layer
+
+          FlattenLayerTest flatten_layer_test;
+          flatten_layer_test.run_test_case();
+          tests_count += flatten_layer_test.get_tests_count();
+          tests_passed_count += flatten_layer_test.get_tests_passed_count();
+          tests_failed_count += flatten_layer_test.get_tests_failed_count();
+
           // neural network
 
-          NeuralNetworkTest neural_network_test;
+          NeuralNetworkTest neural_network_test;         
           neural_network_test.run_test_case();
           tests_count += neural_network_test.get_tests_count();
           tests_passed_count += neural_network_test.get_tests_passed_count();

@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef REGIONPROPOSALLAYER_H
-#define REGIONPROPOSALLAYER_H
+#ifndef NONMAXSUPRESSIONLAYER_H
+#define NONMAXSUPRESSIONLAYER_H
 
 // System includes
 

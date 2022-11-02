@@ -473,8 +473,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Type::Scaling
-                && layers_pointers[i]->get_type() != Layer::Type::Unscaling
-                && layers_pointers[i]->get_type() != Layer::Type::Bounding)
+            && layers_pointers[i]->get_type() != Layer::Type::Unscaling
+            && layers_pointers[i]->get_type() != Layer::Type::Bounding)
         {
             trainable_layers_pointers[index] = layers_pointers[i];
             index++;
@@ -1233,7 +1233,8 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
 Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> NeuralNetwork::get_layers_parameters()
 {
-    const Index trainable_layers_number = get_trainable_layers_number();
+    Index trainable_layers_number = get_trainable_layers_number();
+
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters(trainable_layers_number);
@@ -1241,7 +1242,6 @@ Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> NeuralNetwork::get_layers_
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         layers_parameters(i) = trainable_layers_pointers(i)->get_layer_parameters();
-
     }
 
     return layers_parameters;
@@ -1374,7 +1374,6 @@ Index NeuralNetwork::get_trainable_layers_number() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
                 && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Type::Flatten
                 && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             count++;
@@ -1603,6 +1602,7 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
                                                         forward_propagation.layers(i-1)->outputs_dimensions,
                                                         forward_propagation.layers(i));
     }
+
 }
 
 
@@ -1714,7 +1714,41 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
     }
     else if(inputs_dimensions_number == 4)
     {
-        /// @todo
+        Tensor<type, 2> outputs;
+        Tensor<type, 2> last_layer_outputs;
+
+        Tensor<Index, 1> outputs_dimensions;
+        Tensor<Index, 1> last_layer_outputs_dimensions;
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0)
+        {
+            const Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
+            outputs = TensorMap<Tensor<type,2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+            return outputs;
+        }
+
+        outputs.resize(inputs_dimensions(3), layers_pointers(0)->get_neurons_number());
+        outputs_dimensions = get_dimensions(outputs);
+
+        layers_pointers(0)->calculate_outputs(inputs_data, inputs_dimensions, outputs.data(), outputs_dimensions);
+
+        last_layer_outputs = outputs;
+        last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
+
+        for(Index i = 1; i < layers_number; i++)
+        {
+            outputs.resize(inputs_dimensions(3), layers_pointers(i)->get_neurons_number());
+            outputs_dimensions = get_dimensions(outputs);
+
+            layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, outputs.data(), outputs_dimensions);
+
+            last_layer_outputs = outputs;
+            last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
+        }
+
+        return outputs;
     }
     else
     {

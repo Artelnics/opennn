@@ -55,6 +55,7 @@ SOURCES += \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
     response_optimization_test.cpp \
+    flatten_layer_test.cpp \
     main.cpp
 
 HEADERS += \
@@ -98,6 +99,7 @@ HEADERS += \
     scaling_test.h \
     convolutional_layer_test.h \
     pooling_layer_test.h \
+    flatten_layer_test.h \
     response_optimization_test.h
 
 
