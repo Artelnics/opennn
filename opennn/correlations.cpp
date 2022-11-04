@@ -958,7 +958,6 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
-
     pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
 
     Tensor<type,2> x_filtered = filtered_matrixes.first;
@@ -968,14 +967,10 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     {
         Tensor<bool, 0> are_equal = ( x_filtered == y_filtered).all();
 
-        cout << "are equal" << endl;
-
         cout << are_equal << endl;
 
         if(are_equal(0))
         {
-            cout << "double are equal" << endl;
-
             correlation.r = static_cast<type>(1);
 
             correlation.correlation_type = CorrelationType::Logistic;
