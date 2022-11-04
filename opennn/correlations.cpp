@@ -868,8 +868,16 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     Tensor<type,1> x_filtered = filtered_elements.first;
     Tensor<type,2> y_filtered = filtered_elements.second;
 
-//    cout << "x filtered: " << endl << x_filtered << endl;
-//    cout << "y filtered: " << endl << y_filtered << endl;
+    if( y_filtered.dimension(1) > 50)
+    {
+        cout << "Warning: Y variable has too many categories." << endl;
+
+        correlation.r = static_cast<type>(NAN);
+
+        correlation.correlation_type = CorrelationType::Logistic;
+
+        return correlation;
+    }
 
     if(x_filtered.size() == 0)
     {
@@ -911,8 +919,6 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.set_display(false);
 
-//    training_strategy.set_maximum_epochs_number(10000);
-
     training_strategy.set_display_period(1000);
 
     training_strategy.perform_training();
@@ -928,19 +934,11 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
-//    cout << "inputs:" << endl << inputs << endl;
-//    cout << "outputs:" << endl << outputs << endl;
-//    cout << "targets:" << endl << targets << endl;
-
     const Eigen::array<Index, 1> vector{{targets.size()}};
-
-//    cout << "warning!" << endl;
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     correlation.correlation_type = CorrelationType::Logistic;
-
-//    getchar();
 
     return correlation;
 }
@@ -960,14 +958,24 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
+
     pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
 
-    if(x.dimensions()  == y.dimensions())
+    Tensor<type,2> x_filtered = filtered_matrixes.first;
+    Tensor<type,2> y_filtered = filtered_matrixes.second;
+
+    if(x.dimension(0)  == y.dimension(0) && x.dimension(1)  == y.dimension(1))
     {
-        Tensor<bool, 0> are_equal = ( x == y).all();
+        Tensor<bool, 0> are_equal = ( x_filtered == y_filtered).all();
+
+        cout << "are equal" << endl;
+
+        cout << are_equal << endl;
 
         if(are_equal(0))
         {
+            cout << "double are equal" << endl;
+
             correlation.r = static_cast<type>(1);
 
             correlation.correlation_type = CorrelationType::Logistic;
@@ -976,8 +984,17 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
         }
     }
 
-    Tensor<type,2> x_filtered = filtered_matrixes.first;
-    Tensor<type,2> y_filtered = filtered_matrixes.second;
+    if(x.dimension(1) > 50 || y.dimension(1) > 50)
+    {
+        cout << "Warning: One variable has too many categories." << endl;
+
+        correlation.r = static_cast<type>(NAN);
+
+        correlation.correlation_type = CorrelationType::Logistic;
+
+        return correlation;
+    }
+
 
     if(x_filtered.size() == 0 && y_filtered.size() == 0)
     {
