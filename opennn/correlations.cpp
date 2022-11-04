@@ -967,8 +967,6 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     {
         Tensor<bool, 0> are_equal = ( x_filtered == y_filtered).all();
 
-        cout << are_equal << endl;
-
         if(are_equal(0))
         {
             correlation.r = static_cast<type>(1);
