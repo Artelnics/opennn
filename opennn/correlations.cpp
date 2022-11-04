@@ -962,6 +962,20 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
 
+    if(x.dimensions()  == y.dimensions())
+    {
+        Tensor<bool, 0> are_equal = ( x == y).all();
+
+        if(are_equal(0))
+        {
+            correlation.r = static_cast<type>(1);
+
+            correlation.correlation_type = CorrelationType::Logistic;
+
+            return correlation;
+        }
+    }
+
     Tensor<type,2> x_filtered = filtered_matrixes.first;
     Tensor<type,2> y_filtered = filtered_matrixes.second;
 
@@ -1005,9 +1019,11 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+    training_strategy.set_maximum_epochs_number(500);
 
     training_strategy.set_display(false);
 
