@@ -637,11 +637,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
         loss_index_pointer->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
         loss_index_pointer->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
         loss_index_pointer->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        const type new_loss = back_propagation_lm.error
-                + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        type new_loss;
+
+        try{
+            new_loss = back_propagation_lm.error
+                    + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        }catch(invalid_argument)
+        {
+            new_loss = back_propagation_lm.loss;
+        }
 
         if(new_loss < back_propagation_lm.loss) // succesfull step
         {
