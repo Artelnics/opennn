@@ -27,6 +27,60 @@ int main(int argc, char* argv[])
     {
         cout << "Hello OpenNN" << endl;
 
+
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/opennn_genetic/opennn/datasets/5_years_mortality.csv",';',true);
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index hidden_neurons_number = 10;
+        data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
+
+        data_set.impute_missing_values_mean();
+
+        // Neural network
+
+        //data_set.print_data_preview();
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+
+        cout<<neural_network.is_empty()<<endl;
+        // Training strategy
+
+       TrainingStrategy training_strategy(&neural_network, &data_set);
+
+       for(Index i=0;i<data_set.get_input_columns_number();i++)
+       {
+           if( data_set.get_column_type(i)==DataSet::ColumnType::Categorical){
+
+               cout<<"Variable number"<< i+1<<"is Categorical"<<endl;
+           }else if (data_set.get_column_type(i)==DataSet::ColumnType::Binary)
+           {
+               cout<<"Variable number"<< i+1<<"is Binary"<<endl;
+           }else
+           {
+               cout<<"Variable number"<< i+1<<"is Numeric"<<endl;
+           }
+
+       }
+       //data_set.has_categorical_columns();
+
+        //cout<< data_set.calculate_columns_descriptives_training_samples()<<endl;
+
+        //training_strategy.perform_training();
+
+       GeneticAlgorithm genetic_algorithm(&training_strategy);
+
+       genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+
+       genetic_algorithm.initialize_population_correlations();
+
+       genetic_algorithm.print_population();
+
+       // Testing analysis
+
+       //TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+
         cout << "Bye OpenNN" << endl;
     }
     catch (const exception& e)

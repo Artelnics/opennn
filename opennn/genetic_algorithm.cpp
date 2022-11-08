@@ -402,33 +402,45 @@ namespace opennn
 			initialize_population_correlations();
 		}
 		
-		//check_categorical_columns();
+        //check_categorical_columns();
 
 	}
 
+
+    ///Generation of a random population
 	void GeneticAlgorithm::initialize_population_random()
 	{
-		const Index individuals_number = get_individuals_number();
+        ///Parameters obtention
+        const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
+
+        ///This variable controls if the generated individual is repeated
 		bool is_repeated;
 		Tensor<bool, 1> individual(genes_number);
 
+        /// Main loop
 		for (Index i = 0; i < individuals_number; i++)
-		{
+        {
+           ///First, we set the individual as having no gene activated.
 			individual.setConstant(false);
 			
 			do 
 			{
 				is_repeated = false;
+
+                ///For each gene we generate a random number between 0 and 1.
 				for (Index j = 0; j < genes_number; j++)
 				{
 					rand() % 2 == 0 ? individual(j) = false : individual(j) = true;
 					
 				}
+                ///Prevent no inputs by activating a random gene
 				if (is_false(individual)) 
 				{
 					individual(static_cast<Index>(rand()) % genes_number) = true;
 				}
+
+                ///Repetition check
 				for (Index j = 0; j < i; j++)
 						{
 							Tensor<bool, 1> row = population.chip(j, 0);
@@ -442,133 +454,187 @@ namespace opennn
 			
 			} while (is_repeated);
 
-			//Add individual to population
+            ///Add individual to population
 			
 			
 			for (Index j = 0; j < genes_number; j++)
 			{
 				population(i, j) = individual(j);
-			}
+            }///End of individual adittion to population
 
 			
-			}
+            }///End of population generation
 
-		check_categorical_columns();
+
 	}
 
 	void GeneticAlgorithm::initialize_population_correlations()
     {
         //Needed parameters obtentions
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
 		Index individuals_number = get_individuals_number();
 
-		Index genes_number = get_genes_number();
+        const Index genes_number = get_genes_number();///= number of inputs including dummy variables
 		
 		DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
 
-        //
+        const Index columns_number=data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
+
+        cout<<"Correlation matrix is being calculated..."<<endl;
 
 		Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
+
+        cout<<"Correlation matrix calculated"<<endl;
+
 
 		Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
 		Tensor<Index, 1> rank(genes_number);
 
+
+
 		rank= calculate_rank_greater(correlations);
 
-        Tensor<type, 1 > fitness_correlations(genes_number);
 
-        for(Index i=0;i<genes_number;i++)
+        Tensor<type, 1 > fitness_correlations(rank.size());
+
+
+
+         for(Index i=0;i<columns_number;i++)
         {
-            fitness_correlations(rank(i))=type(i);
-        }
+            fitness_correlations(rank(i))=type(i+1);
+        }///End of calculation of the new fitness correlations vector
 
-		//Cumulative probability tensor calculation
-		
-		type sum = (type(genes_number)*type(genes_number+1))/2;
 
-		Tensor <type,1> probabilities_vector(genes_number);
+        ///Cumulative probability tensor calculation
+
+        type sum = (type(columns_number)*type(columns_number+1))/2;
+
+        ///This vector stores in probabilities_vector(i)="Probability of input number i being choose"
+        ///
+
+        Tensor <type,1> probabilities_vector(columns_number);
 	
 
-		for (Index i = 0; i <genes_number ; i++)
+        for (Index i = 0; i <columns_number ; i++)
 		{
-            probabilities_vector[i] = type(genes_number - fitness_correlations(i)) / sum;
+            probabilities_vector[i] = type(fitness_correlations.size() - fitness_correlations(i)-1) / sum;
 
 		}
 
+        ///This tensor means cumulative_probabilities(i)="sum of the first i elements of probabilities_vector"
 		Tensor <type, 1> cumulative_probabilities = probabilities_vector.cumsum(0);
 
-        cout<< cumulative_probabilities;
+        cout<< genes_number<<endl;
+        cout<< columns_number<<endl;
 
-		//Population Generation
-		for (Index i = 0; i < individuals_number; i++)
-		{
+        Tensor<Index, 1> columns_variables_indices(columns_number);
 
-			//Generation of an empty individual 
-			Tensor<bool, 1> individual(genes_number);
+        Index index_count=0;
+        for(Index i=0;i<columns_number;i++)
+        {
+             if(data_set_pointer->get_column_type(i)==DataSet::ColumnType::Categorical)
+             {
+                columns_variables_indices(i)=index_count;
 
-			Index active_genes=0;
+                index_count+=data_set_pointer->get_columns()(i).get_categories_number();
+             }else
+             {
+                columns_variables_indices(i)=index_count;
+                index_count++;
+             }
+         }
 
-			Index genes_count=0;
 
-			individual.setConstant(false);
 
-			bool is_repeated=false;
+        Tensor <bool, 1> individual(genes_number);
+        Index activated_columns;
+        Index columns_count;
+        type pointer;
 
-			//Individual Generation
+        ///Population Generation
+        for(Index i=0; i<individuals_number;i++)
+        {
+            individual.setConstant(false);
+            bool is_repeated=false;
+            do
+            {
+                activated_columns=rand()%columns_number;
+                columns_count=0;
+                do
+                {
+                    ///Random pointer generation
+                    pointer=type(rand())/type(RAND_MAX);
+                    if(pointer<cumulative_probabilities(0)&&!individual(0))
+                    {
+                        ///Categorical comprobation
+                        if(data_set_pointer->get_column_type(0)==DataSet::ColumnType::Categorical)
+                        {
+                            for(Index j=0;j<data_set_pointer->get_columns()(0).get_categories_number();j++)
+                            {
+                                individual(j)=true;
+                            }
+                            columns_count++;
+                        }else
+                        {
+                            individual(0)=true;
+                           columns_count++;
+                        }
+                    }else
+                    {
+                        for(Index j=0;j<columns_number;j++)
+                        {
+                            if(pointer>cumulative_probabilities(j) && pointer<=cumulative_probabilities(j+1)&& !individual(columns_variables_indices(j)))
+                            {
+                                if(data_set_pointer->get_column_type(j)==DataSet::ColumnType::Categorical)
+                                {
+                                    for(Index k=0;k<data_set_pointer->get_columns()(j).get_categories_number();k++)
+                                    {
+                                        individual(columns_variables_indices(j)+k)=true;
+                                        columns_count++;
+                                    }
+                                }else
+                                {
+                                    individual(j)=true;
+                                    columns_count++;
+                                }
+                            }
+                        }
+                    }
 
-			do {
-				
-				active_genes = rand()%genes_number;
-				if (active_genes==genes_number-1) individual.setConstant(true); 
 
-				else 
-				{
-					do {
-						//Pointer generation between 0 and 1 
-						type pointer = type(rand()) / type(RAND_MAX);
-						if (pointer < cumulative_probabilities(0) && !individual[0])
-						{ 
-							individual(0) = true;
-							genes_count++;
-						}
-						for (Index j = 0; j <genes_number-1 ; j++)
-						{
-							if (pointer > cumulative_probabilities(j) && pointer < cumulative_probabilities(j + 1)) 
-							{ 
-								if (individual(j)) 
-								{
-									continue;
-								}
-								else 
-								{
-									individual(j) = true;
-									genes_count++;
-									break;
-								}
-							
-							}
 
-						}
-					} while (genes_count < active_genes);
+                }while(columns_count<activated_columns);
 
-				}
-				
 
-				//Check for repetitions
 
-				for (Index j = 0; j < i; j++)
-				{
-					Tensor<bool, 1> row = population.chip(j, 0);
+            ///Check for repetitions
+            for (Index j = 0; j < i; j++)
+                {
+                    Tensor<bool, 1> row = population.chip(j, 0);
 
-					if (are_equal(individual, row))
-					{
-						is_repeated = true;
-						break;
-					}
-				}
-			} while (is_repeated);
-		}
+                    if (are_equal(individual, row))
+                    {
+                            is_repeated = true;
+                            break;
+                    }
+                }
+
+            }while(is_repeated);
+
+
+            ///Individual addition to population
+            for(Index j=0;j<genes_number;j++)
+            {
+                population(i,j)=individual(j);
+            }
+
+        }
+
+
+
 
 	}
 
@@ -640,7 +706,7 @@ namespace opennn
 
 			Index column_index = 0;
 
-			/*for (Index j = 0; j < genes_number; j++)
+            for (Index j = 0; j < genes_number; j++)
 			{
 				if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
 				{
@@ -663,7 +729,7 @@ namespace opennn
 				}
 
 				column_index++;
-			}*/
+            }
 
 
 
@@ -1129,8 +1195,6 @@ namespace opennn
 
 		time(&beginning_time);
 
-		
-
 		for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
 		{
 			if (display) cout << "Generation: " << epoch + 1 << endl;
@@ -1140,11 +1204,14 @@ namespace opennn
 
 			optimal_individual_index = minimal_index(selection_errors);
 
-			//optimal_individuals_history(epoch) = population(optimal_individual_index);
+            optimal_individuals_history(epoch) = population(optimal_individual_index);
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
+
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+
 			inputs_selection_results.mean_selection_error_history(epoch) = mean_generational_selection_error;
+
 			inputs_selection_results.mean_training_error_history(epoch)= mean_generational_training_error;
 
 			if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
@@ -1322,8 +1389,6 @@ namespace opennn
 		}
 
 	};
-
-
 
 
 	Tensor<bool, 1> GeneticAlgorithm::transform_individual_to_indexes(Tensor<bool, 1>& individual)
@@ -1722,14 +1787,20 @@ namespace opennn
 
 	void GeneticAlgorithm::save(const string& file_name) const
 	{
-		FILE* file = fopen(file_name.c_str(), "w");
+        try {
+            FILE* file = fopen(file_name.c_str(), "w");
 
-		if (file)
-		{
-			tinyxml2::XMLPrinter printer(file);
-			write_XML(printer);
-			fclose(file);
-		}
+            if (file)
+            {
+                tinyxml2::XMLPrinter printer(file);
+                write_XML(printer);
+                fclose(file);
+            }
+
+        } catch (exception e) {
+            cout<< e.what();
+        }
+
 	}
 
 
@@ -1756,12 +1827,6 @@ namespace opennn
 		from_XML(document);
 	}
 
-	void GeneticAlgorithm::export_mean_selection_error_to_csv(const string& file)
-	{
-
-		ofstream File(file);
-
-	}
 
 
 
