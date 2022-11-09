@@ -902,6 +902,86 @@ void DataSet::transform_time_series_data()
 }
 
 
+/// This method duplicates the columns for association problems.
+
+void DataSet::transform_associative_columns()
+{
+    cout << "Transforming associative columns..." << endl;
+
+    associative_columns = columns;
+
+    const Index columns_number = get_columns_number();
+
+    Tensor<Column, 1> new_columns;
+
+    new_columns.resize(2*columns_number);
+
+    Index column_index = 0;
+
+    for(Index i = 0; i < 2*columns_number; i++)
+    {
+        column_index = i%columns_number;
+
+        if(i < columns_number)
+        {
+            new_columns(i).name = columns(column_index).name;
+
+            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(i).set_use(DataSet::VariableUse::Input);
+            new_columns(i).type = columns(column_index).type;
+            new_columns(i).categories = columns(column_index).categories;
+        }
+        else
+        {
+            new_columns(i).name = columns(column_index).name + "_output";
+
+            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(i).set_use(DataSet::VariableUse::Target);
+            new_columns(i).type = columns(column_index).type;
+            new_columns(i).categories = columns(column_index).categories;
+        }
+    }
+
+    columns = new_columns;
+}
+
+
+void DataSet::transform_associative_data()
+{
+    cout << "Transforming associative data..." << endl;
+
+    const Index samples_number = data.dimension(0);
+
+    const Index old_variables_number = data.dimension(1);
+    const Index new_variables_number = 2 * old_variables_number;
+
+    associative_data = data;
+
+    data.resize(samples_number, new_variables_number);
+
+    // Duplicate data
+
+    if(samples_number < 1000)
+    {
+        Eigen::array<int, 2> bcast({1, 2});
+        data = associative_data.broadcast(bcast);
+    }
+    else
+    {
+        for(Index i = 0; i < old_variables_number; i++)
+        {
+            std::copy(associative_data.data() + i * samples_number,
+                      associative_data.data() + (i+1) *  samples_number,
+                      data.data() + i * samples_number);
+
+            std::copy(associative_data.data() + i * samples_number,
+                      associative_data.data() + (i+1) *  samples_number,
+                      data.data() + samples_number * old_variables_number + i * samples_number);
+        }
+    }
+}
+
+
 /// Returns true if a given sample is to be used for training, selection or testing,
 /// and false if it is to be unused.
 /// @param index Sample index.
@@ -3933,14 +4013,14 @@ const string DataSet::get_codification_string() const
 {
     switch(codification)
     {
-        case Codification::UTF8:
-            return "UTF-8";
+    case Codification::UTF8:
+        return "UTF-8";
 
-        case Codification::SHIFT_JIS:
-            return "SHIFT_JIS";
+    case Codification::SHIFT_JIS:
+        return "SHIFT_JIS";
 
-        default:
-            return "UTF-8";
+    default:
+        return "UTF-8";
     }
 }
 
@@ -4738,8 +4818,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-    //    ThreadPool* thread_pool = nullptr;
-    //    ThreadPoolDevice* thread_pool_device = nullptr;
+    ThreadPool* thread_pool = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
 
@@ -8803,6 +8883,19 @@ void DataSet::transform_time_series()
 }
 
 
+/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
+
+void DataSet::transform_associative_dataset()
+{
+    transform_associative_data();
+
+    transform_associative_columns();
+
+    unuse_constant_columns();
+}
+
+
+
 /// This method loads the data from a binary data file.
 
 void DataSet::load_data_binary()
@@ -9263,18 +9356,18 @@ string DataSet::decode(const string& input_string) const
 {
     switch(codification)
     {
-        case DataSet::Codification::UTF8:
-        {
-            return input_string;
-        }
+    case DataSet::Codification::UTF8:
+    {
+        return input_string;
+    }
 
-        case DataSet::Codification::SHIFT_JIS:
-        {
-            return sj2utf8(input_string);
-        }
+    case DataSet::Codification::SHIFT_JIS:
+    {
+        return sj2utf8(input_string);
+    }
 
-        default:
-            return input_string;
+    default:
+        return input_string;
     }
 }
 
@@ -10822,6 +10915,7 @@ void DataSet::read_csv()
     }
 }
 
+
 Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
 {
     Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
@@ -11998,8 +12092,6 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
-        //        if(project_type != DataSet::ProjectType::TextClassification) check_special_characters(line);
-
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 
         lines_count++;
@@ -12075,10 +12167,10 @@ void DataSet::read_csv_1()
                 || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
                 || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
                 || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
-                {
-                    columns(column_index).type = ColumnType::DateTime;
-                    column_index++;
-                }
+        {
+            columns(column_index).type = ColumnType::DateTime;
+            column_index++;
+        }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
                 || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
                 || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
