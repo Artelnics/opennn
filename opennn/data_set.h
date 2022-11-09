@@ -677,9 +677,9 @@ public:
     // Time series methods
 
     void transform_time_series();
-
     void transform_time_series_columns();
     void transform_time_series_data();
+
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
@@ -687,6 +687,12 @@ public:
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
+
+    // Autoassiciative methods
+
+    void transform_associative_dataset();
+    void transform_associative_columns();
+    void transform_associative_data();
 
     // Image classification methods
 
@@ -752,6 +758,7 @@ public:
     // Data load methods
 
     void read_csv();
+
 
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
@@ -913,8 +920,10 @@ private:
     /// The number of columns is the number of variables before time series transformation.
 
     Tensor<type, 2> time_series_data;
+    Tensor<type, 2> associative_data;
 
     Tensor<Column, 1> time_series_columns;
+    Tensor<Column, 1> associative_columns;
 
     Index gmt = 0;
 
