@@ -28,14 +28,18 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/opennn_genetic/opennn/datasets/5_years_mortality.csv",';',true);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',true);
+
+
+        //cout<<data_set.get_columns()(1)<<endl;
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
-        const Index hidden_neurons_number = 10;
+        const Index hidden_neurons_number = 1;
         data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
 
         data_set.impute_missing_values_mean();
+
 
         // Neural network
 
@@ -48,39 +52,40 @@ int main(int argc, char* argv[])
 
        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-       for(Index i=0;i<data_set.get_input_columns_number();i++)
-       {
-           if( data_set.get_column_type(i)==DataSet::ColumnType::Categorical){
-
-               cout<<"Variable number"<< i+1<<"is Categorical"<<endl;
-           }else if (data_set.get_column_type(i)==DataSet::ColumnType::Binary)
-           {
-               cout<<"Variable number"<< i+1<<"is Binary"<<endl;
-           }else
-           {
-               cout<<"Variable number"<< i+1<<"is Numeric"<<endl;
-           }
-
-       }
-       //data_set.has_categorical_columns();
-
-        //cout<< data_set.calculate_columns_descriptives_training_samples()<<endl;
-
-        //training_strategy.perform_training();
+       training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
        GeneticAlgorithm genetic_algorithm(&training_strategy);
 
        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
 
-       genetic_algorithm.initialize_population_correlations();
+       genetic_algorithm.set_individuals_number(4);
 
-       genetic_algorithm.print_population();
+       genetic_algorithm.set_maximum_epochs_number(1);
+
+
+       genetic_algorithm.initialize_population();
+       /*Tensor<bool,1> individual=genetic_algorithm.get_population().chip(0,0);
+       genetic_algorithm.transform_individual_to_columns(individual);*/
+
+        genetic_algorithm.evaluate_population();
+        genetic_algorithm.perform_fitness_assignment();
+        //cout<<genetic_algorithm.get_fitness().cumsum(0)<<endl;
+
+       //cout<<genetic_algorithm.get_population().dimension(1);
+
+       //InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+
 
        // Testing analysis
 
-       //TestingAnalysis testing_analysis(&neural_network, &data_set);
+       TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+       TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
+
+       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
 
 
+        //ofstream mean_selection_error_csv("C:/");
         cout << "Bye OpenNN" << endl;
     }
     catch (const exception& e)

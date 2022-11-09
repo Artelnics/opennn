@@ -130,6 +130,7 @@ namespace opennn
 		// Training operators
 
 		elitism_size = 2;
+
 	}
 
 
@@ -482,7 +483,7 @@ namespace opennn
 
         const Index columns_number=data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
 
-        cout<<"Correlation matrix is being calculated..."<<endl;
+        cout<<"Calculating correlations matrix"<<endl;
 
 		Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
@@ -527,9 +528,6 @@ namespace opennn
         ///This tensor means cumulative_probabilities(i)="sum of the first i elements of probabilities_vector"
 		Tensor <type, 1> cumulative_probabilities = probabilities_vector.cumsum(0);
 
-        cout<< genes_number<<endl;
-        cout<< columns_number<<endl;
-
         Tensor<Index, 1> columns_variables_indices(columns_number);
 
         Index index_count=0;
@@ -561,7 +559,7 @@ namespace opennn
             bool is_repeated=false;
             do
             {
-                activated_columns=rand()%columns_number;
+                activated_columns=1+rand()%columns_number;
                 columns_count=0;
                 do
                 {
@@ -672,8 +670,8 @@ namespace opennn
 
 		DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-		original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-		original_target_columns_indices = data_set_pointer->get_target_columns_indices();
+        original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+        original_target_columns_indices = data_set_pointer->get_target_columns_indices();
 
 		Tensor<string, 1> inputs_names;
 
@@ -689,103 +687,74 @@ namespace opennn
 
 		const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
+        Tensor<bool,1> individual_columns;
+        Tensor<Index,1> individual_columns_indexes;
 
 		
 		for (Index i = 0; i < individuals_number; i++)
 		{
-			individual = population.chip(i, 0);
+
+            individual = population.chip(i, 0);
 
 			if (display) cout << "Individual " << i + 1 << endl;
 
-			const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
-
-			Tensor<Index, 1> input_columns_indices(input_columns_number(0));
+            individual_columns_indexes=transform_individual_to_columns_indexes(individual);
 
 
-			Index index = 0;
+            data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
 
-			Index column_index = 0;
+            data_set_pointer->set_input_target_columns(individual_columns_indexes, original_target_columns_indices);
 
-            for (Index j = 0; j < genes_number; j++)
-			{
-				if (data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
-				{
-					const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+            inputs_names = data_set_pointer->get_input_variables_names();
 
-					if (!(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)))
-					{
-						input_columns_indices(index) = original_input_columns_indices(column_index);
-						index++;
-					}
-					j += categories_number - 1;
-				}
-				else
-				{
-					if (individual(j))
-					{
-						input_columns_indices(index) = original_input_columns_indices(column_index);
-						index++;
-					}
-				}
+            neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-				column_index++;
+            neural_network_pointer->set_inputs_names(inputs_names);
+
+            neural_network_pointer->set_parameters_random();
+
+            training_results = training_strategy_pointer->perform_training();
+
+            parameters(i) = neural_network_pointer->get_parameters();
+
+            training_errors(i) = type(training_results.get_training_error());
+
+            selection_errors(i) = type(training_results.get_selection_error());
+
+            if (display)
+            {
+                cout << "Inputs: " << endl;
+
+                const Tensor<string, 1> inputs_names = data_set_pointer->get_input_columns_names();
+
+                for (Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
+
+                cout << "Training error: " << training_results.get_training_error() << endl;
+                cout << "Selection error: " << training_results.get_selection_error() << endl;
+
             }
 
 
+        }
 
-			//data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
+        //Mean generational selection and training error calculation (primitive way)
 
-			inputs_names = data_set_pointer->get_input_variables_names();
+        type sum1 = 0;
 
-			neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+        type sum2 = 0;
 
-			neural_network_pointer->set_inputs_names(inputs_names);
+        for (Index i = 0; i < individuals_number; i++)
+        {
+            sum1 += training_errors(i);
+            sum2 += selection_errors(i);
 
-			neural_network_pointer->set_parameters_random();
-
-			training_results = training_strategy_pointer->perform_training();
-
-			// Set stuff
-
-			parameters(i) = neural_network_pointer->get_parameters();
-
-			training_errors(i) = type(training_results.get_training_error());
-			selection_errors(i) = type(training_results.get_selection_error());
+        }
+        mean_generational_training_error = (type(sum1) / type(training_errors.size()));
+        mean_generational_selection_error = (type(sum2) / type(selection_errors.size()));
+}
 
 
 
-			if (display)
-			{
-				cout << "Inputs: " << endl;
-
-				const Tensor<string, 1> inputs_names = data_set_pointer->get_input_columns_names();
-
-				for (Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
-
-				cout << "Training error: " << training_results.get_training_error() << endl;
-				cout << "Selection error: " << training_results.get_selection_error() << endl;
-
-			}
-
-
-		}
-
-		//Mean generational selection and training error calculation (primitive way)
-
-		type sum1 = 0;
-
-		type sum2 = 0;
-
-		for (Index i = 0; i < individuals_number; i++)
-		{
-			sum1 += training_errors(i);
-			sum2 += selection_errors(i);
-
-		}
-		mean_generational_training_error = (type(sum1) / type(training_errors.size()));
-		mean_generational_selection_error = (type(sum2) / type(selection_errors.size()));
-
-	}
 
 
 	/// Calculate the fitness with the errors depending on the fitness assignment method.
@@ -793,13 +762,18 @@ namespace opennn
 	void GeneticAlgorithm::perform_fitness_assignment()
 	{
 		const Index individuals_number = get_individuals_number();
+        cout<<"Selection errors"<<endl;
+        cout<<selection_errors<<endl;
 
-		const Tensor<Index, 1> rank = calculate_rank_greater(selection_errors);
+        const Tensor<Index, 1> rank = calculate_rank_less(selection_errors);
+
+        cout<<rank<<endl<<endl;
 
 		for (Index i = 0; i < individuals_number; i++)
 		{
 			fitness(rank(i)) = type(i + 1);
 		}
+        cout<<fitness<<endl;
 
 	}
 
@@ -834,56 +808,72 @@ namespace opennn
 
 #endif
 
-		selection.setConstant(false);
+        /*selection.resize(get_individuals_number());
 
-		const Index individuals_number = get_individuals_number();
+        selection.setConstant(false);
 
-		const Index selected_individuals_number = static_cast<Index>((individuals_number) / 2 - elitism_size);
+        const Index individuals_number=get_individuals_number();
 
-		const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
+        const Index selected_individuals_number = static_cast<Index>((individuals_number) / 2 - elitism_size);
 
-		Tensor<Index, 1> fitness_rank = calculate_rank_greater(fitness);
+        Tensor<Index,1> cumulative_fitness=fitness.cumsum(0);
 
-		Index selection_count = 0;
+        Index sum=0;
+        for(Index i=0;i<cumulative_fitness.size();i++)
+        {
+            sum+=cumulative_fitness(i);
+        }
 
-		// Elitism
+        Tensor<type,1> probabilities();
 
-		if (elitism_size != 0)
-		{
-			for (Index i = 0; i < individuals_number; i++)
-			{
-				if (fitness(i) - 1 >= (individuals_number - elitism_size) && fitness(i) - 1 <= individuals_number)
-				{
-					selection(i) = true;
-				}
-			}
-		}
 
-		// Roulette wheel selection
 
-		while (selection_count < selected_individuals_number)
-		{
-			const type pointer = ((type)rand() / RAND_MAX) * cumulative_fitness(individuals_number - 1);
+        /*
 
-			if (pointer < cumulative_fitness(0) && !selection(0))
-			{
-				selection(0) = true;
-				selection_count++;
-				continue;
-			}
+        const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
-			for (Index i = 0; i < individuals_number - 1; i++)
-			{
-				if (cumulative_fitness(i) < pointer
-					&& pointer < cumulative_fitness(i + 1)
-					&& !selection(i + 1))
-				{
-					selection(i + 1) = true;
-					selection_count++;
-					break;
-				}
-			}
-		}
+        Tensor<Index, 1> fitness_rank = calculate_rank_greater(fitness);
+
+        Index selection_count = 0;
+
+        // Elitism
+
+        if (elitism_size != 0)
+        {
+            for (Index i = 0; i < individuals_number; i++)
+            {
+                if (fitness(i) - 1 >= (individuals_number - elitism_size) && fitness(i) - 1 <= individuals_number)
+                {
+                    selection(i) = true;
+                }
+            }
+        }
+
+        // Roulette wheel selection
+
+        while (selection_count < selected_individuals_number)
+        {
+            const type pointer = ((type)rand() / RAND_MAX) * cumulative_fitness(individuals_number - 1);
+
+            if (pointer < cumulative_fitness(0) && !selection(0))
+            {
+                selection(0) = true;
+                selection_count++;
+                continue;
+            }
+
+            for (Index i = 0; i < individuals_number - 1; i++)
+            {
+                if (cumulative_fitness(i) < pointer
+                    && pointer < cumulative_fitness(i + 1)
+                    && !selection(i + 1))
+                {
+                    selection(i + 1) = true;
+                    selection_count++;
+                    break;
+                }
+            }
+        }*/
 
 
 #ifdef OPENNN_DEBUG
@@ -1156,12 +1146,12 @@ namespace opennn
 
 		if (display) cout << "Performing genetic inputs selection..." << endl << endl;
 
-		if (population.dimension(1) == 0)
+        if (population.dimension(0) == 0)
 		{
-			set_individuals_number();
+            initialize_population();
 		}
 
-		initialize_population();
+
 
 		// Selection algorithm
 
@@ -1193,38 +1183,68 @@ namespace opennn
 		time_t current_time;
 		type elapsed_time = type(0);
 
+        original_input_columns_indices=data_set_pointer->get_input_variables_indices();
+        original_target_columns_indices=data_set_pointer->get_target_variables_indices();
+        Tensor<Index,1> optimal_inputs_columns_indexes;
 		time(&beginning_time);
+        inputs_selection_results.optimum_selection_error=numeric_limits<type>::max();
 
 		for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
 		{
 			if (display) cout << "Generation: " << epoch + 1 << endl;
-			inputs_selection_results.resize_history(inputs_selection_results.mean_training_error_history.size()+1);
+            inputs_selection_results.resize_history(inputs_selection_results.mean_training_error_history.size()+1);
 
 			evaluate_population();
 
+
+
+            ///Optimal individual in population
 			optimal_individual_index = minimal_index(selection_errors);
 
-            optimal_individuals_history(epoch) = population(optimal_individual_index);
+
+
+            ///Store optimal individual in the history
+
+            /*for(Index i=0;i<population.dimension(1);i++)
+            {
+            optimal_individuals_history(epoch,i)=population(optimal_individual_index,i);
+            }
+            system("pause");*/
+
+
+            ///store optimal training and selection error in the history
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
 
+
+
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+
+
+
+            ///store mean errors histories
 
 			inputs_selection_results.mean_selection_error_history(epoch) = mean_generational_selection_error;
 
+
 			inputs_selection_results.mean_training_error_history(epoch)= mean_generational_training_error;
 
-			if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
+
+            if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
 			{
-				data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
+
+                data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
 
 				// Neural network
 
 				inputs_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
 
-				inputs_selection_results.optimal_inputs = transform_individual_to_indexes(inputs_selection_results.optimal_inputs);
+                inputs_selection_results.optimal_inputs = transform_individual_to_indexes(inputs_selection_results.optimal_inputs);
 
-				data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
+                optimal_inputs_columns_indexes=transform_individual_to_columns_indexes(inputs_selection_results.optimal_inputs);
+
+
+                data_set_pointer->set_input_target_columns(optimal_inputs_columns_indexes,original_target_columns_indices);
 
 				inputs_selection_results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
 
@@ -1236,11 +1256,14 @@ namespace opennn
 
 				inputs_selection_results.optimum_selection_error = selection_errors(optimal_individual_index);
 
-			}
+            }else{
+                data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
+            }
 
-			// Needed for new input indexes setting
+            // Needed for new input indexes setting (is like a reset)
 
-			data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
+
+            data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
 
 			time(&current_time);
 
@@ -1250,10 +1273,12 @@ namespace opennn
 			{
 				cout << endl;
 
-				cout << "Generation mean training error: " << training_errors.mean() << endl;
+
 
 				cout << "Epoch number: " << epoch << endl;
+                cout << "Generation mean training error: " << training_errors.mean() << endl;
 				cout << "Generation mean selection error: " << inputs_selection_results.mean_selection_error_history(epoch) << endl;
+
 
 				cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
 				cout << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl;
@@ -1310,13 +1335,13 @@ namespace opennn
 
 			perform_mutation();
 
-			check_categorical_columns();
+            //check_categorical_columns();
 
 		}
 
 		// Set data set stuff
 
-		data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
+        data_set_pointer->set_input_target_columns(optimal_inputs_columns_indexes,original_target_columns_indices);
 
 		const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
@@ -1333,9 +1358,10 @@ namespace opennn
 
 		neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
-		if (display) inputs_selection_results.print();
+        if (display) inputs_selection_results.print();
 
-		return inputs_selection_results;
+
+        return inputs_selection_results;
 	}
 
 
@@ -1389,6 +1415,65 @@ namespace opennn
 		}
 
 	};
+
+    Tensor<bool,1 > GeneticAlgorithm::transform_individual_to_columns(Tensor<bool,1>& individual)
+    {
+        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+        const Index columns_number=original_input_columns_indices.size();
+        Tensor<bool,1> columns_indexes(columns_number);
+        columns_indexes.setConstant(false);
+        Index genes_count=0;
+        Index categories_number;
+        for(Index i=0;i<columns_number;i++)
+        {
+            if(data_set_pointer->get_column_type(i)==DataSet::ColumnType::Categorical)
+            {
+                categories_number=data_set_pointer->get_columns()(i).get_categories_number();
+                for(Index j=0;j<categories_number;j++)
+                {
+                    if(individual(genes_count+j))
+                    {
+                        columns_indexes(i)=true;
+                    }
+                }
+                genes_count+=categories_number-1;
+
+            }else
+            {
+                columns_indexes(i)=individual(genes_count);
+
+                genes_count++;
+            }
+        }
+
+        return columns_indexes;
+
+    }
+    Tensor<Index,1> GeneticAlgorithm::transform_individual_to_columns_indexes(Tensor<bool,1>& individual)
+    {
+        Tensor<bool, 1> individual_columns=transform_individual_to_columns(individual);
+        Index active_columns=0;
+        for(Index i=0; i<individual_columns.size();i++)
+        {
+            if(individual_columns(i)==true)
+            {
+                active_columns++;
+            }
+        }
+        Tensor<Index,1> individual_columns_indexes(active_columns);
+        Index active_column_index=0;
+
+        for(Index i=0; i<individual_columns.size();i++)
+        {
+            if(individual_columns(i)==true)
+            {
+                individual_columns_indexes(active_column_index)=i;
+                active_column_index++;
+            }
+        }
+
+        return individual_columns_indexes;
+    }
 
 
 	Tensor<bool, 1> GeneticAlgorithm::transform_individual_to_indexes(Tensor<bool, 1>& individual)

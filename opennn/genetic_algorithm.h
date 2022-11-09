@@ -124,6 +124,10 @@ public:
 
     Tensor<bool, 1> transform_individual_to_indexes(Tensor<bool,1> &);
 
+    Tensor<bool, 1> transform_individual_to_columns(Tensor<bool,1> &);
+
+    Tensor<Index, 1> transform_individual_to_columns_indexes(Tensor<bool,1> &);
+
     // Inputs selection methods
 
     InputsSelectionResults perform_inputs_selection()  final;
@@ -164,7 +168,10 @@ private:
     type mean_generational_training_error;
     type mean_generational_selection_error;
     
-    Tensor <type, 2> optimal_individuals_history;
+    Tensor <bool, 2> optimal_individuals_history;
+
+    Tensor<Index, 1> original_input_columns_indices;
+    Tensor<Index, 1> original_target_columns_indices;
 
 
     
