@@ -783,6 +783,8 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 void DataSet::transform_time_series_columns()
 {
+    cout << "Transforming time series columns..." << endl;
+
     // Categorical columns?
 
     time_series_columns = columns;
@@ -794,7 +796,6 @@ void DataSet::transform_time_series_columns()
     if(has_time_columns())
     {
         // @todo check if there are more than one time column
-
         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
     }
     else
@@ -867,6 +868,8 @@ void DataSet::transform_time_series_columns()
 
 void DataSet::transform_time_series_data()
 {
+    cout << "Transforming time series data..." << endl;
+
     // Categorical / Time columns?
 
     const Index old_samples_number = data.dimension(0);
@@ -4434,7 +4437,7 @@ Index DataSet::get_column_index(const string& column_name) const
     ostringstream buffer;
 
     buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_column_index(const string&&) const method.\n"
+           << "Index get_column_index(const string&) const method.\n"
            << "Cannot find " << column_name << "\n";
 
     throw invalid_argument(buffer.str());
@@ -8890,6 +8893,8 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 
 void DataSet::transform_time_series()
 {
+    cout << "Transforming time series..." << endl;
+
     if(lags_number == 0 || steps_ahead == 0) return;
 
     transform_time_series_data();
@@ -12188,6 +12193,7 @@ void DataSet::read_csv_1()
                 || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(column_index).type = ColumnType::DateTime;
+            time_column = columns(column_index).name;
             column_index++;
         }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
@@ -12205,10 +12211,10 @@ void DataSet::read_csv_1()
         }
     }
 
-    if(time_column != "")
-    {
-        set_column_type(time_column, DataSet::ColumnType::DateTime);
-    }
+//    if(time_column != "")
+//    {
+//        set_column_type(time_column, DataSet::ColumnType::DateTime);
+//    }
 
 }
 
