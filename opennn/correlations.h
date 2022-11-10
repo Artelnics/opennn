@@ -64,22 +64,24 @@ struct Correlation
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
         cout << "r: " << r << endl;
+        cout << "Lower confidence: " << lower_confidence << endl;
+        cout << "Upper confidence: " << upper_confidence << endl;
     }
 
-    /// Independent coefficient of the logistic function.
+    /// Independent coefficient of the regression function.
 
     type a = static_cast<type>(NAN);
 
-    /// x coefficient of the logistic function.
+    /// x coefficient of the regression function.
 
     type b = static_cast<type>(NAN);
 
-    /// Correlation coefficient of the  regression.
+    /// Correlation coefficient of the regression.
 
     type r = static_cast<type>(NAN);
 
-    type lower_confidence_interval = static_cast<type>(NAN);
-    type upper_confidence_interval = static_cast<type>(NAN);
+    type lower_confidence = static_cast<type>(NAN);
+    type upper_confidence = static_cast<type>(NAN);
 
     /// Regression method type
 
@@ -117,6 +119,14 @@ struct Correlation
     Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Correlation correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    // Confidence interval
+
+    type r_correlation_to_z_correlation(const type&);
+    type z_correlation_to_r_correlation(const type&);
+
+    Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+
 
     // Time series correlation methods
 
