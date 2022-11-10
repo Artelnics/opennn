@@ -103,6 +103,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
             // Found a token, add it to the vector
 
             tokens[index] = str.substr(lastPos, pos - lastPos);
+            trim(tokens[index]);
         }
 
         old_pos = pos;
@@ -232,6 +233,8 @@ Tensor<string, 1> get_tokens(const string& s, const string& sep)
 
         tokens(i) = str.substr(last_pos, pos - last_pos);
 
+        trim(tokens(i));
+
         pos += sep.length();
         last_pos = pos;
         i++;
@@ -240,6 +243,7 @@ Tensor<string, 1> get_tokens(const string& s, const string& sep)
     if(last_pos != s.length()) // Reading last element
     {
         tokens(i) = str.substr(last_pos, s.length() - last_pos);
+        trim(tokens(i));
     }
 
     return tokens;
@@ -942,6 +946,7 @@ void trim(string& str)
     str.erase(str.find_last_not_of('\r') + 1);
     str.erase(str.find_last_not_of('\f') + 1);
     str.erase(str.find_last_not_of('\v') + 1);
+    str.erase(str.find_last_not_of('\b') + 1);
 
 }
 
@@ -963,11 +968,21 @@ string get_trimmed(const string& str)
     //prefixing spaces
 
     output.erase(0, output.find_first_not_of(' '));
+    output.erase(0, output.find_first_not_of('\t'));
+    output.erase(0, output.find_first_not_of('\n'));
+    output.erase(0, output.find_first_not_of('\r'));
+    output.erase(0, output.find_first_not_of('\f'));
+    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
     output.erase(output.find_last_not_of(' ') + 1);
-
+    output.erase(output.find_last_not_of('\t') + 1);
+    output.erase(output.find_last_not_of('\n') + 1);
+    output.erase(output.find_last_not_of('\r') + 1);
+    output.erase(output.find_last_not_of('\f') + 1);
+    output.erase(output.find_last_not_of('\v') + 1);
+    output.erase(output.find_last_not_of('\b') + 1);
     return output;
 }
 
