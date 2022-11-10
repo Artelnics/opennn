@@ -929,11 +929,20 @@ void trim(string& str)
 
     str.erase(0, str.find_first_not_of(' '));
     str.erase(0, str.find_first_not_of('\t'));
+    str.erase(0, str.find_first_not_of('\n'));
+    str.erase(0, str.find_first_not_of('\r'));
+    str.erase(0, str.find_first_not_of('\f'));
+    str.erase(0, str.find_first_not_of('\v'));
 
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
     str.erase(str.find_last_not_of('\t') + 1);
+    str.erase(str.find_last_not_of('\n') + 1);
+    str.erase(str.find_last_not_of('\r') + 1);
+    str.erase(str.find_last_not_of('\f') + 1);
+    str.erase(str.find_last_not_of('\v') + 1);
+
 }
 
 

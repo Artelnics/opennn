@@ -841,7 +841,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 }
 
 
-
 Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* thread_pool_device,
                                                         const Tensor<type, 1>& x,
                                                         const Tensor<type, 1>& y)
@@ -1032,6 +1031,8 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 2>& y)
 {
     Correlation correlation;
+
+    // Scrub missing values
 
     pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
 
