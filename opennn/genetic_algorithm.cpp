@@ -761,19 +761,15 @@ namespace opennn
 
 	void GeneticAlgorithm::perform_fitness_assignment()
 	{
-		const Index individuals_number = get_individuals_number();
-        cout<<"Selection errors"<<endl;
-        cout<<selection_errors<<endl;
+        const Index individuals_number = get_individuals_number();
 
         const Tensor<Index, 1> rank = calculate_rank_less(selection_errors);
-
-        cout<<rank<<endl<<endl;
 
 		for (Index i = 0; i < individuals_number; i++)
 		{
 			fitness(rank(i)) = type(i + 1);
 		}
-        cout<<fitness<<endl;
+
 
 	}
 
@@ -808,46 +804,79 @@ namespace opennn
 
 #endif
 
-        /*selection.resize(get_individuals_number());
+        selection.resize(get_individuals_number());
 
         selection.setConstant(false);
 
         const Index individuals_number=get_individuals_number();
 
-        const Index selected_individuals_number = static_cast<Index>((individuals_number) / 2 - elitism_size);
+        const Index selected_individuals_number = static_cast<Index>(individuals_number/2)-elitism_size;
 
-        Tensor<Index,1> cumulative_fitness=fitness.cumsum(0);
-
+        /*cout<<static_cast<Index>(individuals_number/2)<<endl;
+        cout<<elitism_size<<endl;
+        cout<<selected_individuals_number<<endl;*/
+        //Calculation of cumulative probabilities
         Index sum=0;
-        for(Index i=0;i<cumulative_fitness.size();i++)
+        for(Index i=0;i<individuals_number;i++)
         {
-            sum+=cumulative_fitness(i);
+            sum+=(i+1);
         }
 
-        Tensor<type,1> probabilities();
+        Tensor<type,1> probabilities(individuals_number);
 
+        for(Index i=0;i<individuals_number;i++)
+        {
+            probabilities(i)=(type(individuals_number)-type(fitness(i)-1))/sum;
+        }
 
-
-        /*
-
-        const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
-
-        Tensor<Index, 1> fitness_rank = calculate_rank_greater(fitness);
-
-        Index selection_count = 0;
-
-        // Elitism
-
+        Tensor<type,1> cumulative_probabilities=probabilities.cumsum(0);
+        ///Roulette Wheel
+        ///Elitism
         if (elitism_size != 0)
         {
             for (Index i = 0; i < individuals_number; i++)
             {
-                if (fitness(i) - 1 >= (individuals_number - elitism_size) && fitness(i) - 1 <= individuals_number)
+                if (fitness(i) - 1 >=0 && fitness(i) - 1 <= elitism_size)
                 {
                     selection(i) = true;
                 }
             }
         }
+
+        srand(static_cast<unsigned>(time(nullptr)));
+
+        Index selected_individuals_count=0;
+
+        type pointer;
+
+        do
+        {
+
+            pointer=type(rand())/type(RAND_MAX);
+            if(pointer<cumulative_probabilities(0)&& !selection(0))
+            {
+                selection(0)=true;
+                selected_individuals_count++;
+            }
+            for(Index i=0;i<individuals_number-1;i++)
+            {
+                if(pointer>=cumulative_probabilities(i) && pointer<cumulative_probabilities(i+1) && !selection(i) )
+                {
+                    selection(i)=true;
+                    selected_individuals_count++;
+                    break;
+                }
+            }
+            cout<<selected_individuals_count<<endl;
+        }while(selected_individuals_count<selected_individuals_number-1);
+        /*cout<<"Fitness"<<endl;
+        cout<<fitness<<endl;
+        cout<<"Selected individuals"<<endl;
+        cout<<selection<<endl;
+
+
+
+
 
         // Roulette wheel selection
 
@@ -1341,7 +1370,9 @@ namespace opennn
 
 		// Set data set stuff
 
-        data_set_pointer->set_input_target_columns(optimal_inputs_columns_indexes,original_target_columns_indices);
+
+        Tensor<Index,1>optimal_columns=transform_individual_to_columns_indexes(inputs_selection_results.optimal_inputs);
+        data_set_pointer->set_input_target_columns(optimal_columns,original_target_columns_indices);
 
 		const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
@@ -1359,6 +1390,7 @@ namespace opennn
 		neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
         if (display) inputs_selection_results.print();
+
 
 
         return inputs_selection_results;
