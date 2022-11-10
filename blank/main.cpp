@@ -21,17 +21,22 @@
 #include "../opennn/opennn.h"
 using namespace opennn;
 
-#include <iostream>
-#include <vector>
-#include <cmath>
 using namespace std;
 
-int main()
+int main(int argc, char *argv[])
 {
-    cout << "Hello, world!" << endl;
+    try
+    {
+        cout << "Hello OpenNN!" << endl;
 
+        cout << "Bye OpenNN!" << endl;
+    }
+    catch(const exception& e)
+    {
+        cerr << e.what() << endl;
 
-    return 0;
+        return 1;
+    }
 }
 
 // OpenNN: Open Neural Networks Library.
