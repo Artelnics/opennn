@@ -615,7 +615,7 @@ public:
 
     // Inputs correlations
 
-    Tensor<Correlation, 2> calculate_input_columns_correlations() const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(/*CorrelationMethod::Both*/) const;
 
     void print_inputs_correlations() const;
 
