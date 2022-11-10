@@ -6470,13 +6470,18 @@ void DataSet::print_top_input_target_columns_correlations() const
 /// Calculate the correlation between each input in the data set.
 /// Returns a matrix with the correlation values between variables in the data set.
 
-Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
+
+Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations() const
 {
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
     const Index input_columns_number = get_input_columns_number();
 
     Tensor<Correlation, 2> correlations(input_columns_number, input_columns_number);
+    Tensor<Correlation, 2> correlations_spearman(input_columns_number, input_columns_number);
+
+    // list to return
+    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -6493,10 +6498,15 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+            correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
 
             if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
             {
                 correlations(i,j).r = type(1);
+            }
+            if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+            {
+                correlations_spearman(i,j).r = type(1);
             }
         }
     }
@@ -6508,8 +6518,17 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             correlations(i,j) = correlations(j,i);
         }
     }
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        for(Index j = 0; j < i; j++)
+        {
+            correlations_spearman(i,j) = correlations_spearman(j,i);
+        }
+    }
 
-    return correlations;
+    correlations_list(0) = correlations;
+    correlations_list(1) = correlations_spearman;
+    return correlations_list;
 }
 
 
@@ -6517,7 +6536,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations());
+    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations()(0));
 
     cout << inputs_correlations << endl;
 }
@@ -6548,7 +6567,7 @@ void DataSet::print_top_inputs_correlations() const
 
     const Tensor<string, 1> variables_name = get_input_variables_names();
 
-    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations());
+    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations()(0));
 
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
