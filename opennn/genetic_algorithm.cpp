@@ -924,6 +924,24 @@ namespace opennn
 
 	}
 
+    ///Transform selection vector to indices
+
+    Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_to_indexes()
+    {
+        Tensor<Index,1> selection_indexes(count(selection.data(), selection.data() + selection.size(), 1));
+        Index activated_index_count=0;
+        for(Index i=0;i<selection.size();i++)
+        {
+            if(selection(i))
+            {
+                selection_indexes(activated_index_count)=i;
+                activated_index_count++;
+            }
+        }
+        return selection_indexes;
+
+    }
+
 	/// Perform the crossover depending on the crossover method.
 
 	void GeneticAlgorithm::perform_crossover()
@@ -958,38 +976,43 @@ namespace opennn
         Tensor<bool, 2> new_population(individuals_number, genes_number);
 
         Tensor<Index, 2> couples(couples_number, 2);
-        cout<<couples.dimensions();
+        Tensor<Index,1> selected_indexes=get_selected_individuals_to_indexes();
+        //cout<<couples.dimensions();
+        couples.setConstant(0);
        // bool couple_is_repeated;
 
-        for(Index i = 0; i < individuals_number; i++)
+        Index parent_1_index=0;
+        Index parent_2_index=0;
+
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+        Tensor<Index, 1> parent_1_indices =selected_indexes;
+
+        //Vector permutation
+        std::shuffle(parent_1_indices.data(),parent_1_indices.data()+parent_1_indices.size(), g);
+
+        Tensor<Index, 1> parent_2_indices =selected_indexes;
+
+        //Vector permutation
+        std::shuffle(parent_2_indices.data(),parent_2_indices.data()+parent_2_indices.size(), g);
+
+        cout<<endl<<parent_1_indices<<endl;
+        cout<<endl<<parent_2_indices<<endl;
+
+        for(Index i=0; i<couples_number;i++)
         {
-
-                if(selection(i))
-                {
-                // Parent 1
-
-                couples(i, 0) = i;
-
-                couples(i, 1) = rand()% individuals_number;
-
-
-                //Parent 2 selection
-              /* do{
-
-
-
-                }while(!selection(parent_2_index) || i==parent_2_index);*/
-
-
-                //Couple repetition check
-                /*for(Index j=0;j<i;j++)
-                {
-                    if(couples(i,1)==couples(j,0)&& couples()==couples());
-
-                } */
-                }
-
+            couples(i,0)=parent_1_indices(i);
+            couples(i,1)=parent_2_indices(i);
         }
+        cout<< couples<<endl;
+
+
+
+
+
+
+
 
 
 
