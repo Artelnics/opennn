@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
         DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',false);
 
 
-        //cout<<data_set.get_columns()(1)<<endl;
+
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
