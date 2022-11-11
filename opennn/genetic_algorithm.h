@@ -126,6 +126,8 @@ public:
 
     Tensor<bool, 1> transform_individual_to_columns(Tensor<bool,1> &);
 
+    Tensor<bool,1> transform_individual_columns_to_variables(Tensor<bool,1> &);
+
     Tensor<Index, 1> transform_individual_to_columns_indexes(Tensor<bool,1> &);
 
     // Inputs selection methods

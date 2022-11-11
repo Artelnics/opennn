@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',false);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',true);
 
 
 
@@ -67,6 +67,10 @@ int main(int argc, char* argv[])
 
 
        genetic_algorithm.initialize_population();
+       genetic_algorithm.evaluate_population();
+       genetic_algorithm.perform_fitness_assignment();
+       genetic_algorithm.perform_selection();
+
        /*Tensor<bool,1> individual=genetic_algorithm.get_population().chip(0,0);
        genetic_algorithm.transform_individual_to_columns(individual);*/
 
@@ -76,7 +80,7 @@ int main(int argc, char* argv[])
 
        //cout<<genetic_algorithm.get_population().dimension(1);
 
-       InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+       /*InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
 
        cout<<inputs_selection_results.mean_selection_error_history<<endl;
        // Testing analysis
