@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
         data_set.impute_missing_values_mean();
 
-        //Borrar luego
+
         // Neural network
 
         //data_set.print_data_preview();
