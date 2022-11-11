@@ -930,10 +930,13 @@ namespace opennn
 
 	void GeneticAlgorithm::perform_crossover()
 	{
-		const Index individuals_number = get_individuals_number();
+        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+        const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
+        const Index columns_number=data_set_pointer->get_columns_number();
 
 		const Index selected_individuals_number = std::count(selection.data(), selection.data() + selection.size(), 1);
+        ///por aqui me he quedado cambiando
 
 #ifdef OPENNN_DEBUG
 
@@ -958,6 +961,8 @@ namespace opennn
 
 		Tensor<bool, 1> parent_1(genes_number);
 		Tensor<bool, 1> parent_2(genes_number);
+        Tensor<bool, 1> parent_1_columns(columns_number);
+        Tensor<bool, 1> parent_2_columns(genes_number);
 
 		Tensor<bool, 1> descendent(genes_number);
 
@@ -996,13 +1001,16 @@ namespace opennn
 
 			parent_1_index = rand() % selected_individuals_number;
 			parent_1 = new_population.chip(parent_1_index, 0);
+            Tensor<bool,1> parent_1_columns=transform_individual_to_columns(parent_1);
 
 			parent_2_index = rand() % selected_individuals_number;
 
-			do {
 
+            ///Check for parents repetition
+			do {
 				parent_2_index = rand() % selected_individuals_number;
 				parent_2 = new_population.chip(parent_2_index, 0);
+                parent_2_columns=transform_individual_to_columns()
 
 				distance = 0;
 				for (Index j = 0; j < genes_number; j++)
