@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',true);
+        DataSet data_set ("C:/Users/cristinaquijada/Downloads/5_years_mortality.csv",';',true);
 
 
 
@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
         const Index target_variables_number = data_set.get_target_variables_number();
         const Index hidden_neurons_number = 3;
         data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
+
 
         data_set.impute_missing_values_mean();
 
@@ -70,6 +71,7 @@ int main(int argc, char* argv[])
        genetic_algorithm.evaluate_population();
        genetic_algorithm.perform_fitness_assignment();
        genetic_algorithm.perform_selection();
+       genetic_algorithm.perform_crossover();
 
        /*Tensor<bool,1> individual=genetic_algorithm.get_population().chip(0,0);
        genetic_algorithm.transform_individual_to_columns(individual);*/
