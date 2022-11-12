@@ -101,13 +101,12 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
 {
-//    cout << "Hi i am in the flaten layter calculate outputs 4d->2d!!" << endl;
-    const Index batch = inputs.dimension(3);
-    const Index channels = inputs.dimension(2);
-    const Index heights = inputs.dimension(0);
-    const Index width = inputs.dimension(1);
+    const Index rows_number = inputs.dimension(0);
+    const Index columns_number= inputs.dimension(1);
+    const Index channels_number = inputs.dimension(2);
+    const Index batch_size = inputs.dimension(3);
 
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
+    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*rows_number*columns_number}};
 
     const Tensor<type, 2> outputs = inputs.reshape(new_dims);
 
@@ -148,8 +147,8 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForward
 
     // Check, problems with colmajor and rowmajor
 
-    const Index rows = inputs.dimension(0);
-    const Index columns = inputs.dimension(1);
+    const Index rows_number = inputs.dimension(0);
+    const Index columns_number = inputs.dimension(1);
     const Index channels_number = inputs.dimension(2);
 //    const Index batch_size = inputs.dimension(3);
 
@@ -162,7 +161,7 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForward
 
         variable_counter++;
 
-        if(variable_counter == channels_number * rows * columns)
+        if(variable_counter == channels_number * rows_number * columns_number)
         {
             variable_counter = 0;
             image_counter++;

@@ -594,6 +594,15 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
 
+//    cout << "---------------" << endl;
+
+//    cout << "kernels_rows_number: " << kernels_rows_number << endl;
+//    cout << "kernels_columns_number: " << kernels_columns_number <<        endl;
+//    cout << "kernels_number: " << kernels_number << endl;
+//    cout << "kernels_channels_number: " << kernel_channels_number << endl;
+
+//    cout << "---------------" << endl;
+
     const Index inputs_rows_number = inputs.dimension(0);
     const Index inputs_columns_number = inputs.dimension(1);
     const Index inputs_channels_number = inputs.dimension(2);
@@ -601,15 +610,19 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-    const Index next_image = inputs_rows_number*inputs_columns_number*kernel_channels_number;
+    const Index next_image = inputs_rows_number*inputs_columns_number*inputs_channels_number;
 
     Tensor<type,4> new_inputs = inputs;
     Tensor<type,3> gradient;
 
+    const Index delta_columns_number = convolutional_layer_back_propagation->delta.dimension(1);
+
+//    cout << "Delta: " << endl << convolutional_layer_back_propagation->delta << endl;
+
     for(Index i = 0; i < images_number; i++)
     {
         Eigen::array<Eigen::Index, 2> offsets = {i, 0};
-        Eigen::array<Eigen::Index, 2> extents = {1, 4};
+        Eigen::array<Eigen::Index, 2> extents = {1, delta_columns_number};
 
         Tensor<type, 2> delta_slice = convolutional_layer_back_propagation->delta.slice(offsets, extents);
 
@@ -619,15 +632,20 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
                                                       inputs_channels_number);
 
         TensorMap<Tensor<type,3>>delta_reshape(delta_slice.data(),
-                                               kernels_rows_number,
-                                               kernels_columns_number,
+                                               inputs_rows_number - kernels_rows_number + 1,
+                                               inputs_columns_number - kernels_columns_number + 1,
                                                1);
 
+        cout << "single image: " << endl << single_image << endl;
+        cout << "delta reshape: " << endl << delta_reshape << endl;
+
+        cout << "convolution: " << endl << single_image.convolve(delta_reshape,dims) << endl;
+system("pause");
         if(i == 0) gradient = single_image.convolve(delta_reshape,dims);
         else gradient += single_image.convolve(delta_reshape,dims);
     }
 
-    cout << "Final gradient: " << gradient << endl;
+    cout << "Final gradient: " << endl << gradient << endl;
     cout << "Gradient dimensions: " << gradient.dimensions() << endl;
 
     system("pause");

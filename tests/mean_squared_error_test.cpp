@@ -567,112 +567,593 @@ void MeanSquaredErrorTest::test_back_propagate()
 void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 {
     cout << "test_calculate_gradient_convolutional_network\n";
+{
+//    const Index images_number = 2;
 
-    const Index images_number = 2;
+//    Tensor<Index, 1> inputs_dimensions(3);
+//    inputs_dimensions(0) = 2;
+//    inputs_dimensions(1) = 2;
+//    inputs_dimensions(2) = 2;
 
-    Tensor<Index, 1> inputs_dimensions(3);
-    inputs_dimensions(0) = 2;
-    inputs_dimensions(1) = 2;
-    inputs_dimensions(2) = 2;
+//    Tensor<type, 2> data(images_number,9);
 
-    Tensor<type, 2> data(images_number,9);
+//    // Image 1
 
-    // Image 1
+//    data(0,0) = 1;
+//    data(0,1) = 5;
+//    data(0,2) = 2;
+//    data(0,3) = 6;
 
-    data(0,0) = 1;
-    data(0,1) = 5;
-    data(0,2) = 2;
-    data(0,3) = 6;
+//    data(0,4) = 3;
+//    data(0,5) = 7;
+//    data(0,6) = 4;
+//    data(0,7) = 8;
 
-    data(0,4) = 3;
-    data(0,5) = 7;
-    data(0,6) = 4;
-    data(0,7) = 8;
+//    data(0,8) = 0; // Target
 
-    data(0,8) = 0; // Target
+//    // Image 2
 
-    // Image 2
+//    data(1,0) = 9;
+//    data(1,1) = 13;
+//    data(1,2) = 10;
+//    data(1,3) = 14;
 
-    data(1,0) = 9;
-    data(1,1) = 13;
-    data(1,2) = 10;
-    data(1,3) = 14;
+//    data(1,4) = 11;
+//    data(1,5) = 15;
+//    data(1,6) = 12;
+//    data(1,7) = 16;
 
-    data(1,4) = 11;
-    data(1,5) = 15;
-    data(1,6) = 12;
-    data(1,7) = 16;
+//    data(1,8) = 1; // Target
 
-    data(1,8) = 1; // Target
+//    DataSet data_set(images_number,1,1);
+//    //    data_set.set_data_constant(3.1416);
+//    data_set.set_input_variables_dimensions(inputs_dimensions);
+//    data_set.set_data(data); // 2d data
 
-    DataSet data_set(images_number,1,1);
-//    data_set.set_data_constant(3.1416);
-    data_set.set_input_variables_dimensions(inputs_dimensions);
-    data_set.set_data(data); // 2d data
+//    const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+//    const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+//    const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-    const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+//    DataSetBatch batch(images_number, &data_set);
 
-    DataSetBatch batch(images_number, &data_set);
+//    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+//    //    batch.print();
 
-//    batch.print();
+//    Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
+//    convolutional_layer_inputs_dimensions(0) = 2;
+//    convolutional_layer_inputs_dimensions(1) = 2;
+//    convolutional_layer_inputs_dimensions(2) = 2;
+//    convolutional_layer_inputs_dimensions(3) = images_number;
 
-    Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
-    convolutional_layer_inputs_dimensions(0) = 2;
-    convolutional_layer_inputs_dimensions(1) = 2;
-    convolutional_layer_inputs_dimensions(2) = 2;
-    convolutional_layer_inputs_dimensions(3) = images_number;
+//    NeuralNetwork neural_network;
 
-    NeuralNetwork neural_network;
+//    Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
+//    convolutional_layer_kernels_dimensions(0) = 1;
+//    convolutional_layer_kernels_dimensions(1) = 1;
+//    convolutional_layer_kernels_dimensions(2) = images_number;
+//    convolutional_layer_kernels_dimensions(3) = 1;
 
-    Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
-    convolutional_layer_kernels_dimensions(0) = 1;
-    convolutional_layer_kernels_dimensions(1) = 1;
-    convolutional_layer_kernels_dimensions(2) = images_number;
-    convolutional_layer_kernels_dimensions(3) = 1;
+//    ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-    ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+//    convolutional_layer->set_synaptic_weights_constant(0.5);
+//    convolutional_layer->set_biases_constant(0);
 
-    convolutional_layer->set_synaptic_weights_constant(0.5);
-    convolutional_layer->set_biases_constant(0);
+//    Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+//    flatten_layer_inputs_dimensions(0) = 2;
+//    flatten_layer_inputs_dimensions(1) = 2;
+//    flatten_layer_inputs_dimensions(2) = 1;
+//    flatten_layer_inputs_dimensions(3) = 2;
 
-    Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-    flatten_layer_inputs_dimensions(0) = 2;
-    flatten_layer_inputs_dimensions(1) = 2;
-    flatten_layer_inputs_dimensions(2) = 1;
-    flatten_layer_inputs_dimensions(3) = 2;
+//    FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-    FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+//    PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 1);
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 1);
+//    perceptron_layer->set_synaptic_weights_constant(1);
+//    perceptron_layer->set_biases_constant(0);
+//    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
-    perceptron_layer->set_synaptic_weights_constant(1);
-    perceptron_layer->set_biases_constant(0);
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+//    neural_network.add_layer(convolutional_layer);
+//    neural_network.add_layer(flatten_layer);
+//    neural_network.add_layer(perceptron_layer);
 
-    neural_network.add_layer(convolutional_layer);
-    neural_network.add_layer(flatten_layer);
-    neural_network.add_layer(perceptron_layer);
+//    NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
-    NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
+//    neural_network.forward_propagate(batch, forward_propagation);
+//    //    forward_propagation.print();
 
-    neural_network.forward_propagate(batch, forward_propagation);
-//    forward_propagation.print();
+//    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+//    LossIndexBackPropagation back_propagation(2, &mean_squared_error);
 
-    LossIndexBackPropagation back_propagation(2, &mean_squared_error);
+//    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+//    //    cout << "Gradient: " << back_propagation.gradient << endl;
 
-//    cout << "Gradient: " << back_propagation.gradient << endl;
+//    gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
 
-    gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//    cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
+}
+    {
+//        const Index images_number = 2;
 
-    cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
+//        Tensor<Index, 1> inputs_dimensions(3);
+//        inputs_dimensions(0) = 2;
+//        inputs_dimensions(1) = 2;
+//        inputs_dimensions(2) = 2;
+
+//        Tensor<type, 2> data(images_number,9);
+
+//        // Image 1
+
+//        data(0,0) = 1;
+//        data(0,1) = 5;
+//        data(0,2) = 2;
+//        data(0,3) = 6;
+
+//        data(0,4) = 3;
+//        data(0,5) = 7;
+//        data(0,6) = 4;
+//        data(0,7) = 8;
+
+//        data(0,8) = 0; // Target
+
+//        // Image 2
+
+//        data(1,0) = 9;
+//        data(1,1) = 13;
+//        data(1,2) = 10;
+//        data(1,3) = 14;
+
+//        data(1,4) = 11;
+//        data(1,5) = 15;
+//        data(1,6) = 12;
+//        data(1,7) = 16;
+
+//        data(1,8) = 1; // Target
+
+//        DataSet data_set(images_number,1,1);
+//        data_set.set_input_variables_dimensions(inputs_dimensions);
+//        data_set.set_data(data); // 2d data
+
+//        const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+//        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+//        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+//        DataSetBatch batch(images_number, &data_set);
+
+//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+//        //    batch.print();
+
+//        Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
+//        convolutional_layer_inputs_dimensions(0) = 2;
+//        convolutional_layer_inputs_dimensions(1) = 2;
+//        convolutional_layer_inputs_dimensions(2) = 2;
+//        convolutional_layer_inputs_dimensions(3) = images_number;
+
+//        NeuralNetwork neural_network;
+
+//        Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
+//        convolutional_layer_kernels_dimensions(0) = 1;
+//        convolutional_layer_kernels_dimensions(1) = 1;
+//        convolutional_layer_kernels_dimensions(2) = images_number;
+//        convolutional_layer_kernels_dimensions(3) = 1;
+
+//        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+
+//        Tensor<type, 4> kernels(1,1,2,1);
+
+//        kernels(0) = 0.5;
+//        kernels(1) = 0.7;
+
+//        convolutional_layer->set_synaptic_weights(kernels);
+
+//        //    convolutional_layer->set_synaptic_weights_constant(0.5);
+//        convolutional_layer->set_biases_constant(0);
+
+//        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+//        flatten_layer_inputs_dimensions(0) = 2;
+//        flatten_layer_inputs_dimensions(1) = 2;
+//        flatten_layer_inputs_dimensions(2) = 1;
+//        flatten_layer_inputs_dimensions(3) = 2;
+
+//        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+
+//        PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 2);
+
+//        Tensor<type, 2> synaptic_weights(4,2);
+//        synaptic_weights(0,0) = 1;
+//        synaptic_weights(1,0) = 1;
+//        synaptic_weights(2,0) = 1;
+//        synaptic_weights(3,0) = 1;
+
+//        synaptic_weights(0,1) = 2;
+//        synaptic_weights(1,1) = 2;
+//        synaptic_weights(2,1) = 2;
+//        synaptic_weights(3,1) = 2;
+
+//        //    perceptron_layer->set_synaptic_weights_constant(1);
+//        perceptron_layer->set_synaptic_weights(synaptic_weights);
+//        perceptron_layer->set_biases_constant(0);
+//        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+//        cout << "Perceptron layer weights: " << perceptron_layer->get_synaptic_weights() << endl;
+
+//        neural_network.add_layer(convolutional_layer);
+//        neural_network.add_layer(flatten_layer);
+//        neural_network.add_layer(perceptron_layer);
+
+//        NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
+
+//        neural_network.forward_propagate(batch, forward_propagation);
+//        forward_propagation.print();
+
+//        system("pause");
+
+//        MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+//        LossIndexBackPropagation back_propagation(2, &mean_squared_error);
+
+//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+//        //    cout << "Gradient: " << back_propagation.gradient << endl;
+
+//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+//        cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
+    }
+
+    // Inputs 3x3x2x2; Filters: 1x1x2; Perceptrons: 2 --> Test ok
+/*
+    {
+        const Index images_number = 2;
+
+        Tensor<Index, 1> inputs_dimensions(3);
+        inputs_dimensions(0) = 2; // Channels number
+        inputs_dimensions(1) = 3; // rows number
+        inputs_dimensions(2) = 3; // columns number
+
+        Tensor<type, 2> data(images_number,19);
+
+        // Image 1
+
+        data(0,0) = 1;
+        data(0,1) = 10;
+        data(0,2) = 2;
+        data(0,3) = 11;
+        data(0,4) = 3;
+        data(0,5) = 12;
+        data(0,6) = 4;
+        data(0,7) = 13;
+        data(0,8) = 5;
+        data(0,9) = 14;
+        data(0,10) = 6;
+        data(0,11) = 15;
+        data(0,12) = 7;
+        data(0,13) = 16;
+        data(0,14) = 8;
+        data(0,15) = 17;
+        data(0,16) = 9;
+        data(0,17) = 18;
+
+        data(0,18) = 0; // Target
+
+        // Image 2
+
+        data(1,0) = 19;
+        data(1,1) = 28;
+        data(1,2) = 20;
+        data(1,3) = 29;
+        data(1,4) = 21;
+        data(1,5) = 30;
+        data(1,6) = 22;
+        data(1,7) = 31;
+        data(1,8) = 23;
+        data(1,9) = 32;
+        data(1,10) = 24;
+        data(1,11) = 33;
+        data(1,12) = 25;
+        data(1,13) = 34;
+        data(1,14) = 26;
+        data(1,15) = 35;
+        data(1,16) = 27;
+        data(1,17) = 36;
+
+        data(1,18) = 1; // Target
+
+        DataSet data_set(images_number,1,1);
+        data_set.set_input_variables_dimensions(inputs_dimensions);
+        data_set.set_data(data); // 2d data
+
+        const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+        DataSetBatch batch(images_number, &data_set);
+
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+//        batch.print();
+
+        Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
+        convolutional_layer_inputs_dimensions(0) = 3;
+        convolutional_layer_inputs_dimensions(1) = 3;
+        convolutional_layer_inputs_dimensions(2) = 2;
+        convolutional_layer_inputs_dimensions(3) = images_number;
+
+        NeuralNetwork neural_network;
+
+        Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
+        convolutional_layer_kernels_dimensions(0) = 1;
+        convolutional_layer_kernels_dimensions(1) = 1;
+        convolutional_layer_kernels_dimensions(2) = images_number;
+        convolutional_layer_kernels_dimensions(3) = 1;
+
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+
+        Tensor<type, 4> kernels(1,1,2,1);
+
+        kernels(0) = 0.5;
+        kernels(1) = 0.7;
+
+        convolutional_layer->set_synaptic_weights(kernels);
+
+    //    convolutional_layer->set_synaptic_weights_constant(0.5);
+        convolutional_layer->set_biases_constant(0);
+
+        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+        flatten_layer_inputs_dimensions(0) = 3;
+        flatten_layer_inputs_dimensions(1) = 3;
+        flatten_layer_inputs_dimensions(2) = 1;
+        flatten_layer_inputs_dimensions(3) = 2;
+
+        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(9, 2);
+
+        Tensor<type, 2> synaptic_weights(9,2);
+        synaptic_weights(0,0) = 1;
+        synaptic_weights(1,0) = 1;
+        synaptic_weights(2,0) = 1;
+        synaptic_weights(3,0) = 1;
+        synaptic_weights(4,0) = 1;
+        synaptic_weights(5,0) = 1;
+        synaptic_weights(6,0) = 1;
+        synaptic_weights(7,0) = 1;
+        synaptic_weights(8,0) = 1;
+
+        synaptic_weights(0,1) = 2;
+        synaptic_weights(1,1) = 2;
+        synaptic_weights(2,1) = 2;
+        synaptic_weights(3,1) = 2;
+        synaptic_weights(4,1) = 2;
+        synaptic_weights(5,1) = 2;
+        synaptic_weights(6,1) = 2;
+        synaptic_weights(7,1) = 2;
+        synaptic_weights(8,1) = 2;
+    //    perceptron_layer->set_synaptic_weights_constant(1);
+        perceptron_layer->set_synaptic_weights(synaptic_weights);
+        perceptron_layer->set_biases_constant(0);
+        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        cout << "Perceptron layer weights: " << perceptron_layer->get_synaptic_weights() << endl;
+
+        neural_network.add_layer(convolutional_layer);
+        neural_network.add_layer(flatten_layer);
+        neural_network.add_layer(perceptron_layer);
+
+        NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
+
+        neural_network.forward_propagate(batch, forward_propagation);
+//        forward_propagation.print();
+
+//        system("pause");
+
+        MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+        LossIndexBackPropagation back_propagation(2, &mean_squared_error);
+
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+    //    cout << "Gradient: " << back_propagation.gradient << endl;
+
+        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+
+    }
+
+    */
+
+    // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 2
+
+    {
+        const Index images_number = 2;
+
+        Tensor<Index, 1> inputs_dimensions(3);
+        inputs_dimensions(0) = 2; // Channels number
+        inputs_dimensions(1) = 3; // rows number
+        inputs_dimensions(2) = 3; // columns number
+
+        Tensor<type, 2> data(images_number,20);
+
+        // Image 1
+
+        data(0,0) = 1;
+        data(0,1) = 10;
+        data(0,2) = 2;
+        data(0,3) = 11;
+        data(0,4) = 3;
+        data(0,5) = 12;
+        data(0,6) = 4;
+        data(0,7) = 13;
+        data(0,8) = 5;
+        data(0,9) = 14;
+        data(0,10) = 6;
+        data(0,11) = 15;
+        data(0,12) = 7;
+        data(0,13) = 16;
+        data(0,14) = 8;
+        data(0,15) = 17;
+        data(0,16) = 9;
+        data(0,17) = 18;
+
+        data(0,18) = 0; // Target
+        data(0,19) = 0; // Target
+
+        // Image 2
+
+        data(1,0) = 19;
+        data(1,1) = 28;
+        data(1,2) = 20;
+        data(1,3) = 29;
+        data(1,4) = 21;
+        data(1,5) = 30;
+        data(1,6) = 22;
+        data(1,7) = 31;
+        data(1,8) = 23;
+        data(1,9) = 32;
+        data(1,10) = 24;
+        data(1,11) = 33;
+        data(1,12) = 25;
+        data(1,13) = 34;
+        data(1,14) = 26;
+        data(1,15) = 35;
+        data(1,16) = 27;
+        data(1,17) = 36;
+
+        data(1,18) = 1; // Target
+        data(1,19) = 1; // Target
+
+        DataSet data_set(images_number,1,2);
+        data_set.set_input_variables_dimensions(inputs_dimensions);
+
+        data_set.set_data(data); // 2d data
+
+        const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+//        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+//        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+        Tensor<Index, 1> input_variables_indices(18);
+        input_variables_indices(0) = 0;
+        input_variables_indices(9) = 1;
+        input_variables_indices(8) = 2;
+        input_variables_indices(7) = 3;
+        input_variables_indices(6) = 4;
+        input_variables_indices(5) = 5;
+        input_variables_indices(4) = 6;
+        input_variables_indices(3) = 7;
+        input_variables_indices(2) = 8;
+        input_variables_indices(1) = 9;
+        input_variables_indices(10) = 10;
+        input_variables_indices(11) = 11;
+        input_variables_indices(12) = 12;
+        input_variables_indices(13) = 13;
+        input_variables_indices(14) = 14;
+        input_variables_indices(15) = 15;
+        input_variables_indices(16) = 16;
+        input_variables_indices(17) = 17;
+
+        Tensor<Index, 1> target_variables_indices(2);
+        target_variables_indices(0) = 18;
+        target_variables_indices(1) = 19;
+
+        cout << "input_variables_indices:  " << input_variables_indices << endl;
+        cout << "target_variables_indices:  " << target_variables_indices << endl;
+
+        DataSetBatch batch(images_number, &data_set);
+
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        batch.print();
+
+        system("pause");
+
+        Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
+        convolutional_layer_inputs_dimensions(0) = 3;
+        convolutional_layer_inputs_dimensions(1) = 3;
+        convolutional_layer_inputs_dimensions(2) = 2;
+        convolutional_layer_inputs_dimensions(3) = images_number;
+
+        NeuralNetwork neural_network;
+
+        Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
+        convolutional_layer_kernels_dimensions(0) = 1;
+        convolutional_layer_kernels_dimensions(1) = 1;
+        convolutional_layer_kernels_dimensions(2) = images_number;
+        convolutional_layer_kernels_dimensions(3) = 1;
+
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+
+        Tensor<type, 4> kernels(2,2,2,1);
+
+        kernels(0,0,0,0) = 0.5;
+        kernels(0,1,0,0) = 0.5;
+        kernels(1,0,0,0) = 0.5;
+        kernels(1,1,0,0) = 0.5;
+
+        kernels(0,0,1,0) = 0.7;
+        kernels(0,1,1,0) = 0.7;
+        kernels(1,0,1,0) = 0.7;
+        kernels(1,1,1,0) = 0.7;
+
+        convolutional_layer->set_synaptic_weights(kernels);
+
+        convolutional_layer->set_biases_constant(0);
+
+        Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+        flatten_layer_inputs_dimensions(0) = 2;
+        flatten_layer_inputs_dimensions(1) = 2;
+        flatten_layer_inputs_dimensions(2) = 1;
+        flatten_layer_inputs_dimensions(3) = 2;
+
+        FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 2);
+
+        Tensor<type, 2> synaptic_weights(4,2);
+        synaptic_weights(0,0) = 1;
+        synaptic_weights(1,0) = 1;
+        synaptic_weights(2,0) = 1;
+        synaptic_weights(3,0) = 1;
+
+        synaptic_weights(0,1) = 2;
+        synaptic_weights(1,1) = 2;
+        synaptic_weights(2,1) = 2;
+        synaptic_weights(3,1) = 2;
+
+        perceptron_layer->set_synaptic_weights(synaptic_weights);
+        perceptron_layer->set_biases_constant(0);
+        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        cout << "Perceptron layer weights: " << perceptron_layer->get_synaptic_weights() << endl;
+
+        neural_network.add_layer(convolutional_layer);
+        neural_network.add_layer(flatten_layer);
+        neural_network.add_layer(perceptron_layer);
+
+        NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
+
+        neural_network.forward_propagate(batch, forward_propagation);
+        forward_propagation.print();
+
+        system("pause");
+
+        MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+        LossIndexBackPropagation back_propagation(images_number, &mean_squared_error);
+
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        cout << "Gradient: " << back_propagation.gradient << endl;
+
+        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+
+    }
+
 }
 
 

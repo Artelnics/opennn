@@ -326,9 +326,18 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     {
     case Layer::Type::Perceptron:
     {
+        cout << "Calculating errors................" << endl;
+
+        cout << "Activations: " << endl << static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations << endl;
+
+        cout << "Targets: " << endl << batch.targets_2d << endl;
+
+
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
                 batch.targets_2d;
+
+        cout << "End of calculate errors..........." << endl;
      }
         break;
 
@@ -427,13 +436,14 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     // Loss index
 
     calculate_errors(batch, forward_propagation, back_propagation);
-cout << "errors: " << back_propagation.errors << endl;
+    cout << "LossIndex errors: " << endl << back_propagation.errors << endl;
     calculate_error(batch, forward_propagation, back_propagation);
-cout << "Error: " << back_propagation.error << endl;
+    cout << "LossIndex error: " << back_propagation.error << endl;
     calculate_layers_delta(batch, forward_propagation, back_propagation);
 
     calculate_error_gradient(batch, forward_propagation, back_propagation);
-cout << "error gradient" << endl;
+    cout << "LossIndex error gradient" << endl;
+
     // Loss
 
     back_propagation.loss = back_propagation.error;
