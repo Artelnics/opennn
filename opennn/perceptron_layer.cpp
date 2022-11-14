@@ -15,6 +15,7 @@ namespace opennn
 /// Default constructor.
 /// It creates a empty layer object, with no perceptrons.
 /// This constructor also initializes the rest of the class members to their default values.
+//-
 
 PerceptronLayer::PerceptronLayer() : Layer()
 {
