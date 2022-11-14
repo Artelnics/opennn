@@ -412,33 +412,35 @@ namespace opennn
 	void GeneticAlgorithm::initialize_population_random()
 	{
         ///Parameters obtention
+        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
         const Index individuals_number = get_individuals_number();
 		const Index genes_number = get_genes_number();
+        const Index columns_number=data_set_pointer->get_columns_number();
 
         ///This variable controls if the generated individual is repeated
 		bool is_repeated;
-		Tensor<bool, 1> individual(genes_number);
+        Tensor<bool, 1> individual_columns(columns_number);
 
         /// Main loop
 		for (Index i = 0; i < individuals_number; i++)
         {
            ///First, we set the individual as having no gene activated.
-			individual.setConstant(false);
+            individual_columns.setConstant(false);
 			
 			do 
 			{
 				is_repeated = false;
 
                 ///For each gene we generate a random number between 0 and 1.
-				for (Index j = 0; j < genes_number; j++)
+                for (Index j = 0; j < columns_number; j++)
 				{
-					rand() % 2 == 0 ? individual(j) = false : individual(j) = true;
+                    rand() % 2 == 0 ? individual_columns(j) = false : individual_columns(j) = true;
 					
 				}
                 ///Prevent no inputs by activating a random gene
-				if (is_false(individual)) 
+                if (is_false(individual_columns))
 				{
-					individual(static_cast<Index>(rand()) % genes_number) = true;
+                    individual_columns(static_cast<Index>(rand()) % genes_number) = true;
 				}
 
                 ///Repetition check
@@ -446,7 +448,7 @@ namespace opennn
 						{
 							Tensor<bool, 1> row = population.chip(j, 0);
 
-							if (are_equal(individual, row))
+                            if (are_equal(transform_individual_columns_to_variables(individual_columns), row))
 							{
 									is_repeated = true;
 									break;
@@ -456,11 +458,11 @@ namespace opennn
 			} while (is_repeated);
 
             ///Add individual to population
-			
+            Tensor<bool,1> individual_variables=transform_individual_columns_to_variables(individual_columns);
 			
 			for (Index j = 0; j < genes_number; j++)
 			{
-				population(i, j) = individual(j);
+                population(i, j) = individual_variables(j);
             }///End of individual adittion to population
 
 			
@@ -810,14 +812,13 @@ namespace opennn
 
         const Index individuals_number=get_individuals_number();
 
-        Index selected_individuals_number = static_cast<Index>(type(individuals_number)/2)-elitism_size;
-        if(selected_individuals_number%2==1){
-            selected_individuals_number++;
-        }
+        Index selected_individuals_number = static_cast<Index>(type(individuals_number)/2);
+
 
         cout<<static_cast<Index>(individuals_number/2)<<endl;
-        cout<<elitism_size<<endl;
-        cout<<selected_individuals_number<<endl;
+        cout<<"Tamaño de elitismo: "<<elitism_size<<endl;
+        cout<<"Individuos seleccionados: "<<selected_individuals_number<<endl;
+
         //Calculation of cumulative probabilities
         Index sum=0;
         for(Index i=0;i<individuals_number;i++)
@@ -848,7 +849,7 @@ namespace opennn
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        Index selected_individuals_count=0;
+        Index selected_individuals_count=count(selection.data(), selection.data() + selection.size(), 1);
 
         type pointer;
 
@@ -872,36 +873,6 @@ namespace opennn
             }
             cout<<selected_individuals_count<<endl;
         }
-        cout<<"Fitness"<<endl;
-        cout<<fitness<<endl;
-        cout<<"Selected individuals"<<endl;
-        cout<<selection<<endl;
-
-        /* Roulette wheel selection
-
-        while (selection_count < selected_individuals_number)
-        {
-            const type pointer = ((type)rand() / RAND_MAX) * cumulative_fitness(individuals_number - 1);
-
-            if (pointer < cumulative_fitness(0) && !selection(0))
-            {
-                selection(0) = true;
-                selection_count++;
-                continue;
-            }
-
-            for (Index i = 0; i < individuals_number - 1; i++)
-            {
-                if (cumulative_fitness(i) < pointer
-                    && pointer < cumulative_fitness(i + 1)
-                    && !selection(i + 1))
-                {
-                    selection(i + 1) = true;
-                    selection_count++;
-                    break;
-                }
-            }
-        }*/
 
 
 #ifdef OPENNN_DEBUG
@@ -953,8 +924,8 @@ namespace opennn
 
         const Index selected_individuals_number = count(selection.data(), selection.data() + selection.size(), 1);
 
-        const Index couples_number = static_cast<Index>(selected_individuals_number/2);
-        cout<<selected_individuals_number;
+
+        //cout<<selected_individuals_number;
 
 #ifdef OPENNN_DEBUG
 
@@ -975,7 +946,7 @@ namespace opennn
 #endif
         Tensor<bool, 2> new_population(individuals_number, genes_number);
 
-        Tensor<Index, 2> couples(couples_number, 2);
+        Tensor<Index, 2> couples(selected_individuals_number, 2);
         Tensor<Index,1> selected_indexes=get_selected_individuals_to_indexes();
         //cout<<couples.dimensions();
         couples.setConstant(0);
@@ -997,32 +968,77 @@ namespace opennn
         //Vector permutation
         std::shuffle(parent_2_indices.data(),parent_2_indices.data()+parent_2_indices.size(), g);
 
-        cout<<endl<<parent_1_indices<<endl;
-        cout<<endl<<parent_2_indices<<endl;
 
-        for(Index i=0; i<couples_number;i++)
+
+        for(Index i=0; i<selected_individuals_number;i++)
         {
             couples(i,0)=parent_1_indices(i);
             couples(i,1)=parent_2_indices(i);
         }
-        cout<< couples<<endl;
 
 
+        Tensor<bool,1> descendent(columns_number);
 
+        Tensor<bool,1 > parent_1_columns(columns_number);
+        Tensor<bool,1 > parent_2_columns(columns_number);
+        Index individuals_generated_number;
+        Tensor <bool,1 > parent_1;
+        Tensor<bool,1>parent_2;
 
+        bool is_repeated;
+        Index individual_total_count=0;
+        for (Index i = 0; i <couples.dimension(0) ; i++)
+        {
+            parent_1=population.chip(couples(i,0),0);
+            parent_1_columns=transform_individual_to_columns(parent_1);
 
+            individuals_generated_number=0;
 
+            parent_2=population.chip(couples(i,1),0);
+            parent_2_columns=transform_individual_to_columns(parent_2);
+            while(individuals_generated_number<2)
+            {
 
+                do{
+                    is_repeated=false;
+                    descendent=parent_1;
+                    for(Index j=0;j<descendent.size();j++)
+                    {
+                        if(parent_1_columns(j)!=parent_2_columns(j))
+                        {
+                           rand() % 2 == 0 ? descendent(j) = false : descendent(j) = true;
+                        }
+                    }
+                //Repetition comprobation
+                Tensor<bool,1> row(genes_number);
+                Tensor<bool,1> descendent_variables= transform_individual_columns_to_variables(descendent);
+                if(individual_total_count>0)
+                {
+                for(Index j=0; j<individual_total_count;j++)
+                {
+                    row=population.chip(j,0);
+                    if(are_equal(descendent_variables,row))
+                    {
+                        is_repeated=true;
+                    }
+                }
 
+                }
 
+                }while(is_repeated);
+                individual_total_count++;
+                individuals_generated_number++;
+                //Descend addition to population
+                for(Index j=0;j<descendent.size();j++)
+                {
+                    new_population(individual_total_count,j)=descendent(j);
+                }
+             }
 
+        }
+        cout<<individual_total_count;
 
-
-
-
-
-
-
+        population=new_population;
 
         /*		Index parent_1_index = 0;
         Index parent_2_index = 0;

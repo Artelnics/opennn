@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/cristinaquijada/Downloads/5_years_mortality.csv",';',true);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',true);
 
 
 
@@ -64,14 +64,10 @@ int main(int argc, char* argv[])
        genetic_algorithm.set_maximum_epochs_number(50);
 
        genetic_algorithm.set_mutation_rate(0);
-       genetic_algorithm.set_elitism_size(5);
+       genetic_algorithm.set_elitism_size(2);
 
 
-       genetic_algorithm.initialize_population();
-       genetic_algorithm.evaluate_population();
-       genetic_algorithm.perform_fitness_assignment();
-       genetic_algorithm.perform_selection();
-       genetic_algorithm.perform_crossover();
+
 
        /*Tensor<bool,1> individual=genetic_algorithm.get_population().chip(0,0);
        genetic_algorithm.transform_individual_to_columns(individual);*/
@@ -82,9 +78,9 @@ int main(int argc, char* argv[])
 
        //cout<<genetic_algorithm.get_population().dimension(1);
 
-       /*InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+       InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
 
-       cout<<inputs_selection_results.mean_selection_error_history<<endl;
+       //cout<<inputs_selection_results.mean_selection_error_history<<endl;
        // Testing analysis
 
       // training_strategy.perform_training();
@@ -95,17 +91,11 @@ int main(int argc, char* argv[])
 
        mean_selection_error_csv.close();
 
-       /*TestingAnalysis testing_analysis(&neural_network, &data_set);
+       TestingAnalysis testing_analysis(&neural_network, &data_set);
 
        TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
 
-       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;*/
-
-
-
-
-
-
+       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
 
         cout << "Bye OpenNN" << endl;
     }
