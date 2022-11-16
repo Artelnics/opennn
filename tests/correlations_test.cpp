@@ -45,23 +45,8 @@ void CorrelationsTest::test_linear_correlation()
     assert_true(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
 
-
-    /* puesto asi el mas grande es el primero, osea 0, el mas pequeño el ultimo, osea 1*/
     const Tensor<type, 1> x1 = calculate_rank_greater(x).cast<type>();
     const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // Test
@@ -371,3 +356,4 @@ void CorrelationsTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
