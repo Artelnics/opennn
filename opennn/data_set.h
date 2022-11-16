@@ -363,6 +363,7 @@ public:
     Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
+    Tensor<string, 2> get_text_data_file_preview() const;
 
     Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
