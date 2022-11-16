@@ -11542,6 +11542,7 @@ void DataSet::read_ground_truth()
             //------------------------------------------------------------------------
 
             const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
+			cout << "" << endl;
 
             BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
