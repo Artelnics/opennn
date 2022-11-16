@@ -4789,6 +4789,12 @@ Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
 }
 
 
+Tensor<string, 2> DataSet::get_text_data_file_preview() const
+{
+    return text_data_file_preview;
+}
+
+
 Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & variables_indices) const
 {
     const Index rows_number = rows_indices.size();
