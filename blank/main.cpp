@@ -20,6 +20,7 @@
 
 #include "../opennn/opennn.h"
 using namespace opennn;
+
 using namespace std;
 
 int main(int argc, char *argv[])

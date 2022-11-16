@@ -783,6 +783,8 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 void DataSet::transform_time_series_columns()
 {
+    cout << "Transforming time series columns..." << endl;
+
     // Categorical columns?
 
     time_series_columns = columns;
@@ -794,7 +796,6 @@ void DataSet::transform_time_series_columns()
     if(has_time_columns())
     {
         // @todo check if there are more than one time column
-
         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
     }
     else
@@ -867,6 +868,8 @@ void DataSet::transform_time_series_columns()
 
 void DataSet::transform_time_series_data()
 {
+    cout << "Transforming time series data..." << endl;
+
     // Categorical / Time columns?
 
     const Index old_samples_number = data.dimension(0);
@@ -4440,7 +4443,7 @@ Index DataSet::get_column_index(const string& column_name) const
     ostringstream buffer;
 
     buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_column_index(const string&&) const method.\n"
+           << "Index get_column_index(const string&) const method.\n"
            << "Cannot find " << column_name << "\n";
 
     throw invalid_argument(buffer.str());
@@ -4789,6 +4792,12 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
 Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
 {
     return data_file_preview;
+}
+
+
+Tensor<string, 2> DataSet::get_text_data_file_preview() const
+{
+    return text_data_file_preview;
 }
 
 
@@ -6489,13 +6498,18 @@ void DataSet::print_top_input_target_columns_correlations() const
 /// Calculate the correlation between each input in the data set.
 /// Returns a matrix with the correlation values between variables in the data set.
 
-Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
+
+Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations() const
 {
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
     const Index input_columns_number = get_input_columns_number();
 
     Tensor<Correlation, 2> correlations(input_columns_number, input_columns_number);
+    Tensor<Correlation, 2> correlations_spearman(input_columns_number, input_columns_number);
+
+    // list to return
+    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -6512,10 +6526,15 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+            correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
 
             if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
             {
                 correlations(i,j).r = type(1);
+            }
+            if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+            {
+                correlations_spearman(i,j).r = type(1);
             }
         }
     }
@@ -6527,8 +6546,17 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             correlations(i,j) = correlations(j,i);
         }
     }
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        for(Index j = 0; j < i; j++)
+        {
+            correlations_spearman(i,j) = correlations_spearman(j,i);
+        }
+    }
 
-    return correlations;
+    correlations_list(0) = correlations;
+    correlations_list(1) = correlations_spearman;
+    return correlations_list;
 }
 
 
@@ -6536,7 +6564,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations());
+    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations()(0));
 
     cout << inputs_correlations << endl;
 }
@@ -6567,7 +6595,7 @@ void DataSet::print_top_inputs_correlations() const
 
     const Tensor<string, 1> variables_name = get_input_variables_names();
 
-    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations());
+    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations()(0));
 
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
@@ -8890,6 +8918,8 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 
 void DataSet::transform_time_series()
 {
+    cout << "Transforming time series..." << endl;
+
     if(lags_number == 0 || steps_ahead == 0) return;
 
     transform_time_series_data();
@@ -11531,6 +11561,7 @@ void DataSet::read_ground_truth()
             //------------------------------------------------------------------------
 
             const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
+			cout << "" << endl;
 
             BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
@@ -12188,6 +12219,7 @@ void DataSet::read_csv_1()
                 || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(column_index).type = ColumnType::DateTime;
+            time_column = columns(column_index).name;
             column_index++;
         }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
@@ -12205,10 +12237,10 @@ void DataSet::read_csv_1()
         }
     }
 
-    if(time_column != "")
-    {
-        set_column_type(time_column, DataSet::ColumnType::DateTime);
-    }
+//    if(time_column != "")
+//    {
+//        set_column_type(time_column, DataSet::ColumnType::DateTime);
+//    }
 
 }
 
