@@ -366,7 +366,7 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
     activation_function = new_activation_function;
 }
 
-
+//.
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
 /// @param new_activation_function Activation function for that layer.
