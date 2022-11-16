@@ -324,6 +324,7 @@ public:
     Tensor<type, 2>* get_data_pointer();
 
     const Tensor<type, 2>& get_time_series_data() const;
+    const Tensor<type, 2>& get_associative_data() const;
 
     Tensor<type, 2> get_training_data() const;
     Tensor<type, 2> get_selection_data() const;
@@ -683,6 +684,10 @@ public:
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
+
+    void get_associative_columns_number(const Index&);
+    void set_associative_data(const Tensor<type, 2>&);
+    void set_associative_columns_number(const Index&);
 
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
