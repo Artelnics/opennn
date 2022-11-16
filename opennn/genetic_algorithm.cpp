@@ -815,9 +815,9 @@ namespace opennn
         Index selected_individuals_number = static_cast<Index>(type(individuals_number)/2);
 
 
-        cout<<static_cast<Index>(individuals_number/2)<<endl;
+        /*cout<<static_cast<Index>(individuals_number/2)<<endl;
         cout<<"Tamaño de elitismo: "<<elitism_size<<endl;
-        cout<<"Individuos seleccionados: "<<selected_individuals_number<<endl;
+        cout<<"Individuos seleccionados: "<<selected_individuals_number<<endl;*/
 
         //Calculation of cumulative probabilities
         Index sum=0;
@@ -871,7 +871,7 @@ namespace opennn
                     break;
                 }
             }
-            cout<<selected_individuals_count<<endl;
+
         }
 
 
@@ -917,302 +917,248 @@ namespace opennn
 
 	void GeneticAlgorithm::perform_crossover()
 	{
-        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
         const Index individuals_number = get_individuals_number();
-		const Index genes_number = get_genes_number();
-        const Index columns_number=data_set_pointer->get_columns_number();
-
-        const Index selected_individuals_number = count(selection.data(), selection.data() + selection.size(), 1);
-
-
-        //cout<<selected_individuals_number;
-
-#ifdef OPENNN_DEBUG
-
-		Index count_selected_individuals = 0;
-		for (Index i = 0; i < individuals_number; i++) if (selection(i)) count_selected_individuals++;
-
-		if (selected_individuals_number != count_selected_individuals)
-		{
-			ostringstream buffer;
-
-			buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-				<< "void perform_crossover() method.\n"
-				<< "Selected individuals number is wrong.\n";
-
-			throw invalid_argument(buffer.str());
-		}
-
-#endif
-        Tensor<bool, 2> new_population(individuals_number, genes_number);
-
-        Tensor<Index, 2> couples(selected_individuals_number, 2);
-        Tensor<Index,1> selected_indexes=get_selected_individuals_to_indexes();
-        //cout<<couples.dimensions();
-        couples.setConstant(0);
-       // bool couple_is_repeated;
-
-        Index parent_1_index=0;
-        Index parent_2_index=0;
-
-
+        const Index genes_number = get_genes_number();
+        const Index selected_individuals_number = std::count(selection.data(), selection.data() + selection.size(), 1);
+        #ifdef OPENNN_DEBUG
+                Index count_selected_individuals = 0;
+                for (Index i = 0; i < individuals_number; i++) if (selection(i)) count_selected_individuals++;
+                if (selected_individuals_number != count_selected_individuals)
+                {
+                    ostringstream buffer;
+                    buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+                        << "void perform_crossover() method.\n"
+                        << "Selected individuals number is wrong.\n";
+                    throw invalid_argument(buffer.str());
+                }
+        #endif
+        ///Couples generation
+        /// First obtain selected individuals indexes
+        Tensor<Index,1> parent_1_indexes=get_selected_individuals_to_indexes();
+        Tensor<Index, 1> parent_2_indexes=parent_1_indexes;
         std::random_device rd;
         std::mt19937 g(rd());
-        Tensor<Index, 1> parent_1_indices =selected_indexes;
-
-        //Vector permutation
-        std::shuffle(parent_1_indices.data(),parent_1_indices.data()+parent_1_indices.size(), g);
-
-        Tensor<Index, 1> parent_2_indices =selected_indexes;
-
-        //Vector permutation
-        std::shuffle(parent_2_indices.data(),parent_2_indices.data()+parent_2_indices.size(), g);
-
-
-
-        for(Index i=0; i<selected_individuals_number;i++)
+        std::shuffle(parent_1_indexes.data(),parent_1_indexes.data()+parent_1_indexes.size(), g);
+        std::shuffle(parent_2_indexes.data(),parent_2_indexes.data()+parent_2_indexes.size(), g);
+        Tensor<Index,2> couples(selected_individuals_number,2);
+        for(Index i=0;i<selected_individuals_number;i++)
         {
-            couples(i,0)=parent_1_indices(i);
-            couples(i,1)=parent_2_indices(i);
+            couples(i,0)=parent_1_indexes(i);
+            couples(i,1)=parent_2_indexes(i);
         }
+        //cout<<couples<<endl;
 
+        Tensor<bool, 1> parent_1_variables;
+        Tensor<bool, 1> parent_2_variables;
+        Tensor<bool,1> descendent_variables;
+        Tensor<bool, 1> parent_1_columns;
+        Tensor<bool, 1> parent_2_columns;
+        Tensor<bool, 1> descendent_columns;
+        Tensor<bool, 2> new_population(individuals_number, genes_number);
+        Index offspring_count=0;
 
-        Tensor<bool,1> descendent(columns_number);
-
-        Tensor<bool,1 > parent_1_columns(columns_number);
-        Tensor<bool,1 > parent_2_columns(columns_number);
-        Index individuals_generated_number;
-        Tensor <bool,1 > parent_1;
-        Tensor<bool,1>parent_2;
-
-        bool is_repeated;
-        Index individual_total_count=0;
-        for (Index i = 0; i <couples.dimension(0) ; i++)
-        {
-            parent_1=population.chip(couples(i,0),0);
-            parent_1_columns=transform_individual_to_columns(parent_1);
-
-            individuals_generated_number=0;
-
-            parent_2=population.chip(couples(i,1),0);
-            parent_2_columns=transform_individual_to_columns(parent_2);
-            while(individuals_generated_number<2)
-            {
-
-                do{
-                    is_repeated=false;
-                    descendent=parent_1;
-                    for(Index j=0;j<descendent.size();j++)
-                    {
-                        if(parent_1_columns(j)!=parent_2_columns(j))
-                        {
-                           rand() % 2 == 0 ? descendent(j) = false : descendent(j) = true;
-                        }
-                    }
-                //Repetition comprobation
-                Tensor<bool,1> row(genes_number);
-                Tensor<bool,1> descendent_variables= transform_individual_columns_to_variables(descendent);
-                if(individual_total_count>0)
-                {
-                for(Index j=0; j<individual_total_count;j++)
-                {
-                    row=population.chip(j,0);
-                    if(are_equal(descendent_variables,row))
-                    {
-                        is_repeated=true;
-                    }
-                }
-
-                }
-
-                }while(is_repeated);
-                individual_total_count++;
-                individuals_generated_number++;
-                //Descend addition to population
-                for(Index j=0;j<descendent.size();j++)
-                {
-                    new_population(individual_total_count,j)=descendent(j);
-                }
-             }
-
-        }
-        cout<<individual_total_count;
-
-        population=new_population;
-
-        /*		Index parent_1_index = 0;
-        Index parent_2_index = 0;
-
-        Tensor<bool, 1> parent_1(genes_number);
-        Tensor<bool, 1> parent_2(genes_number);
-        Tensor<bool, 1> parent_1_columns(columns_number);
-        Tensor<bool, 1> parent_2_columns(columns_number);
-
-        // Hay que añadir un método para pasar de columnas a variables
-
-        Tensor<bool, 1> descendent(genes_number);
-        Tensor<bool, 1> descendent_columns(columns_number);
-
-        Index offspring_count = 0;
-
-        bool is_repeated = false;
-
-        // Take selected individuals in perform_selection()
-
+        //We keep parents in the new generation
         for (Index i = 0; i < individuals_number; i++)
         {
-            if (selection(i) && offspring_count < selected_individuals_number)
+           if (selection(i) && offspring_count < selected_individuals_number)
             {
-                for (Index j = 0; j < genes_number; j++)
-                {
-                    new_population(offspring_count, j) = population(i, j);
-                }
-
-                offspring_count++;
+              for (Index j = 0; j < genes_number; j++)
+              {
+                new_population(offspring_count, j) = population(i, j);
+              }
+              offspring_count++;
             }
-        }
-
-        Index random_loops = 0;
-        Index random_loops_2 = 0;
-
-        // Perform crossover
-
-        for (Index i = selected_individuals_number; i < individuals_number; i++)
+         }
+        for(Index i=0;i< selected_individuals_number;i++)
         {
-            Index distance = 0;
-            random_loops_2 = 0;
-            is_repeated = false;
-
-            // Select parents
-
-            parent_1_index = rand() % selected_individuals_number;
-            parent_1 = new_population.chip(parent_1_index, 0);
-            Tensor<bool,1> parent_1_columns=transform_individual_to_columns(parent_1);
-
-            parent_2_index = rand() % selected_individuals_number;
-
-            ///Check for parents repetition
-
-            do {
-                parent_2_index = rand() % selected_individuals_number;
-                parent_2 = new_population.chip(parent_2_index, 0);
-                parent_2_columns=transform_individual_to_columns(parent_2);
-
-                distance = 0;
-                for (Index j = 0; j < genes_number; j++)
-                    if (parent_1(j) != parent_2(j)) distance++;
-
-                random_loops_2++;
-
-            } while (distance < 1 && random_loops_2 < 25);
-
-            // Perform crossover
-
-            descendent_columns = parent_1_columns;
-
-            for (Index j = 0; j < columns_number; j++)
+            parent_1_variables=population.chip(couples(i,0),0);
+            parent_2_variables=population.chip(couples(i,1),0);
+            ///Transform each parent to columns
+            parent_1_columns=transform_individual_to_columns(parent_1_variables);
+            parent_2_columns=transform_individual_to_columns(parent_2_variables);
+            //Perform crossover
+            descendent_columns=parent_1_columns;
+            for(Index j=0;j<descendent_columns.size();j++)
             {
-                if (parent_1_columns(j) != parent_2_columns(j))
-                    descendent_columns(j) = (rand() % 2 == 0);
-            }
-
-            // Prevent no inputs
-
-            if (is_false(descendent_columns))
-                descendent_columns(static_cast<Index>(rand()) % genes_number) = true;
-
-            // Repetition comprobation
-
-            descendent=transform_individual_columns_to_variables(descendent_columns);
-
-            for (Index j = 0; j < i; j++)
-            {
-                Tensor<bool, 1> row = new_population.chip(j, 0);
-
-                if (are_equal(row, descendent))
+                if(parent_1_columns(j)!=parent_2_columns(j))
                 {
-                    is_repeated = true;
+                    rand()%2==0 ? descendent_columns(j)=false : descendent_columns(j)=true;
                 }
             }
 
-            // Prevent repetition and infinite loop
-
-            if (is_repeated && random_loops < 25)
+            ///Population addition
+            Tensor<bool,1> descendent=transform_individual_columns_to_variables(descendent_columns);
+            for(Index j=0;j<genes_number;j++)
             {
-                random_loops++;
-                i--;
+                new_population(i+selected_individuals_number,j)=descendent(j);
             }
-            else
-            {
-                for (Index j = 0; j < genes_number; j++)
-                {
-                    new_population(i, j) = descendent(j);
-                }
-                random_loops = 0;
 
-                if (false)
-                {
-                    cout << "------------------------------" << endl;
-                    cout << "Crossover for creating individuals " << i << " and " << i + 1 << endl;
-                    cout << "Parent 1 Index:     " << parent_1_index;
-                    cout << " Parent 1:     ";
-                    for (Index j = 0; j < genes_number; j++)
-                    {
-                        cout << parent_1(j) << " ";
-                    }
-                    cout << endl << "Parent 2 Index:     " << parent_2_index;
-                    cout << " Parent 2:     ";
-                    for (Index j = 0; j < genes_number; j++)
-                    {
-                        cout << parent_2(j) << " ";
-                    }
+            //cout<<descendent_columns;
 
-                    cout << endl << "Descendent 1 Index: " << i << " Descendent 1: ";
-                    for (Index j = 0; j < genes_number; j++)
-                    {
-                        cout << descendent(j) << " ";
-                    }
-                }
 
-            }
         }
+        population=new_population;
 
-        population = new_population;*/
+        //Perform crossover
+
+
+                /*        // Take selected individuals in perform_selection()
+                for (Index i = 0; i < individuals_number; i++)
+                {
+                    if (selection(i) && offspring_count < selected_individuals_number)
+                      {
+                            for (Index j = 0; j < genes_number; j++)
+                             {
+                                new_population(offspring_count, j) = population(i, j);
+                             }
+                             offspring_count++;
+                      }
+                  }
+                        Index random_loops = 0;
+                        Index random_loops_2 = 0;
+
+                for (Index i = selected_individuals_number; i < individuals_number; i++)
+                {
+                    Index distance = 0;
+                    random_loops_2 = 0;
+                    is_repeated = false;
+                    // Select parents
+                    parent_1_index = rand() % selected_individuals_number;
+                    parent_1 = new_population.chip(parent_1_index, 0);
+                    parent_2_index = rand() % selected_individuals_number;
+                            do {
+                                parent_2_index = rand() % selected_individuals_number;
+                                parent_2 = new_population.chip(parent_2_index, 0);
+                                distance = 0;
+                                for (Index j = 0; j < genes_number; j++)
+                                    if (parent_1(j) != parent_2(j)) distance++;
+                                random_loops_2++;
+                            } while (distance < 1 && random_loops_2 < 25);
+                            // Perform crossover
+                            descendent = parent_1;
+                            for (Index j = 0; j < genes_number; j++)
+                            {
+                                if (parent_1(j) != parent_2(j))
+                                    descendent(j) = (rand() % 2 == 0);
+                            }
+                            // Prevent no inputs
+                            if (is_false(descendent))
+                                descendent(static_cast<Index>(rand()) % genes_number) = true;
+                            // Repetition comprobation
+                            for (Index j = 0; j < i; j++)
+                            {
+                                Tensor<bool, 1> row = new_population.chip(j, 0);
+                                if (are_equal(row, descendent))
+                                {
+                                    is_repeated = true;
+                                }
+                            }
+                            // Prevent repetition and infinite loop
+                            if (is_repeated && random_loops < 25)
+                            {
+                                random_loops++;
+                                i--;
+                            }
+                            else
+                            {
+                                for (Index j = 0; j < genes_number; j++)
+                                {
+                                    new_population(i, j) = descendent(j);
+                                }
+                                random_loops = 0;
+                                if (false)
+                                {
+                                    cout << "------------------------------" << endl;
+                                    cout << "Crossover for creating individuals " << i << " and " << i + 1 << endl;
+                                    cout << "Parent 1 Index:     " << parent_1_index;
+                                    cout << " Parent 1:     ";
+                                    for (Index j = 0; j < genes_number; j++)
+                                    {
+                                        cout << parent_1(j) << " ";
+                                    }
+                                    cout << endl << "Parent 2 Index:     " << parent_2_index;
+                                    cout << " Parent 2:     ";
+                                    for (Index j = 0; j < genes_number; j++)
+                                    {
+                                        cout << parent_2(j) << " ";
+                                    }
+                                    cout << endl << "Descendent 1 Index: " << i << " Descendent 1: ";
+                                    for (Index j = 0; j < genes_number; j++)
+                                    {
+                                        cout << descendent(j) << " ";
+                                    }
+                                }
+                            }
+                        }
+                        population = new_population;*/
+                    }
 
 
 
-	}
 
 
 	/// Perform the mutation of the individuals generated in the crossover.
 
 	void GeneticAlgorithm::perform_mutation()
 	{
+        const Index individuals_number=get_individuals_number();
 
-		const Index individuals_number = get_individuals_number();
+        const Index genes_number=get_genes_number();
 
-		const Index genes_number = get_genes_number();
+        Tensor<bool,1> individual_variables;
 
-		Tensor<bool, 1> individual(genes_number);
+        Tensor<bool,1> individual_columns;
 
-		bool is_repeated = false;
+        for(Index i=0; i<individuals_number;i++)
+        {
+            individual_variables=population.chip(i,0);
 
-		for (Index i = 0; i < individuals_number; i++)
-		{
-			individual = population.chip(i, 0);
+            individual_columns=transform_individual_to_columns(individual_variables);
+
+            for (Index j = 0; j <individual_columns.size();j++)
+            {
+                if ((static_cast<type>(rand() / (RAND_MAX + 1.0)) <= mutation_rate))
+                {
+                    individual_columns(j)= !individual_columns(j);
+                }
+            }
+
+            individual_variables=transform_individual_columns_to_variables(individual_columns);
+
+            for(Index j=0;j<genes_number;j++)
+            {
+                population(i,j)=individual_variables(j);
+            }
+
+
+        }
 
 
 
-			// Perform mutation
+        /*const Index individuals_number = get_individuals_number();
 
-			for (Index j = 0; j < genes_number; j++)
-			{
-				if ((static_cast<type>(rand() / (RAND_MAX + 1.0)) <= mutation_rate) || is_repeated)
-				{
-					population(i, j) = !population(i, j);
-					is_repeated = false;
-				}
-			}
+        const Index genes_number = get_genes_number();
+
+        Tensor<bool, 1> individual(genes_number);
+
+        bool is_repeated = false;
+
+        for (Index i = 0; i < individuals_number; i++)
+        {
+            individual = population.chip(i, 0);
+
+
+
+            // Perform mutation
+
+            for (Index j = 0; j < genes_number; j++)
+            {
+                if ((static_cast<type>(rand() / (RAND_MAX + 1.0)) <= mutation_rate) || is_repeated)
+                {
+                    population(i, j) = !population(i, j);
+                    is_repeated = false;
+                }
+            }
             // Check if its repeated
 
             for (Index j = 0; j < individuals_number; j++)
@@ -1225,14 +1171,14 @@ namespace opennn
                 }
             }
 
-			// Prevent no inputs
+            // Prevent no inputs
 
-			if (is_false(individual))
-			{
-				individual(static_cast<Index>(rand()) % genes_number) = true;
-				for (Index j = 0; j < genes_number; j++) population(i, j) = individual(j);
-			}
-		}
+            if (is_false(individual))
+            {
+                individual(static_cast<Index>(rand()) % genes_number) = true;
+                for (Index j = 0; j < genes_number; j++) population(i, j) = individual(j);
+            }
+        }*/
 	}
 
 	void GeneticAlgorithm::print_population()
@@ -1263,7 +1209,7 @@ namespace opennn
 
 	/// Select the inputs with the best generalization properties using the genetic algorithm.
 
-	InputsSelectionResults GeneticAlgorithm::perform_inputs_selection() 
+    InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 	{
 #ifdef OPENNN_DEBUG
 
@@ -1462,7 +1408,9 @@ namespace opennn
 
 			perform_crossover();
 
-			perform_mutation();
+            if(mutation_rate!=0){
+            perform_mutation();
+            }
 
             //check_categorical_columns();
 
@@ -1611,15 +1559,17 @@ namespace opennn
     {
         DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
 
-        const Index input_variables_number=data_set_pointer->get_input_variables_number();
+        const Index columns_number=individual_columns.size();
 
-        Tensor<bool,1> individual_columns_to_variables(input_variables_number);
+        const Index genes_number=get_genes_number();
+
+        Tensor<bool,1> individual_columns_to_variables(genes_number);
 
         individual_columns_to_variables.setConstant(false);
 
         Index input_index=0;
 
-        for(Index i=0;i<individual_columns.size();i++)
+        for(Index i=0;i<columns_number;i++)
         {
             if(data_set_pointer->get_column_type(i)==DataSet::ColumnType::Categorical)
             {

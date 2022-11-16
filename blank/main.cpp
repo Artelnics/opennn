@@ -28,14 +28,13 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/5_years_mortality.csv",';',true);
-
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/5_years_mortality_modified.csv",';',true);
 
 
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
-        const Index hidden_neurons_number = 3;
+        const Index hidden_neurons_number = 1;
         data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
 
 
@@ -53,7 +52,7 @@ int main(int argc, char* argv[])
 
        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-       training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+       training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
 
        GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -63,9 +62,13 @@ int main(int argc, char* argv[])
 
        genetic_algorithm.set_maximum_epochs_number(50);
 
-       genetic_algorithm.set_mutation_rate(0);
+       genetic_algorithm.set_mutation_rate(0.01);
        genetic_algorithm.set_elitism_size(2);
-
+       /*genetic_algorithm.initialize_population();
+       genetic_algorithm.evaluate_population();
+       genetic_algorithm.perform_fitness_assignment();
+       genetic_algorithm.perform_selection();
+       genetic_algorithm.perform_crossover();*/
 
 
 
@@ -91,11 +94,11 @@ int main(int argc, char* argv[])
 
        mean_selection_error_csv.close();
 
-       TestingAnalysis testing_analysis(&neural_network, &data_set);
+      /* TestingAnalysis testing_analysis(&neural_network, &data_set);
 
        TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
 
-       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
+       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;*/
 
         cout << "Bye OpenNN" << endl;
     }
