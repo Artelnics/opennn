@@ -3857,6 +3857,12 @@ const Tensor<type, 2>& DataSet::get_time_series_data() const
 }
 
 
+const Tensor<type, 2>& DataSet::get_associative_data() const
+{
+    return associative_data;
+}
+
+
 /// Returns a string with the method used.
 
 DataSet::MissingValuesMethod DataSet::get_missing_values_method() const
@@ -5131,15 +5137,28 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     data = new_data;
 }
 
+
 void DataSet::set_time_series_data(const Tensor<type, 2>& new_data)
 {
     time_series_data = new_data;
 }
 
 
+void DataSet::set_associative_data(const Tensor<type, 2>& new_data)
+{
+    associative_data = new_data;
+}
+
+
 void DataSet::set_time_series_columns_number(const Index& new_variables_number)
 {
     time_series_columns.resize(new_variables_number);
+}
+
+
+void DataSet::set_associative_columns_number(const Index& new_variables_number)
+{
+    associative_columns.resize(new_variables_number);
 }
 
 
