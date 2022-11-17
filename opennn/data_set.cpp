@@ -3660,25 +3660,50 @@ void DataSet::set_binary_simple_columns()
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 columns(column_index).categories.resize(2);
 
-                if(values(0) == type(0) && values(1) == type(1))
+                if((abs(values(0)-type(0))<NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1))<NUMERIC_LIMITS_MIN))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(1));
+
                 }
-                else if(values(0) == type(1) && values(1) == type(0))
+                else if(abs(values(0) - type(1))<NUMERIC_LIMITS_MIN && abs(values(1) - type(0))<NUMERIC_LIMITS_MIN)
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(1));
                 }
                 else if(values(0) > values(1))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(1));
                 }
                 else if(values(0) < values(1))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(1));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -11561,7 +11586,7 @@ void DataSet::read_ground_truth()
             //------------------------------------------------------------------------
 
             const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
-			cout << "" << endl;
+            cout << "" << endl;
 
             BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
@@ -12237,10 +12262,10 @@ void DataSet::read_csv_1()
         }
     }
 
-//    if(time_column != "")
-//    {
-//        set_column_type(time_column, DataSet::ColumnType::DateTime);
-//    }
+    //    if(time_column != "")
+    //    {
+    //        set_column_type(time_column, DataSet::ColumnType::DateTime);
+    //    }
 
 }
 
