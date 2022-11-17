@@ -1796,7 +1796,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_columns_correlations();
+    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(1,0).r == 1, LOG);
@@ -1821,7 +1821,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     for(Index i = 0; i <  data_set.get_input_columns_number() ; i++)
     {
@@ -1848,7 +1848,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Linear, LOG);
@@ -1884,7 +1884,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     for(Index i = 0; i < data_set.get_input_columns_number(); i++)
     {
@@ -1909,7 +1909,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     cout << "Calculating input correlations " << endl;
 /*
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Logistic, LOG);
@@ -1939,7 +1939,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1968,7 +1968,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -1996,7 +1996,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Logistic, LOG);
@@ -2031,7 +2031,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Logistic, LOG);
@@ -2061,7 +2061,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -2090,7 +2090,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
 
@@ -2118,7 +2118,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_columns_correlations();
+    inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Logistic, LOG);
