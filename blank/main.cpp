@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/5_years_mortality_modified.csv",';',true);
+        DataSet data_set ("D:/Descargas/5_years_mortality.csv",';',true);
 
 
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 
        GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-       genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+       genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
        genetic_algorithm.set_individuals_number(10);
 
@@ -64,11 +64,11 @@ int main(int argc, char* argv[])
 
        genetic_algorithm.set_mutation_rate(0.01);
        genetic_algorithm.set_elitism_size(2);
-       /*genetic_algorithm.initialize_population();
+       genetic_algorithm.initialize_population();
        genetic_algorithm.evaluate_population();
        genetic_algorithm.perform_fitness_assignment();
        genetic_algorithm.perform_selection();
-       genetic_algorithm.perform_crossover();*/
+       genetic_algorithm.perform_crossover();
 
 
 
@@ -81,18 +81,18 @@ int main(int argc, char* argv[])
 
        //cout<<genetic_algorithm.get_population().dimension(1);
 
-       InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+       //InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
 
        //cout<<inputs_selection_results.mean_selection_error_history<<endl;
        // Testing analysis
 
       // training_strategy.perform_training();
 
-       ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
+       /*ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
 
        mean_selection_error_csv<<inputs_selection_results.mean_selection_error_history;
 
-       mean_selection_error_csv.close();
+       mean_selection_error_csv.close();*/
 
       /* TestingAnalysis testing_analysis(&neural_network, &data_set);
 

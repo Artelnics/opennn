@@ -938,17 +938,46 @@ namespace opennn
         Tensor<Index, 1> parent_2_indexes=parent_1_indexes;
         std::random_device rd;
         std::mt19937 g(rd());
-        std::shuffle(parent_1_indexes.data(),parent_1_indexes.data()+parent_1_indexes.size(), g);
-        std::shuffle(parent_2_indexes.data(),parent_2_indexes.data()+parent_2_indexes.size(), g);
+
+
         Tensor<Index,2> couples(selected_individuals_number,2);
+        bool is_parent_repeated=false;
+        bool is_couple_repeated=false;
+
         for(Index i=0;i<selected_individuals_number;i++)
         {
+
+            do{
+                is_couple_repeated=false;
+                is_parent_repeated=false;
+
+                std::shuffle(parent_2_indexes.data(),parent_2_indexes.data()+parent_2_indexes.size(), g);
+
+                if(parent_1_indexes(i)==parent_2_indexes(i))
+                {
+                    is_parent_repeated=true;
+
+
+                }
+
+                //Check for couples repetition
+                for(Index j=0;j<i;j++)
+                {
+                    if((couples(j,0)==parent_1_indexes(i) && couples(j,1)==parent_2_indexes(i))||(couples(j,0)==parent_2_indexes(i) && couples(j,1)==parent_1_indexes(i)))
+                    {
+                       is_couple_repeated=true;
+
+                    }
+                }
+
+            }while(is_parent_repeated||is_couple_repeated);
+            //couple to collection addition
             couples(i,0)=parent_1_indexes(i);
             couples(i,1)=parent_2_indexes(i);
         }
-        //cout<<couples<<endl;
+        cout<<couples<<endl;
 
-        Tensor<bool, 1> parent_1_variables;
+       Tensor<bool, 1> parent_1_variables;
         Tensor<bool, 1> parent_2_variables;
         Tensor<bool,1> descendent_variables;
         Tensor<bool, 1> parent_1_columns;
@@ -956,6 +985,7 @@ namespace opennn
         Tensor<bool, 1> descendent_columns;
         Tensor<bool, 2> new_population(individuals_number, genes_number);
         Index offspring_count=0;
+        bool is_repeated=false;
 
         //We keep parents in the new generation
         for (Index i = 0; i < individuals_number; i++)
@@ -977,15 +1007,27 @@ namespace opennn
             parent_1_columns=transform_individual_to_columns(parent_1_variables);
             parent_2_columns=transform_individual_to_columns(parent_2_variables);
             //Perform crossover
+            do{
             descendent_columns=parent_1_columns;
-            for(Index j=0;j<descendent_columns.size();j++)
-            {
-                if(parent_1_columns(j)!=parent_2_columns(j))
+                for(Index j=0;j<descendent_columns.size();j++)
                 {
-                    rand()%2==0 ? descendent_columns(j)=false : descendent_columns(j)=true;
+                    if(parent_1_columns(j)!=parent_2_columns(j))
+                    {
+                        rand()%2==0 ? descendent_columns(j)=false : descendent_columns(j)=true;
+                    }
+                }
+            //check for repetitions
+            for(Index j=0;j<i;j++)
+            {
+                Tensor<bool,1> row=population.chip(j,0);
+                descendent_variables=transform_individual_columns_to_variables(descendent_columns);
+                if(are_equal(row,descendent_variables))
+                {
+                    is_repeated=true;
                 }
             }
 
+            }while(is_repeated);
             ///Population addition
             Tensor<bool,1> descendent=transform_individual_columns_to_variables(descendent_columns);
             for(Index j=0;j<genes_number;j++)
