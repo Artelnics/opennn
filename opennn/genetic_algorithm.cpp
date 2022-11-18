@@ -618,9 +618,14 @@ namespace opennn
                     if (are_equal(individual, row))
                     {
                             is_repeated = true;
-                            break;
+                            //break;
                     }
                 }
+            ///Check for no inputs
+            if(is_false(individual))
+            {
+                is_repeated=true;
+            }
 
             }while(is_repeated);
 
@@ -683,7 +688,7 @@ namespace opennn
 
 		// Optimization algorithm
 
-		Tensor<bool, 1> individual;
+        Tensor<bool, 1> individual;
 
 		// Model selection
 
@@ -702,18 +707,19 @@ namespace opennn
 
             individual_columns_indexes=transform_individual_to_columns_indexes(individual);
 
-
             data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
 
             data_set_pointer->set_input_target_columns(individual_columns_indexes, original_target_columns_indices);
 
             inputs_names = data_set_pointer->get_input_variables_names();
 
-            neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+            neural_network_pointer->set_inputs_number(individual_columns_indexes.size());
 
             neural_network_pointer->set_inputs_names(inputs_names);
 
             neural_network_pointer->set_parameters_random();
+
+
 
             training_results = training_strategy_pointer->perform_training();
 
@@ -729,7 +735,9 @@ namespace opennn
 
                 const Tensor<string, 1> inputs_names = data_set_pointer->get_input_columns_names();
 
-                for (Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
+                cout<< inputs_names<<endl;
+
+                //for (Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
 
                 cout << "Training error: " << training_results.get_training_error() << endl;
                 cout << "Selection error: " << training_results.get_selection_error() << endl;
@@ -975,9 +983,9 @@ namespace opennn
             couples(i,0)=parent_1_indexes(i);
             couples(i,1)=parent_2_indexes(i);
         }
-        cout<<couples<<endl;
 
-       Tensor<bool, 1> parent_1_variables;
+
+        Tensor<bool, 1> parent_1_variables;
         Tensor<bool, 1> parent_2_variables;
         Tensor<bool,1> descendent_variables;
         Tensor<bool, 1> parent_1_columns;
@@ -985,7 +993,7 @@ namespace opennn
         Tensor<bool, 1> descendent_columns;
         Tensor<bool, 2> new_population(individuals_number, genes_number);
         Index offspring_count=0;
-        bool is_repeated=false;
+        bool is_empty=false;
 
         //We keep parents in the new generation
         for (Index i = 0; i < individuals_number; i++)
@@ -1008,7 +1016,8 @@ namespace opennn
             parent_2_columns=transform_individual_to_columns(parent_2_variables);
             //Perform crossover
             do{
-            descendent_columns=parent_1_columns;
+                is_empty=false;
+                descendent_columns=parent_1_columns;
                 for(Index j=0;j<descendent_columns.size();j++)
                 {
                     if(parent_1_columns(j)!=parent_2_columns(j))
@@ -1016,24 +1025,31 @@ namespace opennn
                         rand()%2==0 ? descendent_columns(j)=false : descendent_columns(j)=true;
                     }
                 }
-            //check for repetitions
-            for(Index j=0;j<i;j++)
-            {
-                Tensor<bool,1> row=population.chip(j,0);
-                descendent_variables=transform_individual_columns_to_variables(descendent_columns);
-                if(are_equal(row,descendent_variables))
+                //check for repetitions
+            /*for(Index j=0;j<i;j++)
                 {
-                    is_repeated=true;
+                    Tensor<bool,1> row=new_population.chip(j,0);
+                    descendent_variables=transform_individual_columns_to_variables(descendent_columns);
+                    if(are_equal(row,descendent_variables))
+                    {
+                        is_repeated=true;
+                    }
+                }*/
+                ///Prevent no inputs
+                if(is_false(descendent_columns))
+                {
+                    is_empty=true;
                 }
-            }
 
-            }while(is_repeated);
+            }while(is_empty);
             ///Population addition
             Tensor<bool,1> descendent=transform_individual_columns_to_variables(descendent_columns);
             for(Index j=0;j<genes_number;j++)
             {
                 new_population(i+selected_individuals_number,j)=descendent(j);
+
             }
+
 
             //cout<<descendent_columns;
 
@@ -1041,99 +1057,8 @@ namespace opennn
         }
         population=new_population;
 
-        //Perform crossover
 
-
-                /*        // Take selected individuals in perform_selection()
-                for (Index i = 0; i < individuals_number; i++)
-                {
-                    if (selection(i) && offspring_count < selected_individuals_number)
-                      {
-                            for (Index j = 0; j < genes_number; j++)
-                             {
-                                new_population(offspring_count, j) = population(i, j);
-                             }
-                             offspring_count++;
-                      }
-                  }
-                        Index random_loops = 0;
-                        Index random_loops_2 = 0;
-
-                for (Index i = selected_individuals_number; i < individuals_number; i++)
-                {
-                    Index distance = 0;
-                    random_loops_2 = 0;
-                    is_repeated = false;
-                    // Select parents
-                    parent_1_index = rand() % selected_individuals_number;
-                    parent_1 = new_population.chip(parent_1_index, 0);
-                    parent_2_index = rand() % selected_individuals_number;
-                            do {
-                                parent_2_index = rand() % selected_individuals_number;
-                                parent_2 = new_population.chip(parent_2_index, 0);
-                                distance = 0;
-                                for (Index j = 0; j < genes_number; j++)
-                                    if (parent_1(j) != parent_2(j)) distance++;
-                                random_loops_2++;
-                            } while (distance < 1 && random_loops_2 < 25);
-                            // Perform crossover
-                            descendent = parent_1;
-                            for (Index j = 0; j < genes_number; j++)
-                            {
-                                if (parent_1(j) != parent_2(j))
-                                    descendent(j) = (rand() % 2 == 0);
-                            }
-                            // Prevent no inputs
-                            if (is_false(descendent))
-                                descendent(static_cast<Index>(rand()) % genes_number) = true;
-                            // Repetition comprobation
-                            for (Index j = 0; j < i; j++)
-                            {
-                                Tensor<bool, 1> row = new_population.chip(j, 0);
-                                if (are_equal(row, descendent))
-                                {
-                                    is_repeated = true;
-                                }
-                            }
-                            // Prevent repetition and infinite loop
-                            if (is_repeated && random_loops < 25)
-                            {
-                                random_loops++;
-                                i--;
-                            }
-                            else
-                            {
-                                for (Index j = 0; j < genes_number; j++)
-                                {
-                                    new_population(i, j) = descendent(j);
-                                }
-                                random_loops = 0;
-                                if (false)
-                                {
-                                    cout << "------------------------------" << endl;
-                                    cout << "Crossover for creating individuals " << i << " and " << i + 1 << endl;
-                                    cout << "Parent 1 Index:     " << parent_1_index;
-                                    cout << " Parent 1:     ";
-                                    for (Index j = 0; j < genes_number; j++)
-                                    {
-                                        cout << parent_1(j) << " ";
-                                    }
-                                    cout << endl << "Parent 2 Index:     " << parent_2_index;
-                                    cout << " Parent 2:     ";
-                                    for (Index j = 0; j < genes_number; j++)
-                                    {
-                                        cout << parent_2(j) << " ";
-                                    }
-                                    cout << endl << "Descendent 1 Index: " << i << " Descendent 1: ";
-                                    for (Index j = 0; j < genes_number; j++)
-                                    {
-                                        cout << descendent(j) << " ";
-                                    }
-                                }
-                            }
-                        }
-                        population = new_population;*/
-                    }
+ }
 
 
 
@@ -1151,12 +1076,16 @@ namespace opennn
 
         Tensor<bool,1> individual_columns;
 
+
         for(Index i=0; i<individuals_number;i++)
         {
             individual_variables=population.chip(i,0);
 
             individual_columns=transform_individual_to_columns(individual_variables);
 
+            bool is_empty;
+           do{
+                is_empty=false;
             for (Index j = 0; j <individual_columns.size();j++)
             {
                 if ((static_cast<type>(rand() / (RAND_MAX + 1.0)) <= mutation_rate))
@@ -1164,6 +1093,12 @@ namespace opennn
                     individual_columns(j)= !individual_columns(j);
                 }
             }
+            ///Prevent no inputs
+            if(is_false(individual_columns))
+            {
+                is_empty=true;
+            }
+            }while(is_empty);
 
             individual_variables=transform_individual_columns_to_variables(individual_columns);
 
@@ -1175,52 +1110,6 @@ namespace opennn
 
         }
 
-
-
-        /*const Index individuals_number = get_individuals_number();
-
-        const Index genes_number = get_genes_number();
-
-        Tensor<bool, 1> individual(genes_number);
-
-        bool is_repeated = false;
-
-        for (Index i = 0; i < individuals_number; i++)
-        {
-            individual = population.chip(i, 0);
-
-
-
-            // Perform mutation
-
-            for (Index j = 0; j < genes_number; j++)
-            {
-                if ((static_cast<type>(rand() / (RAND_MAX + 1.0)) <= mutation_rate) || is_repeated)
-                {
-                    population(i, j) = !population(i, j);
-                    is_repeated = false;
-                }
-            }
-            // Check if its repeated
-
-            for (Index j = 0; j < individuals_number; j++)
-            {
-                Tensor<bool, 1> row = population.chip(j, 0);
-
-                if (i != j && are_equal(row, individual))
-                {
-                    (is_repeated = true);
-                }
-            }
-
-            // Prevent no inputs
-
-            if (is_false(individual))
-            {
-                individual(static_cast<Index>(rand()) % genes_number) = true;
-                for (Index j = 0; j < genes_number; j++) population(i, j) = individual(j);
-            }
-        }*/
 	}
 
 	void GeneticAlgorithm::print_population()
@@ -1389,8 +1278,6 @@ namespace opennn
 			if (display)
 			{
 				cout << endl;
-
-
 
 				cout << "Epoch number: " << epoch << endl;
                 cout << "Generation mean training error: " << training_errors.mean() << endl;
