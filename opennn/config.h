@@ -5,7 +5,6 @@
 //#define OPENNN_MKL
 
 #ifdef OPENNN_MKL
-    #define EIGEN_USE_MKL_ALL
     #include "mkl.h"
 #endif
 

@@ -309,6 +309,65 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 /* New function calculate_vector_of_ranks */
 
+<<<<<<< HEAD
+=======
+using namespace std;
+bool sortbysec(const pair<int,int> &a, const pair<int,int> &b)
+{
+    return (a.first < b.first);
+}
+
+/*
+void rankify_improved(int A[] , int n) {
+
+    // Rank Vector
+    float R[n] = {0};
+
+    // Create an auxiliary array of tuples
+    // Each tuple stores the data as well
+    // as its index in A
+    vector <pair<int,int>> T(n);
+    for(int i = 0; i < n; i++)
+    {
+        T[i].first=A[i];
+        T[i].second=i;
+    }
+
+
+    // T[][0] is the data and T[][1] is
+    // the index of data in A
+
+    // Sort T according to first element
+    sort(T.begin(),T.end(),sortbysec);
+
+    float rank = 1, m = 1,i = 0;
+
+    while(i < n){
+        float j = i;
+
+        // Get no of elements with equal rank
+        while(j < n - 1 && T[j].first == T[j + 1].first)
+            j += 1;
+
+        m = j - i + 1;
+
+        for(int k=0;k<m;k++){
+
+            // For each equal element use formula
+            // obtain index of T[i+j][0] in A
+            int idx = T[i+k].second;
+            R[idx] = (double)(rank + (m - 1) * 0.5);
+        }
+
+        // Increment rank and i
+        rank += m;
+        i += m;
+    }
+    for (int i = 0; i < n; i++)
+        cout << (double)R[i] << ' ';
+
+}*/
+>>>>>>> checksmkl
 
 
 

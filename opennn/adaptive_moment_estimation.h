@@ -164,7 +164,7 @@ private:
 
    /// Training and selection batch size.
 
-   Index batch_samples_number = 10;
+   Index batch_samples_number = 1000;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"
@@ -189,6 +189,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     Tensor<type, 1> gradient_exponential_decay;
     Tensor<type, 1> square_gradient_exponential_decay;
+
+    Tensor<type, 1> square_gradient_exponential_decay_square_root;
 
     Index iteration = 0;
 

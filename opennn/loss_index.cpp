@@ -398,7 +398,10 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     }
 
     if(back_propagation.assemble) assemble_layers_error_gradient(back_propagation);
+<<<<<<< HEAD
 
+=======
+>>>>>>> checksmkl
 }
 
 

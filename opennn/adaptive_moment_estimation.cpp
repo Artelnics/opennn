@@ -562,28 +562,42 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 /// @param optimization_data New moment estimation data.
 
 void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
-                              AdaptiveMomentEstimationData& optimization_data) const
+    AdaptiveMomentEstimationData& optimization_data) const
 {
     const type learning_rate =
-        type(initial_learning_rate*
-            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
+        type(initial_learning_rate *
+            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration))) /
             (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
 
+#ifdef OPENNN_MKL
+
+    int parameters_number = back_propagation.gradient.size();
+
+    int incx = 1;
+    int incy = 1;
+
+    type a = (type(1) - beta_1);
+    type b = beta_1;
+
+    saxpby(&parameters_number, &a, back_propagation.gradient.data(), &incx, &b, optimization_data.gradient_exponential_decay.data(), &incy);
+
+#else
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.gradient_exponential_decay*beta_1
-            + back_propagation.gradient*(type(1) - beta_1);
+        = back_propagation.gradient * (type(1) - beta_1)
+        + optimization_data.gradient_exponential_decay * beta_1;
 
+#endif
+  
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
+        = back_propagation.gradient * back_propagation.gradient * (type(1) - beta_2)
+        + optimization_data.square_gradient_exponential_decay * beta_2;
 
-    //back_propagation.parameters.device(*thread_pool_device) -=
-    //        optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
-    
-    auto tmp = optimization_data.square_gradient_exponential_decay.sqrt();
+    optimization_data.square_gradient_exponential_decay_square_root.device(*thread_pool_device)
+        = optimization_data.square_gradient_exponential_decay.sqrt() + epsilon;
 
-    back_propagation.parameters.device(*thread_pool_device) -= learning_rate * optimization_data.gradient_exponential_decay / (tmp + epsilon);
-    
+    back_propagation.parameters.device(*thread_pool_device)
+        -= learning_rate * optimization_data.gradient_exponential_decay / optimization_data.square_gradient_exponential_decay_square_root;
+        
     optimization_data.iteration++;
 
     // Update parameters
@@ -820,6 +834,9 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     gradient_exponential_decay.setZero();
 
     square_gradient_exponential_decay.resize(parameters_number);
+    square_gradient_exponential_decay.setZero();
+
+    square_gradient_exponential_decay_square_root.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
 }
 

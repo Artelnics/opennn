@@ -31,8 +31,8 @@ int main()
      
         // Data Set
         
-        const Index samples_number = 10000;
-        const Index inputs_number = 10000;
+        const Index samples_number = 1000000;
+        const Index inputs_number = 1000;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = 1000;
         
@@ -46,11 +46,11 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
-        neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
+        neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
         PerceptronLayer* pl = static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(2));
 
-        pl->set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
+        pl->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
         // Training strategy
 
@@ -58,12 +58,13 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_maximum_epochs_number(10);
+        training_strategy.set_maximum_epochs_number(1000);
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
 
         cout << "End Rosenbrock" << endl;
+
 
         return 0;
     }

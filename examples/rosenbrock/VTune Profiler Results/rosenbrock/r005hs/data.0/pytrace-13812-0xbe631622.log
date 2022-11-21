@@ -1,0 +1,3 @@
+
+8392 : 0x4c6be631f69 : 3 : logger_init :  LOG FILE OPENED (by collectunits.logger), level: 4
+8392 : 0x4c6be72e7a7 : 4 : pytrace_start_profiling :  [CALLED]
