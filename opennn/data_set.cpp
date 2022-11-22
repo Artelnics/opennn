@@ -708,6 +708,11 @@ string DataSet::get_project_type_string(const DataSet::ProjectType& newProjectTy
     {
         return "ImageClassification";
     }
+    else if(newProjectType == ProjectType::AutoAssociation)
+    {
+        return "AutoAssociation";
+    }
+
 }
 
 
@@ -5137,6 +5142,10 @@ void DataSet::set_project_type_string(const string& newLearningTask)
     else if(newLearningTask == "TextClassification")
     {
         set_project_type(ProjectType::TextClassification);
+    }
+    else if(newLearningTask == "AutoAssociation")
+    {
+        set_project_type(ProjectType::AutoAssociation);
     }
     else
     {
