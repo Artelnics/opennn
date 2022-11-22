@@ -103,7 +103,6 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
             // Found a token, add it to the vector
 
             tokens[index] = str.substr(lastPos, pos - lastPos);
-            trim(tokens[index]);
         }
 
         old_pos = pos;
@@ -185,9 +184,9 @@ Index count_tokens(const string& s, const string& sep)
 {
     Index tokens_number = 0;
 
-    string::size_type pos = 0;
+    std::string::size_type pos = 0;
 
-    while ( s.find(sep, pos) != string::npos )
+    while ( s.find(sep, pos) != std::string::npos )
     {
         pos = s.find(sep, pos);
         ++ tokens_number;
@@ -233,8 +232,6 @@ Tensor<string, 1> get_tokens(const string& s, const string& sep)
 
         tokens(i) = str.substr(last_pos, pos - last_pos);
 
-        trim(tokens(i));
-
         pos += sep.length();
         last_pos = pos;
         i++;
@@ -243,7 +240,6 @@ Tensor<string, 1> get_tokens(const string& s, const string& sep)
     if(last_pos != s.length()) // Reading last element
     {
         tokens(i) = str.substr(last_pos, s.length() - last_pos);
-        trim(tokens(i));
     }
 
     return tokens;
@@ -392,7 +388,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 
 bool is_date_time_string(const string& str)
 {
-    if(is_numeric_string(str)) return false;
+    if(is_numeric_string(str))return false;
 
     const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
@@ -411,7 +407,14 @@ bool is_date_time_string(const string& str)
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
 
-    return regex_match(str, regular_expression);
+    if(regex_match(str, regular_expression))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
@@ -887,8 +890,8 @@ bool contains_substring(const string& str, const string& sub_str)
  ///@param toReplace
  ///@param replaceWith
 
-void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
-    string buf;
+void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
+    std::string buf;
 
     std::size_t pos = 0;
     std::size_t prevPos;
@@ -901,7 +904,7 @@ void replace_all_appearances(string& s, string const& toReplace, string const& r
         prevPos =    pos;
         pos = s.find(toReplace, pos);
 
-        if (pos == string::npos)
+        if (pos == std::string::npos)
             break;
 
         buf.append(s, prevPos, pos - prevPos);
@@ -923,6 +926,89 @@ void replace_all_appearances(string& s, string const& toReplace, string const& r
 }
 
 
+/// Replaces all apprearances non allowed programming characters of a substring with allowed characters
+/// \brief replace_non_allowed_programming_characters
+/// \param s
+/// \return
+string replace_non_allowed_programming_characters(std::string& s)
+{
+    string out = "";
+    if (s[0] == '$')
+        out=s;
+
+    for (char& c: s)
+    {
+        if (c=='/'){ out+="_div_"; }
+        if (c=='*'){ out+="_mul_"; }
+        if (c=='+'){ out+="_sum_"; }
+        if (c=='-'){ out+="_res_"; }
+        if (c=='='){ out+="_equ_"; }
+        if (c=='!'){ out+="_not_"; }
+        if (c=='<'){ out+="_lower_" ; }
+        if (c=='>'){ out+="_higher_"; }
+        if (isalnum(c)!=0){ out += c; }
+        if (isalnum(c)==0){ out+='_'; }
+    }
+
+    return out;
+}
+
+
+vector<string> get_words_in_a_string(string str)
+{
+    vector<string> output;
+    string word = "";
+
+    for (auto x : str)
+    {
+        if (isalnum(x))
+        {
+            word = word + x;
+        }else if (x=='_')
+        {
+            word = word + x;
+        }
+        else
+        //if (x == ' ')
+        {
+            output.push_back(word);
+            word = "";
+        }
+    }
+
+    output.push_back(word);
+    return output;
+}
+
+
+///Returns the number of apprearances of a substring
+///@brief WordOccurrence
+///@param sentence
+///@param word
+///@return
+int WordOccurrence(char *sentence, char *word)
+{
+    int slen = strlen(sentence);
+    int wordlen = strlen(word);
+    int count = 0;
+    int i, j;
+
+    for(i=0; i<slen; i++)
+    {
+        for(j=0; j<wordlen; j++)
+        {
+            if(sentence[i+j]!=word[j])
+            break;
+        }
+        if(j==wordlen)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
@@ -933,21 +1019,11 @@ void trim(string& str)
 
     str.erase(0, str.find_first_not_of(' '));
     str.erase(0, str.find_first_not_of('\t'));
-    str.erase(0, str.find_first_not_of('\n'));
-    str.erase(0, str.find_first_not_of('\r'));
-    str.erase(0, str.find_first_not_of('\f'));
-    str.erase(0, str.find_first_not_of('\v'));
 
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
     str.erase(str.find_last_not_of('\t') + 1);
-    str.erase(str.find_last_not_of('\n') + 1);
-    str.erase(str.find_last_not_of('\r') + 1);
-    str.erase(str.find_last_not_of('\f') + 1);
-    str.erase(str.find_last_not_of('\v') + 1);
-    str.erase(str.find_last_not_of('\b') + 1);
-
 }
 
 
@@ -968,21 +1044,11 @@ string get_trimmed(const string& str)
     //prefixing spaces
 
     output.erase(0, output.find_first_not_of(' '));
-    output.erase(0, output.find_first_not_of('\t'));
-    output.erase(0, output.find_first_not_of('\n'));
-    output.erase(0, output.find_first_not_of('\r'));
-    output.erase(0, output.find_first_not_of('\f'));
-    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
     output.erase(output.find_last_not_of(' ') + 1);
-    output.erase(output.find_last_not_of('\t') + 1);
-    output.erase(output.find_last_not_of('\n') + 1);
-    output.erase(output.find_last_not_of('\r') + 1);
-    output.erase(output.find_last_not_of('\f') + 1);
-    output.erase(output.find_last_not_of('\v') + 1);
-    output.erase(output.find_last_not_of('\b') + 1);
+
     return output;
 }
 
@@ -1089,7 +1155,7 @@ bool is_mixed(const Tensor<string, 1>& v)
 /// Checks if a string is valid encoded in UTF-8 or not
 /// @param string String to be checked.
 
-void remove_non_printable_chars( string& wstr)
+void remove_non_printable_chars( std::string& wstr)
 {
     // get the ctype facet for wchar_t (Unicode code points in pactice)
     typedef std::ctype< wchar_t > ctype ;
@@ -1136,58 +1202,16 @@ void replace(string& source, const string& find_what, const string& replace_with
 }
 
 
-///Replaces all apprearances of a substring with another string
- ///@param s
- ///@param toReplace
- ///@param replaceWith
-/*
-void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith) {
-    string buf;
-
-    std::size_t pos = 0;
-    std::size_t prevPos;
-
-    // Reserves rough estimate of final size of string.
-    buf.reserve(s.size());
-
-    while (true) {
-
-        prevPos =    pos;
-        pos = s.find(toReplace, pos);
-
-        if (pos == string::npos)
-            break;
-
-        buf.append(s, prevPos, pos - prevPos);
-        if (buf.back() == '_')
-        {
-            buf += toReplace;
-            pos += toReplace.size();
-
-        }else
-        {
-            buf += replaceWith;
-            pos += toReplace.size();
-
-        }
-    }
-
-    buf.append(s, prevPos, s.size() - prevPos);
-    s.swap(buf);
-}
-*/
-
 bool isNotAlnum (char &c)
 {
     return (c < ' ' || c > '~');
 }
 
+
 void remove_not_alnum(string &str)
 {
         str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
 }
-
-
 
 }
 
