@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "region_proposal_layer.h"
-#include "region_proposal_layer.h"
+#include "opennn_images.h"
 
 
 namespace opennn
