@@ -143,7 +143,7 @@ namespace opennn
         return data_without_padding;
     }
 
-    Tensor<type, 1> propose_random_region(const Tensor<Tensor<type, 1>, 1>& image_data)
+    Tensor<type, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>& image_data, const Index width_to_resize, const Index height_to_resize)
     {
         const Index image_height = image_data(1)(0);
         const Index image_width = image_data(1)(1);
@@ -173,9 +173,16 @@ namespace opennn
 
         Tensor<type, 1> random_region(channels_number * region_width * region_height);
 
+        // We resize the region after its random proposal
+
         random_region = get_bounding_box(image_data, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
-        return random_region;
+        Tensor<type, 1> resized_random_region(channels_number * width_to_resize * height_to_resize);
+
+        resized_random_region = resize_proposed_region(random_region, channels_number, region_width,
+                                                       region_height, width_to_resize, height_to_resize);
+
+        return resized_random_region;
     }
 
     Tensor<type, 1> get_bounding_box(const Tensor<Tensor<type, 1>, 1>& image,
@@ -271,83 +278,35 @@ namespace opennn
         return output_image;
     }
 
-    /*
-    Tensor<type, 1> get_bounding_box(const Tensor<unsigned char, 1>& image,
-                                              const Index& x_top_left, const Index& y_top_left,
-                                              const Index& x_bottom_right, const Index& y_bottom_right)
+    Tensor<type, 1> resize_proposed_region(const Tensor<type, 1> region_data, const Index& channels_number,
+                                           const Index& region_width, const Index& region_height,
+                                           const Index& new_width, const Index& new_height)
     {
-        const Index channels_number = get_channels_number();
-        const Index height = get_image_height();
-        const Index width = get_image_width();
-        const Index image_size_single_channel = height * width;
+        Tensor<type, 1> new_resized_region_data(channels_number * new_width * new_height);
 
-        const Index bounding_box_width = abs(x_top_left - x_bottom_right);
-        const Index bounding_box_height = abs(y_top_left - y_bottom_right);
-        const Index bounding_box_single_channel_size = bounding_box_width * bounding_box_height;
+        const type scaleWidth =  (type)new_width / (type)region_width;
+        const type scaleHeight = (type)new_height / (type)region_height;
 
-        Tensor<type, 1> bounding_box_data;
-        bounding_box_data.resize(channels_number * bounding_box_single_channel_size);
-
-        const Index pixel_loop_start = width * (height - y_bottom_right) + x_top_left;
-        const Index pixel_loop_end = width * (height - 1 - y_top_left) + x_bottom_right;
-
-        if(channels_number == 3)
+        for(Index i = 0; i < new_height; i++)
         {
-            Tensor<unsigned char, 1> image_red_channel_flatted_sorted(image_size_single_channel);
-            Tensor<unsigned char, 1> image_green_channel_flatted_sorted(image_size_single_channel);
-            Tensor<unsigned char, 1> image_blue_channel_flatted_sorted(image_size_single_channel);
-
-            image_red_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
-            image_green_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
-            image_blue_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({2 * image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
-
-            Tensor<type, 1> bounding_box_red_channel(bounding_box_single_channel_size);
-            Tensor<type, 1> bounding_box_green_channel(bounding_box_single_channel_size);
-            Tensor<type, 1> bounding_box_blue_channel(bounding_box_single_channel_size);
-
-            Index data_index = 0;
-
-            for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+            for(Index j = 0; j < new_width; j++)
             {
-                const int height_number = (int)(i/height);
+                const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
+                const int nearestMatch =  (((int)(i / scaleHeight) * (region_width * channels_number)) + ((int)(j / scaleWidth) * channels_number));
 
-                const Index left_margin = height_number * width + x_top_left;
-                const Index right_margin = height_number * width + x_bottom_right;
-
-                if(i >= left_margin && i < right_margin)
+                if(channels_number == 3)
                 {
-                    bounding_box_red_channel(data_index) = static_cast<type>(image_red_channel_flatted_sorted[i]);
-                    bounding_box_green_channel(data_index) = static_cast<type>(image_green_channel_flatted_sorted[i]);
-                    bounding_box_blue_channel(data_index) = static_cast<type>(image_blue_channel_flatted_sorted[i]);
-
-                    data_index++;
+                    new_resized_region_data[pixel] =  region_data[nearestMatch];
+                    new_resized_region_data[pixel + 1] =  region_data[nearestMatch + 1];
+                    new_resized_region_data[pixel + 2] =  region_data[nearestMatch + 2];
                 }
-            }
-
-            Tensor<type, 1> red_green_concatenation(bounding_box_red_channel.size() + bounding_box_green_channel.size());
-            red_green_concatenation = bounding_box_red_channel.concatenate(bounding_box_green_channel, 0); // To allow a double concatenation
-            bounding_box_data = red_green_concatenation.concatenate(bounding_box_blue_channel, 0);
-        }
-        else
-        {
-            Index data_index = 0;
-
-            for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
-            {
-                const int height_number = (int)(i/height);
-
-                const Index left_margin = height_number * width + x_top_left;
-                const Index right_margin = height_number * width + x_bottom_right;
-
-                if(i >= left_margin && i < right_margin)
+                else
                 {
-                    bounding_box_data(data_index) = static_cast<type>(image[i]);
-                    data_index++;
+                    new_resized_region_data[pixel] =  region_data[nearestMatch];
                 }
             }
         }
 
-        return bounding_box_data;
+        return new_resized_region_data;
     }
-    */
 }
