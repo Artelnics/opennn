@@ -26,7 +26,7 @@ NeuralNetwork::NeuralNetwork()
 /// It creates a neural network object with the given model type and architecture.
 /// It initializes the rest of the members to their default values.
 /// @param model_type Type of problem to be solved with the neural network
-/// (Approximation, Classification, Forecasting, ImageClassification).
+/// (Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation).
 /// @param architecture Architecture of the neural network({inputs_number, hidden_neurons_number, outputs_number}).
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
@@ -406,6 +406,14 @@ string NeuralNetwork::get_project_type_string() const
     else if(project_type == ProjectType::ImageClassification)
     {
         return "ImageClassification";
+    }
+    else if(project_type == ProjectType::TextGeneration)
+    {
+        return "TextGeneration";
+    }
+    else if(project_type == ProjectType::AutoAssociation)
+    {
+        return "AutoAssociation";
     }
 }
 
@@ -800,12 +808,12 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::Forecasting)
     {
-        //        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        //        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+        //                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        //                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        //        this->add_layer(long_short_term_memory_layer_pointer);
+        //                this->add_layer(long_short_term_memory_layer_pointer);
 
-        for(Index i = 0; i < size-1; i++)
+        for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -827,6 +835,33 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     else if(model_type == ProjectType::ImageClassification)
     {
         // Use the set mode build specifically for image classification
+    }
+    else if(model_type == ProjectType::TextGeneration)
+    {
+        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+
+        ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
+
+        this->add_layer(long_short_term_memory_layer_pointer);
+        this->add_layer(probabilistic_layer_pointer);
+    }
+    else if(model_type == ProjectType::AutoAssociation)
+    {
+        const Index mapping_neurons_number = 50;
+        const Index bottle_neck_neurons_number = architecture[1];
+        const Index target_variables_number = architecture[2];
+
+        PerceptronLayer *mapping_layer = new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        PerceptronLayer *bottle_neck_layer = new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear);
+        PerceptronLayer *demapping_layer = new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        PerceptronLayer *output_layer = new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear);
+        UnscalingLayer *unscaling_layer = new UnscalingLayer(target_variables_number);
+
+        this->add_layer(mapping_layer);
+        this->add_layer(bottle_neck_layer);
+        this->add_layer(demapping_layer);
+        this->add_layer(output_layer);
+        this->add_layer(unscaling_layer);
     }
 
     outputs_names.resize(outputs_number);
@@ -914,30 +949,38 @@ void NeuralNetwork::set_project_type(const NeuralNetwork::ProjectType& new_proje
     project_type = new_project_type;
 }
 
-void NeuralNetwork::set_project_type_string(const string& newLearningTask)
+void NeuralNetwork::set_project_type_string(const string& new_project_type)
 {
-    if(newLearningTask == "Approximation")
+    if(new_project_type == "Approximation")
     {
         set_project_type(ProjectType::Approximation);
     }
-    else if(newLearningTask == "Classification")
+    else if(new_project_type == "Classification")
     {
         set_project_type(ProjectType::Classification);
     }
-    else if(newLearningTask == "Forecasting")
+    else if(new_project_type == "Forecasting")
     {
         set_project_type(ProjectType::Forecasting);
     }
-    else if(newLearningTask == "ImageClassification")
+    else if(new_project_type == "ImageClassification")
     {
         set_project_type(ProjectType::ImageClassification);
+    }
+    else if(new_project_type == "TextClassification")
+    {
+        set_project_type(ProjectType::TextClassification);
+    }
+    else if(new_project_type == "AutoAssociation")
+    {
+        set_project_type(ProjectType::AutoAssociation);
     }
     else
     {
         const string message =
-                "Neural Engine Exception:\n"
-                "void NeuralEngine::setProjectType(const QString&)\n"
-                "Unknown project type: " + newLearningTask + "\n";
+                "Neural Network class exception:\n"
+                "void set_project_type_string(const string&)\n"
+                "Unknown project type: " + new_project_type + "\n";
 
         throw logic_error(message);
     }
@@ -1643,13 +1686,15 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions)
 {
 #ifdef OPENNN_DEBUG
+    cout << "inputs dimensions: " << inputs_dimensions << endl;
+
     if(inputs_dimensions(1) != get_inputs_number())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions, type* outputs_data, Tensor<Index, 1>& outputs_dimensions) method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
+               << "Inputs columns number must be equal to " << get_inputs_number() << ", (" << inputs_dimensions(1) << ").\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -1862,49 +1907,49 @@ string NeuralNetwork::generate_word(TextGenerationAlphabet& text_generation_alph
 
     // Under development
 
-//    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+    //    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
 
-//    if(first_letters.length()*alphabet_length != get_inputs_number())
-//    {
-//        ostringstream buffer;
+    //    if(first_letters.length()*alphabet_length != get_inputs_number())
+    //    {
+    //        ostringstream buffer;
 
-//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
-//               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+    //               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+    //               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
 
-//        throw invalid_argument(buffer.str());
-//    }
+    //        throw invalid_argument(buffer.str());
+    //    }
 
 
-//    string result = first_letters;
+    //    string result = first_letters;
 
-//    // 1. Input letters to one hot encode
+    //    // 1. Input letters to one hot encode
 
-//    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+    //    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
 
-//    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+    //    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-//    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+    //    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
 
-//    punctuation_signs.setValues({" ",",",".","\n",":",";"});
+    //    punctuation_signs.setValues({" ",",",".","\n",":",";"});
 
-//    // 2. Loop for forecasting the following letter in function of the last letters
+    //    // 2. Loop for forecasting the following letter in function of the last letters
 
-//    do{
-//        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+    //    do{
+    //        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
-//        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+    //        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
-//        if(!contains(punctuation_signs, letter))
-//        {
-//            result += letter;
+    //        if(!contains(punctuation_signs, letter))
+    //        {
+    //            result += letter;
 
-//            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
-//        }
+    //            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+    //        }
 
-//    }while(result.length() < length);
+    //    }while(result.length() < length);
 
-//    return result;
+    //    return result;
 }
 
 
@@ -1932,6 +1977,10 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
     Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
     do{
+        Tensor<type, 2> input_data(get_inputs_number(), 1);
+        input_data.setZero();
+        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
         Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
         string letter = text_generation_alphabet.multiple_one_hot_decode(output);
@@ -2562,7 +2611,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
 
 void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
-{    
+{
     ostringstream buffer;
 
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Outputs");
@@ -2764,7 +2813,6 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 string NeuralNetwork::write_expression_c() const
 {
 
-<<<<<<< HEAD
     //get_scaling_layer_pointer()->get_descriptives()
 
     int LSTM_number = get_long_short_term_memory_layers_number();
@@ -2772,10 +2820,6 @@ string NeuralNetwork::write_expression_c() const
     int hidden_state_counter = 0;
 
     vector<std::string> found_tokens;
-=======
-    //vector<string> found_tokens;
-
->>>>>>> checksmkl
     ostringstream buffer;
     ostringstream calculate_outputs_buffer;
 
@@ -2806,15 +2850,15 @@ string NeuralNetwork::write_expression_c() const
     buffer << "main program has to look like this:" << endl;
     buffer << "\t" << endl;
     buffer << "int main(){ " << endl;
-	buffer << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer << "\t" << "vector<float> inputs(3);"<< endl;
     buffer << "\t" << endl;
-	buffer << "\t" << "const float asdas  = 0.3;" << endl;
-	buffer << "\t" << "inputs[0] = asdas;"        << endl;
-	buffer << "\t" << "const float input2 = 2.5;" << endl;
-	buffer << "\t" << "inputs[1] = input2;"       << endl;
-	buffer << "\t" << "const float input3 = 1.8;" << endl;
-	buffer << "\t" << "inputs[2] = input3;"       << endl;
-	buffer << "\t" << ". . ." << endl;
+    buffer << "\t" << "const float asdas  = 0.3;" << endl;
+    buffer << "\t" << "inputs[0] = asdas;"        << endl;
+    buffer << "\t" << "const float input2 = 2.5;" << endl;
+    buffer << "\t" << "inputs[1] = input2;"       << endl;
+    buffer << "\t" << "const float input3 = 1.8;" << endl;
+    buffer << "\t" << "inputs[2] = input3;"       << endl;
+    buffer << "\t" << ". . ." << endl;
     buffer << "\n" << endl;
 
     buffer << "Inputs Names:" <<endl;
@@ -3818,15 +3862,15 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "main program has to look like this:" << endl;
     buffer << "\t" << endl;
     buffer << "int neuralNetwork(){ " << endl;
-	buffer << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer << "\t" << "vector<float> inputs(3);"<< endl;
     buffer << "\t" << endl;
-	buffer << "\t" << "const float asdas  = 0.3;" << endl;
-	buffer << "\t" << "inputs[0] = asdas;"        << endl;
-	buffer << "\t" << "const float input2 = 2.5;" << endl;
-	buffer << "\t" << "inputs[1] = input2;"       << endl;
-	buffer << "\t" << "const float input3 = 1.8;" << endl;
-	buffer << "\t" << "inputs[2] = input3;"       << endl;
-	buffer << "\t" << ". . ." << endl;
+    buffer << "\t" << "const float asdas  = 0.3;" << endl;
+    buffer << "\t" << "inputs[0] = asdas;"        << endl;
+    buffer << "\t" << "const float input2 = 2.5;" << endl;
+    buffer << "\t" << "inputs[1] = input2;"       << endl;
+    buffer << "\t" << "const float input3 = 1.8;" << endl;
+    buffer << "\t" << "inputs[2] = input3;"       << endl;
+    buffer << "\t" << ". . ." << endl;
     buffer << "\n" << endl;
     buffer << "Inputs Names:" <<endl;
 
@@ -4296,17 +4340,17 @@ string NeuralNetwork::write_expression_python() const
     buffer << "main program has to look like this:" << endl;
     buffer << "" << endl;
     buffer << "def main ():" << endl;
-	buffer << "\t" << "#default_val = 3.1416" << endl;
-	buffer << "\t" << "inputs = [None]*3" << endl;
+    buffer << "\t" << "#default_val = 3.1416" << endl;
+    buffer << "\t" << "inputs = [None]*3" << endl;
     buffer << "\t" <<  "" << endl;
-	buffer << "\t" << "Id_1 = 0.3" << endl;
+    buffer << "\t" << "Id_1 = 0.3" << endl;
     buffer << "\t" << "Id_1 = 2.5" << endl;
     buffer << "\t" << "Id_1 = 1.8" << endl;
-	buffer << "\t" << "" << endl;
+    buffer << "\t" << "" << endl;
     buffer << "\t" << "inputs[0] = Input_1" << endl;
     buffer << "\t" << "inputs[1] = Input_2" << endl;
-	buffer << "\t" << "inputs[2] = Input_3" << endl;
-	buffer << "\t" << ". . ." << endl;
+    buffer << "\t" << "inputs[2] = Input_3" << endl;
+    buffer << "\t" << ". . ." << endl;
     buffer << "\n" << endl;
     buffer << "Inputs Names: \t" << endl;
 
