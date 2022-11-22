@@ -143,6 +143,120 @@ namespace opennn
         return data_without_padding;
     }
 
+    Tensor<type, 1> propose_random_region(const Tensor<Tensor<type, 1>, 1>& image_data)
+    {
+        const Index image_height = image_data(1)(0);
+        const Index image_width = image_data(1)(1);
+        const Index channels_number = image_data(1)(2);
+
+        Index x_center = rand() % image_width;
+        Index y_center = rand() % image_height;
+
+        Index x_top_left;
+        Index y_top_left;
+
+        if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
+        if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
+
+        Index x_bottom_right;
+
+        if(x_top_left == 0){x_bottom_right = rand()%(image_width - (x_center + 1) + 1) + (x_center + 1);}
+        else{x_bottom_right = rand()%(image_width - x_center + 1) + x_center;}
+
+        Index y_bottom_right;
+
+        if(y_top_left == 0){y_bottom_right = rand()%(image_height - (y_center + 1) + 1) + (y_center + 1);}
+        else{y_bottom_right = rand() % (image_height - y_center + 1) + y_center;}
+
+        const Index region_width = abs(x_top_left - x_bottom_right);
+        const Index region_height = abs(y_top_left - y_bottom_right);
+
+        Tensor<type, 1> random_region(channels_number * region_width * region_height);
+
+        random_region = get_bounding_box(image_data, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+        return random_region;
+    }
+
+    Tensor<type, 1> get_bounding_box(const Tensor<Tensor<type, 1>, 1>& image,
+                                              const Index& x_top_left, const Index& y_top_left,
+                                              const Index& x_bottom_right, const Index& y_bottom_right)
+    {
+        const Index channels_number = image(1)(2);
+        const Index height = image(1)(0);
+        const Index width = image(1)(1);
+
+        const Index image_size_single_channel = height * width;
+
+        const Index bounding_box_width = abs(x_top_left - x_bottom_right);
+        const Index bounding_box_height = abs(y_top_left - y_bottom_right);
+        const Index bounding_box_single_channel_size = bounding_box_width * bounding_box_height;
+
+        Tensor<type, 1> bounding_box_data;
+        bounding_box_data.resize(channels_number * bounding_box_single_channel_size);
+
+        const Index pixel_loop_start = width * (height - y_bottom_right) + x_top_left;
+        const Index pixel_loop_end = width * (height - 1 - y_top_left) + x_bottom_right;
+
+        if(channels_number == 3)
+        {
+            Tensor<type, 1> image_red_channel_flatted_sorted(image_size_single_channel);
+            Tensor<type, 1> image_green_channel_flatted_sorted(image_size_single_channel);
+            Tensor<type, 1> image_blue_channel_flatted_sorted(image_size_single_channel);
+
+            image_red_channel_flatted_sorted = image(0).slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+            image_green_channel_flatted_sorted = image(0).slice(Eigen::array<Eigen::Index, 1>({image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+            image_blue_channel_flatted_sorted = image(0).slice(Eigen::array<Eigen::Index, 1>({2 * image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+
+            Tensor<type, 1> bounding_box_red_channel(bounding_box_single_channel_size);
+            Tensor<type, 1> bounding_box_green_channel(bounding_box_single_channel_size);
+            Tensor<type, 1> bounding_box_blue_channel(bounding_box_single_channel_size);
+
+            Index data_index = 0;
+
+            for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+            {
+                const int height_number = (int)(i/height);
+
+                const Index left_margin = height_number * width + x_top_left;
+                const Index right_margin = height_number * width + x_bottom_right;
+
+                if(i >= left_margin && i < right_margin)
+                {
+                    bounding_box_red_channel(data_index) = image_red_channel_flatted_sorted[i];
+                    bounding_box_green_channel(data_index) = image_green_channel_flatted_sorted[i];
+                    bounding_box_blue_channel(data_index) = image_blue_channel_flatted_sorted[i];
+
+                    data_index++;
+                }
+            }
+
+            Tensor<type, 1> red_green_concatenation(bounding_box_red_channel.size() + bounding_box_green_channel.size());
+            red_green_concatenation = bounding_box_red_channel.concatenate(bounding_box_green_channel, 0); // To allow a double concatenation
+            bounding_box_data = red_green_concatenation.concatenate(bounding_box_blue_channel, 0);
+        }
+        else
+        {
+            Index data_index = 0;
+
+            for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+            {
+                const int height_number = (int)(i/height);
+
+                const Index left_margin = height_number * width + x_top_left;
+                const Index right_margin = height_number * width + x_bottom_right;
+
+                if(i >= left_margin && i < right_margin)
+                {
+                    bounding_box_data(data_index) = image(0)[i];
+                    data_index++;
+                }
+            }
+        }
+
+        return bounding_box_data;
+    }
+
     Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>& input_image,
                                             Index& x_top_left, Index& y_top_left,
                                             Index& x_bottom_right, Index& y_bottom_right)
