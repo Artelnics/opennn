@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/5_years_mortality_expression.csv",';',true);
+        DataSet data_set ("C:/Users/PedroFM/Desktop/5_years_mortality_modified.csv",';',true);
 
 
 
@@ -56,15 +56,17 @@ int main(int argc, char* argv[])
 
        GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-       genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+       genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
-       genetic_algorithm.set_individuals_number(500);
+       genetic_algorithm.set_individuals_number(200);
 
        genetic_algorithm.set_maximum_epochs_number(50);
 
        genetic_algorithm.set_mutation_rate(0.01);
        genetic_algorithm.set_elitism_size(2);
+
        genetic_algorithm.initialize_population();
+       system("pause");
        genetic_algorithm.evaluate_population();
        genetic_algorithm.perform_fitness_assignment();
        genetic_algorithm.perform_selection();

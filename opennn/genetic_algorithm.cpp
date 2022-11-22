@@ -494,11 +494,14 @@ namespace opennn
 
 		Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
+        Tensor<type,1> correlations_abs=correlations.abs();
+
+
 		Tensor<Index, 1> rank(genes_number);
 
 
 
-		rank= calculate_rank_greater(correlations);
+        rank= calculate_rank_greater(correlations_abs);
 
 
         Tensor<type, 1 > fitness_correlations(rank.size());
@@ -560,7 +563,7 @@ namespace opennn
             individual.setConstant(false);
             bool is_repeated=false;
             do
-            {
+            {   is_repeated=false;
                 activated_columns=1+rand()%columns_number;
                 columns_count=0;
                 do
