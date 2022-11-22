@@ -83,8 +83,8 @@ string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& ne
     else
     {
         const string message =
-                "Neural Engine Exception:\n"
-                "void NeuralEngine::setProjectType(const QString&)\n"
+                "Scaling Layer Exception:\n"
+                "string get_project_type_string(const ScalingLayer::ProjectType&) const\n"
                 "Unknown project type.\n";
 
         throw logic_error(message);
@@ -437,9 +437,9 @@ void ScalingLayer::set_project_type_string(const string& newLearningTask)
     else
     {
         const string message =
-                "Neural Engine Exception:\n"
-                "void NeuralEngine::setProjectType(const QString&)\n"
-                "Unknown project type: " + newLearningTask + "\n";
+                "Scaling Layer Exception:\n"
+                "void set_project_type_string(const string&)\n"
+                "Unknown project type.\n";
 
         throw logic_error(message);
     }

@@ -5121,38 +5121,38 @@ void DataSet::set_default()
     input_variables_dimensions.setConstant(get_input_variables_number());
 }
 
-void DataSet::set_project_type_string(const string& newLearningTask)
+void DataSet::set_project_type_string(const string& new_project_type)
 {
-    if(newLearningTask == "Approximation")
+    if(new_project_type == "Approximation")
     {
         set_project_type(ProjectType::Approximation);
     }
-    else if(newLearningTask == "Classification")
+    else if(new_project_type == "Classification")
     {
         set_project_type(ProjectType::Classification);
     }
-    else if(newLearningTask == "Forecasting")
+    else if(new_project_type == "Forecasting")
     {
         set_project_type(ProjectType::Forecasting);
     }
-    else if(newLearningTask == "ImageClassification")
+    else if(new_project_type == "ImageClassification")
     {
         set_project_type(ProjectType::ImageClassification);
     }
-    else if(newLearningTask == "TextClassification")
+    else if(new_project_type == "TextClassification")
     {
         set_project_type(ProjectType::TextClassification);
     }
-    else if(newLearningTask == "AutoAssociation")
+    else if(new_project_type == "AutoAssociation")
     {
         set_project_type(ProjectType::AutoAssociation);
     }
     else
     {
         const string message =
-                "Neural Engine Exception:\n"
-                "void NeuralEngine::setProjectType(const QString&)\n"
-                "Unknown project type: " + newLearningTask + "\n";
+                "Data Set class exception:\n"
+                "void set_project_type_string(const string&)\n"
+                "Unknown project type: " + new_project_type + "\n";
 
         throw logic_error(message);
     }
