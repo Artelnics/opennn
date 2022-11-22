@@ -113,7 +113,7 @@ public:
 
     /// Enumeration of the learning tasks.
 
-    enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification};
+    enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
 
     /// This enumeration represents the possible uses of an sample
     /// (training, selection, testing or unused).

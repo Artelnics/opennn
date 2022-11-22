@@ -76,6 +76,10 @@ string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& ne
     {
         return "TextClassification";
     }
+    else if(newProjectType == ProjectType::AutoAssociation)
+    {
+        return "AutoAssociation";
+    }
     else
     {
         const string message =
@@ -425,6 +429,10 @@ void ScalingLayer::set_project_type_string(const string& newLearningTask)
     else if(newLearningTask == "TextClassification")
     {
         set_project_type(ProjectType::TextClassification);
+    }
+    else if(newLearningTask == "AutoAssociation")
+    {
+        set_project_type(ProjectType::AutoAssociation);
     }
     else
     {
