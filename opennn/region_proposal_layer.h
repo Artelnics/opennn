@@ -32,21 +32,27 @@ class RegionProposalLayer : public Layer
 {
 
 public:
-   // Constructors
+    // Constructors
 
-   explicit RegionProposalLayer();
+    explicit RegionProposalLayer();
 
-//   BoundingBox propose_random_region(const Tensor<unsigned char, 1>&, const string&);
+    // Region proposal layer outputs
 
-   // Region proposal layer outputs
+    void set_filename(const string&);
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
+    const Tensor<type, 4> get_input_regions();
+
+    void forward_propagate(type*, const Tensor<Index, 1>&,
                           LayerForwardPropagation*);
-
 
 protected:
 
    bool display = true;
+
+   string filename;
+   const Index regions_number = 2000;
+   const Index region_rows = 227;
+   const Index region_columns = 227;
 };
 
 
@@ -89,6 +95,8 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     {
 
     }
+
+    Tensor<type, 2> outputs;
 };
 
 

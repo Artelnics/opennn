@@ -21,61 +21,67 @@ RegionProposalLayer::RegionProposalLayer() : Layer()
 {
 }
 
-/*
-BoundingBox RegionProposalLayer::propose_random_region(const Tensor<unsigned char, 1>& image, const string& filename)
+void RegionProposalLayer::set_filename(const string& new_filename)
 {
-    const Index channels_number = get_channels_number();
-    const Index image_height = get_image_height();
-    const Index image_width = get_image_width();
-
-    Index x_center = rand() % image_width;
-    Index y_center = rand() % image_height;
-
-    Index x_top_left;
-    Index y_top_left;
-
-    if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
-    if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
-
-    Index x_bottom_right;
-
-    if(x_top_left == 0){x_bottom_right = rand()%(image_width - (x_center + 1) + 1) + (x_center + 1);}
-    else{x_bottom_right = rand()%(image_width - x_center + 1) + x_center;}
-
-    Index y_bottom_right;
-
-    if(y_top_left == 0){y_bottom_right = rand()%(image_height - (y_center + 1) + 1) + (y_center + 1);}
-    else{y_bottom_right = rand() % (image_height - y_center + 1) + y_center;}
-
-    BoundingBox random_region(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
-
-    random_region.data = get_bounding_box(image, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
-
-    return random_region;
+    filename = new_filename;
 }
-*/
+
+const Tensor<type, 4> RegionProposalLayer::get_input_regions()
+{
+    Tensor<type, 4> input_regions;
+
+//    const Tensor<Tensor<type, 1>, 1> image_data = read_bmp_image_data(filename);
+
+//    for (Index i = 0; i < regions_number; i ++)
+//    {
+//        const Tensor<type, 1> proposed_region = propose_random_region(image_data);
+//    }
+
+    return input_regions;
+}
+
 
 void RegionProposalLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation)
 {
 
-    const Index channels_number = 2000;
+    const Index channels_number = 3;
 
     const Index images_number = 1;
     const Index input_rows = 0;
     const Index input_columns = 0;
 
+//    Tensor<type, 4> inputs(images_number, channels_number, region_rows, region_columns);
 
-    const Index regions_number = 2000;
-    const Index region_rows = 227;
-    const Index region_columns = 227;
+//    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-    Tensor<type, 4> inputs(images_number, channels_number, region_rows, region_columns);
-
+    const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image_data(filename);
     // Propose random region for each image
 
     Tensor<type, 4> outputs(regions_number, channels_number, region_rows, region_columns);
+
+    Index image_index = 0;
+
+    for (Index region_index = 0; region_index < regions_number; region_index ++)
+    {
+        Tensor<type, 1> proposed_region = propose_single_random_region(input_image, region_columns, region_rows);
+
+        for (Index channel_index = 0; channel_index < channels_number; channel_index ++)
+        {
+            for (Index rows_index = 0; rows_index < region_rows; rows_index ++)
+            {
+                for (Index columns_index = 0; columns_index < region_columns; columns_index ++)
+                {
+                    outputs(region_index, channel_index, rows_index, columns_index) = proposed_region(image_index);
+                    image_index++;
+                }
+            }
+        }
+    }
+
+
+
 
 
 //    BatchNormalizationLayerForwardPropagation* batch_norm_layer_forward_propagation
