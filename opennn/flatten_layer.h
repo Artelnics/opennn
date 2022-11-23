@@ -170,20 +170,22 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
         batch_samples_number = new_batch_samples_number;
 
+        const Index neurons_number = new_layer_pointer->get_neurons_number();
         const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
-        delta.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
+//        deltas.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
+        deltas.resize(batch_samples_number, neurons_number);
     }
 
 
     void print() const
     {
-        cout << "Delta: " << endl;
+        cout << "Deltas: " << endl;
 
-        cout << delta << endl;
+        cout << deltas << endl;
     }
 
-    Tensor<type, 4> delta;
+    Tensor<type, 2> deltas;
 
 };
 
