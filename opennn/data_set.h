@@ -751,9 +751,13 @@ public:
 
     void save_time_series_data_binary(const string&) const;
 
+    void save_auto_associative_data_binary(const string&) const;
+
     void load_data_binary();
 
     void load_time_series_data_binary(const string&);
+
+    void load_auto_associative_data_binary(const string&);
 
     void check_input_csv(const string&, const char&) const;
 

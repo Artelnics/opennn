@@ -847,14 +847,18 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::AutoAssociation)
     {
-        const Index mapping_neurons_number = 50;
+        const Index mapping_neurons_number = 10;
         const Index bottle_neck_neurons_number = architecture[1];
         const Index target_variables_number = architecture[2];
 
         PerceptronLayer *mapping_layer = new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        mapping_layer->set_name("mapping_layer");
         PerceptronLayer *bottle_neck_layer = new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear);
+        bottle_neck_layer->set_name("bottle_neck_layer");
         PerceptronLayer *demapping_layer = new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        demapping_layer->set_name("demapping_layer");
         PerceptronLayer *output_layer = new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear);
+        output_layer->set_name("output_layer");
         UnscalingLayer *unscaling_layer = new UnscalingLayer(target_variables_number);
 
         this->add_layer(mapping_layer);
@@ -1402,7 +1406,6 @@ Index NeuralNetwork::get_trainable_layers_number() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
                 && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Type::Flatten
                 && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             count++;
