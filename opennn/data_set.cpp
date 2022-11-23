@@ -8948,6 +8948,56 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 }
 
 
+/// Saves to the data file the values of the auto associative data matrix in binary format.
+
+void DataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
+{
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class." << endl
+               << "void save_auto_associative_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = time_series_data.dimension(1);
+    Index rows_number = time_series_data.dimension(0);
+
+    cout << "Saving binary data file..." << endl;
+
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    for(int i = 0; i < columns_number; i++)
+    {
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = associative_data(j,i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+        }
+    }
+
+    file.close();
+
+    cout << "Binary data file saved." << endl;
+}
+
+
+
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 
 void DataSet::transform_time_series()
@@ -9022,7 +9072,7 @@ void DataSet::load_data_binary()
 }
 
 
-/// This method loads time series data from a binary data.
+/// This method loads time series data from a binary data file.
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
@@ -9064,6 +9114,51 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
     file.close();
 }
+
+
+/// This method loads associative data from a binary data file.
+
+void DataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
+{
+    std::ifstream file;
+
+    file.open(auto_associative_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load_auto_associative_data_binary(const string&) method.\n"
+               << "Cannot open binary file: " << auto_associative_data_file_name << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number;
+    Index rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    associative_data.resize(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number*columns_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        associative_data(i) = value;
+    }
+
+    file.close();
+}
+
 
 
 /// This method checks if the input data file has the correct format. Returns an error message.
