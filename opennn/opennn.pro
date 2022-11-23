@@ -6,14 +6,13 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
+
 QT = \ # Do not use qt
     widgets
-
 TARGET = opennn
 #DESTDIR = "$$PWD/bin"
 
 TEMPLATE = lib
-
 CONFIG += staticlib
 #CONFIG += c++17
 
@@ -28,21 +27,7 @@ DEFINES += __Cpp17__
 
 # OpenMP library
 
-win32:!win32-g++{
-#QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
-#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-#LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
-QMAKE_LFLAGS += -fopenmp -lgomp
-LIBS += -fopenmp -pthread -lgomp
-}else: macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
-
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
+include(../opennmp.pri)
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
@@ -163,39 +148,41 @@ SOURCES += \
     json_to_xml.cpp \
     batch_normalization_layer.cpp\
     unit_testing.cpp
-    win32:{
+#    win32:{
 
-    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
+#    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
 
-    INCLUDEPATH += "$$INTEL_HOME/mkl/include"
+#    INCLUDEPATH += "$$INTEL_HOME/mkl/include"
 
-    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_rt
-    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_core
+#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_rt
+#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_core
 
-    win32:CONFIG(release, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
-    else:win32:CONFIG(debug, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
-    }
+#    win32:CONFIG(release, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
+#    else:win32:CONFIG(debug, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
+#    }
 
-    unix:{
+#    unix:{
 
-    ENV_HOME = $$(HOME)
+#    ENV_HOME = $$(HOME)
 
-    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/include/
-    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/
+#    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/include/
+#    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/
 
-    #QMAKE_PRE_LINK += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
+#    #QMAKE_PRE_LINK += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
 
-    QMAKE_PRE_LINK=/bin/sh $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
+#    QMAKE_PRE_LINK=/bin/sh $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
 
-    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
+#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
 
-    LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
-    LIBS += -L$$ENV_HOME/intel/lib/intel64 -liomp5 -lpthread -ldl -lm
+#    LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+#    LIBS += -L$$ENV_HOME/intel/lib/intel64 -liomp5 -lpthread -ldl -lm
 
-    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
-    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/  \
-    #    -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core \
-    #    -L/opt/intel/lib/intel64 \
-    #    -liomp5 -lpthread -ldl -lm
-    }
+#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
+#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/  \
+#    #    -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core \
+#    #    -L/opt/intel/lib/intel64 \
+#    #    -liomp5 -lpthread -ldl -lm
+#    }
+
+
 

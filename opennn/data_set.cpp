@@ -9446,7 +9446,7 @@ string DataSet::decode(const string& input_string) const
 
     case DataSet::Codification::SHIFT_JIS:
     {
-        return sj2utf8(input_string);
+//        return sj2utf8(input_string);
     }
 
     default:

@@ -103,22 +103,7 @@ HEADERS += \
 
 # OpenMP library
 
-win32{
-QMAKE_CXXFLAGS += -openmp
-QMAKE_LFLAGS += -openmp
-QMAKE_CXXFLAGS += -MP
-
-}
-
-unix:macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib
-}
-
-unix:!macx{
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS += -fopenmp
-}
+include(../opennmp.pri)
 
 
 # OpenNN library

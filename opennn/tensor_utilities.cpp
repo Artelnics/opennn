@@ -309,8 +309,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 /* New function calculate_vector_of_ranks */
 
-<<<<<<< HEAD
-=======
+
 using namespace std;
 bool sortbysec(const pair<int,int> &a, const pair<int,int> &b)
 {
@@ -367,8 +366,6 @@ void rankify_improved(int A[] , int n) {
         cout << (double)R[i] << ' ';
 
 }*/
->>>>>>> checksmkl
-
 
 
 void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)

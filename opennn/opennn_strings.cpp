@@ -926,7 +926,6 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
 }
 
 
-<<<<<<< HEAD
 /// Replaces all apprearances non allowed programming characters of a substring with allowed characters
 /// \brief replace_non_allowed_programming_characters
 /// \param s
@@ -1009,9 +1008,6 @@ int WordOccurrence(char *sentence, char *word)
     return count;
 }
 
-
-=======
->>>>>>> checksmkl
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
