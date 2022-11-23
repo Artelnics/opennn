@@ -1402,7 +1402,6 @@ Index NeuralNetwork::get_trainable_layers_number() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
                 && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Type::Flatten
                 && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             count++;
