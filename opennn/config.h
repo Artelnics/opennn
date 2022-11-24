@@ -2,7 +2,7 @@
 
 #define NUMERIC_LIMITS_MIN 0.000001
 
-//#define OPENNN_MKL
+#define OPENNN_MKL
 
 #ifdef OPENNN_MKL
     #include "mkl.h"

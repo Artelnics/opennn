@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\ramadev\opennn\opennn\codification.h" />
     <ClInclude Include="adaptive_moment_estimation.h" />
     <ClInclude Include="bounding_layer.h" />
     <ClInclude Include="config.h" />
@@ -71,6 +72,7 @@
     <ClInclude Include="weighted_squared_error.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\ramadev\opennn\opennn\codification.cpp" />
     <ClCompile Include="adaptive_moment_estimation.cpp" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClCompile Include="conjugate_gradient.cpp" />
