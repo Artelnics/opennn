@@ -2799,6 +2799,12 @@ Tensor<DataSet::Column, 1> DataSet::get_time_series_columns() const
 }
 
 
+Tensor<DataSet::Column, 1> DataSet::get_associative_columns() const
+{
+    return associative_columns;
+}
+
+
 Index DataSet::get_time_series_data_rows_number() const
 {
     return time_series_data.dimension(0);
