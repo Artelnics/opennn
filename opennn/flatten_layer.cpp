@@ -63,7 +63,7 @@ Index FlattenLayer::get_inputs_number() const
 
 Index FlattenLayer::get_input_height() const
 {
-    return input_variables_dimensions(0);
+    return input_variables_dimensions(2);
 }
 
 Index FlattenLayer::get_input_width() const
@@ -73,7 +73,7 @@ Index FlattenLayer::get_input_width() const
 
 Index FlattenLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions(2);
+    return input_variables_dimensions(0);
 }
 
 Index FlattenLayer::get_inputs_batch_number() const
