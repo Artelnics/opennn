@@ -38,12 +38,14 @@ include(../opennmp.pri)
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    codification.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
     statistics.h \
     scaling.h \
     correlations.h \
+    codification.h \
     tinyxml2.h \
     filesystem.h \
     data_set.h \
@@ -102,6 +104,7 @@ SOURCES += \
     statistics.cpp \
     scaling.cpp \
     correlations.cpp \
+    codification.cpp \
     tinyxml2.cpp \
     data_set.cpp \
     layer.cpp \
@@ -148,6 +151,7 @@ SOURCES += \
     json_to_xml.cpp \
     batch_normalization_layer.cpp\
     unit_testing.cpp
+
 #    win32:{
 
 #    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"

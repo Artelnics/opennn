@@ -8,6 +8,7 @@
 
 #include "data_set.h"
 #include "region_based_object_detector.h"
+#include "codification.h"
 
 using namespace  opennn;
 using namespace std;
@@ -9541,7 +9542,7 @@ string DataSet::decode(const string& input_string) const
 
     case DataSet::Codification::SHIFT_JIS:
     {
-//        return sj2utf8(input_string);
+        return sj2utf8(input_string);
     }
 
     default:
