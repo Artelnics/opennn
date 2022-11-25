@@ -95,6 +95,8 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     minkowski_error.device(*thread_pool_device)
             = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
+//    back_propagation.print();
+
     const Index batch_size = batch.get_batch_size();
 
     back_propagation.error = minkowski_error(0)/type(batch_size);
@@ -111,6 +113,8 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
 
     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
 
+    Tensor<type, 2> deltas_copy;
+
     const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
@@ -122,10 +126,13 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     }
     else
     {
-        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
+        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs()/*.pow(minkowski_parameter - type(2))*/);
 
         deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
+
+        std::replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
     }
+
 }
 
 

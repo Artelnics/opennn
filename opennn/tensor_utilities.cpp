@@ -97,6 +97,7 @@ bool is_nan(const Tensor<type,1>& tensor)
 }
 
 
+
 bool is_false(const Tensor<bool, 1>& tensor)
 {
     const Index size = tensor.size();
@@ -307,16 +308,11 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
     return rank;
 }
 
-/* New function calculate_vector_of_ranks */
-
-
-
 
 void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
     std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
-
 
 
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank)
