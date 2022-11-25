@@ -6,7 +6,9 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
+#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#endif
 
 // System includes
 
