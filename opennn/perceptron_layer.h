@@ -297,23 +297,23 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs_dimensions << endl;
-
         cout << "Combinations:" << endl;
         cout << combinations.dimensions() << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
+        cout << "Outputs dimensions:" << endl;
+        cout << outputs_dimensions << endl;
+
         cout << "Outputs:" << endl;
         cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
-//        cout << "Combinations:" << endl;
-//        cout << combinations << endl;
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
 
-//        cout << "Activations derivatives:" << endl;
-//        cout << activations_derivatives << endl;
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 2> combinations;
