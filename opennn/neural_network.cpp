@@ -3311,16 +3311,16 @@ string NeuralNetwork::write_expression() const
         if(i == layers_number-1)
         {
             outputs_names_vector = outputs_names;
-            for (int i = 0; i < outputs_names.dimension(0); i++)
+            for (int j = 0; j < outputs_names.dimension(0); j++)
             {
-                if (!outputs_names_vector[i].empty())
+                if (!outputs_names_vector[j].empty())
                 {
-                    aux_name = outputs_names[i];
-                    outputs_names_vector(i) = replace_non_allowed_programming_characters(aux_name);
+                    aux_name = outputs_names[j];
+                    outputs_names_vector(j) = replace_non_allowed_programming_characters(aux_name);
                 }
                 else
                 {
-                    outputs_names_vector(i) = "output_" + to_string(i);
+                    outputs_names_vector(j) = "output_" + to_string(i);
                 }
             }
             buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
