@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
-#include "region_based_object_detector.h"
+#include "opennn_images.h"
 
 using namespace  opennn;
 using namespace std;
@@ -683,6 +683,91 @@ void DataSet::Column::print() const
     }
 }
 
+// BoundingBox constructor
+
+DataSet::BoundingBox::BoundingBox(const Index& new_channels_number, const Index& new_width, const Index& new_height)
+{
+    channels_number = new_channels_number;
+    width = new_width;
+    height = new_height;
+
+    data.resize(channels_number*width*height);
+}
+
+// BoundingBox constructor
+
+DataSet::BoundingBox::BoundingBox(const Index& new_channels_number, const Tensor<Index, 1>& new_center, const Index& new_width, const Index& new_height)
+{
+   channels_number = new_channels_number;
+
+   x_center = new_center(0);
+   y_center = new_center(1);
+   width = new_width;
+   height = new_height;
+
+   data.resize(channels_number*width*height);
+}
+
+// BoundingBox constructor
+
+DataSet::BoundingBox::BoundingBox(const Index& new_channels_number, const Index& new_x_top_left, const Index& new_y_top_left,
+                             const Index& new_x_bottom_right, const Index& new_y_bottom_right)
+{
+    channels_number = new_channels_number;
+
+    x_top_left = new_x_top_left;
+    y_top_left = new_y_top_left;
+    x_bottom_right = new_x_bottom_right;
+    y_bottom_right = new_y_bottom_right;
+
+    width = abs(new_x_top_left - new_x_bottom_right);
+    height = abs(new_y_top_left - new_y_bottom_right);
+
+    data.resize(channels_number*width*height);
+}
+
+Index DataSet::BoundingBox::get_bounding_box_size(const BoundingBox& bounding_box) const
+{
+    return bounding_box.data.size();
+}
+
+DataSet::BoundingBox DataSet::BoundingBox::resize(const Index& new_channels_number, const Index& new_width, const Index& new_height) const
+{
+    BoundingBox new_bounding_box(new_channels_number, new_width, new_height);
+
+    const type scaleWidth =  (type)new_width / (type)width;
+    const type scaleHeight = (type)new_height / (type)height;
+
+    for(Index i = 0; i < new_height; i++)
+    {
+        for(Index j = 0; j < new_width; j++)
+        {
+            const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
+            const int nearestMatch =  (((int)(i / scaleHeight) * (width * channels_number)) + ((int)(j / scaleWidth) * channels_number));
+
+            if(channels_number == 3)
+            {
+                new_bounding_box.data[pixel] =  data[nearestMatch];
+                new_bounding_box.data[pixel + 1] =  data[nearestMatch + 1];
+                new_bounding_box.data[pixel + 2] =  data[nearestMatch + 2];
+            }
+            else
+            {
+                new_bounding_box.data[pixel] =  data[nearestMatch];
+            }
+        }
+    }
+
+    return new_bounding_box;
+}
+
+
+void DataSet::BoundingBox::print() const
+{
+    cout << "Showing the values from the bounding box of size " << width << " x " << height << " x " << channels_number << ": " << endl;
+    cout << data << endl;
+    cout << "Total size of the bounding box data: " << data.size() << endl;
+}
 
 DataSet::ProjectType DataSet::get_project_type() const
 {
@@ -3772,6 +3857,11 @@ void DataSet::set_binary_simple_columns()
     cout << "Binary columns checked " << endl;
 }
 
+void DataSet::set_categories_number(const Index& new_categories_number)
+{
+    categories_number = new_categories_number;
+}
+
 void DataSet::check_constant_columns()
 {
     if(display) cout << "Checking constant columns..." << endl;
@@ -5518,6 +5608,35 @@ void DataSet::set_image_padding(const int& new_padding)
     padding = new_padding;
 }
 
+
+void DataSet::set_images_number(const Index & new_images_number)
+{
+    images_number = new_images_number;
+}
+
+type DataSet::calculate_intersection_over_union(const BoundingBox& gTruth_bounding_box, const BoundingBox& proposed_bounding_box)
+{
+    Index intersection_x_top_left = max(gTruth_bounding_box.x_top_left, proposed_bounding_box.x_top_left);
+    Index intersection_y_top_left = max(gTruth_bounding_box.y_top_left, proposed_bounding_box.y_top_left);
+    Index intersection_x_bottom_right = min(gTruth_bounding_box.x_bottom_right, proposed_bounding_box.x_bottom_right);
+    Index intersection_y_bottom_right = min(gTruth_bounding_box.y_bottom_right, proposed_bounding_box.y_bottom_right);
+
+    if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left)) return 0;
+
+    type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left) * (intersection_y_bottom_right - intersection_y_top_left));
+
+    type gTruth_bounding_box_area = (gTruth_bounding_box.x_bottom_right - gTruth_bounding_box.x_top_left) *
+                                    (gTruth_bounding_box.y_bottom_right - gTruth_bounding_box.y_top_left);
+
+    type proposed_bounding_box_area = (proposed_bounding_box.x_bottom_right - proposed_bounding_box.x_top_left) *
+                                        (proposed_bounding_box.y_bottom_right - proposed_bounding_box.y_top_left);
+
+    type union_area = gTruth_bounding_box_area + proposed_bounding_box_area - intersection_area;
+
+    type intersection_over_union = static_cast<type>(intersection_area / union_area);
+
+    return intersection_over_union;
+}
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
@@ -11102,6 +11221,7 @@ void DataSet::read_csv()
 }
 
 
+/*
 Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
 {
     Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
@@ -11128,8 +11248,9 @@ Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, 
     }
     return data_without_padding;
 }
+*/
 
-
+/*
 void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
 {
     unsigned char* aux_row = nullptr;
@@ -11148,7 +11269,7 @@ void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned ch
     }
 
 }
-
+*/
 
 Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
@@ -11475,7 +11596,7 @@ void DataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
-
+/*
 Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
                                                const Index &image_width,
                                                const Index &image_height,
@@ -11511,26 +11632,64 @@ Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
 
     return new_bounding_box;
 }
+*/
+
+DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
+{
+    const Index channels_number = get_channels_number();
+    const Index image_height = get_image_height();
+    const Index image_width = get_image_width();
+
+    Index x_center = rand() % image_width;
+    Index y_center = rand() % image_height;
+
+    Index x_top_left;
+    Index y_top_left;
+
+    if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
+    if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
+
+    Index x_bottom_right;
+
+    if(x_top_left == 0){x_bottom_right = rand()%(image_width - (x_center + 1) + 1) + (x_center + 1);}
+    else{x_bottom_right = rand()%(image_width - x_center + 1) + x_center;}
+
+    Index y_bottom_right;
+
+    if(y_top_left == 0){y_bottom_right = rand()%(image_height - (y_center + 1) + 1) + (y_center + 1);}
+    else{y_bottom_right = rand() % (image_height - y_center + 1) + y_center;}
+
+    BoundingBox random_region(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    random_region.data = get_bounding_box(image, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    return random_region;
+}
 
 
 void DataSet::read_ground_truth()
-{/*
+{
+    srand(time(NULL));
+
     const Index classes_number = get_label_classes_number_from_XML(data_file_name);
+    const Index annotations_number = get_bounding_boxes_number_from_XML(data_file_name); // This function also save channels, width and height
 
-    const Index bounding_boxes_number = get_bounding_boxes_number_from_XML(data_file_name);
+    const Index regions_number = 1000; // Number of region proposals per image
+    const Index region_width = 6; // Final region width to warp
+    const Index region_height = 6; // Final region height to warp
 
-    RegionBasedObjectDetector region_based_object_detector;
+    const Index target_variables_number = classes_number == 1 ? 1 : classes_number + 1; // 1 class for background
 
-    Index bounding_box_height = 224;
-    Index bounding_box_width = 224;
+    const Index samples_number = images_number * regions_number;
+    const Index variables_number = channels_number * region_width * region_height + target_variables_number;
 
-    Index pixels_number = channels_number * bounding_box_height * bounding_box_width;
+    const Index pixels_number = channels_number * region_width * region_height;
 
-    data.resize(bounding_boxes_number, pixels_number + classes_number);
+    set(samples_number, variables_number);
 
     data.setZero();
 
-    rows_labels.resize(bounding_boxes_number);
+    rows_labels.resize(samples_number);
 
     Index row_index = 0;
 
@@ -11577,7 +11736,6 @@ void DataSet::read_ground_truth()
         throw invalid_argument(buffer.str());
     }
 
-
     // Images Number
 
     const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
@@ -11595,7 +11753,7 @@ void DataSet::read_ground_truth()
 
     const tinyxml2::XMLElement* start_images_element = images_number_element;
 
-    for(Index i = 0; i < images_number; i++)
+    for(Index image_index = 0; image_index < images_number; image_index++)
     {
         // Image
 
@@ -11624,7 +11782,9 @@ void DataSet::read_ground_truth()
             throw invalid_argument(buffer.str());
         }
 
-        const string image_filename = file_name_element->GetText();
+        const string image_filename = file_name_element->GetText();        
+
+        const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
 
         // Annotations Number
 
@@ -11639,16 +11799,16 @@ void DataSet::read_ground_truth()
             throw invalid_argument(buffer.str());
         }
 
-        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));        
 
-        const tinyxml2::XMLElement* start_annotatioins_element = annotations_number_element;
+        const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
 
         for(Index j = 0; j < annotations_number; j++)
         {
             // Annotation
 
-            const tinyxml2::XMLElement* annotation_element = start_annotatioins_element->NextSiblingElement("Annotation");
-            start_annotatioins_element = annotation_element;
+            const tinyxml2::XMLElement* annotation_element = start_annotations_element->NextSiblingElement("Annotation");
+            start_annotations_element = annotation_element;
 
             if(!annotation_element)
             {
@@ -11672,7 +11832,7 @@ void DataSet::read_ground_truth()
                 throw invalid_argument(buffer.str());
             }
 
-            string gTruth_class = label_element->GetText();
+            const string gTruth_class = label_element->GetText();
 
             // Points
 
@@ -11687,47 +11847,72 @@ void DataSet::read_ground_truth()
                 throw invalid_argument(buffer.str());
             }
 
-            string bounding_box_points = points_element->GetText();
-            Tensor<string, 1> splitted_points = get_tokens(bounding_box_points, ',');
+            const string bounding_box_points = points_element->GetText();
+            const Tensor<string, 1> splitted_points = get_tokens(bounding_box_points, ',');
 
             const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
             const int y_top_left = static_cast<int>(stoi(splitted_points[1]));
             const int x_bottom_right = static_cast<int>(stoi(splitted_points[2]));
             const int y_bottom_right = static_cast<int>(stoi(splitted_points[3]));
 
-            //------------------------------------------------------------------------
+            // Segmentation for region proposal (Not implemented, we use random region proposal)
 
-            const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
-            cout << "" << endl;
+            const BoundingBox gTruth_bounding_box = BoundingBox(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
-            BoundingBox bounding_box(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+            Tensor<BoundingBox, 1> random_bounding_box(regions_number);
 
-            bounding_box.data = region_based_object_detector.get_unique_bounding_box(image_pixel_values,
-                                                                                    x_top_left, y_top_left,
-                                                                                    x_bottom_right, y_bottom_right);
-            BoundingBox warped_bounding_box = bounding_box.resize(channels_number, bounding_box_width, bounding_box_height);
-
-            for(Index j = 0; j < pixels_number; j++)
+            for(Index region_index = 0; region_index < regions_number; region_index++)
             {
-                data(row_index, j) = warped_bounding_box.data(j);
-            }
+                random_bounding_box(region_index) = propose_random_region(image_pixel_values);
 
-            for(Index p = 0; p < labels_tokens.size(); p++)
-            {
-                if(labels_tokens(p) == gTruth_class)
+                type intersection_over_union = calculate_intersection_over_union(gTruth_bounding_box, random_bounding_box(region_index));
+
+//                cout << "intersection_over_union: " << intersection_over_union << endl;
+
+                if(intersection_over_union >= 0.3) // If IoU > 0.3 -> object class
                 {
-//                    cout << "For the index " << p <<": " << labels_tokens(p) <<" == "<< gTruth_class << endl;
-                    data(row_index, pixels_number + p) = 1;
+                    for(Index p = 1; p < labels_tokens.size() + 1; p++)
+                    {
+                        if(labels_tokens(p - 1) == gTruth_class)
+                        {
+                            if(classes_number == 1)
+                            {
+                                data(row_index, pixels_number) = 1;
+                            }
+                            else
+                            {
+                                data(row_index, pixels_number + p) = 1;
+                            }
+                        }
+                    }
                 }
+                else // If IoU < 0.3 -> background class
+                {
+                    if(classes_number == 1)
+                    {
+                        data(row_index, pixels_number) = 0;
+                    }
+                    else
+                    {
+                        data(row_index, pixels_number) = 1;
+                    }
+                }
+
+                BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_width, region_height);
+
+                for(Index j = 0; j < pixels_number; j++)
+                {
+                    data(row_index, j) = warped_bounding_box.data(j);
+                }
+
+                rows_labels(row_index) = image_filename;
+
+                row_index++;
             }
-
-            rows_labels(row_index) = image_filename;
-
-            row_index++;
         }
     }
 
-    columns.resize(pixels_number + 1);
+//    cout << data << endl;
 
     // Input columns
 
@@ -11735,9 +11920,9 @@ void DataSet::read_ground_truth()
 
     for(Index i = 0; i < channels_number; i++)
     {
-        for(Index j = 0; j < bounding_box_width; j++)
+        for(Index j = 0; j < region_width; j++)
         {
-            for(Index k = 0; k < bounding_box_height ; k++)
+            for(Index k = 0; k < region_height ; k++)
             {
                 columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
                 columns(column_index).type = ColumnType::Numeric;
@@ -11752,45 +11937,42 @@ void DataSet::read_ground_truth()
 
     columns(pixels_number).name = "label";
 
-    if(classes_number == 1)
+    if(classes_number == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void read_ground_truth() method.\n"
-               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+               << "Invalid number of categories. The minimum is 1 and you have 0.\n";
 
         throw invalid_argument(buffer.str());
 
     }
-    else if(classes_number == 2)
+    else if(classes_number == 1) // Just one because we include background (1+1)
     {
         columns(pixels_number).column_use = VariableUse::Target;
         columns(pixels_number).type = ColumnType::Binary;
         columns(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(classes_number);
+        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
         columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
     }
     else
     {
-        Tensor<string, 1> categories(classes_number);
+        Tensor<string, 1> categories(target_variables_number);
 
         columns(pixels_number).column_use = VariableUse::Target;
         columns(pixels_number).type = ColumnType::Categorical;
         columns(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(classes_number);
+        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
         columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
     }
-
-    samples_uses.resize(images_number);
 
     split_samples_random();
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels_number, bounding_box_width, bounding_box_height});
-    */
+    input_variables_dimensions.setValues({region_height, region_width, channels_number});
 }
 
 
@@ -11856,6 +12038,8 @@ Index DataSet::get_bounding_boxes_number_from_XML(const string& file_name)
     }
 
     const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+
+    set_images_number(images_number);
 
     const tinyxml2::XMLElement* start_image_element = images_number_element;
 
@@ -11963,7 +12147,7 @@ Index DataSet::get_bounding_boxes_number_from_XML(const string& file_name)
 
 Index DataSet::get_label_classes_number_from_XML(const string& file_name)
 {
-    /**********************Load XML from string**************************************/
+    //-----------------------Load XML from string-----------------------------------/
 
     tinyxml2::XMLDocument document;
 
@@ -11978,7 +12162,7 @@ Index DataSet::get_label_classes_number_from_XML(const string& file_name)
         throw invalid_argument(buffer.str());
     }
 
-    /**********************Read ground Truth XML**************************************/
+    //--------------------------------Read ground Truth XML-------------------------------------/
 
     ostringstream buffer;
 
@@ -12032,23 +12216,28 @@ Index DataSet::get_label_classes_number_from_XML(const string& file_name)
         throw invalid_argument(buffer.str());
     }
 
-    const Index labels_number = static_cast<Index>(atoi(labels_number_element->GetText()));
+    if(labels_number_element->GetText())
+    {
+        const Index labels_number = static_cast<Index>(atoi(labels_number_element->GetText()));
 
-    labels_tokens.resize(labels_number);
+        set_categories_number(labels_number);
+    }
 
-    const tinyxml2::XMLElement* start_image_element = labels_number_element;
+    labels_tokens.resize(categories_number);
 
-    for(Index i = 0; i < labels_number; i++)
+    const tinyxml2::XMLElement* start_label_element = labels_number_element;
+
+    for(Index i = 0; i < categories_number; i++)
     {
         // Label
 
-        const tinyxml2::XMLElement* label_element = start_image_element->NextSiblingElement("Label");
-        start_image_element = label_element;
+        const tinyxml2::XMLElement* label_element = start_label_element->NextSiblingElement("Label");
+        start_label_element = label_element;
 
         if(!label_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Label element is nullptr.\n";
 
             throw invalid_argument(buffer.str());
@@ -12061,7 +12250,7 @@ Index DataSet::get_label_classes_number_from_XML(const string& file_name)
         if(!name_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Name element is nullptr.\n";
 
             throw invalid_argument(buffer.str());
@@ -12078,15 +12267,112 @@ Index DataSet::get_label_classes_number_from_XML(const string& file_name)
         if(!color_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Color element is nullptr.\n";
 
             throw invalid_argument(buffer.str());
         }
     }
 
-    return labels_number;
+    return categories_number;
 }
+
+
+Tensor<type, 1> DataSet::get_bounding_box(const Tensor<unsigned char, 1>& image,
+                                          const Index& x_top_left, const Index& y_top_left,
+                                          const Index& x_bottom_right, const Index& y_bottom_right) const
+{
+    const Index channels_number = get_channels_number();
+    const Index height = get_image_height();
+    const Index width = get_image_width();
+    const Index image_size_single_channel = height * width;
+
+    const Index bounding_box_width = abs(x_top_left - x_bottom_right);
+    const Index bounding_box_height = abs(y_top_left - y_bottom_right);
+    const Index bounding_box_single_channel_size = bounding_box_width * bounding_box_height;
+
+    Tensor<type, 1> bounding_box_data;
+    bounding_box_data.resize(channels_number * bounding_box_single_channel_size);
+
+    const Index pixel_loop_start = width * (height - y_bottom_right) + x_top_left;
+    const Index pixel_loop_end = width * (height - 1 - y_top_left) + x_bottom_right;
+
+    if(channels_number == 3)
+    {
+        Tensor<unsigned char, 1> image_red_channel_flatted_sorted(image_size_single_channel);
+        Tensor<unsigned char, 1> image_green_channel_flatted_sorted(image_size_single_channel);
+        Tensor<unsigned char, 1> image_blue_channel_flatted_sorted(image_size_single_channel);
+
+        image_red_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+        image_green_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+        image_blue_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({2 * image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+
+        Tensor<type, 1> bounding_box_red_channel(bounding_box_single_channel_size);
+        Tensor<type, 1> bounding_box_green_channel(bounding_box_single_channel_size);
+        Tensor<type, 1> bounding_box_blue_channel(bounding_box_single_channel_size);
+
+        Index data_index = 0;
+
+        for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+        {
+            const int height_number = (int)(i/height);
+
+            const Index left_margin = height_number * width + x_top_left;
+            const Index right_margin = height_number * width + x_bottom_right;
+
+            if(i >= left_margin && i < right_margin)
+            {
+                bounding_box_red_channel(data_index) = static_cast<type>(image_red_channel_flatted_sorted[i]);
+                bounding_box_green_channel(data_index) = static_cast<type>(image_green_channel_flatted_sorted[i]);
+                bounding_box_blue_channel(data_index) = static_cast<type>(image_blue_channel_flatted_sorted[i]);
+
+                data_index++;
+            }
+        }
+
+        Tensor<type, 1> red_green_concatenation(bounding_box_red_channel.size() + bounding_box_green_channel.size());
+        red_green_concatenation = bounding_box_red_channel.concatenate(bounding_box_green_channel, 0); // To allow a double concatenation
+        bounding_box_data = red_green_concatenation.concatenate(bounding_box_blue_channel, 0);
+    }
+    else
+    {
+        Index data_index = 0;
+
+        for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+        {
+            const int height_number = (int)(i/height);
+
+            const Index left_margin = height_number * width + x_top_left;
+            const Index right_margin = height_number * width + x_bottom_right;
+
+            if(i >= left_margin && i < right_margin)
+            {
+                bounding_box_data(data_index) = static_cast<type>(image[i]);
+                data_index++;
+            }
+        }
+    }
+
+    return bounding_box_data;
+}
+
+// Function to slice a given vector from range X to Y
+/*Tensor<unsigned char, 1> DataSet::slicing(Tensor<unsigned char, 1>& arr, int& X, int& Y)
+{
+    // Starting and Ending iterators
+
+    auto start = X;
+    auto end = Y + 1;
+
+    Tensor<unsigned char, 1> result(Y - X + 1);
+
+    // Copy vector using copy function()
+    copy(start, end, result);
+
+    // Return the final sliced vector
+    return result;
+}*/
+
 
 void DataSet::read_txt()
 {
@@ -13341,7 +13627,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         fill_submatrix(data, samples, inputs, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
-    {
+    {        
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
@@ -13437,7 +13723,6 @@ void DataSetBatch::print() const
         cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
     else if(inputs_dimensions.size() == 4)
         cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
-
     cout << "Targets dimensions:" << endl;
     cout << targets_dimensions << endl;
 
