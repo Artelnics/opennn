@@ -129,10 +129,7 @@ public:
     Tensor<bool,1> get_individual_as_variables_from_columns(Tensor<bool,1> &);
     Tensor <Index,1>get_selected_individuals_to_indexes();
 
-    Tensor<Index, 1> get_individuals_as_indexes_from_columns(Tensor<bool,1> &);
-
-    // Inputs selection methods
-
+    Tensor<Index, 1> get_individual_as_columns_indexes_from_variables(Tensor<bool,1>&);
     InputsSelectionResults perform_inputs_selection()  final;
 
     // Serialization method
