@@ -124,12 +124,12 @@ public:
 
     Tensor<bool, 1> transform_individual_to_indexes(Tensor<bool,1> &);
 
-    Tensor<bool, 1> transform_individual_to_columns(Tensor<bool,1> &);
+    Tensor<bool, 1> get_individual_as_columns_from_variables(Tensor<bool,1> &);
 
-    Tensor<bool,1> transform_individual_columns_to_variables(Tensor<bool,1> &);
+    Tensor<bool,1> get_individual_as_variables_from_columns(Tensor<bool,1> &);
     Tensor <Index,1>get_selected_individuals_to_indexes();
 
-    Tensor<Index, 1> transform_individual_to_columns_indexes(Tensor<bool,1> &);
+    Tensor<Index, 1> get_individuals_as_indexes_from_columns(Tensor<bool,1> &);
 
     // Inputs selection methods
 

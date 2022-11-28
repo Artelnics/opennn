@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/PedroFM/Desktop/5_years_mortality_modified.csv",';',true);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/categories.csv",',',true);
 
 
 
@@ -39,69 +39,88 @@ int main(int argc, char* argv[])
 
 
         data_set.impute_missing_values_mean();
+        data_set.split_samples_sequential();
 
 
         // Neural network
 
         //data_set.print_data_preview();
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
 
 
         // Training strategy
 
        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-       training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+       training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
        GeneticAlgorithm genetic_algorithm(&training_strategy);
 
        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
-       genetic_algorithm.set_individuals_number(200);
+       genetic_algorithm.set_individuals_number(2);
 
-       genetic_algorithm.set_maximum_epochs_number(50);
+       cout<<genetic_algorithm.get_population()<<endl;
 
-       genetic_algorithm.set_mutation_rate(0.01);
-       genetic_algorithm.set_elitism_size(2);
+       Tensor<bool,2> population_stored = genetic_algorithm.get_population();
 
-       genetic_algorithm.initialize_population();
-       system("pause");
-       genetic_algorithm.evaluate_population();
-       genetic_algorithm.perform_fitness_assignment();
-       genetic_algorithm.perform_selection();
-       genetic_algorithm.perform_crossover();
-       genetic_algorithm.perform_mutation();
+       population_stored.setZero();
+       cout<<population_stored<<endl;
+
+       genetic_algorithm.initialize_population_random();
 
 
+        Tensor<bool,1> pruebas(6);
+        pruebas.setConstant(false);
+        //cout<<pruebas;
+        if(is_false(pruebas))
+        {
+            cout<<"Hola"<<endl;
+        }
 
-       /*Tensor<bool,1> individual=genetic_algorithm.get_population().chip(0,0);
-       genetic_algorithm.transform_individual_to_columns(individual);*/
 
-        //genetic_algorithm.evaluate_population();
+       cout<<genetic_algorithm.get_population()<<endl;
 
-        //cout<<genetic_algorithm.get_fitness().cumsum(0)<<endl;
+       //genetic_algorithm.set_mutation_rate(0.01);
+       //genetic_algorithm.set_elitism_size(2);
 
-       //cout<<genetic_algorithm.get_population().dimension(1);
+       //genetic_algorithm.initialize_population();
+       //genetic_algorithm.evaluate_population();
+       //genetic_algorithm.perform_fitness_assignment();
+       //genetic_algorithm.perform_selection();
+       //genetic_algorithm.perform_crossover();
+       //genetic_algorithm.perform_mutation();
 
-       InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+
+
+       ///*Tensor<bool,1> individual=genetic_algorithm.get_population().chip(0,0);
+       //genetic_algorithm.transform_individual_to_columns(individual);*/
+
+       // //genetic_algorithm.evaluate_population();
+
+       // //cout<<genetic_algorithm.get_fitness().cumsum(0)<<endl;
+
+       ////cout<<genetic_algorithm.get_population().dimension(1);
+
+       //InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
 
        //cout<<inputs_selection_results.mean_selection_error_history<<endl;
        // Testing analysis
 
       // training_strategy.perform_training();
 
-      ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
+     // ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
 
-       mean_selection_error_csv<<inputs_selection_results.mean_selection_error_history;
+     //  mean_selection_error_csv<<inputs_selection_results.mean_selection_error_history;
 
-       mean_selection_error_csv.close();
+     //  mean_selection_error_csv.close();
 
-      TestingAnalysis testing_analysis(&neural_network, &data_set);
+     // TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-       TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
+     //  TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
 
-       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
+       //cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
        system("pause");
 
         cout << "Bye OpenNN" << endl;

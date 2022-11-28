@@ -113,6 +113,9 @@ namespace opennn
 		// Population stuff
 
 		population.resize(individuals_number, genes_number);
+        population.setZero();
+
+
 
 		parameters.resize(individuals_number);
 		for (Index i = 0; i < individuals_number; i++) parameters(i).resize(genes_number);
@@ -407,69 +410,82 @@ namespace opennn
 
 	}
 
-
+   /* bool GeneticAlgorithm::is_individual_repeated(Tensor<bool,1>& individual,Index i)
+    {
+        ///First we check if the
+    }*/
     ///Generation of a random population
 	void GeneticAlgorithm::initialize_population_random()
 	{
-        ///Parameters obtention
-        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
-        const Index individuals_number = get_individuals_number();
-		const Index genes_number = get_genes_number();
-        const Index columns_number=data_set_pointer->get_columns_number();
-
-        ///This variable controls if the generated individual is repeated
-		bool is_repeated;
-        Tensor<bool, 1> individual_columns(columns_number);
-
-        /// Main loop
-		for (Index i = 0; i < individuals_number; i++)
-        {
-           ///First, we set the individual as having no gene activated.
-            individual_columns.setConstant(false);
-			
-			do 
-			{
-				is_repeated = false;
-
-                ///For each gene we generate a random number between 0 and 1.
-                for (Index j = 0; j < columns_number; j++)
-				{
-                    rand() % 2 == 0 ? individual_columns(j) = false : individual_columns(j) = true;
-					
-				}
-                ///Prevent no inputs by activating a random gene
-                if (is_false(individual_columns))
-				{
-                    individual_columns(static_cast<Index>(rand()) % genes_number) = true;
-				}
-
-                ///Repetition check
-				for (Index j = 0; j < i; j++)
-						{
-							Tensor<bool, 1> row = population.chip(j, 0);
-
-                            if (are_equal(transform_individual_columns_to_variables(individual_columns), row))
-							{
-									is_repeated = true;
-									break;
-							}
-						}
-			
-			} while (is_repeated);
-
-            ///Add individual to population
-            Tensor<bool,1> individual_variables=transform_individual_columns_to_variables(individual_columns);
-			
-			for (Index j = 0; j < genes_number; j++)
-			{
-                population(i, j) = individual_variables(j);
-            }///End of individual adittion to population
-
-			
-            }///End of population generation
+               ///Parameters obtention
+               DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+               const Index columns_number=data_set_pointer->get_input_columns_number();
+               const Index individuals_number = get_individuals_number();
+               const Index genes_number = get_genes_number();
+               population.setConstant(false);
 
 
-	}
+
+               ///This variable controls if the generated individual is repeated
+               bool is_repeated=false;
+               Tensor<bool, 1> individual_variables(genes_number);
+               Tensor<bool,1> individual_columns(columns_number);
+
+               Index active_columns_count=0;
+               Index active_columns;
+
+               ///Hacemos el individual_columns
+               for(Index i=0; i<individuals_number;i++)
+               {
+
+                   individual_columns.setConstant(false);
+                   individual_variables.setConstant(false);
+                   do{
+                       is_repeated=false;
+                       srand(static_cast<unsigned>(time(nullptr)));
+                       active_columns=1+rand()%columns_number;
+                       while(active_columns_count<active_columns)
+                       {
+                          srand(static_cast<unsigned>(time(nullptr)));
+                          Index active_column_index=rand()%columns_number;
+                          if(!individual_columns(active_column_index))
+                          {
+                              individual_columns(active_column_index)=true;
+                              active_columns_count++;
+                          }
+                       }
+                       //cout<< individual_columns<<endl;
+                       //cout<<endl<<endl;
+                       //Check for no inputs
+                       if(is_false(individual_columns))
+                       {
+                            is_repeated=true;
+                       }
+                       //Check for repetition
+                        individual_variables=get_individual_as_variables_from_columns(individual_columns);
+                       for(Index j=0;j<i;j++)
+                       {
+                           Tensor<bool,1> row=population.chip(j,0);
+                           if(are_equal(individual_variables,row))
+                           {
+                               is_repeated=true;
+                           }
+                       }
+
+                   }while(is_repeated);
+
+                   //Add individual to population
+                   for(Index j=0;j<genes_number;j++)
+                   {
+                       population(i,j)=individual_variables(j);
+                   }
+               }
+
+
+
+}
+
+
 
 	void GeneticAlgorithm::initialize_population_correlations()
     {
@@ -708,7 +724,7 @@ namespace opennn
 
 			if (display) cout << "Individual " << i + 1 << endl;
 
-            individual_columns_indexes=transform_individual_to_columns_indexes(individual);
+            individual_columns_indexes=get_individuals_as_indexes_from_columns(individual);
 
             data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
 
@@ -943,8 +959,8 @@ namespace opennn
                     throw invalid_argument(buffer.str());
                 }
         #endif
-        ///Couples generation
-        /// First obtain selected individuals indexes
+        //Couples generation
+        // First obtain selected individuals indexes
         Tensor<Index,1> parent_1_indexes=get_selected_individuals_to_indexes();
         Tensor<Index, 1> parent_2_indexes=parent_1_indexes;
         std::random_device rd;
@@ -982,15 +998,16 @@ namespace opennn
                 }
 
             }while(is_parent_repeated||is_couple_repeated);
+
             //couple to collection addition
             couples(i,0)=parent_1_indexes(i);
             couples(i,1)=parent_2_indexes(i);
         }
 
 
-        Tensor<bool, 1> parent_1_variables;
-        Tensor<bool, 1> parent_2_variables;
-        Tensor<bool,1> descendent_variables;
+        Tensor<bool, 1> parent_1_variables(genes_number);
+        Tensor<bool, 1> parent_2_variables(genes_number);
+        Tensor<bool,1> descendent_variables(genes_number);
         Tensor<bool, 1> parent_1_columns;
         Tensor<bool, 1> parent_2_columns;
         Tensor<bool, 1> descendent_columns;
@@ -1014,9 +1031,11 @@ namespace opennn
         {
             parent_1_variables=population.chip(couples(i,0),0);
             parent_2_variables=population.chip(couples(i,1),0);
-            ///Transform each parent to columns
-            parent_1_columns=transform_individual_to_columns(parent_1_variables);
-            parent_2_columns=transform_individual_to_columns(parent_2_variables);
+
+            //Transform each parent as columns
+            parent_1_columns=get_individual_as_columns_from_variables(parent_1_variables);
+            parent_2_columns=get_individual_as_columns_from_variables(parent_2_variables);
+
             //Perform crossover
             do{
                 is_empty=false;
@@ -1038,7 +1057,7 @@ namespace opennn
                         is_repeated=true;
                     }
                 }*/
-                ///Prevent no inputs
+                //Prevent no inputs
                 if(is_false(descendent_columns))
                 {
                     is_empty=true;
@@ -1046,7 +1065,7 @@ namespace opennn
 
             }while(is_empty);
             ///Population addition
-            Tensor<bool,1> descendent=transform_individual_columns_to_variables(descendent_columns);
+            Tensor<bool,1> descendent=get_individual_as_variables_from_columns(descendent_columns);
             for(Index j=0;j<genes_number;j++)
             {
                 new_population(i+selected_individuals_number,j)=descendent(j);
@@ -1084,7 +1103,7 @@ namespace opennn
         {
             individual_variables=population.chip(i,0);
 
-            individual_columns=transform_individual_to_columns(individual_variables);
+            individual_columns=get_individual_as_columns_from_variables(individual_variables);
 
             bool is_empty;
            do{
@@ -1096,14 +1115,14 @@ namespace opennn
                     individual_columns(j)= !individual_columns(j);
                 }
             }
-            ///Prevent no inputs
+            //Prevent no inputs
             if(is_false(individual_columns))
             {
                 is_empty=true;
             }
             }while(is_empty);
 
-            individual_variables=transform_individual_columns_to_variables(individual_columns);
+            individual_variables=get_individual_as_variables_from_columns(individual_columns);
 
             for(Index j=0;j<genes_number;j++)
             {
@@ -1194,7 +1213,7 @@ namespace opennn
 
         original_input_columns_indices=data_set_pointer->get_input_variables_indices();
         original_target_columns_indices=data_set_pointer->get_target_variables_indices();
-        Tensor<Index,1> optimal_inputs_columns_indexes;
+        Tensor<Index,1> optimal_inputs_columns_indexes(maximum_epochs_number);
 		time(&beginning_time);
         inputs_selection_results.optimum_selection_error=numeric_limits<type>::max();
 
@@ -1206,32 +1225,17 @@ namespace opennn
 			evaluate_population();
 
 
+            //Optimal individual in population
 
-            ///Optimal individual in population
-			optimal_individual_index = minimal_index(selection_errors);
+            optimal_individual_index = minimal_index(selection_errors);
 
-
-
-            ///Store optimal individual in the history
-
-            /*for(Index i=0;i<population.dimension(1);i++)
-            {
-            optimal_individuals_history(epoch,i)=population(optimal_individual_index,i);
-            }
-            system("pause");*/
-
-
-            ///store optimal training and selection error in the history
+            //store optimal training and selection error in the history
 
 			inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
 
-
-
 			inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
-
-
-            ///store mean errors histories
+            //store mean errors histories
 
 			inputs_selection_results.mean_selection_error_history(epoch) = mean_generational_selection_error;
 
@@ -1250,7 +1254,7 @@ namespace opennn
 
                 inputs_selection_results.optimal_inputs = transform_individual_to_indexes(inputs_selection_results.optimal_inputs);
 
-                optimal_inputs_columns_indexes=transform_individual_to_columns_indexes(inputs_selection_results.optimal_inputs);
+                optimal_inputs_columns_indexes=get_individuals_as_indexes_from_columns(inputs_selection_results.optimal_inputs);
 
 
                 data_set_pointer->set_input_target_columns(optimal_inputs_columns_indexes,original_target_columns_indices);
@@ -1351,7 +1355,7 @@ namespace opennn
 		// Set data set stuff
 
 
-        Tensor<Index,1>optimal_columns=transform_individual_to_columns_indexes(inputs_selection_results.optimal_inputs);
+        Tensor<Index,1>optimal_columns=get_individuals_as_indexes_from_columns(inputs_selection_results.optimal_inputs);
         data_set_pointer->set_input_target_columns(optimal_columns,original_target_columns_indices);
 
 		const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
@@ -1426,12 +1430,12 @@ namespace opennn
 			}
 		}
 
-	};
+    }
 
-    Tensor<bool,1 > GeneticAlgorithm::transform_individual_to_columns(Tensor<bool,1>& individual)
+    Tensor<bool,1 > GeneticAlgorithm::get_individual_as_columns_from_variables(Tensor<bool,1>& individual)
     {
         DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
-        const Index columns_number=original_input_columns_indices.size();
+        const Index columns_number=data_set_pointer->get_input_columns_number();
         Tensor<bool,1> columns_indexes(columns_number);
         columns_indexes.setConstant(false);
         Index genes_count=0;
@@ -1448,7 +1452,7 @@ namespace opennn
                         columns_indexes(i)=true;
                     }
                 }
-                genes_count+=categories_number-1;
+                genes_count+=categories_number;
 
             }else
             {
@@ -1461,9 +1465,9 @@ namespace opennn
         return columns_indexes;
 
     }
-    Tensor<Index,1> GeneticAlgorithm::transform_individual_to_columns_indexes(Tensor<bool,1>& individual)
+    Tensor<Index,1> GeneticAlgorithm::get_individuals_as_indexes_from_columns(Tensor<bool,1>& individual)
     {
-        Tensor<bool, 1> individual_columns=transform_individual_to_columns(individual);
+        Tensor<bool, 1> individual_columns=get_individual_as_columns_from_variables(individual);
         Index active_columns=0;
         for(Index i=0; i<individual_columns.size();i++)
         {
@@ -1487,42 +1491,52 @@ namespace opennn
         return individual_columns_indexes;
     }
 
-    Tensor<bool, 1> GeneticAlgorithm::transform_individual_columns_to_variables(Tensor<bool, 1>& individual_columns)
+    Tensor<bool, 1> GeneticAlgorithm::get_individual_as_variables_from_columns(Tensor<bool, 1>& individual_columns)
     {
+        ///First we obtain the auxiliar parameters we need
+
         DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
 
-        const Index columns_number=individual_columns.size();
+        const Index columns_number=data_set_pointer->get_input_columns_number();
 
         const Index genes_number=get_genes_number();
 
+        ///We declare the tensor which stores the individual as genes expression
         Tensor<bool,1> individual_columns_to_variables(genes_number);
 
         individual_columns_to_variables.setConstant(false);
 
         Index input_index=0;
 
-        for(Index i=0;i<columns_number;i++)
+        ///If data_set has no categorical columns, individual as "variables" is equal to individual as "columns"
+        if(data_set_pointer->has_categorical_columns())
         {
-            if(data_set_pointer->get_column_type(i)==DataSet::ColumnType::Categorical)
+            for(Index i=0;i<columns_number;i++)
             {
-                if(individual_columns(i)){
-                for(Index j=0; j<data_set_pointer->get_columns()(i).get_categories_number();j++)
+                if(data_set_pointer->get_column_type(i)==DataSet::ColumnType::Categorical)
                 {
-                    individual_columns_to_variables(input_index+j)=true;
+                    if(individual_columns(i))
+                    {
+                        for(Index j=0; j<data_set_pointer->get_columns()(i).get_categories_number();j++)
+                            {
+                                individual_columns_to_variables(input_index+j)=true;
+                            }
+                    }
+                    input_index+=data_set_pointer->get_columns()(i).get_categories_number();
 
+                }else if(individual_columns(i))
+                {
+                    individual_columns_to_variables(input_index)=true;
+                    input_index++;
+                }else
+                {
+                    input_index++;
                 }
-                }
-                input_index+=data_set_pointer->get_columns()(i).get_categories_number();
 
-            }else if(individual_columns(i))
-            {
-                individual_columns_to_variables(input_index)=true;
-                input_index++;
-            }else
-            {
-                input_index++;
             }
-
+        }else
+        {
+            individual_columns_to_variables=individual_columns;
         }
 
         return individual_columns_to_variables;
@@ -1565,7 +1579,7 @@ namespace opennn
 		}
 		return new_indexes;
 
-	};
+    }
 
 
 	/// This method writes a matrix of strings the most representative atributes.
@@ -1967,7 +1981,7 @@ namespace opennn
 
 
 
-}
+};
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
