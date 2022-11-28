@@ -32,6 +32,7 @@ FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimension
     layer_type = Type::Flatten;
 }
 
+
 void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
 
@@ -42,15 +43,22 @@ Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
     return input_variables_dimensions;
 }
 
+
 /// @todo
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 
+//Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
+Index FlattenLayer::get_outputs_number() const
+{
+    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+}
+
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(2);
+    Tensor<Index, 1> outputs_dimensions;
 
-    outputs_dimensions(0) = input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
-    outputs_dimensions(1) = 1; //input_variables_dimensions(3); // Number of batches
+    /// @todo
+    outputs_dimensions.setValues({1000, input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2)});
 
     return outputs_dimensions;
 }
@@ -61,25 +69,30 @@ Index FlattenLayer::get_inputs_number() const
     return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2) * input_variables_dimensions(3);
 }
 
+
 Index FlattenLayer::get_input_height() const
 {
     return input_variables_dimensions(2);
 }
+
 
 Index FlattenLayer::get_input_width() const
 {
     return input_variables_dimensions(1);
 }
 
+
 Index FlattenLayer::get_inputs_channels_number() const
 {
     return input_variables_dimensions(0);
 }
 
+
 Index FlattenLayer::get_inputs_batch_number() const
 {
     return input_variables_dimensions(3);
 }
+
 
 /// Returns the number of neurons
 
@@ -102,6 +115,13 @@ Index FlattenLayer::get_parameters_number() const
     return 0;
 }
 
+Tensor< TensorMap< Tensor<type, 1> >*, 1> FlattenLayer::get_layer_parameters()
+{
+    Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_parameters;
+
+    return layer_parameters;
+}
+
 
 /// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
 
@@ -109,6 +129,8 @@ Index FlattenLayer::get_parameters_number() const
 
 void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
+    layer_name = "flatten_layer";
+
     input_variables_dimensions = new_inputs_dimensions;
 
 }
@@ -119,18 +141,21 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 /// @param inputs 4d tensor(batch, channels, width, height)
 /// @return result 2d tensor(batch, number of pixels)
 
-Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
+void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    const Index batch = inputs.dimension(3);
-    const Index channels = inputs.dimension(2);
-    const Index heights = inputs.dimension(0);
-    const Index width = inputs.dimension(1);
+    const Index height = inputs_dimensions(0);
+    const Index width = inputs_dimensions(1);
+    const Index channels = inputs_dimensions(2);
+    const Index batch = inputs_dimensions(3);
 
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
+    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
 
-    const Tensor<type, 2> outputs = inputs.reshape(new_dims);
+    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-    return outputs;
+    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch, channels*width*height);
+
+    outputs = inputs.reshape(new_dims);
 }
 
 
@@ -175,12 +200,12 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
         throw invalid_argument(buffer.str());
     }
 
-    const Index batch = inputs_dimensions(3);
-    const Index channels = inputs_dimensions(2);
-    const Index heights = inputs_dimensions(0);
+    const Index height = inputs_dimensions(0);
     const Index width = inputs_dimensions(1);
+    const Index channels = inputs_dimensions(2);
+    const Index batch = inputs_dimensions(3);
 
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
+    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 

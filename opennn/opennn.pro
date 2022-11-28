@@ -57,6 +57,7 @@ HEADERS += \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
+    opennn_images.h \
     statistics.h \
     scaling.h \
     correlations.h \
@@ -107,14 +108,17 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-    region_based_object_detector.h \
-    json_to_xml.h \
+#    region_based_object_detector.h \
+#    json_to_xml.h \
     batch_normalization_layer.h\
+    region_proposal_layer.h \
+    non_max_suppression_layer.h \
     opennn.h
 
 SOURCES += \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
+    opennn_images.cpp \
     tensor_utilities.cpp \
     statistics.cpp \
     scaling.cpp \
@@ -162,7 +166,9 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-    region_based_object_detector.cpp \
-    json_to_xml.cpp \
+#    region_based_object_detector.cpp \
+#    json_to_xml.cpp \
     batch_normalization_layer.cpp\
+    region_proposal_layer.cpp \
+    non_max_suppression_layer.cpp \
     unit_testing.cpp

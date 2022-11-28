@@ -61,6 +61,7 @@ int main()
 
 //        data_set.set_training();
 
+
         const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
 
         const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
@@ -117,9 +118,9 @@ int main()
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(1000);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);
-        system("pause");
-        training_strategy.perform_training();
 
+        training_strategy.perform_training();
+/*
         // Testing analysis
 
         Tensor<type, 4> inputs_4d;
@@ -153,7 +154,7 @@ int main()
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+*/
         cout << "Bye!" << endl;
 
         return 0;
