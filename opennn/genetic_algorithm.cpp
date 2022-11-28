@@ -433,7 +433,10 @@ namespace opennn
 
                Index active_columns_count=0;
                Index active_columns;
-
+               if(display)
+               {
+                   cout<<"Creating initial random population"<<endl;
+               }
                ///Hacemos el individual_columns
                for(Index i=0; i<individuals_number;i++)
                {
@@ -442,20 +445,14 @@ namespace opennn
                    individual_variables.setConstant(false);
                    do{
                        is_repeated=false;
-                       srand(static_cast<unsigned>(time(nullptr)));
-                       active_columns=1+rand()%columns_number;
-                       while(active_columns_count<active_columns)
+                       for(Index j=0;j<columns_number;j++)
                        {
-                          srand(static_cast<unsigned>(time(nullptr)));
-                          Index active_column_index=rand()%columns_number;
-                          if(!individual_columns(active_column_index))
-                          {
-                              individual_columns(active_column_index)=true;
-                              active_columns_count++;
-                          }
+                           type is_column_activated=rand()%2;
+                           if(is_column_activated==1)
+                           {
+                               individual_columns(j)=true;
+                           }
                        }
-                       //cout<< individual_columns<<endl;
-                       //cout<<endl<<endl;
                        //Check for no inputs
                        if(is_false(individual_columns))
                        {
@@ -473,6 +470,7 @@ namespace opennn
                        }
 
                    }while(is_repeated);
+                   //cout<< "Individual "<< i+1<<" creado"<<endl;
 
                    //Add individual to population
                    for(Index j=0;j<genes_number;j++)
@@ -481,7 +479,10 @@ namespace opennn
                    }
                }
 
-
+            if(display)
+            {
+                cout<<"Initial random population created"<<endl;
+            }
 
 }
 
@@ -1268,6 +1269,7 @@ namespace opennn
 				inputs_selection_results.optimum_training_error = training_errors(optimal_individual_index);
 
 				inputs_selection_results.optimum_selection_error = selection_errors(optimal_individual_index);
+
 
             }else{
                 data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);

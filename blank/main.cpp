@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         cout << "Hello OpenNN" << endl;
 
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Downloads/categories.csv",',',true);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/5_years_mortality_no_ids.csv",';',true);
 
 
 
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
         //data_set.print_data_preview();
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
 
         // Training strategy
@@ -59,38 +59,33 @@ int main(int argc, char* argv[])
 
        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
-       genetic_algorithm.set_individuals_number(2);
-
-       cout<<genetic_algorithm.get_population()<<endl;
-
-       Tensor<bool,2> population_stored = genetic_algorithm.get_population();
-
-       population_stored.setZero();
-       cout<<population_stored<<endl;
-
-       genetic_algorithm.initialize_population_random();
+       genetic_algorithm.set_individuals_number(100);
+       genetic_algorithm.set_maximum_epochs_number(10);
 
 
-        Tensor<bool,1> pruebas(6);
+       //genetic_algorithm.initialize_population_random();
+
+
+        /*Tensor<bool,1> pruebas(6);
         pruebas.setConstant(false);
         //cout<<pruebas;
         if(is_false(pruebas))
         {
             cout<<"Hola"<<endl;
-        }
+        }*/
 
 
-       cout<<genetic_algorithm.get_population()<<endl;
+       //cout<<genetic_algorithm.get_population()<<endl;
 
-       //genetic_algorithm.set_mutation_rate(0.01);
-       //genetic_algorithm.set_elitism_size(2);
+       genetic_algorithm.set_mutation_rate(0.01);
+       genetic_algorithm.set_elitism_size(2);
 
-       //genetic_algorithm.initialize_population();
-       //genetic_algorithm.evaluate_population();
-       //genetic_algorithm.perform_fitness_assignment();
-       //genetic_algorithm.perform_selection();
-       //genetic_algorithm.perform_crossover();
-       //genetic_algorithm.perform_mutation();
+       genetic_algorithm.initialize_population();
+       genetic_algorithm.evaluate_population();
+       genetic_algorithm.perform_fitness_assignment();
+       genetic_algorithm.perform_selection();
+       genetic_algorithm.perform_crossover();
+       genetic_algorithm.perform_mutation();
 
 
 
@@ -103,24 +98,30 @@ int main(int argc, char* argv[])
 
        ////cout<<genetic_algorithm.get_population().dimension(1);
 
-       //InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+       InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
 
        //cout<<inputs_selection_results.mean_selection_error_history<<endl;
        // Testing analysis
 
       // training_strategy.perform_training();
 
-     // ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
+      ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
 
-     //  mean_selection_error_csv<<inputs_selection_results.mean_selection_error_history;
+      mean_selection_error_csv<<inputs_selection_results.mean_selection_error_history;
 
-     //  mean_selection_error_csv.close();
+      mean_selection_error_csv.close();
 
-     // TestingAnalysis testing_analysis(&neural_network, &data_set);
+      ofstream optimum_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/OPSEH.csv");
+      optimum_selection_error_csv<<inputs_selection_results.selection_error_history;
+      optimum_selection_error_csv.close();
 
-     //  TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
 
-       //cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
+      TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+      TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
+
+       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
+
        system("pause");
 
         cout << "Bye OpenNN" << endl;
