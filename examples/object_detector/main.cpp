@@ -53,7 +53,14 @@ int main()
 
         data_set.set_training();
 
+        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index input_variables_number = data_set.get_input_variables_number();
+
+        cout << "input_variables_number: "  << input_variables_number<< endl;
+
         Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
+
+        cout << "input_variables_dimensions: " << input_variables_dimensions << endl;
 
         NeuralNetwork neural_network;
 /*
@@ -63,8 +70,13 @@ int main()
         FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
 
-        ProbabilisticLayer probabilistic_layer(108, 1);
+        const Index flatten_output_numbers = flatten_layer.get_outputs_number();
+
+        cout << "flatten_output_numbers: " << flatten_output_numbers << endl;
+
+        ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
         neural_network.add_layer(&probabilistic_layer);
+
 /*
         NonMaxSupressionLayer non_max_supression_layer;
         neural_network.add_layer(&non_max_supression_layer);
