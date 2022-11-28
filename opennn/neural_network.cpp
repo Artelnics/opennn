@@ -4815,11 +4815,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 {
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    Tensor<type, 2> outputs(inputs_dimensions(0), get_outputs_number());
-
-    Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-    calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    Tensor<type, 2> outputs = calculate_outputs(inputs.data(), inputs_dimensions);
 
     std::ofstream file(file_name.c_str());
 
