@@ -48,6 +48,7 @@ public:
     // Get methods
 
     Tensor<Index, 1> get_input_variables_dimensions() const;
+    Index get_outputs_number() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
@@ -172,15 +173,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
         batch_samples_number = new_batch_samples_number;      
 
         const Index neurons_number = new_layer_pointer->get_neurons_number();
-/*
-        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
-        cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-        cout << "input_variables_dimensions(0): " << input_variables_dimensions(0) << endl;
-        cout << "input_variables_dimensions(1): " << input_variables_dimensions(1) << endl;
-        cout << "input_variables_dimensions(2): " << input_variables_dimensions(2) << endl;
-        cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-*/
         deltas.resize(batch_samples_number, neurons_number);
     }
 
