@@ -767,7 +767,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     check_size(potential_parameters, get_parameters_number(), LOG);
 #endif
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
     const Index neurons_number = get_neurons_number();
 
