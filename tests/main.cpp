@@ -1,11 +1,11 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P E N N N   T E S T S   A P P L I C A T I O N                       
+//   O P E N N N   T E S T S   A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-  
+
 // System includes
 
 #include <iostream>
@@ -22,11 +22,11 @@ int main()
 {
    cout <<
    "Open Neural Networks Library. Test Suite Application.\n\n"
-   
+
    "suite - run all tests\n\n"
-   
+
    "Individual Tests:\n\n"
-   
+
    "adaptive_moment_estimation | adam\n"
    "bounding_layer | bl\n"
    "conjugate_gradient | cg\n"
@@ -210,7 +210,7 @@ int main()
 
       else if(test == "convolutional_layer" || test == "cl")
       {
-         ConvolutionalLayerTest layer_test;         
+         ConvolutionalLayerTest layer_test;
          layer_test.run_test_case();
          tests_count += layer_test.get_tests_count();
          tests_passed_count += layer_test.get_tests_passed_count();
@@ -219,7 +219,7 @@ int main()
 
       else if(test == "pooling_layer" || test == "pll")
       {
-         PoolingLayerTest layer_test;         
+         PoolingLayerTest layer_test;
          layer_test.run_test_case();
          tests_count += layer_test.get_tests_count();
          tests_passed_count += layer_test.get_tests_passed_count();
@@ -342,13 +342,13 @@ int main()
       }
       else if(test == "stochastic_gradient_descent" || test == "sgd")
       {
-       
+
         StochasticGradientDescentTest stochastic_gradient_descent_test;
         stochastic_gradient_descent_test.run_test_case();
         tests_count += stochastic_gradient_descent_test.get_tests_count();
         tests_passed_count += stochastic_gradient_descent_test.get_tests_passed_count();
         tests_failed_count += stochastic_gradient_descent_test.get_tests_failed_count();
-       
+
       }
       else if(test == "training_strategy" || test == "ts")
       {
@@ -578,7 +578,7 @@ int main()
 
           // neural network
 
-          NeuralNetworkTest neural_network_test;         
+          NeuralNetworkTest neural_network_test;
           neural_network_test.run_test_case();
           tests_count += neural_network_test.get_tests_count();
           tests_passed_count += neural_network_test.get_tests_passed_count();
@@ -794,11 +794,11 @@ int main()
    }
    catch(const exception& e)
    {
-      cerr << e.what() << endl;		 
+      cerr << e.what() << endl;
 
       return 1;
    }
-}  
+}
 
 
 // OpenNN: Open Neural Networks Library.

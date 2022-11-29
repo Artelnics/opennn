@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   N E U R A L   N E T W O R K   C L A S S   H E A D E R                 
+//   N E U R A L   N E T W O R K   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -91,7 +91,7 @@ public:
    bool has_probabilistic_layer() const;
    bool has_convolutional_layer() const;
    bool has_flatten_layer() const;
-   bool is_empty() const;  
+   bool is_empty() const;
 
    const Tensor<string, 1>& get_inputs_names() const;
    string get_input_name(const Index&) const;
@@ -154,7 +154,7 @@ public:
 
    void set_display(const bool&);
 
-   // Layers 
+   // Layers
 
    Index get_layers_number() const;
    Tensor<Index, 1> get_layers_neurons_numbers() const;
@@ -203,7 +203,7 @@ public:
 
    void perturbate_parameters(const type&);
 
-   // Output 
+   // Output
 
    Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
 
@@ -247,7 +247,7 @@ public:
    // Expression methods
 
     string write_expression() const;
-    
+
     string write_expression_python() const;
     string write_expression_c() const;
     string write_expression_api() const;
@@ -310,7 +310,7 @@ struct NeuralNetworkForwardPropagation
     virtual ~NeuralNetworkForwardPropagation() {}
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
-    {        
+    {
         batch_samples_number = new_batch_samples_number;
 
         neural_network_pointer = new_neural_network_pointer;

@@ -109,7 +109,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    // Default constructor
 
    explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {        
+   {
    }
 
    // Constructor
@@ -170,7 +170,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     {
         layer_pointer = new_layer_pointer;
 
-        batch_samples_number = new_batch_samples_number;      
+        batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = new_layer_pointer->get_neurons_number();
 //        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
@@ -215,4 +215,3 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

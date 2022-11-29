@@ -39,7 +39,7 @@ namespace opennn
 
     Tensor<type, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>&, const Index&, const Index&);
 
-    Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>&, Index&, Index&, Index&, Index&); 
+    Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>&, Index&, Index&, Index&, Index&);
 
     Tensor<type, 1> get_bounding_box(const Tensor<Tensor<type, 1>, 1>&, const Index&,
                                      const Index&, const Index&, const Index&);
