@@ -711,7 +711,7 @@ namespace opennn
         const Index genes_number = get_genes_number();
         Tensor<bool,1> individual_columns;
         Tensor<Index,1> individual_columns_indexes;
-        Tensor<string,1>inputs_names;
+        //Tensor<string,1>inputs_names;
 
 
         for (Index i = 0; i < individuals_number; i++)
@@ -723,20 +723,17 @@ namespace opennn
 
             individual_columns_indexes=get_individual_as_columns_indexes_from_variables(individual);
 
-            data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
-
             data_set_pointer->set_input_target_columns(individual_columns_indexes, original_target_columns_indices);
 
-            //inputs_variables_names.resize(count(individual.data(),individual.data()+individual.size(),1));
+            Tensor<string,1> inputs_names = data_set_pointer->get_input_variables_names();
 
-            //inputs_variables_names = data_set_pointer->get_input_variables_names();
-
-            inputs_names = data_set_pointer->get_input_variables_names();
-
-            neural_network_pointer->set_inputs_number(data_set_pointer->get_input_columns_number());
-            system("pause");
+            neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
             neural_network_pointer->set_inputs_names(inputs_names);
+
+            //cout<<neural_network_pointer->get_inputs_names()<<endl;
+
+            //system("pause");
 
             neural_network_pointer->set_parameters_random();
 
@@ -758,12 +755,13 @@ namespace opennn
                 {
                     if(individual_columns(i))
                     {
+
                         cout<<data_set_pointer->get_columns()(i).name<<endl;
                     }
                 }
-                system("pause");
 
-                cout<< inputs_names<<endl;
+
+                //cout<< inputs_names<<endl;
 
                 //for (Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
 
@@ -771,6 +769,7 @@ namespace opennn
                 cout << "Selection error: " << training_results.get_selection_error() << endl;
 
             }
+            data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
 
 
         }
@@ -1054,15 +1053,15 @@ namespace opennn
                     }
                 }
                 //check for repetitions
-            /*for(Index j=0;j<i;j++)
+            for(Index j=0;j<i;j++)
                 {
                     Tensor<bool,1> row=new_population.chip(j,0);
-                    descendent_variables=transform_individual_columns_to_variables(descendent_columns);
+                    descendent_variables=get_individual_as_variables_from_columns(descendent_columns);
                     if(are_equal(row,descendent_variables))
                     {
-                        is_repeated=true;
+                        is_empty=true;
                     }
-                }*/
+                }
                 ///Prevent no inputs
                 if(is_false(descendent_columns))
                 {
@@ -1509,7 +1508,7 @@ namespace opennn
                 active_column_index++;
             }
         }
-        cout<<individual_columns_indexes<<endl;
+        //cout<<individual_columns_indexes<<endl;
         return individual_columns_indexes;
     }
 

@@ -92,6 +92,7 @@ int main(int argc, char* argv[])
        //system("pause");
        //
        Tensor<Index,1> target_original_columns=data_set.get_target_columns_indices();
+       Tensor<Index,1> inputs_original_columns=data_set.get_input_columns_indices();
 
 
        //for(Index i=0;i<genetic_algorithm.get_individuals_number();i++)
@@ -112,6 +113,49 @@ int main(int argc, char* argv[])
        //    }
        //    //system("pause");
        //}
+       //Tensor<bool,2> population=genetic_algorithm.get_population();
+       ////Compruebo que no hay ninguna que no falla estableciendo que ningún individuo sea vacío, pero su inputs_names si
+       //for(Index i=0;i<population.dimension(0);i++)
+       //{
+       //    //Seleccionamos el individuo i-ésimo
+       //    Tensor<bool,1> individual=population.chip(i,0);
+
+       //    if(is_false(individual))
+       //    {
+       //        cout<<"El individuo es nulo"<<endl;
+       //    }else
+       //    {
+       //        cout<< "El individuo es no nulo" <<endl;
+       //    }
+
+       //    Tensor<Index, 1> individual_columns_indexes=genetic_algorithm.get_individual_as_columns_indexes_from_variables(individual);
+       //    data_set.set_input_target_columns(individual_columns_indexes,target_original_columns);
+
+       //    Tensor<string,1> inputs_columns_names=data_set.get_input_columns_names();
+       //    Tensor<string,1> inputs_variables_names=data_set.get_input_variables_names();
+
+       //    if(inputs_variables_names.size()==0 ||inputs_columns_names.size()==0 )
+       //    {
+       //        cout<<inputs_variables_names.size()<<endl;
+       //        cout<<inputs_columns_names.size()<<endl;
+
+       //    }else if(inputs_variables_names.size()!=0 &&inputs_columns_names.size()!=0)
+       //    {
+       //        cout<<"Nombre de las variables no vacío"<<endl;
+       //        //cout<<inputs_variables_names<<endl;
+       //        system("pause");
+       //        cout<<"Nombre de las columnas no vacío"<<endl;
+       //        //cout<<inputs_columns_names<<endl;
+       //        system("pause");
+       //    }
+
+       //    data_set.set_input_target_columns(inputs_original_columns,target_original_columns);
+
+
+
+
+       //}
+
 
        genetic_algorithm.evaluate_population();
        genetic_algorithm.perform_fitness_assignment();
