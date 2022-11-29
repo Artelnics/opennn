@@ -39,7 +39,7 @@
 using namespace std;
 using namespace opennn;
 
-int main()
+int main(int argc, char *argv[])
 {
     try
     {

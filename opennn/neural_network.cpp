@@ -912,12 +912,14 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
         outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
+        /*
         // Pooling layer 1
 
         PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
         this->add_layer(pooling_layer_1);
 
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
+        */
     }
 
     FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
