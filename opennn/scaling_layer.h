@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S C A L I N G   L A Y E R   C L A S S   H E A D E R                   
+//   S C A L I N G   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -31,8 +31,8 @@ namespace opennn
 /// This class represents a layer of scaling neurons.
 
 ///
-/// Scaling layers are included in the definition of a neural network. 
-/// They are used to normalize variables so they are in an appropriate range for computer processing.  
+/// Scaling layers are included in the definition of a neural network.
+/// They are used to normalize variables so they are in an appropriate range for computer processing.
 
 class ScalingLayer : public Layer
 {
@@ -51,7 +51,7 @@ public:
    explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
    // Get methods
-   
+
    ProjectType get_project_type() const;
    string get_project_type_string(const ScalingLayer::ProjectType&) const;
    Tensor<Index, 1> get_outputs_dimensions() const;
@@ -143,7 +143,7 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization methods
-   
+
    void print() const;
 
    virtual void from_XML(const tinyxml2::XMLDocument&) final;
@@ -169,7 +169,7 @@ protected:
    type min_range;
    type max_range;
 
-   /// Display warning messages to screen. 
+   /// Display warning messages to screen.
 
    bool display = true;
 
@@ -197,4 +197,3 @@ protected:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

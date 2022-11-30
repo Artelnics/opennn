@@ -2651,7 +2651,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
 
 void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
-{    
+{
     ostringstream buffer;
 
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Outputs");
@@ -3902,15 +3902,15 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "main program has to look like this:" << endl;
     buffer << "\t" << endl;
     buffer << "int neuralNetwork(){ " << endl;
-	buffer << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer << "\t" << "vector<float> inputs(3);"<< endl;
     buffer << "\t" << endl;
-	buffer << "\t" << "const float asdas  = 0.3;" << endl;
-	buffer << "\t" << "inputs[0] = asdas;"        << endl;
-	buffer << "\t" << "const float input2 = 2.5;" << endl;
-	buffer << "\t" << "inputs[1] = input2;"       << endl;
-	buffer << "\t" << "const float input3 = 1.8;" << endl;
-	buffer << "\t" << "inputs[2] = input3;"       << endl;
-	buffer << "\t" << ". . ." << endl;
+    buffer << "\t" << "const float asdas  = 0.3;" << endl;
+    buffer << "\t" << "inputs[0] = asdas;"        << endl;
+    buffer << "\t" << "const float input2 = 2.5;" << endl;
+    buffer << "\t" << "inputs[1] = input2;"       << endl;
+    buffer << "\t" << "const float input3 = 1.8;" << endl;
+    buffer << "\t" << "inputs[2] = input3;"       << endl;
+    buffer << "\t" << ". . ." << endl;
     buffer << "\n" << endl;
     buffer << "Inputs Names:" <<endl;
 

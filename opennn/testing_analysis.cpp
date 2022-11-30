@@ -317,7 +317,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
     for(Index i = 0;  i < outputs_number; i++)
-    {        
+    {
         const Tensor<type,1> targets = testing_targets.chip(i,1);
         const Tensor<type,1> outputs = testing_outputs.chip(i,1);
 
@@ -3381,9 +3381,9 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";
-/*    
+/*
     classification_statistics_file << misclassified_numerical_probabilities.mean() << ",";
-*/    
+*/
     classification_statistics_file << standard_deviation(misclassified_numerical_probabilities);
 }
 

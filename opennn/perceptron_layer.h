@@ -133,10 +133,13 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>&,
+
+   void calculate_combinations(type*,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               type*) const;
+                               type*,
+                               const Tensor<Index, 1>&) const;
+
 
    // Perceptron layer activations
 
@@ -303,6 +306,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
+
         cout << "Outputs dimensions:" << endl;
         cout << outputs_dimensions << endl;
 
@@ -314,6 +318,11 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
+    }
+    type* get_combinations_data()
+    {
+        return combinations.data();
+
     }
 
     Tensor<type, 2> combinations;
@@ -402,6 +411,10 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+
+        deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+
     }
 
     Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
@@ -432,6 +445,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
+
+
+    Tensor<type, 2> deltas_times_activations_derivatives;
+
+
 };
 
 }
