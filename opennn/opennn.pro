@@ -28,7 +28,7 @@ DEFINES += __Cpp17__
 
 # OpenMP library
 
-win32:!win32-g++{
+win32:{
 #QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
@@ -39,10 +39,10 @@ LIBS += -fopenmp -pthread -lgomp
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
+#win32:!win32-g++{
+##QMAKE_CXXFLAGS+= -arch:AVX
+##QMAKE_CFLAGS+= -arch:AVX
+#}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
