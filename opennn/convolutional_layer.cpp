@@ -1662,12 +1662,6 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
     return input_variables_dimensions[1];
 }
 
-/// Returns the dimensions of the input.
-
-Tensor<Index, 1> ConvolutionalLayer::get_input_variables_dimenisons() const
-{
-    return input_variables_dimensions;
-}
 
 void ConvolutionalLayer::to_2d(const Tensor<type, 4>& input_4d, Tensor<type, 2>& output_2d) const
 {
@@ -1689,11 +1683,35 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("ConvolutionalLayer");
 
-    // Convolutional type
+    // Layer name
 
     file_stream.OpenElement("LayerName");
 
-    file_stream.PushText(write_activation_function().c_str());
+    buffer.str("");
+    buffer << layer_name;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Image size
+
+    file_stream.OpenElement("InputsVariablesDimensions");
+
+    buffer.str("");
+
+    const Tensor<Index, 1> inputs_variables_dimensions = get_input_variables_dimensions();
+
+    for(Index i = 0; i < inputs_variables_dimensions.size(); i++)
+    {
+        buffer << inputs_variables_dimensions(i);
+
+        if(i != (inputs_variables_dimensions.size() - 1)) buffer << " ";
+    }
+
+    cout << "Input variables dimensions string: " << buffer.str().c_str() << endl;
+
+    file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
@@ -1762,7 +1780,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    // Convolution type element
+    // Convolutional layer name element
 
     const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("LayerName");
 
@@ -1781,7 +1799,24 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* filters_number_element = convolutional_layer_element->FirstChildElement("FiltersNumber");
+    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputVariablesDimensions");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional input variables dimensions element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
+
+//    set_input_variables_dimenisons(static_cast<Index>(stoi(input_variables_dimensions_string));
+
+    // Filters Number element
+
+    const tinyxml2::XMLElement* filters_number_element = input_variables_dimensions_element->FirstChildElement("FiltersNumber");
 
     if(!filters_number_element)
     {

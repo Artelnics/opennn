@@ -908,6 +908,8 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     for(Index i = 0; i < blocks_number; i++)
     {
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        convolutional_layer->set_name("convolutional_layer_" + to_string(i+1));
+
         this->add_layer(convolutional_layer);
 
         outputs_dimensions = convolutional_layer->get_outputs_dimensions();
@@ -915,8 +917,9 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
         /*
         // Pooling layer 1
 
-        PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
-        this->add_layer(pooling_layer_1);
+        PoolingLayer* pooling_layer = new PoolingLayer(outputs_dimensions);
+        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
+        this->add_layer(pooling_layer);
 
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
         */
