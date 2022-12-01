@@ -1,14 +1,14 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   D A T A   S E T   T E S T   C L A S S                                 
+//   D A T A   S E T   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "data_set_test.h"
 
-DataSetTest::DataSetTest() : UnitTesting() 
+DataSetTest::DataSetTest() : UnitTesting()
 {
     //    data_set.set_display(false);
 }
@@ -57,7 +57,7 @@ void DataSetTest::test_destructor()
 }
 
 
-void DataSetTest::test_set() 
+void DataSetTest::test_set()
 {
     cout << "test_set\n";
 
@@ -76,7 +76,7 @@ void DataSetTest::test_set()
 }
 
 
-void DataSetTest::test_set_samples_number() 
+void DataSetTest::test_set_samples_number()
 {
     cout << "test_set_samples_number\n";
 
@@ -280,7 +280,7 @@ void DataSetTest::test_calculate_cross_correlations()
     lags_number = 6;
 
     data.resize(6, 3);
-    
+
     data.setValues({
                        {type(5),type(2),type(8)},
                        {type(7),type(8),type(7)},
@@ -464,12 +464,12 @@ void DataSetTest::test_calculate_target_distribution() ///@todo non existing Dat
     // Test two classes
 
     data.resize(4, 5);
-    
+
     data.setValues({{type(2),type(5),type(6),type(9),type(8)},
                     {type(2),type(9),type(1),type(9),type(4)},
                     {type(6),type(5),type(6),type(7),type(3)},
                     {type(0),static_cast<type>(NAN),type(1),type(0),type(1)}});
-    
+
     data_set.set(data);
 
     target_variables_indices.resize(1);
@@ -577,7 +577,7 @@ void DataSetTest::test_unuse_local_outlier_factor_outliers()
 }
 
 
-void DataSetTest::test_read_csv() 
+void DataSetTest::test_read_csv()
 {
     cout << "test_read_csv\n";
 
@@ -1129,7 +1129,7 @@ void DataSetTest::test_read_urinary_inflammations_csv()
         assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Binary, LOG);
         assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Binary, LOG);
         assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Binary, LOG);              
+        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Binary, LOG);
     }
     catch (const exception&)
     {
@@ -1283,7 +1283,7 @@ void DataSetTest::test_save_time_series_data_binary()
     cout << "test_save_time_series_data_binary\n";
 
     const string data_file_name = "../data/test";
-    
+
     // Test
 
     data.resize(4,2);
@@ -1459,7 +1459,7 @@ void DataSetTest::test_calculate_used_targets_mean()
                        {type(1), static_cast<type>(NAN), type(1), type(1)},
                        {type(2), type(2), type(2), type(2)},
                        {type(3), type(3), static_cast<type>(NAN), type(3)}});
-    
+
     data_set.set_data(data);
 
     Tensor<Index, 1> indices(3);
@@ -2150,7 +2150,7 @@ void DataSetTest::test_unuse_repeated_samples()
     // Test
 
     data.resize(3, 3);
-    
+
     data.setValues({{type(1),type(2),type(2)},
                     {type(1),type(2),type(2)},
                     {type(1),type(6),type(6)}});
