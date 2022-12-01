@@ -167,6 +167,7 @@ private:
 
     type mean_generational_training_error;
     type mean_generational_selection_error;
+    type mean_generational_inputs_activated;
     
     Tensor <bool, 2> optimal_individuals_history;
 

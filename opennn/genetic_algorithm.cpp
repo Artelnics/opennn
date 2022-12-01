@@ -93,6 +93,8 @@ namespace opennn
 
     void GeneticAlgorithm::set_default()
     {
+        //First we set genes_number equals number of variables
+
         Index genes_number;
 
         if (training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
@@ -101,8 +103,11 @@ namespace opennn
         }
         else
         {
+            //"Variables" includes dummy variables, columns treat categorical variables as one (important)
+
             genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
         }
+
 
         Index individuals_number = 10;
 
@@ -118,11 +123,11 @@ namespace opennn
         for (Index i = 0; i < individuals_number; i++) parameters(i).resize(genes_number);
 
         training_errors.resize(individuals_number);
+
         selection_errors.resize(individuals_number);
 
-
-
         fitness.resize(individuals_number);
+
         fitness.setConstant(type(-1.0));
 
         selection.resize(individuals_number);
@@ -403,7 +408,7 @@ namespace opennn
             initialize_population_correlations();
         }
 
-        //check_categorical_columns();
+
 
     }
 
@@ -413,35 +418,50 @@ namespace opennn
     {
         ///Parameters obtention
         DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+
         const Index columns_number=data_set_pointer->get_input_columns_number();
+
         const Index individuals_number = get_individuals_number();
+
         const Index genes_number = get_genes_number();
+
+        //First we set population as false
         population.setConstant(false);
 
-
+        //Generate a new random seed that depends on the execution time, making each execution different
         srand(time(nullptr));
-        ///This variable controls if the generated individual is repeated
-        bool is_repeated=false;
+
+        //This variable controls if the generated individual is repeated or empty
+
+        bool is_repeated_or_empty=false;
+
         Tensor<bool, 1> individual_variables(genes_number);
+
         Tensor<bool,1> individual_columns(columns_number);
 
         Index active_columns_count=0;
         Index active_columns;
+
+        //
         if(display)
         {
             cout<<"Creating initial random population"<<endl;
         }
-        ///Hacemos el individual_columns
+
         for(Index i=0; i<individuals_number;i++)
         {
 
-
-
             do{
+
                 individual_columns.setConstant(false);
+
                 individual_variables.setConstant(false);
+
+                //This variable represents how many activated columns will have this individual
                 active_columns=1+rand()%columns_number;
+
                 active_columns_count=0;
+
                 type random_column;
                 while(active_columns_count<active_columns)
                 {
@@ -451,12 +471,12 @@ namespace opennn
                         individual_columns(random_column)=true;
                         active_columns_count++;
                     }
-                   //cout<<"ey"<<endl;
+
                 }
                 //Check for no inputs
                 if(is_false(individual_columns))
                 {
-                     is_repeated=true;
+                     is_repeated_or_empty=true;
                 }
                 //Check for repetition
                  individual_variables=get_individual_as_variables_from_columns(individual_columns);
@@ -465,11 +485,11 @@ namespace opennn
                     Tensor<bool,1> row=population.chip(j,0);
                     if(are_equal(individual_variables,row))
                     {
-                        is_repeated=true;
+                        is_repeated_or_empty=true;
                     }
                 }
 
-            }while(is_repeated);
+            }while(is_repeated_or_empty);
             //cout<< "Individual "<< i+1<<" creado"<<endl;
 
             //Add individual to population
@@ -712,16 +732,20 @@ namespace opennn
         Tensor<bool,1> individual_columns;
         Tensor<Index,1> individual_columns_indexes;
         //Tensor<string,1>inputs_names;
-
+        Tensor<Index,1> inputs_activated(individuals_number);
+        set_display(true);
 
         for (Index i = 0; i < individuals_number; i++)
         {
 
             individual = population.chip(i, 0);
 
-            if (display) cout << "Individual " << i + 1 << endl;
+
+            //if (display) cout << "Individual " << i + 1 << endl;
 
             individual_columns_indexes=get_individual_as_columns_indexes_from_variables(individual);
+
+            inputs_activated(i)=individual_columns_indexes.size();
 
             data_set_pointer->set_input_target_columns(individual_columns_indexes, original_target_columns_indices);
 
@@ -737,7 +761,9 @@ namespace opennn
 
             neural_network_pointer->set_parameters_random();
 
+            training_strategy_pointer->set_display(false);
             training_results = training_strategy_pointer->perform_training();
+
 
             parameters(i) = neural_network_pointer->get_parameters();
 
@@ -745,7 +771,8 @@ namespace opennn
 
             selection_errors(i) = type(training_results.get_selection_error());
 
-            if (display)
+
+           /*   if (display)
             {
                 cout << "Inputs: " << endl;
 
@@ -768,7 +795,7 @@ namespace opennn
                 cout << "Training error: " << training_results.get_training_error() << endl;
                 cout << "Selection error: " << training_results.get_selection_error() << endl;
 
-            }
+            }*/
             data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
 
 
@@ -780,14 +807,18 @@ namespace opennn
 
         type sum2 = 0;
 
+        type sum3=0; //Alberga la suma de las inputs activadas por generación
+
         for (Index i = 0; i < individuals_number; i++)
             {
                 sum1 += training_errors(i);
                 sum2 += selection_errors(i);
+                sum3 += inputs_activated(i);
 
             }
         mean_generational_training_error = (type(sum1) / type(training_errors.size()));
         mean_generational_selection_error = (type(sum2) / type(selection_errors.size()));
+        mean_generational_inputs_activated=(type(sum3)/type(individuals_number));
 }
 
 
@@ -1179,11 +1210,8 @@ namespace opennn
 
         if (display) cout << "Performing genetic inputs selection..." << endl << endl;
 
-        if (population.dimension(0) == 0)
-        {
-            initialize_population();
-        }
 
+        initialize_population();
 
 
         // Selection algorithm
@@ -1221,6 +1249,13 @@ namespace opennn
         Tensor<Index,1> optimal_inputs_columns_indexes;
         time(&beginning_time);
         inputs_selection_results.optimum_selection_error=numeric_limits<type>::max();
+        training_strategy_pointer->get_optimization_algorithm_pointer()->set_display(false);
+        /*if(display)
+        {
+            cout<< "Generation 0 "<<endl;
+           cout<< "Mean inputs number  " << mean_generational_inputs_activated<<endl;
+           system("pause");
+        }*/
 
         for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
         {
@@ -1253,8 +1288,6 @@ namespace opennn
 
             inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
-
-
             ///store mean errors histories
 
             inputs_selection_results.mean_selection_error_history(epoch) = mean_generational_selection_error;
@@ -1262,10 +1295,8 @@ namespace opennn
 
             inputs_selection_results.mean_training_error_history(epoch)= mean_generational_training_error;
 
-
             if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
             {
-
                 data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
 
                 // Neural network
@@ -1275,7 +1306,6 @@ namespace opennn
                 //inputs_selection_results.optimal_inputs = transform_individual_to_indexes(inputs_selection_results.optimal_inputs);
 
                 optimal_inputs_columns_indexes=get_individual_as_columns_indexes_from_variables(inputs_selection_results.optimal_inputs);
-
 
                 data_set_pointer->set_input_target_columns(optimal_inputs_columns_indexes,original_target_columns_indices);
 
@@ -1306,18 +1336,20 @@ namespace opennn
             {
                 cout << endl;
 
-                cout << "Epoch number: " << epoch << endl;
+                /*cout << "Epoch number: " << epoch << endl;
                 cout << "Generation mean training error: " << training_errors.mean() << endl;
-                cout << "Generation mean selection error: " << inputs_selection_results.mean_selection_error_history(epoch) << endl;
+                cout << "Generation mean selection error: " << inputs_selection_results.mean_selection_error_history(epoch) << endl;*/
+                cout<< "Mean inputs number  " << mean_generational_inputs_activated<<endl;
 
 
-                cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
+                /*cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
                 cout << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl;
 
                 cout << "Best ever training error: " << inputs_selection_results.optimum_training_error << endl;
                 cout << "Best ever selection error: " << inputs_selection_results.optimum_selection_error << endl;
 
-                cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+                cout << "Elapsed time: " << write_time(elapsed_time) << endl;*/
+
             }
 
             // Stopping criteria
