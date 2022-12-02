@@ -27,22 +27,25 @@ int main(int argc, char* argv[])
     {
         cout << "Hello OpenNN" << endl;
 
+        srand(time(nullptr));
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/sum1000.csv",';',false);
-        system("pause");
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/sum10.csv",';',false);
+
         const Index input_variables_number = data_set.get_input_variables_number();
+
         const Index target_variables_number = data_set.get_target_variables_number();
+
         const Index hidden_neurons_number = 1;
+
         data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
 
         data_set.impute_missing_values_mean();
-        data_set.split_samples_sequential();
 
+        data_set.split_samples_sequential();
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
-
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, target_variables_number});
 
         // Training strategy
 
@@ -54,18 +57,69 @@ int main(int argc, char* argv[])
 
        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
-       genetic_algorithm.set_individuals_number(10);
-       genetic_algorithm.set_maximum_epochs_number(50);
+       genetic_algorithm.set_individuals_number(4);
 
-       genetic_algorithm.set_mutation_rate(0.01);
-       genetic_algorithm.set_elitism_size(4);
+       genetic_algorithm.set_elitism_size(1);
+
+
+
+       genetic_algorithm.set_maximum_epochs_number(1);
+
+       genetic_algorithm.initialize_population();
+
+       cout << "Initialize population" << endl;
+
+       Tensor<bool,2> population=genetic_algorithm.get_population();
+
+       cout << population << endl;
+
+       cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
+
+       cout << "Evaluate population" << endl;
+
+       genetic_algorithm.evaluate_population();
+
+       cout << "Training errors" << endl;
+
+       cout<<genetic_algorithm.get_training_errors() << endl;
+
+       cout << "Selection errors" << endl;
+
+       cout << genetic_algorithm.get_selection_errors() << endl;
+
+       cout << "Performing fitness assignment" << endl;
+
+       genetic_algorithm.perform_fitness_assignment();
+
+       cout << genetic_algorithm.get_fitness() << endl;
+
+       cout << "Performing selection" << endl;
+
+       genetic_algorithm.perform_selection();
+
+       cout << genetic_algorithm.get_selection() << endl;
+
+       cout<< "Performing Crossover" << endl;
+
+       genetic_algorithm.perform_crossover();
+
+
+       /*Index individuals_number= genetic_algorithm.get_individuals_number();
+
+
+
+
+
+
+       //genetic_algorithm.calculate_activation_probabilities();
        //genetic_algorithm.initialize_population();
        //genetic_algorithm.evaluate_population();
        //genetic_algorithm.perform_fitness_assignment();
        //genetic_algorithm.perform_selection();
        //genetic_algorithm.perform_crossover();
        //genetic_algorithm.perform_mutation();
-       InputsSelectionResults inputs_selection_results=genetic_algorithm.perform_inputs_selection();
+
+       InputsSelectionResults inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
        ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
 
@@ -85,6 +139,7 @@ int main(int argc, char* argv[])
 
        cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
 
+       */
        cout << "Bye OpenNN" << endl;
     }
     catch (const exception& e)

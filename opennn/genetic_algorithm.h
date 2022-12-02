@@ -58,6 +58,9 @@ public:
 
     const Tensor<bool, 2>& get_population() const;
 
+    const Tensor<type, 1>& get_training_errors() const;
+    const Tensor<type, 1>& get_selection_errors() const;
+
     const Tensor<type, 1>& get_fitness() const;
     const Tensor<bool, 1>& get_selection() const;
 
@@ -89,6 +92,7 @@ public:
 
     void set_elitism_size(const Index&);
     void set_maximum_epochs_number(const Index&);
+    void calculate_activation_probabilities();
 
     // GENETIC METHODS
 
@@ -125,6 +129,7 @@ public:
     Tensor<bool, 1> transform_individual_to_indexes(Tensor<bool,1> &);
 
     Tensor<bool, 1> get_individual_as_columns_from_variables(Tensor<bool,1> &);
+    Tensor<type, 1> activation_probabilities;
 
     Tensor<bool,1> get_individual_as_variables_from_columns(Tensor<bool,1> &);
     Tensor <Index,1>get_selected_individuals_to_indexes();
@@ -146,11 +151,18 @@ public:
     void load(const string&);
     void export_mean_selection_error_to_csv(const string& file);
 
+
+    Tensor<Tensor<type, 1>, 1> parameters;
+
+
 private:
 
     /// Population matrix.
-
     Tensor<bool, 2> population;
+
+    Tensor<type, 1> training_errors;
+    Tensor<type, 1> selection_errors;
+
 
     /// Fitness of population.
 
@@ -158,12 +170,13 @@ private:
 
     Tensor<bool, 1> selection;
 
+
     /// Performance of population.
 
-    Tensor<Tensor<type, 1>, 1> parameters;
+    //Tensor<Tensor<type, 1>, 1> parameters;
 
-    Tensor<type, 1> training_errors;
-    Tensor<type, 1> selection_errors;
+    //Tensor<type, 1> training_errors;
+    //Tensor<type, 1> selection_errors;
 
     type mean_generational_training_error;
     type mean_generational_selection_error;

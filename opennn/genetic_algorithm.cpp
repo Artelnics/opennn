@@ -36,6 +36,15 @@ namespace opennn
         return population;
     }
 
+    const Tensor<type, 1>& GeneticAlgorithm::get_training_errors() const
+    {
+        return training_errors;
+    }
+
+    const Tensor<type, 1>& GeneticAlgorithm::get_selection_errors() const
+    {
+        return selection_errors;
+    }
 
     /// Returns the fitness of the population.
 
@@ -81,12 +90,12 @@ namespace opennn
     }
 
 
-    /// Returns the method used for initalizating the population
+/// Returns the method used for initalizating the population
 
-    const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
-    {
-        return initialization_method;
-    }
+const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
+{
+    return initialization_method;
+}
 
 
     /// Sets the members of the genetic algorithm object to their default values.
@@ -429,7 +438,7 @@ namespace opennn
         population.setConstant(false);
 
         //Generate a new random seed that depends on the execution time, making each execution different
-        srand(time(nullptr));
+
 
         //This variable controls if the generated individual is repeated or empty
 
@@ -452,7 +461,7 @@ namespace opennn
         {
 
             do{
-
+                is_repeated_or_empty=false;
                 individual_columns.setConstant(false);
 
                 individual_variables.setConstant(false);
@@ -510,7 +519,7 @@ namespace opennn
     {
         //Needed parameters obtentions
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        //srand(static_cast<unsigned>(time(nullptr)));
 
         Index individuals_number = get_individuals_number();
 
@@ -525,7 +534,6 @@ namespace opennn
         Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
         cout<<"Correlation matrix calculated"<<endl;
-
 
         Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
@@ -881,9 +889,6 @@ namespace opennn
         Index selected_individuals_number = static_cast<Index>(type(individuals_number)/2);
 
 
-        /*cout<<static_cast<Index>(individuals_number/2)<<endl;
-        cout<<"Tamaño de elitismo: "<<elitism_size<<endl;
-        cout<<"Individuos seleccionados: "<<selected_individuals_number<<endl;*/
 
         //Calculation of cumulative probabilities
         Index sum=0;
@@ -892,7 +897,8 @@ namespace opennn
             sum+=(i+1);
         }
 
-        Tensor<type,1> probabilities(individuals_number);
+
+        Tensor<type,1> probabilities (individuals_number);
 
         for(Index i=0;i<individuals_number;i++)
         {
@@ -906,21 +912,23 @@ namespace opennn
         {
             for (Index i = 0; i < individuals_number; i++)
             {
-                if (fitness(i) - 1 >=0 && fitness(i) - 1 <= elitism_size)
+                if (fitness(i) - 1 >=0 && fitness(i) - 1 <elitism_size)
                 {
                     selection(i) = true;
                 }
             }
         }
 
-        srand(static_cast<unsigned>(time(nullptr)));
 
-        Index selected_individuals_count=count(selection.data(), selection.data() + selection.size(), 1);
+
+        Index selected_individuals_count=elitism_size;
 
         type pointer;
 
+
         while(selected_individuals_count<selected_individuals_number)
         {
+
 
             pointer=type(rand())/type(RAND_MAX);
             if(pointer<cumulative_probabilities(0)&& !selection(0))
@@ -939,6 +947,7 @@ namespace opennn
             }
 
         }
+
 
 
 #ifdef OPENNN_DEBUG
@@ -983,9 +992,12 @@ namespace opennn
 
     void GeneticAlgorithm::perform_crossover()
     {
+        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
         const Index individuals_number = get_individuals_number();
         const Index genes_number = get_genes_number();
-        const Index selected_individuals_number = std::count(selection.data(), selection.data() + selection.size(), 1);
+        const Index selected_individuals_number = count(selection.data(), selection.data() + selection.size(), 1);
+        const Index couples_number=selected_individuals_number/2;
+        const Index columns_number=data_set_pointer->get_input_columns_number();
         #ifdef OPENNN_DEBUG
                 Index count_selected_individuals = 0;
                 for (Index i = 0; i < individuals_number; i++) if (selection(i)) count_selected_individuals++;
@@ -1006,11 +1018,12 @@ namespace opennn
         std::mt19937 g(rd());
 
 
-        Tensor<Index,2> couples(selected_individuals_number,2);
+        Tensor<Index,2> couples(couples_number,2);
+        //calculate_activation_probabilities();
         bool is_parent_repeated=false;
         bool is_couple_repeated=false;
 
-        for(Index i=0;i<selected_individuals_number;i++)
+        for(Index i=0;i<couples_number;i++)
         {
 
             do{
@@ -1042,7 +1055,84 @@ namespace opennn
             couples(i,1)=parent_2_indexes(i);
         }
 
+        cout << couples << endl;
 
+
+        Tensor<bool,2> new_population(individuals_number,genes_number);
+
+        Tensor<bool, 1> parent_1_variables;
+
+        Tensor<bool, 1> parent_2_variables;
+
+        Tensor<bool,1> descendent_variables;
+
+        Tensor<bool,1 > descendent_columns(columns_number);
+
+        Tensor<bool, 1> parent_1_columns;
+
+        Tensor<bool, 1> parent_2_columns;
+
+        Index descendent_generated_by_couple_count=0;
+
+        Tensor <bool,2> descendents_generated_by_couple(4,columns_number);
+
+        //descendents_generated_by_couple.setConstant(false);
+
+
+        bool is_descendent_repeated;
+
+        for(Index i=0;i<couples.dimension(0);i++)
+        {
+            parent_1_variables=population.chip(couples(i,0),0);
+            parent_1_columns=get_individual_as_columns_from_variables(parent_1_variables);
+            parent_2_variables=population.chip(couples(i,1),0);
+            parent_2_columns=get_individual_as_columns_from_variables(parent_2_variables);
+
+            do{
+
+                do{
+                    is_descendent_repeated=false;
+                    descendent_columns.setConstant(false);
+
+                    descendent_columns=parent_1_columns;
+                    for(Index j=0;j<columns_number;j++)
+                    {
+                        if(parent_1_columns(j)!=parent_2_columns(j))
+                        {
+                            if(rand()%2==1)
+                            {
+                                descendent_columns(j)=true;
+                            }
+                        }
+
+                    }
+                    //Check for repetitions
+
+                    for(Index j=0;j<descendent_generated_by_couple_count;j++)
+                    {
+                        Tensor <bool,1> row= descendents_generated_by_couple.chip(j,0);
+                        if(are_equal( row , descendent_columns))
+                        {
+                            is_descendent_repeated=true;
+                        }
+                    }
+
+                }while(is_descendent_repeated);
+                //Addition to descendents_generated_by_couple
+
+                for(Index j=0; j<columns_number;j++)
+                {
+                    descendents_generated_by_couple(descendent_generated_by_couple_count,j)=descendent_columns(j);
+                }
+
+                descendent_generated_by_couple_count++;
+                cout << descendents_generated_by_couple << endl;
+                system("pause");
+            }while(descendent_generated_by_couple_count<4);
+
+
+        }
+        /*
         Tensor<bool, 1> parent_1_variables;
         Tensor<bool, 1> parent_2_variables;
         Tensor<bool,1> descendent_variables;
@@ -1053,7 +1143,7 @@ namespace opennn
         Index offspring_count=0;
         bool is_empty=false;
 
-        //We keep parents in the new generation
+        //We keep parents in the new generation?
         for (Index i = 0; i < individuals_number; i++)
         {
            if (selection(i) && offspring_count < selected_individuals_number)
@@ -1080,7 +1170,10 @@ namespace opennn
                 {
                     if(parent_1_columns(j)!=parent_2_columns(j))
                     {
-                        rand()%2==0 ? descendent_columns(j)=false : descendent_columns(j)=true;
+                       type pointer=type(rand())/type(RAND_MAX);
+
+                       pointer<activation_probabilities(j)? descendent_columns(j)=true: descendent_columns(j)=false;
+
                     }
                 }
                 //check for repetitions
@@ -1113,7 +1206,7 @@ namespace opennn
 
 
         }
-        population=new_population;
+        population=new_population;*/
 
 
  }
@@ -1167,6 +1260,64 @@ namespace opennn
 
 
         }
+
+    }
+
+    void GeneticAlgorithm::calculate_activation_probabilities()
+    {
+        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+        const Index columns_number=data_set_pointer->get_input_columns_number();
+
+        Tensor<Correlation,2> correlations_matrix=data_set_pointer->calculate_input_target_columns_correlations();
+
+        Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
+
+        Tensor<type,1> correlations_abs=correlations.abs();
+
+       // cout<<correlations_abs<<endl;
+
+        Tensor<Index,1 > rank =calculate_rank_less(correlations_abs);
+        system("pause");
+
+        Tensor<type, 1 > fitness_correlations(rank.size());
+
+         for(Index i=0;i<rank.size();i++)
+        {
+            fitness_correlations(rank(i))=type(i+1);
+        }///End of calculation of the new fitness correlations vector
+
+         type sum = (type(columns_number)*type(columns_number+1))/2;
+
+         ///This vector stores in probabilities_vector(i)="Probability of input number i being choose"
+         ///
+
+         Tensor <type,1> probabilities_vector(columns_number);
+
+
+         for (Index i = 0; i <columns_number ; i++)
+         {
+             probabilities_vector[i] = type(fitness_correlations.size() - fitness_correlations(i)+1) / sum;
+
+         }
+         //cout<<probabilities_vector<<endl;
+
+         Tensor<type,1 > rank_probabilities_matrix(columns_number);
+         rank_probabilities_matrix.setConstant(0.0);
+         cout<<rank_probabilities_matrix<<endl;
+         for(Index i=0;i<columns_number;i++)
+         {
+             //rank_probabilities_matrix(i,0)=type(fitness_correlations(i));
+             type sum1=0;
+             for(Index j=0;j<fitness_correlations(i);j++)
+             {
+                 sum1+=probabilities_vector(rank(j));
+             }
+             rank_probabilities_matrix(i)=type(sum1);
+         }
+
+         //cout<<rank_probabilities_matrix<<endl;
+         activation_probabilities=0.5*rank_probabilities_matrix;
+
 
     }
 
