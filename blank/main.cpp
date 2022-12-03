@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
         srand(time(nullptr));
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/sum10.csv",';',false);
+        DataSet data_set ("C:/Users/Pedro/Documents/sum11.csv",';',false);
 
         const Index input_variables_number = data_set.get_input_variables_number();
 
@@ -71,37 +71,42 @@ int main(int argc, char* argv[])
 
        Tensor<bool,2> population=genetic_algorithm.get_population();
 
-       cout << population << endl;
+       //cout << population << endl;
 
        cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
 
-       cout << "Evaluate population" << endl;
+       genetic_algorithm.calculate_activation_probabilities();
 
-       genetic_algorithm.evaluate_population();
+       
 
-       cout << "Training errors" << endl;
 
-       cout<<genetic_algorithm.get_training_errors() << endl;
-
-       cout << "Selection errors" << endl;
-
-       cout << genetic_algorithm.get_selection_errors() << endl;
-
-       cout << "Performing fitness assignment" << endl;
-
-       genetic_algorithm.perform_fitness_assignment();
-
-       cout << genetic_algorithm.get_fitness() << endl;
-
-       cout << "Performing selection" << endl;
-
-       genetic_algorithm.perform_selection();
-
-       cout << genetic_algorithm.get_selection() << endl;
-
-       cout<< "Performing Crossover" << endl;
-
-       genetic_algorithm.perform_crossover();
+      // cout << "Evaluate population" << endl;
+      //
+      // genetic_algorithm.evaluate_population();
+      //
+      // cout << "Training errors" << endl;
+      //
+      // cout<<genetic_algorithm.get_training_errors() << endl;
+      //
+      // cout << "Selection errors" << endl;
+      //
+      // cout << genetic_algorithm.get_selection_errors() << endl;
+      //
+      // cout << "Performing fitness assignment" << endl;
+      //
+      // genetic_algorithm.perform_fitness_assignment();
+      //
+      // cout << genetic_algorithm.get_fitness() << endl;
+      //
+      // cout << "Performing selection" << endl;
+      //
+      // genetic_algorithm.perform_selection();
+      //
+      // cout << genetic_algorithm.get_selection() << endl;
+      //
+      // cout<< "Performing Crossover" << endl;
+      //
+      // genetic_algorithm.perform_crossover();
 
 
        /*Index individuals_number= genetic_algorithm.get_individuals_number();

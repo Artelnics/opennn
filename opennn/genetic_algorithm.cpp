@@ -90,12 +90,12 @@ namespace opennn
     }
 
 
-/// Returns the method used for initalizating the population
+    /// Returns the method used for initalizating the population
 
-const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
-{
-    return initialization_method;
-}
+    const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initialization_method() const
+    {
+        return initialization_method;
+    }
 
 
     /// Sets the members of the genetic algorithm object to their default values.
@@ -144,6 +144,8 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
         // Training operators
 
         elitism_size = 2;
+
+        calculate_activation_probabilities();
 
     }
 
@@ -216,8 +218,6 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
     void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
     {
         maximum_epochs_number = new_maximum_epochs_number;
-
-
     }
 
 
@@ -301,9 +301,11 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
         parameters.resize(new_individuals_number);
 
         training_errors.resize(new_individuals_number);
+
         selection_errors.resize(new_individuals_number);
 
         fitness.resize(new_individuals_number);
+
         fitness.setConstant(type(-1.0));
 
         selection.resize(new_individuals_number);
@@ -448,10 +450,7 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
         Tensor<bool,1> individual_columns(columns_number);
 
-        Index active_columns_count=0;
-        Index active_columns;
-
-        //
+       
         if(display)
         {
             cout<<"Creating initial random population"<<endl;
@@ -461,229 +460,88 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
         {
 
             do{
+
                 is_repeated_or_empty=false;
+
                 individual_columns.setConstant(false);
 
                 individual_variables.setConstant(false);
 
-                //This variable represents how many activated columns will have this individual
-                active_columns=1+rand()%columns_number;
+                //Random individual generation
 
-                active_columns_count=0;
-
-                type random_column;
-                while(active_columns_count<active_columns)
+                for (Index j = 0; j < columns_number; j++)
                 {
-                    random_column=rand()%columns_number;
-                    if(!individual_columns(random_column))
-                    {
-                        individual_columns(random_column)=true;
-                        active_columns_count++;
-                    }
-
+                    individual_columns(j) = calculate_random_bool();
                 }
                 //Check for no inputs
-                if(is_false(individual_columns))
-                {
-                     is_repeated_or_empty=true;
-                }
+
+                is_repeated_or_empty = is_false(individual_columns);
+
                 //Check for repetition
+
                  individual_variables=get_individual_as_variables_from_columns(individual_columns);
                 for(Index j=0;j<i;j++)
                 {
                     Tensor<bool,1> row=population.chip(j,0);
-                    if(are_equal(individual_variables,row))
-                    {
-                        is_repeated_or_empty=true;
-                    }
+
+                    if(are_equal(individual_variables,row)) is_repeated_or_empty = true;
+
                 }
 
             }while(is_repeated_or_empty);
-            //cout<< "Individual "<< i+1<<" creado"<<endl;
-
+            
             //Add individual to population
+
             for(Index j=0;j<genes_number;j++)
             {
                 population(i,j)=individual_variables(j);
             }
         }
 
-        if(display)
-        {
-           cout<<"Initial random population created"<<endl;
+        if(display) cout << "Initial random population created" << endl;
 
-        }
       }
 
     void GeneticAlgorithm::initialize_population_correlations()
     {
         //Needed parameters obtentions
 
-        //srand(static_cast<unsigned>(time(nullptr)));
+        DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
-        Index individuals_number = get_individuals_number();
+        const Index individuals_number = get_individuals_number();
 
         const Index genes_number = get_genes_number();///= number of inputs including dummy variables
 
-        DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
-
         const Index columns_number=data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
 
-        cout<<"Calculating correlations matrix"<<endl;
+        Tensor <bool, 1> individual_columns(columns_number);
 
-        Tensor<Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
-
-        cout<<"Correlation matrix calculated"<<endl;
-
-        Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
-
-        Tensor<Index, 1> rank(genes_number);
+        Tensor <bool, 1> individual_variables(genes_number);
 
 
-
-        rank= calculate_rank_greater(correlations);
-
-
-        Tensor<type, 1 > fitness_correlations(rank.size());
-
-
-
-         for(Index i=0;i<columns_number;i++)
+        for (Index i = 0; i < individuals_number; i++)
         {
-            fitness_correlations(rank(i))=type(i+1);
-        }///End of calculation of the new fitness correlations vector
+            individual_columns.setConstant(false);
 
+            individual_variables.setConstant(false);
 
-        ///Cumulative probability tensor calculation
+            //Generation of new individual
 
-        type sum = (type(columns_number)*type(columns_number+1))/2;
+            do {
 
-        ///This vector stores in probabilities_vector(i)="Probability of input number i being choose"
-        ///
+                
 
-        Tensor <type,1> probabilities_vector(columns_number);
+            
+            } while (is_false(individual_columns));
 
-
-        for (Index i = 0; i <columns_number ; i++)
-        {
-            probabilities_vector[i] = type(fitness_correlations.size() - fitness_correlations(i)-1) / sum;
-
-        }
-
-        ///This tensor means cumulative_probabilities(i)="sum of the first i elements of probabilities_vector"
-        Tensor <type, 1> cumulative_probabilities = probabilities_vector.cumsum(0);
-
-        Tensor<Index, 1> columns_variables_indices(columns_number);
-
-        Index index_count=0;
-        for(Index i=0;i<columns_number;i++)
-        {
-             if(data_set_pointer->get_column_type(i)==DataSet::ColumnType::Categorical)
-             {
-                columns_variables_indices(i)=index_count;
-
-                index_count+=data_set_pointer->get_columns()(i).get_categories_number();
-             }else
-             {
-                columns_variables_indices(i)=index_count;
-                index_count++;
-             }
-         }
-
-
-
-        Tensor <bool, 1> individual(genes_number);
-        Index activated_columns;
-        Index columns_count;
-        type pointer;
-
-        ///Population Generation
-        for(Index i=0; i<individuals_number;i++)
-        {
-            individual.setConstant(false);
-            bool is_repeated=false;
-            do
+            individual_variables = get_individual_as_variables_from_columns(individual_columns);
+            //Add individual to population
+            for (Index j = 0; j < genes_number; j++)
             {
-                activated_columns=1+rand()%columns_number;
-                columns_count=0;
-                do
-                {
-                    ///Random pointer generation
-                    pointer=type(rand())/type(RAND_MAX);
-                    if(pointer<cumulative_probabilities(0)&&!individual(0))
-                    {
-                        ///Categorical comprobation
-                        if(data_set_pointer->get_column_type(0)==DataSet::ColumnType::Categorical)
-                        {
-                            for(Index j=0;j<data_set_pointer->get_columns()(0).get_categories_number();j++)
-                            {
-                                individual(j)=true;
-                            }
-                            columns_count++;
-                        }else
-                        {
-                            individual(0)=true;
-                           columns_count++;
-                        }
-                    }else
-                    {
-                        for(Index j=0;j<columns_number;j++)
-                        {
-                            if(pointer>cumulative_probabilities(j) && pointer<=cumulative_probabilities(j+1)&& !individual(columns_variables_indices(j)))
-                            {
-                                if(data_set_pointer->get_column_type(j)==DataSet::ColumnType::Categorical)
-                                {
-                                    for(Index k=0;k<data_set_pointer->get_columns()(j).get_categories_number();k++)
-                                    {
-                                        individual(columns_variables_indices(j)+k)=true;
-                                        columns_count++;
-                                    }
-                                }else
-                                {
-                                    individual(j)=true;
-                                    columns_count++;
-                                }
-                            }
-                        }
-                    }
-
-
-
-                }while(columns_count<activated_columns);
-
-
-
-            ///Check for repetitions
-            for (Index j = 0; j < i; j++)
-                {
-                    Tensor<bool, 1> row = population.chip(j, 0);
-
-                    if (are_equal(individual, row))
-                    {
-                            is_repeated = true;
-                            //break;
-                    }
-                }
-            ///Check for no inputs
-            if(is_false(individual))
-            {
-                is_repeated=true;
+                population(i, j) = individual_variables(j);
             }
-
-            }while(is_repeated);
-
-
-            ///Individual addition to population
-            for(Index j=0;j<genes_number;j++)
-            {
-                population(i,j)=individual(j);
-            }
-
         }
-
-
-
-
+        
     }
 
     /// Evaluate the population loss.
@@ -1019,7 +877,7 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 
         Tensor<Index,2> couples(couples_number,2);
-        //calculate_activation_probabilities();
+        calculate_activation_probabilities();
         bool is_parent_repeated=false;
         bool is_couple_repeated=false;
 
@@ -1132,88 +990,8 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 
         }
-        /*
-        Tensor<bool, 1> parent_1_variables;
-        Tensor<bool, 1> parent_2_variables;
-        Tensor<bool,1> descendent_variables;
-        Tensor<bool, 1> parent_1_columns;
-        Tensor<bool, 1> parent_2_columns;
-        Tensor<bool, 1> descendent_columns;
-        Tensor<bool, 2> new_population(individuals_number, genes_number);
-        Index offspring_count=0;
-        bool is_empty=false;
-
-        //We keep parents in the new generation?
-        for (Index i = 0; i < individuals_number; i++)
-        {
-           if (selection(i) && offspring_count < selected_individuals_number)
-            {
-              for (Index j = 0; j < genes_number; j++)
-              {
-                new_population(offspring_count, j) = population(i, j);
-              }
-              offspring_count++;
-            }
-         }
-        for(Index i=0;i< selected_individuals_number;i++)
-        {
-            parent_1_variables=population.chip(couples(i,0),0);
-            parent_2_variables=population.chip(couples(i,1),0);
-            ///Transform each parent to columns
-            parent_1_columns=get_individual_as_columns_from_variables(parent_1_variables);
-            parent_2_columns=get_individual_as_columns_from_variables(parent_2_variables);
-            //Perform crossover
-            do{
-                is_empty=false;
-                descendent_columns=parent_1_columns;
-                for(Index j=0;j<descendent_columns.size();j++)
-                {
-                    if(parent_1_columns(j)!=parent_2_columns(j))
-                    {
-                       type pointer=type(rand())/type(RAND_MAX);
-
-                       pointer<activation_probabilities(j)? descendent_columns(j)=true: descendent_columns(j)=false;
-
-                    }
-                }
-                //check for repetitions
-            for(Index j=0;j<i;j++)
-                {
-                    Tensor<bool,1> row=new_population.chip(j,0);
-                    descendent_variables=get_individual_as_variables_from_columns(descendent_columns);
-                    if(are_equal(row,descendent_variables))
-                    {
-                        is_empty=true;
-                    }
-                }
-                ///Prevent no inputs
-                if(is_false(descendent_columns))
-                {
-                    is_empty=true;
-                }
-
-            }while(is_empty);
-            ///Population addition
-            Tensor<bool,1> descendent=get_individual_as_variables_from_columns(descendent_columns);
-            for(Index j=0;j<genes_number;j++)
-            {
-                new_population(i+selected_individuals_number,j)=descendent(j);
-
-            }
-
-
-            //cout<<descendent_columns;
-
-
-        }
-        population=new_population;*/
-
-
+  
  }
-
-
-
-
 
     /// Perform the mutation of the individuals generated in the crossover.
 
@@ -1266,59 +1044,39 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
     void GeneticAlgorithm::calculate_activation_probabilities()
     {
         DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+
         const Index columns_number=data_set_pointer->get_input_columns_number();
 
-        Tensor<Correlation,2> correlations_matrix=data_set_pointer->calculate_input_target_columns_correlations();
+        const Tensor<Correlation,2> correlations_matrix=data_set_pointer->calculate_input_target_columns_correlations();
 
-        Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
+        const Tensor<type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
-        Tensor<type,1> correlations_abs=correlations.abs();
+        const Tensor<type,1> correlations_abs=correlations.abs();
 
-       // cout<<correlations_abs<<endl;
-
-        Tensor<Index,1 > rank =calculate_rank_less(correlations_abs);
-        system("pause");
+        const Tensor<Index,1 > rank =calculate_rank_less(correlations_abs);
 
         Tensor<type, 1 > fitness_correlations(rank.size());
 
-         for(Index i=0;i<rank.size();i++)
+        for(Index i=0; i<rank.size(); i++)
         {
             fitness_correlations(rank(i))=type(i+1);
         }///End of calculation of the new fitness correlations vector
 
-         type sum = (type(columns_number)*type(columns_number+1))/2;
+        type sum = (type(columns_number)*type(columns_number+1))/2;
 
-         ///This vector stores in probabilities_vector(i)="Probability of input number i being choose"
-         ///
+        ///This vector stores in probabilities_vector(i)="Probability of input number i being choose"
 
-         Tensor <type,1> probabilities_vector(columns_number);
+        Tensor <type, 1> probabilities(columns_number);
+        
+        for (Index i = 0; i <columns_number ; i++)
+        {
+            probabilities(i) = type(fitness_correlations.size() - fitness_correlations(i)+1) / sum;
+        }
 
+        activation_probabilities.resize(columns_number);
 
-         for (Index i = 0; i <columns_number ; i++)
-         {
-             probabilities_vector[i] = type(fitness_correlations.size() - fitness_correlations(i)+1) / sum;
-
-         }
-         //cout<<probabilities_vector<<endl;
-
-         Tensor<type,1 > rank_probabilities_matrix(columns_number);
-         rank_probabilities_matrix.setConstant(0.0);
-         cout<<rank_probabilities_matrix<<endl;
-         for(Index i=0;i<columns_number;i++)
-         {
-             //rank_probabilities_matrix(i,0)=type(fitness_correlations(i));
-             type sum1=0;
-             for(Index j=0;j<fitness_correlations(i);j++)
-             {
-                 sum1+=probabilities_vector(rank(j));
-             }
-             rank_probabilities_matrix(i)=type(sum1);
-         }
-
-         //cout<<rank_probabilities_matrix<<endl;
-         activation_probabilities=0.5*rank_probabilities_matrix;
-
-
+        activation_probabilities = probabilities.cumsum(0);
+                  
     }
 
     void GeneticAlgorithm::print_population()
@@ -1842,6 +1600,21 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
         string_matrix.chip(1, 1) = values;
 
         return string_matrix;
+
+    }
+
+    ///Generate a random boolean
+
+    bool GeneticAlgorithm::calculate_random_bool() 
+    {
+        if (rand() % 2 == 1) 
+        {
+            return true;
+        }
+        else 
+        {
+            return false;
+        }
 
     }
 
