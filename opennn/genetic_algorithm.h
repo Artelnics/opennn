@@ -56,17 +56,17 @@ public:
 
     // Get methods
 
-    const Tensor<bool, 2>& get_population() const;
+    const Tensor <bool, 2>& get_population() const;
 
 
-    const Tensor<type, 1>& get_training_errors() const;
+    const Tensor <type, 1>& get_training_errors() const;
 
-    const Tensor<type, 1>& get_selection_errors() const;
+    const Tensor <type, 1>& get_selection_errors() const;
 
 
-    const Tensor<type, 1>& get_fitness() const;
+    const Tensor <type, 1>& get_fitness() const;
 
-    const Tensor<bool, 1>& get_selection() const;
+    const Tensor <bool, 1>& get_selection() const;
 
 
     Index get_individuals_number() const;
@@ -88,7 +88,7 @@ public:
 
     void set_individuals_number(const Index& new_individuals_number=4);
 
-    void set_genes_number(const Index&);
+    void set_genes_number(const Index&);  
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
@@ -107,9 +107,7 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
-    void calculate_activation_probabilities();
-
-    // GENETIC METHODS
+    // GENETIC OPERATORS METHODS
 
     // Population methods
 
@@ -118,8 +116,6 @@ public:
     void initialize_population_random();
     
     void initialize_population_correlations();
-
-    Tensor <bool, 1> create_individual_correlations();
 
     type generate_random_between_0_and_1();
 
@@ -141,21 +137,19 @@ public:
 
     void perform_mutation();
 
-    void print_population();
-
     // Check  methods
 
     void check_categorical_columns();
 
-    Tensor <bool, 1> transform_individual_to_indexes (Tensor<bool,1> &);
+    Tensor <bool, 1> get_individual_variables_to_indexes (Tensor <bool, 1>&);
 
-    Tensor <bool, 1> get_individual_as_columns_from_variables (Tensor<bool,1> &);
+    Tensor <bool, 1> get_individual_columns(Tensor <bool, 1>&);
 
-    Tensor <bool, 1> get_individual_as_variables_from_columns (Tensor<bool,1> &);
+    Tensor <bool, 1> get_individual_variables(Tensor <bool,1>&);
 
-    Tensor <Index, 1> get_selected_individuals_to_indexes ();
+    Tensor <Index, 1> get_selected_individuals_indices ();
 
-    Tensor <Index, 1> get_individual_as_columns_indexes_from_variables( Tensor<bool,1>&);
+    Tensor <Index, 1> get_individual_as_columns_indexes_from_variables( Tensor <bool, 1>&);
 
     InputsSelectionResults perform_inputs_selection ()  final;
 
@@ -178,11 +172,13 @@ public:
     Tensor <Tensor<type, 1>, 1> parameters;
 
 private:
+    
     /// Activation probabilities.
     
     Tensor <type, 1> activation_inputs_probabilities;
 
     /// Population matrix.
+
     Tensor <bool, 2> population;
 
     Tensor <type, 1> training_errors;
@@ -199,11 +195,11 @@ private:
 
     /// Performance of population.
 
-    type mean_generational_training_error;
+    type mean_training_error;
 
-    type mean_generational_selection_error;
+    type mean_selection_error;
 
-    type mean_generational_inputs_activated;
+    type mean_inputs_number;
     
     Tensor <bool, 2> optimal_individuals_history;
 
@@ -226,11 +222,8 @@ private:
 
     Index elitism_size;
 
-    InitializationMethod initialization_method ;
+    InitializationMethod initialization_method;
 
-   
-
-    
 };
 
 }

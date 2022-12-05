@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
         srand(time(nullptr));
 
-        DataSet data_set ("C:/Users/Pedro/Documents/sum11.csv",';',false);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/sum10.csv",';',false);
 
         const Index input_variables_number = data_set.get_input_variables_number();
 
@@ -61,90 +61,52 @@ int main(int argc, char* argv[])
 
        genetic_algorithm.set_elitism_size(1);
 
-
-
        genetic_algorithm.set_maximum_epochs_number(1);
 
-       genetic_algorithm.initialize_population_correlations();
+       genetic_algorithm.initialize_population();
 
        cout << "Initialize population" << endl;
 
-       Tensor<bool,2> population=genetic_algorithm.get_population();
+       Tensor<bool,2> population = genetic_algorithm.get_population();
 
-       //cout << population << endl;
+       cout << population << endl;
 
-       //cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
+       cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
 
-       //genetic_algorithm.calculate_activation_probabilities();
-
+       genetic_algorithm.set_display(false);
        
+       genetic_algorithm.evaluate_population();
+       
+       cout << "Training errors" << endl;
+       
+       cout<<genetic_algorithm.get_training_errors() << endl;
+       
+       cout << "Selection errors" << endl;
+       
+       cout << genetic_algorithm.get_selection_errors() << endl;
+       
+       cout << "Performing fitness assignment" << endl;
+       
+       genetic_algorithm.perform_fitness_assignment();
+       
+       cout << genetic_algorithm.get_fitness() << endl;
+       
+       cout << "Performing selection" << endl;
+       
+       genetic_algorithm.perform_selection();
+       
+       cout << genetic_algorithm.get_selection() << endl;
+       
+       cout<< "Performing Crossover" << endl;
+       
+       genetic_algorithm.perform_crossover();
+       
+       population = genetic_algorithm.get_population();
+       
+       cout << "New Population generated " << endl;
+       
+       cout << population << endl;
 
-
-      // cout << "Evaluate population" << endl;
-      //
-      // genetic_algorithm.evaluate_population();
-      //
-      // cout << "Training errors" << endl;
-      //
-      // cout<<genetic_algorithm.get_training_errors() << endl;
-      //
-      // cout << "Selection errors" << endl;
-      //
-      // cout << genetic_algorithm.get_selection_errors() << endl;
-      //
-      // cout << "Performing fitness assignment" << endl;
-      //
-      // genetic_algorithm.perform_fitness_assignment();
-      //
-      // cout << genetic_algorithm.get_fitness() << endl;
-      //
-      // cout << "Performing selection" << endl;
-      //
-      // genetic_algorithm.perform_selection();
-      //
-      // cout << genetic_algorithm.get_selection() << endl;
-      //
-      // cout<< "Performing Crossover" << endl;
-      //
-      // genetic_algorithm.perform_crossover();
-
-
-       /*Index individuals_number= genetic_algorithm.get_individuals_number();
-
-
-
-
-
-
-       //genetic_algorithm.calculate_activation_probabilities();
-       //genetic_algorithm.initialize_population();
-       //genetic_algorithm.evaluate_population();
-       //genetic_algorithm.perform_fitness_assignment();
-       //genetic_algorithm.perform_selection();
-       //genetic_algorithm.perform_crossover();
-       //genetic_algorithm.perform_mutation();
-
-       InputsSelectionResults inputs_selection_results = genetic_algorithm.perform_inputs_selection();
-
-       ofstream mean_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/MSEH.csv");
-
-       mean_selection_error_csv<<inputs_selection_results.mean_selection_error_history;
-
-       mean_selection_error_csv.close();
-
-       ofstream optimum_selection_error_csv("C:/Users/rodrigo ingelmo/Documents/OPSEH.csv");
-
-       optimum_selection_error_csv<<inputs_selection_results.selection_error_history;
-
-       optimum_selection_error_csv.close();
-
-       TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-       TestingAnalysis::RocAnalysisResults roc_analysis_results=testing_analysis.perform_roc_analysis();
-
-       cout<<"AUC: "<< roc_analysis_results.area_under_curve<<endl;
-
-       */
        cout << "Bye OpenNN" << endl;
     }
     catch (const exception& e)
