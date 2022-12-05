@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
        genetic_algorithm.set_maximum_epochs_number(1);
 
-       genetic_algorithm.initialize_population();
+       genetic_algorithm.initialize_population_correlations();
 
        cout << "Initialize population" << endl;
 
@@ -73,9 +73,9 @@ int main(int argc, char* argv[])
 
        //cout << population << endl;
 
-       cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
+       //cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
 
-       genetic_algorithm.calculate_activation_probabilities();
+       //genetic_algorithm.calculate_activation_probabilities();
 
        
 

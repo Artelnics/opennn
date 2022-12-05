@@ -119,9 +119,15 @@ public:
     
     void initialize_population_correlations();
 
+    Tensor <bool, 1> create_individual_correlations();
+
+    type generate_random_between_0_and_1();
+
     void evaluate_population();
 
     void perform_fitness_assignment();
+
+    Tensor<type, 1> calculate_selection_probabilities();
 
     // Selection methods
 
@@ -174,7 +180,7 @@ public:
 private:
     /// Activation probabilities.
     
-    Tensor <type, 1> activation_probabilities;
+    Tensor <type, 1> activation_inputs_probabilities;
 
     /// Population matrix.
     Tensor <bool, 2> population;
