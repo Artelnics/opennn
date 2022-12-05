@@ -841,6 +841,8 @@ void GeneticAlgorithm::perform_crossover()
 
     Tensor <bool, 2> new_population(individuals_number, genes_number);
 
+    new_population.setConstant(false); //Try
+
     Tensor <bool, 1> parent_1_variables;
 
     Tensor <bool, 1> parent_2_variables;

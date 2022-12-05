@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
         srand(time(nullptr));
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/sum10.csv",';',false);
+        DataSet data_set ("C:/Users/albertoberral/Documents/sum.csv",';',false);
 
         const Index input_variables_number = data_set.get_input_variables_number();
 
@@ -106,6 +106,9 @@ int main(int argc, char* argv[])
        cout << "New Population generated " << endl;
        
        cout << population << endl;
+
+
+
 
        cout << "Bye OpenNN" << endl;
     }
