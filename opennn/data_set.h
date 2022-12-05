@@ -830,7 +830,6 @@ public:
 
     void read_csv();
 
-
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
     void read_bmp();

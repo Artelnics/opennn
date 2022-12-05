@@ -9152,8 +9152,9 @@ void DataSet::transform_associative_dataset()
     transform_associative_columns();
 
     unuse_constant_columns();
-}
 
+    set_training();
+}
 
 
 /// This method loads the data from a binary data file.
@@ -9285,7 +9286,6 @@ void DataSet::load_auto_associative_data_binary(const string& auto_associative_d
 
     file.close();
 }
-
 
 
 /// This method checks if the input data file has the correct format. Returns an error message.

@@ -1073,6 +1073,10 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
         {
             buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
         }
+        else if(scalers(i) == Scaler::Logarithm)
+        {
+            buffer << "scaled_" << inputs_names(i) << " = log(" << inputs_names(i) << ");\n";
+        }
         else
         {
             ostringstream buffer;
