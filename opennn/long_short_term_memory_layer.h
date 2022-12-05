@@ -209,7 +209,6 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
                                           LongShortTermMemoryLayerBackPropagation*) const;

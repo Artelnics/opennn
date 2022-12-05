@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
 
         srand(time(NULL));
-
+/*
         DataSet data_set;
 
         data_set.set_data_file_name("Z:/Images/DatasetRedDots-bmp/ground_truth.xml");
@@ -65,12 +65,50 @@ int main(int argc, char *argv[])
         Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
         cout << "input_variables_dimensions: " << input_variables_dimensions << endl;
+        */
 
         NeuralNetwork neural_network;
-/*
+
         RegionProposalLayer region_proposal_layer;
         neural_network.add_layer(&region_proposal_layer);
-*/
+
+        const string filename = "Z:/Images/DatasetRedDots-bmp/9.bmp";
+        const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image_data(filename);
+
+        Tensor<type, 2> image(1, input_image(0).dimensions()[0] + input_image(1).dimensions()[0]);
+
+        Index pixel_valule_index = 0;
+        Index dimensions_index = 0;
+
+        for(Index i = 0; i < image.dimension(1); i++)
+        {
+            if(i < input_image(0).dimensions()[0])
+            {
+                image(0,i) = input_image(0)(pixel_valule_index);
+                pixel_valule_index++;
+            }
+            else
+            {
+                image(0,i) = input_image(1)(dimensions_index);
+                dimensions_index++;
+            }
+        }
+
+        Tensor<Index, 1> inputs_dimensions = get_dimensions(image);
+
+        const Index regions_number = 2000;
+        const Index columns_number = 22;
+        const Index rows_number = 22;
+        const Index channels_number = input_image(1)(2);
+
+        Tensor<type,2> output(regions_number, rows_number * columns_number * channels_number);
+        Tensor<Index, 1> output_dimensions = get_dimensions(output);
+
+        region_proposal_layer.calculate_outputs(image.data(), inputs_dimensions, output.data(), output_dimensions);
+
+        cout << "output: " << output << endl;
+
+        /*
         FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
 
@@ -81,20 +119,19 @@ int main(int argc, char *argv[])
         ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
         neural_network.add_layer(&probabilistic_layer);
 
-
-/*
-        NonMaxSupressionLayer non_max_supression_layer;
+        NonMaxSuppressionLayer non_max_supression_layer;
         neural_network.add_layer(&non_max_supression_layer);
-*/
+        */
+
         Tensor<type, 4> inputs(6,6,3,1);
         inputs.setRandom();
-
+/*
         Tensor<Index, 1> inputs_dimensions(4);
         inputs_dimensions(0) = 6;
         inputs_dimensions(1) = 6;
         inputs_dimensions(2) = 3;
         inputs_dimensions(3) = 1;
-
+*/
 //        Tensor<type, 2> outputs(1, 108);
 
 //        Tensor<Index, 1> outputs_dimensions(2);
@@ -113,7 +150,7 @@ int main(int argc, char *argv[])
 //        cout << "outputs_dimension: " << endl;
 //        cout << outputs.dimensions() << endl;
 
-
+/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);

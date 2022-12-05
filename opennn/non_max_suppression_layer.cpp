@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_layer.h"
+#include "opennn_images.h"
 
 namespace opennn
 {
@@ -15,45 +16,138 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-    NonMaxSupressionLayer::NonMaxSupressionLayer() : Layer()
+    NonMaxSuppressionLayer::NonMaxSuppressionLayer() : Layer()
 {
 }
 
+void NonMaxSuppressionLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                              type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+{
+    // inputs_data -> Score of each input image bounding box
+    //             -> 4 parameters defining the bbox
+    // outputs_data -> Bounding box that surpasses our criteria
 
-void NonMaxSupressionLayer::forward_propagate(type* inputs_data,
+    const type overlap_threshold = 0.65;
+    const type confidence_score_threshold = 0.4;
+
+    const Index regions_number = inputs_dimensions(0);
+    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+    // INPUTS MATRIX
+
+    Tensor<Tensor<type, 1>, 1> region_inputs(regions_number); // x_top_left, y_top_left, x_bottom_right, y_bottom_right (from region_proposal_layer)
+    Tensor<type, 1> inputs_confidence_score; // confidence_score
+
+    Tensor<bool, 1> mask_regions(regions_number);
+
+    Index higher_score_regions_number = 0;
+
+    for(Index i = 0; i < regions_number; i++)
+    {
+        if(inputs_confidence_score(i) > confidence_score_threshold)
+        {
+            mask_regions(i) = true;
+            higher_score_regions_number++;
+        }
+        else
+        {
+            mask_regions(i) = false;
+        }
+    }
+
+    // Fill filtered input tensor
+
+    Tensor<Tensor<type, 1>, 1> filtered_proposals(higher_score_regions_number);
+    Tensor<type, 1> filtered_proposals_score(higher_score_regions_number);
+
+    Index filtered_proposals_index = 0;
+
+    for(Index i = 0; i < regions_number; i++)
+    {
+        if(mask_regions(i) == true)
+        {
+            filtered_proposals(filtered_proposals_index) = region_inputs(i);
+            filtered_proposals_score(filtered_proposals_index) = inputs_confidence_score(i);
+            filtered_proposals_index++;
+        }
+    }
+
+    // Calculate IoU between regions
+
+    Tensor<bool, 1> final_detections_boolean(higher_score_regions_number);
+    Index final_detections_number = 0;
+
+    for(Index i = 0; i < higher_score_regions_number; i++)
+    {
+        const Index x_top_left_box_1 = filtered_proposals(i)(0);
+        const Index y_top_left_box_1 = filtered_proposals(i)(1);
+        const Index x_bottom_right_box_1 = filtered_proposals(i)(2);
+        const Index y_bottom_right_box_1 = filtered_proposals(i)(3);
+
+
+        for(Index j = 0; j < higher_score_regions_number; j++)
+        {
+            if(i < j)
+            {
+                const Index x_top_left_box_2 = filtered_proposals(j)(0);
+                const Index y_top_left_box_2 = filtered_proposals(j)(1);
+                const Index x_bottom_right_box_2 = filtered_proposals(j)(2);
+                const Index y_bottom_right_box_2 = filtered_proposals(j)(3);
+
+                const type intersection_over_union_between_boxes = intersection_over_union(x_top_left_box_1, y_top_left_box_1,
+                                                                                           x_bottom_right_box_1, y_bottom_right_box_1,
+                                                                                           x_top_left_box_2, y_top_left_box_2,
+                                                                                           x_bottom_right_box_2, y_bottom_right_box_2);
+                if(intersection_over_union_between_boxes > overlap_threshold)
+                {
+                    final_detections_boolean(i) = true;
+                    final_detections_number++;
+                }
+                else
+                {
+                    final_detections_boolean(i) = false;
+                }
+            }
+        }
+    }
+
+    Tensor<Tensor<type, 1>, 1> outputs(final_detections_number);
+//    TensorMap<Tensor<type, 2>> outputs(outputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+    Tensor<type, 1> outputs_score(final_detections_number);
+
+    Index final_detections_index = 0;
+
+    for(Index i = 0; i < higher_score_regions_number; i++)
+    {
+        if(final_detections_boolean(i) == true)
+        {
+            outputs(final_detections_index) = filtered_proposals(i);
+            outputs_score(final_detections_index) = filtered_proposals_score(i);
+            final_detections_index++;
+        }
+    }
+
+}
+
+void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation)
 {
-
-    const Index channels_number = 2000;
-
-    const Index images_number = 1;
-    const Index input_rows = 0;
-    const Index input_columns = 0;
+    NonMaxSuppressionLayerForwardPropagation* non_max_suppression_layer_forward_propagation
+            = static_cast<NonMaxSuppressionLayerForwardPropagation*>(forward_propagation);
 
 
-    const Index regions_number = 2000;
-    const Index region_rows = 227;
-    const Index region_columns = 227;
+    // Propose random region for each image
 
+//    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);
 
-    Tensor<type, 4> inputs(regions_number, channels_number, region_rows, region_columns);
+    const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
 
-//    const Index detections_number = 20;
-
-//    Tensor<type, 4> outputs(detections_number*(1+1+2+1+1));
-
-//    BatchNormalizationLayerForwardPropagation* batch_norm_layer_forward_propagation
-//            = static_cast<BatchNormalizationLayerForwardPropagation*>(forward_propagation);
-
-//    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
-//    Tensor<type, 2> inputs_normalized = perform_inputs_normalization(inputs, batch_norm_layer_forward_propagation);
-
-//    calculate_combinations(inputs_normalized,
-//                           synaptic_weights,
-//                           batch_norm_layer_forward_propagation->outputs_data);
-
+    calculate_outputs(inputs_data,
+                      inputs_dimensions,
+                      non_max_suppression_layer_forward_propagation->outputs.data(),
+                      outputs_dimensions);
 }
 
 }

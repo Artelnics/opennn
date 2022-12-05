@@ -143,7 +143,7 @@ namespace opennn
         return data_without_padding;
     }
 
-    Tensor<type, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>& image_data, const Index width_to_resize, const Index height_to_resize)
+    Tensor<Tensor<type, 1>, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>& image_data, const Index& width_to_resize, const Index& height_to_resize)
     {
         const Index image_height = image_data(1)(0);
         const Index image_width = image_data(1)(1);
@@ -171,6 +171,10 @@ namespace opennn
         const Index region_width = abs(x_top_left - x_bottom_right);
         const Index region_height = abs(y_top_left - y_bottom_right);
 
+
+        Tensor<type, 1> region_parameters(4);
+        region_parameters.setValues({static_cast<type>(x_top_left), static_cast<type>(y_top_left),
+                                     static_cast<type>(x_bottom_right), static_cast<type>(y_bottom_right)});
         Tensor<type, 1> random_region(channels_number * region_width * region_height);
 
         // We resize the region after its random proposal
@@ -182,8 +186,48 @@ namespace opennn
         resized_random_region = resize_proposed_region(random_region, channels_number, region_width,
                                                        region_height, width_to_resize, height_to_resize);
 
-        return resized_random_region;
+        Tensor<Tensor<type, 1>, 1> region(2);
+        region(0).resize(resized_random_region.size());
+        region(1).resize(region_parameters.size());
+
+        region(0) = resized_random_region;
+        region(1) = region_parameters;
+
+        return region;
     }
+
+
+    type intersection_over_union(const Index& x_top_left_box_1,
+                                 const Index& y_top_left_box_1,
+                                 const Index& x_bottom_right_box_1,
+                                 const Index& y_bottom_right_box_1,
+                                 const Index& x_top_left_box_2,
+                                 const Index& y_top_left_box_2,
+                                 const Index& x_bottom_right_box_2,
+                                 const Index& y_bottom_right_box_2)
+    {
+        Index intersection_x_top_left = max(x_top_left_box_1, x_top_left_box_2);
+        Index intersection_y_top_left = max(y_top_left_box_1, y_top_left_box_2);
+        Index intersection_x_bottom_right = min(x_bottom_right_box_1, x_bottom_right_box_2);
+        Index intersection_y_bottom_right = min(y_bottom_right_box_1, y_bottom_right_box_2);
+
+        if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left)) return 0;
+
+        type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left) * (intersection_y_bottom_right - intersection_y_top_left));
+
+        type gTruth_bounding_box_area = (x_bottom_right_box_1 - x_top_left_box_1) *
+                                        (y_bottom_right_box_1 - y_top_left_box_1);
+
+        type proposed_bounding_box_area = (x_bottom_right_box_2 - x_top_left_box_2) *
+                                            (y_bottom_right_box_2 - y_top_left_box_2);
+
+        type union_area = gTruth_bounding_box_area + proposed_bounding_box_area - intersection_area;
+
+        type intersection_over_union = static_cast<type>(intersection_area / union_area);
+
+        return intersection_over_union;
+    }
+
 
     Tensor<type, 1> get_bounding_box(const Tensor<Tensor<type, 1>, 1>& image,
                                               const Index& x_top_left, const Index& y_top_left,

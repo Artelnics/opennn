@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   N O N   M A X   S U P R E S S I O N   L A Y E R   C L A S S   H E A D E R
+//   B O U N D I N G   B O X   R E G R E S S O R   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef NonMaxSuppressionLayer_H
-#define NonMaxSuppressionLayer_H
+#ifndef BOUNDINGBOXREGRESSORLAYER_H
+#define BOUNDINGBOXREGRESSORLAYER_H
 
 // System includes
 
@@ -26,18 +26,17 @@
 
 namespace opennn
 {
-class NonMaxSuppressionLayer : public Layer
+
+class BoundingBoxRegressorLayer : public Layer
 
 {
 
 public:
    // Constructors
 
-   explicit NonMaxSuppressionLayer();
+   explicit BoundingBoxRegressorLayer();
 
    // Perceptron layer outputs
-
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    void forward_propagate(type*, const Tensor<Index, 1>&,
                           LayerForwardPropagation*);
@@ -49,19 +48,19 @@ protected:
 };
 
 
-struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
+struct BoundingBoxRegressorLayerForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
 
-    explicit NonMaxSuppressionLayerForwardPropagation()
+    explicit BoundingBoxRegressorLayerForwardPropagation()
         : LayerForwardPropagation()
     {
     }
 
     // Constructor
 
-    explicit NonMaxSuppressionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : NonMaxSuppressionLayerForwardPropagation()
+    explicit BoundingBoxRegressorLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : BoundingBoxRegressorLayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer_pointer);
     }
@@ -76,8 +75,6 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     {
 
     }
-
-    Tensor<type, 2> outputs;
 };
 
 

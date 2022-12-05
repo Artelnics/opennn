@@ -209,8 +209,6 @@ public:
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
-   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){};
-
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    // Text generation
@@ -263,6 +261,7 @@ public:
    /// Calculate forward propagation in neural network
 
    void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
 protected:

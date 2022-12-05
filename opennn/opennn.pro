@@ -113,6 +113,7 @@ HEADERS += \
     batch_normalization_layer.h\
     region_proposal_layer.h \
     non_max_suppression_layer.h \
+    bounding_box_regressor_layer.h \
     opennn.h
 
 SOURCES += \
@@ -171,6 +172,7 @@ SOURCES += \
     batch_normalization_layer.cpp\
     region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
+    bounding_box_regressor_layer.cpp \
     unit_testing.cpp
 
 
