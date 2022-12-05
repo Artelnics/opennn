@@ -22,6 +22,7 @@ BatchNormalizationLayer::BatchNormalizationLayer() : Layer()
 BatchNormalizationLayer::BatchNormalizationLayer(const Index& new_inputs_number) : Layer()
 {
     set(new_inputs_number);
+
     layer_type = Type::BatchNormalization;
 }
 
@@ -64,6 +65,7 @@ Index BatchNormalizationLayer::get_inputs_number() const
     return synaptic_weights.dimension(1);
 }
 
+
 Tensor<type, 2> BatchNormalizationLayer::perform_inputs_normalization(const Tensor<type, 2>& inputs, BatchNormalizationLayerForwardPropagation* batch_norm_forward_propagation) const
 {
     const int rows_number = static_cast<int>(inputs.dimension(0));
@@ -103,8 +105,8 @@ void BatchNormalizationLayer::forward_propagate(type* inputs_data,
     calculate_combinations(inputs_normalized,
                            synaptic_weights,
                            batch_norm_layer_forward_propagation->outputs_data);
-
 }
+
 
 void BatchNormalizationLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                      const Tensor<type, 2>& weights,
@@ -116,8 +118,8 @@ void BatchNormalizationLayer::calculate_combinations(const Tensor<type, 2>& inpu
     float* subtensor_inputs = nullptr;
     float* subtensor_weights = nullptr;
 
-    subtensor_inputs = (float*) malloc(static_cast<size_t>(inputs.size()*sizeof(type)));
-    subtensor_weights = (float*) malloc(static_cast<size_t>(weights.size()*sizeof(type)));
+    subtensor_inputs = (float*) malloc(static_cast<size_t>(inputs.size()*sizeof(float)));
+    subtensor_weights = (float*) malloc(static_cast<size_t>(weights.size()*sizeof(float)));
 
     for(int i = 0; i<input_number; i++)
     {

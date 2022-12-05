@@ -28,7 +28,7 @@ DEFINES += __Cpp17__
 
 # OpenMP library
 
-win32:!win32-g++{
+win32:{
 #QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
@@ -39,10 +39,10 @@ LIBS += -fopenmp -pthread -lgomp
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
+#win32:!win32-g++{
+##QMAKE_CXXFLAGS+= -arch:AVX
+##QMAKE_CFLAGS+= -arch:AVX
+#}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
@@ -176,7 +176,8 @@ SOURCES += \
     unit_testing.cpp
 
 
-
+contains(DEFINES, OPENNN_MKL)
+{
     win32:{
 
     INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
@@ -212,5 +213,5 @@ SOURCES += \
     #    -L/opt/intel/lib/intel64 \
     #    -liomp5 -lpthread -ldl -lm
     }
-
+}
 
