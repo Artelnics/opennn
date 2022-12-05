@@ -10,7 +10,7 @@
 //#define OPENNN_MKL
 
 #ifdef OPENNN_MKL
-    #include "mkl.h"
+    #include "../mkl/mkl.h"
 #endif
 
 //Eigen includes

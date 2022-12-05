@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "perceptron_layer.h"
-#include"mkl.h"
 
 namespace opennn
 {

@@ -174,7 +174,8 @@ SOURCES += \
     unit_testing.cpp
 
 
-
+contains(DEFINES, OPENNN_MKL)
+{
     win32:{
 
     INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
@@ -210,5 +211,5 @@ SOURCES += \
     #    -L/opt/intel/lib/intel64 \
     #    -liomp5 -lpthread -ldl -lm
     }
-
+}
 
