@@ -862,12 +862,14 @@ void GeneticAlgorithm::perform_crossover()
     std::mt19937 g(rd());
 
     Tensor <Index, 1> parent_1_indices = get_selected_individuals_indices();
-    std::shuffle(parent_1_indices.data(), parent_1_indices.data() + parent_1_indices.size(), g);
+
+    //std::shuffle(parent_1_indices.data(), parent_1_indices.data() + parent_1_indices.size(), g);
 
     Tensor <Index, 1> parent_2_indices = get_selected_individuals_indices();
+
     std::shuffle(parent_2_indices.data(), parent_2_indices.data() + parent_2_indices.size(), g);
 
-    for(Index i = 0; i < selected_individuals_number; i++)
+    for(Index i = 0; i < parent_1_indices.size(); i++)
     {
         parent_1_variables = population.chip(parent_1_indices(i), 0);
 
@@ -879,25 +881,25 @@ void GeneticAlgorithm::perform_crossover()
 
         for (Index j = 0; j < 2; j++)
         {
+            descendent_columns = parent_1_columns; 
+
             for(Index k = 0; k < columns_number; k++)
             {
-                if (parent_1_columns(k) == parent_2_columns(k))
-                {
-                    descendent_columns(k) = parent_1_columns(k);
-                }
-                else
+                if(parent_1_columns(k) != parent_2_columns(k))
                 {
                     descendent_columns(k) = calculate_random_bool();
                 }
             }
+            if (is_false(descendent_columns))
+            {
+                descendent_columns(rand() % columns_number) = true;
+            }
 
-            if (is_false(descendent_columns)) descendent_columns(rand() % columns_number) = true;
-
-            descendent_variables = get_individual_columns(descendent_columns);
+            descendent_variables = get_individual_variables(descendent_columns);
 
             for (Index k = 0; k < genes_number; k++)
             {
-                new_population(descendent_index, k) = descendent_variables(k);
+                new_population(2*i+j, k) = descendent_variables(k);
 
                 descendent_index++;
             }
