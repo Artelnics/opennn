@@ -55,10 +55,11 @@ Index FlattenLayer::get_outputs_number() const
 
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions;
+    Tensor<Index, 1> outputs_dimensions(2);
 
     /// @todo
-    outputs_dimensions.setValues({1000, input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2)});
+    outputs_dimensions(0) = input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+    outputs_dimensions(1) = 1; // batches number
 
     return outputs_dimensions;
 }

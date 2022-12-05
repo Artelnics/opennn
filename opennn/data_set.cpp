@@ -11782,7 +11782,7 @@ void DataSet::read_ground_truth()
             throw invalid_argument(buffer.str());
         }
 
-        const string image_filename = file_name_element->GetText();        
+        const string image_filename = file_name_element->GetText();
 
         const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
 
@@ -11799,7 +11799,7 @@ void DataSet::read_ground_truth()
             throw invalid_argument(buffer.str());
         }
 
-        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));        
+        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
 
         const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
 
@@ -13627,7 +13627,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         fill_submatrix(data, samples, inputs, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
-    {        
+    {
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);

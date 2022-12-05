@@ -6,9 +6,11 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
+
 #ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
+
 
 // System includes
 
@@ -59,7 +61,9 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
+
 //        data_set.set_training();
+
 
 
         const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
@@ -74,6 +78,7 @@ int main()
         // Neural network
 
         NeuralNetwork neural_network;
+
 
         ScalingLayer scaling_layer(input_variables_dimensions);
         neural_network.add_layer(&scaling_layer);
@@ -109,6 +114,7 @@ int main()
         ProbabilisticLayer probabilistic_layer(hidden_layers_number, target_variables_number);
         neural_network.add_layer(&probabilistic_layer);
 */
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -121,6 +127,7 @@ int main()
 
         training_strategy.perform_training();
 /*
+
         // Testing analysis
 
         Tensor<type, 4> inputs_4d;
@@ -155,6 +162,7 @@ int main()
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
 */
+
         cout << "Bye!" << endl;
 
         return 0;

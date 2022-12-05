@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
+
 #ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
@@ -39,11 +40,12 @@
 using namespace std;
 using namespace opennn;
 
-int main()
+int main(int argc, char *argv[])
 {
     try
     {
         cout << "OpenNN. Region Based Object Detector Example." << endl;
+
 
         srand(time(NULL));
 
@@ -79,6 +81,7 @@ int main()
         ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
         neural_network.add_layer(&probabilistic_layer);
 
+
 /*
         NonMaxSupressionLayer non_max_supression_layer;
         neural_network.add_layer(&non_max_supression_layer);
@@ -110,9 +113,11 @@ int main()
 //        cout << "outputs_dimension: " << endl;
 //        cout << outputs.dimensions() << endl;
 
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
@@ -124,6 +129,7 @@ int main()
         training_strategy.perform_training();
 
 //        training_strategy.get_mean_squared_error_pointer()->calculate_regularization();
+
 
         // Testing analysis
 /*

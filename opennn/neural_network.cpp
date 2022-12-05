@@ -908,16 +908,21 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     for(Index i = 0; i < blocks_number; i++)
     {
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        convolutional_layer->set_name("convolutional_layer_" + to_string(i+1));
+
         this->add_layer(convolutional_layer);
 
         outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
+        /*
         // Pooling layer 1
 
-        PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
-        this->add_layer(pooling_layer_1);
+        PoolingLayer* pooling_layer = new PoolingLayer(outputs_dimensions);
+        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
+        this->add_layer(pooling_layer);
 
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
+        */
     }
 
     FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
@@ -2649,7 +2654,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
 
 void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
-{    
+{
     ostringstream buffer;
 
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("Outputs");
@@ -3900,15 +3905,15 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "main program has to look like this:" << endl;
     buffer << "\t" << endl;
     buffer << "int neuralNetwork(){ " << endl;
-	buffer << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer << "\t" << "vector<float> inputs(3);"<< endl;
     buffer << "\t" << endl;
-	buffer << "\t" << "const float asdas  = 0.3;" << endl;
-	buffer << "\t" << "inputs[0] = asdas;"        << endl;
-	buffer << "\t" << "const float input2 = 2.5;" << endl;
-	buffer << "\t" << "inputs[1] = input2;"       << endl;
-	buffer << "\t" << "const float input3 = 1.8;" << endl;
-	buffer << "\t" << "inputs[2] = input3;"       << endl;
-	buffer << "\t" << ". . ." << endl;
+    buffer << "\t" << "const float asdas  = 0.3;" << endl;
+    buffer << "\t" << "inputs[0] = asdas;"        << endl;
+    buffer << "\t" << "const float input2 = 2.5;" << endl;
+    buffer << "\t" << "inputs[1] = input2;"       << endl;
+    buffer << "\t" << "const float input3 = 1.8;" << endl;
+    buffer << "\t" << "inputs[2] = input3;"       << endl;
+    buffer << "\t" << ". . ." << endl;
     buffer << "\n" << endl;
     buffer << "Inputs Names:" <<endl;
 
