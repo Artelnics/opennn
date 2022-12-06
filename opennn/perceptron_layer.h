@@ -24,16 +24,13 @@
 #include "layer.h"
 #include "probabilistic_layer.h"
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
-#endif
-
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
 
 namespace opennn
 {
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+#endif
 
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;

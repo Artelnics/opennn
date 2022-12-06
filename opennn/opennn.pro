@@ -178,20 +178,20 @@ SOURCES += \
 
 contains(DEFINES, OPENNN_MKL)
 {
-#    win32:{
+    win32:{
 
-#    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
+    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
 
-#    INCLUDEPATH += "$$INTEL_HOME/mkl/include"
+    INCLUDEPATH += "$$INTEL_HOME/mkl/include"
 
-#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_rt
-#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_core
+    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_rt
+    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_core
 
-#    win32:CONFIG(release, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
-#    else:win32:CONFIG(debug, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
-#    }
+    win32:CONFIG(release, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
+    else:win32:CONFIG(debug, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
+    }
 
-#    unix:{
+    unix:{
 
 #    ENV_HOME = $$(HOME)
 
@@ -212,6 +212,6 @@ contains(DEFINES, OPENNN_MKL)
 #    #    -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core \
 #    #    -L/opt/intel/lib/intel64 \
 #    #    -liomp5 -lpthread -ldl -lm
-#    }
+    }
 }
 
