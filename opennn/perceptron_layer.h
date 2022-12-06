@@ -432,8 +432,8 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        //cout << deltas << endl;
+//        cout << "Deltas:" << endl;
+//        cout << deltas << endl;
 
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;

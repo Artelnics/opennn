@@ -181,6 +181,12 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     }
 
 
+    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+    {
+        return Tensor< TensorMap< Tensor<type, 1> >*, 1>();
+    }
+
+
     void print() const
     {
         cout << "Deltas: " << endl;
