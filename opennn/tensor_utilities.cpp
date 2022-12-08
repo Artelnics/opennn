@@ -752,6 +752,16 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
 }
 
 
+type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
+{
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+
 void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {
     const Index rows_number = matrix.dimension(0);

@@ -32,6 +32,24 @@ Descriptives::Descriptives(const type& new_minimum, const type& new_maximum,
 }
 
 
+Descriptives::Descriptives(const Tensor<type, 1>&x)
+{
+    Tensor<type, 0> minimum = x.minimum();
+
+    Tensor<type, 0> maximum = x.maximum();
+
+    Tensor<type, 0> mean = x.mean();
+
+    Tensor<type, 0> stde = (x - mean(0)).square().sum();
+
+    stde = stde * (1/static_cast<type>(x.size()));
+
+    stde = stde.sqrt();
+
+    set(minimum(0), maximum(0), mean(0), stde(0));
+}
+
+
 void Descriptives::set(const type& new_minimum, const type& new_maximum,
                                const type& new_mean, const type& new_standard_deviation)
 {
