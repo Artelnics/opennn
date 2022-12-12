@@ -485,6 +485,8 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     Tensor <bool, 1> individual_variables(genes_number);
 
+    type arrow;
+
     for (Index i = 0; i < individuals_number; i++)
     {
         individual_columns.setConstant(false);
@@ -493,11 +495,20 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         // Generation of new individual
 
-        do {
+        for(Index j=0; j<rand()%columns_number; j++)
+        {
+            arrow=type(rand())/type(RAND_MAX);
 
-            //individual_columns = create_individual_correlations();
+            if(arrow>activation_inputs_probabilities(j)
+               && arrow< activation_inputs_probabilities(j+1)
+               && !individual_columns(j))
+             {
+               individual_columns(j) = true;
+            }
 
-        } while (is_false(individual_columns));
+        }
+
+        if(is_false(individual_columns)) individual_columns(rand()%columns_number);
             
         individual_variables = get_individual_variables(individual_columns);
 
@@ -583,7 +594,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         individual = population.chip(i, 0);
 
-        if (display) cout << "Individual " << i + 1 << endl;
+        //if (display) cout << "Individual " << i + 1 << endl;
 
         individual_columns_indexes = get_individual_as_columns_indexes_from_variables(individual);
 
@@ -609,13 +620,13 @@ void GeneticAlgorithm::evaluate_population()
 
         if (display)
         {
-            cout << "Inputs: " << endl;
+            //cout << "Inputs: " << endl;
 
-            cout << inputs_names << endl; 
+            ////cout << inputs_names << endl;
 
-            cout << "Training error: " << training_results.get_training_error() << endl;
+            //cout << "Training error: " << training_results.get_training_error() << endl;
 
-            cout << "Selection error: " << training_results.get_selection_error() << endl;
+            //cout << "Selection error: " << training_results.get_selection_error() << endl;
         }
            
         data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);

@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
         srand(time(nullptr));
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/.csv",';',false);
+        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/5_years_mortality.csv",';',true);
 
         const Index input_variables_number = data_set.get_input_variables_number();
 
@@ -45,67 +45,33 @@ int main(int argc, char* argv[])
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
 
         // Training strategy
 
        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-       training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+       training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
 
        GeneticAlgorithm genetic_algorithm(&training_strategy);
 
        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
-       genetic_algorithm.set_individuals_number(4);
+       genetic_algorithm.set_individuals_number(40);
 
-       genetic_algorithm.set_elitism_size(1);
+       genetic_algorithm.set_elitism_size(2);
 
-       genetic_algorithm.set_maximum_epochs_number(1);
+       genetic_algorithm.set_maximum_epochs_number(60);
 
-       genetic_algorithm.initialize_population();
+       InputsSelectionResults inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-       cout << "Initialize population" << endl;
+       cout << inputs_selection_results.mean_selection_error_history << endl ;
 
-       Tensor<bool,2> population = genetic_algorithm.get_population();
+       system("pause");
 
-       cout << population << endl;
+       cout << inputs_selection_results.mean_training_error_history << endl ;
 
-       cout<< "Inputs number: " << count(population.data(),population.data()+population.size(),1) << endl;
 
-       genetic_algorithm.set_display(false);
-       
-       genetic_algorithm.evaluate_population();
-       
-       cout << "Training errors" << endl;
-       
-       cout<<genetic_algorithm.get_training_errors() << endl;
-       
-       cout << "Selection errors" << endl;
-       
-       cout << genetic_algorithm.get_selection_errors() << endl;
-       
-       cout << "Performing fitness assignment" << endl;
-       
-       genetic_algorithm.perform_fitness_assignment();
-       
-       cout << genetic_algorithm.get_fitness() << endl;
-       
-       cout << "Performing selection" << endl;
-       
-       genetic_algorithm.perform_selection();
-       
-       cout << genetic_algorithm.get_selection() << endl;
-       
-       cout<< "Performing Crossover" << endl;
-       
-       genetic_algorithm.perform_crossover();
-       
-       population = genetic_algorithm.get_population();
-       
-       cout << "New Population generated " << endl;
-       
-       cout << population << endl;
 
        cout << "Bye OpenNN" << endl;
     }
