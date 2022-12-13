@@ -113,7 +113,7 @@ public:
 
     /// Enumeration of the learning tasks.
 
-    enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification};
+    enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
 
     /// This enumeration represents the possible uses of an sample
     /// (training, selection, testing or unused).
@@ -203,6 +203,62 @@ public:
         void print() const;
     };
 
+    struct BoundingBox
+    {
+        /// Default constructor.
+
+        explicit BoundingBox() {}
+
+        explicit BoundingBox(const Index&, const Index&, const Index&);
+
+        explicit BoundingBox(const Index&,
+                             const Tensor<Index, 1>&,
+                             const Index&,
+                             const Index&);
+
+        explicit BoundingBox(const Index&,
+                             const Index&,
+                             const Index&,
+                             const Index&,
+                             const Index&);
+
+        /// Destructor.
+
+        virtual ~BoundingBox() {}
+
+
+//        BoundingBox regression()
+//        {
+//            /// todo
+//            BoundingBox regressed_bounging_box;
+//            return regressed_bounging_box;
+//        }
+
+
+        Index get_bounding_box_size(const BoundingBox&) const;
+
+        BoundingBox resize(const Index&, const Index&, const Index&) const;
+
+        void print() const;
+
+        Tensor<type, 1> data;
+
+        Index x_center;
+        Index y_center;
+        Index channels_number;
+        Index width;
+        Index height;
+
+        Index x_top_left;
+        Index y_top_left;
+        Index x_bottom_right;
+        Index y_bottom_right;
+
+        string label; // ????
+        Index score; // ????
+    };
+
+
     // Project type
 
     ProjectType get_project_type() const;
@@ -239,6 +295,7 @@ public:
 
     Tensor<Column, 1> get_columns() const;
     Tensor<Column, 1> get_time_series_columns() const;
+    Tensor<Column, 1> get_associative_columns() const;
     Index get_time_series_data_rows_number() const;
     Tensor<Column, 1> get_input_columns() const;
     Tensor<bool, 1> get_input_columns_binary() const;
@@ -324,6 +381,7 @@ public:
     Tensor<type, 2>* get_data_pointer();
 
     const Tensor<type, 2>& get_time_series_data() const;
+    const Tensor<type, 2>& get_associative_data() const;
 
     Tensor<type, 2> get_training_data() const;
     Tensor<type, 2> get_selection_data() const;
@@ -363,6 +421,7 @@ public:
     Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
+    Tensor<string, 2> get_text_data_file_preview() const;
 
     Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
@@ -477,6 +536,8 @@ public:
     void set_columns_scalers(const Scaler&);
 
     void set_binary_simple_columns();
+
+    void set_categories_number(const Index&);
 
     // Columns other methods
 
@@ -615,7 +676,7 @@ public:
 
     // Inputs correlations
 
-    Tensor<Correlation, 2> calculate_input_columns_correlations() const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(/*CorrelationMethod::Both*/) const;
 
     void print_inputs_correlations() const;
 
@@ -624,6 +685,7 @@ public:
     // Inputs-targets correlations
 
     Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_columns_correlations_spearman() const;
 
     void print_input_target_columns_correlations() const;
 
@@ -676,16 +738,26 @@ public:
     // Time series methods
 
     void transform_time_series();
-
     void transform_time_series_columns();
     void transform_time_series_data();
+
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
 
+    void get_associative_columns_number(const Index&);
+    void set_associative_data(const Tensor<type, 2>&);
+    void set_associative_columns_number(const Index&);
+
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
+
+    // Autoassiciative methods
+
+    void transform_associative_dataset();
+    void transform_associative_columns();
+    void transform_associative_data();
 
     // Image classification methods
 
@@ -699,7 +771,9 @@ public:
     void set_image_width(const int&);
     void set_image_height(const int&);
     void set_image_padding(const int&);
+    void set_images_number(const Index&);
 
+    type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
 
     // Text classification methods
 
@@ -738,9 +812,13 @@ public:
 
     void save_time_series_data_binary(const string&) const;
 
+    void save_auto_associative_data_binary(const string&) const;
+
     void load_data_binary();
 
     void load_time_series_data_binary(const string&);
+
+    void load_auto_associative_data_binary(const string&);
 
     void check_input_csv(const string&, const char&) const;
 
@@ -762,15 +840,23 @@ public:
 
     // Image methods
 
-    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
+//    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
 
-    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
+//    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
 
-    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
+//    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
+
+    BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
     Index get_bounding_boxes_number_from_XML(const string&);
 
     Index get_label_classes_number_from_XML(const string&);
+
+    Tensor<type, 1> get_bounding_box(const Tensor<unsigned char, 1>&,
+                                     const Index&, const Index&,
+                                     const Index&, const Index&) const;
+
+//    Tensor<unsigned char, 1> slicing(Tensor<unsigned char, 1>&, int&, int&);
 
     // Trasform methods
 
@@ -890,6 +976,9 @@ private:
 
     Codification codification = Codification::UTF8;
 
+    // OBJECT DETECTION
+
+    Index categories_number = 0;
 
     Tensor<Tensor<string, 1>, 1> data_file_preview;
 
@@ -912,8 +1001,10 @@ private:
     /// The number of columns is the number of variables before time series transformation.
 
     Tensor<type, 2> time_series_data;
+    Tensor<type, 2> associative_data;
 
     Tensor<Column, 1> time_series_columns;
+    Tensor<Column, 1> associative_columns;
 
     Index gmt = 0;
 

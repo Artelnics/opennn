@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+ <rdmgr>
+  <timestamp type="u64_t">1664803464</timestamp>
+  <hostname>DESKTOP-SDJERHP</hostname>
+  <os>windows</os>
+  <product>Intel® VTune™ Profiler 2022.2.0</product>
+  <buildNumber type="s32_t">623516</buildNumber>
+  <logicalCPUCount type="s32_t">16</logicalCPUCount>
+  <physicalCoreCount type="s32_t">8</physicalCoreCount>
+  <processorPackageCount type="s32_t">1</processorPackageCount>
+  <CPUFrequency type="s64_t">2500000000</CPUFrequency>
+  <CPUFamily type="s32_t">6</CPUFamily>
+  <CPUModel type="s32_t">167</CPUModel>
+  <CPUStepping type="s32_t">1</CPUStepping>
+  <CPUBrandName>11th Gen Intel(R) Core(TM) i7-11700F @ 2.50GHz</CPUBrandName>
+  <isa>avx512</isa>
+  <collectionTimeBegin type="u64_t">1664803464</collectionTimeBegin>
+  <collectionTimeEnd type="u64_t">1664803476</collectionTimeEnd>
+  <variables>
+   <at>hs</at>
+  </variables>
+ </rdmgr>
+</root>

@@ -24,6 +24,9 @@
 #include "perceptron_layer_test.h"
 #include "convolutional_layer_test.h"
 #include "pooling_layer_test.h"
+
+#include "flatten_layer_test.h"
+
 #include "scaling_layer_test.h"
 #include "unscaling_layer_test.h"
 #include "bounding_layer_test.h"

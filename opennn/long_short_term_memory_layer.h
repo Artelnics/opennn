@@ -209,7 +209,6 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
                                           LongShortTermMemoryLayerBackPropagation*) const;
@@ -285,10 +284,6 @@ public:
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
 
-   string write_expression_c() const final;
-   string write_combinations_c() const;
-
-   string write_expression_python() const final;
    string write_combinations_python() const;
 
    // Serialization methods

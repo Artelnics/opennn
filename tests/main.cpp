@@ -1,11 +1,11 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P E N N N   T E S T S   A P P L I C A T I O N                       
+//   O P E N N N   T E S T S   A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-  
+
 // System includes
 
 #include <iostream>
@@ -22,11 +22,11 @@ int main()
 {
    cout <<
    "Open Neural Networks Library. Test Suite Application.\n\n"
-   
+
    "suite - run all tests\n\n"
-   
+
    "Individual Tests:\n\n"
-   
+
    "adaptive_moment_estimation | adam\n"
    "bounding_layer | bl\n"
    "conjugate_gradient | cg\n"
@@ -35,6 +35,7 @@ int main()
    "convulational_layer | cl\n"
    "descriptives | dsc\n"
    "data_set | ds\n"
+   "flatten_layer | fl\n"
    "genetic_algorithm | ga\n"
    "gradient_descent | gd\n"
    "growing_inputs | gi\n"
@@ -161,6 +162,7 @@ int main()
          tests_failed_count += long_short_memory_layer_test.get_tests_failed_count();
 
       }
+
       else if(test == "recurrent_layer" || test == "rl")
       {
          RecurrentLayerTest recurrent_layer_test;
@@ -169,6 +171,7 @@ int main()
          tests_passed_count += recurrent_layer_test.get_tests_passed_count();
          tests_failed_count += recurrent_layer_test.get_tests_failed_count();
       }
+
       else if(test == "scaling_layer" || test == "sl")
       {
          ScalingLayerTest scaling_layer_test;
@@ -177,6 +180,7 @@ int main()
          tests_passed_count += scaling_layer_test.get_tests_passed_count();
          tests_failed_count += scaling_layer_test.get_tests_failed_count();
       }
+
       else if(test == "unscaling_layer" || test == "ul")
       {
          UnscalingLayerTest unscaling_layer_test;
@@ -185,6 +189,7 @@ int main()
          tests_passed_count += unscaling_layer_test.get_tests_passed_count();
          tests_failed_count += unscaling_layer_test.get_tests_failed_count();
       }
+
       else if(test == "bounding_layer" || test == "bl")
       {
          BoundingLayerTest bounding_layer_test;
@@ -193,6 +198,7 @@ int main()
          tests_passed_count += bounding_layer_test.get_tests_passed_count();
          tests_failed_count += bounding_layer_test.get_tests_failed_count();
       }
+
       else if(test == "probabilistic_layer" || test == "pbl")
       {
          ProbabilisticLayerTest probabilistic_layer_test;
@@ -210,9 +216,19 @@ int main()
          tests_passed_count += layer_test.get_tests_passed_count();
          tests_failed_count += layer_test.get_tests_failed_count();
       }
+
       else if(test == "pooling_layer" || test == "pll")
       {
          PoolingLayerTest layer_test;
+         layer_test.run_test_case();
+         tests_count += layer_test.get_tests_count();
+         tests_passed_count += layer_test.get_tests_passed_count();
+         tests_failed_count += layer_test.get_tests_failed_count();
+      }
+
+      else if(test == "flatten_layer" || test == "fl")
+      {
+         FlattenLayerTest layer_test;
          layer_test.run_test_case();
          tests_count += layer_test.get_tests_count();
          tests_passed_count += layer_test.get_tests_passed_count();
@@ -326,13 +342,13 @@ int main()
       }
       else if(test == "stochastic_gradient_descent" || test == "sgd")
       {
-       
+
         StochasticGradientDescentTest stochastic_gradient_descent_test;
         stochastic_gradient_descent_test.run_test_case();
         tests_count += stochastic_gradient_descent_test.get_tests_count();
         tests_passed_count += stochastic_gradient_descent_test.get_tests_passed_count();
         tests_failed_count += stochastic_gradient_descent_test.get_tests_failed_count();
-       
+
       }
       else if(test == "training_strategy" || test == "ts")
       {
@@ -552,6 +568,14 @@ int main()
           tests_passed_count += pooling_layer_test.get_tests_passed_count();
           tests_failed_count += pooling_layer_test.get_tests_failed_count();
 
+          // Flatten layer
+
+          FlattenLayerTest flatten_layer_test;
+          flatten_layer_test.run_test_case();
+          tests_count += flatten_layer_test.get_tests_count();
+          tests_passed_count += flatten_layer_test.get_tests_passed_count();
+          tests_failed_count += flatten_layer_test.get_tests_failed_count();
+
           // neural network
 
           NeuralNetworkTest neural_network_test;
@@ -770,11 +794,11 @@ int main()
    }
    catch(const exception& e)
    {
-      cerr << e.what() << endl;		 
+      cerr << e.what() << endl;
 
       return 1;
    }
-}  
+}
 
 
 // OpenNN: Open Neural Networks Library.

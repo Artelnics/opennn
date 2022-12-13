@@ -48,6 +48,7 @@ public:
     // Get methods
 
     Tensor<Index, 1> get_input_variables_dimensions() const;
+    Index get_outputs_number() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
@@ -59,6 +60,8 @@ public:
 
     Tensor<type, 1> get_parameters() const final;
     Index get_parameters_number() const;
+
+    Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
 
     // Set methods
 
@@ -81,7 +84,7 @@ public:
 
     // Outputs
 
-    Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
+    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
     void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
@@ -106,7 +109,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    // Default constructor
 
    explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {        
+   {
    }
 
    // Constructor
@@ -142,7 +145,6 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    }
 
    Tensor<type, 2> outputs;
-
 };
 
 
@@ -170,20 +172,29 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
         batch_samples_number = new_batch_samples_number;
 
-        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
+        const Index neurons_number = new_layer_pointer->get_neurons_number();
+//        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
-        delta.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
+//        deltas.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
+
+        deltas.resize(batch_samples_number, neurons_number);
+    }
+
+
+    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+    {
+        return Tensor< TensorMap< Tensor<type, 1> >*, 1>();
     }
 
 
     void print() const
     {
-        cout << "Delta: " << endl;
+        cout << "Deltas: " << endl;
 
-        cout << delta << endl;
+        cout << deltas << endl;
     }
 
-    Tensor<type, 4> delta;
+    Tensor<type, 2> deltas;
 
 };
 
@@ -210,4 +221,3 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

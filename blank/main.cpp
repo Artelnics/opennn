@@ -19,61 +19,20 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
-using namespace opennn;
 
-int main(int argc, char* argv[])
+using namespace opennn;
+using namespace std;
+
+int main(int argc, char *argv[])
 {
     try
     {
         cout << "Hello OpenNN" << endl;
 
-        srand(time(nullptr));
+        cout << "Bye OpenNN!" << endl;
 
-        DataSet data_set ("C:/Users/rodrigo ingelmo/Documents/5_years_mortality.csv",';',true);
+        return 0;
 
-        const Index input_variables_number = data_set.get_input_variables_number();
-
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        const Index hidden_neurons_number = 1;
-
-        data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
-
-        data_set.impute_missing_values_mean();
-
-        data_set.split_samples_sequential();
-
-        // Neural network
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
-
-        // Training strategy
-
-       TrainingStrategy training_strategy(&neural_network, &data_set);
-
-       training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
-
-       GeneticAlgorithm genetic_algorithm(&training_strategy);
-
-       genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
-
-       genetic_algorithm.set_individuals_number(40);
-
-       genetic_algorithm.set_elitism_size(2);
-
-       genetic_algorithm.set_maximum_epochs_number(60);
-
-       InputsSelectionResults inputs_selection_results = genetic_algorithm.perform_inputs_selection();
-
-       cout << inputs_selection_results.mean_selection_error_history << endl ;
-
-       system("pause");
-
-       cout << inputs_selection_results.mean_training_error_history << endl ;
-
-
-
-       cout << "Bye OpenNN" << endl;
     }
     catch (const exception& e)
     {
@@ -98,4 +57,3 @@ int main(int argc, char* argv[])
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

@@ -100,7 +100,7 @@ public:
 
     // Outputs
 
-    virtual void calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&);
+    virtual void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
     virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
     virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
@@ -154,10 +154,6 @@ public:
     // Expression methods
 
     virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const {return string();}
-
-    virtual string write_expression_c() const {return string();}
-
-    virtual string write_expression_python() const {return string();}
 
 protected:
 
