@@ -1,3 +1,0 @@
-
-7508 : 0x4b497d27d85 : 3 : logger_init :  LOG FILE OPENED (by collectunits.logger), level: 4
-7508 : 0x4b497e32bd4 : 4 : pytrace_start_profiling :  [CALLED]
