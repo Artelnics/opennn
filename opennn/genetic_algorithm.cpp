@@ -26,6 +26,8 @@ GeneticAlgorithm::GeneticAlgorithm()
 GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy_pointer)
     : InputsSelection(new_training_strategy_pointer)
 {
+//    set(new_training_strategy_pointer);
+
     set_default();
 }
 
@@ -102,8 +104,6 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 void GeneticAlgorithm::set_default()
 {
-    training_strategy_pointer->set_display(false);
-
     // First we set genes_number equals number of variables
 
     Index genes_number;
@@ -117,8 +117,8 @@ void GeneticAlgorithm::set_default()
         // "Variables" includes dummy variables, columns treat categorical variables as one (important)
 
         genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
+        training_strategy_pointer->set_display(false);
     }
-
 
     Index individuals_number = 10;
 
@@ -137,7 +137,6 @@ void GeneticAlgorithm::set_default()
     training_errors.resize(individuals_number);
 
     selection_errors.resize(individuals_number);
-
     fitness.resize(individuals_number);
 
     fitness.setConstant(type(-1.0));
@@ -150,6 +149,7 @@ void GeneticAlgorithm::set_default()
 
     //calculate_activation_probabilities();
 
+    set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 }
 
 
@@ -975,7 +975,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if (display) cout << "Performing genetic inputs selection..." << endl << endl;
     
-    initialize_population();
+    initialize_population_random();
 
     // Selection algorithm
 
