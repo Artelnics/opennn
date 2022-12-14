@@ -69,6 +69,12 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     genetic_algorithm.set_individuals_number(individuals_number);
 
+    if(genetic_algorithm.get_initialization_method()==GeneticAlgorithm::InitializationMethod::Correlations)
+    {
+        genetic_algorithm.calculate_inputs_activation_probabilities();
+    }
+
+
     genetic_algorithm.initialize_population();
 
     population = genetic_algorithm.get_population();

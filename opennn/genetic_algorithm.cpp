@@ -118,7 +118,9 @@ void GeneticAlgorithm::set_default()
         // "Variables" includes dummy variables, columns treat categorical variables as one (important)
 
         genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
-        //training_strategy_pointer->set_display(false);
+
+        calculate_inputs_activation_probabilities();
+
     }
 
     Index individuals_number = 10;
@@ -148,9 +150,7 @@ void GeneticAlgorithm::set_default()
 
     elitism_size = 2;
 
-    //calculate_activation_probabilities();
-
-    set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
+    set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
 
 }
 
@@ -443,8 +443,6 @@ void GeneticAlgorithm::initialize_population_random()
 
     population.setConstant(false);
 
-    bool is_repeated_or_empty = false;
-
     Tensor<bool, 1> individual_columns(columns_number);
 
     Tensor<bool, 1> individual_variables(genes_number);
@@ -474,6 +472,42 @@ void GeneticAlgorithm::initialize_population_random()
     if(display) cout << "Initial random population created" << endl;
 }
 
+void GeneticAlgorithm::calculate_inputs_activation_probabilities()
+{
+
+    DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+
+    const Index columns_number=data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
+
+    cout<<"Calculating correlations matrix"<<endl;
+
+    Tensor <Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
+
+    cout<<"Correlation matrix calculated"<<endl;
+
+    Tensor <type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
+
+    Tensor <Index, 1> rank = calculate_rank_greater(correlations);
+
+    Tensor <type, 1> fitness_correlations(rank.size());
+
+    for(Index i=0; i<columns_number; i++)
+    {
+        fitness_correlations(rank(i))=type(i+1);
+    }//End of calculation of the new fitness correlations vector
+
+
+    //Cumulative probability tensor calculation
+    Tensor <type,1> probabilities_vector(columns_number);
+
+    for (Index i = 0; i <columns_number ; i++)
+    {
+        probabilities_vector[i] = type(fitness_correlations.size() - fitness_correlations(i)-1) / (type(columns_number)*type(columns_number+1))/2;
+        //This vector stores in probabilities_vector(i)="Probability of input number i being choose"
+    }
+    //This tensor means cumulative_probabilities(i)="sum of the first i elements of probabilities_vector"
+    inputs_activation_probabilities = probabilities_vector.cumsum(0);
+}
 
 void GeneticAlgorithm::initialize_population_correlations()
 {
@@ -505,12 +539,12 @@ void GeneticAlgorithm::initialize_population_correlations()
         {
             arrow=type(rand())/type(RAND_MAX);
 
-            if(arrow>activation_inputs_probabilities(j)
-               && arrow< activation_inputs_probabilities(j+1)
+            if(arrow > inputs_activation_probabilities(j)
+               && arrow < inputs_activation_probabilities(j+1)
                && !individual_columns(j))
              {
                individual_columns(j) = true;
-            }
+             }
 
         }
 
@@ -626,13 +660,13 @@ void GeneticAlgorithm::evaluate_population()
 
         if (display)
         {
-            //cout << "Inputs: " << endl;
+            cout << "Inputs: " << endl;
 
-            ////cout << inputs_names << endl;
+            cout << inputs_names << endl;
 
-            //cout << "Training error: " << training_results.get_training_error() << endl;
+            cout << "Training error: " << training_results.get_training_error() << endl;
 
-            //cout << "Selection error: " << training_results.get_selection_error() << endl;
+            cout << "Selection error: " << training_results.get_selection_error() << endl;
         }
            
         data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);

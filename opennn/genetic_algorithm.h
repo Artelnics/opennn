@@ -114,6 +114,8 @@ public:
     void initialize_population();
 
     void initialize_population_random();
+
+    void calculate_inputs_activation_probabilities();
     
     void initialize_population_correlations();
 
@@ -175,7 +177,7 @@ private:
     
     /// Activation probabilities.
     
-    Tensor <type, 1> activation_inputs_probabilities;
+    Tensor <type, 1> inputs_activation_probabilities;
 
     /// Population matrix.
 
