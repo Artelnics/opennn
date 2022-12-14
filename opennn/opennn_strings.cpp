@@ -885,6 +885,130 @@ bool contains_substring(const string& str, const string& sub_str)
 }
 
 
+ ///Replaces all apprearances of a substring with another string
+ ///@param s
+ ///@param toReplace
+ ///@param replaceWith
+
+void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
+    std::string buf;
+
+    std::size_t pos = 0;
+    std::size_t prevPos;
+
+    // Reserves rough estimate of final size of string.
+    buf.reserve(s.size());
+
+    while (true) {
+
+        prevPos =    pos;
+        pos = s.find(toReplace, pos);
+
+        if (pos == std::string::npos)
+            break;
+
+        buf.append(s, prevPos, pos - prevPos);
+        if (buf.back() == '_')
+        {
+            buf += toReplace;
+            pos += toReplace.size();
+
+        }else
+        {
+            buf += replaceWith;
+            pos += toReplace.size();
+
+        }
+    }
+
+    buf.append(s, prevPos, s.size() - prevPos);
+    s.swap(buf);
+}
+
+
+/// Replaces all apprearances non allowed programming characters of a substring with allowed characters
+/// \brief replace_non_allowed_programming_characters
+/// \param s
+/// \return
+string replace_non_allowed_programming_characters(std::string& s)
+{
+    string out = "";
+    if (s[0] == '$')
+        out=s;
+
+    for (char& c: s)
+    {
+        if (c=='/'){ out+="_div_"; }
+        if (c=='*'){ out+="_mul_"; }
+        if (c=='+'){ out+="_sum_"; }
+        if (c=='-'){ out+="_res_"; }
+        if (c=='='){ out+="_equ_"; }
+        if (c=='!'){ out+="_not_"; }
+        if (c=='<'){ out+="_lower_" ; }
+        if (c=='>'){ out+="_higher_"; }
+        if (isalnum(c)!=0){ out += c; }
+        if (isalnum(c)==0){ out+='_'; }
+    }
+
+    return out;
+}
+
+
+vector<string> get_words_in_a_string(string str)
+{
+    vector<string> output;
+    string word = "";
+
+    for (auto x : str)
+    {
+        if (isalnum(x))
+        {
+            word = word + x;
+        }else if (x=='_')
+        {
+            word = word + x;
+        }
+        else
+        //if (x == ' ')
+        {
+            output.push_back(word);
+            word = "";
+        }
+    }
+
+    output.push_back(word);
+    return output;
+}
+
+
+///Returns the number of apprearances of a substring
+///@brief WordOccurrence
+///@param sentence
+///@param word
+///@return
+int WordOccurrence(char *sentence, char *word)
+{
+    int slen = strlen(sentence);
+    int wordlen = strlen(word);
+    int count = 0;
+    int i, j;
+
+    for(i=0; i<slen; i++)
+    {
+        for(j=0; j<wordlen; j++)
+        {
+            if(sentence[i+j]!=word[j])
+            break;
+        }
+        if(j==wordlen)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
@@ -895,11 +1019,20 @@ void trim(string& str)
 
     str.erase(0, str.find_first_not_of(' '));
     str.erase(0, str.find_first_not_of('\t'));
+    str.erase(0, str.find_first_not_of('\n'));
+    str.erase(0, str.find_first_not_of('\r'));
+    str.erase(0, str.find_first_not_of('\f'));
+    str.erase(0, str.find_first_not_of('\v'));
 
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
     str.erase(str.find_last_not_of('\t') + 1);
+    str.erase(str.find_last_not_of('\n') + 1);
+    str.erase(str.find_last_not_of('\r') + 1);
+    str.erase(str.find_last_not_of('\f') + 1);
+    str.erase(str.find_last_not_of('\v') + 1);
+    str.erase(str.find_last_not_of('\b') + 1);
 }
 
 
@@ -920,10 +1053,21 @@ string get_trimmed(const string& str)
     //prefixing spaces
 
     output.erase(0, output.find_first_not_of(' '));
+    output.erase(0, output.find_first_not_of('\t'));
+    output.erase(0, output.find_first_not_of('\n'));
+    output.erase(0, output.find_first_not_of('\r'));
+    output.erase(0, output.find_first_not_of('\f'));
+    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
     output.erase(output.find_last_not_of(' ') + 1);
+    output.erase(output.find_last_not_of('\t') + 1);
+    output.erase(output.find_last_not_of('\n') + 1);
+    output.erase(output.find_last_not_of('\r') + 1);
+    output.erase(output.find_last_not_of('\f') + 1);
+    output.erase(output.find_last_not_of('\v') + 1);
+    output.erase(output.find_last_not_of('\b') + 1);
 
     return output;
 }
@@ -1083,17 +1227,131 @@ bool isNotAlnum (char &c)
     return (c < ' ' || c > '~');
 }
 
+
 void remove_not_alnum(string &str)
 {
         str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
 }
 
 
+vector<std::string> fix_write_expresion_outputs(const std::string &str, const Tensor<std::string, 1> &outputs, const string &programming_languaje)
+{
+    string expression = str;
+    std::stringstream ss(expression);
+
+    std::string token;
+    vector<std::string> tokens;
+    vector<std::string> found_tokens;
+    vector<std::string> out;
+
+    string new_variable;
+    string old_variable;
+
+    string out_string;
+    int option = 0;
+
+    //Define option number depending on the programming_languaje
+    if (programming_languaje == "javascript") { option = 1; }
+    else if (programming_languaje == "php")   { option = 2; }
+    else if (programming_languaje == "python"){ option = 3; }
+    else if (programming_languaje == "c")     { option = 4; }
+
+    //save output tensors dimension
+    int dimension = outputs.dimension(0);
+
+    //get last lines depending on the dimension
+    while (getline(ss, token, '\n'))
+    {
+        if (token.size() > 1 && token.back() == '{'){ break; }
+        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+        tokens.push_back(token);
+    }
+
+    ////Get corresponding variable
+    for (string& s : tokens)
+    {
+        string word = "";
+        for (char& c : s)
+        {
+            if ( c!=' ' && c!='=' ){ word += c; }
+            else { break; }
+        }
+
+        if (word.size() > 1)
+        {
+            found_tokens.push_back(word);
+        }
+    }
+
+    new_variable = found_tokens[found_tokens.size()-1];
+    old_variable = outputs[dimension-1];
+
+    if (new_variable != old_variable)
+    {
+        int j = found_tokens.size();
+
+        for (int i = dimension; i --> 0;)
+        {
+            j -= 1;
+
+            //get variable names of those lines
+            new_variable = found_tokens[j];
+            old_variable = outputs[i];
+
+            //create especificied lines
+            switch(option)
+            {
+                //JavaScript
+                case 1:
+                    out_string = "\tvar ";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out.push_back(out_string);
+                break;
+
+                //Php
+                case 2:
+                    out_string = "$";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += "$";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out.push_back(out_string);
+                break;
+
+                //Python
+                case 3:
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out.push_back(out_string);
+                break;
+
+                //C
+                case 4:
+                    out_string = "double ";
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out.push_back(out_string);
+                break;
+
+                default:
+                break;
+            }
+        }
+    }
+    return out;
+}
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
