@@ -100,6 +100,7 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 }
 
 
+
 /// Sets the members of the genetic algorithm object to their default values.
 
 void GeneticAlgorithm::set_default()
@@ -117,7 +118,7 @@ void GeneticAlgorithm::set_default()
         // "Variables" includes dummy variables, columns treat categorical variables as one (important)
 
         genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
-        training_strategy_pointer->set_display(false);
+        //training_strategy_pointer->set_display(false);
     }
 
     Index individuals_number = 10;
@@ -150,6 +151,7 @@ void GeneticAlgorithm::set_default()
     //calculate_activation_probabilities();
 
     set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
+
 }
 
 
@@ -216,6 +218,10 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 #endif
 
     population = new_population;
+}
+void GeneticAlgorithm::set_genes_number(const Index& new_genes_number)
+{
+    genes_number = new_genes_number;
 }
 
 void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
@@ -802,7 +808,8 @@ void GeneticAlgorithm::perform_selection()
 
 Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-    Tensor<Index,1> selection_indexes( count(selection.data(), selection.data() + selection.size(), 1) );
+
+    Tensor<Index,1> selection_indexes(std::count(selection.data(), selection.data() + selection.size(), 1));
 
     Index activated_index_count=0;
 
@@ -810,7 +817,7 @@ Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
     {
         if(selection(i))
         {
-            selection_indexes(activated_index_count)=i;
+            selection_indexes(activated_index_count) = i;
 
             activated_index_count++;
         }
@@ -823,17 +830,13 @@ Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 
 void GeneticAlgorithm::perform_crossover()
 {
-    DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+    DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
     const Index individuals_number = get_individuals_number();
 
     const Index genes_number = get_genes_number();
 
-    const Index selected_individuals_number = count(selection.data(), selection.data() + selection.size(), 1);
-
-    const Index couples_number = selected_individuals_number/2;
-
-    const Index columns_number=data_set_pointer->get_input_columns_number();
+    const Index columns_number = data_set_pointer->get_input_columns_number();
 
     #ifdef OPENNN_DEBUG
             Index count_selected_individuals = 0;
@@ -851,8 +854,6 @@ void GeneticAlgorithm::perform_crossover()
     // Couples generation
 
     Tensor <bool, 2> new_population(individuals_number, genes_number);
-
-    new_population.setConstant(false); //Try
 
     Tensor <bool, 1> parent_1_variables;
 
@@ -880,7 +881,7 @@ void GeneticAlgorithm::perform_crossover()
 
     std::shuffle(parent_2_indices.data(), parent_2_indices.data() + parent_2_indices.size(), g);
 
-    for(Index i = 0; i < parent_1_indices.size(); i++)
+    for(Index i = 0; i < parent_1_indices.dimension(0); i++)
     {
         parent_1_variables = population.chip(parent_1_indices(i), 0);
 
@@ -892,7 +893,7 @@ void GeneticAlgorithm::perform_crossover()
 
         for (Index j = 0; j < 2; j++)
         {
-            descendent_columns = parent_1_columns; 
+            descendent_columns = parent_1_columns;
 
             for(Index k = 0; k < columns_number; k++)
             {
@@ -933,9 +934,9 @@ void GeneticAlgorithm::perform_mutation()
 
     const Index genes_number = get_genes_number();
 
-    Tensor <bool,1> individual_variables;
+    Tensor <bool, 1> individual_variables(genes_number);
 
-    Tensor <bool,1> individual_columns;
+    Tensor <bool, 1> individual_columns(columns_number);
 
     for(Index i=0; i < individuals_number; i++)
     {

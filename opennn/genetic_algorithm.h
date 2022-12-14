@@ -207,8 +207,7 @@ private:
 
     Tensor <Index, 1> original_target_columns_indices;
 
-
-    
+    Index genes_number;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
