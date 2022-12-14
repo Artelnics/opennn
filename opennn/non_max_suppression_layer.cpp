@@ -26,8 +26,8 @@ void NonMaxSuppressionLayer::calculate_outputs(type* inputs_data, const Tensor<I
     //             -> 4 parameters defining the bbox
     // outputs_data -> Bounding box that surpasses our criteria
 
-    const type overlap_threshold = 0.65;
-    const type confidence_score_threshold = 0.4;
+    const type overlap_threshold = type(0.65);
+    const type confidence_score_threshold = type(0.4);
 
     const Index regions_number = inputs_dimensions(0);
     TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));

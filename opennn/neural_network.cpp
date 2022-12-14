@@ -407,6 +407,10 @@ string NeuralNetwork::get_project_type_string() const
     {
         return "ImageClassification";
     }
+    else if(project_type == ProjectType::TextClassification)
+    {
+        return "TextClassification";
+    }
     else if(project_type == ProjectType::TextGeneration)
     {
         return "TextGeneration";
@@ -416,6 +420,7 @@ string NeuralNetwork::get_project_type_string() const
         return "AutoAssociation";
     }
 }
+
 
 /// Returns a string vector with the names of the variables used as outputs.
 
@@ -1881,7 +1886,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         throw invalid_argument(buffer.str());
     }
-
 }
 
 
@@ -2022,9 +2026,10 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
     do{
         Tensor<type, 2> input_data(get_inputs_number(), 1);
         input_data.setZero();
+
         Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+        const Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
         string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
@@ -2032,7 +2037,7 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
         input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
 
-    }while(result.length() < length);
+    }while(Index(result.length()) < length);
 
     return result;
 }

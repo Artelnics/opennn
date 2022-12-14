@@ -793,11 +793,14 @@ string DataSet::get_project_type_string(const DataSet::ProjectType& newProjectTy
     {
         return "ImageClassification";
     }
+    else if(newProjectType == ProjectType::TextClassification)
+    {
+        return "TextClassification";
+    }
     else if(newProjectType == ProjectType::AutoAssociation)
     {
         return "AutoAssociation";
-    }
-
+    }   
 }
 
 
@@ -4959,8 +4962,11 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    delete thread_pool;
+    thread_pool = nullptr;
+
+    delete thread_pool_device;
+    thread_pool_device = nullptr;
 
     data.resize(0,0);
 
@@ -11387,7 +11393,7 @@ void DataSet::read_bmp()
     }
 
 
-    for (Index i = 0 ; i < folder_paths.size() ; i++)
+    for (Index i = 0 ; i < Index(folder_paths.size()) ; i++)
     {
         for (const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
@@ -11395,7 +11401,7 @@ void DataSet::read_bmp()
         }
     }
 
-    for(Index i = 0; i < image_paths.size(); i++)
+    for(Index i = 0; i < Index(image_paths.size()); i++)
     {
         if(image_paths[i].extension() != ".bmp")
         {
@@ -11424,7 +11430,7 @@ void DataSet::read_bmp()
     Index image_size;
     Index size_comprobation = 0;
 
-    for(Index i = 0; i < image_paths.size(); i++)
+    for(Index i = 0; i < Index(image_paths.size()); i++)
     {
         info_img = image_paths[i].string();
         image = read_bmp_image(info_img);
