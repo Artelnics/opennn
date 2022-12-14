@@ -762,6 +762,16 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 }
 
 
+type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
+{
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+
 void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {
     const Index rows_number = matrix.dimension(0);

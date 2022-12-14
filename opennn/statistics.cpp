@@ -263,6 +263,7 @@ Histogram::Histogram(const Tensor<type, 1>& data,
 {
     const type data_maximum = maximum(data);
     const type data_minimum = minimum(data);
+
     const type step = (data_maximum - data_minimum) / type(number_of_bins);
 
     Tensor<type, 1> new_centers(number_of_bins);
@@ -282,6 +283,9 @@ Histogram::Histogram(const Tensor<type, 1>& data,
     {
         value = data(i);
         corresponding_bin = int((value - data_minimum) / step);
+
+        if(corresponding_bin >= number_of_bins)
+            corresponding_bin = number_of_bins - 1;
 
         new_frequencies(corresponding_bin)++;
     }

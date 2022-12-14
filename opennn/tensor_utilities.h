@@ -52,7 +52,6 @@ void save_csv(const Tensor<type,2>&, const string&);
 
 // Rank and indices methods
 
-
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
@@ -88,6 +87,7 @@ void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<ty
 void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
