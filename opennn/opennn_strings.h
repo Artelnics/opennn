@@ -86,6 +86,8 @@ namespace opennn
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
+
+    vector<std::string> fix_write_expresion_outputs(const std::string&, const Tensor<std::string, 1>&, const string&);
 }
 
 #endif // OPENNNSTRINGS_H
