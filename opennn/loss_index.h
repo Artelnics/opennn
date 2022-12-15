@@ -333,6 +333,7 @@ struct LossIndexBackPropagation
         regularization_gradient.resize(parameters_number);
     }
 
+
     void print() const
     {
         cout << "Loss index back-propagation" << endl;

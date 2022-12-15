@@ -47,12 +47,12 @@ int main()
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+//        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
-        training_strategy.set_maximum_epochs_number(20000);
-        training_strategy.set_display_period(1000);
+        training_strategy.set_maximum_epochs_number(1000);
+        training_strategy.set_display_period(100);
 
         training_strategy.perform_training();
 

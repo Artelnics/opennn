@@ -23,12 +23,11 @@ int main(){
 
 
 Inputs Names:
-	0) input_0
-	1) input_1
-	2) input_2
-	3) input_3
-	4) input_4
-	0) ouput_0
+	0) frequency
+	1) angle_of_attack
+	2) chord_lenght
+	3) free_res__stream_velocity
+	4) suction_side_displacement_thickness
 */
 
 
@@ -43,128 +42,128 @@ using namespace std;
 
 vector<float> calculate_outputs(const vector<float>& inputs)
 {
-	const float input_0 = inputs[0];
-	const float input_1 = inputs[1];
-	const float input_2 = inputs[2];
-	const float input_3 = inputs[3];
-	const float input_4 = inputs[4];
+	const float frequency = inputs[0];
+	const float angle_of_attack = inputs[1];
+	const float chord_lenght = inputs[2];
+	const float free_res__stream_velocity = inputs[3];
+	const float suction_side_displacement_thickness = inputs[4];
 
-	double scaled_input_0 = (input_0-2886.380615)/3152.573242;
-	double scaled_input_1 = (input_1-6.782301903)/5.918128014;
-	double scaled_input_2 = (input_2-0.136548236)/0.09354072809;
-	double scaled_input_3 = (input_3-50.86074448)/15.57278538;
-	double scaled_input_4 = (input_4-0.01113987993)/0.01315023471;
+	double scaled_frequency = (frequency-2886.380615)/3152.573242;
+	double scaled_angle_of_attack = (angle_of_attack-6.782301903)/5.918128014;
+	double scaled_chord_lenght = (chord_lenght-0.136548236)/0.09354072809;
+	double scaled_free_res__stream_velocity = (free_res__stream_velocity-50.86074448)/15.57278538;
+	double scaled_suction_side_displacement_thickness = (suction_side_displacement_thickness-0.01113987993)/0.01315023471;
 
-	double perceptron_layer_1_output_0 = tanh( 0.643919 + (scaled_*-0.594028) + (scaled_*-0.102154) + (scaled_*-0.868622) + (scaled_*0.221574) + (scaled_*-0.145109) );
-	double perceptron_layer_1_output_1 = tanh( 0.185916 + (scaled_*0.144227) + (scaled_*0.0590693) + (scaled_*-0.0809972) + (scaled_*0.191018) + (scaled_*0.184544) );
-	double perceptron_layer_1_output_2 = tanh( 0.108583 + (scaled_*1.21012) + (scaled_*0.975115) + (scaled_*-1.16161) + (scaled_*-0.154521) + (scaled_*-0.464992) );
-	double perceptron_layer_1_output_3 = tanh( -0.146318 + (scaled_*-0.0764351) + (scaled_*0.193485) + (scaled_*0.14585) + (scaled_*0.18401) + (scaled_*-0.120219) );
-	double perceptron_layer_1_double output_4 = tanh( 0.00816371 + (scaled_*0.0324083) + (scaled_*0.212127) + (scaled_*-0.219034) + (scaled_*-0.114936) + (scaled_*0.133852) );
-	double perceptron_layer_1_output_5 = tanh( 1.62018 + (scaled_*1.68499) + (scaled_*-0.300188) + (scaled_*0.455115) + (scaled_*0.46788) + (scaled_*0.380378) );
-	double perceptron_layer_1_output_6 = tanh( -0.0485595 + (scaled_*0.0634535) + (scaled_*-0.465133) + (scaled_*0.0542446) + (scaled_*-0.388361) + (scaled_*0.159494) );
-	double perceptron_layer_1_output_7 = tanh( 0.0357532 + (scaled_*-0.0729044) + (scaled_*0.10693) + (scaled_*0.159654) + (scaled_*-0.111869) + (scaled_*-0.113801) );
-	double perceptron_layer_1_output_8 = tanh( -1.37787 + (scaled_*-1.58569) + (scaled_*1.30629) + (scaled_*0.00396758) + (scaled_*0.0157961) + (scaled_*0.248692) );
-	double perceptron_layer_1_output_9 = tanh( 0.412771 + (scaled_*0.216747) + (scaled_*-1.20893) + (scaled_*0.213271) + (scaled_*0.909054) + (scaled_*-0.361389) );
-	double perceptron_layer_1_output_10 = tanh( 0.814776 + (scaled_*0.129118) + (scaled_*0.290146) + (scaled_*1.00732) + (scaled_*0.173542) + (scaled_*-0.77338) );
-	double perceptron_layer_1_output_11 = tanh( 0.162515 + (scaled_*-0.0278774) + (scaled_*-0.0855513) + (scaled_*0.271165) + (scaled_*-0.0123834) + (scaled_*0.167958) );
-	double perceptron_layer_1_output_12 = tanh( -0.128562 + (scaled_*0.10715) + (scaled_*0.0816353) + (scaled_*-0.280996) + (scaled_*0.137199) + (scaled_*0.14978) );
-	double perceptron_layer_1_output_13 = tanh( 0.998629 + (scaled_*0.703659) + (scaled_*-0.119222) + (scaled_*0.576745) + (scaled_*-0.346351) + (scaled_*1.21933) );
-	double perceptron_layer_1_output_14 = tanh( -0.115955 + (scaled_*0.0976702) + (scaled_*0.138614) + (scaled_*0.187865) + (scaled_*0.178554) + (scaled_*-0.054008) );
-	double perceptron_layer_1_output_15 = tanh( -0.742596 + (scaled_*0.529844) + (scaled_*-0.654644) + (scaled_*0.5297) + (scaled_*-0.300071) + (scaled_*0.0998728) );
-	double perceptron_layer_1_output_16 = tanh( -0.409654 + (scaled_*-0.0731382) + (scaled_*-0.523467) + (scaled_*0.943288) + (scaled_*-0.525875) + (scaled_*0.36504) );
-	double perceptron_layer_1_output_17 = tanh( -0.0767377 + (scaled_*-0.0417581) + (scaled_*0.122802) + (scaled_*0.0813451) + (scaled_*0.144534) + (scaled_*-0.128455) );
-	double perceptron_layer_1_output_18 = tanh( 0.153437 + (scaled_*0.193388) + (scaled_*-0.0734411) + (scaled_*-0.175957) + (scaled_*-0.236308) + (scaled_*0.165722) );
-	double perceptron_layer_1_output_19 = tanh( -0.775774 + (scaled_*-0.395496) + (scaled_*-0.256842) + (scaled_*-0.283968) + (scaled_*0.326949) + (scaled_*-0.60096) );
-	double perceptron_layer_1_output_20 = tanh( 2.08069 + (scaled_*-0.528782) + (scaled_*-1.57966) + (scaled_*-0.341087) + (scaled_*-0.295081) + (scaled_*0.494887) );
-	double perceptron_layer_1_output_21 = tanh( 0.938147 + (scaled_*0.713931) + (scaled_*0.529195) + (scaled_*0.927952) + (scaled_*0.10587) + (scaled_*0.127334) );
-	double perceptron_layer_1_output_22 = tanh( -0.934895 + (scaled_*1.07448) + (scaled_*0.0466623) + (scaled_*0.325726) + (scaled_*0.0695758) + (scaled_*0.477545) );
-	double perceptron_layer_1_output_23 = tanh( 0.0383572 + (scaled_*0.24387) + (scaled_*0.27828) + (scaled_*-0.010099) + (scaled_*0.244825) + (scaled_*0.168929) );
-	double perceptron_layer_1_output_24 = tanh( -0.181073 + (scaled_*-0.0427041) + (scaled_*-0.0804859) + (scaled_*-0.226652) + (scaled_*-0.118263) + (scaled_*-0.068492) );
-	double perceptron_layer_1_output_25 = tanh( 0.0707144 + (scaled_*-0.140345) + (scaled_*-0.0477795) + (scaled_*-0.123571) + (scaled_*-0.168664) + (scaled_*-0.140804) );
-	double perceptron_layer_1_output_26 = tanh( 0.172781 + (scaled_*0.133336) + (scaled_*-0.312112) + (scaled_*0.0187486) + (scaled_*0.0967072) + (scaled_*0.00949857) );
-	double perceptron_layer_1_output_27 = tanh( -0.110677 + (scaled_*0.133144) + (scaled_*0.0946114) + (scaled_*0.230999) + (scaled_*0.0643557) + (scaled_*0.0501479) );
-	double perceptron_layer_1_output_28 = tanh( -0.72813 + (scaled_*-0.180047) + (scaled_*-0.412537) + (scaled_*-0.661762) + (scaled_*-0.0901612) + (scaled_*0.36367) );
-	double perceptron_layer_1_output_29 = tanh( 0.0411201 + (scaled_*0.182678) + (scaled_*-0.154616) + (scaled_*-0.0720856) + (scaled_*0.00526289) + (scaled_*-0.126274) );
-	double perceptron_layer_1_output_30 = tanh( -2.28283 + (scaled_*-2.66344) + (scaled_*-0.476387) + (scaled_*0.579319) + (scaled_*0.262415) + (scaled_*1.32031) );
-	double perceptron_layer_1_output_31 = tanh( 0.175262 + (scaled_*-0.134958) + (scaled_*0.180923) + (scaled_*0.169164) + (scaled_*-0.103352) + (scaled_*0.0229379) );
-	double perceptron_layer_1_output_32 = tanh( 0.669908 + (scaled_*-0.00599568) + (scaled_*-0.0545351) + (scaled_*-0.379955) + (scaled_*-0.286859) + (scaled_*-0.973591) );
-	double perceptron_layer_1_output_33 = tanh( -0.334142 + (scaled_*-0.538545) + (scaled_*-0.339999) + (scaled_*0.15772) + (scaled_*0.0242066) + (scaled_*0.118649) );
-	double perceptron_layer_1_output_34 = tanh( -0.00326882 + (scaled_*-0.138194) + (scaled_*-0.0645933) + (scaled_*-0.184386) + (scaled_*0.144806) + (scaled_*-0.123196) );
-	double perceptron_layer_1_output_35 = tanh( -0.000719587 + (scaled_*0.394824) + (scaled_*-0.120924) + (scaled_*-0.107688) + (scaled_*-0.209714) + (scaled_*-0.231054) );
-	double perceptron_layer_1_output_36 = tanh( 0.110647 + (scaled_*-1.3779) + (scaled_*0.827955) + (scaled_*0.599462) + (scaled_*-0.151988) + (scaled_*0.566579) );
-	double perceptron_layer_1_output_37 = tanh( 0.165553 + (scaled_*0.0818642) + (scaled_*-0.0113753) + (scaled_*-0.0396362) + (scaled_*0.12037) + (scaled_*-0.112669) );
-	double perceptron_layer_1_output_38 = tanh( 0.282099 + (scaled_*0.259311) + (scaled_*0.0776433) + (scaled_*0.14121) + (scaled_*-0.0585107) + (scaled_*0.208758) );
-	double perceptron_layer_1_output_39 = tanh( 0.505877 + (scaled_*0.318362) + (scaled_*0.28832) + (scaled_*0.31649) + (scaled_*-0.120393) + (scaled_*0.332025) );
-	double perceptron_layer_1_output_40 = tanh( -0.017447 + (scaled_*-0.374449) + (scaled_*-0.133581) + (scaled_*-0.234294) + (scaled_*-0.336565) + (scaled_*-0.445613) );
-	double perceptron_layer_1_output_41 = tanh( 0.214997 + (scaled_*0.00292207) + (scaled_*-0.487267) + (scaled_*-0.120279) + (scaled_*0.310835) + (scaled_*-0.0107261) );
-	double perceptron_layer_1_output_42 = tanh( 0.205284 + (scaled_*0.141314) + (scaled_*-0.10132) + (scaled_*-0.123961) + (scaled_*-0.0387978) + (scaled_*0.0836628) );
-	double perceptron_layer_1_output_43 = tanh( -0.17549 + (scaled_*0.0893281) + (scaled_*-0.00266937) + (scaled_*0.222599) + (scaled_*-0.0301058) + (scaled_*0.133876) );
-	double perceptron_layer_1_output_44 = tanh( -0.0973073 + (scaled_*0.0896338) + (scaled_*0.104991) + (scaled_*0.0493422) + (scaled_*0.0105825) + (scaled_*-0.114916) );
-	double perceptron_layer_1_output_45 = tanh( -0.220223 + (scaled_*-0.129615) + (scaled_*0.153929) + (scaled_*0.18009) + (scaled_*-0.161148) + (scaled_*-0.0749689) );
-	double perceptron_layer_1_output_46 = tanh( -0.00903378 + (scaled_*0.00926416) + (scaled_*-0.0578438) + (scaled_*0.210238) + (scaled_*-0.0439274) + (scaled_*0.161373) );
-	double perceptron_layer_1_output_47 = tanh( -0.0905298 + (scaled_*0.323174) + (scaled_*-0.147056) + (scaled_*-0.32768) + (scaled_*0.476011) + (scaled_*-0.764583) );
-	double perceptron_layer_1_output_48 = tanh( -0.47133 + (scaled_*0.857388) + (scaled_*1.48482) + (scaled_*0.34879) + (scaled_*-0.125704) + (scaled_*-0.0113532) );
-	double perceptron_layer_1_output_49 = tanh( 0.123305 + (scaled_*0.0101806) + (scaled_*0.107922) + (scaled_*0.0832219) + (scaled_*0.106908) + (scaled_*0.0764241) );
-	double perceptron_layer_1_output_50 = tanh( -1.81783 + (scaled_*-0.212909) + (scaled_*1.44329) + (scaled_*0.93563) + (scaled_*0.00545602) + (scaled_*-0.666803) );
-	double perceptron_layer_1_output_51 = tanh( -0.341217 + (scaled_*0.217233) + (scaled_*-0.842882) + (scaled_*0.111186) + (scaled_*-0.437928) + (scaled_*-0.884543) );
-	double perceptron_layer_1_output_52 = tanh( 0.812335 + (scaled_*-0.409608) + (scaled_*-0.0085211) + (scaled_*0.216908) + (scaled_*-0.317421) + (scaled_*-0.298833) );
-	double perceptron_layer_1_output_53 = tanh( 1.17152 + (scaled_*1.55818) + (scaled_*0.28487) + (scaled_*1.41118) + (scaled_*-0.116902) + (scaled_*0.628183) );
-	double perceptron_layer_1_output_54 = tanh( -0.473027 + (scaled_*0.302644) + (scaled_*0.334822) + (scaled_*0.0198361) + (scaled_*-0.046429) + (scaled_*-0.328254) );
-	double perceptron_layer_1_output_55 = tanh( -0.101118 + (scaled_*0.0630049) + (scaled_*-0.0111419) + (scaled_*0.202784) + (scaled_*0.039796) + (scaled_*0.126447) );
-	double perceptron_layer_1_output_56 = tanh( 0.635951 + (scaled_*1.40725) + (scaled_*1.2436) + (scaled_*1.08542) + (scaled_*-0.313132) + (scaled_*0.36502) );
-	double perceptron_layer_1_output_57 = tanh( -2.4195 + (scaled_*-3.17465) + (scaled_*0.14364) + (scaled_*0.0429908) + (scaled_*0.147083) + (scaled_*-1.53182) );
-	double perceptron_layer_1_output_58 = tanh( -3.0937 + (scaled_*-4.80404) + (scaled_*0.375327) + (scaled_*-0.177181) + (scaled_*0.0640797) + (scaled_*-0.662182) );
-	double perceptron_layer_1_output_59 = tanh( -0.103612 + (scaled_*0.136356) + (scaled_*-0.376235) + (scaled_*-0.141768) + (scaled_*0.1186) + (scaled_*0.0595966) );
-	double perceptron_layer_1_output_60 = tanh( 0.00743489 + (scaled_*0.012985) + (scaled_*0.0820185) + (scaled_*-0.207136) + (scaled_*0.0331804) + (scaled_*-0.18702) );
-	double perceptron_layer_1_output_61 = tanh( -0.103655 + (scaled_*-0.202219) + (scaled_*0.00147657) + (scaled_*-0.0217945) + (scaled_*0.119499) + (scaled_*0.213322) );
-	double perceptron_layer_1_output_62 = tanh( 0.211613 + (scaled_*-0.00590132) + (scaled_*0.295501) + (scaled_*-0.507404) + (scaled_*0.0051908) + (scaled_*0.366352) );
-	double perceptron_layer_1_output_63 = tanh( -1.08545 + (scaled_*0.570067) + (scaled_*0.980077) + (scaled_*-1.35245) + (scaled_*-0.18916) + (scaled_*-0.499815) );
-	double perceptron_layer_1_output_64 = tanh( -0.16562 + (scaled_*-0.0345172) + (scaled_*0.00632182) + (scaled_*0.143613) + (scaled_*-0.121836) + (scaled_*0.0928976) );
-	double perceptron_layer_1_output_65 = tanh( 0.378089 + (scaled_*-0.0572145) + (scaled_*0.18709) + (scaled_*-0.268652) + (scaled_*0.255188) + (scaled_*-0.356244) );
-	double perceptron_layer_1_output_66 = tanh( 0.041463 + (scaled_*-0.124718) + (scaled_*-0.245615) + (scaled_*-0.160542) + (scaled_*-0.0593831) + (scaled_*0.0352114) );
-	double perceptron_layer_1_output_67 = tanh( 0.287055 + (scaled_*0.473477) + (scaled_*-0.160279) + (scaled_*0.939358) + (scaled_*-0.816994) + (scaled_*0.445784) );
-	double perceptron_layer_1_output_68 = tanh( 0.235187 + (scaled_*0.315787) + (scaled_*0.113288) + (scaled_*-0.270437) + (scaled_*-0.10072) + (scaled_*0.0191489) );
-	double perceptron_layer_1_output_69 = tanh( 1.1886 + (scaled_*2.4322) + (scaled_*-1.07758) + (scaled_*-0.19262) + (scaled_*0.078145) + (scaled_*-0.608338) );
-	double perceptron_layer_1_output_70 = tanh( 0.0549624 + (scaled_*0.122149) + (scaled_*0.160383) + (scaled_*0.198718) + (scaled_*0.101306) + (scaled_*-0.0139897) );
-	double perceptron_layer_1_output_71 = tanh( 0.000419917 + (scaled_*-0.224174) + (scaled_*0.0998027) + (scaled_*0.0351046) + (scaled_*0.0674186) + (scaled_*0.122164) );
-	double perceptron_layer_1_output_72 = tanh( 0.421641 + (scaled_*-0.0435334) + (scaled_*-0.769298) + (scaled_*-0.0878589) + (scaled_*0.47388) + (scaled_*0.161513) );
-	double perceptron_layer_1_output_73 = tanh( 0.281336 + (scaled_*-0.475803) + (scaled_*0.230367) + (scaled_*0.169396) + (scaled_*1.00138) + (scaled_*-0.353899) );
-	double perceptron_layer_1_output_74 = tanh( -0.029858 + (scaled_*0.311453) + (scaled_*1.40914) + (scaled_*-0.164176) + (scaled_*-0.553544) + (scaled_*-0.807027) );
-	double perceptron_layer_1_output_75 = tanh( 0.0250845 + (scaled_*-0.118911) + (scaled_*-0.0486356) + (scaled_*-0.275471) + (scaled_*-0.122976) + (scaled_*-0.0421399) );
-	double perceptron_layer_1_output_76 = tanh( 0.167285 + (scaled_*0.166836) + (scaled_*0.0927212) + (scaled_*-0.296374) + (scaled_*-0.917746) + (scaled_*0.65998) );
-	double perceptron_layer_1_output_77 = tanh( 0.300948 + (scaled_*0.0394368) + (scaled_*0.37562) + (scaled_*-0.341614) + (scaled_*0.0890927) + (scaled_*0.150389) );
-	double perceptron_layer_1_output_78 = tanh( -0.36313 + (scaled_*0.000651902) + (scaled_*0.0604584) + (scaled_*-0.326537) + (scaled_*-0.103978) + (scaled_*-0.137392) );
-	double perceptron_layer_1_output_79 = tanh( 0.410524 + (scaled_*-0.29622) + (scaled_*-0.186537) + (scaled_*-0.437902) + (scaled_*-0.133775) + (scaled_*-0.0417957) );
-	double perceptron_layer_1_output_80 = tanh( -0.389911 + (scaled_*-0.291664) + (scaled_*0.0260256) + (scaled_*0.733337) + (scaled_*-0.147238) + (scaled_*-0.176655) );
-	double perceptron_layer_1_output_81 = tanh( -0.158092 + (scaled_*0.204963) + (scaled_*0.0474772) + (scaled_*-0.0551232) + (scaled_*-0.0606602) + (scaled_*-0.201447) );
-	double perceptron_layer_1_output_82 = tanh( 0.038766 + (scaled_*0.177881) + (scaled_*-0.205133) + (scaled_*0.0319683) + (scaled_*0.0845458) + (scaled_*0.0306687) );
-	double perceptron_layer_1_output_83 = tanh( -0.215886 + (scaled_*0.0933463) + (scaled_*0.476076) + (scaled_*-0.580093) + (scaled_*0.888135) + (scaled_*-0.359949) );
-	double perceptron_layer_1_output_84 = tanh( -0.196901 + (scaled_*-0.26014) + (scaled_*0.04582) + (scaled_*-0.0627642) + (scaled_*0.0992004) + (scaled_*0.0664914) );
-	double perceptron_layer_1_output_85 = tanh( 0.0245486 + (scaled_*0.00689128) + (scaled_*0.108552) + (scaled_*0.179695) + (scaled_*0.142708) + (scaled_*0.00476263) );
-	double perceptron_layer_1_output_86 = tanh( 2.28959 + (scaled_*3.85765) + (scaled_*0.178444) + (scaled_*0.251911) + (scaled_*-0.331968) + (scaled_*0.383546) );
-	double perceptron_layer_1_output_87 = tanh( -1.45119 + (scaled_*-0.932511) + (scaled_*-0.0339315) + (scaled_*1.16958) + (scaled_*-0.0288431) + (scaled_*0.692823) );
-	double perceptron_layer_1_output_88 = tanh( 0.930987 + (scaled_*-1.24331) + (scaled_*-0.854004) + (scaled_*0.0413623) + (scaled_*0.163686) + (scaled_*-0.388623) );
-	double perceptron_layer_1_output_89 = tanh( 0.323338 + (scaled_*-0.0589426) + (scaled_*-0.291958) + (scaled_*-0.144147) + (scaled_*0.243515) + (scaled_*-0.147315) );
-	double perceptron_layer_1_output_90 = tanh( -0.624921 + (scaled_*0.184053) + (scaled_*0.0289524) + (scaled_*1.50374) + (scaled_*-0.240252) + (scaled_*0.0179131) );
-	double perceptron_layer_1_output_91 = tanh( -1.24767 + (scaled_*1.42497) + (scaled_*-0.436601) + (scaled_*-0.184763) + (scaled_*0.296443) + (scaled_*0.423824) );
-	double perceptron_layer_1_output_92 = tanh( -0.0635145 + (scaled_*0.0810235) + (scaled_*0.119007) + (scaled_*-0.0500792) + (scaled_*0.106396) + (scaled_*-0.135983) );
-	double perceptron_layer_1_output_93 = tanh( -0.183043 + (scaled_*-0.120801) + (scaled_*-0.390855) + (scaled_*0.515875) + (scaled_*-0.0114771) + (scaled_*-0.451761) );
-	double perceptron_layer_1_output_94 = tanh( 0.71188 + (scaled_*-0.412473) + (scaled_*-0.41684) + (scaled_*-0.0959718) + (scaled_*0.34276) + (scaled_*0.904636) );
-	double perceptron_layer_1_output_95 = tanh( -0.437739 + (scaled_*-1.1204) + (scaled_*-1.41716) + (scaled_*-0.859526) + (scaled_*0.221352) + (scaled_*0.609454) );
-	double perceptron_layer_1_output_96 = tanh( -0.0989964 + (scaled_*0.17219) + (scaled_*-0.0816459) + (scaled_*-0.0387207) + (scaled_*0.120232) + (scaled_*0.0570321) );
-	double perceptron_layer_1_output_97 = tanh( -0.153168 + (scaled_*-0.149843) + (scaled_*-0.101888) + (scaled_*-0.386934) + (scaled_*-0.26059) + (scaled_*0.0685152) );
-	double perceptron_layer_1_output_98 = tanh( 0.0139667 + (scaled_*-0.0605234) + (scaled_*0.0884043) + (scaled_*0.194978) + (scaled_*-0.120837) + (scaled_*0.0835552) );
-	double perceptron_layer_1_output_99 = tanh( -3.19098 + (scaled_*-3.96537) + (scaled_*0.164638) + (scaled_*-0.326796) + (scaled_*0.0932564) + (scaled_*-0.8567) );
+	double perceptron_layer_1_output_0 = tanh( 0.0581426 + (scaled_frequency*0.0533972) + (scaled_angle_of_attack*0.0530112) + (scaled_chord_lenght*0.132047) + (scaled_free_res__stream_velocity*-0.10355) + (scaled_suction_side_displacement_thickness*0.118668) );
+	double perceptron_layer_1_output_1 = tanh( 0.0551679 + (scaled_frequency*0.0725646) + (scaled_angle_of_attack*-0.026407) + (scaled_chord_lenght*0.0792294) + (scaled_free_res__stream_velocity*-0.0893853) + (scaled_suction_side_displacement_thickness*-0.0410026) );
+	double perceptron_layer_1_output_2 = tanh( -0.128566 + (scaled_frequency*0.111093) + (scaled_angle_of_attack*-0.117648) + (scaled_chord_lenght*0.0224293) + (scaled_free_res__stream_velocity*0.0744251) + (scaled_suction_side_displacement_thickness*0.0288616) );
+	double perceptron_layer_1_output_3 = tanh( -0.110146 + (scaled_frequency*0.0824609) + (scaled_angle_of_attack*0.0344866) + (scaled_chord_lenght*-0.0498873) + (scaled_free_res__stream_velocity*-0.00204463) + (scaled_suction_side_displacement_thickness*0.0579702) );
+	double perceptron_layer_1_output_4 = tanh( 0.0719086 + (scaled_frequency*0.0619238) + (scaled_angle_of_attack*-0.104123) + (scaled_chord_lenght*-0.109598) + (scaled_free_res__stream_velocity*0.0887826) + (scaled_suction_side_displacement_thickness*-0.0759988) );
+	double perceptron_layer_1_output_5 = tanh( 0.0269654 + (scaled_frequency*0.0967146) + (scaled_angle_of_attack*-0.144197) + (scaled_chord_lenght*0.0309866) + (scaled_free_res__stream_velocity*-0.0330541) + (scaled_suction_side_displacement_thickness*-0.0935791) );
+	double perceptron_layer_1_output_6 = tanh( -0.0247906 + (scaled_frequency*0.0534032) + (scaled_angle_of_attack*-0.0849166) + (scaled_chord_lenght*0.0845842) + (scaled_free_res__stream_velocity*0.0202357) + (scaled_suction_side_displacement_thickness*-0.0764997) );
+	double perceptron_layer_1_output_7 = tanh( 0.0872863 + (scaled_frequency*-0.0295515) + (scaled_angle_of_attack*-0.101032) + (scaled_chord_lenght*0.088661) + (scaled_free_res__stream_velocity*-0.0696067) + (scaled_suction_side_displacement_thickness*0.0108188) );
+	double perceptron_layer_1_output_8 = tanh( -0.0751995 + (scaled_frequency*-0.0462659) + (scaled_angle_of_attack*-0.00858151) + (scaled_chord_lenght*0.124136) + (scaled_free_res__stream_velocity*-0.0486291) + (scaled_suction_side_displacement_thickness*-0.127502) );
+	double perceptron_layer_1_output_9 = tanh( -0.118257 + (scaled_frequency*0.0660875) + (scaled_angle_of_attack*0.0390527) + (scaled_chord_lenght*-0.0613898) + (scaled_free_res__stream_velocity*-0.0921771) + (scaled_suction_side_displacement_thickness*0.0780167) );
+	double perceptron_layer_1_output_10 = tanh( -0.0609405 + (scaled_frequency*-0.00359068) + (scaled_angle_of_attack*0.105046) + (scaled_chord_lenght*-0.168663) + (scaled_free_res__stream_velocity*0.104011) + (scaled_suction_side_displacement_thickness*0.009473) );
+	double perceptron_layer_1_output_11 = tanh( -0.106427 + (scaled_frequency*0.0474479) + (scaled_angle_of_attack*0.106427) + (scaled_chord_lenght*0.125783) + (scaled_free_res__stream_velocity*-0.030318) + (scaled_suction_side_displacement_thickness*0.0750092) );
+	double perceptron_layer_1_output_12 = tanh( 0.0958727 + (scaled_frequency*-0.0652598) + (scaled_angle_of_attack*0.0149096) + (scaled_chord_lenght*-0.0834685) + (scaled_free_res__stream_velocity*0.0812834) + (scaled_suction_side_displacement_thickness*0.101319) );
+	double perceptron_layer_1_output_13 = tanh( 0.121893 + (scaled_frequency*-0.0931519) + (scaled_angle_of_attack*0.04527) + (scaled_chord_lenght*-0.0695546) + (scaled_free_res__stream_velocity*0.0410322) + (scaled_suction_side_displacement_thickness*-0.0639872) );
+	double perceptron_layer_1_output_14 = tanh( 0.0589603 + (scaled_frequency*0.123343) + (scaled_angle_of_attack*0.0246062) + (scaled_chord_lenght*0.0417927) + (scaled_free_res__stream_velocity*-0.12795) + (scaled_suction_side_displacement_thickness*-0.00853406) );
+	double perceptron_layer_1_output_15 = tanh( 0.0432151 + (scaled_frequency*-0.084648) + (scaled_angle_of_attack*0.121707) + (scaled_chord_lenght*-0.0988161) + (scaled_free_res__stream_velocity*0.0787827) + (scaled_suction_side_displacement_thickness*0.00126925) );
+	double perceptron_layer_1_output_16 = tanh( 0.0184079 + (scaled_frequency*0.122238) + (scaled_angle_of_attack*0.0555079) + (scaled_chord_lenght*-0.025473) + (scaled_free_res__stream_velocity*0.0768394) + (scaled_suction_side_displacement_thickness*-0.0847967) );
+	double perceptron_layer_1_output_17 = tanh( -0.110335 + (scaled_frequency*0.066933) + (scaled_angle_of_attack*0.0185492) + (scaled_chord_lenght*0.154287) + (scaled_free_res__stream_velocity*-0.0174952) + (scaled_suction_side_displacement_thickness*0.0901958) );
+	double perceptron_layer_1_output_18 = tanh( -0.0504929 + (scaled_frequency*-0.0634997) + (scaled_angle_of_attack*0.0330547) + (scaled_chord_lenght*-0.128682) + (scaled_free_res__stream_velocity*0.0291374) + (scaled_suction_side_displacement_thickness*0.0988648) );
+	double perceptron_layer_1_output_19 = tanh( 0.0318443 + (scaled_frequency*-0.00894894) + (scaled_angle_of_attack*0.0657802) + (scaled_chord_lenght*0.0900946) + (scaled_free_res__stream_velocity*-0.049366) + (scaled_suction_side_displacement_thickness*0.0129364) );
+	double perceptron_layer_1_output_20 = tanh( -0.0705791 + (scaled_frequency*-0.127209) + (scaled_angle_of_attack*-0.0491753) + (scaled_chord_lenght*0.0270683) + (scaled_free_res__stream_velocity*0.0386473) + (scaled_suction_side_displacement_thickness*0.0919311) );
+	double perceptron_layer_1_output_21 = tanh( 0.11711 + (scaled_frequency*-0.088647) + (scaled_angle_of_attack*-0.0808502) + (scaled_chord_lenght*0.0029541) + (scaled_free_res__stream_velocity*-0.110338) + (scaled_suction_side_displacement_thickness*0.0334109) );
+	double perceptron_layer_1_output_22 = tanh( 0.00219364 + (scaled_frequency*-0.0138536) + (scaled_angle_of_attack*0.0847813) + (scaled_chord_lenght*-0.0971464) + (scaled_free_res__stream_velocity*-0.128445) + (scaled_suction_side_displacement_thickness*0.0397957) );
+	double perceptron_layer_1_output_23 = tanh( -0.117416 + (scaled_frequency*-0.0969534) + (scaled_angle_of_attack*-0.0800721) + (scaled_chord_lenght*0.101838) + (scaled_free_res__stream_velocity*0.0984409) + (scaled_suction_side_displacement_thickness*-0.0558717) );
+	double perceptron_layer_1_output_24 = tanh( -0.0546421 + (scaled_frequency*0.116886) + (scaled_angle_of_attack*0.125312) + (scaled_chord_lenght*0.00265598) + (scaled_free_res__stream_velocity*0.0396312) + (scaled_suction_side_displacement_thickness*0.0413139) );
+	double perceptron_layer_1_output_25 = tanh( -0.028635 + (scaled_frequency*0.130535) + (scaled_angle_of_attack*-0.113783) + (scaled_chord_lenght*0.000590454) + (scaled_free_res__stream_velocity*-0.134909) + (scaled_suction_side_displacement_thickness*0.101565) );
+	double perceptron_layer_1_output_26 = tanh( 0.123665 + (scaled_frequency*0.0721176) + (scaled_angle_of_attack*0.103075) + (scaled_chord_lenght*-0.0567342) + (scaled_free_res__stream_velocity*-0.127084) + (scaled_suction_side_displacement_thickness*-0.0280223) );
+	double perceptron_layer_1_output_27 = tanh( 0.0900386 + (scaled_frequency*-0.116962) + (scaled_angle_of_attack*0.036701) + (scaled_chord_lenght*0.032073) + (scaled_free_res__stream_velocity*0.0377112) + (scaled_suction_side_displacement_thickness*0.0161882) );
+	double perceptron_layer_1_output_28 = tanh( -0.0454836 + (scaled_frequency*-0.0990519) + (scaled_angle_of_attack*-0.0341115) + (scaled_chord_lenght*0.0181862) + (scaled_free_res__stream_velocity*-0.00604114) + (scaled_suction_side_displacement_thickness*-0.116547) );
+	double perceptron_layer_1_output_29 = tanh( 0.0563301 + (scaled_frequency*-0.0906383) + (scaled_angle_of_attack*-0.0644623) + (scaled_chord_lenght*0.0279593) + (scaled_free_res__stream_velocity*-0.107085) + (scaled_suction_side_displacement_thickness*0.0813224) );
+	double perceptron_layer_1_output_30 = tanh( -0.134004 + (scaled_frequency*0.0401372) + (scaled_angle_of_attack*-0.0463364) + (scaled_chord_lenght*0.0522827) + (scaled_free_res__stream_velocity*0.0340408) + (scaled_suction_side_displacement_thickness*0.0692768) );
+	double perceptron_layer_1_output_31 = tanh( -0.0920937 + (scaled_frequency*0.00310392) + (scaled_angle_of_attack*-0.0931082) + (scaled_chord_lenght*-0.061183) + (scaled_free_res__stream_velocity*0.0320807) + (scaled_suction_side_displacement_thickness*0.0588708) );
+	double perceptron_layer_1_output_32 = tanh( -0.0654029 + (scaled_frequency*-0.0614295) + (scaled_angle_of_attack*-0.0578733) + (scaled_chord_lenght*0.0381489) + (scaled_free_res__stream_velocity*0.0563949) + (scaled_suction_side_displacement_thickness*0.125701) );
+	double perceptron_layer_1_output_33 = tanh( -0.0266646 + (scaled_frequency*0.14118) + (scaled_angle_of_attack*-0.0406761) + (scaled_chord_lenght*-0.0635983) + (scaled_free_res__stream_velocity*-0.00881787) + (scaled_suction_side_displacement_thickness*0.0766405) );
+	double perceptron_layer_1_output_34 = tanh( 0.0706566 + (scaled_frequency*0.0312746) + (scaled_angle_of_attack*-0.0536101) + (scaled_chord_lenght*0.105998) + (scaled_free_res__stream_velocity*0.139574) + (scaled_suction_side_displacement_thickness*-0.06376) );
+	double perceptron_layer_1_output_35 = tanh( -0.0274471 + (scaled_frequency*-0.0293565) + (scaled_angle_of_attack*-0.138586) + (scaled_chord_lenght*-0.0610592) + (scaled_free_res__stream_velocity*0.0347274) + (scaled_suction_side_displacement_thickness*-0.080743) );
+	double perceptron_layer_1_output_36 = tanh( -0.00461088 + (scaled_frequency*-0.0534124) + (scaled_angle_of_attack*-0.0837289) + (scaled_chord_lenght*-0.0813274) + (scaled_free_res__stream_velocity*0.00982704) + (scaled_suction_side_displacement_thickness*0.0689482) );
+	double perceptron_layer_1_output_37 = tanh( -0.0714704 + (scaled_frequency*-0.0223219) + (scaled_angle_of_attack*0.0126421) + (scaled_chord_lenght*0.166151) + (scaled_free_res__stream_velocity*0.100512) + (scaled_suction_side_displacement_thickness*0.0204431) );
+	double perceptron_layer_1_output_38 = tanh( -0.112885 + (scaled_frequency*-0.120866) + (scaled_angle_of_attack*0.107371) + (scaled_chord_lenght*-0.0186577) + (scaled_free_res__stream_velocity*0.105048) + (scaled_suction_side_displacement_thickness*-0.00303376) );
+	double perceptron_layer_1_output_39 = tanh( 0.0977828 + (scaled_frequency*0.113436) + (scaled_angle_of_attack*-0.0813458) + (scaled_chord_lenght*0.0959442) + (scaled_free_res__stream_velocity*-0.0957348) + (scaled_suction_side_displacement_thickness*0.0037763) );
+	double perceptron_layer_1_output_40 = tanh( 0.0372981 + (scaled_frequency*-0.0845791) + (scaled_angle_of_attack*-0.0707715) + (scaled_chord_lenght*-0.140975) + (scaled_free_res__stream_velocity*-0.0616966) + (scaled_suction_side_displacement_thickness*-0.130979) );
+	double perceptron_layer_1_output_41 = tanh( 0.0985063 + (scaled_frequency*-0.0669421) + (scaled_angle_of_attack*-0.0911845) + (scaled_chord_lenght*-0.109068) + (scaled_free_res__stream_velocity*0.047551) + (scaled_suction_side_displacement_thickness*-0.135931) );
+	double perceptron_layer_1_output_42 = tanh( 0.0720539 + (scaled_frequency*-0.0476747) + (scaled_angle_of_attack*0.078578) + (scaled_chord_lenght*0.0531397) + (scaled_free_res__stream_velocity*-0.0969795) + (scaled_suction_side_displacement_thickness*0.0289647) );
+	double perceptron_layer_1_output_43 = tanh( 0.00345982 + (scaled_frequency*0.0204922) + (scaled_angle_of_attack*-0.0179387) + (scaled_chord_lenght*0.0925215) + (scaled_free_res__stream_velocity*-0.0119202) + (scaled_suction_side_displacement_thickness*0.0770268) );
+	double perceptron_layer_1_output_44 = tanh( -0.0751068 + (scaled_frequency*0.0695404) + (scaled_angle_of_attack*0.098235) + (scaled_chord_lenght*-0.0808393) + (scaled_free_res__stream_velocity*0.000300232) + (scaled_suction_side_displacement_thickness*-0.025195) );
+	double perceptron_layer_1_output_45 = tanh( -0.0661021 + (scaled_frequency*0.151831) + (scaled_angle_of_attack*0.00992463) + (scaled_chord_lenght*0.0619535) + (scaled_free_res__stream_velocity*-0.123545) + (scaled_suction_side_displacement_thickness*-0.066803) );
+	double perceptron_layer_1_output_46 = tanh( 0.112811 + (scaled_frequency*0.0395383) + (scaled_angle_of_attack*-0.111304) + (scaled_chord_lenght*-0.0653706) + (scaled_free_res__stream_velocity*-0.0487734) + (scaled_suction_side_displacement_thickness*0.0695179) );
+	double perceptron_layer_1_output_47 = tanh( 0.0587568 + (scaled_frequency*-0.0562562) + (scaled_angle_of_attack*-0.113846) + (scaled_chord_lenght*-0.0786099) + (scaled_free_res__stream_velocity*-0.040669) + (scaled_suction_side_displacement_thickness*-0.104245) );
+	double perceptron_layer_1_output_48 = tanh( -0.107655 + (scaled_frequency*0.0523518) + (scaled_angle_of_attack*0.107201) + (scaled_chord_lenght*0.0560455) + (scaled_free_res__stream_velocity*0.0348776) + (scaled_suction_side_displacement_thickness*0.122398) );
+	double perceptron_layer_1_output_49 = tanh( -0.0380147 + (scaled_frequency*-0.129403) + (scaled_angle_of_attack*0.0546375) + (scaled_chord_lenght*0.088408) + (scaled_free_res__stream_velocity*-0.0921991) + (scaled_suction_side_displacement_thickness*0.00465523) );
+	double perceptron_layer_1_output_50 = tanh( -0.112884 + (scaled_frequency*0.121363) + (scaled_angle_of_attack*-0.0206632) + (scaled_chord_lenght*0.146893) + (scaled_free_res__stream_velocity*0.00594613) + (scaled_suction_side_displacement_thickness*0.152906) );
+	double perceptron_layer_1_output_51 = tanh( -0.123188 + (scaled_frequency*0.0982331) + (scaled_angle_of_attack*0.0179543) + (scaled_chord_lenght*0.0240328) + (scaled_free_res__stream_velocity*-0.0977674) + (scaled_suction_side_displacement_thickness*-0.0535253) );
+	double perceptron_layer_1_output_52 = tanh( 0.0445101 + (scaled_frequency*0.123928) + (scaled_angle_of_attack*-0.0935524) + (scaled_chord_lenght*-0.105794) + (scaled_free_res__stream_velocity*0.0684594) + (scaled_suction_side_displacement_thickness*0.0162033) );
+	double perceptron_layer_1_output_53 = tanh( 0.000535579 + (scaled_frequency*0.0886133) + (scaled_angle_of_attack*-0.10262) + (scaled_chord_lenght*-0.0283389) + (scaled_free_res__stream_velocity*0.0796175) + (scaled_suction_side_displacement_thickness*-0.129546) );
+	double perceptron_layer_1_output_54 = tanh( 0.070074 + (scaled_frequency*0.110097) + (scaled_angle_of_attack*0.0462503) + (scaled_chord_lenght*-0.0329062) + (scaled_free_res__stream_velocity*0.0752957) + (scaled_suction_side_displacement_thickness*0.0334697) );
+	double perceptron_layer_1_output_55 = tanh( 0.114383 + (scaled_frequency*0.0199124) + (scaled_angle_of_attack*-0.0534014) + (scaled_chord_lenght*0.0449813) + (scaled_free_res__stream_velocity*0.112086) + (scaled_suction_side_displacement_thickness*0.0923808) );
+	double perceptron_layer_1_output_56 = tanh( -0.10862 + (scaled_frequency*-0.0761028) + (scaled_angle_of_attack*0.120015) + (scaled_chord_lenght*0.0107956) + (scaled_free_res__stream_velocity*-0.049721) + (scaled_suction_side_displacement_thickness*-0.0549094) );
+	double perceptron_layer_1_output_57 = tanh( -0.0176566 + (scaled_frequency*-0.0877722) + (scaled_angle_of_attack*-0.0764352) + (scaled_chord_lenght*-0.0271802) + (scaled_free_res__stream_velocity*0.0473273) + (scaled_suction_side_displacement_thickness*-0.105174) );
+	double perceptron_layer_1_output_58 = tanh( 0.0857674 + (scaled_frequency*0.0674313) + (scaled_angle_of_attack*0.115703) + (scaled_chord_lenght*-0.0247645) + (scaled_free_res__stream_velocity*-0.132002) + (scaled_suction_side_displacement_thickness*0.0542636) );
+	double perceptron_layer_1_output_59 = tanh( 0.0971698 + (scaled_frequency*0.122822) + (scaled_angle_of_attack*-0.0492844) + (scaled_chord_lenght*0.0526231) + (scaled_free_res__stream_velocity*-0.0128071) + (scaled_suction_side_displacement_thickness*-0.0914944) );
+	double perceptron_layer_1_output_60 = tanh( -0.143479 + (scaled_frequency*-0.0312215) + (scaled_angle_of_attack*-0.0264164) + (scaled_chord_lenght*-0.0540512) + (scaled_free_res__stream_velocity*-0.0963891) + (scaled_suction_side_displacement_thickness*-0.111976) );
+	double perceptron_layer_1_output_61 = tanh( -0.072836 + (scaled_frequency*0.0396249) + (scaled_angle_of_attack*0.0065123) + (scaled_chord_lenght*0.0575213) + (scaled_free_res__stream_velocity*-0.0655753) + (scaled_suction_side_displacement_thickness*0.0349177) );
+	double perceptron_layer_1_output_62 = tanh( 0.0507907 + (scaled_frequency*-0.0413352) + (scaled_angle_of_attack*0.0356989) + (scaled_chord_lenght*-0.0842469) + (scaled_free_res__stream_velocity*-0.128041) + (scaled_suction_side_displacement_thickness*0.0884699) );
+	double perceptron_layer_1_output_63 = tanh( 0.0175737 + (scaled_frequency*-0.154008) + (scaled_angle_of_attack*0.00877618) + (scaled_chord_lenght*-0.00998815) + (scaled_free_res__stream_velocity*-0.0437902) + (scaled_suction_side_displacement_thickness*-0.142687) );
+	double perceptron_layer_1_output_64 = tanh( -0.12469 + (scaled_frequency*0.0627774) + (scaled_angle_of_attack*-0.115842) + (scaled_chord_lenght*0.00181675) + (scaled_free_res__stream_velocity*0.0752705) + (scaled_suction_side_displacement_thickness*-0.0978371) );
+	double perceptron_layer_1_output_65 = tanh( 0.0898275 + (scaled_frequency*0.0221311) + (scaled_angle_of_attack*0.0617564) + (scaled_chord_lenght*-0.0168021) + (scaled_free_res__stream_velocity*-0.0439183) + (scaled_suction_side_displacement_thickness*-0.126298) );
+	double perceptron_layer_1_output_66 = tanh( -0.0231005 + (scaled_frequency*-0.0636396) + (scaled_angle_of_attack*0.111688) + (scaled_chord_lenght*-0.0167821) + (scaled_free_res__stream_velocity*-0.0226996) + (scaled_suction_side_displacement_thickness*-0.103557) );
+	double perceptron_layer_1_output_67 = tanh( -0.0309494 + (scaled_frequency*-0.0399814) + (scaled_angle_of_attack*0.0324285) + (scaled_chord_lenght*-0.0772604) + (scaled_free_res__stream_velocity*-0.103566) + (scaled_suction_side_displacement_thickness*-0.0294345) );
+	double perceptron_layer_1_output_68 = tanh( -0.0764993 + (scaled_frequency*0.0639572) + (scaled_angle_of_attack*0.0668878) + (scaled_chord_lenght*-0.00868136) + (scaled_free_res__stream_velocity*-0.141531) + (scaled_suction_side_displacement_thickness*0.0456831) );
+	double perceptron_layer_1_output_69 = tanh( 0.0846789 + (scaled_frequency*0.100196) + (scaled_angle_of_attack*0.105173) + (scaled_chord_lenght*0.087653) + (scaled_free_res__stream_velocity*0.0910024) + (scaled_suction_side_displacement_thickness*-0.06481) );
+	double perceptron_layer_1_output_70 = tanh( -0.0105309 + (scaled_frequency*0.0805287) + (scaled_angle_of_attack*-0.0251379) + (scaled_chord_lenght*-0.0482217) + (scaled_free_res__stream_velocity*-0.0792344) + (scaled_suction_side_displacement_thickness*0.104536) );
+	double perceptron_layer_1_output_71 = tanh( 0.0122112 + (scaled_frequency*0.0844785) + (scaled_angle_of_attack*-0.0259709) + (scaled_chord_lenght*0.0100859) + (scaled_free_res__stream_velocity*-0.0464108) + (scaled_suction_side_displacement_thickness*0.0394237) );
+	double perceptron_layer_1_output_72 = tanh( -0.0955341 + (scaled_frequency*0.162409) + (scaled_angle_of_attack*0.032781) + (scaled_chord_lenght*-0.0798832) + (scaled_free_res__stream_velocity*0.0371821) + (scaled_suction_side_displacement_thickness*0.111923) );
+	double perceptron_layer_1_output_73 = tanh( -0.0303568 + (scaled_frequency*0.146224) + (scaled_angle_of_attack*0.0203964) + (scaled_chord_lenght*-0.0890804) + (scaled_free_res__stream_velocity*0.119634) + (scaled_suction_side_displacement_thickness*0.0325778) );
+	double perceptron_layer_1_output_74 = tanh( 0.0315803 + (scaled_frequency*0.044838) + (scaled_angle_of_attack*-0.106154) + (scaled_chord_lenght*-0.0329659) + (scaled_free_res__stream_velocity*-0.0372314) + (scaled_suction_side_displacement_thickness*-0.138468) );
+	double perceptron_layer_1_output_75 = tanh( -0.0328803 + (scaled_frequency*-0.0178716) + (scaled_angle_of_attack*-0.0435206) + (scaled_chord_lenght*-0.0595412) + (scaled_free_res__stream_velocity*0.0604221) + (scaled_suction_side_displacement_thickness*-0.110084) );
+	double perceptron_layer_1_output_76 = tanh( -0.0365843 + (scaled_frequency*0.116251) + (scaled_angle_of_attack*0.0806087) + (scaled_chord_lenght*0.108806) + (scaled_free_res__stream_velocity*-0.111514) + (scaled_suction_side_displacement_thickness*0.0192122) );
+	double perceptron_layer_1_output_77 = tanh( -0.00679309 + (scaled_frequency*0.00172622) + (scaled_angle_of_attack*-0.0190425) + (scaled_chord_lenght*-0.0763444) + (scaled_free_res__stream_velocity*0.100656) + (scaled_suction_side_displacement_thickness*0.101824) );
+	double perceptron_layer_1_output_78 = tanh( 0.0830328 + (scaled_frequency*-0.177536) + (scaled_angle_of_attack*-0.100813) + (scaled_chord_lenght*0.0165027) + (scaled_free_res__stream_velocity*0.0039146) + (scaled_suction_side_displacement_thickness*-0.123063) );
+	double perceptron_layer_1_output_79 = tanh( -0.0120049 + (scaled_frequency*-0.0235597) + (scaled_angle_of_attack*-0.120036) + (scaled_chord_lenght*-0.103836) + (scaled_free_res__stream_velocity*0.110679) + (scaled_suction_side_displacement_thickness*0.0680932) );
+	double perceptron_layer_1_output_80 = tanh( 0.0526194 + (scaled_frequency*-0.0389749) + (scaled_angle_of_attack*0.0182947) + (scaled_chord_lenght*0.0895276) + (scaled_free_res__stream_velocity*-0.136115) + (scaled_suction_side_displacement_thickness*-0.0932547) );
+	double perceptron_layer_1_output_81 = tanh( -0.0706219 + (scaled_frequency*-0.0585385) + (scaled_angle_of_attack*0.0946062) + (scaled_chord_lenght*0.0959387) + (scaled_free_res__stream_velocity*0.0356843) + (scaled_suction_side_displacement_thickness*-0.0481104) );
+	double perceptron_layer_1_output_82 = tanh( 0.0801556 + (scaled_frequency*0.104721) + (scaled_angle_of_attack*0.00103433) + (scaled_chord_lenght*-0.0732989) + (scaled_free_res__stream_velocity*-0.118948) + (scaled_suction_side_displacement_thickness*0.127439) );
+	double perceptron_layer_1_output_83 = tanh( -0.0222097 + (scaled_frequency*0.0148052) + (scaled_angle_of_attack*0.119966) + (scaled_chord_lenght*0.109546) + (scaled_free_res__stream_velocity*-0.0232659) + (scaled_suction_side_displacement_thickness*0.00562245) );
+	double perceptron_layer_1_output_84 = tanh( 0.000408199 + (scaled_frequency*0.17767) + (scaled_angle_of_attack*-0.0128953) + (scaled_chord_lenght*0.0936188) + (scaled_free_res__stream_velocity*0.0837722) + (scaled_suction_side_displacement_thickness*0.0479215) );
+	double perceptron_layer_1_output_85 = tanh( -0.0180922 + (scaled_frequency*0.0283503) + (scaled_angle_of_attack*0.0978914) + (scaled_chord_lenght*0.0950495) + (scaled_free_res__stream_velocity*0.109424) + (scaled_suction_side_displacement_thickness*0.033983) );
+	double perceptron_layer_1_output_86 = tanh( -0.0646387 + (scaled_frequency*0.0350954) + (scaled_angle_of_attack*-0.0210307) + (scaled_chord_lenght*-0.12351) + (scaled_free_res__stream_velocity*0.0999085) + (scaled_suction_side_displacement_thickness*-0.0677003) );
+	double perceptron_layer_1_output_87 = tanh( 0.0295489 + (scaled_frequency*0.0808064) + (scaled_angle_of_attack*-0.0758908) + (scaled_chord_lenght*0.0197268) + (scaled_free_res__stream_velocity*-0.102053) + (scaled_suction_side_displacement_thickness*-0.115014) );
+	double perceptron_layer_1_output_88 = tanh( -0.015517 + (scaled_frequency*0.150818) + (scaled_angle_of_attack*-0.0518415) + (scaled_chord_lenght*-0.0913201) + (scaled_free_res__stream_velocity*-0.0280027) + (scaled_suction_side_displacement_thickness*0.00412745) );
+	double perceptron_layer_1_output_89 = tanh( -0.0471204 + (scaled_frequency*0.00166146) + (scaled_angle_of_attack*0.0847619) + (scaled_chord_lenght*0.154029) + (scaled_free_res__stream_velocity*-0.1199) + (scaled_suction_side_displacement_thickness*-0.0462148) );
+	double perceptron_layer_1_output_90 = tanh( -0.0614267 + (scaled_frequency*0.0957468) + (scaled_angle_of_attack*0.0248489) + (scaled_chord_lenght*0.165277) + (scaled_free_res__stream_velocity*-0.00602362) + (scaled_suction_side_displacement_thickness*-0.0535799) );
+	double perceptron_layer_1_output_91 = tanh( -0.037158 + (scaled_frequency*0.0135765) + (scaled_angle_of_attack*0.029822) + (scaled_chord_lenght*0.0595196) + (scaled_free_res__stream_velocity*0.119176) + (scaled_suction_side_displacement_thickness*0.074082) );
+	double perceptron_layer_1_output_92 = tanh( -0.0266959 + (scaled_frequency*0.0642074) + (scaled_angle_of_attack*0.0191109) + (scaled_chord_lenght*0.0326548) + (scaled_free_res__stream_velocity*-0.138634) + (scaled_suction_side_displacement_thickness*-0.00529874) );
+	double perceptron_layer_1_output_93 = tanh( -0.129081 + (scaled_frequency*-0.104011) + (scaled_angle_of_attack*-0.00915393) + (scaled_chord_lenght*0.0390531) + (scaled_free_res__stream_velocity*0.0252345) + (scaled_suction_side_displacement_thickness*-0.0980907) );
+	double perceptron_layer_1_output_94 = tanh( -0.124824 + (scaled_frequency*-0.105372) + (scaled_angle_of_attack*0.118716) + (scaled_chord_lenght*-0.084554) + (scaled_free_res__stream_velocity*0.0616376) + (scaled_suction_side_displacement_thickness*-0.106241) );
+	double perceptron_layer_1_output_95 = tanh( 0.088007 + (scaled_frequency*0.0551612) + (scaled_angle_of_attack*0.110307) + (scaled_chord_lenght*-0.0779217) + (scaled_free_res__stream_velocity*0.0237148) + (scaled_suction_side_displacement_thickness*0.0300523) );
+	double perceptron_layer_1_output_96 = tanh( 0.0310232 + (scaled_frequency*-0.103354) + (scaled_angle_of_attack*-0.0722028) + (scaled_chord_lenght*-0.0170319) + (scaled_free_res__stream_velocity*0.11386) + (scaled_suction_side_displacement_thickness*0.111294) );
+	double perceptron_layer_1_output_97 = tanh( -0.111935 + (scaled_frequency*0.0313903) + (scaled_angle_of_attack*0.0047315) + (scaled_chord_lenght*0.0393849) + (scaled_free_res__stream_velocity*-0.0955027) + (scaled_suction_side_displacement_thickness*0.0779279) );
+	double perceptron_layer_1_output_98 = tanh( -0.1212 + (scaled_frequency*0.119484) + (scaled_angle_of_attack*0.0398203) + (scaled_chord_lenght*0.0107637) + (scaled_free_res__stream_velocity*0.0858583) + (scaled_suction_side_displacement_thickness*0.110643) );
+	double perceptron_layer_1_output_99 = tanh( -0.0330017 + (scaled_frequency*-0.074953) + (scaled_angle_of_attack*-0.0497197) + (scaled_chord_lenght*0.0902219) + (scaled_free_res__stream_velocity*0.10366) + (scaled_suction_side_displacement_thickness*0.0220054) );
 
-	double perceptron_layer_2_output_0 = ( -0.190094 + (perceptron_layer_1_output_0*0.962713) + (perceptron_layer_1_output_1*0.232163) + (perceptron_layer_1_output_2*-1.09266) + (perceptron_layer_1_output_3*0.11656) + (perceptron_layer_1_output_4*0.199491) + (perceptron_layer_1_output_5*1.1126) + (perceptron_layer_1_output_6*-0.371509) + (perceptron_layer_1_output_7*-0.15473) + (perceptron_layer_1_output_8*2.80812) + (perceptron_layer_1_output_9*-0.605129) + (perceptron_layer_1_output_10*-1.03815) + (perceptron_layer_1_output_11*-0.380928) + (perceptron_layer_1_output_12*0.294216) + (perceptron_layer_1_output_13*1.34421) + (perceptron_layer_1_output_14*-0.134167) + (perceptron_layer_1_output_15*1.08158) + (perceptron_layer_1_output_16*-1.01342) + (perceptron_layer_1_output_17*-0.000229261) + (perceptron_layer_1_output_18*-0.274797) + (perceptron_layer_1_output_19*-0.86289) + (perceptron_layer_1_output_20*1.58781) + (perceptron_layer_1_output_21*1.19568) + (perceptron_layer_1_output_22*-2.10067) + (perceptron_layer_1_output_23*0.299368) + (perceptron_layer_1_output_24*0.217899) + (perceptron_layer_1_output_25*0.0270415) + (perceptron_layer_1_output_26*0.306888) + (perceptron_layer_1_output_27*-0.212362) + (perceptron_layer_1_output_28*0.913117) + (perceptron_layer_1_output_29*0.16992) + (perceptron_layer_1_output_30*-1.36209) + (perceptron_layer_1_output_31*-0.458995) + (perceptron_layer_1_output_32*-0.719512) + (perceptron_layer_1_output_33*0.437344) + (perceptron_layer_1_output_34*0.149129) + (perceptron_layer_1_output_35*0.585303) + (perceptron_layer_1_output_36*-1.31392) + (perceptron_layer_1_output_37*0.157007) + (perceptron_layer_1_output_38*0.208938) + (perceptron_layer_1_output_39*0.57222) + (perceptron_layer_1_output_40*-0.607026) + (perceptron_layer_1_output_41*0.540999) + (perceptron_layer_1_output_42*0.00607258) + (perceptron_layer_1_output_43*-0.292672) + (perceptron_layer_1_output_44*0.0275012) + (perceptron_layer_1_output_45*-0.0696947) + (perceptron_layer_1_output_46*-0.297209) + (perceptron_layer_1_output_47*-0.906578) + (perceptron_layer_1_output_48*-1.4827) + (perceptron_layer_1_output_49*-0.0706596) + (perceptron_layer_1_output_50*1.77643) + (perceptron_layer_1_output_51*-0.795111) + (perceptron_layer_1_output_52*-0.728717) + (perceptron_layer_1_output_53*-1.92957) + (perceptron_layer_1_output_54*0.666141) + (perceptron_layer_1_output_55*-0.259004) + (perceptron_layer_1_output_56*-1.73512) + (perceptron_layer_1_output_57*3.12673) + (perceptron_layer_1_output_58*3.22317) + (perceptron_layer_1_output_59*0.387149) + (perceptron_layer_1_output_60*0.327717) + (perceptron_layer_1_output_61*-0.192066) + (perceptron_layer_1_output_62*0.555014) + (perceptron_layer_1_output_63*-1.87264) + (perceptron_layer_1_output_64*-0.235892) + (perceptron_layer_1_output_65*0.641436) + (perceptron_layer_1_output_66*0.163051) + (perceptron_layer_1_output_67*-0.762146) + (perceptron_layer_1_output_68*-0.234961) + (perceptron_layer_1_output_69*1.35547) + (perceptron_layer_1_output_70*-0.128727) + (perceptron_layer_1_output_71*-0.2733) + (perceptron_layer_1_output_72*0.769795) + (perceptron_layer_1_output_73*-0.400411) + (perceptron_layer_1_output_74*1.38017) + (perceptron_layer_1_output_75*0.284505) + (perceptron_layer_1_output_76*-0.857361) + (perceptron_layer_1_output_77*0.385967) + (perceptron_layer_1_output_78*0.513918) + (perceptron_layer_1_output_79*0.465696) + (perceptron_layer_1_output_80*0.885218) + (perceptron_layer_1_output_81*0.266996) + (perceptron_layer_1_output_82*0.28458) + (perceptron_layer_1_output_83*-0.788805) + (perceptron_layer_1_output_84*-0.189311) + (perceptron_layer_1_output_85*-0.116117) + (perceptron_layer_1_output_86*2.02627) + (perceptron_layer_1_output_87*1.50552) + (perceptron_layer_1_output_88*-0.988967) + (perceptron_layer_1_output_89*0.406076) + (perceptron_layer_1_output_90*1.27442) + (perceptron_layer_1_output_91*1.08058) + (perceptron_layer_1_output_92*0.106909) + (perceptron_layer_1_output_93*-0.58715) + (perceptron_layer_1_output_94*-0.871181) + (perceptron_layer_1_output_95*-1.39286) + (perceptron_layer_1_output_96*0.107477) + (perceptron_layer_1_output_97*0.45318) + (perceptron_layer_1_output_98*-0.413362) + (perceptron_layer_1_output_99*-4.69429) );
+	double perceptron_layer_2_output_0 = ( -0.0669833 + (perceptron_layer_1_output_0*-0.177415) + (perceptron_layer_1_output_1*-0.0967244) + (perceptron_layer_1_output_2*-0.00667994) + (perceptron_layer_1_output_3*-0.0587502) + (perceptron_layer_1_output_4*0.123191) + (perceptron_layer_1_output_5*0.0762691) + (perceptron_layer_1_output_6*-0.0983914) + (perceptron_layer_1_output_7*-0.0407303) + (perceptron_layer_1_output_8*0.0214296) + (perceptron_layer_1_output_9*-0.0996766) + (perceptron_layer_1_output_10*0.127096) + (perceptron_layer_1_output_11*-0.129202) + (perceptron_layer_1_output_12*-0.0122903) + (perceptron_layer_1_output_13*0.0619982) + (perceptron_layer_1_output_14*-0.100582) + (perceptron_layer_1_output_15*0.0745469) + (perceptron_layer_1_output_16*-0.103283) + (perceptron_layer_1_output_17*-0.12367) + (perceptron_layer_1_output_18*0.0616818) + (perceptron_layer_1_output_19*-0.119555) + (perceptron_layer_1_output_20*0.111813) + (perceptron_layer_1_output_21*-0.0465798) + (perceptron_layer_1_output_22*-0.0638131) + (perceptron_layer_1_output_23*-0.0371717) + (perceptron_layer_1_output_24*-0.124987) + (perceptron_layer_1_output_25*-0.132737) + (perceptron_layer_1_output_26*-0.0839663) + (perceptron_layer_1_output_27*0.107712) + (perceptron_layer_1_output_28*0.000377047) + (perceptron_layer_1_output_29*0.0236525) + (perceptron_layer_1_output_30*0.0606202) + (perceptron_layer_1_output_31*0.00141359) + (perceptron_layer_1_output_32*-0.0688363) + (perceptron_layer_1_output_33*-0.126595) + (perceptron_layer_1_output_34*0.0668242) + (perceptron_layer_1_output_35*0.116544) + (perceptron_layer_1_output_36*0.11997) + (perceptron_layer_1_output_37*-0.11148) + (perceptron_layer_1_output_38*0.00604416) + (perceptron_layer_1_output_39*-0.0148926) + (perceptron_layer_1_output_40*0.148982) + (perceptron_layer_1_output_41*0.158511) + (perceptron_layer_1_output_42*-0.030402) + (perceptron_layer_1_output_43*-0.142264) + (perceptron_layer_1_output_44*0.0799467) + (perceptron_layer_1_output_45*-0.125832) + (perceptron_layer_1_output_46*-0.0623396) + (perceptron_layer_1_output_47*0.122067) + (perceptron_layer_1_output_48*-0.0477831) + (perceptron_layer_1_output_49*0.051529) + (perceptron_layer_1_output_50*-0.186334) + (perceptron_layer_1_output_51*-0.0679602) + (perceptron_layer_1_output_52*0.0111681) + (perceptron_layer_1_output_53*0.00992664) + (perceptron_layer_1_output_54*-0.00222778) + (perceptron_layer_1_output_55*-0.0630092) + (perceptron_layer_1_output_56*0.0512482) + (perceptron_layer_1_output_57*-0.00995993) + (perceptron_layer_1_output_58*-0.130293) + (perceptron_layer_1_output_59*-0.0658029) + (perceptron_layer_1_output_60*0.140125) + (perceptron_layer_1_output_61*-0.0963461) + (perceptron_layer_1_output_62*0.028583) + (perceptron_layer_1_output_63*0.167178) + (perceptron_layer_1_output_64*-0.011842) + (perceptron_layer_1_output_65*0.0616728) + (perceptron_layer_1_output_66*0.0882013) + (perceptron_layer_1_output_67*0.116477) + (perceptron_layer_1_output_68*-0.111743) + (perceptron_layer_1_output_69*-0.010728) + (perceptron_layer_1_output_70*-0.0999489) + (perceptron_layer_1_output_71*-0.016957) + (perceptron_layer_1_output_72*-0.14135) + (perceptron_layer_1_output_73*-0.0659211) + (perceptron_layer_1_output_74*0.127221) + (perceptron_layer_1_output_75*0.00390438) + (perceptron_layer_1_output_76*-0.182615) + (perceptron_layer_1_output_77*-0.00119895) + (perceptron_layer_1_output_78*0.171147) + (perceptron_layer_1_output_79*0.075672) + (perceptron_layer_1_output_80*-0.0569168) + (perceptron_layer_1_output_81*0.0412569) + (perceptron_layer_1_output_82*-0.0831998) + (perceptron_layer_1_output_83*-0.141378) + (perceptron_layer_1_output_84*-0.176842) + (perceptron_layer_1_output_85*-0.0729887) + (perceptron_layer_1_output_86*0.110265) + (perceptron_layer_1_output_87*0.00893191) + (perceptron_layer_1_output_88*-0.0631658) + (perceptron_layer_1_output_89*-0.137337) + (perceptron_layer_1_output_90*-0.139307) + (perceptron_layer_1_output_91*-0.0705433) + (perceptron_layer_1_output_92*-0.0798256) + (perceptron_layer_1_output_93*0.12111) + (perceptron_layer_1_output_94*0.0506196) + (perceptron_layer_1_output_95*-0.0742325) + (perceptron_layer_1_output_96*0.0555989) + (perceptron_layer_1_output_97*-0.10362) + (perceptron_layer_1_output_98*-0.124158) + (perceptron_layer_1_output_99*-0.0677084) );
 
 	double unscaling_layer_output_0=perceptron_layer_2_output_0*6.898656845+124.8359451;
 
-	output_4 = max(-3.402823466e+38, unscaling_layer_output_0);
-	output_4 = min(3.402823466e+38, unscaling_layer_output_0);
+	double scaled_sound_pressure_level = max(-3.402823466e+38, unscaling_layer_output_0);
+	scaled_sound_pressure_level = min(3.402823466e+38, unscaling_layer_output_0);
 
 	vector<float> out(1);
-	out[0] = output0;
+	out[0] = scaled_sound_pressure_level;
 
 	return out;
 }
@@ -174,23 +173,23 @@ int main(){
 
 	vector<float> inputs(5); 
 
-	const float input_0 = /*enter your value here*/; 
-	inputs[0] = input_0;
-	const float input_1 = /*enter your value here*/; 
-	inputs[1] = input_1;
-	const float input_2 = /*enter your value here*/; 
-	inputs[2] = input_2;
-	const float input_3 = /*enter your value here*/; 
-	inputs[3] = input_3;
-	const float input_4 = /*enter your value here*/; 
-	inputs[4] = input_4;
+	const float frequency = /*enter your value here*/; 
+	inputs[0] = frequency;
+	const float angle_of_attack = /*enter your value here*/; 
+	inputs[1] = angle_of_attack;
+	const float chord_lenght = /*enter your value here*/; 
+	inputs[2] = chord_lenght;
+	const float free_res__stream_velocity = /*enter your value here*/; 
+	inputs[3] = free_res__stream_velocity;
+	const float suction_side_displacement_thickness = /*enter your value here*/; 
+	inputs[4] = suction_side_displacement_thickness;
 
 	vector<float> outputs(1);
 
 	outputs = calculate_outputs(inputs);
 
 	printf("These are your outputs:\n");
-	printf( "output0: %f \n", outputs[0]);
+	printf( "scaled_sound_pressure_level: %f \n", outputs[0]);
 
 	return 0;
 } 
