@@ -105,7 +105,6 @@ private:
     Index evaluations_number = 1000;
 
     type calculate_random_uniform(const type&, const type&) const;
-
 };
 
 

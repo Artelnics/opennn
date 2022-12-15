@@ -611,7 +611,6 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
     back_propagation.parameters.device(*thread_pool_device)
         -= learning_rate * optimization_data.gradient_exponential_decay / optimization_data.square_gradient_exponential_decay_square_root;
         
-
     optimization_data.iteration++;
 
     // Update parameters
