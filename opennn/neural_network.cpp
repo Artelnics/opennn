@@ -1636,7 +1636,12 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
+    cout << "forward propagate 1 ****************************************" << endl;
+    cout << "Layer type " << trainable_layers_pointers(0)->get_name() << endl;
+    cout << "FWD layer name: " << forward_propagation.layers(0)->layer_pointer->get_name() << endl;
     trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
+
+    cout << "forward propagate 2 ****************************************" << endl;
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
@@ -1644,6 +1649,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                                         forward_propagation.layers(i-1)->outputs_dimensions,
                                                         forward_propagation.layers(i));
     }
+
+    cout << "forward propagate end ****************************************" << endl;
 }
 
 
@@ -1838,12 +1845,14 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
     DataSetBatch data_set_batch;
     data_set_batch.set_inputs(inputs);
+
+    cout << "calculate outputs 1 *****************************************" << endl;
     // inputs_data, inputs_dimensions, outputs_data, outputs_dimensions
 
     NeuralNetworkForwardPropagation neural_network_forward_propagation(data_set_batch.batch_size, this);
-
+cout << "calculate outputs 2 *****************************************" << endl;
     forward_propagate(data_set_batch, neural_network_forward_propagation);
-
+cout << "calculate outputs 3 *****************************************" << endl;
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();

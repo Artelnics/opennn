@@ -731,15 +731,18 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
     type* combinations_data = perceptron_layer_forward_propagation->get_combinations_data();
+
+    cout << "Perceptron layer forward propagate 1 -------------------------" << endl;
+
     calculate_combinations(inputs_data,
                            biases,
                            synaptic_weights,
                            combinations_data,inputs_dimensions);
-
+cout << "Perceptron layer forward propagate 2 -------------------------" << endl;
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
-
+cout << "Perceptron layer forward propagate 3 -------------------------" << endl;
     calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
                                       combinations_dimensions,
                                       perceptron_layer_forward_propagation->outputs_data,
