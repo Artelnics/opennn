@@ -30,7 +30,7 @@ public:
 
    // Output methods
 
-   void test_forward_propagate();
+   void test_calculate_outputs();
 
    // Unit testing methods
 
@@ -39,7 +39,6 @@ public:
 private:
 
    BoundingLayer bounding_layer;
-   BoundingLayerForwardPropagation bounding_layer_forward_propagation;
 };
 
 #endif

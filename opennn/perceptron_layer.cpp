@@ -140,7 +140,7 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
-    Tensor<type, 1> parameters(biases.size() + synaptic_weights.size());
+    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
     copy(biases.data(),
          biases.data() + biases.size(),
@@ -240,9 +240,9 @@ void PerceptronLayer::set()
 
     synaptic_weights.resize(0, 0);
 
-//    inputs.resize(0,0);
+    inputs.resize(0,0);
 
-//    outputs.resize(0,0);
+    outputs.resize(0,0);
 
     set_default();
 }
@@ -338,7 +338,6 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 {
     synaptic_weights = new_synaptic_weights;
 }
-
 
 
 /// Sets the parameters of this layer.
@@ -510,18 +509,25 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
     check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
 #endif
 
+    
+
     const Index batch_samples_number = inputs_dimension(0);
 
     const Index neurons_number = get_neurons_number();
 
     for (Index i = 0; i < neurons_number; i++)
+
     {
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
     }
+
+
+
     
 #ifdef OPENNN_MKL
 
-   TensorMap<Tensor<type, 2>>inputs(inputs_data, inputs_dimension(0), inputs_dimension(1));
+
+    TensorMap<Tensor<type, 2>>inputs(inputs_data, inputs_dimension(0), inputs_dimension(1));
 
    if (typeid(type) == typeid(float))
     {
@@ -565,6 +571,8 @@ TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension
 combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
 #endif
+
+
 }
 
 
@@ -686,7 +694,7 @@ void PerceptronLayer::calculate_activations_derivatives(type* combinations, cons
     }
 }
 
-/*
+
 void PerceptronLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                         type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -707,7 +715,7 @@ void PerceptronLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1
 
     calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
 }
-*/
+
 
 void PerceptronLayer::forward_propagate(type* inputs_data,
                                         const Tensor<Index,1>& inputs_dimensions,
@@ -748,7 +756,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                       derivatives_dimensions);
 }
 
-/*
+
 void PerceptronLayer::forward_propagate(type* inputs_data,
                                         const Tensor<Index, 1>& inputs_dimensions,
                                         Tensor<type, 1>& potential_parameters,
@@ -768,6 +776,10 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     check_size(potential_parameters, get_parameters_number(), LOG);
 #endif
 
+
+    //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+
     const Index neurons_number = get_neurons_number();
 
     const Index inputs_number = get_inputs_number();
@@ -785,11 +797,13 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
 
+
     calculate_combinations(inputs_data,
                            potential_biases,
                            potential_synaptic_weights,
                            perceptron_layer_forward_propagation->get_combinations_data(),
                            inputs_dimensions);
+
 
     calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
                                       combinations_dimensions,
@@ -798,7 +812,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                       perceptron_layer_forward_propagation->activations_derivatives.data(),
                                       derivatives_dimensions);
 }
-*/
+
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
                                              LayerBackPropagation* next_layer_back_propagation,
@@ -1406,7 +1420,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         const string parameters_string = parameters_element->GetText();
 
-        set_parameters(to_type_vector(parameters_string, ' '), 0);
+        set_parameters(to_type_vector(parameters_string, ' '));
     }
 }
 

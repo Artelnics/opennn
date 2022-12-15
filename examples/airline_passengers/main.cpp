@@ -78,7 +78,7 @@ int main()
 
         Tensor<type, 2> output;
 
-        output = neural_network.calculate_outputs(input);
+        output = neural_network.calculate_outputs(input.data(), input_dims);
 
         cout << "Input data:\n" << input << "\nPredictions:\n" << output << endl;
 

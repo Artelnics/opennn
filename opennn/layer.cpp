@@ -154,7 +154,7 @@ Tensor<type, 1> Layer::get_parameters() const
     throw invalid_argument(buffer.str());
 }
 
-/*
+
 void Layer::calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&)
 {
     ostringstream buffer;
@@ -165,7 +165,6 @@ void Layer::calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tens
 
     throw invalid_argument(buffer.str());
 };
-*/
 
 
 void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*)
@@ -179,18 +178,18 @@ void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropag
     throw invalid_argument(buffer.str());
 }
 
-/*
-void Layer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, Tensor<type, 1>& new_parameters, LayerForwardPropagation* layer_forward_propagation)
+
+void Layer::forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*)
 {
-    const Tensor<type, 1> original_parameters = get_parameters();
+    ostringstream buffer;
 
-    set_parameters(new_parameters);
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    forward_propagate(inputs_data, inputs_dimensions, layer_forward_propagation);
-
-    set_parameters(original_parameters);
+    throw invalid_argument(buffer.str());
 }
-*/
+
 
 /// Returns the number of inputs
 

@@ -88,7 +88,7 @@ int main()
           input_data(1,i) = processed_review_2(i);
         }
 
-        output_data = neural_network.calculate_outputs(input_data);
+        output_data = neural_network.calculate_outputs(input_data.data(), input_dims);
 
         cout << "\n\n" << review_1 << endl << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
         cout << "\n" << review_2 << endl << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
