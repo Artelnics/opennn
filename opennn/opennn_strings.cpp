@@ -1019,20 +1019,11 @@ void trim(string& str)
 
     str.erase(0, str.find_first_not_of(' '));
     str.erase(0, str.find_first_not_of('\t'));
-    str.erase(0, str.find_first_not_of('\n'));
-    str.erase(0, str.find_first_not_of('\r'));
-    str.erase(0, str.find_first_not_of('\f'));
-    str.erase(0, str.find_first_not_of('\v'));
 
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
     str.erase(str.find_last_not_of('\t') + 1);
-    str.erase(str.find_last_not_of('\n') + 1);
-    str.erase(str.find_last_not_of('\r') + 1);
-    str.erase(str.find_last_not_of('\f') + 1);
-    str.erase(str.find_last_not_of('\v') + 1);
-    str.erase(str.find_last_not_of('\b') + 1);
 }
 
 
@@ -1053,21 +1044,10 @@ string get_trimmed(const string& str)
     //prefixing spaces
 
     output.erase(0, output.find_first_not_of(' '));
-    output.erase(0, output.find_first_not_of('\t'));
-    output.erase(0, output.find_first_not_of('\n'));
-    output.erase(0, output.find_first_not_of('\r'));
-    output.erase(0, output.find_first_not_of('\f'));
-    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
     output.erase(output.find_last_not_of(' ') + 1);
-    output.erase(output.find_last_not_of('\t') + 1);
-    output.erase(output.find_last_not_of('\n') + 1);
-    output.erase(output.find_last_not_of('\r') + 1);
-    output.erase(output.find_last_not_of('\f') + 1);
-    output.erase(output.find_last_not_of('\v') + 1);
-    output.erase(output.find_last_not_of('\b') + 1);
 
     return output;
 }

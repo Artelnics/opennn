@@ -393,13 +393,14 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        add_regularization(back_propagation);
-        add_regularization_gradient(back_propagation);
+        const type regularization = calculate_regularization(back_propagation.parameters);
+        back_propagation.loss += regularization;
+
+        calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
+        back_propagation.gradient.device(*thread_pool_device) += back_propagation.regularization_gradient;
     }
-
-    if(back_propagation.assemble) assemble_layers_error_gradient(back_propagation);
-
 }
+
 
 
 /// This method calculates the second-order loss.
@@ -602,212 +603,20 @@ string LossIndex::write_regularization_method() const
 }
 
 
-void LossIndex::add_regularization(LossIndexBackPropagation& back_propagation) const
-{
-    const Tensor< Tensor< TensorMap< Tensor<type, 1>>*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-
-    Tensor<type, 0> norm;
-    norm.setZero();
-
-    switch(regularization_method)
-    {
-        case RegularizationMethod::NoRegularization:
-        {
-        break;
-        }
-
-        case RegularizationMethod::L1:
-        {
-            for(Index i = 0; i < layers_parameters.size(); i++)
-            {
-                for(Index j = 0; j < layers_parameters(i).size(); j++)
-                {
-                    norm.device(*thread_pool_device) += (*layers_parameters(i)(j)).abs().sum();
-                }
-            }
-
-            break;
-        }
-
-        case RegularizationMethod::L2:
-        {
-            for(Index i = 0; i < layers_parameters.size(); i++)
-            {
-                for(Index j = 0; j < layers_parameters(i).size(); j++)
-                {
-                    norm.device(*thread_pool_device) += (*layers_parameters(i)(j)).square().sum();
-                }
-            }
-
-            if(isnan(norm(0)))
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: l2 norm of vector is not a number."
-                       << endl;
-
-                throw invalid_argument(buffer.str());
-            }
-
-            norm(0) = sqrt(norm(0));
-
-        break;
-        }
-    }
-
-    back_propagation.regularization = norm(0);
-
-    back_propagation.loss = back_propagation.error + regularization_weight*back_propagation.regularization;
-}
-
-
-void LossIndex::add_regularization_gradient(LossIndexBackPropagation& back_propagation) const
-{
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient = back_propagation.get_layers_gradient();
-
-    switch(regularization_method)
-    {
-        case RegularizationMethod::NoRegularization: return;
-
-        case RegularizationMethod::L1:
-        {
-            for(Index i = 0; i < layers_parameters.size(); i++)
-            {
-                for(Index j = 0; j < layers_parameters(i).size(); j++)
-                {
-                    (*layers_gradient(i)(j)).device(*thread_pool_device)
-                        += (*layers_parameters(i)(j)).sign()*regularization_weight;
-                }
-            }
-
-            return;
-         }
-
-        case RegularizationMethod::L2:
-        {
-            for(Index i = 0; i < layers_parameters.size(); i++)
-            {
-                for(Index j = 0; j < layers_parameters(i).size(); j++)
-                {
-                    (*layers_gradient(i)(j)).device(*thread_pool_device)
-                            += (*layers_parameters(i)(j))*(regularization_weight/back_propagation.regularization);
-                }
-            }
-
-            return;
-        }
-
-        default: return;
-    }
-}
-
-
-type LossIndex::calculate_regularization() const
-{
-    Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-
-    switch(regularization_method)
-    {
-        case RegularizationMethod::NoRegularization: return type(0);
-
-        case RegularizationMethod::L1:
-        {
-            Tensor<type, 0> norm;
-            norm.setZero();
-
-            for(Index i = 0; i < layers_parameters.size(); i++)
-            {
-                for(Index j = 0; j < layers_parameters(i).size(); j++)
-                {
-                    norm.device(*thread_pool_device) += (*layers_parameters(i)(j)).abs().sum();
-                }
-            }
-
-            //norm.device(*thread_pool_device) = back_propagation.parameters.abs().sum();
-
-            return norm(0);
-         }
-
-        //return l1_norm(thread_pool_device, parameters);
-
-        case RegularizationMethod::L2:
-        {
-            //norm.device(*thread_pool_device) = back_propagation.parameters.square().sum().sqrt();
-
-            Tensor<type, 0> norm;
-            norm.setZero();
-
-            for(Index i = 0; i < layers_parameters.size(); i++)
-            {
-                for(Index j = 0; j < layers_parameters(i).size(); j++)
-                {
-                    norm.device(*thread_pool_device) += (*layers_parameters(i)(j)).square().sum();
-                }
-            }
-
-            if(isnan(norm(0)))
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: l2 norm of vector is not a number."
-                       << endl;
-
-                throw invalid_argument(buffer.str());
-            }
-
-            return sqrt(norm(0));
-        }
-
-        default: return type(0);
-    }
-
-    cout << "Done!!" << endl;
-
-    return type(0);
-}
-
-
 /// It calculates the regularization term using through the use of parameters.
 /// Returns the regularization evaluation, according to the respective regularization type used in the
 /// loss index expression.
 /// @param parameters vector with the parameters to get the regularization term.
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
-{
+{   
     switch(regularization_method)
     {
         case RegularizationMethod::NoRegularization: return type(0);
 
-        case RegularizationMethod::L1:
-        {
-            Tensor<type, 0> norm;
+        case RegularizationMethod::L1: return l1_norm(thread_pool_device, parameters);
 
-            norm.device(*thread_pool_device) = parameters.abs().sum();
-
-            return norm(0);
-         }
-
-        //return l1_norm(thread_pool_device, parameters);
-
-        case RegularizationMethod::L2:
-        {
-            Tensor<type, 0> norm;
-
-            norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
-
-            if(isnan(norm(0)))
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: l2 norm of vector is not a number."
-                       << endl;
-
-                throw invalid_argument(buffer.str());
-            }
-
-            return norm(0);
-        }
+        case RegularizationMethod::L2: return l2_norm(thread_pool_device, parameters);
 
         default: return type(0);
     }
@@ -816,7 +625,6 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 }
 
 
-/// It calculate the regularization term using the gradient method.
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters
@@ -827,20 +635,13 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
     switch(regularization_method)
     {
     case RegularizationMethod::L1:
-    {
         l1_norm_gradient(thread_pool_device, parameters, regularization_gradient);
 
-        return;
-    }
-
     case RegularizationMethod::L2:
-    {
         l2_norm_gradient(thread_pool_device, parameters, regularization_gradient);
 
+    default:
         return;
-    }
-
-    default: return;
     }
 }
 
@@ -855,11 +656,14 @@ void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& paramete
 {
     switch(regularization_method)
     {
-    case RegularizationMethod::L1: l1_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
+    case RegularizationMethod::L1:
+        l1_norm_hessian(thread_pool_device, parameters, regularization_hessian);
 
-    case RegularizationMethod::L2: l2_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
+    case RegularizationMethod::L2:
+        l2_norm_hessian(thread_pool_device, parameters, regularization_hessian);
 
-    default: return;
+    default:
+        return;
     }
 }
 

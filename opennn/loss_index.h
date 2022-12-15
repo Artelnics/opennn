@@ -223,11 +223,6 @@ public:
 
    // Regularization methods
 
-   void add_regularization(LossIndexBackPropagation&) const;
-   void add_regularization_gradient(LossIndexBackPropagation&) const;
-
-   type calculate_regularization() const;
-
    type calculate_regularization(const Tensor<type, 1>&) const;
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -254,6 +249,7 @@ public:
 protected:
 
    ThreadPool* thread_pool = nullptr;
+
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to a neural network object.
@@ -330,12 +326,11 @@ struct LossIndexBackPropagation
 
         errors.resize(batch_samples_number, outputs_number);
 
-        if(true)
-        {
-            parameters = neural_network_pointer->get_parameters();
+        parameters = neural_network_pointer->get_parameters();
 
-            gradient.resize(parameters_number);
-        }
+        gradient.resize(parameters_number);
+
+        regularization_gradient.resize(parameters_number);
     }
 
     void print() const
@@ -360,23 +355,6 @@ struct LossIndexBackPropagation
         neural_network.print();
     }
 
-    Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> get_layers_gradient()
-    {
-        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-        Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient(trainable_layers_number);
-
-        for(Index i = 0; i < trainable_layers_number; i++)
-        {
-            layers_gradient(i) = neural_network.layers(i)->get_layer_gradient();
-        }
-
-        return layers_gradient;
-    }
-
     Index batch_samples_number = 0;
 
     LossIndex* loss_index_pointer = nullptr;
@@ -391,11 +369,8 @@ struct LossIndexBackPropagation
 
     Tensor<type, 1> parameters;
 
-    Tensor< Tensor< TensorMap<Tensor<type, 1> >*, 1>, 1> layers_gradient;
-
     Tensor<type, 1> gradient;
-
-    bool assemble = true;
+    Tensor<type, 1> regularization_gradient;
 };
 
 

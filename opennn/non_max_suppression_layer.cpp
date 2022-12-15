@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_layer.h"
+#include "opennn_images.h"
 
 namespace opennn
 {

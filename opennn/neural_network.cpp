@@ -1268,23 +1268,6 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 }
 
 
-Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> NeuralNetwork::get_layers_parameters()
-{
-    Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters(trainable_layers_number);
-
-    for(Index i = 0; i < trainable_layers_number; i++)
-    {
-        layers_parameters(i) = trainable_layers_pointers(i)->get_layer_parameters();
-    }
-
-    return layers_parameters;
-}
-
-
 Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
@@ -1299,31 +1282,6 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
     }
 
     return trainable_layers_parameters_number;
-}
-
-
-Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const Tensor<type, 1>& parameters) const
-{
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Index, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
-
-    Tensor<Tensor<type, 1>, 1> trainable_layers_parameters(trainable_layers_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < trainable_layers_number; i++)
-    {
-
-        trainable_layers_parameters(i).resize(trainable_layers_parameters_number(i));
-
-        trainable_layers_parameters(i) = parameters.slice(Eigen::array<Eigen::Index, 1>({index}), Eigen::array<Eigen::Index, 1>({trainable_layers_parameters_number(i)}));
-
-        index += trainable_layers_parameters_number(i);
-
-    }
-
-    return trainable_layers_parameters;
 }
 
 
@@ -1614,7 +1572,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
     Tensor<type, 1> parameters = get_parameters();
 
-    parameters = parameters+perturbation;
+    parameters = parameters + perturbation;
 
     set_parameters(parameters);
 }
