@@ -179,13 +179,13 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               PerceptronLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               PerceptronLayerBackPropagation*) const;
 
    // Delta LM
 
@@ -193,11 +193,11 @@ public:
                                   LayerBackPropagationLM*,
                                   LayerBackPropagationLM*) const final;
 
-   void calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation*,
+   void calculate_hidden_delta_lm(PerceptronLayerForwardPropagation*,
                                              PerceptronLayerBackPropagationLM*,
                                              PerceptronLayerBackPropagationLM*) const;
 
-   void calculate_hidden_delta_probabilistic_lm(ProbabilisticLayerForwardPropagation*,
+   void calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation*,
                                                 ProbabilisticLayerBackPropagationLM*,
                                                 PerceptronLayerBackPropagationLM*) const;
 

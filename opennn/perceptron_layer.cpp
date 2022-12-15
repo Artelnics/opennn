@@ -830,9 +830,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
                 reinterpret_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
 
-        calculate_hidden_delta_perceptron(next_perceptron_layer_forward_propagation,
-                                          next_perceptron_layer_back_propagation,
-                                          perceptron_layer_back_propagation);
+        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
+                               next_perceptron_layer_back_propagation,
+                               perceptron_layer_back_propagation);
     }
         break;
 
@@ -844,9 +844,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
                 reinterpret_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
 
-        calculate_hidden_delta_probabilistic(next_probabilistic_layer_forward_propagation,
-                                             next_probabilistic_layer_back_propagation,
-                                             perceptron_layer_back_propagation);
+        calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
+                               next_probabilistic_layer_back_propagation,
+                               perceptron_layer_back_propagation);
     }
         break;
 
@@ -855,9 +855,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation* next_forward_propagation,
-                                                        PerceptronLayerBackPropagation* next_back_propagation,
-                                                        PerceptronLayerBackPropagation* back_propagation) const
+void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* next_forward_propagation,
+                                             PerceptronLayerBackPropagation* next_back_propagation,
+                                             PerceptronLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
@@ -865,11 +865,7 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
-
 #ifdef OPENNN_MKL
-
-
-
 
    if (typeid(type) == typeid(float))
     {
@@ -915,9 +911,9 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation* next_forward_propagation,
-                                                           ProbabilisticLayerBackPropagation* next_back_propagation,
-                                                           PerceptronLayerBackPropagation* back_propagation) const
+void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* next_forward_propagation,
+                                             ProbabilisticLayerBackPropagation* next_back_propagation,
+                                             PerceptronLayerBackPropagation* back_propagation) const
 {
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
@@ -960,7 +956,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
                 ostringstream buffer;
 
                 buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                       << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
                        << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
                 throw invalid_argument(buffer.str());
@@ -971,7 +967,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
                 ostringstream buffer;
 
                 buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                       << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
                        << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
                 throw invalid_argument(buffer.str());
@@ -982,7 +978,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
                 ostringstream buffer;
 
                 buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                       << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
                        << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
                 throw invalid_argument(buffer.str());
@@ -1025,9 +1021,9 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
         PerceptronLayerBackPropagationLM* next_perceptron_layer_back_propagation =
                 static_cast<PerceptronLayerBackPropagationLM*>(next_layer_back_propagation);
 
-        calculate_hidden_delta_perceptron_lm(next_perceptron_layer_forward_propagation,
-                                             next_perceptron_layer_back_propagation,
-                                             perceptron_layer_back_propagation);
+        calculate_hidden_delta_lm(next_perceptron_layer_forward_propagation,
+                                  next_perceptron_layer_back_propagation,
+                                  perceptron_layer_back_propagation);
     }
         break;
 
@@ -1039,9 +1035,9 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
         ProbabilisticLayerBackPropagationLM* next_probabilistic_layer_back_propagation =
                 static_cast<ProbabilisticLayerBackPropagationLM*>(next_layer_back_propagation);
 
-        calculate_hidden_delta_probabilistic_lm(next_probabilistic_layer_forward_propagation,
-                                                next_probabilistic_layer_back_propagation,
-                                                perceptron_layer_back_propagation);
+        calculate_hidden_delta_lm(next_probabilistic_layer_forward_propagation,
+                                  next_probabilistic_layer_back_propagation,
+                                  perceptron_layer_back_propagation);
     }
         break;
 
@@ -1050,7 +1046,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation* next_forward_propagation,
+void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagation* next_forward_propagation,
                                                            PerceptronLayerBackPropagationLM* next_back_propagation,
                                                            PerceptronLayerBackPropagationLM* back_propagation) const
 {
@@ -1061,7 +1057,7 @@ void PerceptronLayer::calculate_hidden_delta_perceptron_lm(PerceptronLayerForwar
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_probabilistic_lm(ProbabilisticLayerForwardPropagation* next_forward_propagation,
+void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation* next_forward_propagation,
                                                               ProbabilisticLayerBackPropagationLM* next_back_propagation,
                                                               PerceptronLayerBackPropagationLM* back_propagation) const
 {           
@@ -1080,7 +1076,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic_lm(ProbabilisticLayer
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
+                   << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
                    << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
             throw invalid_argument(buffer.str());
@@ -1091,7 +1087,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic_lm(ProbabilisticLayer
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
+                   << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
                    << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
             throw invalid_argument(buffer.str());
@@ -1102,7 +1098,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic_lm(ProbabilisticLayer
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
+                   << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
                    << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
             throw invalid_argument(buffer.str());
