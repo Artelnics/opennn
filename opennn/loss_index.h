@@ -153,7 +153,7 @@ public:
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_gradient_numerical_differentiation();
+   Tensor<type, 1> calculate_numerical_differentiation_gradient();
 
    Tensor<type, 2> calculate_jacobian_numerical_differentiation();
 

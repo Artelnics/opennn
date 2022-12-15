@@ -1219,6 +1219,7 @@ void LongShortTermMemoryLayer::calculate_combinations(type* inputs_data, const T
         throw invalid_argument(buffer.str());
 
     }
+
     if(inputs_dimensions(0) != get_inputs_number())
     {
         ostringstream buffer;
@@ -1243,7 +1244,7 @@ void LongShortTermMemoryLayer::calculate_combinations(type* inputs_data, const T
 }
 
 
-void LongShortTermMemoryLayer::calculate_activations(type* combinations_data, Tensor<Index,1> &combinations_dimensions, type* activations_data, Tensor<Index,1> &activations_dimensions)
+void LongShortTermMemoryLayer::calculate_activations(type* combinations_data, const Tensor<Index,1> &combinations_dimensions, type* activations_data, const Tensor<Index,1> &activations_dimensions)
 {
     switch(activation_function)
     {
@@ -1331,8 +1332,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>&
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(type* combinations_data, Tensor<Index, 1>& combinations_dimensions,
-                                                               type* activations_data, Tensor<Index, 1>& activations_dimensions)
+void LongShortTermMemoryLayer::calculate_recurrent_activations(type* combinations_data, const Tensor<Index, 1>& combinations_dimensions,
+                                                               type* activations_data, const Tensor<Index, 1>& activations_dimensions)
 {
 
     if(combinations_dimensions.size() != activations_dimensions.size())
@@ -1385,9 +1386,9 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(type* combination
 }
 
 
-void LongShortTermMemoryLayer::calculate_activations_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dimensions,
-                                       type* activations_data, Tensor<Index, 1>& activations_dimensions,
-                                       type* derivatives_data, Tensor<Index, 1>& derivatives_dimensions)
+void LongShortTermMemoryLayer::calculate_activations_derivatives(type* combinations_data, const Tensor<Index, 1>& combinations_dimensions,
+                                       type* activations_data, const Tensor<Index, 1>& activations_dimensions,
+                                       type* derivatives_data, const Tensor<Index, 1>& derivatives_dimensions)
 {
 
     const Index neurons_number = get_neurons_number();
@@ -1434,9 +1435,9 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(type* combinati
     }
 }
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dimensions,
-                                                 type* activations_data, Tensor<Index, 1>& activations_dimensions,
-                                                 type* derivatives_data, Tensor<Index, 1>& derivatives_dimensions)
+void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(type* combinations_data, const Tensor<Index, 1>& combinations_dimensions,
+                                                 type* activations_data, const Tensor<Index, 1>& activations_dimensions,
+                                                 type* derivatives_data, const Tensor<Index, 1>& derivatives_dimensions)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -1519,6 +1520,7 @@ void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor
         throw invalid_argument(buffer.str());
     }
 
+
     Tensor<type, 1> forget_combinations(neurons_number);
     Tensor<type, 1> forget_activations(neurons_number);
 
@@ -1531,13 +1533,25 @@ void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor
     Tensor<type, 1> output_combinations(neurons_number);
     Tensor<type, 1> output_activations(neurons_number);
 
+    const Tensor<Index, 1> forget_combinations_dimensions = get_dimensions(forget_combinations);
+    const Tensor<Index, 1> forget_activations_dimensions = get_dimensions(forget_activations);
+
+    const Tensor<Index, 1> input_combinations_dimensions = get_dimensions(input_combinations);
+    const Tensor<Index, 1> input_activations_dimensions = get_dimensions(input_activations);
+
+    const Tensor<Index, 1> state_combinations_dimensions = get_dimensions(state_combinations);
+    const Tensor<Index, 1> state_activations_dimensions = get_dimensions(state_activations);
+
+    const Tensor<Index, 1> output_combinations_dimensions = get_dimensions(output_combinations);
+    const Tensor<Index, 1> output_activations_dimensions = get_dimensions(output_activations);
+
+    const Tensor<Index, 1> cell_states_combinations_dimensions = get_dimensions(cell_states);
+    const Tensor<Index, 1> hidden_states_activations_dimensions = get_dimensions(hidden_states);
+
     TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
     TensorMap<Tensor<type,2>> outputs(outputs_data, samples_number, neurons_number);
 
     Tensor<Index, 1> current_inputs_dimensions;
-
-    Tensor<Index, 1> combinations_dimensions;
-    Tensor<Index, 1> activations_dimensions;
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -1552,38 +1566,23 @@ void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor
         current_inputs_dimensions = get_dimensions(current_inputs);
 
 #pragma omp parallel
-        {
-            combinations_dimensions = get_dimensions(forget_combinations);
-            activations_dimensions = get_dimensions(forget_activations);
+        {           
+            calculate_combinations(current_inputs.data(), current_inputs_dimensions, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations.data(), forget_combinations_dimensions);
+            calculate_recurrent_activations(forget_combinations.data(), forget_combinations_dimensions, forget_activations.data(), forget_activations_dimensions);
 
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations.data(), combinations_dimensions);
-            calculate_recurrent_activations(forget_combinations.data(), combinations_dimensions, forget_activations.data(), activations_dimensions);
+            calculate_combinations(current_inputs.data(), current_inputs_dimensions, input_weights, input_recurrent_weights, input_biases, input_combinations.data(), input_combinations_dimensions);
+            calculate_recurrent_activations(input_combinations.data(), input_combinations_dimensions, input_activations.data(), input_activations_dimensions);
 
-            combinations_dimensions = get_dimensions(input_combinations);
-            activations_dimensions = get_dimensions(input_activations);
+            calculate_combinations(current_inputs.data(), current_inputs_dimensions, state_weights, state_recurrent_weights, state_biases, state_combinations.data(), state_combinations_dimensions);
+            calculate_activations(state_combinations.data(), state_combinations_dimensions, state_activations.data(), state_activations_dimensions);
 
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, input_weights, input_recurrent_weights, input_biases, input_combinations.data(), combinations_dimensions);
-            calculate_recurrent_activations(input_combinations.data(), combinations_dimensions, input_activations.data(), activations_dimensions);
-
-            combinations_dimensions = get_dimensions(state_combinations);
-            activations_dimensions = get_dimensions(state_activations);
-
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, state_weights, state_recurrent_weights, state_biases, state_combinations.data(), combinations_dimensions);
-            calculate_activations(state_combinations.data(), combinations_dimensions, state_activations.data(), activations_dimensions);
-
-            combinations_dimensions = get_dimensions(output_combinations);
-            activations_dimensions = get_dimensions(output_activations);
-
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, output_weights, output_recurrent_weights, output_biases, output_combinations.data(), combinations_dimensions);
-            calculate_recurrent_activations(output_combinations.data(), combinations_dimensions, output_activations.data(), activations_dimensions);
+            calculate_combinations(current_inputs.data(), current_inputs_dimensions, output_weights, output_recurrent_weights, output_biases, output_combinations.data(), output_combinations_dimensions);
+            calculate_recurrent_activations(output_combinations.data(), output_combinations_dimensions, output_activations.data(), output_activations_dimensions);
         }
 
         cell_states = forget_activations * cell_states + input_activations * state_activations;
 
-        combinations_dimensions = get_dimensions(cell_states);
-        activations_dimensions = get_dimensions(hidden_states);
-
-        calculate_activations(cell_states.data(), combinations_dimensions, hidden_states.data(), activations_dimensions);
+        calculate_activations(cell_states.data(), cell_states_combinations_dimensions, hidden_states.data(), hidden_states_activations_dimensions);
         hidden_states *= output_activations;
 
         for(Index j = 0; j < neurons_number; j++)
@@ -4108,463 +4107,9 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
            buffer << outputs_names[i] << " = " << "hidden_state_" << to_string(i) << "(t);\n";
        }
 
-       /**
-       */
-
        return buffer.str();
 }
 
-
-string LongShortTermMemoryLayer::write_combinations_python() const
-{
-    ostringstream buffer;
-
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    // Forget gate
-
-    buffer << "\t\tforget_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tforget_gate_combinations[" << i << "] = " << forget_biases(i) << " + ";
-
-        for(Index j = 0; j < inputs_number; j++)
-        {
-             buffer << "inputs[" << j << "] * (" << forget_weights(j,i) << ") + ";
-        }
-
-        for(Index k = 0; k < neurons_number-1; k++)
-        {
-             buffer << "self.hidden_states[" << k << "] * (" << forget_recurrent_weights(k,i) << ") + ";
-        }
-
-        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << forget_recurrent_weights(neurons_number-1,i) << ")";
-
-        buffer << " " << endl;
-    }
-
-    buffer << "\t\t" << endl;
-
-
-    buffer << "\t\tforget_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tforget_gate_activations[" << i << "] = ";
-
-        switch(recurrent_activation_function)
-        {
-        case ActivationFunction::HyperbolicTangent:
-            buffer << "np.tanh(forget_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::RectifiedLinear:
-            buffer << "np.maximum(0.0, forget_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::Logistic:
-            buffer << "1.0/(1.0 + np.exp(-forget_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::Threshold:
-            buffer << "1.0 if forget_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
-            break;
-
-        case ActivationFunction::SymmetricThreshold:
-            buffer << "1.0 if forget_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
-            break;
-
-        case ActivationFunction::Linear:
-            buffer << "forget_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::ScaledExponentialLinear:
-            buffer << "1.0507*1.67326*(np.exp(forget_gate_combinations[" << i << "]) - 1.0) if forget_gate_combinations[" << i << "] < 0.0 else 1.0507*forget_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::SoftPlus:
-            buffer << "np.log(1.0 + np.exp(forget_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::SoftSign:
-            buffer << "forget_gate_combinations[" << i << "]/(1.0 - forget_gate_combinations[" << i << "] ) if forget_gate_combinations[" << i << "] < 0.0 else forget_gate_combinations[" << i << "]/(1.0 + forget_gate_combinations[" << i << "] )\n";
-            break;
-
-        case ActivationFunction::ExponentialLinear:
-            buffer << "1.0*(np.exp(forget_gate_combinations[" << i << "]) - 1.0) if forget_gate_combinations[" << i << "] < 0.0 else forget_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::HardSigmoid:
-            ///@todo
-            break;
-
-        default:
-            buffer << "np.maximum(0.0, forget_gate_combinations[" << i << "])\n";
-            break;
-        }
-    }
-
-
-    buffer << "\t\t" << endl;
-
-    // Input gate
-
-    buffer << "\t\tinput_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tinput_gate_combinations[" << i << "] = " << input_biases(i) << " + ";
-
-        for(Index j = 0; j < inputs_number; j++)
-        {
-             buffer << "inputs[" << j << "] * (" << input_weights(j,i) << ") + ";
-        }
-
-        for(Index k = 0; k < neurons_number-1; k++)
-        {
-             buffer << "self.hidden_states[" << k << "] * (" << input_recurrent_weights(k,i) << ") + ";
-        }
-
-        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << input_recurrent_weights(neurons_number-1,i) << ")";
-
-        buffer << " " << endl;
-    }
-
-
-    buffer << "\t\t" << endl;
-
-    buffer << "\t\tinput_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tinput_gate_activations[" << i << "] = ";
-
-        switch(recurrent_activation_function)
-        {
-        case ActivationFunction::HyperbolicTangent:
-            buffer << "np.tanh(input_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::RectifiedLinear:
-            buffer << "np.maximum(0.0, input_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::Logistic:
-            buffer << "1.0/(1.0 + np.exp(-input_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::Threshold:
-            buffer << "1.0 if input_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
-            break;
-
-        case ActivationFunction::SymmetricThreshold:
-            buffer << "1.0 if input_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
-            break;
-
-        case ActivationFunction::Linear:
-            buffer << "input_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::ScaledExponentialLinear:
-            buffer << "1.0507*1.67326*(np.exp(input_gate_combinations[" << i << "]) - 1.0) if input_gate_combinations[" << i << "] < 0.0 else 1.0507*input_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::SoftPlus:
-            buffer << "np.log(1.0 + np.exp(input_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::SoftSign:
-            buffer << "input_gate_combinations[" << i << "]/(1.0 - input_gate_combinations[" << i << "] ) if input_gate_combinations[" << i << "] < 0.0 else input_gate_combinations[" << i << "]/(1.0 + input_gate_combinations[" << i << "] )\n";
-            break;
-
-        case ActivationFunction::ExponentialLinear:
-            buffer << "1.0*(np.exp(input_gate_combinations[" << i << "]) - 1.0) if input_gate_combinations[" << i << "] < 0.0 else input_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::HardSigmoid:
-            ///@todo
-            break;
-
-        default:
-            buffer << "np.maximum(0.0, input_gate_combinations[" << i << "])\n";
-            break;
-        }
-    }
-
-    buffer << "\t\t" << endl;
-
-
-    // State gate
-
-    buffer << "\t\tstate_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tstate_gate_combinations[" << i << "] = " << state_biases(i) << " + ";
-
-        for(Index j = 0; j < inputs_number; j++)
-        {
-             buffer << "inputs[" << j << "] * (" << state_weights(j,i) << ") + ";
-        }
-
-        for(Index k = 0; k < neurons_number-1; k++)
-        {
-             buffer << "self.hidden_states[" << k << "] * (" << state_recurrent_weights(k,i) << ") + ";
-        }
-
-        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << state_recurrent_weights(neurons_number-1,i) << ")";
-
-        buffer << " " << endl;
-    }
-
-
-    buffer << "\t\t" << endl;
-
-    buffer << "\t\tstate_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tstate_gate_activations[" << i << "] = ";
-
-        switch(activation_function)
-        {
-        case ActivationFunction::HyperbolicTangent:
-            buffer << "np.tanh(state_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::RectifiedLinear:
-            buffer << "np.maximum(0.0, state_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::Logistic:
-            buffer << "1.0/(1.0 + np.exp(-state_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::Threshold:
-            buffer << "1.0 if state_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
-            break;
-
-        case ActivationFunction::SymmetricThreshold:
-            buffer << "1.0 if state_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
-            break;
-
-        case ActivationFunction::Linear:
-            buffer << "state_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::ScaledExponentialLinear:
-            buffer << "1.0507*1.67326*(np.exp(state_gate_combinations[" << i << "]) - 1.0) if state_gate_combinations[" << i << "] < 0.0 else 1.0507*state_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::SoftPlus:
-            buffer << "np.log(1.0 + np.exp(state_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::SoftSign:
-            buffer << "state_gate_combinations[" << i << "]/(1.0 - state_gate_combinations[" << i << "] ) if state_gate_combinations[" << i << "] < 0.0 else state_gate_combinations[" << i << "]/(1.0 + state_gate_combinations[" << i << "] )\n";
-            break;
-
-        case ActivationFunction::ExponentialLinear:
-            buffer << "1.0*(np.exp(state_gate_combinations[" << i << "]) - 1.0) if state_gate_combinations[" << i << "] < 0.0 else state_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::HardSigmoid:
-            ///@todo
-            break;
-
-        default:
-            buffer << "np.maximum(0.0, state_gate_combinations[" << i << "])\n";
-            break;
-        }
-    }
-
-    buffer << "\t\t" << endl;
-
-
-    // Output gate
-
-    buffer << "\t\toutput_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\toutput_gate_combinations[" << i << "] = " << output_biases(i) << " + ";
-
-        for(Index j = 0; j < inputs_number; j++)
-        {
-             buffer << "inputs[" << j << "] * (" << output_weights(j,i) << ") + ";
-        }
-
-        for(Index k = 0; k < neurons_number-1; k++)
-        {
-             buffer << "self.hidden_states[" << k << "] * (" << output_recurrent_weights(k,i) << ") + ";
-        }
-
-        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << output_recurrent_weights(neurons_number-1,i) << ")";
-
-        buffer << " " << endl;
-    }
-
-
-    buffer << "\t\t" << endl;
-
-    buffer << "\t\toutput_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\toutput_gate_activations[" << i << "] = ";
-
-        switch(activation_function)
-        {
-        case ActivationFunction::HyperbolicTangent:
-            buffer << "np.tanh(output_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::RectifiedLinear:
-            buffer << "np.maximum(0.0, output_gate_combinations[" << i << "])\n";
-            break;
-
-        case ActivationFunction::Logistic:
-            buffer << "1.0/(1.0 + np.exp(-output_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::Threshold:
-            buffer << "1.0 if output_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
-            break;
-
-        case ActivationFunction::SymmetricThreshold:
-            buffer << "1.0 if output_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
-            break;
-
-        case ActivationFunction::Linear:
-            buffer << "output_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::ScaledExponentialLinear:
-            buffer << "1.0507*1.67326*(np.exp(output_gate_combinations[" << i << "]) - 1.0) if output_gate_combinations[" << i << "] < 0.0 else 1.0507*output_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::SoftPlus:
-            buffer << "np.log(1.0 + np.exp(output_gate_combinations[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::SoftSign:
-            buffer << "output_gate_combinations[" << i << "]/(1.0 - output_gate_combinations[" << i << "] ) if output_gate_combinations[" << i << "] < 0.0 else output_gate_combinations[" << i << "]/(1.0 + output_gate_combinations[" << i << "] )\n";
-            break;
-
-        case ActivationFunction::ExponentialLinear:
-            buffer << "1.0*(np.exp(output_gate_combinations[" << i << "]) - 1.0) if output_gate_combinations[" << i << "] < 0.0 else output_gate_combinations[" << i << "]\n";
-            break;
-
-        case ActivationFunction::HardSigmoid:
-            ///@todo
-            break;
-
-        default:
-            buffer << "np.maximum(0.0, output_gate_combinations[" << i << "])\n";
-            break;
-        }
-    }
-
-    buffer << "\t\t" << endl;
-
-
-    // Cell states
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tself.cell_states[" << i << "] = forget_gate_activations[" << i << "] * self.cell_states[" << i << "] + input_gate_activations[" << i << "] * state_gate_activations[" << i << "] \n";
-    }
-
-    buffer << " " << endl;
-
-    buffer << "\t\t" << endl;
-
-    buffer << "\t\tcell_state_activations = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tcell_state_activations[" << i << "] = ";
-
-        switch(activation_function)
-        {
-        case ActivationFunction::HyperbolicTangent:
-            buffer << "np.tanh(self.cell_states[" << i << "])\n";
-            break;
-
-        case ActivationFunction::RectifiedLinear:
-            buffer << "np.maximum(0.0, self.cell_states[" << i << "])\n";
-            break;
-
-        case ActivationFunction::Logistic:
-            buffer << "1.0/(1.0 + np.exp(-self.cell_states[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::Threshold:
-            buffer << "1.0 if self.cell_states[" << i << "] >= 0.0 else 0.0\n";
-            break;
-
-        case ActivationFunction::SymmetricThreshold:
-            buffer << "1.0 if self.cell_states[" << i << "] >= 0.0 else -1.0\n";
-            break;
-
-        case ActivationFunction::Linear:
-            buffer << "self.cell_states[" << i << "]\n";
-            break;
-
-        case ActivationFunction::ScaledExponentialLinear:
-            buffer << "1.0507*1.67326*(np.exp(self.cell_states[" << i << "]) - 1.0) if self.cell_states[" << i << "] < 0.0 else 1.0507*self.cell_states[" << i << "]\n";
-            break;
-
-        case ActivationFunction::SoftPlus:
-            buffer << "np.log(1.0 + np.exp(self.cell_states[" << i << "]))\n";
-            break;
-
-        case ActivationFunction::SoftSign:
-            buffer << "self.cell_states[" << i << "]/(1.0 - self.cell_states[" << i << "] ) if self.cell_states[" << i << "] < 0.0 else self.cell_states[" << i << "]/(1.0 + self.cell_states[" << i << "] )\n";
-            break;
-
-        case ActivationFunction::ExponentialLinear:
-            buffer << "1.0*(np.exp(self.cell_states[" << i << "]) - 1.0) if self.cell_states[" << i << "] < 0.0 else self.cell_states[" << i << "]\n";
-            break;
-
-        case ActivationFunction::HardSigmoid:
-            ///@todo
-            break;
-
-        default:
-            buffer << "np.maximum(0.0, self.cell_states[" << i << "])\n";
-            break;
-        }
-    }
-
-    buffer << "\t\t" << endl;
-
-
-    // Hidden state
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tself.hidden_states[" << i << "] = output_gate_activations[" << i << "] * cell_state_activations[" << i << "]\n";
-    }
-
-    buffer << " " << endl;
-
-    buffer << "\t\t" << endl;
-
-
-    // LSTM output
-
-    buffer << "\t\tlong_short_term_memory_output = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\t\tlong_short_term_memory_output[" << i << "] = self.hidden_states[" << i << "]\n";
-    }
-
-    return buffer.str();
-}
 
 void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {

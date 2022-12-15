@@ -1,299 +1,197 @@
-// Artificial Intelligence Techniques SL	
-// artelnics@artelnics.com	
-// 
-// Your model has been exported to this file.
-// You can manage it with the 'neural network' method.	
-// Example:
-// 
-// 	vector<float> sample(n);	
-// 	sample[0] = 1;	
-// 	sample[1] = 2;	
-// 	sample[n] = 10;	
-// 	vector<float> outputs = neural_network(sample);
-// 
-// Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,	
-// however you can loop through neural network function to get multiple outputs.	
+/**
+Artificial Intelligence Techniques SL	
+artelnics@artelnics.com	
 
+Your model has been exported to this c file.
+You can manage it with the main method, where you 	
+can change the values of your inputs. For example:
+
+if we want to add these 3 values (0.3, 2.5 and 1.8)
+to our 3 inputs (Input_1, Input_2 and Input_1), the
+main program has to look like this:
+	
+int main(){ 
+	vector<float> inputs(3);
+	
+	const float asdas  = 0.3;
+	inputs[0] = asdas;
+	const float input2 = 2.5;
+	inputs[1] = input2;
+	const float input3 = 1.8;
+	inputs[2] = input3;
+	. . .
+
+
+Inputs Names:
+	0) input_0
+	1) input_1
+	2) input_2
+	3) input_3
+	4) input_4
+	0) ouput_0
+*/
+
+
+#include <iostream>
 #include <vector>
+#include <math.h>
+#include <stdio.h>
+
 
 using namespace std;
 
-vector<float> scaling_layer(const vector<float>& inputs)
+
+vector<float> calculate_outputs(const vector<float>& inputs)
 {
-	vector<float> outputs(5);
+	const float input_0 = inputs[0];
+	const float input_1 = inputs[1];
+	const float input_2 = inputs[2];
+	const float input_3 = inputs[3];
+	const float input_4 = inputs[4];
 
-	outputs[0] = (inputs[0]-2886.380615)/3152.573242;
-	outputs[1] = (inputs[1]-6.782301903)/5.918128014;
-	outputs[2] = (inputs[2]-0.136548236)/0.09354072809;
-	outputs[3] = (inputs[3]-50.86074448)/15.57278538;
-	outputs[4] = (inputs[4]-0.01113987993)/0.01315023471;
+	double scaled_input_0 = (input_0-2886.380615)/3152.573242;
+	double scaled_input_1 = (input_1-6.782301903)/5.918128014;
+	double scaled_input_2 = (input_2-0.136548236)/0.09354072809;
+	double scaled_input_3 = (input_3-50.86074448)/15.57278538;
+	double scaled_input_4 = (input_4-0.01113987993)/0.01315023471;
 
-	return outputs;
+	double perceptron_layer_1_output_0 = tanh( 0.643919 + (scaled_*-0.594028) + (scaled_*-0.102154) + (scaled_*-0.868622) + (scaled_*0.221574) + (scaled_*-0.145109) );
+	double perceptron_layer_1_output_1 = tanh( 0.185916 + (scaled_*0.144227) + (scaled_*0.0590693) + (scaled_*-0.0809972) + (scaled_*0.191018) + (scaled_*0.184544) );
+	double perceptron_layer_1_output_2 = tanh( 0.108583 + (scaled_*1.21012) + (scaled_*0.975115) + (scaled_*-1.16161) + (scaled_*-0.154521) + (scaled_*-0.464992) );
+	double perceptron_layer_1_output_3 = tanh( -0.146318 + (scaled_*-0.0764351) + (scaled_*0.193485) + (scaled_*0.14585) + (scaled_*0.18401) + (scaled_*-0.120219) );
+	double perceptron_layer_1_double output_4 = tanh( 0.00816371 + (scaled_*0.0324083) + (scaled_*0.212127) + (scaled_*-0.219034) + (scaled_*-0.114936) + (scaled_*0.133852) );
+	double perceptron_layer_1_output_5 = tanh( 1.62018 + (scaled_*1.68499) + (scaled_*-0.300188) + (scaled_*0.455115) + (scaled_*0.46788) + (scaled_*0.380378) );
+	double perceptron_layer_1_output_6 = tanh( -0.0485595 + (scaled_*0.0634535) + (scaled_*-0.465133) + (scaled_*0.0542446) + (scaled_*-0.388361) + (scaled_*0.159494) );
+	double perceptron_layer_1_output_7 = tanh( 0.0357532 + (scaled_*-0.0729044) + (scaled_*0.10693) + (scaled_*0.159654) + (scaled_*-0.111869) + (scaled_*-0.113801) );
+	double perceptron_layer_1_output_8 = tanh( -1.37787 + (scaled_*-1.58569) + (scaled_*1.30629) + (scaled_*0.00396758) + (scaled_*0.0157961) + (scaled_*0.248692) );
+	double perceptron_layer_1_output_9 = tanh( 0.412771 + (scaled_*0.216747) + (scaled_*-1.20893) + (scaled_*0.213271) + (scaled_*0.909054) + (scaled_*-0.361389) );
+	double perceptron_layer_1_output_10 = tanh( 0.814776 + (scaled_*0.129118) + (scaled_*0.290146) + (scaled_*1.00732) + (scaled_*0.173542) + (scaled_*-0.77338) );
+	double perceptron_layer_1_output_11 = tanh( 0.162515 + (scaled_*-0.0278774) + (scaled_*-0.0855513) + (scaled_*0.271165) + (scaled_*-0.0123834) + (scaled_*0.167958) );
+	double perceptron_layer_1_output_12 = tanh( -0.128562 + (scaled_*0.10715) + (scaled_*0.0816353) + (scaled_*-0.280996) + (scaled_*0.137199) + (scaled_*0.14978) );
+	double perceptron_layer_1_output_13 = tanh( 0.998629 + (scaled_*0.703659) + (scaled_*-0.119222) + (scaled_*0.576745) + (scaled_*-0.346351) + (scaled_*1.21933) );
+	double perceptron_layer_1_output_14 = tanh( -0.115955 + (scaled_*0.0976702) + (scaled_*0.138614) + (scaled_*0.187865) + (scaled_*0.178554) + (scaled_*-0.054008) );
+	double perceptron_layer_1_output_15 = tanh( -0.742596 + (scaled_*0.529844) + (scaled_*-0.654644) + (scaled_*0.5297) + (scaled_*-0.300071) + (scaled_*0.0998728) );
+	double perceptron_layer_1_output_16 = tanh( -0.409654 + (scaled_*-0.0731382) + (scaled_*-0.523467) + (scaled_*0.943288) + (scaled_*-0.525875) + (scaled_*0.36504) );
+	double perceptron_layer_1_output_17 = tanh( -0.0767377 + (scaled_*-0.0417581) + (scaled_*0.122802) + (scaled_*0.0813451) + (scaled_*0.144534) + (scaled_*-0.128455) );
+	double perceptron_layer_1_output_18 = tanh( 0.153437 + (scaled_*0.193388) + (scaled_*-0.0734411) + (scaled_*-0.175957) + (scaled_*-0.236308) + (scaled_*0.165722) );
+	double perceptron_layer_1_output_19 = tanh( -0.775774 + (scaled_*-0.395496) + (scaled_*-0.256842) + (scaled_*-0.283968) + (scaled_*0.326949) + (scaled_*-0.60096) );
+	double perceptron_layer_1_output_20 = tanh( 2.08069 + (scaled_*-0.528782) + (scaled_*-1.57966) + (scaled_*-0.341087) + (scaled_*-0.295081) + (scaled_*0.494887) );
+	double perceptron_layer_1_output_21 = tanh( 0.938147 + (scaled_*0.713931) + (scaled_*0.529195) + (scaled_*0.927952) + (scaled_*0.10587) + (scaled_*0.127334) );
+	double perceptron_layer_1_output_22 = tanh( -0.934895 + (scaled_*1.07448) + (scaled_*0.0466623) + (scaled_*0.325726) + (scaled_*0.0695758) + (scaled_*0.477545) );
+	double perceptron_layer_1_output_23 = tanh( 0.0383572 + (scaled_*0.24387) + (scaled_*0.27828) + (scaled_*-0.010099) + (scaled_*0.244825) + (scaled_*0.168929) );
+	double perceptron_layer_1_output_24 = tanh( -0.181073 + (scaled_*-0.0427041) + (scaled_*-0.0804859) + (scaled_*-0.226652) + (scaled_*-0.118263) + (scaled_*-0.068492) );
+	double perceptron_layer_1_output_25 = tanh( 0.0707144 + (scaled_*-0.140345) + (scaled_*-0.0477795) + (scaled_*-0.123571) + (scaled_*-0.168664) + (scaled_*-0.140804) );
+	double perceptron_layer_1_output_26 = tanh( 0.172781 + (scaled_*0.133336) + (scaled_*-0.312112) + (scaled_*0.0187486) + (scaled_*0.0967072) + (scaled_*0.00949857) );
+	double perceptron_layer_1_output_27 = tanh( -0.110677 + (scaled_*0.133144) + (scaled_*0.0946114) + (scaled_*0.230999) + (scaled_*0.0643557) + (scaled_*0.0501479) );
+	double perceptron_layer_1_output_28 = tanh( -0.72813 + (scaled_*-0.180047) + (scaled_*-0.412537) + (scaled_*-0.661762) + (scaled_*-0.0901612) + (scaled_*0.36367) );
+	double perceptron_layer_1_output_29 = tanh( 0.0411201 + (scaled_*0.182678) + (scaled_*-0.154616) + (scaled_*-0.0720856) + (scaled_*0.00526289) + (scaled_*-0.126274) );
+	double perceptron_layer_1_output_30 = tanh( -2.28283 + (scaled_*-2.66344) + (scaled_*-0.476387) + (scaled_*0.579319) + (scaled_*0.262415) + (scaled_*1.32031) );
+	double perceptron_layer_1_output_31 = tanh( 0.175262 + (scaled_*-0.134958) + (scaled_*0.180923) + (scaled_*0.169164) + (scaled_*-0.103352) + (scaled_*0.0229379) );
+	double perceptron_layer_1_output_32 = tanh( 0.669908 + (scaled_*-0.00599568) + (scaled_*-0.0545351) + (scaled_*-0.379955) + (scaled_*-0.286859) + (scaled_*-0.973591) );
+	double perceptron_layer_1_output_33 = tanh( -0.334142 + (scaled_*-0.538545) + (scaled_*-0.339999) + (scaled_*0.15772) + (scaled_*0.0242066) + (scaled_*0.118649) );
+	double perceptron_layer_1_output_34 = tanh( -0.00326882 + (scaled_*-0.138194) + (scaled_*-0.0645933) + (scaled_*-0.184386) + (scaled_*0.144806) + (scaled_*-0.123196) );
+	double perceptron_layer_1_output_35 = tanh( -0.000719587 + (scaled_*0.394824) + (scaled_*-0.120924) + (scaled_*-0.107688) + (scaled_*-0.209714) + (scaled_*-0.231054) );
+	double perceptron_layer_1_output_36 = tanh( 0.110647 + (scaled_*-1.3779) + (scaled_*0.827955) + (scaled_*0.599462) + (scaled_*-0.151988) + (scaled_*0.566579) );
+	double perceptron_layer_1_output_37 = tanh( 0.165553 + (scaled_*0.0818642) + (scaled_*-0.0113753) + (scaled_*-0.0396362) + (scaled_*0.12037) + (scaled_*-0.112669) );
+	double perceptron_layer_1_output_38 = tanh( 0.282099 + (scaled_*0.259311) + (scaled_*0.0776433) + (scaled_*0.14121) + (scaled_*-0.0585107) + (scaled_*0.208758) );
+	double perceptron_layer_1_output_39 = tanh( 0.505877 + (scaled_*0.318362) + (scaled_*0.28832) + (scaled_*0.31649) + (scaled_*-0.120393) + (scaled_*0.332025) );
+	double perceptron_layer_1_output_40 = tanh( -0.017447 + (scaled_*-0.374449) + (scaled_*-0.133581) + (scaled_*-0.234294) + (scaled_*-0.336565) + (scaled_*-0.445613) );
+	double perceptron_layer_1_output_41 = tanh( 0.214997 + (scaled_*0.00292207) + (scaled_*-0.487267) + (scaled_*-0.120279) + (scaled_*0.310835) + (scaled_*-0.0107261) );
+	double perceptron_layer_1_output_42 = tanh( 0.205284 + (scaled_*0.141314) + (scaled_*-0.10132) + (scaled_*-0.123961) + (scaled_*-0.0387978) + (scaled_*0.0836628) );
+	double perceptron_layer_1_output_43 = tanh( -0.17549 + (scaled_*0.0893281) + (scaled_*-0.00266937) + (scaled_*0.222599) + (scaled_*-0.0301058) + (scaled_*0.133876) );
+	double perceptron_layer_1_output_44 = tanh( -0.0973073 + (scaled_*0.0896338) + (scaled_*0.104991) + (scaled_*0.0493422) + (scaled_*0.0105825) + (scaled_*-0.114916) );
+	double perceptron_layer_1_output_45 = tanh( -0.220223 + (scaled_*-0.129615) + (scaled_*0.153929) + (scaled_*0.18009) + (scaled_*-0.161148) + (scaled_*-0.0749689) );
+	double perceptron_layer_1_output_46 = tanh( -0.00903378 + (scaled_*0.00926416) + (scaled_*-0.0578438) + (scaled_*0.210238) + (scaled_*-0.0439274) + (scaled_*0.161373) );
+	double perceptron_layer_1_output_47 = tanh( -0.0905298 + (scaled_*0.323174) + (scaled_*-0.147056) + (scaled_*-0.32768) + (scaled_*0.476011) + (scaled_*-0.764583) );
+	double perceptron_layer_1_output_48 = tanh( -0.47133 + (scaled_*0.857388) + (scaled_*1.48482) + (scaled_*0.34879) + (scaled_*-0.125704) + (scaled_*-0.0113532) );
+	double perceptron_layer_1_output_49 = tanh( 0.123305 + (scaled_*0.0101806) + (scaled_*0.107922) + (scaled_*0.0832219) + (scaled_*0.106908) + (scaled_*0.0764241) );
+	double perceptron_layer_1_output_50 = tanh( -1.81783 + (scaled_*-0.212909) + (scaled_*1.44329) + (scaled_*0.93563) + (scaled_*0.00545602) + (scaled_*-0.666803) );
+	double perceptron_layer_1_output_51 = tanh( -0.341217 + (scaled_*0.217233) + (scaled_*-0.842882) + (scaled_*0.111186) + (scaled_*-0.437928) + (scaled_*-0.884543) );
+	double perceptron_layer_1_output_52 = tanh( 0.812335 + (scaled_*-0.409608) + (scaled_*-0.0085211) + (scaled_*0.216908) + (scaled_*-0.317421) + (scaled_*-0.298833) );
+	double perceptron_layer_1_output_53 = tanh( 1.17152 + (scaled_*1.55818) + (scaled_*0.28487) + (scaled_*1.41118) + (scaled_*-0.116902) + (scaled_*0.628183) );
+	double perceptron_layer_1_output_54 = tanh( -0.473027 + (scaled_*0.302644) + (scaled_*0.334822) + (scaled_*0.0198361) + (scaled_*-0.046429) + (scaled_*-0.328254) );
+	double perceptron_layer_1_output_55 = tanh( -0.101118 + (scaled_*0.0630049) + (scaled_*-0.0111419) + (scaled_*0.202784) + (scaled_*0.039796) + (scaled_*0.126447) );
+	double perceptron_layer_1_output_56 = tanh( 0.635951 + (scaled_*1.40725) + (scaled_*1.2436) + (scaled_*1.08542) + (scaled_*-0.313132) + (scaled_*0.36502) );
+	double perceptron_layer_1_output_57 = tanh( -2.4195 + (scaled_*-3.17465) + (scaled_*0.14364) + (scaled_*0.0429908) + (scaled_*0.147083) + (scaled_*-1.53182) );
+	double perceptron_layer_1_output_58 = tanh( -3.0937 + (scaled_*-4.80404) + (scaled_*0.375327) + (scaled_*-0.177181) + (scaled_*0.0640797) + (scaled_*-0.662182) );
+	double perceptron_layer_1_output_59 = tanh( -0.103612 + (scaled_*0.136356) + (scaled_*-0.376235) + (scaled_*-0.141768) + (scaled_*0.1186) + (scaled_*0.0595966) );
+	double perceptron_layer_1_output_60 = tanh( 0.00743489 + (scaled_*0.012985) + (scaled_*0.0820185) + (scaled_*-0.207136) + (scaled_*0.0331804) + (scaled_*-0.18702) );
+	double perceptron_layer_1_output_61 = tanh( -0.103655 + (scaled_*-0.202219) + (scaled_*0.00147657) + (scaled_*-0.0217945) + (scaled_*0.119499) + (scaled_*0.213322) );
+	double perceptron_layer_1_output_62 = tanh( 0.211613 + (scaled_*-0.00590132) + (scaled_*0.295501) + (scaled_*-0.507404) + (scaled_*0.0051908) + (scaled_*0.366352) );
+	double perceptron_layer_1_output_63 = tanh( -1.08545 + (scaled_*0.570067) + (scaled_*0.980077) + (scaled_*-1.35245) + (scaled_*-0.18916) + (scaled_*-0.499815) );
+	double perceptron_layer_1_output_64 = tanh( -0.16562 + (scaled_*-0.0345172) + (scaled_*0.00632182) + (scaled_*0.143613) + (scaled_*-0.121836) + (scaled_*0.0928976) );
+	double perceptron_layer_1_output_65 = tanh( 0.378089 + (scaled_*-0.0572145) + (scaled_*0.18709) + (scaled_*-0.268652) + (scaled_*0.255188) + (scaled_*-0.356244) );
+	double perceptron_layer_1_output_66 = tanh( 0.041463 + (scaled_*-0.124718) + (scaled_*-0.245615) + (scaled_*-0.160542) + (scaled_*-0.0593831) + (scaled_*0.0352114) );
+	double perceptron_layer_1_output_67 = tanh( 0.287055 + (scaled_*0.473477) + (scaled_*-0.160279) + (scaled_*0.939358) + (scaled_*-0.816994) + (scaled_*0.445784) );
+	double perceptron_layer_1_output_68 = tanh( 0.235187 + (scaled_*0.315787) + (scaled_*0.113288) + (scaled_*-0.270437) + (scaled_*-0.10072) + (scaled_*0.0191489) );
+	double perceptron_layer_1_output_69 = tanh( 1.1886 + (scaled_*2.4322) + (scaled_*-1.07758) + (scaled_*-0.19262) + (scaled_*0.078145) + (scaled_*-0.608338) );
+	double perceptron_layer_1_output_70 = tanh( 0.0549624 + (scaled_*0.122149) + (scaled_*0.160383) + (scaled_*0.198718) + (scaled_*0.101306) + (scaled_*-0.0139897) );
+	double perceptron_layer_1_output_71 = tanh( 0.000419917 + (scaled_*-0.224174) + (scaled_*0.0998027) + (scaled_*0.0351046) + (scaled_*0.0674186) + (scaled_*0.122164) );
+	double perceptron_layer_1_output_72 = tanh( 0.421641 + (scaled_*-0.0435334) + (scaled_*-0.769298) + (scaled_*-0.0878589) + (scaled_*0.47388) + (scaled_*0.161513) );
+	double perceptron_layer_1_output_73 = tanh( 0.281336 + (scaled_*-0.475803) + (scaled_*0.230367) + (scaled_*0.169396) + (scaled_*1.00138) + (scaled_*-0.353899) );
+	double perceptron_layer_1_output_74 = tanh( -0.029858 + (scaled_*0.311453) + (scaled_*1.40914) + (scaled_*-0.164176) + (scaled_*-0.553544) + (scaled_*-0.807027) );
+	double perceptron_layer_1_output_75 = tanh( 0.0250845 + (scaled_*-0.118911) + (scaled_*-0.0486356) + (scaled_*-0.275471) + (scaled_*-0.122976) + (scaled_*-0.0421399) );
+	double perceptron_layer_1_output_76 = tanh( 0.167285 + (scaled_*0.166836) + (scaled_*0.0927212) + (scaled_*-0.296374) + (scaled_*-0.917746) + (scaled_*0.65998) );
+	double perceptron_layer_1_output_77 = tanh( 0.300948 + (scaled_*0.0394368) + (scaled_*0.37562) + (scaled_*-0.341614) + (scaled_*0.0890927) + (scaled_*0.150389) );
+	double perceptron_layer_1_output_78 = tanh( -0.36313 + (scaled_*0.000651902) + (scaled_*0.0604584) + (scaled_*-0.326537) + (scaled_*-0.103978) + (scaled_*-0.137392) );
+	double perceptron_layer_1_output_79 = tanh( 0.410524 + (scaled_*-0.29622) + (scaled_*-0.186537) + (scaled_*-0.437902) + (scaled_*-0.133775) + (scaled_*-0.0417957) );
+	double perceptron_layer_1_output_80 = tanh( -0.389911 + (scaled_*-0.291664) + (scaled_*0.0260256) + (scaled_*0.733337) + (scaled_*-0.147238) + (scaled_*-0.176655) );
+	double perceptron_layer_1_output_81 = tanh( -0.158092 + (scaled_*0.204963) + (scaled_*0.0474772) + (scaled_*-0.0551232) + (scaled_*-0.0606602) + (scaled_*-0.201447) );
+	double perceptron_layer_1_output_82 = tanh( 0.038766 + (scaled_*0.177881) + (scaled_*-0.205133) + (scaled_*0.0319683) + (scaled_*0.0845458) + (scaled_*0.0306687) );
+	double perceptron_layer_1_output_83 = tanh( -0.215886 + (scaled_*0.0933463) + (scaled_*0.476076) + (scaled_*-0.580093) + (scaled_*0.888135) + (scaled_*-0.359949) );
+	double perceptron_layer_1_output_84 = tanh( -0.196901 + (scaled_*-0.26014) + (scaled_*0.04582) + (scaled_*-0.0627642) + (scaled_*0.0992004) + (scaled_*0.0664914) );
+	double perceptron_layer_1_output_85 = tanh( 0.0245486 + (scaled_*0.00689128) + (scaled_*0.108552) + (scaled_*0.179695) + (scaled_*0.142708) + (scaled_*0.00476263) );
+	double perceptron_layer_1_output_86 = tanh( 2.28959 + (scaled_*3.85765) + (scaled_*0.178444) + (scaled_*0.251911) + (scaled_*-0.331968) + (scaled_*0.383546) );
+	double perceptron_layer_1_output_87 = tanh( -1.45119 + (scaled_*-0.932511) + (scaled_*-0.0339315) + (scaled_*1.16958) + (scaled_*-0.0288431) + (scaled_*0.692823) );
+	double perceptron_layer_1_output_88 = tanh( 0.930987 + (scaled_*-1.24331) + (scaled_*-0.854004) + (scaled_*0.0413623) + (scaled_*0.163686) + (scaled_*-0.388623) );
+	double perceptron_layer_1_output_89 = tanh( 0.323338 + (scaled_*-0.0589426) + (scaled_*-0.291958) + (scaled_*-0.144147) + (scaled_*0.243515) + (scaled_*-0.147315) );
+	double perceptron_layer_1_output_90 = tanh( -0.624921 + (scaled_*0.184053) + (scaled_*0.0289524) + (scaled_*1.50374) + (scaled_*-0.240252) + (scaled_*0.0179131) );
+	double perceptron_layer_1_output_91 = tanh( -1.24767 + (scaled_*1.42497) + (scaled_*-0.436601) + (scaled_*-0.184763) + (scaled_*0.296443) + (scaled_*0.423824) );
+	double perceptron_layer_1_output_92 = tanh( -0.0635145 + (scaled_*0.0810235) + (scaled_*0.119007) + (scaled_*-0.0500792) + (scaled_*0.106396) + (scaled_*-0.135983) );
+	double perceptron_layer_1_output_93 = tanh( -0.183043 + (scaled_*-0.120801) + (scaled_*-0.390855) + (scaled_*0.515875) + (scaled_*-0.0114771) + (scaled_*-0.451761) );
+	double perceptron_layer_1_output_94 = tanh( 0.71188 + (scaled_*-0.412473) + (scaled_*-0.41684) + (scaled_*-0.0959718) + (scaled_*0.34276) + (scaled_*0.904636) );
+	double perceptron_layer_1_output_95 = tanh( -0.437739 + (scaled_*-1.1204) + (scaled_*-1.41716) + (scaled_*-0.859526) + (scaled_*0.221352) + (scaled_*0.609454) );
+	double perceptron_layer_1_output_96 = tanh( -0.0989964 + (scaled_*0.17219) + (scaled_*-0.0816459) + (scaled_*-0.0387207) + (scaled_*0.120232) + (scaled_*0.0570321) );
+	double perceptron_layer_1_output_97 = tanh( -0.153168 + (scaled_*-0.149843) + (scaled_*-0.101888) + (scaled_*-0.386934) + (scaled_*-0.26059) + (scaled_*0.0685152) );
+	double perceptron_layer_1_output_98 = tanh( 0.0139667 + (scaled_*-0.0605234) + (scaled_*0.0884043) + (scaled_*0.194978) + (scaled_*-0.120837) + (scaled_*0.0835552) );
+	double perceptron_layer_1_output_99 = tanh( -3.19098 + (scaled_*-3.96537) + (scaled_*0.164638) + (scaled_*-0.326796) + (scaled_*0.0932564) + (scaled_*-0.8567) );
+
+	double perceptron_layer_2_output_0 = ( -0.190094 + (perceptron_layer_1_output_0*0.962713) + (perceptron_layer_1_output_1*0.232163) + (perceptron_layer_1_output_2*-1.09266) + (perceptron_layer_1_output_3*0.11656) + (perceptron_layer_1_output_4*0.199491) + (perceptron_layer_1_output_5*1.1126) + (perceptron_layer_1_output_6*-0.371509) + (perceptron_layer_1_output_7*-0.15473) + (perceptron_layer_1_output_8*2.80812) + (perceptron_layer_1_output_9*-0.605129) + (perceptron_layer_1_output_10*-1.03815) + (perceptron_layer_1_output_11*-0.380928) + (perceptron_layer_1_output_12*0.294216) + (perceptron_layer_1_output_13*1.34421) + (perceptron_layer_1_output_14*-0.134167) + (perceptron_layer_1_output_15*1.08158) + (perceptron_layer_1_output_16*-1.01342) + (perceptron_layer_1_output_17*-0.000229261) + (perceptron_layer_1_output_18*-0.274797) + (perceptron_layer_1_output_19*-0.86289) + (perceptron_layer_1_output_20*1.58781) + (perceptron_layer_1_output_21*1.19568) + (perceptron_layer_1_output_22*-2.10067) + (perceptron_layer_1_output_23*0.299368) + (perceptron_layer_1_output_24*0.217899) + (perceptron_layer_1_output_25*0.0270415) + (perceptron_layer_1_output_26*0.306888) + (perceptron_layer_1_output_27*-0.212362) + (perceptron_layer_1_output_28*0.913117) + (perceptron_layer_1_output_29*0.16992) + (perceptron_layer_1_output_30*-1.36209) + (perceptron_layer_1_output_31*-0.458995) + (perceptron_layer_1_output_32*-0.719512) + (perceptron_layer_1_output_33*0.437344) + (perceptron_layer_1_output_34*0.149129) + (perceptron_layer_1_output_35*0.585303) + (perceptron_layer_1_output_36*-1.31392) + (perceptron_layer_1_output_37*0.157007) + (perceptron_layer_1_output_38*0.208938) + (perceptron_layer_1_output_39*0.57222) + (perceptron_layer_1_output_40*-0.607026) + (perceptron_layer_1_output_41*0.540999) + (perceptron_layer_1_output_42*0.00607258) + (perceptron_layer_1_output_43*-0.292672) + (perceptron_layer_1_output_44*0.0275012) + (perceptron_layer_1_output_45*-0.0696947) + (perceptron_layer_1_output_46*-0.297209) + (perceptron_layer_1_output_47*-0.906578) + (perceptron_layer_1_output_48*-1.4827) + (perceptron_layer_1_output_49*-0.0706596) + (perceptron_layer_1_output_50*1.77643) + (perceptron_layer_1_output_51*-0.795111) + (perceptron_layer_1_output_52*-0.728717) + (perceptron_layer_1_output_53*-1.92957) + (perceptron_layer_1_output_54*0.666141) + (perceptron_layer_1_output_55*-0.259004) + (perceptron_layer_1_output_56*-1.73512) + (perceptron_layer_1_output_57*3.12673) + (perceptron_layer_1_output_58*3.22317) + (perceptron_layer_1_output_59*0.387149) + (perceptron_layer_1_output_60*0.327717) + (perceptron_layer_1_output_61*-0.192066) + (perceptron_layer_1_output_62*0.555014) + (perceptron_layer_1_output_63*-1.87264) + (perceptron_layer_1_output_64*-0.235892) + (perceptron_layer_1_output_65*0.641436) + (perceptron_layer_1_output_66*0.163051) + (perceptron_layer_1_output_67*-0.762146) + (perceptron_layer_1_output_68*-0.234961) + (perceptron_layer_1_output_69*1.35547) + (perceptron_layer_1_output_70*-0.128727) + (perceptron_layer_1_output_71*-0.2733) + (perceptron_layer_1_output_72*0.769795) + (perceptron_layer_1_output_73*-0.400411) + (perceptron_layer_1_output_74*1.38017) + (perceptron_layer_1_output_75*0.284505) + (perceptron_layer_1_output_76*-0.857361) + (perceptron_layer_1_output_77*0.385967) + (perceptron_layer_1_output_78*0.513918) + (perceptron_layer_1_output_79*0.465696) + (perceptron_layer_1_output_80*0.885218) + (perceptron_layer_1_output_81*0.266996) + (perceptron_layer_1_output_82*0.28458) + (perceptron_layer_1_output_83*-0.788805) + (perceptron_layer_1_output_84*-0.189311) + (perceptron_layer_1_output_85*-0.116117) + (perceptron_layer_1_output_86*2.02627) + (perceptron_layer_1_output_87*1.50552) + (perceptron_layer_1_output_88*-0.988967) + (perceptron_layer_1_output_89*0.406076) + (perceptron_layer_1_output_90*1.27442) + (perceptron_layer_1_output_91*1.08058) + (perceptron_layer_1_output_92*0.106909) + (perceptron_layer_1_output_93*-0.58715) + (perceptron_layer_1_output_94*-0.871181) + (perceptron_layer_1_output_95*-1.39286) + (perceptron_layer_1_output_96*0.107477) + (perceptron_layer_1_output_97*0.45318) + (perceptron_layer_1_output_98*-0.413362) + (perceptron_layer_1_output_99*-4.69429) );
+
+	double unscaling_layer_output_0=perceptron_layer_2_output_0*6.898656845+124.8359451;
+
+	output_4 = max(-3.402823466e+38, unscaling_layer_output_0);
+	output_4 = min(3.402823466e+38, unscaling_layer_output_0);
+
+	vector<float> out(1);
+	out[0] = output0;
+
+	return out;
 }
 
-vector<float> perceptron_layer_1(const vector<float>& inputs)
-{
-	vector<float> combinations(100);
 
-	combinations[0] = -0.0698364 +0.00586576*inputs[0] -0.0355319*inputs[1] -0.0943614*inputs[2] +0.0568472*inputs[3] -0.0510303*inputs[4];
-	combinations[1] = 0.0699732 -0.00585386*inputs[0] +0.0355901*inputs[1] +0.094504*inputs[2] -0.0569039*inputs[3] +0.0511303*inputs[4];
-	combinations[2] = 0.0701439 -0.00583899*inputs[0] +0.0356625*inputs[1] +0.0946814*inputs[2] -0.0569744*inputs[3] +0.0512547*inputs[4];
-	combinations[3] = 0.292772 +0.0153026*inputs[0] +0.336029*inputs[1] +0.490543*inputs[2] +0.399071*inputs[3] -0.410977*inputs[4];
-	combinations[4] = -0.07001 +0.00585065*inputs[0] -0.0356057*inputs[1] -0.0945423*inputs[2] +0.0569192*inputs[3] -0.0511571*inputs[4];
-	combinations[5] = -0.0699933 +0.00585209*inputs[0] -0.0355986*inputs[1] -0.0945249*inputs[2] +0.0569123*inputs[3] -0.0511449*inputs[4];
-	combinations[6] = 0.0700872 -0.00584397*inputs[0] +0.0356384*inputs[1] +0.0946224*inputs[2] -0.056951*inputs[3] +0.0512133*inputs[4];
-	combinations[7] = 0.0703364 -0.00582227*inputs[0] +0.0357438*inputs[1] +0.0948816*inputs[2] -0.0570534*inputs[3] +0.0513953*inputs[4];
-	combinations[8] = -0.300838 -1.03197*inputs[0] -0.694751*inputs[1] -0.402167*inputs[2] +0.170191*inputs[3] +0.508642*inputs[4];
-	combinations[9] = 2.40272 +2.58235*inputs[0] +0.183794*inputs[1] +0.628919*inputs[2] -0.0931334*inputs[3] +0.611445*inputs[4];
-	combinations[10] = 0.0703256 -0.00582323*inputs[0] +0.0357392*inputs[1] +0.0948704*inputs[2] -0.057049*inputs[3] +0.0513874*inputs[4];
-	combinations[11] = -0.0702112 +0.00583317*inputs[0] -0.0356909*inputs[1] -0.0947516*inputs[2] +0.0570021*inputs[3] -0.0513039*inputs[4];
-	combinations[12] = 0.0701531 -0.00583821*inputs[0] +0.0356663*inputs[1] +0.0946911*inputs[2] -0.0569782*inputs[3] +0.0512615*inputs[4];
-	combinations[13] = 0.534189 -0.147723*inputs[0] +0.734402*inputs[1] -0.434176*inputs[2] +0.0647858*inputs[3] -0.142865*inputs[4];
-	combinations[14] = 0.430706 +0.541506*inputs[0] +0.168497*inputs[1] -0.724096*inputs[2] -0.14356*inputs[3] +0.0508948*inputs[4];
-	combinations[15] = -0.0700475 +0.00584742*inputs[0] -0.0356216*inputs[1] -0.0945812*inputs[2] +0.0569346*inputs[3] -0.0511843*inputs[4];
-	combinations[16] = 0.635895 -0.96083*inputs[0] -0.0320288*inputs[1] -0.571953*inputs[2] +0.107277*inputs[3] +0.972872*inputs[4];
-	combinations[17] = -0.0700463 +0.00584751*inputs[0] -0.0356211*inputs[1] -0.09458*inputs[2] +0.0569341*inputs[3] -0.0511835*inputs[4];
-	combinations[18] = 0.0700636 -0.00584601*inputs[0] +0.0356284*inputs[1] +0.094598*inputs[2] -0.0569413*inputs[3] +0.0511962*inputs[4];
-	combinations[19] = -0.070094 +0.00584337*inputs[0] -0.0356413*inputs[1] -0.0946295*inputs[2] +0.0569538*inputs[3] -0.0512183*inputs[4];
-	combinations[20] = -0.0701073 +0.00584219*inputs[0] -0.0356469*inputs[1] -0.0946435*inputs[2] +0.0569593*inputs[3] -0.051228*inputs[4];
-	combinations[21] = 0.0701614 -0.00583751*inputs[0] +0.0356699*inputs[1] +0.0946997*inputs[2] -0.0569816*inputs[3] +0.0512676*inputs[4];
-	combinations[22] = 0.0699873 -0.00585263*inputs[0] +0.0355961*inputs[1] +0.0945187*inputs[2] -0.0569098*inputs[3] +0.0511405*inputs[4];
-	combinations[23] = -0.0713143 +0.00573711*inputs[0] -0.0361537*inputs[1] -0.0958933*inputs[2] +0.0574486*inputs[3] -0.0521084*inputs[4];
-	combinations[24] = 0.0702161 -0.00583273*inputs[0] +0.035693*inputs[1] +0.0947566*inputs[2] -0.0570041*inputs[3] +0.0513075*inputs[4];
-	combinations[25] = -0.0700707 +0.00584538*inputs[0] -0.0356315*inputs[1] -0.0946055*inputs[2] +0.0569442*inputs[3] -0.0512014*inputs[4];
-	combinations[26] = 0.0702049 -0.00583373*inputs[0] +0.0356882*inputs[1] +0.0947449*inputs[2] -0.0569995*inputs[3] +0.0512993*inputs[4];
-	combinations[27] = -0.0702945 +0.00582591*inputs[0] -0.0357261*inputs[1] -0.094838*inputs[2] +0.0570363*inputs[3] -0.0513647*inputs[4];
-	combinations[28] = 0.0713024 -0.00573824*inputs[0] +0.0361483*inputs[1] +0.0958812*inputs[2] -0.0574436*inputs[3] +0.0521005*inputs[4];
-	combinations[29] = -0.0700925 +0.00584348*inputs[0] -0.0356407*inputs[1] -0.0946281*inputs[2] +0.0569532*inputs[3] -0.0512173*inputs[4];
-	combinations[30] = -0.0728758 +0.00560182*inputs[0] -0.0367926*inputs[1] -0.0974956*inputs[2] +0.058056*inputs[3] -0.0532506*inputs[4];
-	combinations[31] = -0.301689 -0.445224*inputs[0] -0.733411*inputs[1] -0.823282*inputs[2] +0.215949*inputs[3] +0.102626*inputs[4];
-	combinations[32] = 0.0413508 +0.296616*inputs[0] -0.033985*inputs[1] +0.0725159*inputs[2] +0.562451*inputs[3] +0.42986*inputs[4];
-	combinations[33] = 0.17403 -0.115243*inputs[0] -0.176865*inputs[1] +0.256444*inputs[2] -0.822029*inputs[3] +0.453595*inputs[4];
-	combinations[34] = -0.0700633 +0.00584603*inputs[0] -0.0356283*inputs[1] -0.0945978*inputs[2] +0.0569412*inputs[3] -0.051196*inputs[4];
-	combinations[35] = -0.0699021 +0.00586006*inputs[0] -0.0355599*inputs[1] -0.09443*inputs[2] +0.0568745*inputs[3] -0.0510783*inputs[4];
-	combinations[36] = 0.602222 -0.127697*inputs[0] -0.416866*inputs[1] +0.310509*inputs[2] -0.567189*inputs[3] -0.787158*inputs[4];
-	combinations[37] = -0.648684 +0.471303*inputs[0] +0.58066*inputs[1] -1.31845*inputs[2] -0.203147*inputs[3] -0.184904*inputs[4];
-	combinations[38] = 0.0702372 -0.00583093*inputs[0] +0.0357019*inputs[1] +0.0947784*inputs[2] -0.0570127*inputs[3] +0.0513228*inputs[4];
-	combinations[39] = -0.0700418 +0.00584788*inputs[0] -0.0356193*inputs[1] -0.0945755*inputs[2] +0.0569324*inputs[3] -0.0511804*inputs[4];
-	combinations[40] = 1.04243 +0.172531*inputs[0] -1.23632*inputs[1] +0.140292*inputs[2] +0.247966*inputs[3] +0.632746*inputs[4];
-	combinations[41] = -0.936958 -1.09982*inputs[0] +0.674647*inputs[1] -0.167692*inputs[2] +0.13818*inputs[3] +0.0656001*inputs[4];
-	combinations[42] = 0.137355 -0.159152*inputs[0] +0.606902*inputs[1] +0.0414891*inputs[2] -0.0436777*inputs[3] +0.244032*inputs[4];
-	combinations[43] = -0.070111 +0.00584189*inputs[0] -0.0356485*inputs[1] -0.0946474*inputs[2] +0.0569609*inputs[3] -0.0512308*inputs[4];
-	combinations[44] = -0.0699104 +0.0058593*inputs[0] -0.0355635*inputs[1] -0.0944387*inputs[2] +0.0568779*inputs[3] -0.0510845*inputs[4];
-	combinations[45] = 0.0701955 -0.0058345*inputs[0] +0.0356843*inputs[1] +0.0947352*inputs[2] -0.0569956*inputs[3] +0.0512925*inputs[4];
-	combinations[46] = -0.0701136 +0.00584168*inputs[0] -0.0356496*inputs[1] -0.09465*inputs[2] +0.0569619*inputs[3] -0.0512326*inputs[4];
-	combinations[47] = 0.0698618 -0.00586352*inputs[0] +0.0355428*inputs[1] +0.094388*inputs[2] -0.0568578*inputs[3] +0.051049*inputs[4];
-	combinations[48] = 0.0725758 -0.00562769*inputs[0] +0.0366712*inputs[1] +0.0971892*inputs[2] -0.0579413*inputs[3] +0.0530312*inputs[4];
-	combinations[49] = -0.542015 +0.521274*inputs[0] +0.132218*inputs[1] +0.0304543*inputs[2] -0.502821*inputs[3] -0.236892*inputs[4];
-	combinations[50] = -0.580343 -0.825687*inputs[0] -0.399925*inputs[1] +0.434355*inputs[2] -0.0251213*inputs[3] +0.0877762*inputs[4];
-	combinations[51] = -0.0698535 +0.00586425*inputs[0] -0.0355392*inputs[1] -0.0943793*inputs[2] +0.0568543*inputs[3] -0.0510429*inputs[4];
-	combinations[52] = -0.0701318 +0.00584009*inputs[0] -0.0356573*inputs[1] -0.0946688*inputs[2] +0.0569694*inputs[3] -0.0512459*inputs[4];
-	combinations[53] = 0.0699989 -0.00585162*inputs[0] +0.035601*inputs[1] +0.0945307*inputs[2] -0.0569145*inputs[3] +0.051149*inputs[4];
-	combinations[54] = 0.00934391 +1.71223*inputs[0] +0.76199*inputs[1] +0.0602311*inputs[2] -0.168522*inputs[3] +0.048208*inputs[4];
-	combinations[55] = 0.0701552 -0.00583808*inputs[0] +0.0356672*inputs[1] +0.0946933*inputs[2] -0.056979*inputs[3] +0.051263*inputs[4];
-	combinations[56] = -0.0701156 +0.00584149*inputs[0] -0.0356505*inputs[1] -0.094652*inputs[2] +0.0569627*inputs[3] -0.0512341*inputs[4];
-	combinations[57] = -0.0701277 +0.00584043*inputs[0] -0.0356556*inputs[1] -0.0946646*inputs[2] +0.0569677*inputs[3] -0.0512429*inputs[4];
-	combinations[58] = -0.0701492 +0.00583854*inputs[0] -0.0356647*inputs[1] -0.094687*inputs[2] +0.0569766*inputs[3] -0.0512586*inputs[4];
-	combinations[59] = -0.0699693 +0.00585418*inputs[0] -0.0355885*inputs[1] -0.0944999*inputs[2] +0.0569023*inputs[3] -0.0511274*inputs[4];
-	combinations[60] = 0.810077 +1.49109*inputs[0] +0.30672*inputs[1] -0.00561604*inputs[2] -0.122331*inputs[3] +1.46692*inputs[4];
-	combinations[61] = -0.0699547 +0.00585545*inputs[0] -0.0355823*inputs[1] -0.0944847*inputs[2] +0.0568963*inputs[3] -0.0511167*inputs[4];
-	combinations[62] = -0.0700732 +0.00584518*inputs[0] -0.0356325*inputs[1] -0.0946079*inputs[2] +0.0569452*inputs[3] -0.0512031*inputs[4];
-	combinations[63] = 1.62579 +3.21992*inputs[0] -0.135122*inputs[1] +0.0989514*inputs[2] -0.0353498*inputs[3] +0.465153*inputs[4];
-	combinations[64] = 0.0698018 -0.00586876*inputs[0] +0.0355171*inputs[1] +0.0943253*inputs[2] -0.0568328*inputs[3] +0.0510051*inputs[4];
-	combinations[65] = 0.070021 -0.0058497*inputs[0] +0.0356104*inputs[1] +0.0945536*inputs[2] -0.0569237*inputs[3] +0.0511651*inputs[4];
-	combinations[66] = 0.0699728 -0.00585392*inputs[0] +0.0355899*inputs[1] +0.0945036*inputs[2] -0.0569038*inputs[3] +0.0511299*inputs[4];
-	combinations[67] = 0.0701665 -0.00583707*inputs[0] +0.035672*inputs[1] +0.094705*inputs[2] -0.0569836*inputs[3] +0.0512712*inputs[4];
-	combinations[68] = -0.0699604 +0.00585496*inputs[0] -0.0355847*inputs[1] -0.0944907*inputs[2] +0.0568986*inputs[3] -0.0511209*inputs[4];
-	combinations[69] = 0.0703097 -0.00582461*inputs[0] +0.0357325*inputs[1] +0.0948538*inputs[2] -0.0570425*inputs[3] +0.0513757*inputs[4];
-	combinations[70] = 0.0700722 -0.00584526*inputs[0] +0.0356321*inputs[1] +0.094607*inputs[2] -0.0569449*inputs[3] +0.0512024*inputs[4];
-	combinations[71] = 0.0729813 -0.00559271*inputs[0] +0.0368351*inputs[1] +0.0976034*inputs[2] -0.058096*inputs[3] +0.0533278*inputs[4];
-	combinations[72] = -0.070076 +0.00584493*inputs[0] -0.0356337*inputs[1] -0.094611*inputs[2] +0.0569463*inputs[3] -0.0512053*inputs[4];
-	combinations[73] = 0.112056 -0.00643377*inputs[0] +0.0427328*inputs[1] +0.13178*inputs[2] -0.0623581*inputs[3] +0.0817912*inputs[4];
-	combinations[74] = -0.0700254 +0.00584934*inputs[0] -0.0356122*inputs[1] -0.0945582*inputs[2] +0.0569254*inputs[3] -0.0511682*inputs[4];
-	combinations[75] = -0.0699443 +0.00585635*inputs[0] -0.0355778*inputs[1] -0.0944739*inputs[2] +0.056892*inputs[3] -0.0511092*inputs[4];
-	combinations[76] = 0.0702473 -0.00583005*inputs[0] +0.0357062*inputs[1] +0.0947889*inputs[2] -0.0570169*inputs[3] +0.0513302*inputs[4];
-	combinations[77] = 0.0705093 -0.00580724*inputs[0] +0.0358167*inputs[1] +0.095061*inputs[2] -0.0571241*inputs[3] +0.0515215*inputs[4];
-	combinations[78] = -0.0700753 +0.00584501*inputs[0] -0.0356334*inputs[1] -0.0946102*inputs[2] +0.0569461*inputs[3] -0.0512047*inputs[4];
-	combinations[79] = 0.0701118 -0.00584183*inputs[0] +0.0356488*inputs[1] +0.0946481*inputs[2] -0.0569611*inputs[3] +0.0512313*inputs[4];
-	combinations[80] = -0.0700717 +0.0058453*inputs[0] -0.0356319*inputs[1] -0.0946064*inputs[2] +0.0569446*inputs[3] -0.051202*inputs[4];
-	combinations[81] = 0.0704624 -0.00581132*inputs[0] +0.0357969*inputs[1] +0.0950123*inputs[2] -0.0571049*inputs[3] +0.0514872*inputs[4];
-	combinations[82] = 0.0701397 -0.0058394*inputs[0] +0.0356607*inputs[1] +0.0946771*inputs[2] -0.0569726*inputs[3] +0.0512517*inputs[4];
-	combinations[83] = 0.0701803 -0.00583584*inputs[0] +0.0356778*inputs[1] +0.0947194*inputs[2] -0.0569894*inputs[3] +0.0512813*inputs[4];
-	combinations[84] = -0.0700556 +0.00584671*inputs[0] -0.035625*inputs[1] -0.0945897*inputs[2] +0.056938*inputs[3] -0.0511903*inputs[4];
-	combinations[85] = 0.070093 -0.00584344*inputs[0] +0.0356409*inputs[1] +0.0946286*inputs[2] -0.0569534*inputs[3] +0.0512176*inputs[4];
-	combinations[86] = 0.0701658 -0.00583711*inputs[0] +0.0356717*inputs[1] +0.0947043*inputs[2] -0.0569834*inputs[3] +0.0512707*inputs[4];
-	combinations[87] = 0.0700552 -0.00584672*inputs[0] +0.0356249*inputs[1] +0.0945893*inputs[2] -0.0569378*inputs[3] +0.0511901*inputs[4];
-	combinations[88] = 0.0701946 -0.00583462*inputs[0] +0.0356839*inputs[1] +0.0947342*inputs[2] -0.0569953*inputs[3] +0.0512918*inputs[4];
-	combinations[89] = 0.578202 +0.461313*inputs[0] -1.63509*inputs[1] -0.0978218*inputs[2] -0.108864*inputs[3] -0.451392*inputs[4];
-	combinations[90] = 0.0702083 -0.00583342*inputs[0] +0.0356897*inputs[1] +0.0947485*inputs[2] -0.0570009*inputs[3] +0.0513018*inputs[4];
-	combinations[91] = 0.0698146 -0.00586763*inputs[0] +0.0355227*inputs[1] +0.0943389*inputs[2] -0.0568382*inputs[3] +0.0510146*inputs[4];
-	combinations[92] = -0.0701588 +0.00583773*inputs[0] -0.0356688*inputs[1] -0.094697*inputs[2] +0.0569805*inputs[3] -0.0512656*inputs[4];
-	combinations[93] = 0.07009 -0.00584371*inputs[0] +0.0356396*inputs[1] +0.0946255*inputs[2] -0.0569522*inputs[3] +0.0512154*inputs[4];
-	combinations[94] = -0.0701745 +0.00583637*inputs[0] -0.0356754*inputs[1] -0.0947132*inputs[2] +0.056987*inputs[3] -0.0512771*inputs[4];
-	combinations[95] = -0.0700915 +0.00584357*inputs[0] -0.0356403*inputs[1] -0.0946271*inputs[2] +0.0569528*inputs[3] -0.0512166*inputs[4];
-	combinations[96] = -0.0706354 +0.00579625*inputs[0] -0.0358697*inputs[1] -0.0951916*inputs[2] +0.0571754*inputs[3] -0.0516135*inputs[4];
-	combinations[97] = 0.0704735 -0.00581036*inputs[0] +0.0358016*inputs[1] +0.0950237*inputs[2] -0.0571094*inputs[3] +0.0514953*inputs[4];
-	combinations[98] = 1.43994 +1.71*inputs[0] -0.101341*inputs[1] -0.0237892*inputs[2] -0.189118*inputs[3] +0.332381*inputs[4];
-	combinations[99] = 0.915222 +0.885383*inputs[0] -0.069161*inputs[1] +1.72475*inputs[2] +0.0380077*inputs[3] +0.278743*inputs[4];
+int main(){ 
 
-	vector<float> activations(100);
+	vector<float> inputs(5); 
 
-	activations[0] = tanh(combinations[0]);
-	activations[1] = tanh(combinations[1]);
-	activations[2] = tanh(combinations[2]);
-	activations[3] = tanh(combinations[3]);
-	activations[4] = tanh(combinations[4]);
-	activations[5] = tanh(combinations[5]);
-	activations[6] = tanh(combinations[6]);
-	activations[7] = tanh(combinations[7]);
-	activations[8] = tanh(combinations[8]);
-	activations[9] = tanh(combinations[9]);
-	activations[10] = tanh(combinations[10]);
-	activations[11] = tanh(combinations[11]);
-	activations[12] = tanh(combinations[12]);
-	activations[13] = tanh(combinations[13]);
-	activations[14] = tanh(combinations[14]);
-	activations[15] = tanh(combinations[15]);
-	activations[16] = tanh(combinations[16]);
-	activations[17] = tanh(combinations[17]);
-	activations[18] = tanh(combinations[18]);
-	activations[19] = tanh(combinations[19]);
-	activations[20] = tanh(combinations[20]);
-	activations[21] = tanh(combinations[21]);
-	activations[22] = tanh(combinations[22]);
-	activations[23] = tanh(combinations[23]);
-	activations[24] = tanh(combinations[24]);
-	activations[25] = tanh(combinations[25]);
-	activations[26] = tanh(combinations[26]);
-	activations[27] = tanh(combinations[27]);
-	activations[28] = tanh(combinations[28]);
-	activations[29] = tanh(combinations[29]);
-	activations[30] = tanh(combinations[30]);
-	activations[31] = tanh(combinations[31]);
-	activations[32] = tanh(combinations[32]);
-	activations[33] = tanh(combinations[33]);
-	activations[34] = tanh(combinations[34]);
-	activations[35] = tanh(combinations[35]);
-	activations[36] = tanh(combinations[36]);
-	activations[37] = tanh(combinations[37]);
-	activations[38] = tanh(combinations[38]);
-	activations[39] = tanh(combinations[39]);
-	activations[40] = tanh(combinations[40]);
-	activations[41] = tanh(combinations[41]);
-	activations[42] = tanh(combinations[42]);
-	activations[43] = tanh(combinations[43]);
-	activations[44] = tanh(combinations[44]);
-	activations[45] = tanh(combinations[45]);
-	activations[46] = tanh(combinations[46]);
-	activations[47] = tanh(combinations[47]);
-	activations[48] = tanh(combinations[48]);
-	activations[49] = tanh(combinations[49]);
-	activations[50] = tanh(combinations[50]);
-	activations[51] = tanh(combinations[51]);
-	activations[52] = tanh(combinations[52]);
-	activations[53] = tanh(combinations[53]);
-	activations[54] = tanh(combinations[54]);
-	activations[55] = tanh(combinations[55]);
-	activations[56] = tanh(combinations[56]);
-	activations[57] = tanh(combinations[57]);
-	activations[58] = tanh(combinations[58]);
-	activations[59] = tanh(combinations[59]);
-	activations[60] = tanh(combinations[60]);
-	activations[61] = tanh(combinations[61]);
-	activations[62] = tanh(combinations[62]);
-	activations[63] = tanh(combinations[63]);
-	activations[64] = tanh(combinations[64]);
-	activations[65] = tanh(combinations[65]);
-	activations[66] = tanh(combinations[66]);
-	activations[67] = tanh(combinations[67]);
-	activations[68] = tanh(combinations[68]);
-	activations[69] = tanh(combinations[69]);
-	activations[70] = tanh(combinations[70]);
-	activations[71] = tanh(combinations[71]);
-	activations[72] = tanh(combinations[72]);
-	activations[73] = tanh(combinations[73]);
-	activations[74] = tanh(combinations[74]);
-	activations[75] = tanh(combinations[75]);
-	activations[76] = tanh(combinations[76]);
-	activations[77] = tanh(combinations[77]);
-	activations[78] = tanh(combinations[78]);
-	activations[79] = tanh(combinations[79]);
-	activations[80] = tanh(combinations[80]);
-	activations[81] = tanh(combinations[81]);
-	activations[82] = tanh(combinations[82]);
-	activations[83] = tanh(combinations[83]);
-	activations[84] = tanh(combinations[84]);
-	activations[85] = tanh(combinations[85]);
-	activations[86] = tanh(combinations[86]);
-	activations[87] = tanh(combinations[87]);
-	activations[88] = tanh(combinations[88]);
-	activations[89] = tanh(combinations[89]);
-	activations[90] = tanh(combinations[90]);
-	activations[91] = tanh(combinations[91]);
-	activations[92] = tanh(combinations[92]);
-	activations[93] = tanh(combinations[93]);
-	activations[94] = tanh(combinations[94]);
-	activations[95] = tanh(combinations[95]);
-	activations[96] = tanh(combinations[96]);
-	activations[97] = tanh(combinations[97]);
-	activations[98] = tanh(combinations[98]);
-	activations[99] = tanh(combinations[99]);
+	const float input_0 = /*enter your value here*/; 
+	inputs[0] = input_0;
+	const float input_1 = /*enter your value here*/; 
+	inputs[1] = input_1;
+	const float input_2 = /*enter your value here*/; 
+	inputs[2] = input_2;
+	const float input_3 = /*enter your value here*/; 
+	inputs[3] = input_3;
+	const float input_4 = /*enter your value here*/; 
+	inputs[4] = input_4;
 
-	return activations;
-}
-
-vector<float> perceptron_layer_2(const vector<float>& inputs)
-{
-	vector<float> combinations(1);
-
-	combinations[0] = -0.464471 +0.15179*inputs[0] -0.152049*inputs[1] -0.152371*inputs[2] -0.709238*inputs[3] +0.152118*inputs[4] +0.152087*inputs[5] -0.152264*inputs[6] -0.152734*inputs[7] -1.01086*inputs[8] +3.00891*inputs[9] -0.152714*inputs[10] +0.152498*inputs[11] -0.152389*inputs[12] +0.820702*inputs[13] -0.989275*inputs[14] +0.152189*inputs[15] -0.976993*inputs[16] +0.152187*inputs[17] -0.15222*inputs[18] +0.152277*inputs[19] +0.152302*inputs[20] -0.152404*inputs[21] -0.152076*inputs[22] +0.154574*inputs[23] -0.152508*inputs[24] +0.152233*inputs[25] -0.152486*inputs[26] +0.152655*inputs[27] -0.154552*inputs[28] +0.152274*inputs[29] +0.157495*inputs[30] +0.893211*inputs[31] +0.629855*inputs[32] +0.595588*inputs[33] +0.152219*inputs[34] +0.151915*inputs[35] +0.810117*inputs[36] -1.00446*inputs[37] -0.152547*inputs[38] +0.152179*inputs[39] +1.27685*inputs[40] +1.26841*inputs[41] +0.522878*inputs[42] +0.152309*inputs[43] +0.15193*inputs[44] -0.152469*inputs[45] +0.152314*inputs[46] -0.151839*inputs[47] -0.156935*inputs[48] +0.709495*inputs[49] +0.963772*inputs[50] +0.151823*inputs[51] +0.152348*inputs[52] -0.152098*inputs[53] +0.938756*inputs[54] -0.152393*inputs[55] +0.152318*inputs[56] +0.152341*inputs[57] +0.152381*inputs[58] +0.152042*inputs[59] -1.61002*inputs[60] +0.152014*inputs[61] +0.152238*inputs[62] -1.66798*inputs[63] -0.151725*inputs[64] -0.152139*inputs[65] -0.152048*inputs[66] -0.152414*inputs[67] +0.152025*inputs[68] -0.152684*inputs[69] -0.152236*inputs[70] -0.157691*inputs[71] +0.152243*inputs[72] -0.221168*inputs[73] +0.152147*inputs[74] +0.151994*inputs[75] -0.152566*inputs[76] -0.15306*inputs[77] +0.152242*inputs[78] -0.152311*inputs[79] +0.152235*inputs[80] -0.152972*inputs[81] -0.152363*inputs[82] -0.15244*inputs[83] +0.152205*inputs[84] -0.152275*inputs[85] -0.152412*inputs[86] -0.152204*inputs[87] -0.152467*inputs[88] -1.5504*inputs[89] -0.152493*inputs[90] -0.151749*inputs[91] +0.152399*inputs[92] -0.152269*inputs[93] +0.152429*inputs[94] +0.152272*inputs[95] +0.153298*inputs[96] -0.152993*inputs[97] +1.53986*inputs[98] -1.28226*inputs[99];
-
-	vector<float> activations(1);
-
-	activations[0] = combinations[0];
-
-	return activations;
-}
-
-vector<float> unscaling_layer(const vector<float>& inputs)
-{
 	vector<float> outputs(1);
 
-	outputs[0] = inputs[0]*6.898656845+124.8359451;
+	outputs = calculate_outputs(inputs);
 
-	return outputs;
-}
+	printf("These are your outputs:\n");
+	printf( "output0: %f \n", outputs[0]);
 
-vector<float> bounding_layer(const vector<float>& inputs)
-{
-	vector<float> outputs(1);
+	return 0;
+} 
 
-	if(inputs[0] < -3.40282e+38)
-	{
-	    outputs[0] = -3.40282e+38
-	}
-	else if(inputs[0] > 3.40282e+38)
-	{
-	    outputs[0] = 3.40282e+38
-	}
-	else
-	{
-	    outputs[0] = inputs[0];
-	}
-
-	return outputs;
-}
-
-vector<float> neural_network(const vector<float>& inputs)
-{
-	vector<float> outputs;
-
-	outputs = scaling_layer(inputs);
-	outputs = perceptron_layer_1(outputs);
-	outputs = perceptron_layer_2(outputs);
-	outputs = unscaling_layer(outputs);
-	outputs = bounding_layer(outputs);
-
-	return outputs;
-}
-int main(){return 0;}
