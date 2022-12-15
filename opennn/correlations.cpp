@@ -811,7 +811,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
@@ -893,7 +893,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
@@ -998,7 +998,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
@@ -1124,7 +1124,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 

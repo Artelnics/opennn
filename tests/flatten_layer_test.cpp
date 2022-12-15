@@ -59,7 +59,7 @@ void FlattenLayerTest::test_calculate_flatten_outputs()
     outputs_dimensions(1) = pixels_number;
 
     FlattenLayer flatten_layer(inputs_dimensions);
-    flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+//    flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     cout << "Inputs: " << endl;
     cout << inputs << endl;

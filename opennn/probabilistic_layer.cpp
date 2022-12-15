@@ -700,7 +700,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 /// This posprocessing is performed according to the probabilistic method to be used.
 /// @param inputs Set of inputs to the probabilistic layer.
 
-
+/*
 void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                            type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -717,7 +717,7 @@ void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index
 
     calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
 }
-
+*/
 
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
@@ -758,7 +758,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                       derivatives_dimensions);
 }
 
-
+/*
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index, 1>& inputs_dimensions,
                                            Tensor<type, 1>& potential_parameters,
@@ -808,7 +808,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                       probabilistic_layer_forward_propagation->activations_derivatives.data(),
                                       derivatives_dimensions);
 }
-
+*/
 
 // Gradient methods
 

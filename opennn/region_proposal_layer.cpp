@@ -92,6 +92,8 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
         regions(region_index, 2) = proposed_region(1)(2); // x_bottom_right
         regions(region_index, 3) = proposed_region(1)(3); // y_bottom_right
 
+        // Hacerlo con Eigen
+
         for (Index channel_index = 0; channel_index < image_channels_number; channel_index ++)
         {
             for (Index rows_index = 0; rows_index < region_rows; rows_index ++)
@@ -106,7 +108,7 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
     }
 }
 
-
+/*
 void RegionProposalLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                         type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -175,7 +177,7 @@ void RegionProposalLayer::calculate_outputs(type* inputs_data, const Tensor<Inde
         }
     }
 }
-
+*/
 
 void RegionProposalLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
@@ -184,16 +186,12 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
     RegionProposalLayerForwardPropagation* region_proposal_layer_forward_propagation
             = static_cast<RegionProposalLayerForwardPropagation*>(forward_propagation);
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
     // Propose random region for each image
 
-//    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);
-
-    const Tensor<Index, 1> outputs_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs);
+//    const Tensor<Index, 1> outputs_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs);
     const Tensor<Index, 1> regions_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs_regions);
 
-
+/*
     // Propose random region for each image
 
 //    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
@@ -238,7 +236,7 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
         regions(region_index, 2) = proposed_region(1)(2); // x_bottom_right
         regions(region_index, 3) = proposed_region(1)(3); // y_bottom_right
 
-        // Do it with Eigen
+        // Hacerlo con Eigen
 
         for (Index channel_index = 0; channel_index < image_channels_number; channel_index ++)
         {
@@ -253,6 +251,14 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
             }
         }
     }
+*/
+
+    calculate_regions(inputs_data,
+                      inputs_dimensions,
+                      region_proposal_layer_forward_propagation->outputs_regions.data(),
+                      regions_dimensions,
+                      region_proposal_layer_forward_propagation->outputs_data,
+                      region_proposal_layer_forward_propagation->outputs_dimensions);
 }
 
 

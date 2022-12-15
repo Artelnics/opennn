@@ -53,10 +53,6 @@ public:
 
   // Outputs
 
-//  void test_calculate_outputs();
-
-//  void test_calculate_outputs_2d();
-
   void test_insert_padding();
 
   // Forward propagate

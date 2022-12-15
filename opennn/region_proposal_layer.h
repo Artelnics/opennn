@@ -42,7 +42,7 @@ public:
 
     void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+//    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
     void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
 
@@ -91,7 +91,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         outputs_dimensions(2) = channels_number;
         outputs_dimensions(3) = regions_number;
 
-        outputs_data = outputs.data();
+//        outputs_data = outputs.data();
 
 
 //        outputs_data = (float*) malloc(outputs_dimensions.prod() * sizeof(float));
@@ -101,8 +101,6 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     {
 
     }
-
-    Tensor<type, 2> outputs;
 
     Tensor<type, 2> outputs_regions;
 };

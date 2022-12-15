@@ -109,7 +109,9 @@ public:
 
    bool is_empty() const;
   
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
    void check_range(const Tensor<type, 1>&) const;
 
@@ -122,7 +124,6 @@ public:
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
 
 protected:
 
@@ -144,6 +145,50 @@ protected:
    /// Display warning messages to screen. 
 
    bool display = true;
+};
+
+struct UnscalingLayerForwardPropagation : LayerForwardPropagation
+{
+    // Constructor
+
+    explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    // Constructor
+
+    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        const Index neurons_number = static_cast<UnscalingLayer*>(layer_pointer)->get_neurons_number();
+
+        batch_samples_number = new_batch_samples_number;
+
+        //free(outputs_data);
+
+        // Allocate memory for outputs_data
+
+        outputs_data = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+    }
+
+
+    void print() const
+    {
+        cout << "Outputs:" << endl;
+
+        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+    }
 };
 
 }

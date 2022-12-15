@@ -21,6 +21,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "probabilistic_layer.h"
 
 #ifdef OPENNN_MKL
     #include "../mkl/mkl.h"
@@ -112,7 +113,7 @@ public:
    void set_biases(const Tensor<type, 2>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
+   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
    // Activation functions
 
@@ -133,7 +134,6 @@ public:
 
    // Perceptron layer combinations
 
-
    void calculate_combinations(type*,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
@@ -153,15 +153,14 @@ public:
    // Perceptron layer outputs
 
 
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
-                          LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
-   void forward_propagate(type*,
-                          const Tensor<Index, 1>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*) final;
+//   void forward_propagate(type*,
+//                          const Tensor<Index, 1>&,
+//                          Tensor<type, 1>&,
+//                          LayerForwardPropagation*) final;
 
    // Delta methods
 
@@ -229,14 +228,6 @@ protected:
 
    // MEMBERS
 
-   /// Inputs
-
-   Tensor<type, 2> inputs;
-
-   /// Outputs
-
-   Tensor<type, 2> outputs;
-
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's transfer function to generate the neuron's output.
 
@@ -289,7 +280,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
         // delete outputs_data;
 
-        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
         // Rest of quantities
 
@@ -306,7 +297,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
-
         cout << "Outputs dimensions:" << endl;
         cout << outputs_dimensions << endl;
 
@@ -319,10 +309,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
     }
+
     type* get_combinations_data()
     {
         return combinations.data();
-
     }
 
     Tensor<type, 2> combinations;
@@ -446,10 +436,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
-
     Tensor<type, 2> deltas_times_activations_derivatives;
-
-
 };
 
 }

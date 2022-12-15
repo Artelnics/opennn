@@ -41,44 +41,50 @@ void BoundingLayerTest::test_destructor()
 }
 
 
-void BoundingLayerTest::test_calculate_outputs()
+void BoundingLayerTest::test_forward_propagate()
 {
-    cout << "test_calculate_outputs\n";
+    cout << "test_forward_propagate\n";
 
-    BoundingLayer bounding_layer;
     Tensor<type, 2> inputs;
-    Tensor<type, 2> outputs;
-
     Tensor<Index, 1> inputs_dimensions;
-    Tensor<Index, 1> outputs_dimensions;
 
     // Test
 
-    bounding_layer.set(1);
+    Index samples_number = 1;
+    Index inputs_number = 1;
+
+    bounding_layer.set(inputs_number);
     bounding_layer.set_lower_bound(0, type(-1.0));
     bounding_layer.set_upper_bound(0, type(1));
     bounding_layer.set_bounding_method("Bounding");
 
-    inputs.resize(1, 1);
+    bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
+
+    inputs.resize(samples_number, inputs_number);
     inputs(0) = type(-2.0);
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs.resize(1,1);
-    outputs_dimensions = get_dimensions(outputs);
+    bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation);
 
-    bounding_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    TensorMap<Tensor<type, 2>> outputs(bounding_layer_forward_propagation.outputs_data,
+                                       bounding_layer_forward_propagation.outputs_dimensions(0),
+                                       bounding_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    // Test
+    // Test 2
 
     inputs(0) = type(2.0);
 
-    bounding_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation);
 
-    assert_true(outputs.rank() == 2, LOG);
-    assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    TensorMap<Tensor<type, 2>> outputs_2(bounding_layer_forward_propagation.outputs_data,
+                                       bounding_layer_forward_propagation.outputs_dimensions(0),
+                                       bounding_layer_forward_propagation.outputs_dimensions(1));
+
+    assert_true(outputs_2.rank() == 2, LOG);
+    assert_true(outputs_2(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -93,7 +99,7 @@ void BoundingLayerTest::run_test_case()
 
     // Lower and upper bounds
 
-    test_calculate_outputs();
+    test_forward_propagate();
 
     cout << "End of bounding layer test case.\n\n";
 }

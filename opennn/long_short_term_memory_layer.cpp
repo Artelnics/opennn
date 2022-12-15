@@ -1482,7 +1482,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(type*
     }
 }
 
-
+/*
 void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                                  type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -1590,7 +1590,7 @@ void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor
             outputs(i,j) = hidden_states(j);
     }
 }
-
+*/
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                                       LayerBackPropagation* next_back_propagation,
@@ -1936,7 +1936,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
     }
 }
 
-
+/*
 void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, Tensor<type, 1>& parameters, LayerForwardPropagation* forward_propagation)
 {
 
@@ -2141,7 +2141,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
         copy_index += neurons_number;
     }
 }
-
+*/
 
 void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propagation,
                                                const Index& index,

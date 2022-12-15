@@ -46,7 +46,7 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
-
+/*
 void PoolingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -78,7 +78,7 @@ void PoolingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
     }
 
 }
-
+*/
 
 /// Returns the result of applying average pooling to a batch of images.
 /// @param inputs The batch of images.

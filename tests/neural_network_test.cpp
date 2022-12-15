@@ -754,7 +754,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     inputs.setConstant(type(1));
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.dimension(0) == batch_size, LOG);
     assert_true(outputs.dimension(1) == outputs_number, LOG);
@@ -777,7 +777,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     inputs.setConstant(type(0));
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.size() == batch_size * outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -797,7 +797,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.size() == 2, LOG);
     assert_true(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -814,7 +814,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.size() == 3, LOG);
 
@@ -840,7 +840,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.size() == outputs_number, LOG);
     assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-3), LOG);
@@ -861,7 +861,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.size() == 1, LOG);
     assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-3), LOG);
@@ -877,7 +877,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.size() == 1, LOG);
     assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
@@ -901,7 +901,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network.calculate_outputs(inputs);
 
     assert_true(outputs.dimension(1) == outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);

@@ -46,7 +46,6 @@ public:
     void test_calculate_combinations();
     void test_calculate_activations();
     void test_calculate_activations_derivatives();
-    void test_calculate_outputs();
 
     // Forward propagate
 
@@ -69,6 +68,7 @@ private:
     Index samples_number;
 
     ProbabilisticLayer probabilistic_layer;
+    ProbabilisticLayerForwardPropagation forward_propagation;
 
     NumericalDifferentiation numerical_differentiation;
 };

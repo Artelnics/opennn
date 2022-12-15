@@ -189,7 +189,7 @@ public:
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
    Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
-   void set_parameters(Tensor<type, 1>&) const;
+   void set_parameters(const Tensor<type, 1>&) const;
 
    // Parameters initialization methods
 
@@ -205,9 +205,11 @@ public:
 
    // Output
 
-   Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
+
+//   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){};
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
@@ -260,7 +262,9 @@ public:
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate_deploy(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+
 
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 

@@ -1330,7 +1330,7 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 /// Sets all the parameters(biases and synaptic weights) from a single vector.
 /// @param new_parameters New set of parameter values.
 
-void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
+void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -1624,7 +1624,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(DataSetBatch& batch,
+void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
@@ -1639,7 +1639,24 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
                                                         forward_propagation.layers(i-1)->outputs_dimensions,
                                                         forward_propagation.layers(i));
     }
+}
 
+
+void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
+                                      NeuralNetworkForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+
+    const Index layers_number = layers_pointers.size();
+
+    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
+
+    for(Index i = 1; i < layers_number; i++)
+    {
+        layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
+                                              forward_propagation.layers(i-1)->outputs_dimensions,
+                                              forward_propagation.layers(i));
+    }
 }
 
 
@@ -1649,9 +1666,20 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
-                                      Tensor<type, 1>& parameters,
+                                      Tensor<type, 1>& new_parameters,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
 {
+    const Tensor<type, 1> original_parameters = get_parameters();
+
+    set_parameters(new_parameters);
+
+    const Tensor<Index, 1> inputs_dimensions = batch.get_inputs_dimensions();
+
+    forward_propagate(batch, forward_propagation);
+
+    set_parameters(original_parameters);
+
+/*
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
@@ -1677,6 +1705,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         index += parameters_number;
     }
+*/
 }
 
 
@@ -1692,8 +1721,9 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 {
+/*
 #ifdef OPENNN_DEBUG
     cout << "inputs dimensions: " << inputs_dimensions << endl;
 
@@ -1708,7 +1738,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, const Tensor
         throw invalid_argument(buffer.str());
     }
 #endif
-
+/*
     const Index inputs_dimensions_number = inputs_dimensions.size();
 
     if(inputs_dimensions_number == 2)
@@ -1797,11 +1827,32 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, const Tensor
 
         throw invalid_argument(buffer.str());
     }
+*/
+
+    const Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    DataSetBatch data_set_batch;
+    data_set_batch.set_inputs(inputs);
+    // inputs_data, inputs_dimensions, outputs_data, outputs_dimensions
+
+    NeuralNetworkForwardPropagation neural_network_forward_propagation(data_set_batch.batch_size, this);
+
+    forward_propagate(data_set_batch, neural_network_forward_propagation);
+
+    const Index layers_number = get_layers_number();
+
+    if(layers_number == 0) return Tensor<type, 2>();
+
+    type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
+    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
+
+    return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 }
 
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
+/*
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
     {
@@ -1881,7 +1932,9 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         throw invalid_argument(buffer.str());
     }
+*/
 
+    return Tensor<type, 2>();
 }
 
 
@@ -2024,7 +2077,7 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
         input_data.setZero();
         Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+        Tensor<type, 2> output = calculate_outputs(input_data);
 
         string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
@@ -4855,7 +4908,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 {
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    Tensor<type, 2> outputs = calculate_outputs(inputs.data(), inputs_dimensions);
+    Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     std::ofstream file(file_name.c_str());
 

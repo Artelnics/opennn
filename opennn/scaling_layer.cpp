@@ -97,6 +97,12 @@ Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 }
 
 
+Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
+{
+    return input_variables_dimensions;
+}
+
+
 Index ScalingLayer::get_inputs_number() const
 {
     return descriptives.size();
@@ -831,10 +837,127 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
+void ScalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation)
+{
+#ifdef OPENNN_DEBUG
+    if(inputs_dimensions(1) != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ScalingLayer class.\n"
+               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final method.\n"
+               << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+#endif
+
+    ScalingLayerForwardPropagation* scaling_layer_forward_propagation
+            = static_cast<ScalingLayerForwardPropagation*>(forward_propagation);
+
+    const Index input_rank = inputs_dimensions.size();
+
+    if(input_rank == 2) /// @todo optimize with TensorMap and tensor options
+    {
+        const Index points_number = inputs_dimensions(0);
+        const Index neurons_number = scaling_layer_forward_propagation->layer_pointer->get_neurons_number();
+
+        const Tensor<Index, 0> input_size = inputs_dimensions.prod();
+
+        const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+        for(Index i = 0; i < points_number; i++)
+        {
+            for(Index j = 0; j < neurons_number; j++)
+            {
+                if(abs(descriptives(j).standard_deviation) < type(NUMERIC_LIMITS_MIN))
+                {
+                    if(false)
+                    {
+                        cout << "OpenNN Warning: ScalingLayer class.\n"
+                             << "Tensor<type, 2> forward_propagate(const Tensor<type, 2>&) const method.\n"
+                             << "Standard deviation of variable " << j << " is zero.\n"
+                             << "Those variables won't be scaled.\n";
+                    }
+
+                    outputs(i,j) = inputs(i,j);
+                }
+                else
+                {
+                    if(scalers(j) == Scaler::NoScaling)
+                    {
+                        outputs(i,j) = inputs(i,j);
+                    }
+                    else if(scalers(j) == Scaler::MinimumMaximum)
+                    {
+                        const type slope =
+                                (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
+
+                        const type intercept =
+                                (min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum);
+
+                        outputs(i,j) = inputs(i,j)*slope + intercept;
+                    }
+                    else if(scalers(j) == Scaler::MeanStandardDeviation)
+                    {
+                        const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
+
+                        const type intercept = -descriptives(j).mean/descriptives(j).standard_deviation;
+
+                        outputs(i,j) = inputs(i,j)*slope + intercept;
+                    }
+                    else if(scalers(j) == Scaler::StandardDeviation)
+                    {
+                        outputs(i,j) = inputs(i,j)/descriptives(j).standard_deviation;
+                    }
+                    else if(scalers(j) == Scaler::Logarithm)
+                    {
+                        outputs(i,j) = log(inputs(i,j));
+                    }
+                    else
+                    {
+                        ostringstream buffer;
+
+                        buffer << "OpenNN Exception: ScalingLayer class\n"
+                               << "Tensor<type, 2> forward_propagate(const Tensor<type, 2>&) const method.\n"
+                               << "Unknown scaling method.\n";
+
+                        throw invalid_argument(buffer.str());
+                    }
+                }
+            }
+        }
+    }
+    else if(input_rank == 4)
+    {
+        TensorMap<Tensor<type, 4>> input(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+
+        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+
+        for(Index i = 0; i < input.size(); i++)
+        {
+            output(i) = -static_cast<type>(1) + static_cast<type>(2*input(i)/255);
+        }
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ScalingLayer class.\n"
+               << "void ScalingLayer::forward_propagate(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>& ).\n"
+               << "Input dimension must be 2 or 4.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
 /// Scales some values to produce some scaled values.
 /// @param inputs Set of inputs to the scaling layer.
 
-
+/*
 void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -959,7 +1082,7 @@ void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
         throw invalid_argument(buffer.str());
     }
 }
-
+*/
 
 /// Returns a string with the expression of the scaling process when the none method is used.
 /// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.

@@ -93,7 +93,9 @@ public:
 
    // Lower and upper bounds
 
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
    // Expression methods
 
@@ -124,6 +126,48 @@ private:
    /// Display messages to screen. 
 
    bool display = true;
+};
+
+struct BoundingLayerForwardPropagation : LayerForwardPropagation
+{
+    // Constructor
+
+    explicit BoundingLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    // Constructor
+
+    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        const Index neurons_number = static_cast<BoundingLayer*>(layer_pointer)->get_neurons_number();
+
+        batch_samples_number = new_batch_samples_number;
+
+        // Allocate memory for outputs_data
+
+        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+    }
+
+
+    void print() const
+    {
+        cout << "Outputs:" << endl;
+
+        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+    }
 };
 
 }

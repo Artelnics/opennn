@@ -84,7 +84,7 @@ public:
 
     // Outputs
 
-    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+//    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
     void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
@@ -125,15 +125,18 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
        layer_pointer = new_layer_pointer;
 
+       const Index neurons_number = static_cast<FlattenLayer*>(layer_pointer)->get_neurons_number();
        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
        batch_samples_number = new_batch_samples_number;
 
-       outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
 
-       outputs_data = outputs.data();
+       // Allocate memory for outputs_data
 
-       outputs_dimensions = get_dimensions(outputs);
+       outputs_data = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+
+       outputs_dimensions.resize(2);
+       outputs_dimensions.setValues({batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2)});
    }
 
 
@@ -141,10 +144,8 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
        cout << "Outputs:" << endl;
 
-       cout << outputs << endl;
+       cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
    }
-
-   Tensor<type, 2> outputs;
 };
 
 
