@@ -87,6 +87,9 @@ type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
 void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
+type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
+
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
