@@ -40,6 +40,10 @@ public:
 
     void test_forward_propagate();
 
+    // Forward propagation
+
+    void test_calculate_outputs();
+
     // Unit testing methods
 
     void run_test_case();

@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
         Tensor<type,2> output(regions_number, rows_number * columns_number * channels_number);
         Tensor<Index, 1> output_dimensions = get_dimensions(output);
 
-//        region_proposal_layer.calculate_outputs(image.data(), inputs_dimensions, output.data(), output_dimensions);
+        region_proposal_layer.calculate_outputs(image.data(), inputs_dimensions, output.data(), output_dimensions);
 
-//        cout << "output: " << output << endl;
+        cout << "output: " << output << endl;
 
         /*
         FlattenLayer flatten_layer(input_variables_dimensions);
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 
 //        flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-//        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+//        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
 //        cout << "inputs: " << endl;
 //        cout << inputs << endl;

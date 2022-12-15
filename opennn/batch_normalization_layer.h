@@ -70,7 +70,8 @@ public:
    Tensor<type, 2> perform_inputs_normalization(const Tensor<type, 2>&, BatchNormalizationLayerForwardPropagation*)const;
    // Perceptron layer outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
+   void forward_propagate(type*, const Tensor<Index, 1>&,
+                          LayerForwardPropagation*);
 
    // Gradient methods
 

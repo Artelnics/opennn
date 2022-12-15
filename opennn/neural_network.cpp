@@ -407,10 +407,6 @@ string NeuralNetwork::get_project_type_string() const
     {
         return "ImageClassification";
     }
-    else if(project_type == ProjectType::TextClassification)
-    {
-        return "TextClassification";
-    }
     else if(project_type == ProjectType::TextGeneration)
     {
         return "TextGeneration";
@@ -420,7 +416,6 @@ string NeuralNetwork::get_project_type_string() const
         return "AutoAssociation";
     }
 }
-
 
 /// Returns a string vector with the names of the variables used as outputs.
 
@@ -1293,7 +1288,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 /// Sets all the parameters(biases and synaptic weights) from a single vector.
 /// @param new_parameters New set of parameter values.
 
-void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
+void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -1587,19 +1582,14 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
+void NeuralNetwork::forward_propagate(DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
-    cout << "forward propagate 1 ****************************************" << endl;
-    cout << "Layer type " << trainable_layers_pointers(0)->get_name() << endl;
-    cout << "FWD layer name: " << forward_propagation.layers(0)->layer_pointer->get_name() << endl;
     trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
-
-    cout << "forward propagate 2 ****************************************" << endl;
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
@@ -1608,25 +1598,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                                         forward_propagation.layers(i));
     }
 
-    cout << "forward propagate end ****************************************" << endl;
-}
-
-
-void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
-                                      NeuralNetworkForwardPropagation& forward_propagation) const
-{
-    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
-
-    const Index layers_number = layers_pointers.size();
-
-    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
-
-    for(Index i = 1; i < layers_number; i++)
-    {
-        layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
-                                              forward_propagation.layers(i-1)->outputs_dimensions,
-                                              forward_propagation.layers(i));
-    }
 }
 
 
@@ -1636,20 +1607,9 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
-                                      Tensor<type, 1>& new_parameters,
+                                      Tensor<type, 1>& parameters,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
 {
-    const Tensor<type, 1> original_parameters = get_parameters();
-
-    set_parameters(new_parameters);
-
-    const Tensor<Index, 1> inputs_dimensions = batch.get_inputs_dimensions();
-
-    forward_propagate(batch, forward_propagation);
-
-    set_parameters(original_parameters);
-
-/*
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
@@ -1675,7 +1635,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         index += parameters_number;
     }
-*/
 }
 
 
@@ -1691,9 +1650,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions)
 {
-/*
 #ifdef OPENNN_DEBUG
     cout << "inputs dimensions: " << inputs_dimensions << endl;
 
@@ -1708,7 +1666,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
         throw invalid_argument(buffer.str());
     }
 #endif
-/*
+
     const Index inputs_dimensions_number = inputs_dimensions.size();
 
     if(inputs_dimensions_number == 2)
@@ -1797,34 +1755,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
         throw invalid_argument(buffer.str());
     }
-*/
-
-    const Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
-    DataSetBatch data_set_batch;
-    data_set_batch.set_inputs(inputs);
-
-    cout << "calculate outputs 1 *****************************************" << endl;
-    // inputs_data, inputs_dimensions, outputs_data, outputs_dimensions
-
-    NeuralNetworkForwardPropagation neural_network_forward_propagation(data_set_batch.batch_size, this);
-cout << "calculate outputs 2 *****************************************" << endl;
-    forward_propagate(data_set_batch, neural_network_forward_propagation);
-cout << "calculate outputs 3 *****************************************" << endl;
-    const Index layers_number = get_layers_number();
-
-    if(layers_number == 0) return Tensor<type, 2>();
-
-    type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
-    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
-
-    return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 }
 
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
-/*
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
     {
@@ -1904,9 +1839,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         throw invalid_argument(buffer.str());
     }
-*/
 
-    return Tensor<type, 2>();
 }
 
 
@@ -2047,10 +1980,9 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
     do{
         Tensor<type, 2> input_data(get_inputs_number(), 1);
         input_data.setZero();
-
         Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-        Tensor<type, 2> output = calculate_outputs(input_data);
+        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
 
         string letter = text_generation_alphabet.multiple_one_hot_decode(output);
 
@@ -2058,7 +1990,7 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
         input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
 
-    }while(Index(result.length()) < length);
+    }while(result.length() < length);
 
     return result;
 }
@@ -2879,7 +2811,8 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 
 /// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_c() const {
+string NeuralNetwork::write_expression_c() const
+{
 
     //get_scaling_layer_pointer()->get_descriptives()
 
@@ -2930,6 +2863,23 @@ string NeuralNetwork::write_expression_c() const {
     buffer << "\n" << endl;
 
     buffer << "Inputs Names:" <<endl;
+
+    /*
+    const Tensor<string, 1> inputs = get_inputs_names();
+    const Tensor<string, 1> outputs = get_outputs_names();
+
+    for (int i = 0; i < inputs.dimension(0); i++)
+    {
+        if (inputs[i].empty())
+        {
+            buffer << "\t" << to_string(i) + ") " << "input_" + to_string(i) << endl;
+        }
+        else
+        {
+            buffer << "\t" << to_string(i) + ") " << inputs[i] << endl;
+        }
+    }
+    */
 
     const Tensor<string, 1> inputs_base = get_inputs_names();
     Tensor<string, 1> inputs(inputs_base.dimension(0));
@@ -3225,6 +3175,7 @@ string NeuralNetwork::write_expression_c() const {
         }
         else
         {
+            //aux = "const float " + t;
             calculate_outputs_buffer << "\t" << t << endl;
         }
     }
@@ -3234,6 +3185,7 @@ string NeuralNetwork::write_expression_c() const {
     for (auto& found_token: found_tokens){
         string toReplace(found_token);
 
+        //el fallo es el cont float, con double si que funciona
         string newword = "double " + found_token;
         size_t pos = calculate_outputs_string.find(toReplace);
         calculate_outputs_string.replace(pos, toReplace.length(), newword);
@@ -3249,14 +3201,6 @@ string NeuralNetwork::write_expression_c() const {
         replace_all_appearances(calculate_outputs_string, "hidden_state", "lstm.hidden_state");
     }
     buffer << calculate_outputs_string;
-
-    const string language = "c";
-    const Tensor<std::string, 1> outputs_names = outputs;
-    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
-
-    for (std::string fixed_line: fixed_expression) {
-        buffer << fixed_line << endl;
-    }
 
     buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
     for (int i = 0; i < outputs.dimension(0); i++)
@@ -3330,6 +3274,7 @@ string NeuralNetwork::write_expression_c() const {
     string out = buffer.str();
     return out;
 }
+
 
 string NeuralNetwork::write_expression() const
 {
@@ -3713,14 +3658,6 @@ string NeuralNetwork::write_expression_api() const
         buffer << t << endl;
     }
 
-    const string language = "php";
-    const Tensor<std::string, 1> outputs_names = outputs;
-    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
-
-    for (std::string fixed_line: fixed_expression) {
-        buffer << fixed_line << endl;
-    }
-
     buffer << "if ($status === 200){" << endl;
     buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
@@ -4011,8 +3948,8 @@ string NeuralNetwork::write_expression_javascript() const
             buffer << "<tr style=\"height:3.5em\">" << endl;
             buffer << "<td> " << inputs_names[i] << " </td>" << endl;
             buffer << "<td style=\"text-align:center\">" << endl;
-            buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
-            buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+            buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(0).minimum + inputs_descriptives(0).maximum)/2 << "\" min=\"" << inputs_descriptives(0).minimum << "\" max=\"" << inputs_descriptives(0).maximum << "\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
+            buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(0).minimum + inputs_descriptives(0).maximum)/2 << "\" min=\"" << inputs_descriptives(0).minimum << "\" max=\"" << inputs_descriptives(0).maximum << "\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
             buffer << "</td>" << endl;
             buffer << "</tr>" << endl;
             buffer << "\n" << endl;
@@ -4207,14 +4144,6 @@ string NeuralNetwork::write_expression_javascript() const
     if(LSTM_number>0)
     {
         buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
-    }
-
-    const string language = "javascript";
-    const Tensor<std::string, 1> outputs_names = outputs;
-    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
-
-    for (std::string fixed_line: fixed_expression) {
-        buffer << fixed_line << endl;
     }
 
     buffer << "\t" << "var out = [];" << endl;
@@ -4728,14 +4657,6 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\t\t" << t << endl;
     }
 
-    const string language = "python";
-    const Tensor<std::string, 1> outputs_names = outputs;
-    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
-
-    for (std::string fixed_line: fixed_expression) {
-        buffer << fixed_line << endl;
-    }
-
     buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "" << endl;
 
     for (int i = 0; i < outputs.dimension(0); i++)
@@ -4892,7 +4813,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 {
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    Tensor<type, 2> outputs = calculate_outputs(inputs);
+    Tensor<type, 2> outputs = calculate_outputs(inputs.data(), inputs_dimensions);
 
     std::ofstream file(file_name.c_str());
 

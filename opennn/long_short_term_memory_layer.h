@@ -203,7 +203,7 @@ public:
 
    // Long short-term memory layer outputs
 
-//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
@@ -222,7 +222,7 @@ public:
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
-//   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
    // Eror gradient
 

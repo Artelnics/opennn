@@ -23,8 +23,6 @@
 #include "config.h"
 #include "layer.h"
 #include "opennn_strings.h"
-#include "opennn_images.h"
-
 
 namespace opennn
 {
@@ -39,7 +37,7 @@ public:
 
    // Perceptron layer outputs
 
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    void forward_propagate(type*, const Tensor<Index, 1>&,
                           LayerForwardPropagation*);

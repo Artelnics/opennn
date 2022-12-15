@@ -69,6 +69,10 @@ public:
     void test_calculate_activations();
     void test_calculate_activations_derivatives();
 
+    // Outputs
+
+    void test_calculate_outputs();
+
     // Forward propagate
 
     void test_forward_propagate();

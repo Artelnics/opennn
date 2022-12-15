@@ -112,7 +112,7 @@ public:
 
 //    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
 
-//    void calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&) final;
+    void calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&) final;
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) {}
 
@@ -133,8 +133,9 @@ public:
 
     // First order activations
 
-    void forward_propagate(type*, const Tensor<Index, 1>&,
-                           LayerForwardPropagation*) final {}
+    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*)
+    {
+    }
 
     // Delta methods
 

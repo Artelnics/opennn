@@ -100,9 +100,10 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) = 0;
+    virtual void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-//    virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
 
@@ -216,10 +217,7 @@ struct LayerForwardPropagation
     {
     }
 
-    virtual ~LayerForwardPropagation()
-    {
-        delete outputs_data;
-    }
+    virtual ~LayerForwardPropagation() {}
 
     virtual void set(const Index&, Layer*) {}
 
@@ -230,7 +228,6 @@ struct LayerForwardPropagation
     Layer* layer_pointer = nullptr;
 
     type* outputs_data = nullptr;
-
     Tensor<Index, 1> outputs_dimensions;
 };
 

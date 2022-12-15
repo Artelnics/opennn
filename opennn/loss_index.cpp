@@ -402,6 +402,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 }
 
 
+
 /// This method calculates the second-order loss.
 /// It is used for optimization of parameters during training.
 /// Returns a second-order terms loss structure, which contains the values and the Hessian of the error terms function.

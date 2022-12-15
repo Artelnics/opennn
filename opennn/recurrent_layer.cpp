@@ -796,7 +796,7 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
     }
 }
 
-/*
+
 void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                        Tensor<type, 1>&parameters,
                                        LayerForwardPropagation* forward_propagation)
@@ -864,8 +864,8 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
         }
     }
 }
-*/
-/*
+
+
 void RecurrentLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                        type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -925,7 +925,6 @@ void RecurrentLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>
     }
 
 }
-*/
 
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,

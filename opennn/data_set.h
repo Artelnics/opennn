@@ -1120,23 +1120,7 @@ struct DataSetBatch
 
     Index get_batch_size() const;
 
-    Tensor<Index, 1> get_inputs_dimensions() const
-    {
-        return inputs_dimensions;
-    }
-
-    Tensor<Index, 1> get_targets_dimensions() const
-    {
-        return targets_dimensions;
-    }
-
     void set(const Index&, DataSet*);
-
-    void set_inputs(Tensor<type, 2>& new_inputs)
-    {
-        inputs_data = new_inputs.data();
-        inputs_dimensions = get_dimensions(new_inputs);
-    }
 
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 

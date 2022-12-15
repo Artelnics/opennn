@@ -260,12 +260,15 @@ void UnscalingLayerTest::test_is_empty()
 }
 
 
-void UnscalingLayerTest::test_forward_propagate()
+void UnscalingLayerTest::test_calculate_outputs()
 {
-    cout << "test_forward_propagate\n";
+    cout << "test_calculate_outputs\n";
 
     Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
+
     Tensor<Index, 1> inputs_dimensions;
+    Tensor<Index, 1> outputs_dimensions;
 
     Tensor<type, 2> minimums_maximums;
     Tensor<type, 2> mean_standard_deviation;
@@ -276,23 +279,17 @@ void UnscalingLayerTest::test_forward_propagate()
 
     // Test 0_0
 
-    Index samples_number = 1;
-    Index inputs_number = 1;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(1);
     unscaling_layer.set_scalers(Scaler::NoScaling);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,1);
     inputs.setRandom();
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,1);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 1, LOG);
@@ -300,189 +297,147 @@ void UnscalingLayerTest::test_forward_propagate()
 
     // Test 0_1
 
-    samples_number = 1;
-    inputs_number = 3;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(3);
     unscaling_layer.set_scalers(Scaler::NoScaling);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
-    inputs.resize(samples_number,inputs_number);
+    inputs.resize(1,3);
     inputs.setConstant(type(0));
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,3);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_2(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    assert_true(outputs_2.dimension(0) == 1, LOG);
-    assert_true(outputs_2.dimension(1) == 3, LOG);
-    assert_true(abs(outputs_2(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs_2(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs_2(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 3, LOG);
+    assert_true(abs(outputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test 1_0
 
-    samples_number = 1;
-    inputs_number = 1;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(1);
     unscaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,1);
     inputs.setRandom();
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,1);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_3(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    assert_true(outputs_3.dimension(0) - 1 < NUMERIC_LIMITS_MIN, LOG);
-    assert_true(outputs_3.dimension(1) - 1 < NUMERIC_LIMITS_MIN, LOG);
-    assert_true(abs(outputs_3(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(outputs.dimension(0) - 1 < NUMERIC_LIMITS_MIN, LOG);
+    assert_true(outputs.dimension(1) - 1 < NUMERIC_LIMITS_MIN, LOG);
+    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test 1_1
 
-    samples_number = 1;
-    inputs_number = 2;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(2);
     unscaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
+    minimums_maximums.resize(2,4);
+    minimums_maximums.setValues({
+                                    {type(-1000),type(1000),type(0),type(0)},
+                                    {type(-100),type(100),type(0),type(0)}});
 
-    minimums_maximums.resize(2, 4);
-    minimums_maximums.setValues({{type(-1000),type(1000),type(0),type(0)},
-                                {type(-100),type(100),type(0),type(0)}});
-
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,2);
     inputs.setValues({{type(0.1f),type(0)}});
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,2);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_4(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    assert_true(outputs_4.dimension(0) == 1, LOG);
-    assert_true(outputs_4.dimension(1) == 2, LOG);
-    assert_true(abs(outputs_4(0)*1000 - static_cast<type>(100)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs_4(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 2, LOG);
+    assert_true(abs(outputs(0)*1000 - static_cast<type>(100)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test 2_0
 
-    samples_number = 1;
-    inputs_number = 1;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(1);
     unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,1);
     inputs.setRandom();
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,1);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_5(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    assert_true(outputs_5.dimension(0) == 1, LOG);
-    assert_true(outputs_5.dimension(1) == 1, LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 1, LOG);
 
-    assert_true(abs(outputs_5(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test 2_1
 
-    samples_number = 1;
-    inputs_number = 2;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(2);
     unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
     mean_standard_deviation.resize(2,4);
-    mean_standard_deviation.setValues({{type(-1),type(1),type(-1),type(-2)},
-                                        {type(-1),type(1),type(2),type(3)}});
+    mean_standard_deviation.setValues({
+                                          {type(-1),type(1),type(-1),type(-2)},
+                                          {type(-1),type(1),type(2),type(3)}});
 
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,2);
     inputs.setValues({{type(-1),type(1)}});
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,2);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_6(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    assert_true(outputs_6.dimension(0) == 1, LOG);
-    assert_true(outputs_6.dimension(1) == 2, LOG);
-    assert_true(abs(outputs_6(0)) - static_cast<type>(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs_6(1) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 2, LOG);
+    assert_true(abs(outputs(0)) - static_cast<type>(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test 3_0
 
-    samples_number = 1;
-    inputs_number = 1;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(1);
     unscaling_layer.set_scalers(Scaler::Logarithm);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,1);
     inputs.setValues({{type(1)}});
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,1);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_7(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 1, LOG);
 
-    assert_true(outputs_7.dimension(0) == 1, LOG);
-    assert_true(outputs_7.dimension(1) == 1, LOG);
-
-    assert_true(abs(outputs_7(0) - type(2.71828)) < type(10e-5), LOG);
+    assert_true(abs(outputs(0) - type(2.71828)) < type(10e-5), LOG);
 
     // Test 3_1
 
-    samples_number = 1;
-    inputs_number = 2;
-
-    unscaling_layer.set(inputs_number);
+    unscaling_layer.set(2);
     unscaling_layer.set_scalers(Scaler::Logarithm);
 
-    unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-
-    inputs.resize(samples_number, inputs_number);
+    inputs.resize(1,2);
     inputs.setConstant(type(1));
     inputs_dimensions = get_dimensions(inputs);
 
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation);
+    outputs.resize(1,2);
+    outputs_dimensions = get_dimensions(outputs);
 
-    TensorMap<Tensor<type, 2>> outputs_8(unscaling_layer_forward_propagation.outputs_data,
-                                       unscaling_layer_forward_propagation.outputs_dimensions(0),
-                                       unscaling_layer_forward_propagation.outputs_dimensions(1));
+    unscaling_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    assert_true(outputs_8.dimension(0) == 1, LOG);
-    assert_true(outputs_8.dimension(1) == 2, LOG);
-    assert_true(abs(outputs_8(0) - type(2.71828)) < type(10e-5), LOG);
-    assert_true(abs(outputs_8(1) - type(2.71828)) < type(10e-5), LOG);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 2, LOG);
+    assert_true(abs(outputs(0) - type(2.71828)) < type(10e-5), LOG);
+    assert_true(abs(outputs(1) - type(2.71828)) < type(10e-5), LOG);
 
-    cout << "End test_forward_propagate\n";
 }
 
 
@@ -513,7 +468,7 @@ void UnscalingLayerTest::run_test_case()
 
     // Output methods
 
-    test_forward_propagate();
+    test_calculate_outputs();
 
     cout << "End of unscaling layer test case.\n\n";
 }
