@@ -32,36 +32,6 @@ Descriptives::Descriptives(const type& new_minimum, const type& new_maximum,
 }
 
 
-Descriptives::Descriptives(const Tensor<type, 1>&x)
-{
-#ifdef OPENNN_DEBUG
-
-    if(x.size() == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type descriptives(const Tensor<type, 1>&, "
-               "const Tensor<Index, 1>&).\n"
-               << "Size must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    Tensor<type, 0> minimum = x.minimum();
-    Tensor<type, 0> maximum = x.maximum();
-
-    Tensor<type, 0> mean = x.mean();
-    Tensor<type, 0> stde = (x - mean(0)).square().sum();
-    stde = stde * (1/static_cast<type>(x.size()));
-    stde = stde.sqrt();
-
-    set(minimum(0), maximum(0), mean(0), stde(0));
-}
-
-
 void Descriptives::set(const type& new_minimum, const type& new_maximum,
                                const type& new_mean, const type& new_standard_deviation)
 {
@@ -263,7 +233,6 @@ Histogram::Histogram(const Tensor<type, 1>& data,
 {
     const type data_maximum = maximum(data);
     const type data_minimum = minimum(data);
-
     const type step = (data_maximum - data_minimum) / type(number_of_bins);
 
     Tensor<type, 1> new_centers(number_of_bins);
@@ -283,9 +252,6 @@ Histogram::Histogram(const Tensor<type, 1>& data,
     {
         value = data(i);
         corresponding_bin = int((value - data_minimum) / step);
-
-        if(corresponding_bin >= number_of_bins)
-            corresponding_bin = number_of_bins - 1;
 
         new_frequencies(corresponding_bin)++;
     }
@@ -2061,7 +2027,52 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 
 #endif
 
-    Descriptives descriptives(vector);
+    Descriptives descriptives;
+
+    type minimum = numeric_limits<type>::max();
+    type maximum = -numeric_limits<type>::max();
+
+    long double sum = 0.0;
+    long double squared_sum = 0;
+    Index count = 0;
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(!isnan(vector(i)))
+        {
+            if(vector(i) < minimum) minimum = vector(i);
+
+            if(vector(i) > maximum) maximum = vector(i);
+
+            sum += vector(i);
+            squared_sum += double(vector(i)) *double(vector(i));
+
+            count++;
+        }
+    }
+
+    const type mean = sum/static_cast<type>(count);
+
+    type standard_deviation;
+
+    if(count <= 1)
+    {
+        standard_deviation = type(0);
+    }
+    else
+    {
+        const type numerator = type(squared_sum) - (sum * sum) / type(count);
+        const type denominator = type(size) - static_cast<type>(1.0);
+
+        standard_deviation = numerator / denominator;
+    }
+
+    standard_deviation = sqrt(standard_deviation);
+
+    descriptives.minimum = minimum;
+    descriptives.maximum = maximum;
+    descriptives.mean = mean;
+    descriptives.standard_deviation = standard_deviation;
 
     return descriptives;
 }

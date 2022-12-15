@@ -1,0 +1,3 @@
+
+27236 : 0x184dd70f24a : 3 : logger_init :  LOG FILE OPENED (by collectunits.logger), level: 4
+27236 : 0x184dd8135f4 : 4 : pytrace_start_profiling :  [CALLED]

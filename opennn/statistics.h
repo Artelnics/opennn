@@ -44,8 +44,6 @@ struct Descriptives {
 
   explicit Descriptives(const type&, const type&, const type&, const type&);
 
-  explicit Descriptives(const Tensor<type, 1>&);
-
   // Set methods
 
   void set(const type&, const type&, const type&, const type&);

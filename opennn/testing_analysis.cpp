@@ -3950,11 +3950,14 @@ void TestingAnalysis::print_binary_classification_tests() const
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 {
-    const Index targets_number = data_set_pointer->get_target_variables_number();
-
-#ifdef OPENNN_DEBUG
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
+
+    const Index targets_number = data_set_pointer->get_target_variables_number();
+
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+#ifdef OPENNN_DEBUG
 
     if(!data_set_pointer)
     {
@@ -3985,6 +3988,7 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
     const Tensor<Index, 2> confusion = calculate_confusion();
 
     Index true_positives = 0;
+    Index true_negatives = 0;
     Index false_positives = 0;
     Index false_negatives = 0;
 

@@ -793,14 +793,11 @@ string DataSet::get_project_type_string(const DataSet::ProjectType& newProjectTy
     {
         return "ImageClassification";
     }
-    else if(newProjectType == ProjectType::TextClassification)
-    {
-        return "TextClassification";
-    }
     else if(newProjectType == ProjectType::AutoAssociation)
     {
         return "AutoAssociation";
-    }   
+    }
+
 }
 
 
@@ -1005,6 +1002,8 @@ void DataSet::transform_associative_columns()
     cout << "Transforming associative columns..." << endl;
 
     associative_columns = columns;
+
+    cout << "ASSOCIATIVE COLUMNS NUMBER: " << associative_columns.size();
 
     const Index columns_number = get_columns_number();
 
@@ -4962,11 +4961,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-    delete thread_pool;
-    thread_pool = nullptr;
-
-    delete thread_pool_device;
-    thread_pool_device = nullptr;
+    ThreadPool* thread_pool = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
 
@@ -9100,10 +9096,10 @@ void DataSet::save_auto_associative_data_binary(const string& binary_data_file_n
 
     streamsize size = sizeof(Index);
 
-    Index columns_number = associative_data.dimension(1);
-    Index rows_number = associative_data.dimension(0);
+    Index columns_number = time_series_data.dimension(1);
+    Index rows_number = time_series_data.dimension(0);
 
-    cout << "Saving binary associative data file..." << endl;
+    cout << "Saving binary data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
@@ -9124,7 +9120,7 @@ void DataSet::save_auto_associative_data_binary(const string& binary_data_file_n
 
     file.close();
 
-    cout << "Binary associative data file saved." << endl;
+    cout << "Binary data file saved." << endl;
 }
 
 
@@ -11393,7 +11389,7 @@ void DataSet::read_bmp()
     }
 
 
-    for (Index i = 0 ; i < Index(folder_paths.size()) ; i++)
+    for (Index i = 0 ; i < folder_paths.size() ; i++)
     {
         for (const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
@@ -11401,7 +11397,7 @@ void DataSet::read_bmp()
         }
     }
 
-    for(Index i = 0; i < Index(image_paths.size()); i++)
+    for(Index i = 0; i < image_paths.size(); i++)
     {
         if(image_paths[i].extension() != ".bmp")
         {
@@ -11430,7 +11426,7 @@ void DataSet::read_bmp()
     Index image_size;
     Index size_comprobation = 0;
 
-    for(Index i = 0; i < Index(image_paths.size()); i++)
+    for(Index i = 0; i < image_paths.size(); i++)
     {
         info_img = image_paths[i].string();
         image = read_bmp_image(info_img);
@@ -12560,8 +12556,6 @@ void DataSet::read_csv_1()
         getline(file, line);
 
         line = decode(line);
-
-        replace(line, "\\", "/");
 
         trim(line);
 
