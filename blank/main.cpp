@@ -19,22 +19,22 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
-using namespace opennn;
 
+using namespace opennn;
 using namespace std;
 
 int main(int argc, char *argv[])
 {
     try
     {
-        cout << "Hello OpenNN!" << endl;
-
+        cout << "Hello OpenNN" << endl;
 
         cout << "Bye OpenNN!" << endl;
 
         return 0;
+
     }
-    catch(const exception& e)
+    catch (const exception& e)
     {
         cerr << e.what() << endl;
 
