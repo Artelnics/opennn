@@ -5285,6 +5285,13 @@ void DataSet::set_time_series_data(const Tensor<type, 2>& new_data)
 }
 
 
+Index DataSet::get_associative_columns_number() const
+{
+    return associative_columns.size();
+}
+
+
+
 void DataSet::set_associative_data(const Tensor<type, 2>& new_data)
 {
     associative_data = new_data;
@@ -9311,7 +9318,9 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
 
     Index tokens_count;
 
-    const Index columns_number = get_columns_number() - get_target_columns_number();
+    Index columns_number = get_columns_number() - get_target_columns_number();
+    if(project_type == ProjectType::AutoAssociation)
+        columns_number = get_columns_number() - get_target_columns_number() - get_unused_columns_number()/2;
 
     while(file.good())
     {
@@ -9389,7 +9398,9 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     Index tokens_count;
 
-    const Index columns_number = get_columns_number() - get_target_columns_number();
+    Index columns_number = get_columns_number() - get_target_columns_number();
+    if(project_type == ProjectType::AutoAssociation)
+        columns_number = get_columns_number() - get_target_columns_number() - get_unused_columns_number()/2;
 
     while(file.good())
     {
@@ -9428,6 +9439,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     if(has_columns_name) input_samples_count--;
 
     Tensor<type, 2> inputs_data(input_samples_count, variables_number);
+    inputs_data.setZero();
 
     // Fill input data
 

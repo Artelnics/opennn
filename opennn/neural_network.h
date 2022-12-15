@@ -255,6 +255,8 @@ public:
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
+   void save_autoassociation_outputs(const Tensor<type, 1>&,const Tensor<string, 1>&, const string&) const;
+
    /// Calculate forward propagation in neural network
 
    void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;

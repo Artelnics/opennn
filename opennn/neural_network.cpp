@@ -4857,6 +4857,45 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 }
 
 
+void NeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,const Tensor<string, 1>& types_vector, const string& file_name) const
+{
+    std::ofstream file(file_name.c_str());
+
+    if(distances_vector.size() != types_vector.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void  save_expression_python(const string&) method.\n"
+               << "Distances and types vectors must have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void  save_expression_python(const string&) method.\n"
+               << "Cannot open expression text file.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index samples_number = distances_vector.dimension(0);
+
+    file << "Sample distance" << ";" << "Sample type" << "\n";
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        file << distances_vector(i) << ";" << types_vector(i) << "\n";
+    }
+
+    file.close();
+}
+
+
 Tensor<string, 1> NeuralNetwork::get_layers_names() const
 {
     const Index layers_number = get_layers_number();

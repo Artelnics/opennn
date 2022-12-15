@@ -745,15 +745,16 @@ public:
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
 
-    void get_associative_columns_number(const Index&);
-    void set_associative_data(const Tensor<type, 2>&);
-    void set_associative_columns_number(const Index&);
 
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
 
     // Autoassiciative methods
+
+    Index get_associative_columns_number() const;
+    void set_associative_data(const Tensor<type, 2>&);
+    void set_associative_columns_number(const Index&);
 
     void transform_associative_dataset();
     void transform_associative_columns();

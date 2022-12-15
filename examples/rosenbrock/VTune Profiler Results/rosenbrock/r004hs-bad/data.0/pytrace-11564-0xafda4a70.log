@@ -1,3 +1,0 @@
-
-15932 : 0x4c6afda553a : 3 : logger_init :  LOG FILE OPENED (by collectunits.logger), level: 4
-15932 : 0x4c6aff00dd2 : 4 : pytrace_start_profiling :  [CALLED]
