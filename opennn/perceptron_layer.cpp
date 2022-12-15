@@ -825,10 +825,10 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
     {    case Type::Perceptron:
     {
         PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-                static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
+                reinterpret_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
 
         PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
-                static_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
+                reinterpret_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
 
         calculate_hidden_delta_perceptron(next_perceptron_layer_forward_propagation,
                                           next_perceptron_layer_back_propagation,
@@ -839,10 +839,10 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
     case Type::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-                static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
+                reinterpret_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
 
         ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
+                reinterpret_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
 
         calculate_hidden_delta_probabilistic(next_probabilistic_layer_forward_propagation,
                                              next_probabilistic_layer_back_propagation,

@@ -31,9 +31,17 @@
 namespace opennn
 {
 
+struct LayerForwardPropagation;
+struct LayerBackPropagation;
+struct LayerBackPropagationLM;
+
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
 struct PerceptronLayerBackPropagationLM;
+
+struct ProbabilisticLayerForwardPropagation;
+struct ProbabilisticLayerBackPropagation;
+struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
