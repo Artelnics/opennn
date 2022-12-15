@@ -1597,7 +1597,6 @@ void NeuralNetwork::forward_propagate(DataSetBatch& batch,
                                                         forward_propagation.layers(i-1)->outputs_dimensions,
                                                         forward_propagation.layers(i));
     }
-
 }
 
 
