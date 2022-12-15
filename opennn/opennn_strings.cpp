@@ -1019,11 +1019,20 @@ void trim(string& str)
 
     str.erase(0, str.find_first_not_of(' '));
     str.erase(0, str.find_first_not_of('\t'));
+    str.erase(0, str.find_first_not_of('\n'));
+    str.erase(0, str.find_first_not_of('\r'));
+    str.erase(0, str.find_first_not_of('\f'));
+    str.erase(0, str.find_first_not_of('\v'));
 
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
     str.erase(str.find_last_not_of('\t') + 1);
+    str.erase(str.find_last_not_of('\n') + 1);
+    str.erase(str.find_last_not_of('\r') + 1);
+    str.erase(str.find_last_not_of('\f') + 1);
+    str.erase(str.find_last_not_of('\v') + 1);
+    str.erase(str.find_last_not_of('\b') + 1);
 }
 
 
@@ -1044,10 +1053,21 @@ string get_trimmed(const string& str)
     //prefixing spaces
 
     output.erase(0, output.find_first_not_of(' '));
+    output.erase(0, output.find_first_not_of('\t'));
+    output.erase(0, output.find_first_not_of('\n'));
+    output.erase(0, output.find_first_not_of('\r'));
+    output.erase(0, output.find_first_not_of('\f'));
+    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
     output.erase(output.find_last_not_of(' ') + 1);
+    output.erase(output.find_last_not_of('\t') + 1);
+    output.erase(output.find_last_not_of('\n') + 1);
+    output.erase(output.find_last_not_of('\r') + 1);
+    output.erase(output.find_last_not_of('\f') + 1);
+    output.erase(output.find_last_not_of('\v') + 1);
+    output.erase(output.find_last_not_of('\b') + 1);
 
     return output;
 }
@@ -1213,10 +1233,125 @@ void remove_not_alnum(string &str)
         str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
 }
 
+
+vector<std::string> fix_write_expresion_outputs(const std::string &str, const Tensor<std::string, 1> &outputs, const string &programming_languaje)
+{
+    string expression = str;
+    std::stringstream ss(expression);
+
+    std::string token;
+    vector<std::string> tokens;
+    vector<std::string> found_tokens;
+    vector<std::string> out;
+
+    string new_variable;
+    string old_variable;
+
+    string out_string;
+    int option = 0;
+
+    //Define option number depending on the programming_languaje
+    if (programming_languaje == "javascript") { option = 1; }
+    else if (programming_languaje == "php")   { option = 2; }
+    else if (programming_languaje == "python"){ option = 3; }
+    else if (programming_languaje == "c")     { option = 4; }
+
+    //save output tensors dimension
+    int dimension = outputs.dimension(0);
+
+    //get last lines depending on the dimension
+    while (getline(ss, token, '\n'))
+    {
+        if (token.size() > 1 && token.back() == '{'){ break; }
+        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+        tokens.push_back(token);
+    }
+
+    ////Get corresponding variable
+    for (string& s : tokens)
+    {
+        string word = "";
+        for (char& c : s)
+        {
+            if ( c!=' ' && c!='=' ){ word += c; }
+            else { break; }
+        }
+
+        if (word.size() > 1)
+        {
+            found_tokens.push_back(word);
+        }
+    }
+
+    new_variable = found_tokens[found_tokens.size()-1];
+    old_variable = outputs[dimension-1];
+
+    if (new_variable != old_variable)
+    {
+        int j = found_tokens.size();
+
+        for (int i = dimension; i --> 0;)
+        {
+            j -= 1;
+
+            //get variable names of those lines
+            new_variable = found_tokens[j];
+            old_variable = outputs[i];
+
+            //create especificied lines
+            switch(option)
+            {
+                //JavaScript
+                case 1:
+                    out_string = "\tvar ";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out.push_back(out_string);
+                break;
+
+                //Php
+                case 2:
+                    out_string = "$";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += "$";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out.push_back(out_string);
+                break;
+
+                //Python
+                case 3:
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out.push_back(out_string);
+                break;
+
+                //C
+                case 4:
+                    out_string = "double ";
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out.push_back(out_string);
+                break;
+
+                default:
+                break;
+            }
+        }
+    }
+    return out;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -407,6 +407,10 @@ string NeuralNetwork::get_project_type_string() const
     {
         return "ImageClassification";
     }
+    else if(project_type == ProjectType::TextClassification)
+    {
+        return "TextClassification";
+    }
     else if(project_type == ProjectType::TextGeneration)
     {
         return "TextGeneration";
@@ -416,6 +420,7 @@ string NeuralNetwork::get_project_type_string() const
         return "AutoAssociation";
     }
 }
+
 
 /// Returns a string vector with the names of the variables used as outputs.
 
@@ -2075,6 +2080,7 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
     do{
         Tensor<type, 2> input_data(get_inputs_number(), 1);
         input_data.setZero();
+
         Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
         Tensor<type, 2> output = calculate_outputs(input_data);
@@ -2085,7 +2091,7 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
         input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
 
-    }while(result.length() < length);
+    }while(Index(result.length()) < length);
 
     return result;
 }
@@ -2906,8 +2912,7 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 
 /// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_c() const
-{
+string NeuralNetwork::write_expression_c() const {
 
     //get_scaling_layer_pointer()->get_descriptives()
 
@@ -2958,23 +2963,6 @@ string NeuralNetwork::write_expression_c() const
     buffer << "\n" << endl;
 
     buffer << "Inputs Names:" <<endl;
-
-    /*
-    const Tensor<string, 1> inputs = get_inputs_names();
-    const Tensor<string, 1> outputs = get_outputs_names();
-
-    for (int i = 0; i < inputs.dimension(0); i++)
-    {
-        if (inputs[i].empty())
-        {
-            buffer << "\t" << to_string(i) + ") " << "input_" + to_string(i) << endl;
-        }
-        else
-        {
-            buffer << "\t" << to_string(i) + ") " << inputs[i] << endl;
-        }
-    }
-    */
 
     const Tensor<string, 1> inputs_base = get_inputs_names();
     Tensor<string, 1> inputs(inputs_base.dimension(0));
@@ -3270,7 +3258,6 @@ string NeuralNetwork::write_expression_c() const
         }
         else
         {
-            //aux = "const float " + t;
             calculate_outputs_buffer << "\t" << t << endl;
         }
     }
@@ -3280,7 +3267,6 @@ string NeuralNetwork::write_expression_c() const
     for (auto& found_token: found_tokens){
         string toReplace(found_token);
 
-        //el fallo es el cont float, con double si que funciona
         string newword = "double " + found_token;
         size_t pos = calculate_outputs_string.find(toReplace);
         calculate_outputs_string.replace(pos, toReplace.length(), newword);
@@ -3296,6 +3282,14 @@ string NeuralNetwork::write_expression_c() const
         replace_all_appearances(calculate_outputs_string, "hidden_state", "lstm.hidden_state");
     }
     buffer << calculate_outputs_string;
+
+    const string language = "c";
+    const Tensor<std::string, 1> outputs_names = outputs;
+    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
+
+    for (std::string fixed_line: fixed_expression) {
+        buffer << fixed_line << endl;
+    }
 
     buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
     for (int i = 0; i < outputs.dimension(0); i++)
@@ -3369,7 +3363,6 @@ string NeuralNetwork::write_expression_c() const
     string out = buffer.str();
     return out;
 }
-
 
 string NeuralNetwork::write_expression() const
 {
@@ -3753,6 +3746,14 @@ string NeuralNetwork::write_expression_api() const
         buffer << t << endl;
     }
 
+    const string language = "php";
+    const Tensor<std::string, 1> outputs_names = outputs;
+    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
+
+    for (std::string fixed_line: fixed_expression) {
+        buffer << fixed_line << endl;
+    }
+
     buffer << "if ($status === 200){" << endl;
     buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
@@ -4043,8 +4044,8 @@ string NeuralNetwork::write_expression_javascript() const
             buffer << "<tr style=\"height:3.5em\">" << endl;
             buffer << "<td> " << inputs_names[i] << " </td>" << endl;
             buffer << "<td style=\"text-align:center\">" << endl;
-            buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(0).minimum + inputs_descriptives(0).maximum)/2 << "\" min=\"" << inputs_descriptives(0).minimum << "\" max=\"" << inputs_descriptives(0).maximum << "\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
-            buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(0).minimum + inputs_descriptives(0).maximum)/2 << "\" min=\"" << inputs_descriptives(0).minimum << "\" max=\"" << inputs_descriptives(0).maximum << "\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+            buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
+            buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
             buffer << "</td>" << endl;
             buffer << "</tr>" << endl;
             buffer << "\n" << endl;
@@ -4239,6 +4240,14 @@ string NeuralNetwork::write_expression_javascript() const
     if(LSTM_number>0)
     {
         buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
+    }
+
+    const string language = "javascript";
+    const Tensor<std::string, 1> outputs_names = outputs;
+    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
+
+    for (std::string fixed_line: fixed_expression) {
+        buffer << fixed_line << endl;
     }
 
     buffer << "\t" << "var out = [];" << endl;
@@ -4750,6 +4759,14 @@ string NeuralNetwork::write_expression_python() const
         }
 
         buffer << "\t\t" << t << endl;
+    }
+
+    const string language = "python";
+    const Tensor<std::string, 1> outputs_names = outputs;
+    const vector<std::string> fixed_expression = fix_write_expresion_outputs(expression, outputs_names, language);
+
+    for (std::string fixed_line: fixed_expression) {
+        buffer << fixed_line << endl;
     }
 
     buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "" << endl;

@@ -30,4 +30,4 @@ win32:{
 
 # OpenMP library
 
-include(../opennmp.pri)
+#include(../opennmp.pri)

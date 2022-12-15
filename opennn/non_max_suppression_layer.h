@@ -23,6 +23,8 @@
 #include "config.h"
 #include "layer.h"
 #include "opennn_strings.h"
+#include "opennn_images.h"
+
 
 namespace opennn
 {

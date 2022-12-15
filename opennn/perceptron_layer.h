@@ -21,22 +21,20 @@
 // OpenNN includes
 
 #include "config.h"
+#include "layer.h"
 #include "probabilistic_layer.h"
 
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
 
 namespace opennn
 {
 
-struct PerceptronLayerForwardPropagation;
-struct PerceptronLayerBackPropagation;
-struct PerceptronLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
+
+struct PerceptronLayerForwardPropagation;
+struct PerceptronLayerBackPropagation;
+struct PerceptronLayerBackPropagationLM;
 
 
 /// This class represents a layer of perceptrons.
@@ -423,8 +421,8 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Deltas:" << endl;
-        //cout << deltas << endl;
+//        cout << "Deltas:" << endl;
+//        cout << deltas << endl;
 
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
