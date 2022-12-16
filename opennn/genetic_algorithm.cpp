@@ -115,12 +115,7 @@ void GeneticAlgorithm::set_default()
     }
     else
     {
-        // "Variables" includes dummy variables, columns treat categorical variables as one (important)
-
         genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
-
-        calculate_inputs_activation_probabilities();
-
     }
 
     Index individuals_number = 10;
@@ -151,7 +146,6 @@ void GeneticAlgorithm::set_default()
     elitism_size = 2;
 
     set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
-
 }
 
 
@@ -477,35 +471,28 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 
     DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
-    const Index columns_number = data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
+    const Index columns_number = data_set_pointer->get_input_columns_number();
 
-    cout << "Calculating correlations matrix" << endl;
+    const Tensor <Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
-    Tensor <Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
+    const Tensor <type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
-    cout << "Correlation matrix calculated" << endl;
-
-    Tensor <type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
-
-    Tensor <Index, 1> rank = calculate_rank_greater(correlations);
+    const Tensor <Index, 1> rank = calculate_rank_greater(correlations);
 
     Tensor <type, 1> fitness_correlations(rank.size());
 
     for(Index i=0; i<columns_number; i++)
     {
         fitness_correlations(rank(i)) = type(i+1);
-    }//End of calculation of the new fitness correlations vector
+    }
 
-
-    //Cumulative probability tensor calculation
     Tensor <type,1> probabilities_vector(columns_number);
 
     for (Index i = 0; i <columns_number ; i++)
     {
         probabilities_vector[i] = type(columns_number - fitness_correlations(i)-1) / (type(columns_number)*type(columns_number+1))/2;
-        //This vector stores in probabilities_vector(i)="Probability of input number i being choose"
     }
-    //This tensor means cumulative_probabilities(i)="sum of the first i elements of probabilities_vector"
+
     inputs_activation_probabilities = probabilities_vector.cumsum(0);
 }
 
