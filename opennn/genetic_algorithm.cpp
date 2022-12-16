@@ -473,7 +473,11 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 
     const Index columns_number = data_set_pointer->get_input_columns_number();
 
+    cout << "Calculating Correlations Matrix" << endl ;
+
     const Tensor <Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
+
+    cout << "Correlation matrix calculated" << endl;
 
     const Tensor <type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
