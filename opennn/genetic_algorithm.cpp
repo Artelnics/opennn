@@ -118,7 +118,7 @@ void GeneticAlgorithm::set_default()
         genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
     }
 
-    Index individuals_number = 10;
+    Index individuals_number = 12;
 
     maximum_epochs_number = 100;
 
@@ -514,6 +514,14 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     Tensor <bool, 1> individual_variables(genes_number);
 
+    std::random_device rd;
+
+    std::mt19937 gen(rd());
+
+    std::uniform_real_distribution<> dis(0, 1);
+
+    Index columns_active = 1 + rand() % columns_number;
+
     type arrow;
 
     for (Index i = 0; i < individuals_number; i++)
@@ -522,19 +530,26 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         individual_variables.setConstant(false);
 
-        // Generation of new individual
+        columns_active = 1 + rand() % columns_number;
 
-        for(Index j=0; j< rand()%columns_number ; j++)
+        while (count(individual_columns.data(), individual_columns.data() + individual_columns.size(), 1) < columns_active)
         {
-            arrow=type(rand())/type(RAND_MAX);
+            arrow = dis(gen);
 
-            if(arrow > inputs_activation_probabilities(j)
-               && arrow < inputs_activation_probabilities(j+1)
-               && !individual_columns(j))
-             {
-               individual_columns(j) = true;
-             }
+            if (arrow < inputs_activation_probabilities(0) && !individual_columns(0))
+            {
+                individual_columns(0) = true;
+            }
 
+            for (Index j = 0; j < columns_number - 1; j++)
+            {
+                if (arrow >= inputs_activation_probabilities(j)
+                    && arrow < inputs_activation_probabilities(j + 1)
+                    && !individual_columns(j + 1))
+                {
+                    individual_columns(j + 1) = true;
+                }
+            }
         }
 
         if(is_false(individual_columns)) individual_columns(rand()%columns_number) = true;
@@ -623,7 +638,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         individual = population.chip(i, 0);
 
-        //if (display) cout << "Individual " << i + 1 << endl;
+        if (display) cout << "Individual " << i + 1 << endl;
 
         individual_columns_indexes = get_individual_as_columns_indexes_from_variables(individual);
 
