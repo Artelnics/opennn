@@ -475,15 +475,15 @@ void GeneticAlgorithm::initialize_population_random()
 void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 {
 
-    DataSet* data_set_pointer=training_strategy_pointer->get_data_set_pointer();
+    DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
-    const Index columns_number=data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
+    const Index columns_number = data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
 
-    cout<<"Calculating correlations matrix"<<endl;
+    cout << "Calculating correlations matrix" << endl;
 
     Tensor <Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
-    cout<<"Correlation matrix calculated"<<endl;
+    cout << "Correlation matrix calculated" << endl;
 
     Tensor <type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
@@ -493,7 +493,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 
     for(Index i=0; i<columns_number; i++)
     {
-        fitness_correlations(rank(i))=type(i+1);
+        fitness_correlations(rank(i)) = type(i+1);
     }//End of calculation of the new fitness correlations vector
 
 
@@ -502,7 +502,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 
     for (Index i = 0; i <columns_number ; i++)
     {
-        probabilities_vector[i] = type(fitness_correlations.size() - fitness_correlations(i)-1) / (type(columns_number)*type(columns_number+1))/2;
+        probabilities_vector[i] = type(columns_number - fitness_correlations(i)-1) / (type(columns_number)*type(columns_number+1))/2;
         //This vector stores in probabilities_vector(i)="Probability of input number i being choose"
     }
     //This tensor means cumulative_probabilities(i)="sum of the first i elements of probabilities_vector"
@@ -515,11 +515,13 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
+    calculate_inputs_activation_probabilities();
+
     const Index individuals_number = get_individuals_number();
 
-    const Index genes_number = get_genes_number();///= number of inputs including dummy variables
+    const Index genes_number = get_genes_number(); // = number of inputs including dummy variables
 
-    const Index columns_number=data_set_pointer->get_input_columns_number(); ///In datasets without categorical variables==genes_number
+    const Index columns_number = data_set_pointer->get_input_columns_number(); // In datasets without categorical variables==genes_number
 
     Tensor <bool, 1> individual_columns(columns_number);
 
@@ -535,7 +537,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         // Generation of new individual
 
-        for(Index j=0; j<rand()%columns_number; j++)
+        for(Index j=0; j< rand()%columns_number ; j++)
         {
             arrow=type(rand())/type(RAND_MAX);
 
@@ -548,7 +550,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         }
 
-        if(is_false(individual_columns)) individual_columns(rand()%columns_number);
+        if(is_false(individual_columns)) individual_columns(rand()%columns_number) = true;
             
         individual_variables = get_individual_variables(individual_columns);
 
