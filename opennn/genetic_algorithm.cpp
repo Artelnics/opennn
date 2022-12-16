@@ -135,6 +135,7 @@ void GeneticAlgorithm::set_default()
     training_errors.resize(individuals_number);
 
     selection_errors.resize(individuals_number);
+    
     fitness.resize(individuals_number);
 
     fitness.setConstant(type(-1.0));
@@ -468,7 +469,6 @@ void GeneticAlgorithm::initialize_population_random()
 
 void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 {
-
     DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
 
     const Index columns_number = data_set_pointer->get_input_columns_number();
