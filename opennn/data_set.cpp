@@ -1003,8 +1003,6 @@ void DataSet::transform_associative_columns()
 
     associative_columns = columns;
 
-    cout << "ASSOCIATIVE COLUMNS NUMBER: " << associative_columns.size();
-
     const Index columns_number = get_columns_number();
 
     Tensor<Column, 1> new_columns;
