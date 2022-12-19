@@ -502,26 +502,21 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
 
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number(), LOG);
+//    check_columns_number(inputs, get_inputs_number(), LOG);
 
-    check_dimensions(biases, 1, get_neurons_number(), LOG);
+//    check_dimensions(biases, 1, get_neurons_number(), LOG);
 
-    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
+//    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
 #endif
-
-    
 
     const Index batch_samples_number = inputs_dimension(0);
 
     const Index neurons_number = get_neurons_number();
 
     for (Index i = 0; i < neurons_number; i++)
-
     {
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
     }
-
-
 
     
 #ifdef OPENNN_MKL

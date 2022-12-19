@@ -309,9 +309,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
-
     }    
-
 
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
@@ -354,8 +352,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        parameters_size = training_back_propagation.parameters.size();
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
@@ -367,10 +363,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         optimization_data.iteration = 1;
 
-        parameters_size = training_back_propagation.parameters.size();
-
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
+
             // Data set
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
@@ -380,8 +375,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Loss index
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
             results.training_error_history(epoch) = training_back_propagation.error;
-
-            parameters_size = training_back_propagation.parameters.size();
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
@@ -574,7 +567,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 /// @param optimization_data New moment estimation data.
 
 void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
-
     AdaptiveMomentEstimationData& optimization_data) const
 {
     const type learning_rate =
@@ -600,7 +592,7 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
         + optimization_data.gradient_exponential_decay * beta_1;
 
 #endif
-  
+
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
         = back_propagation.gradient * back_propagation.gradient * (type(1) - beta_2)
         + optimization_data.square_gradient_exponential_decay * beta_2;
