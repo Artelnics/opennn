@@ -883,7 +883,7 @@ void GeneticAlgorithm::perform_crossover()
     #ifdef OPENNN_DEBUG
             Index count_selected_individuals = 0;
             for (Index i = 0; i < individuals_number; i++) if (selection(i)) count_selected_individuals++;
-            if (selected_individuals_number != count_selected_individuals)
+            if (individuals_number != count_selected_individuals)
             {
                 ostringstream buffer;
                 buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
