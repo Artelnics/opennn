@@ -311,7 +311,10 @@ Histogram::Histogram(const Tensor<type, 1>& data,
     for(Index i = 0; i < data.dimension(0); i++)
     {
         value = data(i);
+        if(is_nan(value)) continue;
+
         corresponding_bin = int((value - data_minimum) / step);
+
 
         if(corresponding_bin >= number_of_bins)
             corresponding_bin = number_of_bins - 1;
