@@ -63,7 +63,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
-        bool switch_train = false;
+        bool switch_train = true;
 
         // Data set
 
@@ -112,7 +112,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%10;
         outputs_number = 1;
         neurons_number = 1 + rand()%10;
-        bool switch_train = false;
+        bool switch_train = true;
 
         // Data set
 

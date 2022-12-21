@@ -764,7 +764,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
     {
         calculate_activations(perceptron_layer_forward_propagation->combinations.data(),
                               combinations_dimensions,
-                              perceptron_layer_forward_propagation->combinations.data(),
+                              perceptron_layer_forward_propagation->outputs_data,
                               activations_dimensions);
     }
 }

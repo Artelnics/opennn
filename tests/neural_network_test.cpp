@@ -797,16 +797,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
-    cout << "inputs: " << endl << inputs << endl;
-
     outputs = neural_network.calculate_outputs(inputs);
-
-    neural_network.print();
-
-    cout << "outputs: " << endl << outputs << endl << "-----------------" << endl;
-
-    cout << "outputs(0,0): " << outputs(0,0) << endl;
-    cout << "outputs(0,1): " << outputs(0,1) << endl;
 
     assert_true(outputs.size() == 2, LOG);
     assert_true(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -1037,7 +1028,7 @@ void NeuralNetworkTest::test_forward_propagate()
     inputs_number = 2;
     outputs_number = 1;
     batch_size = 5;
-    bool switch_train = true;
+    bool switch_train = false;
 
     data.resize(batch_size, inputs_number + outputs_number);
 
@@ -1084,13 +1075,11 @@ void NeuralNetworkTest::test_forward_propagate()
     neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
+            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1]);
 
     Tensor<type, 2> perceptron_combinations = perceptron_layer_forward_propagation->combinations;
 
     TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data, perceptron_layer_forward_propagation->outputs_dimensions(0), perceptron_layer_forward_propagation->outputs_dimensions(1));
-
-//    Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3), LOG);
