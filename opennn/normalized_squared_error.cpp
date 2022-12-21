@@ -300,6 +300,17 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const type coefficient = ((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: normalized_squared_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -358,6 +369,19 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
 
     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: normalized_squared_error class.\n"
+               << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 

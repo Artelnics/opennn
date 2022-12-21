@@ -100,6 +100,17 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     const Index batch_size = batch.get_batch_size();
 
     back_propagation.error = minkowski_error(0)/type(batch_size);
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: minkowski_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -131,6 +142,19 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
 
         std::replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
+    }
+
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: minkowski_error class.\n"
+               << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
     }
 
 }

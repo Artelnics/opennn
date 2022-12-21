@@ -908,6 +908,19 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 
     deltas.device(*thread_pool_device) = (next_deltas * next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: perceptron layer class.\n"
+               << "void calculate_hidden_delta_perceptron(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
+    }
+
 #endif
    
 }
@@ -1002,6 +1015,19 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
             deltas.device(*thread_pool_device) =
                     next_back_propagation->error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
         }
+    }
+
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: perceptron layer class.\n"
+               << "void calculate_hidden_delta_probabilistic(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
     }
 }
 

@@ -1888,7 +1888,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 */
 
     const Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-    bool switch_train = false;
 
     DataSetBatch data_set_batch;
     data_set_batch.set_inputs(inputs);
@@ -1897,7 +1896,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
     NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
 
     forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
-//    forward_propagate(data_set_batch, neural_network_forward_propagation, switch_train);
 
     const Index layers_number = get_layers_number();
 

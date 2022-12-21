@@ -93,6 +93,17 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum() - ((type(1)-targets)*((type(1)-outputs).log())).sum();
 
     back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: cross_entropy_error class.\n"
+               << "void calculate_binary_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -178,6 +189,20 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
     deltas.device(*thread_pool_device)
             = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
             (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
+
+
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: cross_entropy_error class.\n"
+               << "void calculate_binary_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -191,13 +216,6 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-
-    cout << "back_propagation.neural_network.layers(trainable_layers_number-1)->layer_pointer->get_name(): "
-         << endl << back_propagation.neural_network.layers(trainable_layers_number-1)->layer_pointer->get_name() << endl;
-
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-
     const Index batch_samples_number = batch.get_batch_size();
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
@@ -209,6 +227,19 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
     TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
 
     deltas.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
+
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: cross_entropy_error class.\n"
+               << "void calculate_multiple_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
