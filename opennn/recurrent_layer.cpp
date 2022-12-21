@@ -711,7 +711,7 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 }
 
 
-void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -780,12 +780,20 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
         activations_derivatives_dimensions = get_dimensions(recurrent_layer_forward_propagation->current_activations_derivatives);
 
 
-        calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
-                                          combinations_dimensions,
-                                          hidden_states.data(),
-                                          activations_dimensions,
-                                          recurrent_layer_forward_propagation->current_activations_derivatives.data(),
-                                          activations_derivatives_dimensions);
+        if(switch_train == true) // Perform training
+        {
+            calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
+                                              combinations_dimensions,
+                                              hidden_states.data(),
+                                              activations_dimensions,
+                                              recurrent_layer_forward_propagation->current_activations_derivatives.data(),
+                                              activations_derivatives_dimensions);
+       }
+       else // Perform deploy
+       {
+            calculate_activations(recurrent_layer_forward_propagation->current_combinations, hidden_states);
+       }
+
 
         for(Index j = 0; j < neurons_number; j++)
         {

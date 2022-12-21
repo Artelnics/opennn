@@ -1425,6 +1425,52 @@ Index NeuralNetwork::get_trainable_layers_number() const
     return count;
 }
 
+Index NeuralNetwork::get_first_trainable_layer_index() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Type::Scaling
+                || layers_pointers(i)->get_type() == Layer::Type::Unscaling
+                || layers_pointers(i)->get_type() == Layer::Type::Bounding)
+        {
+            count++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return count;
+}
+
+Index NeuralNetwork::get_last_trainable_layer_index() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = layers_number - 1;
+
+    for(Index i = count; i >= 0 ; i--)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Type::Scaling
+                || layers_pointers(i)->get_type() == Layer::Type::Unscaling
+                || layers_pointers(i)->get_type() == Layer::Type::Bounding)
+        {
+            count--;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return count;
+}
+
 
 Index NeuralNetwork::get_perceptron_layers_number() const
 {
@@ -1630,27 +1676,23 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
-                                      NeuralNetworkForwardPropagation& forward_propagation) const
+                                      NeuralNetworkForwardPropagation& forward_propagation,
+                                      bool& swicth_train) const
 {
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
 
-    const Index trainable_layers_number = trainable_layers_pointers.size();
+    const Index first_trainable_layer_index = get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    cout << "forward propagate 1 ****************************************" << endl;
-    cout << "Layer type " << trainable_layers_pointers(0)->get_name() << endl;
-    cout << "FWD layer name: " << forward_propagation.layers(0)->layer_pointer->get_name() << endl;
-    trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
+    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(first_trainable_layer_index), swicth_train);
 
-    cout << "forward propagate 2 ****************************************" << endl;
-
-    for(Index i = 1; i < trainable_layers_number; i++)
+    for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
-        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
-                                                        forward_propagation.layers(i-1)->outputs_dimensions,
-                                                        forward_propagation.layers(i));
+        layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
+                                              forward_propagation.layers(i-1)->outputs_dimensions,
+                                              forward_propagation.layers(i),
+                                              swicth_train);
     }
-
-    cout << "forward propagate end ****************************************" << endl;
 }
 
 
@@ -1661,13 +1703,16 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     const Index layers_number = layers_pointers.size();
 
-    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0));
+    bool swicth_train = false;
+
+    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), swicth_train);
 
     for(Index i = 1; i < layers_number; i++)
     {
         layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                               forward_propagation.layers(i-1)->outputs_dimensions,
-                                              forward_propagation.layers(i));
+                                              forward_propagation.layers(i),
+                                              swicth_train);
     }
 }
 
@@ -1686,8 +1731,9 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     set_parameters(new_parameters);
 
     const Tensor<Index, 1> inputs_dimensions = batch.get_inputs_dimensions();
+    bool swicth_train = true;
 
-    forward_propagate(batch, forward_propagation);
+    forward_propagate(batch, forward_propagation, swicth_train);
 
     set_parameters(original_parameters);
 
@@ -1842,17 +1888,17 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 */
 
     const Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    bool switch_train = false;
 
     DataSetBatch data_set_batch;
     data_set_batch.set_inputs(inputs);
+    const Index batch_size = inputs.dimension(0);
 
-    cout << "calculate outputs 1 *****************************************" << endl;
-    // inputs_data, inputs_dimensions, outputs_data, outputs_dimensions
+    NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
 
-    NeuralNetworkForwardPropagation neural_network_forward_propagation(data_set_batch.batch_size, this);
-cout << "calculate outputs 2 *****************************************" << endl;
-    forward_propagate(data_set_batch, neural_network_forward_propagation);
-cout << "calculate outputs 3 *****************************************" << endl;
+    forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+//    forward_propagate(data_set_batch, neural_network_forward_propagation, switch_train);
+
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();

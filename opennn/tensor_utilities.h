@@ -33,6 +33,7 @@ void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);
 bool is_nan(const Tensor<type,1>&);
+bool is_nan(const type&);
 bool is_constant(const Tensor<type, 1>&);
 
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
@@ -98,6 +99,10 @@ void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tenso
 
 Index count_NAN(const Tensor<type, 1>&);
 Index count_NAN(const Tensor<type, 2>&);
+
+bool has_NAN(const Tensor<type, 1>&);
+bool has_NAN(const Tensor<type, 2>&);
+
 
 Index count_empty_values(const Tensor<string, 1>&);
 

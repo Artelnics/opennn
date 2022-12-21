@@ -431,6 +431,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     StochasticGradientDescentData optimization_data(this);
 
     bool stop_training = false;
+    bool switch_train = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -468,7 +469,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
 
             // Loss index
 
@@ -504,7 +505,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, switch_train);
                 results.selection_error_history(epoch) = selection_error;
 
                 // Loss

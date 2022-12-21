@@ -672,6 +672,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     // Optimization algorithm
 
     bool stop_training = false;
+    bool switch_train = true;
 
     Index selection_failures = 0;
 
@@ -695,11 +696,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
 
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
         results.training_error_history(epoch) = training_back_propagation.error;
 
         // Update parameters
@@ -710,7 +712,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
 
             // Loss Index
 

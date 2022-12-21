@@ -61,7 +61,7 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        neural_network.print();
+//        neural_network.print();
 
         const TrainingResults training_results = training_strategy.perform_training();
 

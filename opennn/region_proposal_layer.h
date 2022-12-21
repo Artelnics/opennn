@@ -44,7 +44,7 @@ public:
 
 //    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
+    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&);
 
 protected:
 

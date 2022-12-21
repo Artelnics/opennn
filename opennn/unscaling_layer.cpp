@@ -700,7 +700,7 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-void UnscalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation)
+void UnscalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
 {
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);

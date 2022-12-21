@@ -797,7 +797,16 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     inputs_dimensions = get_dimensions(inputs);
 
+    cout << "inputs: " << endl << inputs << endl;
+
     outputs = neural_network.calculate_outputs(inputs);
+
+    neural_network.print();
+
+    cout << "outputs: " << endl << outputs << endl << "-----------------" << endl;
+
+    cout << "outputs(0,0): " << outputs(0,0) << endl;
+    cout << "outputs(0,1): " << outputs(0,1) << endl;
 
     assert_true(outputs.size() == 2, LOG);
     assert_true(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -1028,6 +1037,7 @@ void NeuralNetworkTest::test_forward_propagate()
     inputs_number = 2;
     outputs_number = 1;
     batch_size = 5;
+    bool switch_train = true;
 
     data.resize(batch_size, inputs_number + outputs_number);
 
@@ -1071,7 +1081,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
-    neural_network.forward_propagate(batch, forward_propagation);
+    neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
@@ -1154,7 +1164,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     NeuralNetworkForwardPropagation forward_propagation_3(data_set.get_training_samples_number(), &neural_network);
 
-    neural_network.forward_propagate(batch, forward_propagation_3);
+    neural_network.forward_propagate(batch, forward_propagation_3, switch_train);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation_3
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation_3.layers[0]);

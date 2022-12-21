@@ -455,6 +455,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Training strategy stuff
 
     bool stop_training = false;
+    bool switch_train = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -474,7 +475,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         // Neural network
 
         neural_network_pointer->forward_propagate(training_batch,
-                                                  training_forward_propagation);
+                                                  training_forward_propagation,
+                                                  switch_train);
 
         // Loss index
 
@@ -487,7 +489,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch,
-                                                      selection_forward_propagation);
+                                                      selection_forward_propagation,
+                                                      switch_train);
 
             loss_index_pointer->calculate_errors_lm(selection_batch,
                                                     selection_forward_propagation,

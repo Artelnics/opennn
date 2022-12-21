@@ -61,17 +61,6 @@ void FlattenLayerTest::test_calculate_flatten_outputs()
     FlattenLayer flatten_layer(inputs_dimensions);
 //    flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    cout << "Inputs: " << endl;
-    cout << inputs << endl;
-
-    cout << endl << endl << endl << endl;
-    cout << "Inputs dimensions: " << inputs.size() << endl;
-    cout << "Outputs dimensions: " << outputs.size() << endl;
-    cout << endl << endl << endl << endl;
-
-    cout << "Outputs: " << endl;
-    cout << outputs << endl;
-
     // Test
 
     assert_true(inputs.size() == outputs.size(), LOG);

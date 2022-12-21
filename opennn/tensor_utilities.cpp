@@ -97,6 +97,14 @@ bool is_nan(const Tensor<type,1>& tensor)
 }
 
 
+bool is_nan(const type& value)
+{
+
+    if(!isnan(value)) return false;
+
+    return true;
+}
+
 
 bool is_false(const Tensor<bool, 1>& tensor)
 {
@@ -874,6 +882,37 @@ Index count_NAN(const Tensor<type, 2>& x)
     return count;
 }
 
+
+bool has_NAN(const Tensor<type, 1>& x)
+{
+    #pragma omp parallel for
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(isnan(x(i))) return true;
+    }
+
+    return false;
+}
+
+
+bool has_NAN(const Tensor<type, 2>& x)
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    #pragma omp parallel for
+
+    for(Index row_index = 0; row_index < rows_number; row_index++)
+    {
+        for(Index column_index = 0; column_index < columns_number; column_index++)
+        {
+            if(isnan(x(row_index, column_index))) return true;
+        }
+    }
+
+    return false;
+}
 
 Index count_empty_values(const Tensor<string, 1>& vector)
 {

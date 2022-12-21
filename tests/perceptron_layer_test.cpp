@@ -1343,6 +1343,7 @@ void PerceptronLayerTest::test_forward_propagate()
     samples_number = 2;
     inputs_number = 2;
     neurons_number = 2;
+    bool switch_train = true;
 
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
     perceptron_layer.set_parameters_constant(type(1));
@@ -1353,7 +1354,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     forward_propagation.set(samples_number, &perceptron_layer);
 
-    perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &forward_propagation);
+    perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &forward_propagation, switch_train);
 
     assert_true(forward_propagation.combinations.rank() == 2, LOG);
     assert_true(forward_propagation.combinations.dimension(0) == samples_number, LOG);
@@ -1388,7 +1389,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     forward_propagation.set(samples_number, &perceptron_layer);
 
-    perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &forward_propagation);
+    perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &forward_propagation, switch_train);
 
     TensorMap< Tensor<type, 2>> outputs_2(forward_propagation.outputs_data, forward_propagation.outputs_dimensions(0), forward_propagation.outputs_dimensions(1));
 

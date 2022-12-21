@@ -160,12 +160,7 @@ void ConvolutionalLayerTest::test_read_bmp()
 
     data_set.read_bmp();
 
-    data_set.print();
-
     Tensor<type, 2> data = data_set.get_data();
-
-//    cout<< "Printing data: " << endl;
-//    cout<<data<<endl;
 }
 
 

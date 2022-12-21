@@ -257,6 +257,7 @@ void RecurrentLayerTest::test_forward_propagate()
     Index neurons_number = 4;
     Index samples_number = 2;
     inputs_number = 3;
+    bool switch_train = false;
 
     RecurrentLayer recurrent_layer(inputs_number, neurons_number);
 
@@ -270,7 +271,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     RecurrentLayerForwardPropagation recurrent_layer_forward_propagation(samples_number, &recurrent_layer);
 
-    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation);
+    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, switch_train);
 
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);

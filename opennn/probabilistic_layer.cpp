@@ -721,7 +721,8 @@ void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index
 
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
-                                           LayerForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation,
+                                           bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -750,12 +751,22 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                            perceptron_layer_forward_propagation->combinations.data(),
                            combinations_dimensions);
 
-    calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                      combinations_dimensions,
-                                      perceptron_layer_forward_propagation->outputs_data,
-                                      activations_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                      derivatives_dimensions);
+    if(switch_train == true) // Perform training
+    {
+        calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
+                                          combinations_dimensions,
+                                          perceptron_layer_forward_propagation->outputs_data,
+                                          activations_dimensions,
+                                          perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                          derivatives_dimensions);
+    }
+    else // perform deploy
+    {
+        calculate_activations(perceptron_layer_forward_propagation->combinations.data(),
+                              combinations_dimensions,
+                              perceptron_layer_forward_propagation->combinations.data(),
+                              activations_dimensions);
+    }
 }
 
 /*

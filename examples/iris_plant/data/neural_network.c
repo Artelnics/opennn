@@ -1,81 +1,101 @@
-// Artificial Intelligence Techniques SL	
-// artelnics@artelnics.com	
-// 
-// Your model has been exported to this file.
-// You can manage it with the 'neural network' method.	
-// Example:
-// 
-// 	vector<float> sample(n);	
-// 	sample[0] = 1;	
-// 	sample[1] = 2;	
-// 	sample[n] = 10;	
-// 	vector<float> outputs = neural_network(sample);
-// 
-// Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,	
-// however you can loop through neural network function to get multiple outputs.	
+/**
+Artificial Intelligence Techniques SL	
+artelnics@artelnics.com	
 
+Your model has been exported to this c file.
+You can manage it with the main method, where you 	
+can change the values of your inputs. For example:
+
+if we want to add these 3 values (0.3, 2.5 and 1.8)
+to our 3 inputs (Input_1, Input_2 and Input_1), the
+main program has to look like this:
+	
+int main(){ 
+	vector<float> inputs(3);
+	
+	const float asdas  = 0.3;
+	inputs[0] = asdas;
+	const float input2 = 2.5;
+	inputs[1] = input2;
+	const float input3 = 1.8;
+	inputs[2] = input3;
+	. . .
+
+
+Inputs Names:
+	0) sepal_lenght
+	1) sepal_width
+	2) petal_lenght
+	3) petal_width
+*/
+
+
+#include <iostream>
 #include <vector>
+#include <math.h>
+#include <stdio.h>
+
 
 using namespace std;
 
-vector<float> scaling_layer(const vector<float>& inputs)
+
+vector<float> calculate_outputs(const vector<float>& inputs)
 {
-	vector<float> outputs(4);
+	const float sepal_lenght = inputs[0];
+	const float sepal_width = inputs[1];
+	const float petal_lenght = inputs[2];
+	const float petal_width = inputs[3];
 
-	outputs[0] = (inputs[0]-5.843333244)/0.8280661106;
-	outputs[1] = (inputs[1]-3.057333231)/0.4358662963;
-	outputs[2] = (inputs[2]-3.757999897)/1.765298247;
-	outputs[3] = (inputs[3]-1.19933331)/0.762237668;
+	double scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.8280661106;
+	double scaled_sepal_width = (sepal_width-3.057333231)/0.4358662963;
+	double scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
+	double scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 
-	return outputs;
+	double perceptron_layer_1_output_0 = tanh( -0.494739 + (scaled_sepal_lenght*-0.296986) + (scaled_sepal_width*0.396066) + (scaled_petal_lenght*-0.620677) + (scaled_petal_width*-0.613801) );
+	double perceptron_layer_1_output_1 = tanh( 1.98493 + (scaled_sepal_lenght*0.69041) + (scaled_sepal_width*0.221568) + (scaled_petal_lenght*-1.89975) + (scaled_petal_width*-1.7502) );
+	double perceptron_layer_1_output_2 = tanh( -0.500013 + (scaled_sepal_lenght*-0.292184) + (scaled_sepal_width*0.393804) + (scaled_petal_lenght*-0.627022) + (scaled_petal_width*-0.618154) );
+
+	double probabilistic_layer_combinations_0 = 0.254467 +1.35186*perceptron_layer_1_output_0 +0.593689*perceptron_layer_1_output_1 +1.35014*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_1 = -0.42925 -0.923573*perceptron_layer_1_output_0 +2.14923*perceptron_layer_1_output_1 -0.923791*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_2 = 0.174789 -0.428276*perceptron_layer_1_output_0 -2.74292*perceptron_layer_1_output_1 -0.426361*perceptron_layer_1_output_2 ;
+
+	double sum = exp(probabilistic_layer_combinations_0) + exp(probabilistic_layer_combinations_1) + exp(probabilistic_layer_combinations_2);
+
+	double iris_setosa = exp(probabilistic_layer_combinations_0)/sum;
+	double iris_versicolor = exp(probabilistic_layer_combinations_1)/sum;
+	double iris_virginica = exp(probabilistic_layer_combinations_2)/sum;
+
+	vector<float> out(3);
+	out[0] = iris_setosa;
+	out[1] = iris_versicolor;
+	out[2] = iris_virginica;
+
+	return out;
 }
 
-vector<float> perceptron_layer_1(const vector<float>& inputs)
-{
-	vector<float> combinations(3);
 
-	combinations[0] = 0.171232 +0.127784*inputs[0] +0.156159*inputs[1] -0.0116542*inputs[2] -0.192001*inputs[3];
-	combinations[1] = -0.100386 +0.0459516*inputs[0] -0.127511*inputs[1] +0.158615*inputs[2] -0.187598*inputs[3];
-	combinations[2] = -0.0988517 +0.158462*inputs[0] -0.161392*inputs[1] +0.0213799*inputs[2] +0.125907*inputs[3];
+int main(){ 
 
-	vector<float> activations(3);
+	vector<float> inputs(4); 
 
-	activations[0] = tanh(combinations[0]);
-	activations[1] = tanh(combinations[1]);
-	activations[2] = tanh(combinations[2]);
+	const float sepal_lenght = /*enter your value here*/; 
+	inputs[0] = sepal_lenght;
+	const float sepal_width = /*enter your value here*/; 
+	inputs[1] = sepal_width;
+	const float petal_lenght = /*enter your value here*/; 
+	inputs[2] = petal_lenght;
+	const float petal_width = /*enter your value here*/; 
+	inputs[3] = petal_width;
 
-	return activations;
-}
+	vector<float> outputs(3);
 
-vector<float> probabilistic_layer(const vector<float>& inputs)
-{
-	vector<float> combinations(3);
+	outputs = calculate_outputs(inputs);
 
-	combinations[0] = 0.0739868 -0.172685*inputs[0] -0.10595*inputs[1] +0.00743201*inputs[2];
-	combinations[1] = 0.0420353 +0.0467598*inputs[0] +0.189647*inputs[1] +0.191713*inputs[2];
-	combinations[2] = -0.0777208 +0.145562*inputs[0] +0.170601*inputs[1] -0.0659442*inputs[2];
+	printf("These are your outputs:\n");
+	printf( "iris_setosa: %f \n", outputs[0]);
+	printf( "iris_versicolor: %f \n", outputs[1]);
+	printf( "iris_virginica: %f \n", outputs[2]);
 
-	vector<float> activations(3);
+	return 0;
+} 
 
-	float sum = 0;
-
-	sum = exp(combinations[0]) + exp(combinations[1]) + exp(combinations[2]);
-
-	activations[0] = exp(combinations[0])/sum;
-	activations[1] = exp(combinations[1])/sum;
-	activations[2] = exp(combinations[2])/sum;
-
-	return activations;
-}
-
-vector<float> neural_network(const vector<float>& inputs)
-{
-	vector<float> outputs;
-
-	outputs = scaling_layer(inputs);
-	outputs = perceptron_layer_1(outputs);
-	outputs = probabilistic_layer(outputs);
-
-	return outputs;
-}
-int main(){return 0;}

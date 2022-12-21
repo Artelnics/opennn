@@ -100,7 +100,7 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) = 0;
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) = 0;
 
 //    virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 

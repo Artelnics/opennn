@@ -168,7 +168,7 @@ void Layer::calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tens
 */
 
 
-void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*)
+void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)
 {
     ostringstream buffer;
 

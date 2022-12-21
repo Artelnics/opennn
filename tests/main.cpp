@@ -462,13 +462,13 @@ int main()
           // D A T A   S E T   T E S T S
 
           // correlation analysis
-
+/*
           CorrelationsTest correlations_test;
           correlations_test.run_test_case();
           tests_count += correlations_test.get_tests_count();
           tests_passed_count += correlations_test.get_tests_passed_count();
           tests_failed_count += correlations_test.get_tests_failed_count();
-
+*/
 
           // statistics
 
@@ -487,13 +487,13 @@ int main()
           tests_failed_count += scaling_test.get_tests_failed_count();
 
           // data set
-
+/*
           DataSetTest data_set_test;
           data_set_test.run_test_case();
           tests_count += data_set_test.get_tests_count();
           tests_passed_count += data_set_test.get_tests_passed_count();
           tests_failed_count += data_set_test.get_tests_failed_count();
-
+*/
           // N E U R A L   N E T W O R K   T E S T S
 
           // perceptron layer

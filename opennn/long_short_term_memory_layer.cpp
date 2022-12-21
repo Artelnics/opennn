@@ -1727,7 +1727,8 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Probabilisti
 
 void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                                  const Tensor<Index, 1>& inputs_dimensions,
-                                                 LayerForwardPropagation* forward_propagation)
+                                                 LayerForwardPropagation* forward_propagation,
+                                                 bool& switch_train)
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -1786,12 +1787,22 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         activations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations);
         derivatives_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives);
 
-        calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_forget_combinations.data(),
-                                                    combinations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
-                                                    activations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data(),
-                                                    derivatives_dimensions);
+        if(switch_train == true)
+        {
+            calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_forget_combinations.data(),
+                                                        combinations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
+                                                        activations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data(),
+                                                        derivatives_dimensions);
+        }
+        else
+        {
+            calculate_activations(long_short_term_memory_layer_forward_propagation->current_forget_combinations.data(),
+                                  combinations_dimensions,
+                                  long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
+                                  activations_dimensions);
+        }
 
         combinations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_combinations);
 
@@ -1807,12 +1818,22 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         activations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations);
         derivatives_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives);
 
-        calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_input_combinations.data(),
-                                                    combinations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
-                                                    activations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data(),
-                                                    combinations_dimensions);
+        if(switch_train == true)
+        {
+            calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_input_combinations.data(),
+                                                        combinations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
+                                                        activations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data(),
+                                                        combinations_dimensions);
+        }
+        else
+        {
+            calculate_activations(long_short_term_memory_layer_forward_propagation->current_input_combinations.data(),
+                                  combinations_dimensions,
+                                  long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
+                                  activations_dimensions);
+        }
 
         combinations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_combinations);
 
@@ -1828,12 +1849,22 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         activations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations);
         derivatives_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives);
 
-        calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_state_combinations.data(),
-                                                    combinations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
-                                                    activations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data(),
-                                                    derivatives_dimensions);
+        if(switch_train == true)
+        {
+            calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_state_combinations.data(),
+                                                        combinations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
+                                                        activations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data(),
+                                                        derivatives_dimensions);
+        }
+        else
+        {
+            calculate_activations(long_short_term_memory_layer_forward_propagation->current_state_combinations.data(),
+                                  combinations_dimensions,
+                                  long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
+                                  activations_dimensions);
+        }
 
         combinations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_combinations);
 
@@ -1849,12 +1880,22 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         activations_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations);
         derivatives_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives);
 
-        calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_output_combinations.data(),
-                                                    combinations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
-                                                    activations_dimensions,
-                                                    long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data(),
-                                                    derivatives_dimensions);
+        if(switch_train == true)
+        {
+            calculate_recurrent_activations_derivatives(long_short_term_memory_layer_forward_propagation->current_output_combinations.data(),
+                                                        combinations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
+                                                        activations_dimensions,
+                                                        long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data(),
+                                                        derivatives_dimensions);
+        }
+        else
+        {
+            calculate_activations(long_short_term_memory_layer_forward_propagation->current_output_combinations.data(),
+                                  combinations_dimensions,
+                                  long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
+                                  activations_dimensions);
+        }
 
         cell_states = long_short_term_memory_layer_forward_propagation->current_forget_activations * cell_states +
                 long_short_term_memory_layer_forward_propagation->current_input_activations * long_short_term_memory_layer_forward_propagation->current_state_activations;
@@ -1863,12 +1904,22 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         activations_dimensions = get_dimensions(hidden_states);
         derivatives_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives);
 
-        calculate_activations_derivatives(cell_states.data(),
-                                          combinations_dimensions,
-                                          hidden_states.data(),
-                                          activations_dimensions,
-                                          long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
-                                          derivatives_dimensions);
+        if(switch_train == true)
+        {
+            calculate_activations_derivatives(cell_states.data(),
+                                              combinations_dimensions,
+                                              hidden_states.data(),
+                                              activations_dimensions,
+                                              long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
+                                              derivatives_dimensions);
+        }
+        else
+        {
+            calculate_activations(cell_states.data(),
+                                  combinations_dimensions,
+                                  hidden_states.data(),
+                                  activations_dimensions);
+        }
 
         hidden_states *= long_short_term_memory_layer_forward_propagation->current_output_activations;
 

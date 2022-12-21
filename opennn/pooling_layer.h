@@ -134,7 +134,7 @@ public:
     // First order activations
 
     void forward_propagate(type*, const Tensor<Index, 1>&,
-                           LayerForwardPropagation*) final {}
+                           LayerForwardPropagation*, bool&) final {}
 
     // Delta methods
 

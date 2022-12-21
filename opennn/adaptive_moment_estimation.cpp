@@ -312,7 +312,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     }    
 
-
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
@@ -337,6 +336,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     AdaptiveMomentEstimationData optimization_data(this);
 
     bool stop_training = false;
+    bool switch_train = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -375,7 +375,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
-            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
 
             // Loss index
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
@@ -411,7 +411,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, switch_train);
 
                 // Loss
 

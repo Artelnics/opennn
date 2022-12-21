@@ -24,4 +24,4 @@ CONFIG += ordered
 
 
 # OpenMP library
-include(../opennn/opennmp.pri)
+include(../opennmp.pri)

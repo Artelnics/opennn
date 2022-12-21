@@ -511,14 +511,17 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
 #endif
 
     const Index batch_samples_number = inputs_dimension(0);
-
     const Index neurons_number = get_neurons_number();
+
+    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
+
+    TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
 
     for (Index i = 0; i < neurons_number; i++)
     {
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
     }
-    
+
 #ifdef OPENNN_MKL
 
    TensorMap<Tensor<type, 2>>inputs(inputs_data, inputs_dimension(0), inputs_dimension(1));
@@ -560,8 +563,6 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
     
 #else
 
-TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
-TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
 combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
 #endif
@@ -711,7 +712,8 @@ void PerceptronLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1
 
 void PerceptronLayer::forward_propagate(type* inputs_data,
                                         const Tensor<Index,1>& inputs_dimensions,
-                                        LayerForwardPropagation* forward_propagation)
+                                        LayerForwardPropagation* forward_propagation,
+                                        bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -728,27 +730,34 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
-
     //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
     type* combinations_data = perceptron_layer_forward_propagation->get_combinations_data();
-
-    cout << "Perceptron layer forward propagate 1 -------------------------" << endl;
 
     calculate_combinations(inputs_data,
                            biases,
                            synaptic_weights,
-                           combinations_data,inputs_dimensions);
-cout << "Perceptron layer forward propagate 2 -------------------------" << endl;
+                           combinations_data,
+                           inputs_dimensions);
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-    const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
-cout << "Perceptron layer forward propagate 3 -------------------------" << endl;
-    calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                      combinations_dimensions,
-                                      perceptron_layer_forward_propagation->outputs_data,
-                                      perceptron_layer_forward_propagation->outputs_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                      derivatives_dimensions);
+    const Tensor<Index, 1> activations_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
+
+    if(switch_train == true) // Perform train
+    {
+        calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
+                                          combinations_dimensions,
+                                          perceptron_layer_forward_propagation->outputs_data,
+                                          perceptron_layer_forward_propagation->outputs_dimensions,
+                                          perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                          activations_dimensions);
+    }
+    else // Perform deploy
+    {
+        calculate_activations(perceptron_layer_forward_propagation->combinations.data(),
+                              combinations_dimensions,
+                              perceptron_layer_forward_propagation->outputs_data,
+                              activations_dimensions);
+    }
 }
 
 /*

@@ -161,7 +161,7 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
 }
 */
 
-void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation)
+void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
 {
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);

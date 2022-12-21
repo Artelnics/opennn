@@ -197,7 +197,10 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+    const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
@@ -504,7 +507,10 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+    const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 

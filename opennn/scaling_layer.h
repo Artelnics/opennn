@@ -130,8 +130,7 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
-                          LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
 //   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
@@ -221,6 +220,9 @@ struct ScalingLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
+        cout << "outputs dimension 0: " << outputs_dimensions(0) << endl;
+        cout << "outputs dimension 1: " << outputs_dimensions(1) << endl;
+
         cout << "Outputs:" << endl;
 
         cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;

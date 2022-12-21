@@ -352,6 +352,7 @@ void ScalingLayerTest::test_forward_propagate()
 
     Index samples_number = 1;
     Index inputs_number = 3;
+    bool switch_train = false;
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_scalers(Scaler::NoScaling);
@@ -362,7 +363,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs.setZero();
     inputs_dimensions = get_dimensions(inputs);
 
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -387,7 +388,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs.setZero();
     inputs_dimensions = get_dimensions(inputs);
 
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs_2(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -414,7 +415,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs.setRandom();
     inputs_dimensions = get_dimensions(inputs);
 
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs_3(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -446,7 +447,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs_4(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -460,7 +461,6 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(abs(outputs_4(2,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
-    cout << "-------------------------- 5 -------------------------------" << endl;
 
     inputs_number = 2;
     samples_number = 2;
@@ -484,12 +484,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    cout << "Inputs: " << endl << inputs << endl;
-
-    cout << "Data: " << endl;
-    data_set.print_data();
-
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs_5(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -499,12 +494,6 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(outputs_5.dimension(1) == inputs_number, LOG);
 
     assert_true(abs(outputs_5(0) + type(0.707107)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    cout << "outputs_5: " << endl << outputs_5 << endl;
-
-    cout << "---------------------------------------------------------" << endl;
-    // Test
-    cout << "---------------------------- 6 ------------------------------" << endl;
 
     inputs_number = 1;
     samples_number = 1;
@@ -528,12 +517,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    cout << "Inputs: " << endl << inputs << endl;
-
-    cout << "Data: " << endl;
-    data_set.print_data();
-
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs_6(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -543,14 +527,6 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(outputs_6.dimension(1) == samples_number, LOG);
 
     assert_true(abs(outputs_6(0) - data(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    cout << "outputs_5: " << endl << outputs_6 << endl;
-
-    cout << "---------------------------------------------------------" << endl;
-
-    // Test
-
-    cout << "----------------------------- 7 ---------------------------" << endl;
 
     inputs_number = 2 + rand()%10;
     samples_number = 1;
@@ -574,12 +550,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs = data_set.get_input_data();
     inputs_dimensions = get_dimensions(inputs);
 
-    cout << "Inputs: " << endl << inputs << endl;
-
-    cout << "Data: " << endl;
-    data_set.print_data();
-
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
     TensorMap<Tensor<type, 2>> outputs_7(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -590,10 +561,6 @@ void ScalingLayerTest::test_forward_propagate()
 
     assert_true(abs(outputs_7(0,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs_7(1,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    cout << "outputs_7: " << endl << outputs_7 << endl;
-
-    cout << "---------------------------------------------------------" << endl;
 }
 
 
