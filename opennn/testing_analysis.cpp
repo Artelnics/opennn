@@ -1531,7 +1531,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 {
     const Index testing_samples_number = targets.dimension(0);
 
-    Tensor<Index, 2> confusion(2, 2);
+    Tensor<Index, 2> confusion(3, 3);
 
     Index true_positive = 0;
     Index false_negative = 0;
@@ -1579,6 +1579,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
 
+    confusion(0,2) = true_positive + false_negative;
+    confusion(1,2) = false_positive + true_negative;
+    confusion(2,0) = true_positive + false_positive;
+    confusion(2,1) = true_negative + false_negative;
+    confusion(2,2) = testing_samples_number;
+
     const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
 
     if(confusion_sum != testing_samples_number)
@@ -1616,8 +1622,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         throw invalid_argument(buffer.str());
     }
 
-    Tensor<Index, 2> confusion(targets_number, targets_number);
+    Tensor<Index, 2> confusion(targets_number + 1, targets_number + 1);
     confusion.setZero();
+    confusion(targets_number, targets_number) = samples_number;
 
     Index target_index = 0;
     Index output_index = 0;
@@ -1627,7 +1634,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
 
-        confusion(target_index,output_index)++;
+        confusion(target_index, output_index)++;
+        confusion(target_index, targets_number)++;
+        confusion(targets_number, output_index)++;
     }
 
     return confusion;
