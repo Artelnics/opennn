@@ -1719,9 +1719,45 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(type*, Tensor<Index, 1>&)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
 {
-    return Tensor<type, 2>();
+    const Index inputs_rank = inputs_dimensions.size();
+
+    if(inputs_rank == 2)
+    {
+        DataSetBatch data_set_batch;
+
+        Tensor<type, 2> inputs = TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+        data_set_batch.set_inputs(inputs);
+
+        const Index batch_size = inputs.dimension(0);
+
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
+
+        forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0) return Tensor<type, 2>();
+
+        type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
+        const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
+
+        return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Tensor<type, 2> calculate_outputs(type* , Tensor<Index, 1>&).\n"
+               << "Inputs rank must be 2.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
 }
 
 /// Calculates the outputs vector from the neural network in response to an inputs vector.
