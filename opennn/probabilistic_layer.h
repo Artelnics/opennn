@@ -92,7 +92,6 @@ public:
    void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
-
    void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);
@@ -151,10 +150,10 @@ public:
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
-//   void forward_propagate(type*,
-//                          const Tensor<Index, 1>&,
-//                          Tensor<type, 1>&,
-//                          LayerForwardPropagation*) final;
+   void forward_propagate(type*,
+                          const Tensor<Index, 1>&,
+                          Tensor<type, 1>&,
+                          LayerForwardPropagation*) final;
 
    // Gradient methods
 
@@ -261,6 +260,8 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         combinations.resize(batch_samples_number, neurons_number);
 
         activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
+
+
     }
 
 

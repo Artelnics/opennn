@@ -222,7 +222,7 @@ public:
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
-//   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
    // Eror gradient
 

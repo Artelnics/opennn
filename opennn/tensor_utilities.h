@@ -53,6 +53,7 @@ void save_csv(const Tensor<type,2>&, const string&);
 
 // Rank and indices methods
 
+
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);

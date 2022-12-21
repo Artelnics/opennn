@@ -2578,7 +2578,7 @@ void TextGenerationAlphabet::encode_alphabet()
     data_tensor.setZero();
 
 #pragma omp parallel for
-    for (Index i = 0; i < Index(text.length()); i++)
+    for (Index i = 0; i < text.length(); i++)
     {
         const int word_index = get_alphabet_index(text[i]);
         data_tensor(i, word_index) = 1;

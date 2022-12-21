@@ -161,9 +161,7 @@ public:
 
    // Outputs
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final {}
-
-   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
    // Delta methods
 

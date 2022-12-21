@@ -238,71 +238,72 @@ void ConvolutionalLayer::calculate_activations_derivatives(Tensor<type, 4>& comb
     }
 }
 
+//@todo
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
-{
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-            = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+//void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation, bool&)
+//{
+//    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+//            = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
-#ifdef OPENNN_DEBUG
+//#ifdef OPENNN_DEBUG
 
-    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+//    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
-    if(outputs_dimensions[0] != convolutional_layer_forward_propagation->combinations.dimension(0))
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(0)<<".\n";
+//    if(outputs_dimensions[0] != convolutional_layer_forward_propagation->combinations.dimension(0))
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+//               << "ConvolutionalLayer::forward_propagate.\n"
+//               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(0)<<".\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    if(outputs_dimensions[1] != convolutional_layer_forward_propagation->combinations.dimension(1))
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(1)<<".\n";
+//    if(outputs_dimensions[1] != convolutional_layer_forward_propagation->combinations.dimension(1))
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+//               << "ConvolutionalLayer::forward_propagate.\n"
+//               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(1)<<".\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    if(outputs_dimensions[2] != convolutional_layer_forward_propagation->combinations.dimension(2))
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[2]" <<outputs_dimensions[2] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(2)<<".\n";
+//    if(outputs_dimensions[2] != convolutional_layer_forward_propagation->combinations.dimension(2))
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+//               << "ConvolutionalLayer::forward_propagate.\n"
+//               << "outputs_dimensions[2]" <<outputs_dimensions[2] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(2)<<".\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    if(outputs_dimensions[3] != convolutional_layer_forward_propagation->combinations.dimension(3))
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[3]" <<outputs_dimensions[3] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(3)<<".\n";
+//    if(outputs_dimensions[3] != convolutional_layer_forward_propagation->combinations.dimension(3))
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+//               << "ConvolutionalLayer::forward_propagate.\n"
+//               << "outputs_dimensions[3]" <<outputs_dimensions[3] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(3)<<".\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-#endif
+//#endif
 
 
-    calculate_convolutions(inputs,
-                           convolutional_layer_forward_propagation->combinations);
+//    calculate_convolutions(inputs,
+//                           convolutional_layer_forward_propagation->combinations);
 
-    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
-                                      convolutional_layer_forward_propagation->activations,
-                                      convolutional_layer_forward_propagation->activations_derivatives);
+//    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
+//                                      convolutional_layer_forward_propagation->activations,
+//                                      convolutional_layer_forward_propagation->activations_derivatives);
 
-/// @todo check here next layer
-//    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
-//    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
-//    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
-}
+///// @todo check here next layer
+////    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
+////    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
+////    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
+//}
 
 
 void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation* next_forward_propagation,

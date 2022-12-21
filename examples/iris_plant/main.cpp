@@ -70,7 +70,7 @@ int main()
                           {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << "\nInputs:\n" << inputs << endl;
 

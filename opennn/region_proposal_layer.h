@@ -91,7 +91,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         outputs_dimensions(2) = channels_number;
         outputs_dimensions(3) = regions_number;
 
-//        outputs_data = outputs.data();
+        outputs_data = outputs.data();
 
 
 //        outputs_data = (float*) malloc(outputs_dimensions.prod() * sizeof(float));
@@ -101,6 +101,8 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     {
 
     }
+
+    Tensor<type, 2> outputs;
 
     Tensor<type, 2> outputs_regions;
 };

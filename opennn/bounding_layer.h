@@ -128,6 +128,7 @@ private:
    bool display = true;
 };
 
+
 struct BoundingLayerForwardPropagation : LayerForwardPropagation
 {
     // Constructor

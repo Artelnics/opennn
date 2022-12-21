@@ -1482,115 +1482,115 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(type*
     }
 }
 
-/*
-void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                                 type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-#ifdef OPENNN_DEBUG
 
-    const Index inputs_number = get_inputs_number();
+//void LongShortTermMemoryLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                                 type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//#ifdef OPENNN_DEBUG
 
-    const Index inputs_columns_number = inputs_dimensions(1);
+//    const Index inputs_number = get_inputs_number();
 
-    if(inputs_columns_number != inputs_number)
-    {
-        ostringstream buffer;
+//    const Index inputs_columns_number = inputs_dimensions(1);
 
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns (" << inputs_columns_number << ") of inputs matrix must be equal to number of inputs (" << inputs_number << ").\n";
+//    if(inputs_columns_number != inputs_number)
+//    {
+//        ostringstream buffer;
 
-        throw invalid_argument(buffer.str());
-    }
-#endif
+//        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+//               << "Number of columns (" << inputs_columns_number << ") of inputs matrix must be equal to number of inputs (" << inputs_number << ").\n";
 
-    const Index samples_number = inputs_dimensions(0);
+//        throw invalid_argument(buffer.str());
+//    }
+//#endif
 
-    const Index neurons_number = get_neurons_number();
+//    const Index samples_number = inputs_dimensions(0);
 
-    if(outputs_dimensions(0) != samples_number || outputs_dimensions(1) != neurons_number)
-    {
-        ostringstream buffer;
+//    const Index neurons_number = get_neurons_number();
 
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)"
-               << "Outputs dimensions must be equal to " << samples_number << " and " << neurons_number << ".\n";
+//    if(outputs_dimensions(0) != samples_number || outputs_dimensions(1) != neurons_number)
+//    {
+//        ostringstream buffer;
 
-        throw invalid_argument(buffer.str());
-    }
+//        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+//               << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)"
+//               << "Outputs dimensions must be equal to " << samples_number << " and " << neurons_number << ".\n";
 
-    Tensor<type, 1> forget_combinations(neurons_number);
-    Tensor<type, 1> forget_activations(neurons_number);
+//        throw invalid_argument(buffer.str());
+//    }
 
-    Tensor<type, 1> input_combinations(neurons_number);
-    Tensor<type, 1> input_activations(neurons_number);
+//    Tensor<type, 1> forget_combinations(neurons_number);
+//    Tensor<type, 1> forget_activations(neurons_number);
 
-    Tensor<type, 1> state_combinations(neurons_number);
-    Tensor<type, 1> state_activations(neurons_number);
+//    Tensor<type, 1> input_combinations(neurons_number);
+//    Tensor<type, 1> input_activations(neurons_number);
 
-    Tensor<type, 1> output_combinations(neurons_number);
-    Tensor<type, 1> output_activations(neurons_number);
+//    Tensor<type, 1> state_combinations(neurons_number);
+//    Tensor<type, 1> state_activations(neurons_number);
 
-    TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-    TensorMap<Tensor<type,2>> outputs(outputs_data, samples_number, neurons_number);
+//    Tensor<type, 1> output_combinations(neurons_number);
+//    Tensor<type, 1> output_activations(neurons_number);
 
-    Tensor<Index, 1> current_inputs_dimensions;
+//    TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+//    TensorMap<Tensor<type,2>> outputs(outputs_data, samples_number, neurons_number);
 
-    Tensor<Index, 1> combinations_dimensions;
-    Tensor<Index, 1> activations_dimensions;
+//    Tensor<Index, 1> current_inputs_dimensions;
 
-    for(Index i = 0; i < samples_number; i++)
-    {
-        if(i%timesteps == 0)
-        {
-            hidden_states.setZero();
-            cell_states.setZero();
-        }
+//    Tensor<Index, 1> combinations_dimensions;
+//    Tensor<Index, 1> activations_dimensions;
 
-        Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+//    for(Index i = 0; i < samples_number; i++)
+//    {
+//        if(i%timesteps == 0)
+//        {
+//            hidden_states.setZero();
+//            cell_states.setZero();
+//        }
 
-        current_inputs_dimensions = get_dimensions(current_inputs);
+//        Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-#pragma omp parallel
-        {
-            combinations_dimensions = get_dimensions(forget_combinations);
-            activations_dimensions = get_dimensions(forget_activations);
+//        current_inputs_dimensions = get_dimensions(current_inputs);
 
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations.data(), combinations_dimensions);
-            calculate_recurrent_activations(forget_combinations.data(), combinations_dimensions, forget_activations.data(), activations_dimensions);
+//#pragma omp parallel
+//        {
+//            combinations_dimensions = get_dimensions(forget_combinations);
+//            activations_dimensions = get_dimensions(forget_activations);
 
-            combinations_dimensions = get_dimensions(input_combinations);
-            activations_dimensions = get_dimensions(input_activations);
+//            calculate_combinations(current_inputs.data(), current_inputs_dimensions, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations.data(), combinations_dimensions);
+//            calculate_recurrent_activations(forget_combinations.data(), combinations_dimensions, forget_activations.data(), activations_dimensions);
 
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, input_weights, input_recurrent_weights, input_biases, input_combinations.data(), combinations_dimensions);
-            calculate_recurrent_activations(input_combinations.data(), combinations_dimensions, input_activations.data(), activations_dimensions);
+//            combinations_dimensions = get_dimensions(input_combinations);
+//            activations_dimensions = get_dimensions(input_activations);
 
-            combinations_dimensions = get_dimensions(state_combinations);
-            activations_dimensions = get_dimensions(state_activations);
+//            calculate_combinations(current_inputs.data(), current_inputs_dimensions, input_weights, input_recurrent_weights, input_biases, input_combinations.data(), combinations_dimensions);
+//            calculate_recurrent_activations(input_combinations.data(), combinations_dimensions, input_activations.data(), activations_dimensions);
 
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, state_weights, state_recurrent_weights, state_biases, state_combinations.data(), combinations_dimensions);
-            calculate_activations(state_combinations.data(), combinations_dimensions, state_activations.data(), activations_dimensions);
+//            combinations_dimensions = get_dimensions(state_combinations);
+//            activations_dimensions = get_dimensions(state_activations);
 
-            combinations_dimensions = get_dimensions(output_combinations);
-            activations_dimensions = get_dimensions(output_activations);
+//            calculate_combinations(current_inputs.data(), current_inputs_dimensions, state_weights, state_recurrent_weights, state_biases, state_combinations.data(), combinations_dimensions);
+//            calculate_activations(state_combinations.data(), combinations_dimensions, state_activations.data(), activations_dimensions);
 
-            calculate_combinations(current_inputs.data(), current_inputs_dimensions, output_weights, output_recurrent_weights, output_biases, output_combinations.data(), combinations_dimensions);
-            calculate_recurrent_activations(output_combinations.data(), combinations_dimensions, output_activations.data(), activations_dimensions);
-        }
+//            combinations_dimensions = get_dimensions(output_combinations);
+//            activations_dimensions = get_dimensions(output_activations);
 
-        cell_states = forget_activations * cell_states + input_activations * state_activations;
+//            calculate_combinations(current_inputs.data(), current_inputs_dimensions, output_weights, output_recurrent_weights, output_biases, output_combinations.data(), combinations_dimensions);
+//            calculate_recurrent_activations(output_combinations.data(), combinations_dimensions, output_activations.data(), activations_dimensions);
+//        }
 
-        combinations_dimensions = get_dimensions(cell_states);
-        activations_dimensions = get_dimensions(hidden_states);
+//        cell_states = forget_activations * cell_states + input_activations * state_activations;
 
-        calculate_activations(cell_states.data(), combinations_dimensions, hidden_states.data(), activations_dimensions);
-        hidden_states *= output_activations;
+//        combinations_dimensions = get_dimensions(cell_states);
+//        activations_dimensions = get_dimensions(hidden_states);
 
-        for(Index j = 0; j < neurons_number; j++)
-            outputs(i,j) = hidden_states(j);
-    }
-}
-*/
+//        calculate_activations(cell_states.data(), combinations_dimensions, hidden_states.data(), activations_dimensions);
+//        hidden_states *= output_activations;
+
+//        for(Index j = 0; j < neurons_number; j++)
+//            outputs(i,j) = hidden_states(j);
+//    }
+//}
+
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                                       LayerBackPropagation* next_back_propagation,
@@ -1987,7 +1987,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
     }
 }
 
-/*
+
 void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, Tensor<type, 1>& parameters, LayerForwardPropagation* forward_propagation)
 {
 
@@ -2192,7 +2192,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
         copy_index += neurons_number;
     }
 }
-*/
+
 
 void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propagation,
                                                const Index& index,

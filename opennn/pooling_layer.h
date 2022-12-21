@@ -26,6 +26,7 @@
 
 #include "statistics.h"
 #include "perceptron_layer.h"
+#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -135,6 +136,10 @@ public:
 
     void forward_propagate(type*, const Tensor<Index, 1>&,
                            LayerForwardPropagation*, bool&) final {}
+
+    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*)
+    {
+    }
 
     // Delta methods
 

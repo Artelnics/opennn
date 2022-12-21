@@ -741,7 +741,7 @@ void UnscalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
                     if(display)
                     {
                         cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
+                             << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)\n"
                              << "Standard deviation of variable " << i << " is zero.\n"
                              << "Those variables won't be scaled.\n";
                     }
@@ -787,7 +787,7 @@ void UnscalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
                         ostringstream buffer;
 
                         buffer << "OpenNN Exception: ScalingLayer class\n"
-                               << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
+                               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)\n"
                                << "Unknown scaling method.\n";
 
                         throw invalid_argument(buffer.str());
@@ -801,7 +801,7 @@ void UnscalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
+               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)\n"
                << "Input dimension must be 2.\n";
 
         throw invalid_argument(buffer.str());
@@ -809,9 +809,10 @@ void UnscalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
 }
 
 
+/*
 /// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
 /// @param inputs Set of inputs to the unscaling layer.
-/*
+
 void UnscalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                        type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {

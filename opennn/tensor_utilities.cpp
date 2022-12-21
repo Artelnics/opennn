@@ -762,6 +762,17 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
 
 type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
+    if(x.size() != y.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Tensor utilites.\n"
+               << "type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&)\n"
+               << "x and y vector must  have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
     Tensor<type, 0> distance;
 
     distance = (x-y).square().sum().sqrt();

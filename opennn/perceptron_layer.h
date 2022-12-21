@@ -24,17 +24,28 @@
 #include "layer.h"
 #include "probabilistic_layer.h"
 
+#ifdef OPENNN_MKL
+    #include "../mkl/mkl.h"
+#endif
 
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
-#endif
+struct LayerForwardPropagation;
+struct LayerBackPropagation;
+struct LayerBackPropagationLM;
 
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
 struct PerceptronLayerBackPropagationLM;
+
+struct ProbabilisticLayerForwardPropagation;
+struct ProbabilisticLayerBackPropagation;
+struct ProbabilisticLayerBackPropagationLM;
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+#endif
 
 
 /// This class represents a layer of perceptrons.
@@ -111,7 +122,7 @@ public:
    void set_biases(const Tensor<type, 2>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
 
    // Activation functions
 
@@ -131,6 +142,7 @@ public:
    void set_parameters_random() final;
 
    // Perceptron layer combinations
+
 
    void calculate_combinations(type*,
                                const Tensor<type, 2>&,
@@ -155,10 +167,14 @@ public:
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
-//   void forward_propagate(type*,
-//                          const Tensor<Index, 1>&,
-//                          Tensor<type, 1>&,
+//   void forward_propagate(type*, const Tensor<Index, 1>&,
 //                          LayerForwardPropagation*) final;
+
+
+   void forward_propagate(type*,
+                          const Tensor<Index, 1>&,
+                          Tensor<type, 1>&,
+                          LayerForwardPropagation*) final;
 
    // Delta methods
 
@@ -226,6 +242,14 @@ protected:
 
    // MEMBERS
 
+   /// Inputs
+
+   Tensor<type, 2> inputs;
+
+   /// Outputs
+
+   Tensor<type, 2> outputs;
+
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's transfer function to generate the neuron's output.
 
@@ -278,7 +302,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
         // delete outputs_data;
 
-        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
 
         // Rest of quantities
 
@@ -295,6 +319,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
+
         cout << "Outputs dimensions:" << endl;
         cout << outputs_dimensions << endl;
 
@@ -307,10 +332,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
     }
-
     type* get_combinations_data()
     {
         return combinations.data();
+
     }
 
     Tensor<type, 2> combinations;
@@ -421,8 +446,8 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
-//        cout << "Deltas:" << endl;
-//        cout << deltas << endl;
+        cout << "Deltas:" << endl;
+        //cout << deltas << endl;
 
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
@@ -434,7 +459,10 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
+
     Tensor<type, 2> deltas_times_activations_derivatives;
+
+
 };
 
 }

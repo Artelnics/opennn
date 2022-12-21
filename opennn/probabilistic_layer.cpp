@@ -700,24 +700,24 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 /// This posprocessing is performed according to the probabilistic method to be used.
 /// @param inputs Set of inputs to the probabilistic layer.
 
-/*
-void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                           type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-    if(inputs_dimensions.size() != 2)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "tuple<type*, Tensor<Index,1>> PerceptronLayer::calculate_outputs(const tuple<type*, Tensor<Index,1>>& tensor)"
-               << "Inputs dimensions must be equal to 2.\n";
-        throw invalid_argument(buffer.str());
-    }
 
-    calculate_combinations(inputs_data, inputs_dimensions, biases, synaptic_weights, outputs_data, outputs_dimensions);
+//void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                           type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//    if(inputs_dimensions.size() != 2)
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+//               << "tuple<type*, Tensor<Index,1>> PerceptronLayer::calculate_outputs(const tuple<type*, Tensor<Index,1>>& tensor)"
+//               << "Inputs dimensions must be equal to 2.\n";
+//        throw invalid_argument(buffer.str());
+//    }
 
-    calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
-}
-*/
+//    calculate_combinations(inputs_data, inputs_dimensions, biases, synaptic_weights, outputs_data, outputs_dimensions);
+
+//    calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
+//}
+
 
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
@@ -769,7 +769,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
     }
 }
 
-/*
+
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index, 1>& inputs_dimensions,
                                            Tensor<type, 1>& potential_parameters,
@@ -819,7 +819,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                       probabilistic_layer_forward_propagation->activations_derivatives.data(),
                                       derivatives_dimensions);
 }
-*/
+
 
 // Gradient methods
 

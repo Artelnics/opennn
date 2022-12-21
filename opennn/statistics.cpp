@@ -54,12 +54,16 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
     Tensor<type, 0> maximum = x.maximum();
 
     Tensor<type, 0> mean = x.mean();
+
     Tensor<type, 0> stde = (x - mean(0)).square().sum();
+
     stde = stde * (1/static_cast<type>(x.size()));
+
     stde = stde.sqrt();
 
     set(minimum(0), maximum(0), mean(0), stde(0));
 }
+
 
 
 void Descriptives::set(const type& new_minimum, const type& new_maximum,
@@ -263,7 +267,6 @@ Histogram::Histogram(const Tensor<type, 1>& data,
 {
     const type data_maximum = maximum(data);
     const type data_minimum = minimum(data);
-
     const type step = (data_maximum - data_minimum) / type(number_of_bins);
 
     Tensor<type, 1> new_centers(number_of_bins);
@@ -2043,24 +2046,6 @@ type range(const Tensor<type, 1>& vector)
 
 Descriptives descriptives(const Tensor<type, 1>& vector)
 {
-    const Index size = vector.dimension(0);
-
-#ifdef OPENNN_DEBUG
-
-    if(size == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "type descriptives(const Tensor<type, 1>&, "
-               "const Tensor<Index, 1>&).\n"
-               << "Size must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Descriptives descriptives(vector);
 
     return descriptives;

@@ -108,12 +108,14 @@ public:
    // Check methods
 
    bool is_empty() const;
-  
-//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+
+   void check_range(const Tensor<type, 1>&) const;
+
+   // Forward propagation methods
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
-   void check_range(const Tensor<type, 1>&) const;
+   //   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    // Serialization methods
 
@@ -124,6 +126,7 @@ public:
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+
 
 protected:
 

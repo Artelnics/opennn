@@ -50,11 +50,11 @@ public:
 
     // Outputs unscaling
 
+    void test_calculate_outputs();
+
     void test_calculate_minimum_maximum_outputs();
     void test_calculate_mean_standard_deviation_outputs();
     void test_calculate_logarithmic_outputs();
-
-    void test_forward_propagate();
 
     // Serialization methods
 
@@ -68,8 +68,6 @@ public:
 private:
 
     UnscalingLayer unscaling_layer;
-
-    UnscalingLayerForwardPropagation unscaling_layer_forward_propagation;
 
     Tensor<Descriptives, 1> descriptives;
 

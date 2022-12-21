@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_layer.h"
+#include "opennn_images.h"
 
 namespace opennn
 {
@@ -19,15 +20,16 @@ namespace opennn
 {
 }
 
-void NonMaxSuppressionLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+
+void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                               type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
     // inputs_data -> Score of each input image bounding box
     //             -> 4 parameters defining the bbox
     // outputs_data -> Bounding box that surpasses our criteria
 
-    const type overlap_threshold = type(0.65);
-    const type confidence_score_threshold = type(0.4);
+    const type overlap_threshold = 0.65;
+    const type confidence_score_threshold = 0.4;
 
     const Index regions_number = inputs_dimensions(0);
     TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
@@ -129,6 +131,7 @@ void NonMaxSuppressionLayer::calculate_outputs(type* inputs_data, const Tensor<I
 
 }
 
+
 void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation)
@@ -143,7 +146,7 @@ void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
 
     const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
 
-    calculate_outputs(inputs_data,
+    calculate_regions(inputs_data,
                       inputs_dimensions,
                       non_max_suppression_layer_forward_propagation->outputs.data(),
                       outputs_dimensions);

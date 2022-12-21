@@ -265,9 +265,6 @@ void GradientDescent::update_parameters(
 {
     NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
 
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient = back_propagation.get_layers_gradient();
-
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
     // Get initial learning_rate
@@ -287,19 +284,10 @@ void GradientDescent::update_parameters(
 
     if(abs(optimization_data.learning_rate) > type(0))
     {
-//        for(Index i = 0; i < layers_parameters.size(); i++)
-//        {
-//            for(Index j = 0; j < layers_parameters(i).size(); j++)
-//            {
-//                (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-optimization_data.learning_rate);
-//            }
-//        }
-
         optimization_data.parameters_increment.device(*thread_pool_device)
                 = optimization_data.training_direction*optimization_data.learning_rate;
 
         back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
-
     }
     else
     {

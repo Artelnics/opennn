@@ -642,11 +642,12 @@ type z_correlation_to_r_correlation (const type& z_correlation)
 }
 
 
+
 Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, const Index& n)
 {
     Tensor<type, 1> confidence_interval(2);
 
-    const type z_standard_error = type(1.959964);
+    const type z_standard_error = 1.959964;
 
     confidence_interval(0) = z_correlation - z_standard_error * 1/sqrt(n - 3);
 
@@ -810,7 +811,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     // Logistic correlation
 
@@ -892,7 +893,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     // Logistic correlation
 
@@ -997,7 +998,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
@@ -1123,7 +1124,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network.calculate_outputs(inputs);
+    outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 

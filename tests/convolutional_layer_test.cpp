@@ -828,7 +828,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
-
+/*
 void ConvolutionalLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
@@ -887,7 +887,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 forward_propagation.activations(0, 0, 0, 0) - type(1.) < type(0.00001) &&
                 type(forward_propagation.activations_derivatives(0, 0, 0, 0)) - type(0.)< type(0.00001), LOG);
 }
-
+*/
 
 void ConvolutionalLayerTest::test_insert_padding()
 {
@@ -1091,7 +1091,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    // Forward propagate
 
-   test_forward_propagate();
+//   test_forward_propagate();
 
    // Back_propagate
 

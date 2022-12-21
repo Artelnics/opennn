@@ -97,15 +97,15 @@ Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 }
 
 
-Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
-{
-    return input_variables_dimensions;
-}
-
-
 Index ScalingLayer::get_inputs_number() const
 {
     return descriptives.size();
+}
+
+
+Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
+{
+    return input_variables_dimensions;
 }
 
 
@@ -954,10 +954,11 @@ void ScalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 }
 
 
+/*
 /// Scales some values to produce some scaled values.
 /// @param inputs Set of inputs to the scaling layer.
 
-/*
+
 void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {

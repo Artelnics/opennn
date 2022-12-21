@@ -474,7 +474,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     assert_true(abs(activations_derivatives(0,3,3) - static_cast<type>(0.00233)) < static_cast<type>(1e-3), LOG);
 }
 
-/*
+
 void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
@@ -514,9 +514,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     outputs.resize(1,4);
     outputs_dimensions = get_dimensions(outputs);
 
-//    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
-
-    probabilistic_layer.forward_propagate(inputs.data(),inputs_dimensions, &forward_propagation);
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     Tensor<type, 1> perceptron_sol(4);
     perceptron_sol.setValues({ type(7),type(-5),type(1),type(7)});
@@ -537,7 +535,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     outputs_dimensions = get_dimensions(outputs);
 
-//    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -571,7 +569,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-//    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
     Tensor<type, 1>perceptron_sol_3(4);
     perceptron_sol.setValues({type(7),type(-5),type(1),type(7)});
 
@@ -597,14 +595,14 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     outputs.resize(1,2);
     outputs_dimensions = get_dimensions(outputs);
 
-//    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
     assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
-*/
+
 
 void ProbabilisticLayerTest::test_forward_propagate()
 {
@@ -778,6 +776,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(outputs_5.dimension(1) == 2, LOG);
     assert_true(abs(outputs_5(0,0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
     */
+
 }
 
 
@@ -808,6 +807,7 @@ void ProbabilisticLayerTest::run_test_case()
     test_calculate_combinations();
     test_calculate_activations();
     test_calculate_activations_derivatives();
+    test_calculate_outputs();
 
     // Forward propagate
 

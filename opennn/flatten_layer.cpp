@@ -53,7 +53,6 @@ Index FlattenLayer::get_outputs_number() const
     return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
 }
 
-
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(2);
@@ -137,29 +136,29 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 }
 
-/*
+
 /// Obtain the connection between the convolutional and the conventional part
 /// of a neural network. That is a matrix which links to the perceptron layer.
 /// @param inputs 4d tensor(batch, channels, width, height)
 /// @return result 2d tensor(batch, number of pixels)
 
-void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-    const Index height = inputs_dimensions(0);
-    const Index width = inputs_dimensions(1);
-    const Index channels = inputs_dimensions(2);
-    const Index batch = inputs_dimensions(3);
+//void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//    const Index height = inputs_dimensions(0);
+//    const Index width = inputs_dimensions(1);
+//    const Index channels = inputs_dimensions(2);
+//    const Index batch = inputs_dimensions(3);
 
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
+//    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
 
-    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+//    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch, channels*width*height);
+//    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch, channels*width*height);
 
-    outputs = inputs.reshape(new_dims);
-}
-*/
+//    outputs = inputs.reshape(new_dims);
+//}
+
 
 void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
 {
@@ -211,9 +210,7 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-    Tensor<type, 2> inputs_reshaped = inputs.reshape(new_dims);
-
-    flatten_layer_forward_propagation->outputs_data = inputs_reshaped.data();
+    flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }
 
 

@@ -125,18 +125,15 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
        layer_pointer = new_layer_pointer;
 
-       const Index neurons_number = static_cast<FlattenLayer*>(layer_pointer)->get_neurons_number();
        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
        batch_samples_number = new_batch_samples_number;
 
+       outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
 
-       // Allocate memory for outputs_data
+       outputs_data = outputs.data();
 
-       outputs_data = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
-
-       outputs_dimensions.resize(2);
-       outputs_dimensions.setValues({batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2)});
+       outputs_dimensions = get_dimensions(outputs);
    }
 
 
@@ -144,8 +141,10 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
        cout << "Outputs:" << endl;
 
-       cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+       cout << outputs << endl;
    }
+
+   Tensor<type, 2> outputs;
 };
 
 
@@ -179,12 +178,6 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 //        deltas.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
 
         deltas.resize(batch_samples_number, neurons_number);
-    }
-
-
-    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-    {
-        return Tensor< TensorMap< Tensor<type, 1> >*, 1>();
     }
 
 
