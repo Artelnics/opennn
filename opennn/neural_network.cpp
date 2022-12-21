@@ -1719,6 +1719,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 }
 
 
+Tensor<type, 2> NeuralNetwork::calculate_outputs(type*, Tensor<Index, 1>&)
+{
+    return Tensor<type, 2>();
+}
+
 /// Calculates the outputs vector from the neural network in response to an inputs vector.
 /// The activity for that is the following:
 /// <ul>

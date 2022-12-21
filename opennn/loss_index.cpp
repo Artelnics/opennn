@@ -410,11 +410,13 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
         const type regularization = calculate_regularization(back_propagation.parameters);
-        back_propagation.loss += regularization;
+        back_propagation.loss += regularization_weight * regularization;
 
         calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
-        back_propagation.gradient.device(*thread_pool_device) += back_propagation.regularization_gradient;
+        back_propagation.gradient.device(*thread_pool_device) += regularization_weight * back_propagation.regularization_gradient;
     }
+
+    assemble_layers_error_gradient(back_propagation);
 }
 
 

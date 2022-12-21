@@ -204,7 +204,7 @@ public:
 
    // Output
 
-   Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);

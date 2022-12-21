@@ -368,6 +368,11 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
      }
 
 
+void ConvolutionalLayer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)
+{
+
+}
+
 
 //void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>&inputs, LayerForwardPropagation* forward_propagation)
 //{

@@ -104,7 +104,6 @@ Index count_NAN(const Tensor<type, 2>&);
 bool has_NAN(const Tensor<type, 1>&);
 bool has_NAN(Tensor<type, 2>&);
 
-
 Index count_empty_values(const Tensor<string, 1>&);
 
 void check_size(const Tensor<type, 1>&, const Index&, const string&);
