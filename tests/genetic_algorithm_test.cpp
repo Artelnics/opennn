@@ -69,6 +69,12 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     genetic_algorithm.set_individuals_number(individuals_number);
 
+    if(genetic_algorithm.get_initialization_method()==GeneticAlgorithm::InitializationMethod::Correlations)
+    {
+        genetic_algorithm.calculate_inputs_activation_probabilities();
+    }
+
+
     genetic_algorithm.initialize_population();
 
     population = genetic_algorithm.get_population();
@@ -143,8 +149,8 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     fitness = genetic_algorithm.get_fitness();
 
-    assert_true(maximal_index(fitness) == 0, LOG);
-    assert_true(minimal_index(fitness) == 3, LOG);
+    assert_true(maximal_index(fitness) == 3, LOG);
+    assert_true(minimal_index(fitness) == 0, LOG);
 
     // Test
 
@@ -165,8 +171,8 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     fitness = genetic_algorithm.get_fitness();
 
-    assert_true(maximal_index(fitness) == 3, LOG);
-    assert_true(minimal_index(fitness) == 0, LOG);
+    assert_true(maximal_index(fitness) == 0, LOG);
+    assert_true(minimal_index(fitness) == 3, LOG);
 
 }
 
@@ -180,6 +186,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     Tensor<bool, 1> selection;
 
     Tensor<type, 1> selection_errors;
+
     Tensor<type, 1> fitness;
 
     // Test 1
@@ -213,7 +220,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);  // FAILS SOMETIMES, @todo CHECK IT
 
-    assert_true( std::count(selection.data() + 2, selection.data() + selection.size(), 1)  >= 1,LOG);
+    assert_true( std::count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 
     // 4 individuals with elitism size = 1
 
@@ -237,15 +244,13 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     genetic_algorithm.perform_selection();
 
-    selection = genetic_algorithm.get_selection();
-
-    assert_true(selection(0) == 0 || selection(0) == 1,LOG);
+    assert_true(selection(0) == 1,LOG);
     assert_true(selection(1) == 0 || selection(1) == 1,LOG);
     assert_true(selection(2) == 0 || selection(2) == 1,LOG);
-    assert_true(selection(3) == 1,LOG);
+    assert_true(selection(3) == 0 || selection(3) == 1,LOG);
 
     assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
-    assert_true( std::count(selection.data() + 2, selection.data() + selection.size(), 1)  >= 1,LOG);
+    assert_true( std::count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 
     // 10 individuals without elitism
 
@@ -259,7 +264,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     selection_errors.resize(8);
     selection_errors.setValues({0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1});
 
-    genetic_algorithm.initialize_population();
+    genetic_algorithm.initialize_population_random();
 
     genetic_algorithm.set_selection_errors(selection_errors);
 
@@ -280,52 +285,50 @@ void GeneticAlgorithmTest::test_perform_selection()
 
 void GeneticAlgorithmTest::test_perform_crossover()
 {
-    cout << "test_perform_crossover\n";
+        cout << "test_perform_crossover\n";
 
-    Tensor<bool, 2> population;
-    Tensor<bool, 2> crossover_population;
-    Tensor<bool, 1> individual;
+        Tensor<type, 2> data(10,5);
+        data.setRandom();
+        data_set.set(data);
 
-    Tensor<type, 1> fitness(4);
+        Tensor<bool, 2> population;
+        Tensor<bool, 2> crossover_population;
+        Tensor<bool, 1> individual;
 
-    Tensor<type, 1> selection_errors(4);
+        Tensor<type, 1> fitness(4);
 
-    // Test
+        Tensor<type, 1> selection_errors(4);
 
-    genetic_algorithm.set_individuals_number(4);
+        // Test
 
-    population.resize(4, 4);
+        genetic_algorithm.set_individuals_number(4);
 
-    population.setValues({{true,false,false,false},
-                          {false,false,false,true},
-                          {true,false,true,false},
-                          {false,false,true,true}});
+        population.resize(4, 4);
 
-    genetic_algorithm.set_population(population);
+        population.setValues({{true,false,false,false},
+                              {true,false,false,true},
+                              {true,false,true,false},
+                              {true,false,true,true}});
 
-    fitness.setValues({1,2,3,4});
+        genetic_algorithm.set_population(population);
 
-    genetic_algorithm.set_fitness(fitness);
+        selection_errors.setValues({0.4,0.3,0.2,0.1});
 
-    selection_errors.setValues({0.4,0.3,0.2,0.1});
+        genetic_algorithm.set_selection_errors(selection_errors);
 
-    genetic_algorithm.set_selection_errors(selection_errors);
+        genetic_algorithm.perform_fitness_assignment();
 
-    genetic_algorithm.perform_selection();
+        genetic_algorithm.perform_selection();
 
-    genetic_algorithm.perform_crossover();
+        genetic_algorithm.perform_crossover();
 
-    crossover_population = genetic_algorithm.get_population();
+        crossover_population = genetic_algorithm.get_population();
 
-    assert_true(crossover_population(0,1) == false, LOG);
-    assert_true(crossover_population(1,1) == false, LOG);
-    assert_true(crossover_population(2,1) == false, LOG);
-    assert_true(crossover_population(3,1) == false, LOG);
-
-    assert_true(crossover_population(0,2) == true, LOG);
-    assert_true(crossover_population(1,2) == true, LOG);
-    assert_true(crossover_population(2,2) == true, LOG);
-    assert_true(crossover_population(3,2) == true, LOG);
+        for(Index i=0; i<4; i++)
+        {
+           assert_true(crossover_population(i,0) == 1, LOG);
+           assert_true(crossover_population(i,1) == 0, LOG);
+        }
 
 }
 
@@ -334,9 +337,14 @@ void GeneticAlgorithmTest::test_perform_mutation()
 {
     cout << "test_perform_mutation\n";
 
+    Tensor<type, 2> data(10,5);
+    data.setRandom();
+    data_set.set(data);
+
     Tensor<bool, 2> population;
     Tensor<bool, 1> individual;
     Tensor<bool, 2> mutated_population;
+    Tensor <bool, 1> mutated_individual;
 
     // Test 1
 
@@ -369,15 +377,23 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     genetic_algorithm.set_mutation_rate(type(0.5));
 
+
     genetic_algorithm.perform_mutation();
 
     mutated_population = genetic_algorithm.get_population();
 
     Index mutated_genes = 0;
 
-    for(Index i = 0; i < population.size(); i++)
+    for(Index i = 0; i < population.dimension(0); i++)
     {
-        if(population(i) != mutated_population(i)) mutated_genes++;
+        individual=population.chip(i,0);
+
+        mutated_individual=mutated_population.chip(i,0);
+
+        for(Index j=0; j<10; j++)
+        {
+            if(individual(j) != mutated_individual(j)) mutated_genes++;
+        }
     }
 
     assert_true( mutated_genes >= 25, LOG);
@@ -419,20 +435,21 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     assert_true(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal, LOG);
     assert_true(inputs_selection_results.selection_error_history(0) <= 1, LOG);
 
+
     // Test 2
 
     Index j = -10;
 
     for(Index i = 0; i < 10; i++)
     {
-        data(i,0) = (type)j;
+        data(i,0) = type(j);
         data(i,1) = type(rand());
         data(i,2) = type(1);
-        j+=1;
+        j++;
     }
     for(Index i = 10; i < 20; i++)
     {
-        data(i,0) = (type)i;
+        data(i,0) = type(i);
         data(i,1) = type(rand());
         data(i,2) = type(0.0);
     }
@@ -511,6 +528,7 @@ void GeneticAlgorithmTest::run_test_case()
     // Order selection methods
 
     test_perform_inputs_selection();
+
 
     cout << "End of genetic algorithm test case.\n\n";
 }

@@ -107,7 +107,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
@@ -151,12 +151,12 @@ void MeanSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
     }
 
     // Test binary classification trivial
@@ -191,7 +191,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -200,8 +200,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
-
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
     }
 
     /// @todo
@@ -239,7 +238,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -247,7 +246,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
     }
 
     // Test forecasting trivial
@@ -321,7 +320,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -329,7 +328,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= type(0), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
     }
 */
     // Test convolutional
@@ -420,7 +419,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 //       cout<<neural_network.get_parameters()<<endl;
 
 //       // create Dataset object to load data.
-//       gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//       numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
    }
 
 }
@@ -467,7 +466,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        back_propagation_lm.set(samples_number, &mean_squared_error);
 //        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 //        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
 
 //        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
@@ -476,7 +475,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(back_propagation_lm.error >= type(0), LOG);
 //        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
+//        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
 //        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-1)), LOG);
     }
 
@@ -518,7 +517,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        back_propagation_lm.set(samples_number, &mean_squared_error);
 //        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 //        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
 
 //        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
@@ -527,7 +526,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(back_propagation_lm.error >= type(0), LOG);
 //        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
 //        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
     }
 
@@ -569,7 +568,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        back_propagation_lm.set(samples_number, &mean_squared_error);
 //        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
 //        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
 
 //        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
@@ -578,7 +577,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(back_propagation_lm.error >= type(0), LOG);
 //        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
 //        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
     }
 */

@@ -172,13 +172,13 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          RecurrentLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               RecurrentLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             RecurrentLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               RecurrentLayerBackPropagation*) const;
 
    // Gradient
 
@@ -205,9 +205,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
-
-   string write_combinations_python() const;
-   string write_activations_python() const;
 
    // Serialization methods
 

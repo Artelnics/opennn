@@ -14,9 +14,11 @@ CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting()
     cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 }
 
+
 CrossEntropyErrorTest::~CrossEntropyErrorTest()
 {
 }
+
 
 void CrossEntropyErrorTest::test_constructor()
 {
@@ -75,14 +77,14 @@ void CrossEntropyErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &cross_entropy_error);
         cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = cross_entropy_error.calculate_numerical_differentiation_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -119,14 +121,14 @@ void CrossEntropyErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &cross_entropy_error);
         cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
+        numerical_differentiation_gradient = cross_entropy_error.calculate_numerical_differentiation_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
     }
 }
 

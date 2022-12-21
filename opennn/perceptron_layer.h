@@ -182,13 +182,13 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               PerceptronLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               PerceptronLayerBackPropagation*) const;
 
    // Delta LM
 
@@ -196,11 +196,11 @@ public:
                                   LayerBackPropagationLM*,
                                   LayerBackPropagationLM*) const final;
 
-   void calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation*,
+   void calculate_hidden_delta_lm(PerceptronLayerForwardPropagation*,
                                              PerceptronLayerBackPropagationLM*,
                                              PerceptronLayerBackPropagationLM*) const;
 
-   void calculate_hidden_delta_probabilistic_lm(ProbabilisticLayerForwardPropagation*,
+   void calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation*,
                                                 ProbabilisticLayerBackPropagationLM*,
                                                 PerceptronLayerBackPropagationLM*) const;
 
@@ -229,9 +229,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
-
-   string write_combinations_python() const;
-   string write_activations_python() const;
 
    // Serialization methods
 

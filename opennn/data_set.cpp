@@ -1003,8 +1003,6 @@ void DataSet::transform_associative_columns()
 
     associative_columns = columns;
 
-    cout << "ASSOCIATIVE COLUMNS NUMBER: " << associative_columns.size();
-
     const Index columns_number = get_columns_number();
 
     Tensor<Column, 1> new_columns;
@@ -9103,10 +9101,10 @@ void DataSet::save_auto_associative_data_binary(const string& binary_data_file_n
 
     streamsize size = sizeof(Index);
 
-    Index columns_number = time_series_data.dimension(1);
-    Index rows_number = time_series_data.dimension(0);
+    Index columns_number = associative_data.dimension(1);
+    Index rows_number = associative_data.dimension(0);
 
-    cout << "Saving binary data file..." << endl;
+    cout << "Saving binary associative data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);

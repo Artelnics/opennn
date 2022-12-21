@@ -21,7 +21,6 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tensor_utilities.h"
 #include "layer.h"
 
 #include "probabilistic_layer.h"
@@ -32,7 +31,6 @@ namespace opennn
 
 struct LongShortTermMemoryLayerForwardPropagation;
 struct LongShortTermMemoryLayerBackPropagation;
-
 
 /// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
@@ -185,21 +183,21 @@ public:
 
    // Long short-term memory layer activations
 
-   void calculate_activations(type*, Tensor<Index,1>&, type*, Tensor<Index,1>&);
+   void calculate_activations(type*, const Tensor<Index,1>&, type*, const Tensor<Index,1>&);
 
    Tensor<type, 1> calculate_activations(Tensor<type, 1>&) const;
 
-   void calculate_recurrent_activations(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&);
+   void calculate_recurrent_activations(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
    // Long short-term memory layer derivatives
 
-   void calculate_activations_derivatives(type*, Tensor<Index, 1>&,
-                                          type*, Tensor<Index, 1>&,
-                                          type*, Tensor<Index, 1>&);
+   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&);
 
-   void calculate_recurrent_activations_derivatives(type*, Tensor<Index, 1>&,
-                                          type*, Tensor<Index, 1>&,
-                                          type*, Tensor<Index, 1>&);
+   void calculate_recurrent_activations_derivatives(type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&);
 
    // Long short-term memory layer outputs
 
@@ -209,14 +207,13 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          LongShortTermMemoryLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               LongShortTermMemoryLayerBackPropagation*) const;
 
-
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             LongShortTermMemoryLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               LongShortTermMemoryLayerBackPropagation*) const;
 
    // Forward propagate
 
@@ -283,8 +280,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
-
-   string write_combinations_python() const;
 
    // Serialization methods
 

@@ -410,15 +410,19 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
         const type regularization = calculate_regularization(back_propagation.parameters);
+        back_propagation.regularization = regularization;
         back_propagation.loss += regularization_weight * regularization;
 
         calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight * back_propagation.regularization_gradient;
     }
 
-    assemble_layers_error_gradient(back_propagation);
-}
 
+    // Assemble gradient
+
+    assemble_layers_error_gradient(back_propagation);
+
+}
 
 
 /// This method calculates the second-order loss.
@@ -659,11 +663,14 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 {
     switch(regularization_method)
     {
+    case RegularizationMethod::NoRegularization:
+        regularization_gradient.setZero(); return;
+
     case RegularizationMethod::L1:
-        l1_norm_gradient(thread_pool_device, parameters, regularization_gradient);
+        l1_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
 
     case RegularizationMethod::L2:
-        l2_norm_gradient(thread_pool_device, parameters, regularization_gradient);
+        l2_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
 
     default:
         return;
@@ -969,7 +976,7 @@ LossIndexBackPropagation::~LossIndexBackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
+Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
 {
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
@@ -995,7 +1002,7 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
     type error_forward;
     type error_backward;
 
-    Tensor<type, 1> gradient_numerical_differentiation(parameters_number);
+    Tensor<type, 1> numerical_differentiation_gradient(parameters_number);
 
     for(Index i = 0; i < parameters_number; i++)
     {
@@ -1025,10 +1032,10 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
 
        parameters_backward(i) += h;
 
-       gradient_numerical_differentiation(i) = (error_forward - error_backward)/(type(2)*h);
+       numerical_differentiation_gradient(i) = (error_forward - error_backward)/(type(2)*h);
     }
 
-    return gradient_numerical_differentiation;
+    return numerical_differentiation_gradient;
 }
 
 
