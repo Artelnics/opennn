@@ -95,8 +95,6 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     minkowski_error.device(*thread_pool_device)
             = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
-//    back_propagation.print();
-
     const Index batch_size = batch.get_batch_size();
 
     back_propagation.error = minkowski_error(0)/type(batch_size);
@@ -118,6 +116,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                                             NeuralNetworkForwardPropagation&,
                                             LossIndexBackPropagation& back_propagation) const
 {
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
@@ -137,7 +136,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     }
     else
     {
-        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs()/*.pow(minkowski_parameter - type(2))*/);
+        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
         deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
 

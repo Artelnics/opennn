@@ -37,6 +37,8 @@ void FlattenLayerTest::test_destructor()
 
 void FlattenLayerTest::test_forward_propagate()
 {    
+    cout << "test_calculate_flatten_outputs\n";
+
     const Index image_height = 6;
     const Index image_width = 6;
     const Index image_channels_number= 3;
