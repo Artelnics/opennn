@@ -388,7 +388,7 @@ struct NeuralNetworkForwardPropagation
 
             layers(i)->print();
 
-            cout << "parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
+            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
         }
     }
 

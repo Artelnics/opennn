@@ -143,13 +143,10 @@ public:
 
    // Perceptron layer combinations
 
-
-   void calculate_combinations(type*,
+   void calculate_combinations(const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               type*,
-                               const Tensor<Index, 1>&) const;
-
+                               type*) const;
 
    // Perceptron layer activations
 
@@ -453,9 +450,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
-
     Tensor<type, 2> deltas_times_activations_derivatives;
-
 
 };
 

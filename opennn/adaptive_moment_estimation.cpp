@@ -235,9 +235,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     check();
 
-    display = true;
-
-
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";

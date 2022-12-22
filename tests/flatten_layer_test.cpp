@@ -37,6 +37,8 @@ void FlattenLayerTest::test_destructor()
 
 void FlattenLayerTest::test_calculate_flatten_outputs()
 {    
+    cout << "test_calculate_flatten_outputs\n";
+
     const Index image_height = 6;
     const Index image_width = 6;
     const Index image_channels_number= 3;
@@ -61,16 +63,16 @@ void FlattenLayerTest::test_calculate_flatten_outputs()
     FlattenLayer flatten_layer(inputs_dimensions);
     flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-    cout << "Inputs: " << endl;
-    cout << inputs << endl;
+//    cout << "Inputs: " << endl;
+//    cout << inputs << endl;
 
-    cout << endl << endl << endl << endl;
-    cout << "Inputs dimensions: " << inputs.size() << endl;
-    cout << "Outputs dimensions: " << outputs.size() << endl;
-    cout << endl << endl << endl << endl;
+//    cout << endl << endl << endl << endl;
+//    cout << "Inputs dimensions: " << inputs.size() << endl;
+//    cout << "Outputs dimensions: " << outputs.size() << endl;
+//    cout << endl << endl << endl << endl;
 
-    cout << "Outputs: " << endl;
-    cout << outputs << endl;
+//    cout << "Outputs: " << endl;
+//    cout << outputs << endl;
 
     // Test
 
