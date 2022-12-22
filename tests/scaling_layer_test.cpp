@@ -337,26 +337,26 @@ void ScalingLayerTest::test_check_range()
 }
 
 
-void ScalingLayerTest::test_calculate_outputs()
+void ScalingLayerTest::test_forward_propagate()
 {
-    cout << "test_calculate_outputs\n";
+    cout << "test_forward_propagate\n";
 
     DataSet data_set;
     Tensor<type, 2> data;
     Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
 
     Tensor<Index, 1> inputs_dimensions;
     Tensor<Index, 1> outputs_dimensions;
 
     Tensor<Descriptives,1> input_descriptives;
 
-    ScalingLayerForwardPropagation scaling_layer_forward_propagation;
 
     // Test
 
-    Index inputs_number = 1;
-    Index samples_number = 1;
-    bool switch_train = false;
+    inputs_number = 1;
+    samples_number = 1;
+    bool switch_train = true;
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_scalers(Scaler::NoScaling);
@@ -368,7 +368,7 @@ void ScalingLayerTest::test_calculate_outputs()
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
 
-    TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation.outputs_data,
+    outputs = TensorMap<Tensor<type, 2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
@@ -433,7 +433,9 @@ void ScalingLayerTest::test_calculate_outputs()
     samples_number = 3;
 
     data.resize(samples_number,inputs_number + 1);
-    data.setValues({{type(1),type(1),type(1),type(1)},{type(2),type(2),type(2),type(2)},{type(3),type(3),type(3),type(3)}});
+    data.setValues({{type(1),type(1),type(1),type(1)},
+                    {type(2),type(2),type(2),type(2)},
+                    {type(3),type(3),type(3),type(3)}});
     data_set.set_data(data);
     data_set.set_training();
 
@@ -539,7 +541,6 @@ void ScalingLayerTest::test_calculate_outputs()
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
-
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
 
@@ -581,7 +582,7 @@ void ScalingLayerTest::run_test_case()
 
     // Scaling and unscaling
 
-    test_calculate_outputs();
+    test_forward_propagate();
 
     cout << "End of scaling layer test case.\n\n";
 }

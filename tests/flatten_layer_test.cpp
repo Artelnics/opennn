@@ -35,13 +35,14 @@ void FlattenLayerTest::test_destructor()
 
 }
 
-void FlattenLayerTest::test_calculate_flatten_outputs()
+void FlattenLayerTest::test_forward_propagate()
 {    
     const Index image_height = 6;
     const Index image_width = 6;
     const Index image_channels_number= 3;
     const Index images_number = 2;
     const Index pixels_number = image_height * image_width * image_channels_number;
+    bool switch_train = true;
 
     Tensor<type, 4> inputs(image_height, image_width, image_channels_number, images_number);
     inputs.setRandom();
@@ -52,14 +53,17 @@ void FlattenLayerTest::test_calculate_flatten_outputs()
     inputs_dimensions(2) = image_channels_number;
     inputs_dimensions(3) = images_number;
 
-    Tensor<type, 2> outputs(images_number, pixels_number);
+    flatten_layer.set(inputs_dimensions);
 
-    Tensor<Index, 1> outputs_dimensions(images_number);
-    outputs_dimensions(0) = images_number;
-    outputs_dimensions(1) = pixels_number;
+    Tensor<type, 2> outputs;
 
-    FlattenLayer flatten_layer(inputs_dimensions);
-    flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    flatten_layer_forward_propagation.set(images_number, &flatten_layer);
+
+    flatten_layer.forward_propagate(inputs.data(), inputs_dimensions, &flatten_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type, 2>>(flatten_layer_forward_propagation.outputs_data,
+                                         flatten_layer_forward_propagation.outputs_dimensions(0),
+                                         flatten_layer_forward_propagation.outputs_dimensions(1));
 
     // Test
 
@@ -77,7 +81,7 @@ void FlattenLayerTest::run_test_case()
 
     // Outputs
 
-    test_calculate_flatten_outputs();
+    test_forward_propagate();
 
    cout << "End of flatten layer test case.\n\n";
 }

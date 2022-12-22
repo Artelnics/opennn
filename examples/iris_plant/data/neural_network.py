@@ -54,13 +54,13 @@ class NeuralNetwork:
 		scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
 		scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 		
-		perceptron_layer_1_output_0 = np.tanh( -1.39003 + (scaled_sepal_lenght*-1.16079) + (scaled_sepal_width*1.90778) + (scaled_petal_lenght*-1.88712) + (scaled_petal_width*-1.49224) );
-		perceptron_layer_1_output_1 = np.tanh( 1.35644 + (scaled_sepal_lenght*-0.412953) + (scaled_sepal_width*1.54215) + (scaled_petal_lenght*-1.36562) + (scaled_petal_width*-1.75088) );
-		perceptron_layer_1_output_2 = np.tanh( 3.08377 + (scaled_sepal_lenght*-0.00240421) + (scaled_sepal_width*0.397815) + (scaled_petal_lenght*-2.38544) + (scaled_petal_width*-3.53993) );
+		perceptron_layer_1_output_0 = np.tanh( -1.67565 + (scaled_sepal_lenght*-0.219405) + (scaled_sepal_width*-0.283519) + (scaled_petal_lenght*1.24661) + (scaled_petal_width*1.58539) );
+		perceptron_layer_1_output_1 = np.tanh( 1.95591 + (scaled_sepal_lenght*0.518382) + (scaled_sepal_width*0.491331) + (scaled_petal_lenght*-1.4719) + (scaled_petal_width*-2.18824) );
+		perceptron_layer_1_output_2 = np.tanh( 1.36319 + (scaled_sepal_lenght*0.434006) + (scaled_sepal_width*-3.62986) + (scaled_petal_lenght*2.43801) + (scaled_petal_width*2.22975) );
 		
-		probabilistic_layer_combinations_0 = -0.0142958 +2.10915*perceptron_layer_1_output_0 +4.3808*perceptron_layer_1_output_1 -0.132654*perceptron_layer_1_output_2 ;
-		probabilistic_layer_combinations_1 = 1.05415 -1.80546*perceptron_layer_1_output_0 -0.533693*perceptron_layer_1_output_1 +2.87931*perceptron_layer_1_output_2 ;
-		probabilistic_layer_combinations_2 = -1.34472 -0.523184*perceptron_layer_1_output_0 -3.49376*perceptron_layer_1_output_1 -2.61436*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_0 = -0.543941 -3.34266*perceptron_layer_1_output_0 -0.158748*perceptron_layer_1_output_1 -3.90887*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_1 = 1.55881 -0.388061*perceptron_layer_1_output_0 +1.59409*perceptron_layer_1_output_1 +1.35736*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_2 = -1.31063 +3.76368*perceptron_layer_1_output_0 -1.55624*perceptron_layer_1_output_1 +2.54995*perceptron_layer_1_output_2 ;
 			
 		sum = np.exp(probabilistic_layer_combinations_0) + np.exp(probabilistic_layer_combinations_1) + np.exp(probabilistic_layer_combinations_2);
 		

@@ -275,20 +275,19 @@ void UnscalingLayerTest::test_calculate_outputs()
 
     Tensor<type, 2> standard_deviation;
 
-    UnscalingLayerForwardPropagation unscaling_layer_forward_propagation;
-
     unscaling_layer.set_display(false);
 
     // Test 0_0
 
-    Index samples_number = 1;
-    Index inputs_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+
     bool switch_train = false;
 
     unscaling_layer.set(inputs_number);
     unscaling_layer.set_scalers(Scaler::NoScaling);
 
-    inputs.resize(1,1);
+    inputs.resize(samples_number,inputs_number);
     inputs.setRandom();
     inputs_dimensions = get_dimensions(inputs);
 

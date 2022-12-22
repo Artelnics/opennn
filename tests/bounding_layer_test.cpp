@@ -41,7 +41,7 @@ void BoundingLayerTest::test_destructor()
 }
 
 
-void BoundingLayerTest::test_calculate_outputs()
+void BoundingLayerTest::test_forward_propagate()
 {
     cout << "test_calculate_outputs\n";
 
@@ -73,6 +73,10 @@ void BoundingLayerTest::test_calculate_outputs()
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
     bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, switch_train);
 
+    outputs = TensorMap<Tensor<type,2>>(bounding_layer_forward_propagation.outputs_data,
+                                         bounding_layer_forward_propagation.outputs_dimensions(0),
+                                         bounding_layer_forward_propagation.outputs_dimensions(1));
+
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -103,7 +107,7 @@ void BoundingLayerTest::run_test_case()
 
     // Lower and upper bounds
 
-    test_calculate_outputs();
+    test_forward_propagate();
 
     cout << "End of bounding layer test case.\n\n";
 }

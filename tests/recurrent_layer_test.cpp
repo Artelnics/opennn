@@ -198,7 +198,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
 
 void RecurrentLayerTest::test_calculate_outputs()
-{
+{/*
     cout << "test_calculate_outputs\n";
 
     Tensor<type, 2> inputs;
@@ -246,6 +246,7 @@ void RecurrentLayerTest::test_calculate_outputs()
     parameters = recurrent_layer.get_parameters();
 
     recurrent_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+    */
 }
 
 
@@ -253,12 +254,20 @@ void RecurrentLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    Index neurons_number = 4;
-    Index samples_number = 2;
+    neurons_number = 4;
+    samples_number = 2;
     inputs_number = 3;
     bool switch_train = false;
 
-    RecurrentLayer recurrent_layer(inputs_number, neurons_number);
+    Tensor<type, 2> outputs;
+    Tensor<Index, 1> outputs_dimensions;
+
+    Tensor<type, 1> parameters;
+    Tensor<type, 2> new_weights;
+    Tensor<type, 2> new_recurrent_weights;
+    Tensor<type, 1> new_biases;
+
+    recurrent_layer.set(inputs_number, neurons_number);
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
@@ -268,14 +277,57 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
-    RecurrentLayerForwardPropagation recurrent_layer_forward_propagation(samples_number, &recurrent_layer);
+    recurrent_layer_forward_propagation.set(samples_number, &recurrent_layer);
 
     recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type, 2>>(recurrent_layer_forward_propagation.outputs_data,
+                                         recurrent_layer_forward_propagation.outputs_dimensions(0),
+                                         recurrent_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(1) == neurons_number, LOG);
+
+    // Test
+/*
+    samples_number = 3;
+    inputs_number = 2;
+    neurons_number = 2;
+
+    recurrent_layer.set(inputs_number, neurons_number);
+
+    inputs.resize(samples_number,inputs_number);
+    inputs.setConstant(type(1));
+    inputs_dimensions = get_dimensions(inputs);
+
+//    outputs.resize(samples_number, 2);
+//    outputs_dimensions = get_dimensions(outputs);
+    recurrent_layer.set_activation_function("SoftPlus");
+    recurrent_layer.set_timesteps(3);
+
+    new_weights.resize(2,2);
+    new_weights.setConstant(type(1));
+    new_recurrent_weights.resize(2,2);
+    new_recurrent_weights.setConstant(type(1));
+    new_biases.resize(2);
+    new_biases.setConstant(type(1));
+
+    recurrent_layer.set_biases(new_biases);
+    recurrent_layer.set_input_weights(new_weights);
+    recurrent_layer.set_recurrent_weights(new_recurrent_weights);
+
+    parameters = recurrent_layer.get_parameters();
+
+    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type, 2>>(recurrent_layer_forward_propagation.outputs_data,
+                                         recurrent_layer_forward_propagation.outputs_dimensions(0),
+                                         recurrent_layer_forward_propagation.outputs_dimensions(1));
+    */
 }
+
+
 
 
 void RecurrentLayerTest::run_test_case()

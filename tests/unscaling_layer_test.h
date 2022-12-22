@@ -69,8 +69,12 @@ private:
 
     UnscalingLayer unscaling_layer;
 
+    UnscalingLayerForwardPropagation unscaling_layer_forward_propagation;
+
     Tensor<Descriptives, 1> descriptives;
 
+    Index samples_number;
+    Index inputs_number;
 };
 
 

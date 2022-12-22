@@ -26,7 +26,7 @@ public:
 
    void test_constructor();
    void test_destructor();
-   void test_calculate_flatten_outputs();
+   void test_forward_propagate();
 
    // Unit testing methods
 
@@ -35,6 +35,7 @@ public:
 private:
 
    FlattenLayer flatten_layer;
+   FlattenLayerForwardPropagation flatten_layer_forward_propagation;
 
 };
 

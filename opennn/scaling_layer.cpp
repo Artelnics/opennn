@@ -839,6 +839,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 
 void ScalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
 {
+
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
     {

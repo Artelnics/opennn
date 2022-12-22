@@ -70,6 +70,8 @@ private:
 
     ProbabilisticLayer probabilistic_layer;
 
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation;
+
     NumericalDifferentiation numerical_differentiation;
 };
 
