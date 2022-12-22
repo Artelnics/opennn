@@ -30,9 +30,12 @@
 namespace opennn
 {
 
+enum class CorrelationMethod{Pearson, Spearman};
+
 /// This enumeration represents the different regression methods provided by OpenNN.
 
-enum class CorrelationMethod{Linear, Logistic, Logarithmic, Exponential, Power};
+enum class CorrelationType{Linear, Logistic, Logarithmic, Exponential, Power};
+
 
 /// This structure provides the results obtained from the regression analysis.
 
@@ -40,15 +43,15 @@ struct Correlation
 {
     explicit Correlation() {}
 
-    string write_correlation_type() const
+    string write_correlation_method() const
     {
         switch(correlation_type)
         {
-        case CorrelationMethod::Linear: return "linear";
-        case CorrelationMethod::Logistic: return "logistic";
-        case CorrelationMethod::Logarithmic: return "logarithmic";
-        case CorrelationMethod::Exponential: return "exponential";
-        case CorrelationMethod::Power: return "power";
+        case CorrelationType::Linear: return "linear";
+        case CorrelationType::Logistic: return "logistic";
+        case CorrelationType::Logarithmic: return "logarithmic";
+        case CorrelationType::Exponential: return "exponential";
+        case CorrelationType::Power: return "power";
         default:
             return string();
         }
@@ -57,30 +60,38 @@ struct Correlation
     void print() const
     {
         cout << "Correlation" << endl;
-        cout << "Type: " << write_correlation_type() << endl;
+        cout << "Type: " << write_correlation_method() << endl;
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
         cout << "r: " << r << endl;
+        cout << "Lower confidence: " << lower_confidence << endl;
+        cout << "Upper confidence: " << upper_confidence << endl;
     }
 
-    /// Independent coefficient of the logistic function.
+    /// Independent coefficient of the regression function.
 
     type a = static_cast<type>(NAN);
 
-    /// x coefficient of the logistic function.
+    /// x coefficient of the regression function.
 
     type b = static_cast<type>(NAN);
 
-    /// Correlation coefficient of the  regression.
+    /// Correlation coefficient of the regression.
 
-    type r =  static_cast<type>(NAN);
+    type r = static_cast<type>(NAN);
 
-    /// Regression method type.
+    type lower_confidence = static_cast<type>(NAN);
+    type upper_confidence = static_cast<type>(NAN);
 
-    CorrelationMethod correlation_type = CorrelationMethod::Linear;
+    /// Regression method type
+
+    CorrelationMethod correlation_method = CorrelationMethod::Pearson;
+    CorrelationType correlation_type = CorrelationType::Linear;
+
 };
 
-    // Correlation methods
+
+    // Pearson correlation methods
 
     Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -99,6 +110,23 @@ struct Correlation
     Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     Correlation correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    // Spearman correlation methods
+
+    Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1>&);
+
+    Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    Correlation correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    // Confidence interval
+
+    type r_correlation_to_z_correlation(const type&);
+    type z_correlation_to_r_correlation(const type&);
+
+    Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+
 
     // Time series correlation methods
 

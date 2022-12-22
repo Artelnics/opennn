@@ -531,7 +531,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
                << "Unknown main type: " << new_optimization_method << ".\n";
 
         throw invalid_argument(buffer.str());
-    }    
+    }
 }
 
 

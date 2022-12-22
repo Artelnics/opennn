@@ -28,7 +28,7 @@ DEFINES += __Cpp17__
 
 # OpenMP library
 
-win32:!win32-g++{
+win32:{
 #QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
@@ -39,10 +39,10 @@ LIBS += -fopenmp -pthread -lgomp
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
+#win32:!win32-g++{
+##QMAKE_CXXFLAGS+= -arch:AVX
+##QMAKE_CFLAGS+= -arch:AVX
+#}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
@@ -57,6 +57,7 @@ HEADERS += \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
+    opennn_images.h \
     statistics.h \
     scaling.h \
     correlations.h \
@@ -107,13 +108,18 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-    region_based_object_detector.h \
-    json_to_xml.h \
+#    region_based_object_detector.h \
+#    json_to_xml.h \
+    batch_normalization_layer.h\
+    region_proposal_layer.h \
+    non_max_suppression_layer.h \
+    bounding_box_regressor_layer.h \
     opennn.h
 
 SOURCES += \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
+    opennn_images.cpp \
     tensor_utilities.cpp \
     statistics.cpp \
     scaling.cpp \
@@ -161,6 +167,51 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-    region_based_object_detector.cpp \
-    json_to_xml.cpp \
+#    region_based_object_detector.cpp \
+#    json_to_xml.cpp \
+    batch_normalization_layer.cpp\
+    region_proposal_layer.cpp \
+    non_max_suppression_layer.cpp \
+    bounding_box_regressor_layer.cpp \
     unit_testing.cpp
+
+
+#contains(DEFINES, OPENNN_MKL)
+#{
+#    win32:{
+
+#    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
+
+#    INCLUDEPATH += "$$INTEL_HOME/mkl/include"
+
+#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_rt
+#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_core
+
+#    win32:CONFIG(release, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
+#    else:win32:CONFIG(debug, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
+#    }
+
+#    unix:{
+
+#    ENV_HOME = $$(HOME)
+
+#    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/include/
+#    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/
+
+#    #QMAKE_PRE_LINK += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
+
+#    QMAKE_PRE_LINK=/bin/sh $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
+
+#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
+
+#    LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+#    LIBS += -L$$ENV_HOME/intel/lib/intel64 -liomp5 -lpthread -ldl -lm
+
+#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
+#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/  \
+#    #    -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core \
+#    #    -L/opt/intel/lib/intel64 \
+#    #    -liomp5 -lpthread -ldl -lm
+#    }
+#}
+

@@ -26,6 +26,7 @@
 
 #include "statistics.h"
 #include "perceptron_layer.h"
+#include "probabilistic_layer.h"
 
 namespace opennn
 {

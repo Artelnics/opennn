@@ -65,9 +65,9 @@ public:
 
    void calculate_combinations(const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               Tensor<type, 2>&);
+                               type*);
 
-    void perform_normalization(const Tensor<type, 2>&, BatchNormalizationLayerForwardPropagation*)const;
+   Tensor<type, 2> perform_inputs_normalization(const Tensor<type, 2>&, BatchNormalizationLayerForwardPropagation*)const;
    // Perceptron layer outputs
 
    void forward_propagate(type*, const Tensor<Index, 1>&,
@@ -85,18 +85,13 @@ protected:
 
    Tensor<type, 2> inputs;
 
-   /// Fixed parameters
-
-//   Tensor<type, 2> mean;
-//   Tensor<type, 2> std;
-
    /// Outputs
 
    Tensor<type, 2> outputs;
 
    /// learneable_parameters
 
-   Tensor<type, 2> normalization_weights;
+   Tensor<type, 2> synaptic_weights; // 2 x inputs
 
    /// Display messages to screen. 
 

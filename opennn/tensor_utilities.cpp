@@ -97,6 +97,7 @@ bool is_nan(const Tensor<type,1>& tensor)
 }
 
 
+
 bool is_false(const Tensor<bool, 1>& tensor)
 {
     const Index size = tensor.size();
@@ -235,7 +236,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
     for (int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
-    
+
     return result;
 }
 
@@ -277,8 +278,9 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     file.close();
 }
 
+
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
-{        
+{
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -311,7 +313,6 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
     std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
-
 
 
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank)
@@ -751,6 +752,37 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
 }
 
 
+type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
+{
+    if(x.size() != y.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Tensor utilites.\n"
+               << "type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&)\n"
+               << "x and y vector must  have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+
+type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
+{
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+
 void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {
     const Index rows_number = matrix.dimension(0);
@@ -836,7 +868,7 @@ Index count_NAN(const Tensor<type, 1>& x)
 Index count_NAN(const Tensor<type, 2>& x)
 {
     const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);   
+    const Index columns_number = x.dimension(1);
 
     Index count = 0;
 

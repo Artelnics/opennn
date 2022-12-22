@@ -910,7 +910,8 @@ void PerceptronLayerTest::test_calculate_activations()
     combinations_dims = get_dimensions(combinations);
     activations_dims = get_dimensions(activations);
 
-    perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations.data());
+    perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(),
+                                            perceptron_layer.get_synaptic_weights(), combinations.data());
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);

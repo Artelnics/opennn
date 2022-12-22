@@ -196,13 +196,21 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Tensor<type, 2> correlations = get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations());
 
-    const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
+    const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
-    Tensor<Index, 1> correlations_rank_descending = data_set_pointer->get_input_columns_indices();
+    Tensor<Index, 1> correlations_indexes(original_input_columns_number);
 
-    sort(correlations_rank_descending.data(),
-         correlations_rank_descending.data() + correlations_rank_descending.size(),
+    initialize_sequential(correlations_indexes);
+
+    sort(correlations_indexes.data(),
+         correlations_indexes.data() + correlations_indexes.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
+
+    Tensor<Index, 1> input_columns_indices = data_set_pointer->get_input_columns_indices();
+
+    Tensor<Index, 1> correlations_rank_descending(input_columns_indices.size());
+
+    for(Index i = 0; i < correlations_rank_descending.size(); i++) correlations_rank_descending(i) = input_columns_indices(correlations_indexes[i]);
 
     data_set_pointer->set_input_columns_unused();
 

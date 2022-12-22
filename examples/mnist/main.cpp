@@ -6,7 +6,11 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
+
+#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#endif
+
 
 // System includes
 
@@ -57,9 +61,10 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        cout << "Number of categories: " << data_set.get_target_variables_number()<< endl;
 
-        data_set.set_training();
+//        data_set.set_training();
+
+
 
         const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
 
@@ -74,14 +79,41 @@ int main()
 
         NeuralNetwork neural_network;
 
-        ScalingLayer scaling_layer(input_dataset_batch_dimenison);
+
+        ScalingLayer scaling_layer(input_variables_dimensions);
         neural_network.add_layer(&scaling_layer);
 
-        FlattenLayer flatten_layer(input_dataset_batch_dimenison);
+        FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
+
+        cout << "Flatten layer height: " << flatten_layer.get_input_height() << endl;
+        cout << "Flatten layer width: " << flatten_layer.get_input_width() << endl;
+        cout << "Flatten layer channels number: " << flatten_layer.get_inputs_channels_number() << endl;
 
         ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
         neural_network.add_layer(&probabilistic_layer);
+
+/*
+        // Neural network
+
+        NeuralNetwork neural_network;
+
+        ScalingLayer scaling_layer(input_variables_dimensions);
+        neural_network.add_layer(&scaling_layer);
+
+        FlattenLayer flatten_layer(input_variables_dimensions);
+        neural_network.add_layer(&flatten_layer);
+
+        const Index hidden_layers_number = 512;
+
+        const Index flatten_layer_outputs = flatten_layer.get_neurons_number();
+
+        PerceptronLayer perceptron_layer(flatten_layer_outputs, hidden_layers_number);
+        neural_network.add_layer(&perceptron_layer);
+
+        ProbabilisticLayer probabilistic_layer(hidden_layers_number, target_variables_number);
+        neural_network.add_layer(&probabilistic_layer);
+*/
 
         // Training strategy
 
@@ -89,7 +121,12 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(1000);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);
+
         training_strategy.perform_training();
+/*
 
         // Testing analysis
 
@@ -124,6 +161,7 @@ int main()
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
+*/
 
         cout << "Bye!" << endl;
 

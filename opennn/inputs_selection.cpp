@@ -216,6 +216,7 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
+    
 }
 
 

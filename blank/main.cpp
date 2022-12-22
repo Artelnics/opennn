@@ -19,17 +19,22 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
+
 using namespace opennn;
+using namespace std;
 
 int main(int argc, char *argv[])
 {
     try
     {
-        cout << "Hello OpenNN!" << endl;
+        cout << "Hello OpenNN" << endl;
 
         cout << "Bye OpenNN!" << endl;
+
+        return 0;
+
     }
-    catch(const exception& e)
+    catch (const exception& e)
     {
         cerr << e.what() << endl;
 
@@ -52,4 +57,3 @@ int main(int argc, char *argv[])
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

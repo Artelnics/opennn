@@ -63,7 +63,7 @@ private:
 
     LossIndexBackPropagationLM back_propagation_lm;
 
-    Tensor<type, 1> gradient_numerical_differentiation;
+    Tensor<type, 1> numerical_differentiation_gradient;
     Tensor<type, 2> jacobian_numerical_differentiation;
 
 };

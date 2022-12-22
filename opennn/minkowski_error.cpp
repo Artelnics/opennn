@@ -105,11 +105,14 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                                             NeuralNetworkForwardPropagation&,
                                             LossIndexBackPropagation& back_propagation) const
 {
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+
+    Tensor<type, 2> deltas_copy;
 
     const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
@@ -125,7 +128,10 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
         deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
+
+        std::replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
     }
+
 }
 
 

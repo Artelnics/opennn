@@ -76,11 +76,15 @@ string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& ne
     {
         return "TextClassification";
     }
+    else if(newProjectType == ProjectType::AutoAssociation)
+    {
+        return "AutoAssociation";
+    }
     else
     {
         const string message =
-                "Neural Engine Exception:\n"
-                "void NeuralEngine::setProjectType(const QString&)\n"
+                "Scaling Layer Exception:\n"
+                "string get_project_type_string(const ScalingLayer::ProjectType&) const\n"
                 "Unknown project type.\n";
 
         throw logic_error(message);
@@ -426,12 +430,16 @@ void ScalingLayer::set_project_type_string(const string& newLearningTask)
     {
         set_project_type(ProjectType::TextClassification);
     }
+    else if(newLearningTask == "AutoAssociation")
+    {
+        set_project_type(ProjectType::AutoAssociation);
+    }
     else
     {
         const string message =
-                "Neural Engine Exception:\n"
-                "void NeuralEngine::setProjectType(const QString&)\n"
-                "Unknown project type: " + newLearningTask + "\n";
+                "Scaling Layer Exception:\n"
+                "void set_project_type_string(const string&)\n"
+                "Unknown project type.\n";
 
         throw logic_error(message);
     }
@@ -1065,6 +1073,10 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
         {
             buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
         }
+        else if(scalers(i) == Scaler::Logarithm)
+        {
+            buffer << "scaled_" << inputs_names(i) << " = log(" << inputs_names(i) << ");\n";
+        }
         else
         {
             ostringstream buffer;
@@ -1084,131 +1096,6 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
 
     return expression;
 
-}
-
-
-/// \brief write_expression_c
-/// \return
-
-string ScalingLayer::write_expression_c() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
-
-    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(scalers(i) == Scaler::NoScaling)
-        {
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
-        }
-        else if(scalers(i) == Scaler::MinimumMaximum)
-        {
-            const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
-
-            const type intercept = -(descriptives(i).minimum*(max_range-min_range))/(descriptives(i).maximum - descriptives(i).minimum) + min_range;
-
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
-        }
-        else if(scalers(i) == Scaler::MeanStandardDeviation)
-        {
-            const type standard_deviation = descriptives(i).standard_deviation;
-
-            const type mean = descriptives(i).mean;
-
-            buffer << "\toutputs[" << i << "] = (inputs[" << i << "]-"<<mean<<")/"<<standard_deviation<<";\n";
-        }
-        else if(scalers(i) == Scaler::StandardDeviation)
-        {
-            const type standard_deviation = descriptives(i).standard_deviation;
-
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << standard_deviation << " ;" << endl;
-        }
-        else if(scalers(i) == Scaler::Logarithm)
-        {
-            buffer << "\toutputs[" << i << "] = log(inputs[" << i << "])"<< " ;" << endl;
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "string write_expression() const method.\n"
-                   << "Unknown inputs scaling method.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-    }
-
-    buffer << "\n\treturn outputs;\n}" << endl;
-
-    return buffer.str();
-}
-
-
-string ScalingLayer::write_expression_python() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
-
-    buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        if(scalers(i) == Scaler::NoScaling)
-        {
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]\n" << endl;
-        }
-        else if(scalers(i) == Scaler::MinimumMaximum)
-        {
-            const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
-
-            const type intercept = -(descriptives(i).minimum*(max_range-min_range))/(descriptives(i).maximum - descriptives(i).minimum) + min_range;
-
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
-        }
-        else if(scalers(i) == Scaler::MeanStandardDeviation)
-        {
-            const type standard_deviation = descriptives(i).standard_deviation;
-
-            const type mean = descriptives(i).mean;
-
-            buffer << "\t\toutputs[" << i << "] = (inputs[" << i << "]-"<<mean<<")/"<<standard_deviation<<"\n";
-        }
-        else if(scalers(i) == Scaler::StandardDeviation)
-        {
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << "\n " << endl;
-        }
-        else if(scalers(i) == Scaler::Logarithm)
-        {
-            buffer << "\t\toutputs[" << i << "] = np.log(inputs[" << i << "])\n"<< endl;
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "string write_expression() const method.\n"
-                   << "Unknown inputs scaling method.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-    }
-
-    buffer << "\n\t\treturn outputs;\n" << endl;
-
-    return buffer.str();
 }
 
 

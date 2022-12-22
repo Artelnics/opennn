@@ -737,7 +737,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: (" << minimum_loss_decrease << "): " <<loss_decrease << endl;
 
             stop_training = true;
 

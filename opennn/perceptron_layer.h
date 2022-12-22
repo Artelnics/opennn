@@ -24,14 +24,24 @@
 #include "layer.h"
 #include "probabilistic_layer.h"
 
-#include "opennn_strings.h"
+#ifdef OPENNN_MKL
+    #include "../mkl/mkl.h"
+#endif
 
 namespace opennn
 {
 
+struct LayerForwardPropagation;
+struct LayerBackPropagation;
+struct LayerBackPropagationLM;
+
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
 struct PerceptronLayerBackPropagationLM;
+
+struct ProbabilisticLayerForwardPropagation;
+struct ProbabilisticLayerBackPropagation;
+struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
@@ -166,13 +176,13 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               PerceptronLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               PerceptronLayerBackPropagation*) const;
 
    // Delta LM
 
@@ -180,11 +190,11 @@ public:
                                   LayerBackPropagationLM*,
                                   LayerBackPropagationLM*) const final;
 
-   void calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation*,
+   void calculate_hidden_delta_lm(PerceptronLayerForwardPropagation*,
                                              PerceptronLayerBackPropagationLM*,
                                              PerceptronLayerBackPropagationLM*) const;
 
-   void calculate_hidden_delta_probabilistic_lm(ProbabilisticLayerForwardPropagation*,
+   void calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation*,
                                                 ProbabilisticLayerBackPropagationLM*,
                                                 PerceptronLayerBackPropagationLM*) const;
 
@@ -213,14 +223,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
-
-   string write_expression_c() const final;
-   string write_combinations_c() const;
-   string write_activations_c() const;
-
-   string write_combinations_python() const;
-   string write_activations_python() const;
-   string write_expression_python() const final;
 
    // Serialization methods
 
@@ -302,23 +304,29 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs_dimensions << endl;
-
         cout << "Combinations:" << endl;
         cout << combinations.dimensions() << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
+
+        cout << "Outputs dimensions:" << endl;
+        cout << outputs_dimensions << endl;
+
         cout << "Outputs:" << endl;
         cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
-//        cout << "Combinations:" << endl;
-//        cout << combinations << endl;
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
 
-//        cout << "Activations derivatives:" << endl;
-//        cout << activations_derivatives << endl;
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
+    }
+    type* get_combinations_data()
+    {
+        return combinations.data();
+
     }
 
     Tensor<type, 2> combinations;
@@ -407,6 +415,10 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+
+        deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+
     }
 
     Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
@@ -437,6 +449,9 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
+
+    Tensor<type, 2> deltas_times_activations_derivatives;
+
 };
 
 }

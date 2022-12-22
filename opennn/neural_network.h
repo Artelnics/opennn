@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   N E U R A L   N E T W O R K   C L A S S   H E A D E R                 
+//   N E U R A L   N E T W O R K   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -52,7 +52,7 @@ class NeuralNetwork
 
 public:
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, TextGeneration};
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, TextGeneration, AutoAssociation};
 
    // Constructors
 
@@ -91,7 +91,7 @@ public:
    bool has_probabilistic_layer() const;
    bool has_convolutional_layer() const;
    bool has_flatten_layer() const;
-   bool is_empty() const;  
+   bool is_empty() const;
 
    const Tensor<string, 1>& get_inputs_names() const;
    string get_input_name(const Index&) const;
@@ -154,7 +154,7 @@ public:
 
    void set_display(const bool&);
 
-   // Layers 
+   // Layers
 
    Index get_layers_number() const;
    Tensor<Index, 1> get_layers_neurons_numbers() const;
@@ -184,10 +184,7 @@ public:
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
-   Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> get_layers_parameters();
-
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
-   Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
    void set_parameters(Tensor<type, 1>&) const;
 
@@ -203,13 +200,11 @@ public:
 
    void perturbate_parameters(const type&);
 
-   // Output 
+   // Output
 
-   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
-
-   void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&){};
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
@@ -246,18 +241,26 @@ public:
 
    // Expression methods
 
-   string write_expression() const;
-   string write_expression_python() const;
-   string write_expression_c() const;
+    string write_expression() const;
 
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
+    string write_expression_python() const;
+    string write_expression_c() const;
+    string write_expression_api() const;
+    string write_expression_javascript() const;
+
+    void save_expression_c(const string&) const;
+    void save_expression_python(const string&) const;
+    void save_expression_api(const string&) const;
+    void save_expression_javascript(const string&) const;
 
    void save_outputs(Tensor<type, 2>&, const string&);
+
+   void save_autoassociation_outputs(const Tensor<type, 1>&,const Tensor<string, 1>&, const string&) const;
 
    /// Calculate forward propagation in neural network
 
    void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
 protected:
@@ -305,7 +308,7 @@ struct NeuralNetworkForwardPropagation
     virtual ~NeuralNetworkForwardPropagation() {}
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
-    {        
+    {
         batch_samples_number = new_batch_samples_number;
 
         neural_network_pointer = new_neural_network_pointer;
@@ -384,6 +387,8 @@ struct NeuralNetworkForwardPropagation
             cout << "Layer " << i + 1 << ": " << neural_network_pointer->get_trainable_layers_pointers()(i)->get_type_string() << endl;
 
             layers(i)->print();
+
+            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
         }
     }
 

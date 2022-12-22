@@ -187,14 +187,6 @@ public:
    string write_combinations(const Tensor<string, 1>&) const;
    string write_activations(const Tensor<string, 1>&) const;
 
-   string write_expression_c() const final;
-   string write_combinations_c() const;
-   string write_activations_c() const;
-
-   string write_expression_python() const final;
-   string write_combinations_python() const;
-   string write_activations_python() const;
-
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&) final;
