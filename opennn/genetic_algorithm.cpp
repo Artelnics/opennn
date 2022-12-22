@@ -473,19 +473,17 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities()
 
     const Index columns_number = data_set_pointer->get_input_columns_number();
 
-    cout << "Calculating Correlations Matrix" << endl ;
-
     const Tensor <Correlation, 2> correlations_matrix = data_set_pointer->calculate_input_target_columns_correlations();
 
     cout << "Correlation matrix calculated" << endl;
 
     const Tensor <type, 1> correlations = get_correlation_values(correlations_matrix).chip(0, 1);
 
-    const Tensor <Index, 1> rank = calculate_rank_greater(correlations);
+    const Tensor <Index, 1> rank = calculate_rank_greater(correlations.abs());
 
-    Tensor <type, 1> fitness_correlations(rank.size());
+    Tensor <type, 1> fitness_correlations(columns_number);
 
-    for(Index i=0; i<columns_number; i++)
+    for(Index i=0; i < columns_number; i++)
     {
         fitness_correlations(rank(i)) = type(i+1);
     }
@@ -536,7 +534,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         columns_active = 1 + rand() % columns_number;
 
-        while (count(individual_columns.data(), individual_columns.data() + individual_columns.size(), 1) < columns_active)
+        while (count(individual_columns.data(), individual_columns.data() + individual_columns.size(), 1) < columns_active  )
         {
             arrow = dis(gen);
 
@@ -555,7 +553,11 @@ void GeneticAlgorithm::initialize_population_correlations()
                 }
             }
         }
+<<<<<<< HEAD
 
+=======
+     
+>>>>>>> genetic
         if(is_false(individual_columns)) individual_columns(rand()%columns_number) = true;
             
         individual_variables = get_individual_variables(individual_columns);
@@ -1018,7 +1020,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if (display) cout << "Performing genetic inputs selection..." << endl << endl;
     
-    initialize_population_random();
+    initialize_population();
 
     // Selection algorithm
 
