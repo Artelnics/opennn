@@ -496,10 +496,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     if(display) results.print();
 
-
-    cout << "End training" << endl;
-
-
     return results;
 }
 

@@ -54,7 +54,7 @@ void GeneticAlgorithmTest::test_initialize_population()
     Tensor<bool, 1> individual;
     Tensor<bool, 1> gene;
 
-    Index individuals_number = 6;
+    Index individuals_number = 8;
 
     // Test
 
@@ -68,12 +68,6 @@ void GeneticAlgorithmTest::test_initialize_population()
     data_set.set(data);
 
     genetic_algorithm.set_individuals_number(individuals_number);
-
-    if(genetic_algorithm.get_initialization_method()==GeneticAlgorithm::InitializationMethod::Correlations)
-    {
-        genetic_algorithm.calculate_inputs_activation_probabilities();
-    }
-
 
     genetic_algorithm.initialize_population();
 
@@ -528,7 +522,6 @@ void GeneticAlgorithmTest::run_test_case()
     // Order selection methods
 
     test_perform_inputs_selection();
-
 
     cout << "End of genetic algorithm test case.\n\n";
 }

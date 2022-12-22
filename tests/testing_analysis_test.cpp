@@ -1151,6 +1151,8 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
+    assert_true(multiple_classification_rates.size() == 9, LOG);
+
     assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
     assert_true(multiple_classification_rates(0,1)(0) == 3, LOG);
     assert_true(multiple_classification_rates(0,2)(0) == 6, LOG);
