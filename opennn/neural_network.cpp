@@ -1949,8 +1949,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         const Index first_trainable_layer_index = get_first_trainable_layer_index();
         const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-        cout << "Layer: " << layers_pointers(0)->get_name() << endl;
-
         if(layers_pointers(0)->get_type_string() != "Scaling")
         {
             layers_pointers(0)->forward_propagate(scaled_inputs_data, inputs_dimensions, forward_propagation.layers(0), switch_train);
@@ -1958,7 +1956,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
             scaled_outputs = TensorMap<Tensor<type,2>>(forward_propagation.layers(0)->outputs_data,
                                                        forward_propagation.layers(0)->outputs_dimensions(0),
                                                        forward_propagation.layers(0)->outputs_dimensions(1));
-//            layers_pointers(0)->calculate_outputs(scaled_inputs_data, inputs_dimensions, scaled_outputs.data(), outputs_dimensions);
         }
         else
         {
@@ -1971,7 +1968,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         for(Index i = 1; i < layers_number; i++)
         {
-            cout << "Layer: " << layers_pointers(i)->get_name() << endl;
             if(layers_pointers(i)->get_type_string() != "Unscaling" || layers_pointers(i)->get_type_string() != "Scaling")
             {
                 scaled_outputs.resize(inputs_dimensions(0),layers_pointers(i)->get_neurons_number());
@@ -1982,7 +1978,9 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
                                                       forward_propagation.layers(i),
                                                       switch_train);
 
-//                layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, scaled_outputs.data(), outputs_dimensions);
+                scaled_outputs = TensorMap<Tensor<type,2>>(forward_propagation.layers(i)->outputs_data,
+                                                           forward_propagation.layers(i)->outputs_dimensions(0),
+                                                           forward_propagation.layers(i)->outputs_dimensions(1));
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
