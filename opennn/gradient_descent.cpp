@@ -293,23 +293,21 @@ void GradientDescent::update_parameters(
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if(abs(back_propagation.gradient(i)) >= type(NUMERIC_LIMITS_MIN))
             {
-                //optimization_data.parameters_increment(i) = type(0);
-            }
-            else if(back_propagation.gradient(i) > type(0))
-            {
-                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
-
-                //optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(back_propagation.gradient(i) < type(0))
-            {
-                back_propagation.parameters(i) += numeric_limits<type>::epsilon();
-
-                //optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+                if(back_propagation.gradient(i) > type(0))
+                {
+                    back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
+                }
+                else if(back_propagation.gradient(i) < type(0))
+                {
+                    back_propagation.parameters(i) += numeric_limits<type>::epsilon();
+                }
             }
         }
+
+        optimization_data.learning_rate = optimization_data.old_learning_rate;
+
     }
 
     // Update parameters
@@ -317,7 +315,6 @@ void GradientDescent::update_parameters(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-
 }
 
 
