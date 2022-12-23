@@ -765,7 +765,6 @@ int main()
           tests_count += response_optimization_test.get_tests_count();
           tests_passed_count += response_optimization_test.get_tests_passed_count();
           tests_failed_count += response_optimization_test.get_tests_failed_count();
-
       }
 
       else

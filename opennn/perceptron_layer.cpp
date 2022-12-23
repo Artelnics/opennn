@@ -493,34 +493,38 @@ void PerceptronLayer::set_parameters_random()
 }
 
 
-
-void PerceptronLayer::calculate_combinations(type* inputs_data,
+void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              const Tensor<type, 2>& biases,
                                              const Tensor<type, 2>& synaptic_weights,
-                                             type* combinations_data,
-                                             const Tensor<Index, 1>& inputs_dimension) const
-
+                                             type* combinations_data) const
 {
 #ifdef OPENNN_DEBUG
-//    check_columns_number(inputs, get_inputs_number(), LOG);
+    check_columns_number(inputs, get_inputs_number(), LOG);
 
-//    check_dimensions(biases, 1, get_neurons_number(), LOG);
+    check_dimensions(biases, 1, get_neurons_number(), LOG);
 
-//    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
+    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
 #endif
 
-    const Index batch_samples_number = inputs_dimension(0);
+    const Index batch_samples_number = inputs.dimension(0);
 
     const Index neurons_number = get_neurons_number();
 
-    for (Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
     }
 
-    
-#ifdef OPENNN_MKL
+    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
 
+    combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+}
+
+
+/* @todo
+MKL implementation
+
+#ifdef OPENNN_MKL
 
     TensorMap<Tensor<type, 2>>inputs(inputs_data, inputs_dimension(0), inputs_dimension(1));
 
@@ -558,17 +562,10 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
             (double*)combinations_data,
             inputs.dimension(0));
     }
-    
+
 #else
 
-TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
-TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
-combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
-
-#endif
-
-
-}
+*/
 
 
 void PerceptronLayer::calculate_activations(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
@@ -703,11 +700,9 @@ void PerceptronLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1
     }
 
 
-  //  const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
-    calculate_combinations(inputs_data, biases, synaptic_weights, outputs_data,inputs_dimensions);
-
-
+    calculate_combinations(inputs, biases, synaptic_weights, outputs_data);
     calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
 }
 
@@ -732,13 +727,14 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
 
-    //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
     type* combinations_data = perceptron_layer_forward_propagation->get_combinations_data();
-    calculate_combinations(inputs_data,
+
+    calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
-                           combinations_data,inputs_dimensions);
-
+                           combinations_data);
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
@@ -771,9 +767,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     check_size(potential_parameters, get_parameters_number(), LOG);
 #endif
 
-
-    //const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
     const Index neurons_number = get_neurons_number();
 
@@ -793,11 +787,10 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
 
 
-    calculate_combinations(inputs_data,
+    calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
-                           perceptron_layer_forward_propagation->get_combinations_data(),
-                           inputs_dimensions);
+                           perceptron_layer_forward_propagation->get_combinations_data());
 
 
     calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
@@ -860,48 +853,49 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
-#ifdef OPENNN_MKL
+    deltas.device(*thread_pool_device) = (next_deltas*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
-   if (typeid(type) == typeid(float))
-    {
-        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            CBLAS_TRANSPOSE::CblasTrans,
-            next_deltas.dimension(0),
-            next_synaptic_weights.dimension(0),
-            next_deltas.dimension(1),
-            static_cast<type>(1.0),
-            next_deltas.data(),
-            next_deltas.dimension(0),
-            next_synaptic_weights.data(),
-            next_synaptic_weights.dimension(0),
-            static_cast<type>(0.0),
-            deltas.data(),
-            next_deltas.dimension(0));
-    }
-    else if (typeid(type) == typeid(double))
-    {
-        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            CBLAS_TRANSPOSE::CblasTrans,
-            next_deltas.dimension(0),
-            next_synaptic_weights.dimension(0),
-            next_deltas.dimension(1),
-            static_cast<type>(1.0),
-            (double*)next_deltas.data(),
-            next_deltas.dimension(0),
-            (double*)next_synaptic_weights.data(),
-            next_synaptic_weights.dimension(0),
-            static_cast<type>(0.0),
-            (double*)deltas.data(),
-            next_deltas.dimension(0));
-    }
+//#ifdef OPENNN_MKL
+
+//   if (typeid(type) == typeid(float))
+//    {
+//        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
+//            CBLAS_TRANSPOSE::CblasNoTrans,
+//            CBLAS_TRANSPOSE::CblasTrans,
+//            next_deltas.dimension(0),
+//            next_synaptic_weights.dimension(0),
+//            next_deltas.dimension(1),
+//            static_cast<type>(1.0),
+//            next_deltas.data(),
+//            next_deltas.dimension(0),
+//            next_synaptic_weights.data(),
+//            next_synaptic_weights.dimension(0),
+//            static_cast<type>(0.0),
+//            deltas.data(),
+//            next_deltas.dimension(0));
+//    }
+//    else if (typeid(type) == typeid(double))
+//    {
+//        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
+//            CBLAS_TRANSPOSE::CblasNoTrans,
+//            CBLAS_TRANSPOSE::CblasTrans,
+//            next_deltas.dimension(0),
+//            next_synaptic_weights.dimension(0),
+//            next_deltas.dimension(1),
+//            static_cast<type>(1.0),
+//            (double*)next_deltas.data(),
+//            next_deltas.dimension(0),
+//            (double*)next_synaptic_weights.data(),
+//            next_synaptic_weights.dimension(0),
+//            static_cast<type>(0.0),
+//            (double*)deltas.data(),
+//            next_deltas.dimension(0));
+//    }
     
-#else
+//#else
 
-    deltas.device(*thread_pool_device) = (next_deltas * next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
-#endif
+//#endif
    
 }
 
@@ -927,7 +921,8 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
     {
         const TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_forward_propagation->activations_derivatives.data(),
                                                                  batch_samples_number, next_neurons_number);
-        deltas.device(*thread_pool_device) =(next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
+        deltas.device(*thread_pool_device) =
+                (next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
 
     }
     else // Multiple
@@ -1197,59 +1192,51 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
 
     const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));//matrix with data deltas_data nrows= deltas_dimensions(0) ncolummns=deltas_dimensions(1)
     
-//    const Index batch_samples_number = deltas.dimension(0);
-
-    //const Index neurons_number = get_neurons_number();
-  
-
-    perceptron_layer_back_propagation->deltas_times_activations_derivatives.device(*thread_pool_device)
-        = deltas * perceptron_layer_forward_propagation->activations_derivatives;
-
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-        perceptron_layer_back_propagation->deltas_times_activations_derivatives.sum(Eigen::array<Index, 1>({ 0 }));
-
-#ifdef OPENNN_MKL
-
-    if (typeid(type) == typeid(float))
-    {
-        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasTrans,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            inputs.dimension(1),
-            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
-            inputs.dimension(0),
-            static_cast<type>(1.0),
-            inputs.data(),
-            inputs.dimension(0),
-            perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
-            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-            static_cast<type>(0.0),
-            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
-            inputs.dimension(1));
-    }
-    else if  (typeid(type) == typeid(double))
-      {
-        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasTrans,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            inputs.dimension(1),
-            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
-            inputs.dimension(0),
-            static_cast<type>(1.0),
-            (double*)inputs.data(),
-            inputs.dimension(0),
-            (double*)perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
-            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-            static_cast<type>(0.0),
-            (double*)perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
-            inputs.dimension(1));
-    }
-#else
+            (deltas * perceptron_layer_forward_propagation->activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
     perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
         inputs.contract(deltas * perceptron_layer_forward_propagation->activations_derivatives, AT_B);
 
-#endif
+//#ifdef OPENNN_MKL
+
+//    if (typeid(type) == typeid(float))
+//    {
+//        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
+//            CBLAS_TRANSPOSE::CblasTrans,
+//            CBLAS_TRANSPOSE::CblasNoTrans,
+//            inputs.dimension(1),
+//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
+//            inputs.dimension(0),
+//            static_cast<type>(1.0),
+//            inputs.data(),
+//            inputs.dimension(0),
+//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
+//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
+//            static_cast<type>(0.0),
+//            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
+//            inputs.dimension(1));
+//    }
+//    else if  (typeid(type) == typeid(double))
+//      {
+//        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
+//            CBLAS_TRANSPOSE::CblasTrans,
+//            CBLAS_TRANSPOSE::CblasNoTrans,
+//            inputs.dimension(1),
+//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
+//            inputs.dimension(0),
+//            static_cast<type>(1.0),
+//            (double*)inputs.data(),
+//            inputs.dimension(0),
+//            (double*)perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
+//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
+//            static_cast<type>(0.0),
+//            (double*)perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
+//            inputs.dimension(1));
+//    }
+//#else
+
+//#endif
 }
 
 

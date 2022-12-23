@@ -93,7 +93,7 @@ private:
                                      { input_variables_number, hidden_neurons_number, target_variables_number});
 
         training_strategy.set(&neural_network, &data_set);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.set_display(false);
         training_strategy.perform_training();
 
@@ -127,7 +127,7 @@ private:
                                      { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
 
         training_strategy.set(&neural_network_2, &data_set);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.set_display(false);
         training_strategy.perform_training();
 

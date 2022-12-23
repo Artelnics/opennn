@@ -692,7 +692,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                            forward_propagation,
                            back_propagation);
 
-
     if (trainable_layers_pointers(0)->get_type() == Layer::Type::Resnet50) return;
 
     // Hidden layers

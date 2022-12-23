@@ -235,9 +235,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     check();
 
-    display = true;
-
-
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
@@ -495,10 +492,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         data_set_pointer->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
-
-
-    cout << "End training" << endl;
-
 
     return results;
 }

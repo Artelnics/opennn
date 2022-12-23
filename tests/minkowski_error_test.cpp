@@ -75,7 +75,6 @@ void MinkowskiErrorTest::test_back_propagate()
         data_set.set_training();
 
         training_samples_indices = data_set.get_training_samples_indices();
-
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
@@ -136,15 +135,15 @@ void MinkowskiErrorTest::test_back_propagate()
         // Loss index
 
         back_propagation.set(samples_number, &minkowski_error);
+
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
         numerical_differentiation_gradient = minkowski_error.calculate_numerical_differentiation_gradient();
 
-
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
     }
 
     // Test binary classification trivial
@@ -233,7 +232,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
     }
 
     // Test forecasting trivial
@@ -270,7 +269,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(is_zero(back_propagation.gradient,type(1e-1)), LOG);
+        assert_true(is_zero(back_propagation.gradient,type(1e-3)), LOG);
     }
 
     // Test forecasting random samples, inputs, outputs, neurons
@@ -314,7 +313,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= type(0), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
 
     }
 

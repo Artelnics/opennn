@@ -1508,11 +1508,14 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
     type  denominador = 0;
 
     // @todo Implementation with tensor operations
+
     for(Index i = 0; i < outputs.size(); i++)
     {
         numerador += (targets(i) - outputs(i))*(targets(i) - outputs(i));
         denominador += (targets(i) - targets_mean(0))*(targets(i) - targets_mean(0));
     }
+
+    denominador == 0 ? denominador = 1 : 0;
 
     type determination_coefficient = type(1) - (numerador/denominador);
 
@@ -1546,7 +1549,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         target = targets(i,0);
         output = outputs(i,0);
 
-        if(target > decision_threshold && output > decision_threshold)
+        if(target >= decision_threshold && output >= decision_threshold)
         {
             true_positive++;
         }
@@ -1554,7 +1557,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             false_negative++;
         }
-        else if(target <= decision_threshold && output > decision_threshold)
+        else if(target < decision_threshold && output >= decision_threshold)
         {
             false_positive++;
         }
@@ -1899,6 +1902,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     points_number = maximum_points_number;
 
+
    if(targets.dimension(1) != 1)
     {
         ostringstream buffer;
@@ -1931,6 +1935,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     Tensor<type, 2> roc_curve(points_number + 1, 3);
     roc_curve.setZero();
 
+
 #pragma omp parallel for schedule(dynamic)
 
     for(Index i = 1; i < static_cast<Index>(points_number); i++)
@@ -1950,7 +1955,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             target = targets(j,0);
             output = outputs(j,0);
 
-            if(target > threshold && output > threshold)
+            if(target >= threshold && output >= threshold)
             {
                 true_positive++;
             }
@@ -1958,7 +1963,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             {
                 false_negative++;
             }
-            else if(target <= threshold && output > threshold)
+            else if(target < threshold && output >= threshold)
             {
                 false_positive++;
             }
