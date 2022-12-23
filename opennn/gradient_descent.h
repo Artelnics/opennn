@@ -179,8 +179,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
         potential_parameters.resize(parameters_number);
 
-        parameters_increment.resize(parameters_number);
-
         // Optimization algorithm data
 
         training_direction.resize(parameters_number);
@@ -197,14 +195,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
     }
 
     GradientDescent* gradient_descent_pointer = nullptr;
-
-    // Neural network data
-
-//    Tensor<type, 1> potential_parameters;
-//    Tensor<type, 1> training_direction;
-//    type initial_learning_rate = type(0);
-
-    Tensor<type, 1> parameters_increment;
 
     // Optimization algorithm data
 

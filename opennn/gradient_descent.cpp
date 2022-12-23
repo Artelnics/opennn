@@ -284,10 +284,8 @@ void GradientDescent::update_parameters(
 
     if(abs(optimization_data.learning_rate) > type(0))
     {
-        optimization_data.parameters_increment.device(*thread_pool_device)
-                = optimization_data.training_direction*optimization_data.learning_rate;
-
-        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+        back_propagation.parameters.device(*thread_pool_device)
+                -= back_propagation.gradient*optimization_data.learning_rate;
     }
     else
     {
@@ -297,23 +295,21 @@ void GradientDescent::update_parameters(
         {
             if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
-                optimization_data.parameters_increment(i) = type(0);
+                //optimization_data.parameters_increment(i) = type(0);
             }
             else if(back_propagation.gradient(i) > type(0))
             {
                 back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
 
-                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
+                //optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < type(0))
             {
                 back_propagation.parameters(i) += numeric_limits<type>::epsilon();
 
-                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+                //optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }
         }
-
-        optimization_data.learning_rate = optimization_data.old_learning_rate;
     }
 
     // Update parameters

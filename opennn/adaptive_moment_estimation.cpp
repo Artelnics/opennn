@@ -321,8 +321,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
-    Index parameters_size = training_back_propagation.parameters.size();
-
     type training_error = type(0);
     type training_loss = type(0);
 
@@ -380,7 +378,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
-
         }
 
         // Loss
@@ -587,6 +584,7 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
     saxpby(&parameters_number, &a, back_propagation.gradient.data(), &incx, &b, optimization_data.gradient_exponential_decay.data(), &incy);
 
 #else
+
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
         = back_propagation.gradient * (type(1) - beta_1)
         + optimization_data.gradient_exponential_decay * beta_1;
@@ -597,11 +595,8 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
         = back_propagation.gradient * back_propagation.gradient * (type(1) - beta_2)
         + optimization_data.square_gradient_exponential_decay * beta_2;
 
-    optimization_data.square_gradient_exponential_decay_square_root.device(*thread_pool_device)
-        = optimization_data.square_gradient_exponential_decay.sqrt() + epsilon;
-
     back_propagation.parameters.device(*thread_pool_device)
-        -= learning_rate * optimization_data.gradient_exponential_decay / optimization_data.square_gradient_exponential_decay_square_root;
+        -= learning_rate * optimization_data.gradient_exponential_decay / (optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
         
     optimization_data.iteration++;
 
@@ -841,7 +836,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     square_gradient_exponential_decay.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
 
-    square_gradient_exponential_decay_square_root.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
 }
 

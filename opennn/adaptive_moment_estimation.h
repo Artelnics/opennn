@@ -192,10 +192,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     Tensor<type, 1> gradient_exponential_decay;
     Tensor<type, 1> square_gradient_exponential_decay;
 
-
-    Tensor<type, 1> square_gradient_exponential_decay_square_root;
-
-
     Index iteration = 0;
 
     Index learning_rate_iteration = 0;
