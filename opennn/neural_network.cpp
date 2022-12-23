@@ -1899,7 +1899,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
+Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions, const string& project_type_string)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -1924,6 +1924,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         Tensor<Index, 1> outputs_dimensions;
         Tensor<Index, 1> last_layer_outputs_dimensions;
 
+
         const Index layers_number = get_layers_number();
 
         if(layers_number == 0)
@@ -1937,9 +1938,27 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         outputs_dimensions = get_dimensions(scaled_outputs);
 
+        set_project_type_string(project_type_string);
+
+        NeuralNetwork neural_network(get_project_type(),get_architecture());
+
+        NeuralNetworkForwardPropagation forward_propagation(inputs_dimensions(0), &neural_network);
+
+        bool switch_train = true;
+
+        const Index first_trainable_layer_index = get_first_trainable_layer_index();
+        const Index last_trainable_layer_index = get_last_trainable_layer_index();
+
+        cout << "Layer: " << layers_pointers(0)->get_name() << endl;
+
         if(layers_pointers(0)->get_type_string() != "Scaling")
         {
-            layers_pointers(0)->calculate_outputs(scaled_inputs_data, inputs_dimensions, scaled_outputs.data(), outputs_dimensions);
+            layers_pointers(0)->forward_propagate(scaled_inputs_data, inputs_dimensions, forward_propagation.layers(0), switch_train);
+
+            scaled_outputs = TensorMap<Tensor<type,2>>(forward_propagation.layers(0)->outputs_data,
+                                                       forward_propagation.layers(0)->outputs_dimensions(0),
+                                                       forward_propagation.layers(0)->outputs_dimensions(1));
+//            layers_pointers(0)->calculate_outputs(scaled_inputs_data, inputs_dimensions, scaled_outputs.data(), outputs_dimensions);
         }
         else
         {
@@ -1952,12 +1971,18 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         for(Index i = 1; i < layers_number; i++)
         {
+            cout << "Layer: " << layers_pointers(i)->get_name() << endl;
             if(layers_pointers(i)->get_type_string() != "Unscaling" || layers_pointers(i)->get_type_string() != "Scaling")
             {
                 scaled_outputs.resize(inputs_dimensions(0),layers_pointers(i)->get_neurons_number());
                 outputs_dimensions = get_dimensions(scaled_outputs);
 
-                layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, scaled_outputs.data(), outputs_dimensions);
+                layers_pointers(i)->forward_propagate(last_layer_outputs.data(),
+                                                      last_layer_outputs_dimensions,
+                                                      forward_propagation.layers(i),
+                                                      switch_train);
+
+//                layers_pointers(i)->calculate_outputs(last_layer_outputs.data(), last_layer_outputs_dimensions, scaled_outputs.data(), outputs_dimensions);
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
