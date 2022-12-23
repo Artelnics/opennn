@@ -288,10 +288,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
         }
         else
         {
-            optimization_data.nesterov_increment.device(*thread_pool_device)
-                    = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
-
-            back_propagation.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;;
         }
     }
     else
@@ -301,20 +298,6 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
 
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
-    /// @todo check if the following is equivalent
-/*
-    if(momentum > type(0))
-    {
-        back_propagation.parameters.device(*thread_pool_device) += momentum*optimization_data.last_parameters_increment;
-
-        if(nesterov)
-        {
-            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum;
-        }
-
-        optimization_data.last_parameters_increment = optimization_data.parameters_increment;
-    }
-*/
     optimization_data.iteration++;
 
     // Update parameters
