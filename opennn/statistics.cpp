@@ -315,7 +315,6 @@ Histogram::Histogram(const Tensor<type, 1>& data,
 
         corresponding_bin = int((value - data_minimum) / step);
 
-
         if(corresponding_bin >= number_of_bins)
             corresponding_bin = number_of_bins - 1;
 
@@ -1930,6 +1929,13 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
                     - (sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>(count(i)-1);
 
             standard_deviation(i) = sqrt(variance);
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < columns_indices_size; i++)
+        {
+            standard_deviation(i) = 0;
         }
     }
 
