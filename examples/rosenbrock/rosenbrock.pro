@@ -51,7 +51,7 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 INCLUDEPATH += D:/OpenNN/eigen
 
 # OpenMP library
-include(../../opennmp.pri)
+#include(../../opennmp.pri)
 
 #DEFINES += __OPENNN_CUDA__
 

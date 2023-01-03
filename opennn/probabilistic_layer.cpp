@@ -751,7 +751,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                            perceptron_layer_forward_propagation->combinations.data(),
                            combinations_dimensions);
 
-    if(switch_train == true) // Perform training
+    if(switch_train) // Perform training
     {
         calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
                                           combinations_dimensions,

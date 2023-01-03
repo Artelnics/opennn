@@ -2049,7 +2049,6 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
             memcpy(y.data() + rows_number*i,
                    tmp_result.data(), static_cast<size_t>(rows_number)*sizeof(type));
         }
-
     }
     else
     {
@@ -2097,6 +2096,7 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
         {
             const TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
             TensorMap<Tensor<type, 2>> activations(activations_data, activations_dimensions(0), activations_dimensions(1));
+
             TensorMap<Tensor<type, 2>> activations_derivatives(activations_derivatives_data, activations_derivatives_dimensions(0), activations_derivatives_dimensions(1));
 
             const Index dim = combinations.dimension(1);
@@ -2126,6 +2126,7 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
         {
             const TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
             TensorMap<Tensor<type, 2>> activations(activations_data, activations_dimensions(0), activations_dimensions(1));
+
             TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data, activations_derivatives_dimensions(0), activations_derivatives_dimensions(1), activations_derivatives_dimensions(2));
 
             const Index dim = combinations.dimension(1);
