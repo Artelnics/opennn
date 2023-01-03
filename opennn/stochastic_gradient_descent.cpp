@@ -271,8 +271,6 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Set hardware to use. Default: Multi-core.
-
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data) const
 {
@@ -290,10 +288,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
         }
         else
         {
-            optimization_data.nesterov_increment.device(*thread_pool_device)
-                    = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
-
-            back_propagation.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;;
         }
     }
     else
