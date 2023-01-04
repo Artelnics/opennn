@@ -540,71 +540,69 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     assert_true(area_under_curve - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    // Test @todo check this tests
+    targets.resize(4,1);
 
-//    targets.resize(4,1);
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
-//    targets(0,0) = type(0);
-//    targets(1,0) = type(0);
-//    targets(2,0) = type(1);
-//    targets(3,0) = type(1);
+    outputs.resize(4,1);
 
-//    outputs.resize(4,1);
+    outputs(0,0) = type(0);
+    outputs(1,0) = type(1);
+    outputs(2,0) = type(0);
+    outputs(3,0) = type(1);
 
-//    outputs(0,0) = type(0);
-//    outputs(1,0) = type(1);
-//    outputs(2,0) = type(0);
-//    outputs(3,0) = type(1);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-//    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-//    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+    assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
-//    assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    // Test
 
-//    // Test
+    targets.resize(4,1);
 
-//    targets.resize(4,1);
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
-//    targets(0,0) = type(0.0);
-//    targets(1,0) = type(0.0);
-//    targets(2,0) = type(1);
-//    targets(3,0) = type(1);
+    outputs.resize(4,1);
 
-//    outputs.resize(4,1);
+    outputs(0,0) = static_cast<type>(0.78);
+    outputs(1,0) = static_cast<type>(0.84);
+    outputs(2,0) = static_cast<type>(0.12);
+    outputs(3,0) = static_cast<type>(0.99);
 
-//    outputs(0,0) = static_cast<type>(0.78);
-//    outputs(1,0) = static_cast<type>(0.84);
-//    outputs(2,0) = static_cast<type>(0.12);
-//    outputs(3,0) = static_cast<type>(0.99);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-//    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-//    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+    assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
-//    assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    // Test
 
-//    // Test
+    targets.resize(4,1);
 
-//    targets.resize(4,1);
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
-//    targets(0,0) = type(0.0);
-//    targets(1,0) = type(0.0);
-//    targets(2,0) = type(1);
-//    targets(3,0) = type(1);
+    outputs.resize(4,1);
 
-//    outputs.resize(4,1);
+    outputs(0,0) = type(1);
+    outputs(1,0) = type(1);
+    outputs(2,0) = type(0.0);
+    outputs(3,0) = type(0.0);
 
-//    outputs(0,0) = type(1);
-//    outputs(1,0) = type(1);
-//    outputs(2,0) = type(0.0);
-//    outputs(3,0) = type(0.0);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-//    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-//    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
-
-//    assert_true(area_under_curve < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(area_under_curve < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 

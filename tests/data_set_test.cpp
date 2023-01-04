@@ -10,7 +10,7 @@
 
 DataSetTest::DataSetTest() : UnitTesting()
 {
-    //    data_set.set_display(false);
+    data_set.set_display(false);
 }
 
 
@@ -1895,8 +1895,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    cout << "Calculating input correlations " << endl;
-    /*
     inputs_correlations = data_set.calculate_input_columns_correlations()(1);
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
@@ -2015,7 +2013,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
     input_columns_indices.setValues({0, 3, 4});
 
     target_columns_indices.resize(1);
-    target_columns_indices.setValues({5});
+    target_columns_indices.setValues({6});
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
@@ -2024,7 +2022,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Logistic, LOG);
 
-    assert_true(inputs_correlations(1,0).r == 1, LOG);
+    assert_true(-1 < inputs_correlations(1,0).r && inputs_correlations(1,0).r < 1, LOG);
     assert_true(inputs_correlations(1,0).correlation_type == CorrelationType::Logistic, LOG);
 
     assert_true(inputs_correlations(1,1).r == 1, LOG);
@@ -2125,7 +2123,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
-*/
+
 }
 
 
@@ -2145,36 +2143,45 @@ void DataSetTest::test_unuse_repeated_samples()
 
     data_set.set_data(data);
 
-    indices.resize(1);
-    indices.setValues({2});
+    indices = data_set.unuse_repeated_samples();
 
-    assert_true(data_set.unuse_repeated_samples().size() == 1, LOG);
+    assert_true(indices.size() == 1, LOG);
+    assert_true(indices(0) == 1, LOG);
 
     // Test
 
-    data.resize(3, 4);
-    data.setValues({{type(1),type(2),type(2),type(2)},
-                    {type(1),type(2),type(2),type(2)},
-                    {type(1),type(6),type(6),type(6)}});
+    data.resize(4,3);
+
+    data.setValues({{type(1),type(2),type(2)},
+                   {type(1),type(2),type(2)},
+                   {type(1),type(2),type(4)},
+                   {type(1),type(2),type(4)}});
 
     data_set.set_data(data);
 
-    indices.resize(2);
-    indices.setValues({2, 3});
+    indices = data_set.unuse_repeated_samples();
 
-    //    assert_true(data_set.unuse_repeated_samples() == indices, LOG);
+    assert_true(indices.size() == 2, LOG);
+    assert_true(contains(indices, 1), LOG);
+    assert_true(contains(indices, 3), LOG);
 
-    data.resize(3, 5);
-    data.setValues({{type(1),type(2),type(2),type(4),type(4)},
-                    {type(1),type(2),type(2),type(4),type(4)},
-                    {type(1),type(6),type(6),type(4),type(4)}});
+    // Test
+
+    data.resize(5, 3);
+    data.setValues({{type(1),type(2),type(2)},
+                   {type(1),type(2),type(2)},
+                   {type(1),type(2),type(4)},
+                   {type(1),type(2),type(4)},
+                   {type(1),type(2),type(4)}});
 
     data_set.set_data(data);
 
-    indices.resize(2);
-    indices.setValues({2,4});
+    indices = data_set.unuse_repeated_samples();
 
-    //    assert_true(data_set.unuse_repeated_samples() == indices, LOG);
+    assert_true(indices.size() == 3, LOG);
+    assert_true(contains(indices, 1), LOG);
+    assert_true(contains(indices, 3), LOG);
+    assert_true(contains(indices, 4), LOG);
 }
 
 

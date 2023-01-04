@@ -3874,7 +3874,7 @@ void DataSet::set_binary_simple_columns()
         }
     }
 
-    cout << "Binary columns checked " << endl;
+    if(display) cout << "Binary columns checked " << endl;
 }
 
 void DataSet::set_categories_number(const Index& new_categories_number)
@@ -5748,14 +5748,12 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
 
 #endif
 
-    Tensor<Index, 1> repeated_samples;
+    Tensor<Index, 1> repeated_samples(0);
 
     Tensor<type, 1> sample_i;
     Tensor<type, 1> sample_j;
 
-#pragma omp parallel for private(sample_i, sample_j) schedule(dynamic)
-
-    for(Index i = 0; i < static_cast<Index>(samples_number); i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         sample_i = get_sample_data(i);
 
@@ -6718,7 +6716,7 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(
 
         const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
 
-        cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
+        if(display) cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
         for(Index j = i; j < input_columns_number; j++)
         {
@@ -12576,7 +12574,7 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
 
 void DataSet::read_csv_1()
 {
-    cout << "Path: " << data_file_name << endl;
+    if(display) cout << "Path: " << data_file_name << endl;
 
     if(data_file_name.empty())
     {
