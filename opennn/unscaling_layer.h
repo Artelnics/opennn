@@ -1,4 +1,3 @@
-// @todo Test this method
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //

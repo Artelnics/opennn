@@ -1,24 +1,24 @@
-type 1,0,0,type 1 2 ,NA,0,0
-type 1 ,1,0,type 1 2 ,type 1 2 ,0,1
-type 1,2,1,type 1 2 ,type 2 2 ,0,1
-NA,NA,1,type 1 2 ,type 3 2 ,NA,1
-type 2,4,1,type 2 2 ,type 1 2 ,1,1
-type 2,5,1,type 2 2 ,type 1 2 ,1,1
-type 2,NA,0,type 2 2 ,type 3 2 ,1,1
-type 2,3,0,type 2 2 ,type 2 2 ,NA,1
-NA,45,0,type 3 2 ,type 1 2 ,0,0
-type 3,5,NA,NA,type 2 2 ,0,0
-type 3,6,1,NA,type 2 2 ,NA,0
+type 1,0,0,type 1 2,NA,0,0
+type 1 ,1,0,type 1 2,type 1 2,0,1
+type 1,2,1,type 1 2,type 2 2,0,1
+NA,NA,1,type 1 2,type 3 2,NA,1
+type 2,4,1,type 2 2,type 1 2,1,1
+type 2,5,1,type 2 2,type 1 2,1,1
+type 2,NA,0,type 2 2,type 3 2,1,1
+type 2,3,0,type 2 2,type 2 2,NA,1
+NA,45,0,type 3 2,type 1 2,0,0
+type 3,5,NA,NA,type 2 2,0,0
+type 3,6,1,NA,type 2 2,NA,0
 type 3,NA,1,NA,NA,0,0
-type 1,0,0,type 1 2 ,NA,0,0
-type 1 ,1,0,type 1 2 ,type 1 2 ,0,1
-type 1,2,1,type 1 2 ,type 2 2 ,0,1
-type 1 ,NA,1,type 1 2 ,type 3 2 ,NA,1
-type 2,4,1,type 2 2 ,type 1 2 ,1,1
-type 2,5,1,type 2 2 ,type 1 2 ,1,1
-type 2,NA,0,type 2 2 ,type 3 2 ,1,1
-type 2,3,0,type 2 2 ,type 2 2 ,NA,1
-type 3,45,0,type 3 2 ,type 1 2 ,0,0
-type 3,5,NA,type 3 2 ,type 2 2 ,0,0
-type 3,6,1,type 3 2 ,type 2 2 ,NA,0
-type 3,NA,1,type 3 2 ,NA,0,0
+type 1,0,0,type 1 2,NA,0,0
+type 1,1,0,type 1 2,type 1 2,0,1
+type 1,2,1,type 1 2,type 2 2,0,1
+type 1,NA,1,type 1 2,type 3 2,NA,1
+type 2,4,1,type 2 2,type 1 2,1,1
+type 2,5,1,type 2 2,type 1 2,1,1
+type 2,NA,0,type 2 2,type 3 2,1,1
+type 2,3,0,type 2 2,type 2 2,NA,1
+type 3,45,0,type 3 2,type 1 2,0,0
+type 3,5,NA,type 3 2,type 2 2,0,0
+type 3,6,1,type 3 2,type 2 2,NA,0
+type 3,NA,1,type 3 2,NA,0,0

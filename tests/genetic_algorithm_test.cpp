@@ -212,7 +212,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     assert_true(selection(2) == 0 || selection(2) == 1,LOG);
     assert_true(selection(3) == 0 || selection(3) == 1,LOG);
 
-    assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);  // FAILS SOMETIMES, @todo CHECK IT
+    assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
 
     assert_true( std::count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 

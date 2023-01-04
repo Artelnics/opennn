@@ -1826,7 +1826,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
     }
     else if(inputs_dimensions_number == 4)
     {
-        /// @todo
+        /// @todo CONV
     }
     else
     {
@@ -1891,7 +1891,7 @@ string NeuralNetwork::calculate_text_outputs(TextGenerationAlphabet& text_genera
 }
 
 
-/// @todo
+/// @todo TEXT GENERATION
 
 string NeuralNetwork::generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
@@ -1953,7 +1953,7 @@ string NeuralNetwork::generate_word(TextGenerationAlphabet& text_generation_alph
 }
 
 
-/// @todo
+/// @todo TEXT GENERATION
 
 string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
 {
@@ -1996,7 +1996,6 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
 
 /// For each layer: inputs, neurons, activation function.
-/// @todo Complete for the rest of the layers.
 
 Tensor<string, 2> NeuralNetwork::get_information() const
 {
@@ -2024,6 +2023,22 @@ Tensor<string, 2> NeuralNetwork::get_information() const
             const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
 
             information(i,2) = probabilistic_layer->write_activation_function();
+        }
+        else if(layer_type == "LongShortTermMemory")
+        {
+            const LongShortTermMemoryLayer* long_short_term_memory_layer = static_cast<LongShortTermMemoryLayer*>(trainable_layers_pointers(i));
+
+            information(i,2) = long_short_term_memory_layer->write_activation_function();
+        }
+        else if(layer_type == "Recurrent")
+        {
+            const RecurrentLayer* recurrent_layer = static_cast<RecurrentLayer*>(trainable_layers_pointers(i));
+
+            information(i,2) = recurrent_layer->write_activation_function();
+        }
+        else
+        {
+            information(i,2) = "No activation function";
         }
     }
 

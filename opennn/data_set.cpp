@@ -1768,8 +1768,20 @@ void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
 
 void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
 {
-    samples_uses(index) = new_use;
+    const Index samples_number = get_samples_number();
 
+    if(index >= samples_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_sample_use(const Index&, const SampleUse&) method.\n"
+               << "Index must be less than samples number.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    samples_uses(index) = new_use;
 }
 
 
@@ -1893,6 +1905,16 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
             throw invalid_argument(buffer.str());
         }
     }
+}
+
+
+void DataSet::set_samples_uses(const Tensor<Index, 1>& indices, const SampleUse sample_use)
+{
+    for(Index i = 0; i < indices.size(); i++)
+    {
+        set_sample_use(indices(i), sample_use);
+    }
+
 }
 
 
@@ -3645,7 +3667,7 @@ void DataSet::set_columns_names(const Tensor<string, 1>& new_names)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        columns(i).name = new_names(i);
+        columns(i).name = get_trimmed(new_names(i));
     }
 }
 
@@ -3870,7 +3892,6 @@ void DataSet::check_constant_columns()
     {
         if(columns(column).type == ColumnType::Numeric)
         {
-            // @todo avoid chip
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
             if(is_constant(numeric_column))
             {
@@ -5895,7 +5916,20 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else // Time @todo
+        else if(columns(i).type == ColumnType::DateTime)
+        {
+            // @todo
+
+            if(columns(i).column_use == VariableUse::Unused)
+            {
+            }
+            else
+            {
+            }
+
+            variable_index++;
+        }
+        else
         {
             variable_index++;
         }
@@ -5977,7 +6011,8 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
             {
                 negatives++;
             }
-            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)) // @todo check if condition is alright
+            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)
+                    || data(training_index, target_index) < type(0))
             {
                 ostringstream buffer;
 
@@ -6796,17 +6831,25 @@ void DataSet::set_default_columns_scalers()
 {
     const Index columns_number = columns.size();
 
-    for(Index i = 0; i < columns_number; i++)
+    if(project_type == ProjectType::ImageClassification)
     {
-        if(columns(i).type == ColumnType::Numeric && project_type != ProjectType::ImageClassification)
+        set_columns_scalers(Scaler::MinimumMaximum);
+    }
+    else
+    {
+        for(Index i = 0; i < columns_number; i++)
         {
-            columns(i).scaler = Scaler::MeanStandardDeviation;
-        }
-        else
-        {
-            columns(i).scaler = Scaler::MinimumMaximum;
+            if(columns(i).type == ColumnType::Numeric)
+            {
+                columns(i).scaler = Scaler::MeanStandardDeviation;
+            }
+            else
+            {
+                columns(i).scaler = Scaler::MinimumMaximum;
+            }
         }
     }
+
 }
 
 
@@ -9690,7 +9733,6 @@ string DataSet::decode(const string& input_string) const
 /// Returns a vector containing the number of samples of each class in the data set.
 /// If the number of target variables is one then the number of classes is two.
 /// If the number of target variables is greater than one then the number of classes is equal to the number of target variables.
-/// @todo Return class_distribution is wrong
 
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
@@ -9730,6 +9772,8 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     else // More than two classes
     {
         class_distribution = Tensor<Index, 1>(targets_number);
+
+        class_distribution.setZero();
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -9834,15 +9878,14 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 /// Calculate the outliers from the data set using Tukey's test and sets in samples object.
 /// @param cleaning_parameter Parameter used to detect outliers
-/// @todo
 
-void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter) const
+void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
     const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
-    //    const Tensor<Index, 1> outliers_samples = outliers_indices(0).get_indices_greater_than(0);
+    const Tensor<Index, 1> outliers_samples = get_elements_greater_than(outliers_indices, 0);
 
-    //    set_samples_unused(outliers_samples);
+    set_samples_uses(outliers_samples, DataSet::SampleUse::Unused);
 }
 
 
@@ -10182,13 +10225,25 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
     return average_reachability;
 }
 
-/// @todo check average_reachabilities length
 
 Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& k_nearest_indexes,
                                                         const Tensor<type, 1>& average_reachabilities,
                                                         const Index & k) const
 {
     const Index samples_number = get_used_samples_number();
+
+    if(average_reachabilities.size() > samples_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "    Tensor<type, 1> calculate_local_outlier_factor(Tensor<list<Index>, 1>&, const Tensor<type, 1>&, const Index &) const method.\n"
+               << "Average reachibilities size must be less than samples number.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
     Tensor<type, 1> LOF_value(samples_number);
 
     long double sum;
@@ -10592,11 +10647,11 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     Index new_lags_number;
 
-    if(samples_number == lags_number || samples_number < lags_number)
+    if((samples_number == lags_number || samples_number < lags_number) && lags_number > 2)
     {
         new_lags_number = lags_number - 2;
     }
-    else if(samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1 && lags_number > 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -10827,7 +10882,6 @@ void DataSet::generate_constant_data(const Index& samples_number, const Index& v
 /// using random data.
 /// @param samples_number Number of samples in the data_set.
 /// @param variables_number Number of variables in the data_set.
-/// @todo
 
 void DataSet::generate_random_data(const Index& samples_number, const Index& variables_number)
 {
@@ -10860,7 +10914,6 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 /// using the Rosenbrock function.
 /// @param samples_number Number of samples in the data_set.
 /// @param variables_number Number of variables in the data_set.
-/// @todo
 
 void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)
 {
@@ -10900,6 +10953,8 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 
     for(Index i = 0; i < samples_number; i++)
     {
+        data(i,variables_number-1) = 0;
+
         for(Index j = 0; j < variables_number-1; j++)
         {
             data(i,variables_number-1) += data(i,j);
@@ -10915,7 +10970,6 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 /// The size must be equal to the number of variables.
 /// @param maximums vector of maximum values in the range.
 /// The size must be equal to the number of variables.
-/// @todo
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
@@ -11226,7 +11280,6 @@ void DataSet::read_csv()
         read_csv_2_complete();
 
         read_csv_3_complete();
-
     }
 }
 
@@ -12584,7 +12637,7 @@ void DataSet::read_csv_1()
 
     file.close();
 
-    // Check empty file    @todo, size() methods returns 0
+    // Check empty file
 
     if(data_file_preview(0).size() == 0)
     {
@@ -12669,12 +12722,6 @@ void DataSet::read_csv_1()
             column_index++;
         }
     }
-
-    //    if(time_column != "")
-    //    {
-    //        set_column_type(time_column, DataSet::ColumnType::DateTime);
-    //    }
-
 }
 
 

@@ -139,7 +139,9 @@ public:
 
    void set_input_weights_constant(const type&);
    void set_recurrent_weights_constant(const type&);
-   void initialize_input_weights_Glorot(const type&, const type&);
+
+   void set_input_weights_random();
+   void set_recurrent_weights_random();
 
    void set_parameters_constant(const type&) final;
 
@@ -155,6 +157,8 @@ public:
 
    void calculate_activations(Tensor<type, 1>&,
                               Tensor<type, 1>&) const;
+
+   Tensor<type, 1> get_activations(const Tensor<type,1>&) const;
 
    void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
                                           type*, const Tensor<Index, 1>&,

@@ -3973,7 +3973,6 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
 /// @param inputs_names Vector of strings with the name of the layer inputs.
 /// @param outputs_names Vector of strings with the name of the layer outputs.
-/// @todo Update this method.
 
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {

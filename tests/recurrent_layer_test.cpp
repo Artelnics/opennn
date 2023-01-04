@@ -74,7 +74,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     Tensor<Index, 1> activations_dims;
     Tensor<Index, 1> activations_derivatives_dims;
 
-    Tensor<type, 2> numerical_activation_derivative;
+    Tensor<type, 1> numerical_activation_derivative;
     Tensor<type, 0> maximum_difference;
 
     // Test
@@ -118,32 +118,70 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     recurrent_layer.set(2, 4);
 
     combinations.resize(1,4);
+    activations.resize(1,4);
+    activations_derivatives.resize(1,4);
+
     combinations(0,0) = static_cast<type>(1.56);
-    combinations(0,2) = static_cast<type>(-0.68);
+    combinations(0,1) = static_cast<type>(-0.68);
     combinations(0,2) = static_cast<type>(0.91);
     combinations(0,3) = static_cast<type>(-1.99);
 
+    combinations_dims = get_dimensions(combinations);
+    activations_dims = get_dimensions(activations);
+    activations_derivatives_dims = get_dimensions(activations_derivatives);
+
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
 
-    ///@todo numerical_differentiation.calculate_derivatives() has different arguments
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
 
-//    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
+    Tensor<type, 1> combinations_chip = combinations.chip(0,0);
 
-//    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value(activations_derivatives - numerical_activation_derivative) < 1.0e-3, LOG);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
 
-//    recurrent_layer.set_activation_function(RecurrentLayer::Linear);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value(activations_derivatives - numerical_activation_derivative) < 1.0e-3, LOG);
+    for(Index i = 0; i < 4; i++)
+    {
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+    }
 
     // Test
 
-    recurrent_layer.set(4, 2);
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
+
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
+
+    combinations_chip = combinations.chip(0,0);
+
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
+
+    for(Index i = 0; i < 4; i++)
+    {
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+    }
+
+    // Test
+
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Linear);
+
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
+
+    combinations_chip = combinations.chip(0,0);
+
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
+
+    for(Index i = 0; i < 4; i++)
+    {
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+    }
+
+    // Test
+
+    recurrent_layer.set(4, 4);
 
     parameters.resize(14);
     parameters(0) = static_cast<type>(0.41);
@@ -169,31 +207,76 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     inputs(0,2) = static_cast<type>(0.29);
     inputs(0,3) = static_cast<type>(-0.77);
 
-    ///@todo
-//    recurrent_layer.set_activation_function(RecurrentLayer::Threshold);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Threshold);
 
-//    recurrent_layer.set_activation_function(RecurrentLayer::SymmetricThreshold);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
 
-//    recurrent_layer.set_activation_function(RecurrentLayer::Logistic);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+    combinations_chip = combinations.chip(0,0);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
 
-//    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+    for(Index i = 0; i < 4; i++)
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
 
-//    recurrent_layer.set_activation_function(RecurrentLayer::Linear);
-//    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-//    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-//    assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+    // Test
+
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::SymmetricThreshold);
+
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
+
+    combinations_chip = combinations.chip(0,0);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
+
+    for(Index i = 0; i < 4; i++)
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+
+    // Test
+
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
+
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
+
+    combinations_chip = combinations.chip(0,0);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
+
+    for(Index i = 0; i < 4; i++)
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+
+
+    // Test
+
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
+
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
+
+    combinations_chip = combinations.chip(0,0);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
+
+    for(Index i = 0; i < 4; i++)
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+
+
+    // Test
+
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction:: Linear);
+
+    recurrent_layer.calculate_activations_derivatives(combinations.data(), combinations_dims,
+                                                      activations.data(), activations_dims,
+                                                      activations_derivatives.data(), activations_derivatives_dims);
+
+    combinations_chip = combinations.chip(0,0);
+    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::get_activations, combinations_chip);
+
+    for(Index i = 0; i < 4; i++)
+        assert_true(abs(activations_derivatives(i) - numerical_activation_derivative(i)) < 1.0e-3, LOG);
+
 }
 
 

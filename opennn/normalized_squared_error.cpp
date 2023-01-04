@@ -89,8 +89,6 @@ void NormalizedSquaredError::set_normalization_coefficient()
 }
 
 
-/// @todo What is targets_t1 ???
-
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
     //Targets matrix

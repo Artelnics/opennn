@@ -64,10 +64,15 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       /// @todo
-
-       void save(const string&) const
+       void save(const string& file_name) const
        {
+           std::ofstream file;
+           file.open(file_name);
+
+           file << "Goodness-of-fit analysis\n";
+           file << "Determination: " << determination << endl;
+
+           file.close();
        }
 
        void print() const

@@ -84,7 +84,6 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 /// \param batch
 /// \param forward_propagation
 /// \param back_propagation
-/// @todo Divide by number of samples.
 
 void MinkowskiError::calculate_error(const DataSetBatch& batch,
                                      const NeuralNetworkForwardPropagation&,

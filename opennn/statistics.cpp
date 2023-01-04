@@ -311,7 +311,7 @@ Histogram::Histogram(const Tensor<type, 1>& data,
     for(Index i = 0; i < data.dimension(0); i++)
     {
         value = data(i);
-        if(is_nan(value)) continue;
+        if(isnan(value)) continue;
 
         corresponding_bin = int((value - data_minimum) / step);
 
@@ -1730,7 +1730,6 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 /// The size of both subvectors is the number of bins.
 /// The first subvector contains the frequency of the bins.
 /// The second subvector contains the center of the bins.
-/// @todo isnan is not defined for bool.
 
 Histogram histogram(const Tensor<bool, 1>& v)
 {
@@ -1794,7 +1793,6 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 /// Each subvector contains the frequencies and centers of that colums.
 /// @param matrix Data to calculate histograms
 /// @param bins_number Number of bins for each histogram.
-/// @todo update this method
 
 Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
@@ -2091,7 +2089,6 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
 /// the normal, half-normal and uniform cumulative distribution. It returns 0, 1
 /// or 2 if the closest distribution is the normal, half-normal or the uniform,
 /// respectively.
-/// @todo review.
 
 Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 {
@@ -3048,15 +3045,16 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
-/// @todo Clea variables names minim, vector_!!!
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
-    Tensor<type, 1> vector_ = vector;
-
     const Index size = vector.dimension(0);
+
+    const Eigen::Tensor<type, 0> minimum = vector.minimum();
+
+    Tensor<type, 1> vector_copy = vector;
+
     Tensor<Index, 1> maximal_indices(number);
-    const Eigen::Tensor<type, 0> minim = vector.minimum();
 
 #ifdef OPENNN_DEBUG
 
@@ -3075,18 +3073,18 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
     for(Index j = 0; j < number; j++)
     {
         Index maximal_index = 0;
-        type maximal = vector_(0);
+        type maximal = vector_copy(0);
 
         for(Index i = 0; i < size; i++)
         {
-            if(vector_(i) > maximal)
+            if(vector_copy(i) > maximal)
             {
                 maximal_index = i;
-                maximal = vector_(i);
+                maximal = vector_copy(i);
             }
         }
 
-        vector_(maximal_index) = minim(0) - type(1);
+        vector_copy(maximal_index) = minimum(0) - type(1);
         maximal_indices(j) = maximal_index;
     }
 
