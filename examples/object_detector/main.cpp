@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
     {
         cout << "OpenNN. Region Based Object Detector Example." << endl;
 
+        // UNDER DEVELOPMENT
 
         srand(time(NULL));
 /*

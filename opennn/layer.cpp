@@ -249,6 +249,10 @@ void Layer::linear(type* x_data, const Tensor<Index, 1>& x_dimensions, type* y_d
 
     if(!same_dimensions(0))
     {
+
+        cout << "x: " << x_dimensions << endl;
+        cout << "y: " << y_dimensions << endl;
+
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"

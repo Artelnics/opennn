@@ -76,11 +76,24 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     /// @todo
 //    Test
 
-//            triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
+//    samples_number = 1;
+//    inputs_number = 1;
+//    targets_number = 1;
+//    neurons_number = 1;
 
-//    Tensor<Index, 3> samples_indices(0, 1, data_set.get_samples_number()-1);
+//    data_set.set(samples_number, inputs_number, targets_number);
+//    data_set.set_data_random();
 
-//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+
+//    batch.set(samples_number, &data_set);
+//    forward_propagation.set(samples_number, &neural_network);
+//    back_propagation.set(samples_number, &sum_squared_error);
+
+//    triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
+
+//    Tensor<Index, 3> samples_indices(0, 1, samples_number);
+
 
 //    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
@@ -88,7 +101,12 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 //    Tensor<type, 1> training_direction;
 //    type initial_learning_rate = 0.0;
 
-//    Test
+//    assert_true(triplet.A.first <= triplet.U.first, LOG);
+//    assert_true(triplet.U.first <= triplet.B.first, LOG);
+//    assert_true(triplet.A.second >= triplet.U.second, LOG);
+//    assert_true(triplet.U.second <= triplet.B.second, LOG);
+
+    // Test
 
 //            sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
 
@@ -216,9 +234,9 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
     Index neurons_number = 5;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    
+
     Tensor<Index, 1> indices(3);
-    
+
     indices.setValues({inputs_number,targets_number,samples_number-1});
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number,neurons_number});
@@ -227,19 +245,16 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
     /// @todo loss_index.calculate_training_loss not available
 
 //    type loss = sum_squared_error.calculate_training_loss();
-//    Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
+//    Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_differentiation_gradient();
 
 //    Tensor<type, 1> training_direction = gradient*(-1.0);
 //    type initial_learning_rate = 0.001;
 
-//    type loss_tolerance = 1.0e-6;
-//    tra.set_loss_tolerance(loss_tolerance);
-
 //    pair<type,type> directional_point
-//            = tra.calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
+//            = learning_rate_algorithm.calculate_directional_point(1e-2, training_direction, initial_learning_rate);
 
 //    assert_true(directional_point.first >= type(0), LOG);
-//    assert_true(directional_point.second < loss, LOG);
+//    assert_true(directional_point.second < 1e-2, LOG);
 
 }
 

@@ -61,11 +61,6 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-
-//        data_set.set_training();
-
-
-
         const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
 
         const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
@@ -79,41 +74,14 @@ int main()
 
         NeuralNetwork neural_network;
 
-
         ScalingLayer scaling_layer(input_variables_dimensions);
         neural_network.add_layer(&scaling_layer);
 
         FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
-
-        cout << "Flatten layer height: " << flatten_layer.get_input_height() << endl;
-        cout << "Flatten layer width: " << flatten_layer.get_input_width() << endl;
-        cout << "Flatten layer channels number: " << flatten_layer.get_inputs_channels_number() << endl;
 
         ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
         neural_network.add_layer(&probabilistic_layer);
-
-/*
-        // Neural network
-
-        NeuralNetwork neural_network;
-
-        ScalingLayer scaling_layer(input_variables_dimensions);
-        neural_network.add_layer(&scaling_layer);
-
-        FlattenLayer flatten_layer(input_variables_dimensions);
-        neural_network.add_layer(&flatten_layer);
-
-        const Index hidden_layers_number = 512;
-
-        const Index flatten_layer_outputs = flatten_layer.get_neurons_number();
-
-        PerceptronLayer perceptron_layer(flatten_layer_outputs, hidden_layers_number);
-        neural_network.add_layer(&perceptron_layer);
-
-        ProbabilisticLayer probabilistic_layer(hidden_layers_number, target_variables_number);
-        neural_network.add_layer(&probabilistic_layer);
-*/
 
         // Training strategy
 
@@ -126,7 +94,6 @@ int main()
         training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);
 
         training_strategy.perform_training();
-/*
 
         // Testing analysis
 
@@ -154,14 +121,14 @@ int main()
 
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-        neural_network.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << "\nInputs:\n" << inputs << endl;
 
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
 
         cout << "Bye!" << endl;
 

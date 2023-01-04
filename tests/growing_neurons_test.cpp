@@ -10,6 +10,7 @@
 
 GrowingNeuronsTest::GrowingNeuronsTest() : UnitTesting()
 {
+    training_strategy.set(&neural_network, &data_set);
 }
 
 
@@ -45,6 +46,8 @@ void GrowingNeuronsTest::test_destructor()
 void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
+
+    growing_neurons.set_training_strategy_pointer(&training_strategy);
 
     Index samples_number;
     Index inputs_number;
@@ -127,9 +130,10 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(0.8),type(0.8)},
                     {type(0.9),type(0.9)},
                     {type(1),type(1)}});
+
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {samples_number, inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, 3, targets_number});
     neural_network.set_parameters_constant(type(0));
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
@@ -137,23 +141,23 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     training_strategy.set_display(false);
 
     growing_neurons.set_trials_number(1);
-    growing_neurons.set_maximum_neurons_number(7);
+    growing_neurons.set_maximum_neurons_number(5);
     growing_neurons.set_selection_error_goal(type(0.0));
     growing_neurons.set_maximum_selection_failures(1);
     growing_neurons.set_display(false);
 
-    assert_true(neural_network.get_layers_neurons_numbers()[0] == samples_number, LOG);
+    assert_true(neural_network.get_layers_neurons_numbers()[0] == inputs_number, LOG);
 
-    /// @todo
-    //neurons_selection_results = growing_neurons.perform_neurons_selection();
-    //assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumEpochs, LOG);
+    neurons_selection_results = growing_neurons.perform_neurons_selection();
+
+    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumNeurons, LOG);
 
 }
 
 
 void GrowingNeuronsTest::run_test_case()
 {
-    cout << "Running incremental order test case...\n";
+    cout << "Running growing neurons test case...\n";
 
     // Constructor and destructor methods
 
@@ -164,5 +168,5 @@ void GrowingNeuronsTest::run_test_case()
 
     test_perform_neurons_selection();
 
-    cout << "End of incremental order test case.\n\n";
+    cout << "End of growing neurons test case.\n\n";
 }

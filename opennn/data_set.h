@@ -504,6 +504,7 @@ public:
 
     void set_samples_uses(const Tensor<SampleUse, 1>&);
     void set_samples_uses(const Tensor<string, 1>&);
+    void set_samples_uses(const Tensor<Index, 1>&, const SampleUse);
 
     // Columns set methods
 
@@ -721,7 +722,7 @@ public:
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
-    void unuse_Tukey_outliers(const type& = type(1.5)) const;
+    void unuse_Tukey_outliers(const type& = type(1.5));
 
     // Local outlier factor
 

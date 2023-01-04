@@ -394,10 +394,13 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
         const type regularization = calculate_regularization(back_propagation.parameters);
+
         back_propagation.regularization = regularization;
+
         back_propagation.loss += regularization_weight * regularization;
 
         calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
+
         back_propagation.gradient.device(*thread_pool_device) += back_propagation.regularization_gradient;
     }
 
@@ -411,7 +414,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 /// This method calculates the second-order loss.
 /// It is used for optimization of parameters during training.
 /// Returns a second-order terms loss structure, which contains the values and the Hessian of the error terms function.
-/// @todo Update method.
 
 void LossIndex::back_propagate_lm(const DataSetBatch& batch,
                                   NeuralNetworkForwardPropagation& forward_propagation,

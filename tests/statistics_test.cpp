@@ -985,7 +985,6 @@ void StatisticsTest::test_quartiles()
 }
 
 
-///@todo ERROR frequencies
 void StatisticsTest::test_histogram()
 {
     cout << "test_histogram\n";
@@ -1026,11 +1025,11 @@ void StatisticsTest::test_histogram()
     assert_true(frequencies[6] == 1, LOG);
     assert_true(frequencies[7] == 1, LOG);
     assert_true(frequencies[8] == 1, LOG);
-    assert_true(frequencies[9] == 1, LOG);
+    assert_true(frequencies[9] == 2, LOG);
 
     Tensor<Index, 0> sum_frec_1 = frequencies.sum();
 
-    //assert_true(sum_frec_1(0) == 11, LOG); // <--- failed
+    assert_true(sum_frec_1(0) == 11, LOG);
 
     // Test
 
@@ -1045,7 +1044,7 @@ void StatisticsTest::test_histogram()
     Tensor<Index, 0> sum_frec_2;
     sum_frec_2 = frequencies.sum();
 
-    //assert_true(sum_frec_2(0) == 20, LOG); // <--- failed
+    assert_true(sum_frec_2(0) == 20, LOG);
 }
 
 
@@ -1397,35 +1396,6 @@ void StatisticsTest::test_percentiles()
 }
 
 
-void StatisticsTest::test_means_by_categories()
-{
-    cout << "test_means_by_categories\n";
-
-    // Test
-
-    Tensor<type, 2> matrix(6, 6);
-    matrix.setValues({
-                         {type(1),type(2),type(3),type(1),type(2),type(3)},
-                         {type(6),type(2),type(3),type(12),type(2),type(3)}});
-
-    Tensor<type, 1> solution(3);
-    solution.setValues({ type(9.0), type(2.0), type(3.0) });
-
-    //    assert_true(means_by_categories(matrix)(0) == solution(0), LOG);
-    //    assert_true(means_by_categories(matrix)(1) == solution(1), LOG);
-    //    assert_true(means_by_categories(matrix)(2) == solution(2), LOG);
-
-    // Test missing vaues
-
-    //    Tensor<type, 2> matrix({Tensor<type, 1>({1,1,1,2,2,2}),Tensor<type, 1>({1,1,1,2,6,static_cast<type>(NAN)})});
-
-    //    Tensor<type, 1> solution({1.0, 4.0});
-
-    //    assert_true(means_by_categories_missing_values(matrix) == solution, LOG);
-
-}
-
-
 void StatisticsTest::run_test_case()
 {
     cout << "Running statistics test case...\n";
@@ -1489,7 +1459,7 @@ void StatisticsTest::run_test_case()
     test_calculate_maximal_centers();
     test_calculate_bin();
     test_calculate_frequency();
-    //   test_histogram();
+    test_histogram();
     test_total_frequencies();
     test_histograms();
 
@@ -1506,10 +1476,6 @@ void StatisticsTest::run_test_case()
     // Percentiles
 
     test_percentiles();
-
-    // Means by categories
-
-    test_means_by_categories();
 
     cout << "End of descriptives test case.\n\n";
 }

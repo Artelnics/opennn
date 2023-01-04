@@ -55,9 +55,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-    // Empty test does not work
-    // normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
     // Test approximation trivial
     {
         samples_number = 1;
@@ -229,16 +226,16 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        numerical_differentiation_gradient = normalized_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_differentiation_gradient = normalized_squared_error.calculate_numerical_differentiation_gradient();
 
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-//        assert_true(back_propagation.error >= 0, LOG);
+        assert_true(back_propagation.error >= 0, LOG);
 
-//        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
     }
-/*
+
     // Test forecasting trivial
     {
         inputs_number = 1;
@@ -322,14 +319,13 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= type(0), LOG);
         assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
     }
-*/
 }
 
 
 void NormalizedSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
-/*
+
     normalized_squared_error.set_normalization_coefficient(type(1));
 
     // Test approximation random samples, inputs, outputs, neurons
@@ -483,7 +479,6 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
     }
 
     // Forecasting incompatible with LM
-*/
 }
 
 
@@ -500,8 +495,6 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     Tensor<type, 1> targets_mean;
     Tensor<type, 2> target_data;
 
-//    type normalization_coefficient;
-
     // Test
 
     samples_number = 4;
@@ -517,11 +510,14 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
     target_data = data_set.get_target_data();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {samples_number, inputs_number, outputs_number});
+    Eigen::array<int, 1> dims({0});
+    targets_mean = target_data.mean(dims);
+
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, 2, outputs_number});
     neural_network.set_parameters_random();
 
-//    normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
-//    assert_true(normalization_coefficient > 0, LOG);
+    type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
+    assert_true(normalization_coefficient > 0, LOG);
 }
 
 
