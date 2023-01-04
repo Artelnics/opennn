@@ -183,11 +183,9 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 
         parameters_increment.resize(parameters_number);
-        nesterov_increment.resize(parameters_number);
         last_parameters_increment.resize(parameters_number);
 
         parameters_increment.setZero();
-        nesterov_increment.setZero();
         last_parameters_increment.setZero();
     }
 
@@ -196,7 +194,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
     Index iteration = 0;
 
     Tensor<type, 1> parameters_increment;
-    Tensor<type, 1> nesterov_increment;
     Tensor<type, 1> last_parameters_increment;
 };
 

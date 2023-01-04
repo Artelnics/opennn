@@ -354,7 +354,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     }
 
     return PR_parameter;
-
 }
 
 
@@ -987,7 +986,7 @@ void ConjugateGradient::update_parameters(
     }
 
     optimization_data.training_slope.device(*thread_pool_device)
-            = (back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+            = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
     if(optimization_data.training_slope(0) >= type(0))
     {
