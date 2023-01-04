@@ -66,6 +66,8 @@ public:
 
     const Tensor<type, 4>& get_synaptic_weights() const;
 
+    Index get_biases_number() const;
+
     Index get_synaptic_weights_number() const;
 
     ActivationFunction get_activation_function() const;
@@ -340,13 +342,15 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
 
+        const Index synaptic_weights_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_synaptic_weights_number();
+
         delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number);
 
         convolutional_delta.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
 
-//        biases_derivatives.resize(neurons_number);
+        biases_derivatives.resize(kernels_number);
 
-//        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+        synaptic_weights_derivatives.resize(kernels_number+synaptic_weights_number);
     }
 
 
@@ -366,9 +370,9 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> delta;
     Tensor<type, 4> convolutional_delta;
 
-    Tensor<type, 4> biases_derivatives;
+    Tensor<type, 1> biases_derivatives;
 
-    Tensor<type, 4> synaptic_weights_derivatives;
+    Tensor<type, 1> synaptic_weights_derivatives;
 };
 
 

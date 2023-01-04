@@ -966,17 +966,21 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     */
 
-    // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 2
+    // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1
 
     {
+        const Index input_channels_number = 2;
+        const Index input_rows_number = 3;
+        const Index input_columns_number = 3;
+
         const Index images_number = 2;
 
         Tensor<Index, 1> inputs_dimensions(3);
-        inputs_dimensions(0) = 2; // Channels number
-        inputs_dimensions(1) = 3; // rows number
-        inputs_dimensions(2) = 3; // columns number
+        inputs_dimensions(0) = input_channels_number; // Channels number
+        inputs_dimensions(1) = input_rows_number; // rows number
+        inputs_dimensions(2) = input_columns_number; // columns number
 
-        Tensor<type, 2> data(images_number,20);
+        Tensor<type, 2> data(images_number,19);
 
         // Image 1
 
@@ -1000,7 +1004,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(0,17) = 18;
 
         data(0,18) = 0; // Target
-        data(0,19) = 0; // Target
 
         // Image 2
 
@@ -1024,9 +1027,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(1,17) = 36;
 
         data(1,18) = 1; // Target
-        data(1,19) = 1; // Target
 
-        DataSet data_set(images_number,1,2);
+        DataSet data_set(images_number,1,1);
         data_set.set_input_variables_dimensions(inputs_dimensions);
 
         data_set.set_data(data); // 2d data
@@ -1037,15 +1039,15 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         Tensor<Index, 1> input_variables_indices(18);
         input_variables_indices(0) = 0;
-        input_variables_indices(9) = 1;
-        input_variables_indices(8) = 2;
-        input_variables_indices(7) = 3;
-        input_variables_indices(6) = 4;
+        input_variables_indices(1) = 1;
+        input_variables_indices(2) = 2;
+        input_variables_indices(3) = 3;
+        input_variables_indices(4) = 4;
         input_variables_indices(5) = 5;
-        input_variables_indices(4) = 6;
-        input_variables_indices(3) = 7;
-        input_variables_indices(2) = 8;
-        input_variables_indices(1) = 9;
+        input_variables_indices(6) = 6;
+        input_variables_indices(7) = 7;
+        input_variables_indices(8) = 8;
+        input_variables_indices(9) = 9;
         input_variables_indices(10) = 10;
         input_variables_indices(11) = 11;
         input_variables_indices(12) = 12;
@@ -1055,79 +1057,96 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         input_variables_indices(16) = 16;
         input_variables_indices(17) = 17;
 
-        Tensor<Index, 1> target_variables_indices(2);
+        Tensor<Index, 1> target_variables_indices(1);
         target_variables_indices(0) = 18;
-        target_variables_indices(1) = 19;
-
-        cout << "input_variables_indices:  " << input_variables_indices << endl;
-        cout << "target_variables_indices:  " << target_variables_indices << endl;
 
         DataSetBatch batch(images_number, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-        batch.print();
-
-        system("pause");
-
         Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
-        convolutional_layer_inputs_dimensions(0) = 3;
-        convolutional_layer_inputs_dimensions(1) = 3;
-        convolutional_layer_inputs_dimensions(2) = 2;
+        convolutional_layer_inputs_dimensions(0) = input_rows_number;
+        convolutional_layer_inputs_dimensions(1) = input_columns_number;
+        convolutional_layer_inputs_dimensions(2) = input_channels_number;
         convolutional_layer_inputs_dimensions(3) = images_number;
 
         NeuralNetwork neural_network;
 
+        const Index kernels_rows_number = 2;
+        const Index kernels_columns_number = 2;
+        const Index kernels_channels_number = input_channels_number;
+        const Index kernels_number = 2;
+
         Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
-        convolutional_layer_kernels_dimensions(0) = 1;
-        convolutional_layer_kernels_dimensions(1) = 1;
-        convolutional_layer_kernels_dimensions(2) = images_number;
-        convolutional_layer_kernels_dimensions(3) = 1;
+        convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
+        convolutional_layer_kernels_dimensions(1) = kernels_columns_number;
+        convolutional_layer_kernels_dimensions(2) = kernels_number;
+        convolutional_layer_kernels_dimensions(3) = kernels_channels_number;
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-        Tensor<type, 4> kernels(2,2,2,1);
+        Tensor<type, 4> kernels(kernels_rows_number,kernels_columns_number,images_number,kernels_channels_number);
 
-        kernels(0,0,0,0) = 0.5;
-        kernels(0,1,0,0) = 0.5;
-        kernels(1,0,0,0) = 0.5;
-        kernels(1,1,0,0) = 0.5;
+        kernels(0,0,0,0) = static_cast<type>(0.5);
+        kernels(0,1,0,0) = static_cast<type>(0.5);
+        kernels(1,0,0,0) = static_cast<type>(0.5);
+        kernels(1,1,0,0) = static_cast<type>(0.5);
 
-        kernels(0,0,1,0) = 0.7;
-        kernels(0,1,1,0) = 0.7;
-        kernels(1,0,1,0) = 0.7;
-        kernels(1,1,1,0) = 0.7;
+        kernels(0,0,0,1) = static_cast<type>(0.5);
+        kernels(0,1,0,1) = static_cast<type>(0.5);
+        kernels(1,0,0,1) = static_cast<type>(0.5);
+        kernels(1,1,0,1) = static_cast<type>(0.5);
+
+        kernels(0,0,1,0) = static_cast<type>(0.7);
+        kernels(0,1,1,0) = static_cast<type>(0.7);
+        kernels(1,0,1,0) = static_cast<type>(0.7);
+        kernels(1,1,1,0) = static_cast<type>(0.7);
+
+        kernels(0,0,1,1) = static_cast<type>(0.7);
+        kernels(0,1,1,1) = static_cast<type>(0.7);
+        kernels(1,0,1,1) = static_cast<type>(0.7);
+        kernels(1,1,1,1) = static_cast<type>(0.7);
 
         convolutional_layer->set_synaptic_weights(kernels);
 
         convolutional_layer->set_biases_constant(0);
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-        flatten_layer_inputs_dimensions(0) = 2;
-        flatten_layer_inputs_dimensions(1) = 2;
-        flatten_layer_inputs_dimensions(2) = 1;
-        flatten_layer_inputs_dimensions(3) = 2;
+        flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
+        flatten_layer_inputs_dimensions(1) = input_columns_number-kernels_columns_number+1;
+        flatten_layer_inputs_dimensions(2) = kernels_number;
+        flatten_layer_inputs_dimensions(3) = images_number;
 
         FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-        PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 2);
+        const Index perceptron_layer_inputs_number = flatten_layer_inputs_dimensions(0)*flatten_layer_inputs_dimensions(1)*flatten_layer_inputs_dimensions(2);
+        const Index perceptrons_number = 1;
 
-        Tensor<type, 2> synaptic_weights(4,2);
-        synaptic_weights(0,0) = 1;
-        synaptic_weights(1,0) = 1;
-        synaptic_weights(2,0) = 1;
-        synaptic_weights(3,0) = 1;
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(perceptron_layer_inputs_number, perceptrons_number);
 
-        synaptic_weights(0,1) = 2;
-        synaptic_weights(1,1) = 2;
-        synaptic_weights(2,1) = 2;
-        synaptic_weights(3,1) = 2;
+        Tensor<type, 2> synaptic_weights(perceptron_layer_inputs_number,perceptrons_number);
+
+        for(Index i = 0; i < perceptron_layer_inputs_number; i++)
+        {
+            for(Index j = 0; j < perceptrons_number; j++)
+            {
+                synaptic_weights(i,j) = static_cast<type>(j+1);
+            }
+        }
+
+//        synaptic_weights(0,0) = 1;
+//        synaptic_weights(1,0) = 1;
+//        synaptic_weights(2,0) = 1;
+//        synaptic_weights(3,0) = 1;
+
+//        synaptic_weights(0,1) = 2;
+//        synaptic_weights(1,1) = 2;
+//        synaptic_weights(2,1) = 2;
+//        synaptic_weights(3,1) = 2;
 
         perceptron_layer->set_synaptic_weights(synaptic_weights);
         perceptron_layer->set_biases_constant(0);
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-
-        cout << "Perceptron layer weights: " << perceptron_layer->get_synaptic_weights() << endl;
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
@@ -1136,9 +1155,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
         neural_network.forward_propagate(batch, forward_propagation);
-        forward_propagation.print();
+//        forward_propagation.print();
 
-        system("pause");
+//        system("pause");
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
@@ -1151,7 +1170,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
 
         cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
-
     }
 
 }

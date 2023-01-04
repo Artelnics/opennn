@@ -104,6 +104,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
          cout << "MSE Errors: " << endl << back_propagation.errors << endl;
 
          cout << "output delta: " << endl <<  perceptron_layer_back_propagation->delta << endl;
+         system("pause");
      }
          break;
 

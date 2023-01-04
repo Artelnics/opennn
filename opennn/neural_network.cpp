@@ -1407,8 +1407,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
     || trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
-//        cout << "initial convolutional" << endl;
-
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
     else
@@ -1416,13 +1414,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
     }
 
-//    cout << "trainable layers number: " << trainable_layers_number << endl;
-
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-//        cout << "i: " << i << ": " << trainable_layers_pointers(i)->get_type_string() << endl;
-//        cout << "type " << i-1 << ": " << trainable_layers_pointers(i-1)->get_type_string() << endl;
-
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
