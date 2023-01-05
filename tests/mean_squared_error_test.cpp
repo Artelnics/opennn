@@ -883,16 +883,13 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //    // Image 2
 
-<<<<<<< HEAD
 //    data(1,0) = 9;
 //    data(1,1) = 13;
 //    data(1,2) = 10;
 //    data(1,3) = 14;
-=======
-        forward_propagation.set(samples_number, &neural_network);
-        bool switch_train = true;
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
->>>>>>> dev
+//    forward_propagation.set(samples_number, &neural_network);
+//    bool switch_train = true;
+//    neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
 //    data(1,4) = 11;
 //    data(1,5) = 15;
@@ -961,15 +958,12 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //    PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 1);
 
-<<<<<<< HEAD
 //    perceptron_layer->set_synaptic_weights_constant(1);
 //    perceptron_layer->set_biases_constant(0);
 //    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-=======
-        forward_propagation.set(samples_number, &neural_network);
-        bool switch_train = true;
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
->>>>>>> dev
+//    forward_propagation.set(samples_number, &neural_network);
+//    bool switch_train = true;
+//    neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
 //    neural_network.add_layer(convolutional_layer);
 //    neural_network.add_layer(flatten_layer);
@@ -1029,12 +1023,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 //        neural_network.set_parameters_random();
 
-<<<<<<< HEAD
-=======
-        forward_propagation.set(samples_number, &neural_network);
-        bool switch_train = true;
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
->>>>>>> dev
+//        forward_propagation.set(samples_number, &neural_network);
+//        bool switch_train = true;
+//        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
 //        forward_propagation.set(samples_number, &neural_network);
 //        neural_network.forward_propagate(batch, forward_propagation);
