@@ -2036,8 +2036,10 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
         const Index columns_number = x.dimension(1);
         const Index rows_number = x.dimension(0);
+        const Tensor<type, 0> x_maximum = x.maximum();
 
-        y.device(*thread_pool_device) = x.exp();
+        y.device(*thread_pool_device) = - x_maximum(0) + x;
+        y.device(*thread_pool_device) = y.exp();
 
         Tensor<type, 1> inverse_sums(rows_number);
         inverse_sums.setZero();
