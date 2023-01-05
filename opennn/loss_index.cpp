@@ -361,6 +361,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 }
 
 
+
 void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation & neural_network_forward_propagation,
                                  LossIndexBackPropagationLM & loss_index_back_propagation) const
@@ -420,11 +421,9 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight * back_propagation.regularization_gradient;
     }
 
-
     // Assemble gradient
 
     assemble_layers_error_gradient(back_propagation);
-
 }
 
 
@@ -708,7 +707,7 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index layers_number = neural_network_pointer->get_layers_number();
+//    const Index layers_number = neural_network_pointer->get_layers_number();
 
     if(trainable_layers_number == 0) return;
 
@@ -722,14 +721,36 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
     calculate_output_delta(batch,forward_propagation,
                            back_propagation);
 
+
     // Hidden layers
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
+        // Needs to check flatten layer for convolutional
+        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten)
+        {
+            continue;
+        }
+        if(trainable_layers_pointers(i+1)->get_type() == Layer::Type::Flatten)
+        {
+            trainable_layers_pointers(i)
+                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+2), // Perceptron layer
+                                             back_propagation.neural_network.layers(i+2), // Perceptron layer
+                                             back_propagation.neural_network.layers(i));
+        }
+        else
+        {
+            trainable_layers_pointers(i)
+                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
+                                             back_propagation.neural_network.layers(i+1),
+                                             back_propagation.neural_network.layers(i));
+        }
+/* --> This part was in dev-fwd_refactoring, check
         trainable_layers_pointers(i)->calculate_hidden_delta(
             forward_propagation.layers(first_trainable_layer_index+i+1),
             back_propagation.neural_network.layers(i+1),
             back_propagation.neural_network.layers(i));
+*/
     }
 }
 
@@ -816,12 +837,34 @@ void LossIndex::assemble_layers_error_gradient(LossIndexBackPropagation& back_pr
 
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
+// Convolutional --------------------------------------------------------------------------------------------------------------------------------------------
+//    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
+//      /*  ||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten*/)
+//    {
+//        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
+//                                                               forward_propagation.layers(0),
+//                                                               back_propagation.neural_network.layers(0));
+
+//    }
+//    else if( trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
+//    {
+//       // do nothing
+//    }
+//    else
+//    {
+//        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
+//                                                               forward_propagation.layers(0),
+//                                                               back_propagation.neural_network.layers(0));
+//    }
+// End convolutional, check if needed --------------------------------------------------------------------------------------------------------------------------------------------
 
     Index index = 0;
 
+// dev-fwd_refactoring---------------------------------------------------------------------------
     trainable_layers_pointers(0)->insert_gradient(back_propagation.neural_network.layers(0),
                                                   index,
                                                   back_propagation.gradient);
+//  end dev-fwd_refactoring---------------------------------------------------------------------------
 
     index += trainable_layers_parameters_number(0);
 
@@ -1002,7 +1045,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
     type error_forward;
     type error_backward;
 
-    Tensor<type, 1> numerical_differentiation_gradient(parameters_number);
+    Tensor<type, 1> gradient_numerical_differentiation(parameters_number);
+    gradient_numerical_differentiation.setConstant(0);
 
     for(Index i = 0; i < parameters_number; i++)
     {
@@ -1032,10 +1076,10 @@ Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
 
        parameters_backward(i) += h;
 
-       numerical_differentiation_gradient(i) = (error_forward - error_backward)/(type(2)*h);
+       gradient_numerical_differentiation(i) = (error_forward - error_backward)/(type(2)*h);
     }
 
-    return numerical_differentiation_gradient;
+    return gradient_numerical_differentiation;
 }
 
 

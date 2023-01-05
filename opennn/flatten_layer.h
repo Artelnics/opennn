@@ -71,6 +71,7 @@ public:
     void set(const tinyxml2::XMLDocument&);
 
     void set_default();
+    void set_name(const string&);
 
     void set_parameters(const Tensor<type, 1>&, const Index&) final;
 
@@ -84,7 +85,7 @@ public:
 
     // Outputs
 
-//    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
     void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 

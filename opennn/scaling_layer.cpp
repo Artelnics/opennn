@@ -966,7 +966,7 @@ void ScalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 }
 
 
-/*
+
 /// Scales some values to produce some scaled values.
 /// @param inputs Set of inputs to the scaling layer.
 
@@ -1096,7 +1096,7 @@ void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
         throw invalid_argument(buffer.str());
     }
 }
-*/
+
 
 /// Returns a string with the expression of the scaling process when the none method is used.
 /// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.

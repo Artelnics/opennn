@@ -45,9 +45,12 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
+    // Check if works for convolutional
     const Index batch_samples_number = batch.get_batch_size();
 
-    const type coefficient = static_cast<type>(batch_samples_number);
+// This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
+
+    const type coefficient = batch_samples_number > 0 ? static_cast<type>(batch_samples_number) : 1;
 
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
@@ -94,7 +97,11 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
+     // Check if works for convolutional
      const Index batch_samples_number = batch.get_batch_size();
+
+//     This line was written in convolutional. Without it, batch samples number was 0.
+//     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 

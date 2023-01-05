@@ -5127,6 +5127,8 @@ void DataSet::set(const Index& new_samples_number,
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
 
+    // @todo check for 4d data
+
     data.resize(new_samples_number, new_variables_number);
 
     columns.resize(new_variables_number);
@@ -13684,8 +13686,11 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index rows_number = input_variables_dimensions(2);
+//        const Index columns_number = input_variables_dimensions(1);
+//        const Index rows_number = input_variables_dimensions(2);
+
+        const Index rows_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(2);
 
         TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
 

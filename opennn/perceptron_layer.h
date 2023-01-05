@@ -271,69 +271,69 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
 
-    explicit PerceptronLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
+     explicit PerceptronLayerForwardPropagation() : LayerForwardPropagation()
+     {
+     }
 
-    explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+     explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+         : LayerForwardPropagation()
+     {
+         set(new_batch_samples_number, new_layer_pointer);
+     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
+     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+     {
+         layer_pointer = new_layer_pointer;
 
-        batch_samples_number = new_batch_samples_number;
+         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
+         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        // Outputs
+         // Outputs
 
-        outputs_dimensions.resize(2);
-        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+         outputs_dimensions.resize(2);
+         outputs_dimensions.setValues({batch_samples_number, neurons_number});
 
-        // delete outputs_data;
+         // delete outputs_data;
 
-        outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+         outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
 
-        // Rest of quantities
+         // Rest of quantities
 
-        combinations.resize(batch_samples_number, neurons_number);
+         combinations.resize(batch_samples_number, neurons_number);
 
-        activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
+         activations_derivatives.resize(batch_samples_number, neurons_number);
+     }
 
-    void print() const
-    {
-        cout << "Combinations:" << endl;
-        cout << combinations.dimensions() << endl;
+     void print() const
+     {
+         cout << "Combinations:" << endl;
+         cout << combinations.dimensions() << endl;
 
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives.dimensions() << endl;
+         cout << "Activations derivatives:" << endl;
+         cout << activations_derivatives.dimensions() << endl;
 
 
-        cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions << endl;
+         cout << "Outputs dimensions:" << endl;
+         cout << outputs_dimensions << endl;
 
-        cout << "Outputs:" << endl;
-        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+         cout << "Outputs:" << endl;
+         cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
-        cout << "Combinations:" << endl;
-        cout << combinations << endl;
+         cout << "Combinations:" << endl;
+         cout << combinations << endl;
 
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
-    }
-    type* get_combinations_data()
-    {
-        return combinations.data();
+         cout << "Activations derivatives:" << endl;
+         cout << activations_derivatives << endl;
+     }
+     type* get_combinations_data()
+     {
+         return combinations.data();
 
-    }
+     }
 
-    Tensor<type, 2> combinations;
-    Tensor<type, 2> activations_derivatives;
+     Tensor<type, 2> combinations;
+     Tensor<type, 2> activations_derivatives;
 };
 
 

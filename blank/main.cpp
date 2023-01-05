@@ -29,10 +29,10 @@ int main(int argc, char *argv[])
     {
         cout << "Hello OpenNN" << endl;
 
-        cout << "Bye OpenNN!" << endl;
+
+        cout << "Good bye!" << endl;
 
         return 0;
-
     }
     catch (const exception& e)
     {

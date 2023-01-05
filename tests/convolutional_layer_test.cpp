@@ -980,6 +980,7 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
     cout << convolutional_layer_backpropagate.deltas << endl;
 */
+
 }
 
 
