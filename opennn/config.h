@@ -1,3 +1,8 @@
+
+#ifndef OPENNN_CONFIG_H
+#define OPENNN_CONFIG_H
+
+
 #include "half.hpp"
 
 #define NUMERIC_LIMITS_MIN 0.000001
@@ -5,8 +10,7 @@
 //#define OPENNN_MKL
 
 #ifdef OPENNN_MKL
-    #define EIGEN_USE_MKL_ALL
-    #include "mkl.h"
+    #include "../mkl/mkl.h"
 #endif
 
 //Eigen includes
@@ -15,15 +19,15 @@
 
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 
-#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 
 
 // For numeric limits
 
 #define NOMINMAX
 
-#ifndef EIGEN_USE_THREADS
+
 #define EIGEN_USE_THREADS
-#endif
+
 
 //#pragma warning(push, 0)
 #include "tinyxml2.h"
@@ -51,8 +55,12 @@
 
 namespace opennn
 {
-
+    using namespace std;
+    using namespace Eigen;
     using type = float;
 //    typedef double type;
 }
+
+
+#endif
 

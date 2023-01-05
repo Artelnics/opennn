@@ -22,8 +22,6 @@
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
-using namespace std;
-using namespace Eigen;
 
 int main()
 {
@@ -50,31 +48,34 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.perform_training();
 
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<type, 2> inputs(3, 4);
-        Tensor<type, 2> outputs;
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+
+        Tensor<type, 2> inputs(3, neural_network.get_inputs_number());
+        Tensor<type, 2> outputs(3, neural_network.get_outputs_number());
+
+        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
         inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
                           {type(6.4),type(3.2),type(4.5),type(1.5)},
                           {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        outputs = neural_network.calculate_outputs(inputs);
+
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << "\nInputs:\n" << inputs << endl;
 
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
-        cout << data_set.get_used_columns_indices() << endl;
-
 
         // Save results
 

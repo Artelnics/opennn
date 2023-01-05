@@ -24,6 +24,9 @@
 #include "perceptron_layer_test.h"
 #include "convolutional_layer_test.h"
 #include "pooling_layer_test.h"
+
+#include "flatten_layer_test.h"
+
 #include "scaling_layer_test.h"
 #include "unscaling_layer_test.h"
 #include "bounding_layer_test.h"
@@ -40,6 +43,7 @@
 #include "cross_entropy_error_test.h"
 
 #include "learning_rate_algorithm_test.h"
+#include "adaptive_moment_estimation_test.h"
 #include "gradient_descent_test.h"
 #include "stochastic_gradient_descent_test.h"
 #include "conjugate_gradient_test.h"
@@ -53,7 +57,6 @@
 #include "growing_neurons_test.h"
 #include "inputs_selection_test.h"
 #include "growing_inputs_test.h"
-#include "pruning_inputs_test.h"
 #include "genetic_algorithm_test.h"
 #include "correlations_test.h"
 #include "tensor_utilities_test.h"

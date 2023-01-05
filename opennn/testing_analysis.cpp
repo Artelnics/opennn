@@ -216,11 +216,15 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 
     // Calculate regression parameters
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     return linear_correlation(targets,outputs);
 }
@@ -228,6 +232,20 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>& target, const Tensor<type, 2>& output) const
 {
+#ifdef OPENNN_DEBUG
+
+    if(target.dimension(0) != output.dimension(0) || target.dimension(1) != output.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << LOG << endl
+               << "Targets and outputs dimensions must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
     const Index outputs_number = data_set_pointer->get_target_variables_number();
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
@@ -282,20 +300,24 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
         throw invalid_argument(buffer.str());
     }
 
-    const Tensor<type, 2> testing_inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> testing_inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> testing_targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> testing_inputs_dimensions = get_dimensions(testing_inputs);
+
+    Tensor<type, 2> testing_targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> testing_outputs = neural_network_pointer->calculate_outputs(testing_inputs);
+    Tensor<type, 2> testing_outputs;
+
+    testing_outputs = neural_network_pointer->calculate_outputs(testing_inputs.data(), testing_inputs_dimensions);
 
     // Approximation testing stuff
 
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
     for(Index i = 0;  i < outputs_number; i++)
-    {        
+    {
         const Tensor<type,1> targets = testing_targets.chip(i,1);
         const Tensor<type,1> outputs = testing_outputs.chip(i,1);
 
@@ -360,15 +382,19 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
 
@@ -444,13 +470,19 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
 
@@ -469,8 +501,6 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     // Error data
 
@@ -494,12 +524,17 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
 {
     // Data set
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     // Error descriptives
 
@@ -520,12 +555,17 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 {
     // Data set
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     // Error descriptives
 
@@ -783,13 +823,17 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(4);
 
@@ -833,13 +877,17 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(6);
 
@@ -894,13 +942,17 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(5);
 
@@ -944,13 +996,17 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(4);
 
@@ -994,13 +1050,17 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(6);
 
@@ -1046,13 +1106,17 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(5);
 
@@ -1106,13 +1170,17 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(4);
 
@@ -1167,13 +1235,17 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(6);
 
@@ -1229,13 +1301,17 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     Tensor<type, 1> errors(4);
 
@@ -1427,18 +1503,14 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 
 #endif
 
-    type numerador = 0;
     const Tensor<type, 0> targets_mean = targets.mean();
-    type  denominador = 0;
 
-    // @todo Implementation with tensor operations
-    for(Index i = 0; i < outputs.size(); i++)
-    {
-        numerador += (targets(i) - outputs(i))*(targets(i) - outputs(i));
-        denominador += (targets(i) - targets_mean(0))*(targets(i) - targets_mean(0));
-    }
+    Tensor<type, 0> numerator = ((targets-outputs)*(targets-outputs)).sum();
+    Tensor<type, 0> denominator = ((- targets_mean(0) + targets)*(- targets_mean(0) + targets)).sum();
 
-    type determination_coefficient = type(1) - (numerador/denominador);
+    denominator(0) == 0 ? denominator(0) = 1 : 0;
+
+    type determination_coefficient = type(1) - (numerator(0)/denominator(0));
 
     return determination_coefficient;
 };
@@ -1455,7 +1527,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 {
     const Index testing_samples_number = targets.dimension(0);
 
-    Tensor<Index, 2> confusion(2, 2);
+    Tensor<Index, 2> confusion(3, 3);
 
     Index true_positive = 0;
     Index false_negative = 0;
@@ -1470,7 +1542,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         target = targets(i,0);
         output = outputs(i,0);
 
-        if(target > decision_threshold && output > decision_threshold)
+        if(target >= decision_threshold && output >= decision_threshold)
         {
             true_positive++;
         }
@@ -1478,7 +1550,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             false_negative++;
         }
-        else if(target <= decision_threshold && output > decision_threshold)
+        else if(target < decision_threshold && output >= decision_threshold)
         {
             false_positive++;
         }
@@ -1502,6 +1574,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     confusion(0,1) = false_negative;
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
+
+    confusion(0,2) = true_positive + false_negative;
+    confusion(1,2) = false_positive + true_negative;
+    confusion(2,0) = true_positive + false_positive;
+    confusion(2,1) = true_negative + false_negative;
+    confusion(2,2) = testing_samples_number;
 
     const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
 
@@ -1540,8 +1618,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         throw invalid_argument(buffer.str());
     }
 
-    Tensor<Index, 2> confusion(targets_number, targets_number);
+    Tensor<Index, 2> confusion(targets_number + 1, targets_number + 1);
     confusion.setZero();
+    confusion(targets_number, targets_number) = samples_number;
 
     Index target_index = 0;
     Index output_index = 0;
@@ -1551,7 +1630,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
 
-        confusion(target_index,output_index)++;
+        confusion(target_index, output_index)++;
+        confusion(target_index, targets_number)++;
+        confusion(targets_number, output_index)++;
     }
 
     return confusion;
@@ -1629,11 +1710,17 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    // Neural network
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     if(outputs_number == 1)
     {
@@ -1712,11 +1799,15 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     RocAnalysisResults roc_analysis_results;
 
@@ -1798,25 +1889,13 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         throw invalid_argument(buffer.str());
     }
 
-    const Index maximum_points_number = 501;
+    const Index maximum_points_number = 200;
 
-    Index step_size;
-
-    const Index testing_samples_number = targets.dimension(0);
     Index points_number;
 
-    if(testing_samples_number > maximum_points_number)
-    {
-        step_size = static_cast<Index>(static_cast<type>(testing_samples_number)/static_cast<type>(maximum_points_number));
-        points_number = static_cast<Index>(static_cast<type>(testing_samples_number)/static_cast<type>(step_size));
-    }
-    else
-    {
-        points_number = testing_samples_number;
-        step_size = 1;
-    }
+    points_number = maximum_points_number;
 
-    if(targets.dimension(1) != 1)
+   if(targets.dimension(1) != 1)
     {
         ostringstream buffer;
 
@@ -1845,49 +1924,67 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
 
-    Tensor<type, 1> sorted_targets(testing_samples_number);
-    Tensor<type, 1> sorted_outputs(testing_samples_number);
-
-    for(Index i = 0; i < testing_samples_number; i++)
-    {
-        sorted_targets(i) = targets(sorted_indices(i),0);
-        sorted_outputs(i) = outputs(sorted_indices(i),0);
-    }
-
-    Tensor<type, 2> roc_curve(points_number+1, 3);
+    Tensor<type, 2> roc_curve(points_number + 1, 3);
     roc_curve.setZero();
 
-     #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 
-    for(Index i = 0; i < static_cast<Index>(points_number); i++)
+    for(Index i = 1; i < static_cast<Index>(points_number); i++)
     {
-        Index positives = 0;
-        Index negatives = 0;
+        const type threshold = i * (1/static_cast<type>(points_number));
 
-        const Index current_index = i*step_size;
+        Index true_positive = 0;
+        Index false_negative = 0;
+        Index false_positive = 0;
+        Index true_negative = 0;
 
-        const type threshold = sorted_outputs(current_index);
+        type target;
+        type output;
 
-        for(Index j = 0; j < static_cast<Index>(current_index); j++)
+        for(Index j = 0; j < targets.size(); j++)
         {
-             if(sorted_outputs(j) < threshold && static_cast<double>(sorted_targets(j)) == 1.0)
-             {
-                 positives++;
-             }
-             if(sorted_outputs(j) < threshold && sorted_targets(j) < type(NUMERIC_LIMITS_MIN))
-             {
-                 negatives++;
-             }
+            target = targets(j,0);
+            output = outputs(j,0);
+
+            if(target >= threshold && output >= threshold)
+            {
+                true_positive++;
+            }
+            else if(target >= threshold && output < threshold)
+            {
+                false_negative++;
+            }
+            else if(target < threshold && output >= threshold)
+            {
+                false_positive++;
+            }
+            else if(target < threshold && output < threshold)
+            {
+                true_negative++;
+            }
         }
 
-        roc_curve(i,0) = static_cast<type>(positives)/static_cast<type>(total_positives);
-        roc_curve(i,1) = static_cast<type>(negatives)/static_cast<type>(total_negatives);
+        roc_curve(i,0) = 1 - static_cast<type>(true_positive)/(static_cast<type>(true_positive + false_negative));
+        roc_curve(i,1) = static_cast<type>(true_negative)/(static_cast<type>(true_negative + false_positive));
         roc_curve(i,2) = static_cast<type>(threshold);
+
+        if(isnan(roc_curve(i,0)) )
+        {
+            roc_curve(i,0) = 1;
+        }
+        if( isnan(roc_curve(i,1)))
+        {
+            roc_curve(i,1) = 0;
+        }
     }
 
-    roc_curve(points_number, 0) = type(1);
-    roc_curve(points_number, 1) = type(1);
-    roc_curve(points_number, 2) = type(1);
+    roc_curve(0,0) = 0;
+    roc_curve(0,1) = 0;
+    roc_curve(0,2) = 0;
+
+    roc_curve(points_number,0) = 1;
+    roc_curve(points_number,1) = 1;
+    roc_curve(points_number,2) = 1;
 
     return roc_curve;
 }
@@ -2017,123 +2114,6 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     return confidence_limit;
 }
 
-/*
-/// Returns the confidence limit for the area under a roc curve.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param area_under_curve Area under curve.
-
-type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type& area_under_curve) const
-{
-    const Tensor<Index, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
-
-    const Index total_positives = positives_negatives_rate[0];
-    const Index total_negatives = positives_negatives_rate[1];
-
-    if(total_positives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const.\n"
-               << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(total_negatives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const.\n"
-               << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const type Q_1 = area_under_curve/(static_cast<type>(2.0) -area_under_curve);
-    const type Q_2 = (static_cast<type>(2.0) *area_under_curve*area_under_curve)/(static_cast<type>(1.0) *area_under_curve);
-
-    const type confidence_limit = static_cast<type>(1.64485) *sqrt((area_under_curve*(static_cast<type>(1.0) - area_under_curve)
-                                  + (type(total_positives)-static_cast<type>(1.0))*(Q_1-area_under_curve*area_under_curve)
-                                  + (type(total_negatives)-static_cast<type>(1.0))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives)));
-
-    return confidence_limit;
-}
-*/
-/*
-/// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-
-type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
-{
-    const Index maximum_points_number = 1000;
-
-    Index step_size;
-
-    const Index testing_samples_number = targets.dimension(0);
-    Index points_number;
-
-    if(testing_samples_number > maximum_points_number)
-    {
-        step_size = testing_samples_number/maximum_points_number;
-        points_number = testing_samples_number/step_size;
-    }
-    else
-    {
-        points_number = testing_samples_number;
-        step_size = 1;
-    }
-
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
-
-    for(Index i = 0; i < targets_outputs.dimension(1); i++)
-    {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i - targets.dimension(1));
-        }
-    }
-
-    // Sort by ascending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
-    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
-
-    const Tensor<type, 2> roc_curve = calculate_roc_curve(sorted_targets, sorted_outputs);
-
-    type threshold = type(0);
-    type optimal_threshold = type(0.5);
-
-    type minimun_distance = numeric_limits<type>::max();
-    type distance;
-
-    Index current_index;
-
-    for(Index i = 0; i < points_number; i++)
-    {
-        current_index = i*step_size;
-
-        threshold = sorted_outputs(current_index, 0);
-
-        distance = static_cast<type>(sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1))));
-
-        if(distance < minimun_distance)
-        {
-            optimal_threshold = threshold;
-
-            minimun_distance = distance;
-        }
-    }
-
-    return optimal_threshold;
-}
-*/
 
 /// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
 /// @param targets Testing target data.
@@ -2224,10 +2204,16 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
+
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
 
@@ -2436,10 +2422,15 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
     const Tensor<type, 2> lift_chart = calculate_lift_chart(cumulative_gain);
@@ -2534,10 +2525,15 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     TestingAnalysis::KolmogorovSmirnovResults Kolmogorov_Smirnov_results;
 
@@ -2645,10 +2641,15 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Tensor<type, 2> calibration_plot = calculate_calibration_plot(targets, outputs);
 
@@ -2816,10 +2817,15 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Tensor<Index, 1> testing_indices = data_set_pointer->get_testing_samples_indices();
 
@@ -2986,14 +2992,19 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
 }
 
 
-Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_tests() const
+Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() const
 {
     Tensor<type, 1> multiple_classification_tests(2);
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Tensor<Index, 2> confusion_matrix = calculate_confusion_multiple_classification(targets, outputs);
 
@@ -3062,7 +3073,7 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
 
 void TestingAnalysis::save_multiple_classification_tests(const string& classification_tests_file_name) const
 {
-    const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_tests();
+    const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_precision();
 
     std::ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
 
@@ -3122,10 +3133,15 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Tensor<Index, 1> testing_indices = data_set_pointer->get_testing_samples_indices();
 
@@ -3370,9 +3386,9 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";
-/*    
+/*
     classification_statistics_file << misclassified_numerical_probabilities.mean() << ",";
-*/    
+*/
     classification_statistics_file << standard_deviation(misclassified_numerical_probabilities);
 }
 
@@ -3504,10 +3520,15 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
 #endif
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
@@ -3580,11 +3601,15 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Tensor<type, 2> errors = targets - outputs;
 
@@ -3904,6 +3929,8 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 }
 
 
+
+
 void TestingAnalysis::print_binary_classification_tests() const
 {
     const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
@@ -3913,6 +3940,137 @@ void TestingAnalysis::print_binary_classification_tests() const
     cout << "Error rate              : " << binary_classification_tests[1] << endl;
     cout << "Sensitivity             : " << binary_classification_tests[2] << endl;
     cout << "Specificity             : " << binary_classification_tests[3] << endl;
+}
+
+
+/// Returns the results of a multiple classification test in a single matrix.
+/// The size of that vector is 3 *(number of target variables + 2).
+/// The columns are:
+/// <ul>
+/// <li> Precision
+/// <li> Recall
+/// <li> F1-score
+/// </ul>
+/// The 2 lasts row represents the normal and weighted average of each test.
+
+Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
+{
+
+    const Index inputs_number = neural_network_pointer->get_inputs_number();
+
+    const Index targets_number = data_set_pointer->get_target_variables_number();
+
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+#ifdef OPENNN_DEBUG
+
+    if(!data_set_pointer)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class." << endl
+               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
+               << "Data set is nullptr." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(inputs_number != data_set_pointer->get_input_variables_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class." << endl
+               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
+               << "Number of inputs in neural network is not equal to number of inputs in data set." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
+    Tensor<type,2> multiple_classification_tests(targets_number + 2,3);
+
+    const Tensor<Index, 2> confusion = calculate_confusion();
+
+    Index true_positives = 0;
+    Index true_negatives = 0;
+    Index false_positives = 0;
+    Index false_negatives = 0;
+
+    type total_precision = 0;
+    type total_recall = 0;
+    type total_f1_score= 0;
+
+    type total_weighted_precision = 0;
+    type total_weighted_recall = 0;
+    type total_weighted_f1_score= 0;
+
+    Index total_samples = 0;
+
+    for(Index target_index = 0; target_index < targets_number; target_index++)
+    {
+        true_positives = confusion(target_index, target_index);
+
+        Tensor<Index,0> row_sum = confusion.chip(target_index,0).sum();
+        Tensor<Index,0> column_sum = confusion.chip(target_index,1).sum();
+
+        false_negatives = row_sum(0) - true_positives;
+        false_positives= column_sum(0) - true_positives;
+
+        // Precision
+
+        type precision;
+        if(true_positives + false_positives == 0)
+            precision = type(0);
+        else
+            precision = static_cast<type>(true_positives) /static_cast<type>(true_positives + false_positives);
+
+        // Recall
+
+        type recall;
+
+        if(true_positives + false_negatives == 0)
+            recall = type(0);
+        else
+            recall = static_cast<type>(true_positives)/static_cast<type>(true_positives + false_negatives);
+
+        // F1-Score
+
+        type f1_score;
+
+        if(precision + recall == 0)
+            f1_score = type(0);
+        else
+            f1_score = static_cast<type>(2*precision*recall)/static_cast<type>(precision + recall);
+
+        // Save results
+
+        multiple_classification_tests(target_index, 0) = precision;
+        multiple_classification_tests(target_index, 1) = recall;
+        multiple_classification_tests(target_index, 2) = f1_score;
+
+        total_precision += precision;
+        total_recall += recall;
+        total_f1_score += f1_score;
+
+        total_weighted_precision += precision * row_sum(0);
+        total_weighted_recall += recall * row_sum(0);
+        total_weighted_f1_score += f1_score * row_sum(0);
+
+        total_samples += row_sum(0);
+    }
+
+    // Averages
+
+    multiple_classification_tests(targets_number, 0) = total_precision/targets_number;
+    multiple_classification_tests(targets_number, 1) = total_recall/targets_number;
+    multiple_classification_tests(targets_number, 2) = total_f1_score/targets_number;
+
+    multiple_classification_tests(targets_number + 1, 0) = total_weighted_precision/total_samples;
+    multiple_classification_tests(targets_number + 1, 1) = total_weighted_recall/total_samples;
+    multiple_classification_tests(targets_number + 1, 2) = total_weighted_f1_score/total_samples;
+
+    return multiple_classification_tests;
 }
 
 
@@ -3964,11 +4122,15 @@ type TestingAnalysis::calculate_logloss() const
     }
 
 #endif
+    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    const Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+
+    Tensor<type, 2> outputs;
+
+    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 

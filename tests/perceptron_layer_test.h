@@ -89,10 +89,24 @@ private:
 
     PerceptronLayer perceptron_layer;
 
-    PerceptronLayerForwardPropagation forward_propagation;
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation;
     PerceptronLayerBackPropagation back_propagation;
 
     NumericalDifferentiation numerical_differentiation;
+
+    Tensor<type, 2> get_activations(const Tensor<type, 2>&combinations) const
+    {
+        Tensor<type, 2> combinations_copy(combinations);
+        Tensor<type, 2> activations(combinations);
+
+        Tensor<Index, 1> combinations_dims = get_dimensions(combinations);
+        Tensor<Index, 1> activations_dims = get_dimensions(activations);
+
+        perceptron_layer.calculate_activations(combinations_copy.data(), combinations_dims,
+                                               activations.data(), activations_dims);
+
+        return activations;
+    }
 };
 
 

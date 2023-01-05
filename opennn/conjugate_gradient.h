@@ -192,7 +192,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     virtual void print() const;
 
-    ConjugateGradient* conjugate_gradient_pointer = nullptr;
+    ConjugateGradient* conjugate_gradient_pointer = nullptr;  
 
     Tensor<type, 1> parameters_increment;
 

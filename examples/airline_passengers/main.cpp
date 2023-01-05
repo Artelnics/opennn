@@ -20,14 +20,12 @@
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
-using namespace std;
-using namespace Eigen;
 
 int main()
 {
     try
     {
-        cout << "OpenNN. Blank application." << endl;
+        cout << "OpenNN. Ailine passengers example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
 
@@ -46,6 +44,9 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
+        cout << "Input variables number: " << input_variables_number << endl;
+        cout << "Target variables number: " << target_variables_number << endl;
+
         // Neural network
 
         const Index hidden_neurons_number = 10;
@@ -58,24 +59,28 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+//        neural_network.print();
 
         const TrainingResults training_results = training_strategy.perform_training();
 
         // Calculate outputs
 
-        Tensor<type, 2> input_data(4,3);
-
-        input_data.setValues({
-                                 {150,146,135},
-                                 {124,253,352},
-                                 {124,253,352},
-                                 {124,253,352}
+        Tensor<type, 2> input(4,2);
+        Tensor<Index, 1> input_dims = get_dimensions(input);
+        input.setValues({
+                                 {150,146},
+                                 {124,253},
+                                 {124,264},
+                                 {124,221}
                              });
 
-        Tensor<type, 2> output_data = neural_network.calculate_outputs(input_data);
+        Tensor<type, 2> output;
 
-        cout << "Input data:\n" << input_data << "\nPredictions:\n" << output_data << endl;
+        output = neural_network.calculate_outputs(input.data(), input_dims);
+
+        cout << "Input data:\n" << input << "\nPredictions:\n" << output << endl;
 
         // Save results
 

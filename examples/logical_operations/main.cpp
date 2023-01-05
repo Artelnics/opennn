@@ -56,35 +56,37 @@ int main()
         // Print results to screen
 
         Tensor<type, 2> inputs(1,2);
-        Tensor<type, 2> outputs(1,6);
+        Tensor<type, 2> outputs;
+
+        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
         cout << "\nX Y\tAND\tOR\tNAND\tNOR\tXOR\tXNOR\n" << endl;
 
         inputs(0,0) = type(1);
         inputs(0,1) = type(1);
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(1);
         inputs(0,1) = type(0.0);
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(0.0);
         inputs(0,1) = type(1);
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(0.0);
         inputs(0,1) = type(0.0);
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
         cout << inputs << " " << outputs << endl;
 

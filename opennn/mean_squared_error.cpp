@@ -45,15 +45,27 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    // Not working for convolutional. Check input variables dimensions?
+    // Check if works for convolutional
+    const Index batch_samples_number = batch.get_batch_size();
 
-    const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
+// This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
 
     const type coefficient = batch_samples_number > 0 ? static_cast<type>(batch_samples_number) : 1;
 
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: mean_squared_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -63,7 +75,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    const Index batch_samples_number = batch.inputs_2d.dimension(0);
+    const Index batch_samples_number = batch.get_batch_size();
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
@@ -83,59 +95,31 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+     const LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
+     // Check if works for convolutional
+     const Index batch_samples_number = batch.get_batch_size();
+
+//     This line was written in convolutional. Without it, batch samples number was 0.
+//     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
-     switch(output_layer_back_propagation->layer_pointer->get_type())
+     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+
+     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+     Tensor<type, 2> output_deltas(deltas);
+
+     if(has_NAN(output_deltas))
      {
-     case Layer::Type::Perceptron:
-     {
-         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+         ostringstream buffer;
 
-         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+         buffer << "OpenNN Exception: mean_squared_error class.\n"
+                << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+                << "NAN values found in deltas.";
 
-         cout << "coefficient: " << coefficient << endl;
-         cout << "BP errors: " << endl << back_propagation.errors << endl;
-
-         cout << "MSE Errors: " << endl << back_propagation.errors << endl;
-
-         cout << "output delta: " << endl <<  perceptron_layer_back_propagation->delta << endl;
-         system("pause");
-     }
-         break;
-
-     case Layer::Type::Probabilistic:
-     {
-         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
-
-         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     case Layer::Type::Recurrent:
-     {
-         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
-
-         recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     case Layer::Type::LongShortTermMemory:
-     {
-         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
-
-         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
-
-     default: break;
+         throw invalid_argument(buffer.str());
      }
 }
 
@@ -152,37 +136,9 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;  
 
-    switch(output_layer_pointer->get_type())
-    {
-    case Layer::Type::Perceptron:
-    {
-        PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
-                = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
-
-        copy(loss_index_back_propagation.errors.data(),
-             loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-             perceptron_layer_back_propagation->delta.data());
-
-        divide_columns(perceptron_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
-    }
-        break;
-
-    case Layer::Type::Probabilistic:
-    {
-        ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
-                = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
-
-        copy(loss_index_back_propagation.errors.data(),
-             loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-             probabilistic_layer_back_propagation->delta.data());
-
-        divide_columns(probabilistic_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
-    }
-        break;
-
-    default:
+    if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
@@ -191,7 +147,12 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
         throw invalid_argument(buffer.str());
     }
-    }
+
+    copy(loss_index_back_propagation.errors.data(),
+         loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
+         output_layer_back_propagation->deltas.data());
+
+    divide_columns(output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
 }
 
 
@@ -223,7 +184,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
      check();
      #endif
 
-     const Index batch_samples_number = batch.inputs_2d.dimension(0);
+     const Index batch_samples_number = batch.get_batch_size();
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 

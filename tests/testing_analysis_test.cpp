@@ -252,19 +252,16 @@ void TestingAnalysisTest::test_linear_regression()
     samples_number = 1;
     inputs_number = 1;
     targets_number = 1;
+    neurons_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
     data_set.set_testing();
-    /// @todo
-    //   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
     neural_network.set_parameters_constant(type(0));
 
     linear_correlation = testing_analysis.linear_correlation();
-
-    cout << linear_correlation(0).a << endl;
-    cout << linear_correlation(0).b << endl;
-    cout << linear_correlation(0).r << endl;
 
     assert_true(linear_correlation.size() == 1, LOG);
     assert_true(isnan(linear_correlation(0).a), LOG);
@@ -284,11 +281,15 @@ void TestingAnalysisTest::test_save()
 
 
 void TestingAnalysisTest::test_perform_linear_regression()
-{/// @todo
-
+{
     cout << "test_perform_linear_regression\n";
-    /*
+
     // DataSet
+
+    samples_number = 1;
+    inputs_number = 1;
+    neurons_number = 2;
+    targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
 
@@ -303,19 +304,11 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Testing Analysis
 
-    Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> linear_regression_analysis;
+    Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
 
-    // Test
+    assert_true(goodness_of_fit_analysis.size() == 1 , LOG);
+    assert_true(goodness_of_fit_analysis[0].determination - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    linear_regression_analysis = testing_analysis.perform_linear_regression_analysis();
-
-    Tensor<type, 1> test(1);
-    test.setValues({ type(0)});
-
-    assert_true(linear_regression_analysis.size() == 1 , LOG);
-    //assert_true(linear_regression_analysis[0].targets(0) == test(0) , LOG);
-    assert_true(linear_regression_analysis[0].correlation - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
 }
 
 
@@ -347,11 +340,24 @@ void TestingAnalysisTest::test_calculate_confusion()
 
     Tensor<Index, 0> sum = confusion.sum();
 
-    assert_true(sum(0) == 4, LOG);
+    assert_true(sum(0) == 4 + 12, LOG);
+
+    assert_true(confusion.dimension(0) == 4, LOG);
+    assert_true(confusion.dimension(1) == 4, LOG);
     assert_true(confusion(0,0) == 1, LOG);
     assert_true(confusion(1,1) == 2, LOG);
     assert_true(confusion(2,2) == 1, LOG);
-    assert_true(confusion(0,2) == 0, LOG);
+
+    assert_true(confusion(0,3) == confusion(0,0) + confusion(0,1) + confusion(0,2), LOG);
+    assert_true(confusion(1,3) == confusion(1,0) + confusion(1,1) + confusion(1,2), LOG);
+    assert_true(confusion(2,3) == confusion(2,0) + confusion(2,1) + confusion(2,2), LOG);
+
+    assert_true(confusion(3,0) == confusion(0,0) + confusion(1,0) + confusion(2,0), LOG);
+    assert_true(confusion(3,1) == confusion(0,1) + confusion(1,1) + confusion(2,1), LOG);
+    assert_true(confusion(3,2) == confusion(0,2) + confusion(1,2) + confusion(2,2), LOG);
+
+    assert_true(confusion(3,3) == 4, LOG);
+
 
 }
 
@@ -374,12 +380,27 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
     neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis
-    /// @todo
-    /*
+
    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
-*/
+
+   assert_true(binary[0] == 0 , LOG);
+   assert_true(binary[1] == 1 , LOG);
+   assert_true(binary[2] == 0 , LOG);
+   assert_true(binary[3] == 0 , LOG);
+   assert_true(binary[4] == 0 , LOG);
+   assert_true(binary[5] == 0 , LOG);
+   assert_true(binary[6] == 0 , LOG);
+   assert_true(binary[7] == 0 , LOG);
+   assert_true(binary[8] == 1 , LOG);
+   assert_true(binary[9] == 1 , LOG);
+   assert_true(binary[10] == 0 , LOG);
+   assert_true(binary[11] == 0 , LOG);
+   assert_true(binary[12] == 0 , LOG);
+   assert_true(binary[13] == -1 , LOG);
+   assert_true(binary[14] == -1 , LOG);
+
 }
 
 
@@ -442,7 +463,7 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve.dimension(1) == 3, LOG);
-    assert_true(roc_curve.dimension(0) == 5, LOG);
+    assert_true(roc_curve.dimension(0) == 201, LOG);
 
     assert_true(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -474,7 +495,7 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve.dimension(1) == 3, LOG);
-    assert_true(roc_curve.dimension(0) == 5, LOG);
+    assert_true(roc_curve.dimension(0) == 201, LOG);
 
     assert_true(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -518,8 +539,6 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
     assert_true(area_under_curve - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
 
     targets.resize(4,1);
 
@@ -1128,9 +1147,9 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     testing_indices.resize(9);
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
-    /// @todo fails when running "suite" test
-    /*
     multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+
+    assert_true(multiple_classification_rates.size() == 9, LOG);
 
     assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
     assert_true(multiple_classification_rates(0,1)(0) == 3, LOG);
@@ -1141,7 +1160,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     assert_true(multiple_classification_rates(2,0)(0) == 8, LOG);
     assert_true(multiple_classification_rates(2,1)(0) == 5, LOG);
     assert_true(multiple_classification_rates(2,2)(0) == 2, LOG);
-*/}
+}
 
 
 void TestingAnalysisTest::run_test_case()

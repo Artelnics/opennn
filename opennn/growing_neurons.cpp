@@ -171,7 +171,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {               
-        if(display == 0) cout << endl << "Neurons selection epoch: " << epoch << endl;
+        if(display) cout << endl << "Neurons selection epoch: " << epoch << endl;
 
         // Neural network
 
@@ -185,8 +185,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         // Loss index
 
-        if(display) cout << "Neurons number: " << neurons_number << endl;
-
         type minimum_training_error = numeric_limits<type>::max();
         type minimum_selection_error = numeric_limits<type>::max();
 
@@ -194,7 +192,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             neural_network->set_parameters_random();
 
-            training_results = training_strategy_pointer->perform_training();            
+            training_results = training_strategy_pointer->perform_training();
 
             if(display)
             {

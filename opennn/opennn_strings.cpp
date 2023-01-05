@@ -50,7 +50,21 @@ Index count_tokens(string& str, const char& separator)
 
 Index count_tokens(const string& s, const char& c)
 {
-    return static_cast<Index>(count(s.begin(), s.end(), c) + 1);
+    string str_copy = s;
+
+    Index tokens_number = count(s.begin(), s.end(), c);
+
+    if(s[0] == c)
+    {
+        tokens_number--;
+    }
+    if(s[s.size() - 1] == c)
+    {
+        tokens_number--;
+    }
+
+    return (tokens_number+1);
+
 }
 
 
@@ -60,8 +74,6 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
-    //    const string new_string = get_trimmed(str);
-
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
@@ -163,6 +175,76 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 }
 
 
+/// Returns the number of strings delimited by separator.
+/// If separator does not match anywhere in the string, this method returns 0.
+/// @param str String to be tokenized.
+
+
+Index count_tokens(const string& s, const string& sep)
+{
+    Index tokens_number = 0;
+
+    std::string::size_type pos = 0;
+
+    while ( s.find(sep, pos) != std::string::npos )
+    {
+        pos = s.find(sep, pos);
+        ++ tokens_number;
+        pos += sep.length();
+    }
+
+    if(s.find(sep,0) == 0)
+    {
+        tokens_number--;
+    }
+    if(pos == s.length())
+    {
+        tokens_number--;
+    }
+
+    return (tokens_number+1);
+}
+
+
+/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
+/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
+/// @param str String to be tokenized.
+
+Tensor<string, 1> get_tokens(const string& s, const string& sep)
+{
+    const Index tokens_number = count_tokens(s, sep);
+
+    Tensor<string,1> tokens(tokens_number);
+
+    string str = s;
+    size_t pos = 0;
+    size_t last_pos = 0;
+    Index i = 0;
+
+    while ((pos = str.find(sep,pos)) != string::npos)
+    {
+        if(pos == 0) // Skip first position
+        {
+            pos += sep.length();
+            last_pos = pos;
+            continue;
+        }
+
+        tokens(i) = str.substr(last_pos, pos - last_pos);
+
+        pos += sep.length();
+        last_pos = pos;
+        i++;
+    }
+
+    if(last_pos != s.length()) // Reading last element
+    {
+        tokens(i) = str.substr(last_pos, s.length() - last_pos);
+    }
+
+    return tokens;
+}
+
 /// Returns a new vector with the elements of this string vector casted to type.
 
 Tensor<type, 1> to_type_vector(const string& str, const char& separator)
@@ -191,6 +273,42 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
     return type_vector;
 }
+
+
+
+Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
+{
+    string result = " ";
+
+    for(Index i = 0; i < tokens.size(); i++)
+    {
+        if( !contains_substring(result, " " + tokens(i) + " ") )
+        {
+            result += tokens(i) + " ";
+        }
+    }
+
+    return get_tokens(result,' ');
+};
+
+
+
+Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
+{
+    Tensor<string, 1> unique_elements = get_unique_elements(tokens);
+
+    const Index unique_size = unique_elements.size();
+
+    Tensor<Index, 1> unique_count(unique_size);
+
+    for(Index i = 0; i < unique_size; i++)
+    {
+        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements(i)));
+    }
+
+    return unique_count;
+};
+
 
 
 /// Returns true if the string passed as argument represents a number, and false otherwise.
@@ -297,6 +415,78 @@ bool is_date_time_string(const string& str)
     {
         return false;
     }
+}
+
+
+/// Return true if word is a email, and false otherwise.
+/// @param word Word to check.
+
+bool is_email(const string& word)
+{
+    // define a regular expression
+    const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
+
+    // try to match the string with the regular expression
+    return regex_match(word, pattern);
+}
+
+
+/// Return true if word contains a number, and false otherwise.
+/// @param word Word to check.
+
+bool contains_number(const string& word)
+{
+    return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
+}
+
+
+/// Returns true if a word starting with a given substring, and false otherwise.
+/// @param word Word to check.
+/// @param starting Substring to comparison given word.
+
+bool starts_with(const string& word, const string& starting)
+{
+    if(starting.length() > word.length() || starting.length() == 0)
+    {
+        return false;
+    }
+
+    return(word.substr(0,starting.length()) == starting);
+}
+
+
+/// Returns true if a word ending with a given substring, and false otherwise.
+/// @param word Word to check.
+/// @param ending Substring to comparison given word.
+
+bool ends_with(const string& word, const string& ending)
+{
+    if(ending.length() > word.length())
+    {
+        return false;
+    }
+
+    return(word.substr(word.length() - ending.length()) == ending);
+}
+
+
+/// Returns true if a word ending with a given substring Tensor, and false otherwise.
+/// @param word Word to check.
+/// @param ending Substring Tensor with possibles endings words.
+
+bool ends_with(const string& word, const Tensor<string,1>& endings)
+{
+    const Index endings_size = endings.size();
+
+    for(Index i = 0; i < endings_size; i++)
+    {
+        if(ends_with(word,endings[i]))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
@@ -695,6 +885,130 @@ bool contains_substring(const string& str, const string& sub_str)
 }
 
 
+ ///Replaces all apprearances of a substring with another string
+ ///@param s
+ ///@param toReplace
+ ///@param replaceWith
+
+void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith) {
+    std::string buf;
+
+    std::size_t pos = 0;
+    std::size_t prevPos;
+
+    // Reserves rough estimate of final size of string.
+    buf.reserve(s.size());
+
+    while (true) {
+
+        prevPos =    pos;
+        pos = s.find(toReplace, pos);
+
+        if (pos == std::string::npos)
+            break;
+
+        buf.append(s, prevPos, pos - prevPos);
+        if (buf.back() == '_')
+        {
+            buf += toReplace;
+            pos += toReplace.size();
+
+        }else
+        {
+            buf += replaceWith;
+            pos += toReplace.size();
+
+        }
+    }
+
+    buf.append(s, prevPos, s.size() - prevPos);
+    s.swap(buf);
+}
+
+
+/// Replaces all apprearances non allowed programming characters of a substring with allowed characters
+/// \brief replace_non_allowed_programming_characters
+/// \param s
+/// \return
+string replace_non_allowed_programming_characters(std::string& s)
+{
+    string out = "";
+    if (s[0] == '$')
+        out=s;
+
+    for (char& c: s)
+    {
+        if (c=='/'){ out+="_div_"; }
+        if (c=='*'){ out+="_mul_"; }
+        if (c=='+'){ out+="_sum_"; }
+        if (c=='-'){ out+="_res_"; }
+        if (c=='='){ out+="_equ_"; }
+        if (c=='!'){ out+="_not_"; }
+        if (c=='<'){ out+="_lower_" ; }
+        if (c=='>'){ out+="_higher_"; }
+        if (isalnum(c)!=0){ out += c; }
+        if (isalnum(c)==0){ out+='_'; }
+    }
+
+    return out;
+}
+
+
+vector<string> get_words_in_a_string(string str)
+{
+    vector<string> output;
+    string word = "";
+
+    for (auto x : str)
+    {
+        if (isalnum(x))
+        {
+            word = word + x;
+        }else if (x=='_')
+        {
+            word = word + x;
+        }
+        else
+        //if (x == ' ')
+        {
+            output.push_back(word);
+            word = "";
+        }
+    }
+
+    output.push_back(word);
+    return output;
+}
+
+
+///Returns the number of apprearances of a substring
+///@brief WordOccurrence
+///@param sentence
+///@param word
+///@return
+int WordOccurrence(char *sentence, char *word)
+{
+    int slen = strlen(sentence);
+    int wordlen = strlen(word);
+    int count = 0;
+    int i, j;
+
+    for(i=0; i<slen; i++)
+    {
+        for(j=0; j<wordlen; j++)
+        {
+            if(sentence[i+j]!=word[j])
+            break;
+        }
+        if(j==wordlen)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+
 /// Removes whitespaces from the start and the end of the string passed as argument.
 /// This includes the ASCII characters "\t", "\n", "\v", "\f", "\r", and " ".
 /// @param str String to be checked.
@@ -705,11 +1019,20 @@ void trim(string& str)
 
     str.erase(0, str.find_first_not_of(' '));
     str.erase(0, str.find_first_not_of('\t'));
+    str.erase(0, str.find_first_not_of('\n'));
+    str.erase(0, str.find_first_not_of('\r'));
+    str.erase(0, str.find_first_not_of('\f'));
+    str.erase(0, str.find_first_not_of('\v'));
 
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
     str.erase(str.find_last_not_of('\t') + 1);
+    str.erase(str.find_last_not_of('\n') + 1);
+    str.erase(str.find_last_not_of('\r') + 1);
+    str.erase(str.find_last_not_of('\f') + 1);
+    str.erase(str.find_last_not_of('\v') + 1);
+    str.erase(str.find_last_not_of('\b') + 1);
 }
 
 
@@ -730,10 +1053,21 @@ string get_trimmed(const string& str)
     //prefixing spaces
 
     output.erase(0, output.find_first_not_of(' '));
+    output.erase(0, output.find_first_not_of('\t'));
+    output.erase(0, output.find_first_not_of('\n'));
+    output.erase(0, output.find_first_not_of('\r'));
+    output.erase(0, output.find_first_not_of('\f'));
+    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
     output.erase(output.find_last_not_of(' ') + 1);
+    output.erase(output.find_last_not_of('\t') + 1);
+    output.erase(output.find_last_not_of('\n') + 1);
+    output.erase(output.find_last_not_of('\r') + 1);
+    output.erase(output.find_last_not_of('\f') + 1);
+    output.erase(output.find_last_not_of('\v') + 1);
+    output.erase(output.find_last_not_of('\b') + 1);
 
     return output;
 }
@@ -771,7 +1105,12 @@ bool has_numbers(const Tensor<string, 1>& v)
 {
     for(Index i = 0; i < v.size(); i++)
     {
-        if(is_numeric_string(v[i])) return true;
+//        if(is_numeric_string(v[i])) return true;
+        if(is_numeric_string(v[i]))
+        {
+            cout << "The number is: " << v[i] << endl;
+            return true;
+        }
     }
 
     return false;
@@ -833,6 +1172,21 @@ bool is_mixed(const Tensor<string, 1>& v)
 }
 
 
+/// Checks if a string is valid encoded in UTF-8 or not
+/// @param string String to be checked.
+
+void remove_non_printable_chars( std::string& wstr)
+{
+    // get the ctype facet for wchar_t (Unicode code points in pactice)
+    typedef std::ctype< wchar_t > ctype ;
+    const ctype& ct = std::use_facet<ctype>( std::locale() ) ;
+
+    // remove non printable Unicode characters
+    wstr.erase( std::remove_if( wstr.begin(), wstr.end(),
+                    [&ct]( wchar_t ch ) { return !ct.is( ctype::print, ch ) ; } ),
+                wstr.end() ) ;
+}
+
 /// Replaces a substring by another one in each element of this vector.
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.
@@ -866,6 +1220,19 @@ void replace(string& source, const string& find_what, const string& replace_with
         position += replace_with.length();
     }
 }
+
+
+bool isNotAlnum (char &c)
+{
+    return (c < ' ' || c > '~');
+}
+
+
+void remove_not_alnum(string &str)
+{
+        str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

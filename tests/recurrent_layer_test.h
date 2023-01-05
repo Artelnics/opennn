@@ -52,9 +52,10 @@ private:
 
     Index inputs_number;
     Index neurons_number;
-
+    Index samples_number;
 
     RecurrentLayer recurrent_layer;
+    RecurrentLayerForwardPropagation recurrent_layer_forward_propagation;
 
     NumericalDifferentiation numerical_differentiation;
 };

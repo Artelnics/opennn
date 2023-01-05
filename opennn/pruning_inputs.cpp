@@ -8,6 +8,8 @@
 
 #include "pruning_inputs.h"
 
+using namespace std;
+
 namespace opennn
 {
 
@@ -68,7 +70,7 @@ void PruningInputs::set_default()
     {       
         maximum_selection_failures = 100;
 
-        maximum_inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
+        maximum_inputs_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
     }
 
     minimum_inputs_number = 1;
@@ -174,25 +176,36 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    type previus_selection_error = numeric_limits<type>::max();
-
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+    data_set_pointer->scrub_missing_values();
 
     const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
     Tensor<string, 1> input_columns_names;
 
+    Tensor<string,1> original_input_columns_names = data_set_pointer->get_input_columns_names();
+
     const Tensor<type, 2> correlations = get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations());
 
     const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
 
-    Tensor<Index, 1> correlations_rank_ascending = data_set_pointer->get_input_columns_indices();
+    Tensor<Index, 1> correlations_rank_descending = data_set_pointer->get_input_columns_indices();
 
-    sort(correlations_rank_ascending.data(),
-         correlations_rank_ascending.data() + correlations_rank_ascending.size(),
-         [&](Index i, Index j){return total_correlations[i] < total_correlations[j];});
+    sort(correlations_rank_descending.data(),
+         correlations_rank_descending.data() + correlations_rank_descending.size(),
+         [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
+
+    data_set_pointer->set_input_columns_unused();
+
+    for(Index i = 0; i < maximum_inputs_number; i++)
+    {
+        data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Input);
+    }
+
+    Index column_index = 0;
 
     // Neural network
 
@@ -206,6 +219,23 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     TrainingResults training_results;
 
+    // First training
+
+    Index input_columns_number = data_set_pointer->get_input_columns_number();
+    Index input_variables_number = data_set_pointer->get_input_variables_number();
+
+    neural_network_pointer->set_inputs_number(input_variables_number);
+
+    neural_network_pointer->set_parameters_random();
+
+    training_results = training_strategy_pointer->perform_training();
+
+    type previus_selection_error = training_results.get_selection_error();
+    type previus_training_error = training_results.get_training_error();
+
+    inputs_selection_results.training_error_history(0) = previus_selection_error;
+    inputs_selection_results.selection_error_history(0) = previus_training_error;
+
     // Model selection
 
     time_t beginning_time;
@@ -216,12 +246,16 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     bool stop = false;
 
+    Index sorted_index = maximum_inputs_number - 1;
+
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        if(epoch > 0) data_set_pointer->set_column_use(correlations_rank_ascending[epoch], DataSet::VariableUse::Unused);
+        sorted_index = maximum_inputs_number - 1 - epoch;
 
-        const Index input_columns_number = data_set_pointer->get_input_columns_number();
-        const Index input_variables_number = data_set_pointer->get_input_variables_number();
+        data_set_pointer->set_column_use(correlations_rank_descending[sorted_index], DataSet::VariableUse::Unused);
+
+        input_columns_number = data_set_pointer->get_input_columns_number();
+        input_variables_number = data_set_pointer->get_input_variables_number();
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
@@ -251,8 +285,8 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
                 minimum_training_error = training_results.get_training_error();
                 minimum_selection_error = training_results.get_selection_error();
 
-                inputs_selection_results.training_error_history(epoch) = minimum_training_error;
-                inputs_selection_results.selection_error_history(epoch) = minimum_selection_error;
+                inputs_selection_results.training_error_history(column_index) = minimum_training_error;
+                inputs_selection_results.selection_error_history(column_index) = minimum_selection_error;
             }
 
             if(training_results.get_selection_error() < inputs_selection_results.optimum_selection_error)
@@ -278,13 +312,25 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
             }
         }
 
-        if(inputs_selection_results.optimum_selection_error >= previus_selection_error) selection_failures++;
+        if(previus_training_error > minimum_training_error)
+        {
+            cout << "Selection failure" << endl;
+            selection_failures++;
 
-        previus_selection_error = inputs_selection_results.optimum_selection_error;
+            data_set_pointer->set_column_use(correlations_rank_descending[sorted_index], DataSet::VariableUse::Input);
+        }
+        else
+        {
+            previus_training_error = minimum_training_error;
+            previus_selection_error = minimum_selection_error;
 
-        inputs_selection_results.training_error_history(epoch) = training_results.get_training_error();
+            inputs_selection_results.training_error_history(column_index) = minimum_training_error;
+            inputs_selection_results.selection_error_history(column_index) = minimum_selection_error;
 
-        inputs_selection_results.selection_error_history(epoch) = training_results.get_selection_error();
+            column_index++;
+        }
+
+        sorted_index--;
 
         time(&current_time);
 
@@ -324,11 +370,19 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
         }
-        else if(input_columns_number <= minimum_inputs_number || input_columns_number == 1)
+        else if(input_columns_number <= minimum_inputs_number || input_columns_number == 1 )
         {
             stop = true;
 
             if(display) cout << "Epoch " << epoch << endl << "Minimum inputs reached: " << minimum_inputs_number << endl;
+
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MinimumInputs;
+        }
+        else if( sorted_index < 0)
+        {
+            stop = true;
+
+            if(display) cout << "All inputs have been tried." << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MinimumInputs;
         }
@@ -345,6 +399,12 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
         }
     }
 
+    int new_history_size = inputs_selection_results.selection_error_history.size() - count( inputs_selection_results.selection_error_history.data(),
+                inputs_selection_results.selection_error_history.data() + inputs_selection_results.selection_error_history.size(),
+                -1);
+
+    inputs_selection_results.resize_history(new_history_size);
+
     // Set data set stuff
 
     data_set_pointer->set_input_target_columns(inputs_selection_results.optimal_input_columns_indices, target_columns_indices);
@@ -352,6 +412,8 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->calculate_input_variables_descriptives();
+
+    set_maximum_inputs_number(data_set_pointer->get_input_columns_number());
 
     // Set neural network stuff
 

@@ -47,39 +47,37 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 4> PoolingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
-{
-#ifdef OPENNN_DEBUG
+//void PoolingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//    if(inputs_dimensions.size() != 4)
+//    {
+//        ostringstream buffer;
 
-    const Index input_variables_dimensions_number = inputs.rank();
+//        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
+//               << "Number of inputs dimensions (" << inputs_dimensions.size() << ") must be 4: (batch, filters, rows, columns).\n";
 
-    if(input_variables_dimensions_number != 4)
-    {
-        ostringstream buffer;
+//        throw invalid_argument(buffer.str());
+//    }
+//    /// @todo Change everything
 
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
-               << "Number of inputs dimensions (" << input_variables_dimensions_number << ") must be 4 (batch, filters, rows, columns).\n";
+//    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+//    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
-        throw invalid_argument(buffer.str());
-    }
+//    switch(pooling_method)
+//    {
+//    case PoolingMethod::NoPooling:
+//        outputs = calculate_no_pooling_outputs(inputs);
 
-#endif
+//    case PoolingMethod::MaxPooling:
+//        outputs = calculate_max_pooling_outputs(inputs);
 
-    switch(pooling_method)
-    {
-    case PoolingMethod::NoPooling:
-        return calculate_no_pooling_outputs(inputs);
+//    case PoolingMethod::AveragePooling:
+//        outputs = calculate_average_pooling_outputs(inputs);
+//    }
 
-    case PoolingMethod::MaxPooling:
-        return calculate_max_pooling_outputs(inputs);
-
-    case PoolingMethod::AveragePooling:
-        return calculate_average_pooling_outputs(inputs);
-    }
-
-    return Tensor<type, 4>();
-}
+//}
 
 
 /// Returns the result of applying average pooling to a batch of images.
@@ -236,7 +234,7 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation*,
     */
 }
 
-
+/*
 Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
         const Tensor<type, 4>&,
         const Tensor<type, 4>&,
@@ -303,7 +301,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
 
         return hidden_delta;
 }
-
+*/
 
 Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
         const Tensor<type, 4>& activations,
@@ -567,12 +565,6 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
     return hidden_delta;
 }
 
-
-void PoolingLayer::calculate_error_gradient(const Tensor<type, 2>&,
-                              LayerForwardPropagation*,
-                              LayerBackPropagation*) const
-{
-}
 
 
 /// Returns the number of neurons the layer applies to an image.
@@ -1069,7 +1061,6 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         set_padding_width(static_cast<Index>(stoi(padding_width_string)));
     }
 }
-
 }
 
 // OpenNN: Open Neural Networks Library.

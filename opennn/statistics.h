@@ -21,9 +21,6 @@
 
 #include "config.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn
 {
 
@@ -46,6 +43,8 @@ struct Descriptives {
   // Values constructor.
 
   explicit Descriptives(const type&, const type&, const type&, const type&);
+
+  explicit Descriptives(const Tensor<type, 1>&);
 
   // Set methods
 
@@ -297,9 +296,6 @@ struct Histogram
 
      // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);
-
-     // Means by categories
-     Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix);
 
      // NAN methods
      Index count_nan(const Tensor<type, 1>&);

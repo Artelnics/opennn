@@ -271,12 +271,9 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Set hardware to use. Default: Multi-core.
-
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data) const
 {
-    
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -291,10 +288,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
         }
         else
         {
-            optimization_data.nesterov_increment.device(*thread_pool_device)
-                    = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
-
-            back_propagation.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;;
         }
     }
     else
@@ -308,10 +302,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
 
     // Update parameters
 
-    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
-
-    neural_network_pointer->set_parameters(back_propagation.parameters);
-    
+    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
 }
 
 
@@ -417,6 +408,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     StochasticGradientDescentData optimization_data(this);
 
     bool stop_training = false;
+    bool switch_train = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -454,11 +446,12 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
 
             // Loss index
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
+            results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
@@ -489,7 +482,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, switch_train);
+                results.selection_error_history(epoch) = selection_error;
 
                 // Loss
 
@@ -558,7 +552,11 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(stop_training)
         {
-            results.resize_training_error_history(epoch + 1);
+            results.loss = training_back_propagation.loss;
+
+            results.selection_failures = selection_failures;
+
+            results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);

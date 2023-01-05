@@ -63,13 +63,13 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 {
     // Control sentence
 
-    if(new_Minkowski_parameter < type(1) || new_Minkowski_parameter > type(2.0))
+    if(new_Minkowski_parameter < type(1))
     {
         ostringstream buffer;
 
         buffer << "OpenNN Error. MinkowskiError class.\n"
                << "void set_Minkowski_parameter(const type&) method.\n"
-               << "The Minkowski parameter must be comprised between 1 and 2.\n";
+               << "The Minkowski parameter must be greater than 1.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -84,7 +84,6 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 /// \param batch
 /// \param forward_propagation
 /// \param back_propagation
-/// @todo Divide by number of samples.
 
 void MinkowskiError::calculate_error(const DataSetBatch& batch,
                                      const NeuralNetworkForwardPropagation&,
@@ -98,6 +97,17 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     const Index batch_size = batch.get_batch_size();
 
     back_propagation.error = minkowski_error(0)/type(batch_size);
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: minkowski_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -105,100 +115,46 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                                             NeuralNetworkForwardPropagation&,
                                             LossIndexBackPropagation& back_propagation) const
 {
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+
+    TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+
+    Tensor<type, 2> deltas_copy;
 
     const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
     const Index batch_size = batch.get_batch_size();
 
-    switch(output_layer_back_propagation->layer_pointer->get_type())
+    if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
-    case Layer::Type::Perceptron:
+        deltas.setZero();
+    }
+    else
     {
-        PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-                = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            perceptron_layer_back_propagation->delta.setZero();
-        }
-        else
-        {
-            perceptron_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
+        deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
 
-            perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*perceptron_layer_back_propagation->delta/p_norm_derivative();
-        }
+        std::replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
     }
-        break;
 
-    case Layer::Type::Probabilistic:
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
     {
-        ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-                = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+        ostringstream buffer;
 
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            probabilistic_layer_back_propagation->delta.setZero();
+        buffer << "OpenNN Exception: minkowski_error class.\n"
+               << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
 
-        }
-        else
-        {
-            probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
-        }
+        throw invalid_argument(buffer.str());
     }
-        break;
 
-    case Layer::Type::Recurrent:
-    {
-        RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-                = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
-
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            recurrent_layer_back_propagation->delta.setZero();
-        }
-        else
-        {
-            recurrent_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*recurrent_layer_back_propagation->delta/p_norm_derivative();
-        }
-    }
-        break;
-
-    case Layer::Type::LongShortTermMemory:
-    {
-        LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-                = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
-
-        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-        {
-            long_short_term_memory_layer_back_propagation->delta.setZero();
-        }
-        else
-        {
-            long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-            long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_size))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
-        }
-    }
-        break;
-
-    default: break;
-    }
 }
 
 

@@ -7,7 +7,7 @@ You can manage it with the 'NeuralNetwork' class.
 Example:
 
 	model = NeuralNetwork()	
-	sample = [input_1, input_2, input_3, input_4, ...] 	 	
+	sample = [input_1, input_2, input_3, input_4, ...]	
 	outputs = model.calculate_output(sample)
 
 	Inputs Names: 	
@@ -38,7 +38,7 @@ class NeuralNetwork:
 		outputs = [None] * 2
 
 		outputs[0] = (inputs[0]-0.4971455932)/0.1903580129
-		outputs[1] = (inputs[1]-0.4880183339)/0.1982036084
+		outputs[1] = (inputs[1]-0.4880183339)/0.1982035935
 
 		return outputs;
 
@@ -47,16 +47,16 @@ class NeuralNetwork:
 
 		combinations = [None] * 10
 
-		combinations[0] = 0.296804 -0.954437*inputs[0] +0.885734*inputs[1] 
-		combinations[1] = 0.3031 -0.971211*inputs[0] +0.901309*inputs[1] 
-		combinations[2] = -0.277971 +0.904248*inputs[0] -0.839228*inputs[1] 
-		combinations[3] = 0.318156 -1.01146*inputs[0] +0.938595*inputs[1] 
-		combinations[4] = 0.289379 -0.934634*inputs[0] +0.867385*inputs[1] 
-		combinations[5] = 0.313975 -1.00031*inputs[0] +0.92816*inputs[1] 
-		combinations[6] = 0.315903 -1.00549*inputs[0] +0.932938*inputs[1] 
-		combinations[7] = 0.268993 -0.88033*inputs[0] +0.817097*inputs[1] 
-		combinations[8] = -0.311001 +0.992423*inputs[0] -0.920825*inputs[1] 
-		combinations[9] = 0.28485 -0.922566*inputs[0] +0.856198*inputs[1] 
+		combinations[0] = 0.00238452 -0.364511*inputs[0] +0.450243*inputs[1] 
+		combinations[1] = -0.00456767 +0.366057*inputs[0] -0.45232*inputs[1] 
+		combinations[2] = 0.000673228 +0.362297*inputs[0] -0.447277*inputs[1] 
+		combinations[3] = 0.00403211 -0.365687*inputs[0] +0.451815*inputs[1] 
+		combinations[4] = -0.00673104 +0.367579*inputs[0] -0.454366*inputs[1] 
+		combinations[5] = -0.00398696 +0.365649*inputs[0] -0.451769*inputs[1] 
+		combinations[6] = -0.00223028 +0.364388*inputs[0] -0.450079*inputs[1] 
+		combinations[7] = 0.003009 -0.364955*inputs[0] +0.450832*inputs[1] 
+		combinations[8] = 0.00516576 -0.366472*inputs[0] +0.452885*inputs[1] 
+		combinations[9] = 0.0120367 -0.371196*inputs[0] +0.459323*inputs[1] 
 		
 		activations = [None] * 10
 
@@ -78,7 +78,7 @@ class NeuralNetwork:
 
 		combinations = [None] * 1
 
-		combinations[0] = 0.11943 +1.35157*inputs[0] +1.37691*inputs[1] -1.27634*inputs[2] +1.43747*inputs[3] +1.32187*inputs[4] +1.42081*inputs[5] +1.42853*inputs[6] +1.24052*inputs[7] -1.40855*inputs[8] +1.30378*inputs[9] 
+		combinations[0] = -0.465869 +0.726045*inputs[0] -0.729723*inputs[1] -0.720411*inputs[2] +0.728907*inputs[3] -0.733134*inputs[4] -0.728764*inputs[5] -0.725726*inputs[6] +0.727096*inputs[7] +0.73067*inputs[8] +0.740099*inputs[9] 
 		
 		activations = [None] * 1
 

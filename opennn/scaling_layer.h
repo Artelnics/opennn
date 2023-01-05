@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S C A L I N G   L A Y E R   C L A S S   H E A D E R                   
+//   S C A L I N G   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -31,13 +31,15 @@ namespace opennn
 /// This class represents a layer of scaling neurons.
 
 ///
-/// Scaling layers are included in the definition of a neural network. 
-/// They are used to normalize variables so they are in an appropriate range for computer processing.  
+/// Scaling layers are included in the definition of a neural network.
+/// They are used to normalize variables so they are in an appropriate range for computer processing.
 
 class ScalingLayer : public Layer
 {
 
 public:
+
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
 
    // Constructors
 
@@ -49,10 +51,13 @@ public:
    explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
    // Get methods
-   
+
+   ProjectType get_project_type() const;
+   string get_project_type_string(const ScalingLayer::ProjectType&) const;
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const final;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
    Index get_neurons_number() const final;
 
    // Inputs descriptives
@@ -85,6 +90,9 @@ public:
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
 
+   void set_project_type(const ProjectType&);
+   void set_project_type_string(const string&);
+
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 
@@ -107,6 +115,7 @@ public:
    void set_scalers(const Tensor<Scaler, 1>&);
    void set_scalers(const Tensor<string, 1>&);
 
+   void set_scaler(const Index&, const Scaler&);
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
 
@@ -120,8 +129,9 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
-   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
+
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    // Expression methods
 
@@ -135,17 +145,17 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   string write_expression_c() const final;
-
-   string write_expression_python() const final;
-
    // Serialization methods
-   
+
+   void print() const;
+
    virtual void from_XML(const tinyxml2::XMLDocument&) final;
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
+
+   ScalingLayer::ProjectType project_type;
 
    Tensor<Index, 1> input_variables_dimensions;
 
@@ -162,10 +172,59 @@ protected:
    type min_range;
    type max_range;
 
-   /// Display warning messages to screen. 
+   /// Display warning messages to screen.
 
    bool display = true;
 
+};
+
+struct ScalingLayerForwardPropagation : LayerForwardPropagation
+{
+    // Constructor
+
+    explicit ScalingLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    // Constructor
+
+    explicit ScalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        const Tensor<Index, 1> input_variables_dimensions = static_cast<ScalingLayer*>(layer_pointer)->get_input_variables_dimensions();
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        batch_samples_number = new_batch_samples_number;
+
+//        free(outputs_data);
+
+        // Allocate memory for outputs_data
+
+        outputs_data = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+
+        outputs_dimensions.resize(2);
+
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+    }
+
+
+    void print() const
+    {
+        cout << "outputs dimension 0: " << outputs_dimensions(0) << endl;
+        cout << "outputs dimension 1: " << outputs_dimensions(1) << endl;
+
+        cout << "Outputs:" << endl;
+
+        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+    }
 };
 
 }
@@ -190,4 +249,3 @@ protected:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

@@ -139,7 +139,9 @@ public:
 
    void set_input_weights_constant(const type&);
    void set_recurrent_weights_constant(const type&);
-   void initialize_input_weights_Glorot(const type&, const type&);
+
+   void set_input_weights_random();
+   void set_recurrent_weights_random();
 
    void set_parameters_constant(const type&) final;
 
@@ -153,43 +155,40 @@ public:
                                const Tensor<type, 1>&,
                                Tensor<type, 1>&) const;
 
-   void calculate_activations(const Tensor<type, 1>&,
+   void calculate_activations(Tensor<type, 1>&,
                               Tensor<type, 1>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 1>&,
-                                          Tensor<type, 1>&,
-                                          Tensor<type, 1>&) const;
+   Tensor<type, 1> get_activations(const Tensor<type,1>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>&,
-                                          Tensor<type, 2>&,
-                                          Tensor<type, 2>&) const;
-
+   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&);
 
    // neuron layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
+//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
-   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
 
-   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          RecurrentLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               RecurrentLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             RecurrentLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               RecurrentLayerBackPropagation*) const;
 
    // Gradient
 
    void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const final;
 
-   void calculate_error_gradient(const Tensor<type, 2>&,
+   void calculate_error_gradient(type*,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -210,10 +209,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
-
-   string write_expression_python() const final;
-   string write_combinations_python() const;
-   string write_activations_python() const;
 
    // Serialization methods
 
@@ -267,10 +262,21 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;
 
-        batch_samples_number = new_batch_samples_number;
-
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
+
+        batch_samples_number = new_batch_samples_number;
+
+        // Outputs
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete outputs_data;
+
+        outputs_data = (type*)malloc( static_cast<size_t>( batch_samples_number*neurons_number*sizeof(type) ));
+
+        // Rest of quantities
 
         previous_activations.resize(neurons_number);
 
@@ -279,8 +285,6 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
         current_activations_derivatives.resize(neurons_number);
 
         combinations.resize(batch_samples_number, neurons_number);
-
-        activations.resize(batch_samples_number, neurons_number);
 
         activations_derivatives.resize(batch_samples_number, neurons_number);
     }
@@ -296,7 +300,6 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 1> current_activations_derivatives;
 
     Tensor<type, 2> combinations;
-    Tensor<type, 2> activations;
     Tensor<type, 2> activations_derivatives;
 };
 
@@ -323,6 +326,12 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
+        deltas_dimensions.resize(2);
+        deltas_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete deltas_data;
+        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+
         current_layer_deltas.resize(neurons_number);
 
         biases_derivatives.resize(neurons_number);
@@ -330,8 +339,6 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
         input_weights_derivatives.resize(inputs_number * neurons_number);
 
         recurrent_weights_derivatives.resize(neurons_number * neurons_number);
-
-        delta.resize(batch_samples_number, neurons_number);
 
         combinations_biases_derivatives.resize(neurons_number, neurons_number);
         combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
@@ -355,8 +362,6 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> combinations_biases_derivatives;
     Tensor<type, 2> combinations_weights_derivatives;
     Tensor<type, 2> combinations_recurrent_weights_derivatives;
-
-    Tensor<type, 2> delta;
 };
 
 

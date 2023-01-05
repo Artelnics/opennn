@@ -82,8 +82,6 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
-   
-
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
 
@@ -181,8 +179,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
         potential_parameters.resize(parameters_number);
 
-        parameters_increment.resize(parameters_number);
-
         // Optimization algorithm data
 
         training_direction.resize(parameters_number);
@@ -199,10 +195,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
     }
 
     GradientDescent* gradient_descent_pointer = nullptr;
-
-    // Neural network data
-
-    Tensor<type, 1> parameters_increment;
 
     // Optimization algorithm data
 

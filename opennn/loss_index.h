@@ -153,7 +153,7 @@ public:
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_gradient_numerical_differentiation();
+   Tensor<type, 1> calculate_numerical_differentiation_gradient();
 
    Tensor<type, 2> calculate_jacobian_numerical_differentiation();
 
@@ -175,9 +175,11 @@ public:
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagation&) const;
 
-   void calculate_error_gradient(const DataSetBatch&,
+   void calculate_layers_error_gradient(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
                                  LossIndexBackPropagation&) const;
+
+   void assemble_layers_error_gradient(LossIndexBackPropagation&) const;
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
@@ -213,7 +215,7 @@ public:
                                              LossIndexBackPropagationLM&) const;
 
    virtual void calculate_error_hessian_lm(const DataSetBatch&,
-                                                LossIndexBackPropagationLM&) const {}
+                                           LossIndexBackPropagationLM&) const {}
 
    void back_propagate_lm(const DataSetBatch&,
                           NeuralNetworkForwardPropagation&,
@@ -247,6 +249,7 @@ public:
 protected:
 
    ThreadPool* thread_pool = nullptr;
+
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to a neural network object.
@@ -294,8 +297,6 @@ struct LossIndexBackPropagation
 
     explicit LossIndexBackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
-        if(new_batch_samples_number == 0) return;
-
         set(new_batch_samples_number, new_loss_index_pointer);
     }
 
@@ -303,10 +304,9 @@ struct LossIndexBackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
+        loss_index_pointer = new_loss_index_pointer;
 
         batch_samples_number = new_batch_samples_number;
-
-        loss_index_pointer = new_loss_index_pointer;
 
         // Neural network
 
@@ -331,9 +331,8 @@ struct LossIndexBackPropagation
         gradient.resize(parameters_number);
 
         regularization_gradient.resize(parameters_number);
-        regularization_gradient.setConstant(type(0));
-
     }
+
 
     void print() const
     {
@@ -345,6 +344,9 @@ struct LossIndexBackPropagation
         cout << "Error:" << endl;
         cout << error << endl;
 
+        cout << "Regularization:" << endl;
+        cout << regularization << endl;
+
         cout << "Loss:" << endl;
         cout << loss << endl;
 
@@ -354,14 +356,14 @@ struct LossIndexBackPropagation
         neural_network.print();
     }
 
-    LossIndex* loss_index_pointer = nullptr;
-
     Index batch_samples_number = 0;
+
+    LossIndex* loss_index_pointer = nullptr;
 
     NeuralNetworkBackPropagation neural_network;
 
     type error = type(0);
-
+    type regularization = type(0);
     type loss = type(0);
 
     Tensor<type, 2> errors;
@@ -369,7 +371,6 @@ struct LossIndexBackPropagation
     Tensor<type, 1> parameters;
 
     Tensor<type, 1> gradient;
-
     Tensor<type, 1> regularization_gradient;
 };
 
@@ -389,16 +390,14 @@ struct LossIndexBackPropagationLM
 
     explicit LossIndexBackPropagationLM(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
-        if(new_batch_samples_number == 0) return;
-
         set(new_batch_samples_number, new_loss_index_pointer);
     }
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
-        batch_samples_number = new_batch_samples_number;
-
         loss_index_pointer = new_loss_index_pointer;
+
+        batch_samples_number = new_batch_samples_number;
 
         NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -457,11 +456,12 @@ struct LossIndexBackPropagationLM
         cout << hessian << endl;
     }
 
-    LossIndex* loss_index_pointer = nullptr;
-
     Index batch_samples_number = 0;
 
+    LossIndex* loss_index_pointer = nullptr;
+
     type error = type(0);
+    type regularization = type(0);
     type loss = type(0);
 
     Tensor<type, 1> parameters;

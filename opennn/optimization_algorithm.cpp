@@ -524,10 +524,25 @@ string OptimizationAlgorithm::write_time(const type& time) const
 }
 
 
-/// @todo
+/// Saves the training results into a CSV document
+/// @param file_name Path to the output file.
 
-void TrainingResults::save(const string&) const
+void TrainingResults::save(const string& file_name) const
 {
+    Tensor<string, 2> final_results = write_final_results();
+
+    std::ofstream file;
+    file.open(file_name);
+
+    if(file)
+    {
+        for(Index i = 0; i < final_results.dimension(0); i++)
+        {
+            file << final_results(i,0) << "; " << final_results(i,1) << "\n";
+        }
+
+        file.close();
+    }
 
 }
 
@@ -538,11 +553,11 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     Tensor<string, 2> final_results(6, 2);
 
-    final_results(0,0) = "Training error";
-    final_results(1,0) = "Selection error";
-    final_results(2,0) = "Epochs number";
-    final_results(3,0) = "Elapsed time";
-    final_results(4,0) = "Stopping criterion";
+    final_results(0,0) = "Epochs number";
+    final_results(1,0) = "Elapsed time";
+    final_results(2,0) = "Stopping criterion";
+    final_results(3,0) = "Training error";
+    final_results(4,0) = "Selection error";
 
     const Index size = training_error_history.size();
 
@@ -557,12 +572,30 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
         return final_results;
     }
 
+    // Epochs number
+
+    buffer.str("");
+    buffer << training_error_history.size()-1;
+
+    final_results(0,1) = buffer.str();
+
+    // Elapsed time
+
+    buffer.str("");
+    buffer << setprecision(precision) << elapsed_time;
+
+    final_results(1,1) = buffer.str();
+
+    // Stopping criteria
+
+    final_results(2,1) = write_stopping_condition();
+
     // Final training error
 
     buffer.str("");
     buffer << setprecision(precision) << training_error_history(size-1);
 
-    final_results(0,1) = buffer.str();
+    final_results(3,1) = buffer.str();
 
     // Final selection error
 
@@ -570,27 +603,10 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     selection_error_history.size() == 0
             ? buffer << "NAN"
-            : buffer << setprecision(precision) << selection_error_history(size-1);
+                        : buffer << setprecision(precision) << selection_error_history(size-1);
 
-    final_results(1,1) = buffer.str();
+    final_results(4,1) = buffer.str();
 
-    // Epochs number
-
-    buffer.str("");
-    buffer << training_error_history.size()-1;
-
-    final_results(2,1) = buffer.str();
-
-    // Elapsed time
-
-    buffer.str("");
-    buffer << setprecision(precision) << elapsed_time;
-
-    final_results(3,1) = buffer.str();
-
-    // Stopping criteria
-
-    final_results(4,1) = write_stopping_condition();
 
     return final_results;
 }

@@ -263,21 +263,9 @@ void GradientDescent::update_parameters(
         LossIndexBackPropagation& back_propagation,
         GradientDescentData& optimization_data) const
 {
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
+
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
-
-    ostringstream buffer;
-
-    if(is_zero(optimization_data.training_direction))
-    {
-//        buffer << "OpenNN Exception: GradientDescent class.\n"
-//               << "void GradientDescent::update_parameters(const DataSetBatch& batch, \n"
-//               << "NeuralNetworkForwardPropagation& forward_propagation,LossIndexBackPropagation& back_propagation, \n"
-//               << "GradientDescentData& optimization_data) const method.\n"
-//               << "Training direction is zero.\n";
-
-//        throw invalid_argument(buffer.str());
-        return;
-    }
 
     // Get initial learning_rate
 
@@ -296,36 +284,30 @@ void GradientDescent::update_parameters(
 
     if(abs(optimization_data.learning_rate) > type(0))
     {
-        optimization_data.parameters_increment.device(*thread_pool_device)
-                = optimization_data.training_direction*optimization_data.learning_rate;
-
-        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+        back_propagation.parameters.device(*thread_pool_device)
+                -= back_propagation.gradient*optimization_data.learning_rate;
     }
     else
     {
-        const Index parameters_number = back_propagation.parameters.size();
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if(abs(back_propagation.gradient(i)) >= type(NUMERIC_LIMITS_MIN))
             {
-                optimization_data.parameters_increment(i) = type(0);
-            }
-            else if(back_propagation.gradient(i) > type(0))
-            {
-                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
-
-                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(back_propagation.gradient(i) < type(0))
-            {
-                back_propagation.parameters(i) += numeric_limits<type>::epsilon();
-
-                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+                if(back_propagation.gradient(i) > type(0))
+                {
+                    back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
+                }
+                else if(back_propagation.gradient(i) < type(0))
+                {
+                    back_propagation.parameters(i) += numeric_limits<type>::epsilon();
+                }
             }
         }
 
         optimization_data.learning_rate = optimization_data.old_learning_rate;
+
     }
 
     // Update parameters
@@ -333,7 +315,6 @@ void GradientDescent::update_parameters(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-
 }
 
 
@@ -424,6 +405,7 @@ TrainingResults GradientDescent::perform_training()
     Index selection_failures = 0;
 
     bool stop_training = false;
+    bool switch_train = true;
 
     type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
@@ -442,17 +424,18 @@ TrainingResults GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
 
         // Loss index
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        // Update parameters
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -531,6 +514,12 @@ TrainingResults GradientDescent::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation.loss;
+
+            results.loss_decrease = loss_decrease;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
@@ -542,8 +531,6 @@ TrainingResults GradientDescent::perform_training()
         }
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
@@ -731,7 +718,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            cout << "MinimumLossDecrease" << endl;
             const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try

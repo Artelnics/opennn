@@ -39,10 +39,12 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     : neural_network_pointer(new_neural_network_pointer),
       data_set_pointer(new_data_set_pointer)
 {
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
     set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 
+    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
+
     set_loss_index_neural_network_pointer(neural_network_pointer);
+
     set_loss_index_data_set_pointer(data_set_pointer);
 
     set_default();
@@ -413,7 +415,7 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set()
 {
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
+    set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
     set_default();
 }
@@ -706,17 +708,6 @@ void TrainingStrategy::set_default() const
 
 TrainingResults TrainingStrategy::perform_training()
 {
-//    if(data_set_pointer->has_nan())
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-//               << "TrainingResults perform_training() const method.\n"
-//               << "Data set has missing values. Scrub them first.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
         fix_forecasting();
@@ -826,7 +817,7 @@ void TrainingStrategy::fix_forecasting()
     }
     else
     {
-        const Index constant = static_cast<Index>(batch_samples_number/timesteps);
+        const Index constant = timesteps > batch_samples_number ? 1 : static_cast<Index>(batch_samples_number/timesteps);
 
         if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         {

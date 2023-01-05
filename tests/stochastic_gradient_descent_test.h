@@ -45,6 +45,10 @@ public:
 
 private:
 
+    Index samples_number;
+    Index inputs_number;
+    Index outputs_number;
+
     DataSet data_set;
 
     NeuralNetwork neural_network;
@@ -52,6 +56,8 @@ private:
     SumSquaredError sum_squared_error;
 
     StochasticGradientDescent stochastic_gradient_descent;
+
+    TrainingResults training_results;
 
 };
 

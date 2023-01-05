@@ -24,7 +24,6 @@
 #include "training_strategy.h"
 #include "growing_neurons.h"
 #include "growing_inputs.h"
-#include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 
 namespace opennn
@@ -54,7 +53,7 @@ public:
 
     /// Enumeration of all the available inputs selection algorithms.
 
-    enum class InputsSelectionMethod{GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
+    enum class InputsSelectionMethod{GROWING_INPUTS, GENETIC_ALGORITHM};
 
     // Get methods
 
@@ -67,7 +66,6 @@ public:
     GrowingNeurons* get_growing_neurons_pointer();
 
     GrowingInputs* get_growing_inputs_pointer();
-    PruningInputs* get_pruning_inputs_pointer();
     GeneticAlgorithm* get_genetic_algorithm_pointer();
 
     // Set methods
@@ -118,10 +116,6 @@ private:
     /// Growing inputs object to be used for inputs selection.
 
     GrowingInputs growing_inputs;
-
-    /// Pruning inputs object to be used for inputs selection.
-
-    PruningInputs pruning_inputs;
 
     /// Genetic algorithm object to be used for inputs selection.
 

@@ -8,6 +8,7 @@
 
 // System includes
 
+#include <stdio.h>
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -18,32 +19,28 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
-#include "../opennn/layer.h"
 
 using namespace opennn;
 using namespace std;
-using namespace Eigen;
 
-int main()
+int main(int argc, char *argv[])
 {
     try
     {
-        cout << "OpenNN. Blank application." << endl;
-
+        cout << "Hello OpenNN" << endl;
 
 
         cout << "Good bye!" << endl;
 
         return 0;
     }
-    catch(const exception& e)
+    catch (const exception& e)
     {
         cerr << e.what() << endl;
 
         return 1;
     }
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) Artificial Intelligence Techniques SL.

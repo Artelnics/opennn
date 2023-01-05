@@ -230,7 +230,8 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    TrainingResults results(maximum_epochs_number+1);
+
+    TrainingResults results(maximum_epochs_number + 1);
 
     check();
 
@@ -251,12 +252,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+
+    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();    
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();    
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
@@ -272,7 +274,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     selection_samples_number < batch_samples_number && selection_samples_number != 0
             ? batch_size_selection = selection_samples_number
-            : batch_size_selection = batch_samples_number;
+
+            : batch_size_selection = batch_samples_number;   
+
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -302,7 +306,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
-    }
+    }    
 
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
@@ -326,6 +330,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     AdaptiveMomentEstimationData optimization_data(this);
 
     bool stop_training = false;
+    bool switch_train = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -343,7 +348,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
@@ -359,24 +363,19 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
 
             // Data set
-
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
-
-            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
 
             // Loss index
-
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
+            results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
-//            training_back_propagation.print();
-
             update_parameters(training_back_propagation, optimization_data);
-
         }
 
         // Loss
@@ -400,11 +399,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, switch_train);
 
                 // Loss
 
-                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
+                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);               
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
@@ -423,8 +422,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-//        results.print_epoch(display);
-
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
@@ -436,7 +433,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -445,7 +442,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -454,7 +451,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(training_loss <= training_loss_goal)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
@@ -463,7 +460,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(selection_failures >= maximum_selection_failures)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -472,6 +469,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation.loss;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
@@ -557,35 +558,45 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 /// @param optimization_data New moment estimation data.
 
 void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
-                              AdaptiveMomentEstimationData& optimization_data) const
+    AdaptiveMomentEstimationData& optimization_data) const
 {
-
     const type learning_rate =
-        type(initial_learning_rate*
-            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
+        type(initial_learning_rate *
+            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration))) /
             (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
 
+#ifdef OPENNN_MKL
+
+    int parameters_number = back_propagation.gradient.size();
+
+    int incx = 1;
+    int incy = 1;
+
+    type a = (type(1) - beta_1);
+    type b = beta_1;
+
+    saxpby(&parameters_number, &a, back_propagation.gradient.data(), &incx, &b, optimization_data.gradient_exponential_decay.data(), &incy);
+
+#else
+
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.gradient_exponential_decay*beta_1
-            + back_propagation.gradient*(type(1) - beta_1);
+        = back_propagation.gradient * (type(1) - beta_1)
+        + optimization_data.gradient_exponential_decay * beta_1;
+
+#endif
 
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
+        = back_propagation.gradient * back_propagation.gradient * (type(1) - beta_2)
+        + optimization_data.square_gradient_exponential_decay * beta_2;
 
-    //back_propagation.parameters.device(*thread_pool_device) -=
-    //        optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
-    
-    auto tmp = optimization_data.square_gradient_exponential_decay.sqrt();
-
-    back_propagation.parameters.device(*thread_pool_device) -= learning_rate * optimization_data.gradient_exponential_decay / (tmp + epsilon);
-    
+    back_propagation.parameters.device(*thread_pool_device)
+        -= learning_rate * optimization_data.gradient_exponential_decay / (optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+        
     optimization_data.iteration++;
 
     // Update parameters
 
     back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
-
 }
 
 
@@ -817,6 +828,8 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     gradient_exponential_decay.setZero();
 
     square_gradient_exponential_decay.resize(parameters_number);
+    square_gradient_exponential_decay.setZero();
+
     square_gradient_exponential_decay.setZero();
 }
 

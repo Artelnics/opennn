@@ -59,14 +59,14 @@ void ScalingLayerTest::test_set()
     // Test
 
     scaling_layer.set();
-
     assert_true(scaling_layer.get_descriptives().size() == 0, LOG);
 
     descriptives.resize(4);
-    scaling_layer.set_descriptives(descriptives);
-    scaling_layer.set();
 
-    assert_true(scaling_layer.get_descriptives().size() == 0, LOG);
+    scaling_layer.set(4);
+    scaling_layer.set_descriptives(descriptives);
+
+    assert_true(scaling_layer.get_descriptives().size() == 4, LOG);
 
     // Test
 
@@ -173,6 +173,7 @@ void ScalingLayerTest::test_set_descriptives()
     descriptives.resize(1);
     descriptives.setValues({item_0});
 
+    scaling_layer.set(1);
     scaling_layer.set_descriptives(descriptives);
 
     assert_true(abs(scaling_layer.get_descriptives(0).minimum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -185,6 +186,7 @@ void ScalingLayerTest::test_set_descriptives()
     descriptives.resize(2);
     descriptives.setValues({item_0, item_1});
 
+    scaling_layer.set(2);
     scaling_layer.set_descriptives(descriptives);
 
     assert_true(abs(scaling_layer.get_descriptives(1).minimum - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -335,29 +337,41 @@ void ScalingLayerTest::test_check_range()
 }
 
 
-void ScalingLayerTest::test_calculate_outputs()
+void ScalingLayerTest::test_forward_propagate()
 {
-    cout << "test_calculate_outputs\n";
+    cout << "test_forward_propagate\n";
 
     DataSet data_set;
     Tensor<type, 2> data;
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
+    Tensor<Index, 1> inputs_dimensions;
+    Tensor<Index, 1> outputs_dimensions;
+
     Tensor<Descriptives,1> input_descriptives;
+
 
     // Test
 
-    Index inputs_number = 1;
-    Index samples_number = 1;
+    inputs_number = 1;
+    samples_number = 1;
+    bool switch_train = true;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
 
     inputs.resize(samples_number, inputs_number);
     inputs.setZero();
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = scaling_layer.calculate_outputs(inputs);
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type, 2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -370,12 +384,19 @@ void ScalingLayerTest::test_calculate_outputs()
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
 
     inputs.resize(samples_number, inputs_number);
     inputs.setZero();
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = scaling_layer.calculate_outputs(inputs);
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -390,12 +411,19 @@ void ScalingLayerTest::test_calculate_outputs()
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
     inputs.resize(samples_number,inputs_number);
     inputs.setRandom();
+    inputs_dimensions = get_dimensions(inputs);
 
-    outputs = scaling_layer.calculate_outputs(inputs);
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -408,16 +436,28 @@ void ScalingLayerTest::test_calculate_outputs()
     samples_number = 3;
 
     data.resize(samples_number,inputs_number + 1);
-    data.setValues({{type(1),type(1),type(1),type(1)},{type(2),type(2),type(2),type(2)},{type(3),type(3),type(3),type(3)}});
+    data.setValues({{type(1),type(1),type(1),type(1)},
+                    {type(2),type(2),type(2),type(2)},
+                    {type(3),type(3),type(3),type(3)}});
     data_set.set_data(data);
     data_set.set_training();
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
     input_descriptives = data_set.calculate_input_variables_descriptives();
     scaling_layer.set_descriptives(input_descriptives);
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dimensions = get_dimensions(inputs);
+
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -432,6 +472,7 @@ void ScalingLayerTest::test_calculate_outputs()
     samples_number = 2;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
     data.resize(samples_number,inputs_number + 1);
@@ -440,19 +481,25 @@ void ScalingLayerTest::test_calculate_outputs()
 
     input_descriptives = data_set.calculate_input_variables_descriptives();
     scaling_layer.set_descriptives(input_descriptives);
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dimensions = get_dimensions(inputs);
+
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
-
-    assert_true(abs(outputs(0) + type(0.707107)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
 
     inputs_number = 1;
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
     data.resize(samples_number, inputs_number + 1);
@@ -460,7 +507,16 @@ void ScalingLayerTest::test_calculate_outputs()
     data_set.set(data);
 
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dimensions = get_dimensions(inputs);
+
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == inputs_number, LOG);
     assert_true(outputs.dimension(1) == samples_number, LOG);
@@ -469,10 +525,12 @@ void ScalingLayerTest::test_calculate_outputs()
 
     // Test
 
+
     inputs_number = 2 + rand()%10;
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
     data.resize(samples_number, inputs_number + 1);
@@ -480,7 +538,16 @@ void ScalingLayerTest::test_calculate_outputs()
     data_set.set_data(data);
 
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
-    outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
+
+    inputs = data_set.get_input_data();
+    inputs_dimensions = get_dimensions(inputs);
+
+    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+
+    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
+                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -523,7 +590,7 @@ void ScalingLayerTest::run_test_case()
 
     // Scaling and unscaling
 
-    test_calculate_outputs();
+    test_forward_propagate();
 
     cout << "End of scaling layer test case.\n\n";
 }

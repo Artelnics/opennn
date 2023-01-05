@@ -68,15 +68,15 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 
     samples_number = 1;
     inputs_number = 1;
-    targets_number = 1;
+    outputs_number = 1;
     neurons_number = 1;
 
     // Test
 
-    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set(samples_number, inputs_number, outputs_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
 
     // Test
 
@@ -97,10 +97,10 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 
     samples_number = 1;
     inputs_number = 1;
-    targets_number = 1;
+    outputs_number = 1;
     neurons_number = 1;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
@@ -130,12 +130,12 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
     samples_number = 1;
     inputs_number = 1;
-    targets_number = 1;
+    outputs_number = 1;
 
-    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set(samples_number, inputs_number, outputs_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
 
     quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
 
@@ -162,79 +162,88 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
 
 void QuasiNewtonMethodTest::test_perform_training()
-{
+{   
     cout << "test_perform_training\n";
+
+    type old_error = std::numeric_limits<float>::max();
+
+    type error;
 
     // Test
 
     samples_number = 1;
     inputs_number = 1;
-    targets_number = 1;
-    neurons_number = 1;
+    outputs_number = 1;
 
-    data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_random();
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-    quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
+    data_set.set(1,1,1);
+    data_set.set_data_constant(type(1));
+
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(type(1));
+
+    quasi_newton_method.set_maximum_epochs_number(1);
+    quasi_newton_method.set_display(false);
+    training_results = quasi_newton_method.perform_training();
+
+    assert_true(training_results.get_epochs_number() <= 1, LOG);
 
     // Test
 
-    neural_network.set_parameters_constant(type(3.1415927));
+    data_set.set(1,1,1);
+    data_set.set_data_random();
 
-//    type old_loss = sum_squared_error.calculate_training_loss();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(-1);
+
+    quasi_newton_method.set_maximum_epochs_number(1);
+
+    training_results = quasi_newton_method.perform_training();
+    error = training_results.get_training_error();
+
+    assert_true(error < old_error, LOG);
+
+    // Test
+
+    old_error = error;
 
     quasi_newton_method.set_maximum_epochs_number(2);
-    quasi_newton_method.set_display(false);
+    neural_network.set_parameters_constant(-1);
 
-    quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.perform_training();
+    error = training_results.get_training_error();
 
-//    type loss = sum_squared_error.calculate_training_loss();
-
-//    assert_true(loss < old_loss, LOG);
+    assert_true(error <= old_error, LOG);
 
     // Loss goal
 
-    neural_network.set_parameters_constant(type(3.1415927));
+    neural_network.set_parameters_constant(type(-1));
 
-    type training_loss_goal = 100.0;
+    type training_loss_goal = type(0.1);
 
     quasi_newton_method.set_loss_goal(training_loss_goal);
     quasi_newton_method.set_minimum_loss_decrease(0.0);
-    quasi_newton_method.set_maximum_epochs_number(10);
+    quasi_newton_method.set_maximum_epochs_number(1000);
     quasi_newton_method.set_maximum_time(1000.0);
 
-    quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.perform_training();
 
-//    loss = sum_squared_error.calculate_training_loss();
-
-//    assert_true(loss < training_loss_goal, LOG);
+    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
 
     // Minimum loss decrease
 
-//    neural_network.set_parameters_constant(3.1415927);
+    neural_network.set_parameters_constant(type(-1));
 
-    type minimum_loss_decrease = 100.0;
+    type minimum_loss_decrease = type(0.1);
 
     quasi_newton_method.set_loss_goal(type(0));
     quasi_newton_method.set_minimum_loss_decrease(minimum_loss_decrease);
-    quasi_newton_method.set_maximum_epochs_number(10);
+    quasi_newton_method.set_maximum_epochs_number(1000);
     quasi_newton_method.set_maximum_time(1000.0);
 
-    quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.perform_training();
 
-    // Gradient norm goal
+    assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
 
-    neural_network.set_parameters_constant(type(3.1415927));
-
-    quasi_newton_method.set_loss_goal(type(0));
-    quasi_newton_method.set_minimum_loss_decrease(0.0);
-    quasi_newton_method.set_maximum_epochs_number(10);
-    quasi_newton_method.set_maximum_time(1000.0);
-
-    quasi_newton_method.perform_training();
-
-//    type gradient_norm = sum_squared_error.calculate_training_loss_gradient().calculate_norm();
-//    assert_true(gradient_norm < gradient_norm_goal, LOG);
 }
 
 

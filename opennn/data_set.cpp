@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
+#include "opennn_images.h"
 
 using namespace  opennn;
 using namespace std;
@@ -69,16 +70,17 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
     set_default();
 }
 
-
 /// File and separator constructor. It creates a data set object by loading the object members from a data file.
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
-/// @param data_file_name Data file file name.
-/// @param separator Data file file name.
+/// @param data_file_name Data file name.
+/// @param separator Data file separator between columns.
+/// @param has_columns_names True if data file contains a row with columns names, False otherwise.
+/// @param data_codification String codification of the input file
 
-DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names)
+DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names, const Codification& data_codification)
 {
-    set(data_file_name, separator, has_columns_names);
+    set(data_file_name, separator, has_columns_names, data_codification);
 }
 
 
@@ -481,17 +483,17 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(scaler)
     {
-        case Scaler::NoScaling: file_stream.PushText("NoScaling"); break;
+    case Scaler::NoScaling: file_stream.PushText("NoScaling"); break;
 
-        case Scaler::MinimumMaximum: file_stream.PushText("MinimumMaximum"); break;
+    case Scaler::MinimumMaximum: file_stream.PushText("MinimumMaximum"); break;
 
-        case Scaler::MeanStandardDeviation: file_stream.PushText("MeanStandardDeviation"); break;
+    case Scaler::MeanStandardDeviation: file_stream.PushText("MeanStandardDeviation"); break;
 
-        case Scaler::StandardDeviation: file_stream.PushText("StandardDeviation"); break;
+    case Scaler::StandardDeviation: file_stream.PushText("StandardDeviation"); break;
 
-        case Scaler::Logarithm: file_stream.PushText("Logarithm"); break;
+    case Scaler::Logarithm: file_stream.PushText("Logarithm"); break;
 
-        default: break;
+    default: break;
     }
 
     file_stream.CloseElement();
@@ -502,17 +504,17 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(column_use)
     {
-        case VariableUse::Input: file_stream.PushText("Input"); break;
+    case VariableUse::Input: file_stream.PushText("Input"); break;
 
-        case VariableUse::Target: file_stream.PushText("Target"); break;
+    case VariableUse::Target: file_stream.PushText("Target"); break;
 
-        case VariableUse::Unused: file_stream.PushText("Unused"); break;
+    case VariableUse::Unused: file_stream.PushText("Unused"); break;
 
-        case VariableUse::Time: file_stream.PushText("Time"); break;
+    case VariableUse::Time: file_stream.PushText("Time"); break;
 
-        case VariableUse::Id: file_stream.PushText("Id"); break;
+    case VariableUse::Id: file_stream.PushText("Id"); break;
 
-        default: break;
+    default: break;
     }
 
     file_stream.CloseElement();
@@ -523,17 +525,17 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(type)
     {
-        case ColumnType::Numeric: file_stream.PushText("Numeric"); break;
+    case ColumnType::Numeric: file_stream.PushText("Numeric"); break;
 
-        case ColumnType::Binary: file_stream.PushText("Binary"); break;
+    case ColumnType::Binary: file_stream.PushText("Binary"); break;
 
-        case ColumnType::Categorical: file_stream.PushText("Categorical"); break;
+    case ColumnType::Categorical: file_stream.PushText("Categorical"); break;
 
-        case ColumnType::Constant: file_stream.PushText("Constant"); break;
+    case ColumnType::Constant: file_stream.PushText("Constant"); break;
 
-        case ColumnType::DateTime: file_stream.PushText("DateTime"); break;
+    case ColumnType::DateTime: file_stream.PushText("DateTime"); break;
 
-        default: break;
+    default: break;
     }
 
     file_stream.CloseElement();
@@ -566,17 +568,17 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             switch(categories_uses(i))
             {
-                case VariableUse::Input: file_stream.PushText("Input"); break;
+            case VariableUse::Input: file_stream.PushText("Input"); break;
 
-                case VariableUse::Target: file_stream.PushText("Target"); break;
+            case VariableUse::Target: file_stream.PushText("Target"); break;
 
-                case VariableUse::Time: file_stream.PushText("Time"); break;
+            case VariableUse::Time: file_stream.PushText("Time"); break;
 
-                case VariableUse::Unused: file_stream.PushText("Unused"); break;
+            case VariableUse::Unused: file_stream.PushText("Unused"); break;
 
-                case VariableUse::Id: file_stream.PushText("Id"); break;
+            case VariableUse::Id: file_stream.PushText("Id"); break;
 
-                default: break;
+            default: break;
             }
 
             if(i != categories_uses.size()-1)
@@ -681,6 +683,123 @@ void DataSet::Column::print() const
     }
 }
 
+// BoundingBox constructor
+
+DataSet::BoundingBox::BoundingBox(const Index& new_channels_number, const Index& new_width, const Index& new_height)
+{
+    channels_number = new_channels_number;
+    width = new_width;
+    height = new_height;
+
+    data.resize(channels_number*width*height);
+}
+
+// BoundingBox constructor
+
+DataSet::BoundingBox::BoundingBox(const Index& new_channels_number, const Tensor<Index, 1>& new_center, const Index& new_width, const Index& new_height)
+{
+   channels_number = new_channels_number;
+
+   x_center = new_center(0);
+   y_center = new_center(1);
+   width = new_width;
+   height = new_height;
+
+   data.resize(channels_number*width*height);
+}
+
+// BoundingBox constructor
+
+DataSet::BoundingBox::BoundingBox(const Index& new_channels_number, const Index& new_x_top_left, const Index& new_y_top_left,
+                             const Index& new_x_bottom_right, const Index& new_y_bottom_right)
+{
+    channels_number = new_channels_number;
+
+    x_top_left = new_x_top_left;
+    y_top_left = new_y_top_left;
+    x_bottom_right = new_x_bottom_right;
+    y_bottom_right = new_y_bottom_right;
+
+    width = abs(new_x_top_left - new_x_bottom_right);
+    height = abs(new_y_top_left - new_y_bottom_right);
+
+    data.resize(channels_number*width*height);
+}
+
+Index DataSet::BoundingBox::get_bounding_box_size(const BoundingBox& bounding_box) const
+{
+    return bounding_box.data.size();
+}
+
+DataSet::BoundingBox DataSet::BoundingBox::resize(const Index& new_channels_number, const Index& new_width, const Index& new_height) const
+{
+    BoundingBox new_bounding_box(new_channels_number, new_width, new_height);
+
+    const type scaleWidth =  (type)new_width / (type)width;
+    const type scaleHeight = (type)new_height / (type)height;
+
+    for(Index i = 0; i < new_height; i++)
+    {
+        for(Index j = 0; j < new_width; j++)
+        {
+            const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
+            const int nearestMatch =  (((int)(i / scaleHeight) * (width * channels_number)) + ((int)(j / scaleWidth) * channels_number));
+
+            if(channels_number == 3)
+            {
+                new_bounding_box.data[pixel] =  data[nearestMatch];
+                new_bounding_box.data[pixel + 1] =  data[nearestMatch + 1];
+                new_bounding_box.data[pixel + 2] =  data[nearestMatch + 2];
+            }
+            else
+            {
+                new_bounding_box.data[pixel] =  data[nearestMatch];
+            }
+        }
+    }
+
+    return new_bounding_box;
+}
+
+
+void DataSet::BoundingBox::print() const
+{
+    cout << "Showing the values from the bounding box of size " << width << " x " << height << " x " << channels_number << ": " << endl;
+    cout << data << endl;
+    cout << "Total size of the bounding box data: " << data.size() << endl;
+}
+
+DataSet::ProjectType DataSet::get_project_type() const
+{
+    return project_type;
+}
+
+
+string DataSet::get_project_type_string(const DataSet::ProjectType& newProjectType) const
+{
+    if(newProjectType == ProjectType::Approximation)
+    {
+        return "Approximation";
+    }
+    else if(newProjectType == ProjectType::Classification)
+    {
+        return "Classification";
+    }
+    else if(newProjectType == ProjectType::Forecasting)
+    {
+        return "Forecasting";
+    }
+    else if(newProjectType == ProjectType::ImageClassification)
+    {
+        return "ImageClassification";
+    }
+    else if(newProjectType == ProjectType::AutoAssociation)
+    {
+        return "AutoAssociation";
+    }
+
+}
+
 
 Index DataSet::Column::get_variables_number() const
 {
@@ -754,6 +873,8 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 void DataSet::transform_time_series_columns()
 {
+    cout << "Transforming time series columns..." << endl;
+
     // Categorical columns?
 
     time_series_columns = columns;
@@ -765,7 +886,6 @@ void DataSet::transform_time_series_columns()
     if(has_time_columns())
     {
         // @todo check if there are more than one time column
-
         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
     }
     else
@@ -796,6 +916,18 @@ void DataSet::transform_time_series_columns()
 
             new_column_index++;
         }
+        else if(i == columns_number*(lags_number+steps_ahead) - 1)
+        {
+            new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
+
+            new_columns(new_column_index).type = columns(column_index).type;
+            new_columns(new_column_index).categories = columns(column_index).categories;
+
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(new_column_index).set_use(VariableUse::Target);
+
+            new_column_index++;
+        }
         else
         {
             new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
@@ -803,19 +935,12 @@ void DataSet::transform_time_series_columns()
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
 
-            if(new_columns(new_column_index).type == ColumnType::Constant)
-            {
-                new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).set_use(VariableUse::Unused);
-            }
-            else
-            {
-                new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).set_use(VariableUse::Target);
-            }
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(new_column_index).set_use(VariableUse::Unused);
 
             new_column_index++;
         }
+
 
         if(lag_index > 0 && column_index == columns_number - 1)
         {
@@ -833,6 +958,8 @@ void DataSet::transform_time_series_columns()
 
 void DataSet::transform_time_series_data()
 {
+    cout << "Transforming time series data..." << endl;
+
     // Categorical / Time columns?
 
     const Index old_samples_number = data.dimension(0);
@@ -865,6 +992,86 @@ void DataSet::transform_time_series_data()
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
+}
+
+
+/// This method duplicates the columns for association problems.
+
+void DataSet::transform_associative_columns()
+{
+    cout << "Transforming associative columns..." << endl;
+
+    associative_columns = columns;
+
+    const Index columns_number = get_columns_number();
+
+    Tensor<Column, 1> new_columns;
+
+    new_columns.resize(2*columns_number);
+
+    Index column_index = 0;
+
+    for(Index i = 0; i < 2*columns_number; i++)
+    {
+        column_index = i%columns_number;
+
+        if(i < columns_number)
+        {
+            new_columns(i).name = columns(column_index).name;
+
+            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(i).set_use(DataSet::VariableUse::Input);
+            new_columns(i).type = columns(column_index).type;
+            new_columns(i).categories = columns(column_index).categories;
+        }
+        else
+        {
+            new_columns(i).name = columns(column_index).name + "_output";
+
+            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(i).set_use(DataSet::VariableUse::Target);
+            new_columns(i).type = columns(column_index).type;
+            new_columns(i).categories = columns(column_index).categories;
+        }
+    }
+
+    columns = new_columns;
+}
+
+
+void DataSet::transform_associative_data()
+{
+    cout << "Transforming associative data..." << endl;
+
+    const Index samples_number = data.dimension(0);
+
+    const Index old_variables_number = data.dimension(1);
+    const Index new_variables_number = 2 * old_variables_number;
+
+    associative_data = data;
+
+    data.resize(samples_number, new_variables_number);
+
+    // Duplicate data
+
+    if(samples_number < 1000)
+    {
+        Eigen::array<int, 2> bcast({1, 2});
+        data = associative_data.broadcast(bcast);
+    }
+    else
+    {
+        for(Index i = 0; i < old_variables_number; i++)
+        {
+            std::copy(associative_data.data() + i * samples_number,
+                      associative_data.data() + (i+1) *  samples_number,
+                      data.data() + i * samples_number);
+
+            std::copy(associative_data.data() + i * samples_number,
+                      associative_data.data() + (i+1) *  samples_number,
+                      data.data() + samples_number * old_variables_number + i * samples_number);
+        }
+    }
 }
 
 
@@ -955,9 +1162,9 @@ Tensor<type, 1> DataSet::get_samples_uses_percentages() const
     Tensor<type, 1> samples_uses_percentage(4);
 
     samples_uses_percentage.setValues({training_samples_percentage,
-                                         selection_samples_percentage,
-                                         testing_samples_percentage,
-                                         unused_samples_percentage});
+                                       selection_samples_percentage,
+                                       testing_samples_percentage,
+                                       unused_samples_percentage});
 
     return samples_uses_percentage;
 }
@@ -982,54 +1189,54 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
     {
         switch(columns(i).type)
         {
-            case ColumnType::Numeric:
-                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-                else sample_string += to_string(double(data(sample_index, variable_index)));
-                variable_index++;
-                break;
+        case ColumnType::Numeric:
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += to_string(double(data(sample_index, variable_index)));
+            variable_index++;
+            break;
 
-            case ColumnType::Binary:
-                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-                else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
-                variable_index++;
-                break;
+        case ColumnType::Binary:
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
+            variable_index++;
+            break;
 
-            case ColumnType::DateTime:
-                // @todo do something
-                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-                else sample_string += to_string(double(data(sample_index, variable_index)));
-                variable_index++;
-                break;
+        case ColumnType::DateTime:
+            // @todo do something
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += to_string(double(data(sample_index, variable_index)));
+            variable_index++;
+            break;
 
-            case ColumnType::Categorical:
-                if(isnan(data(sample_index, variable_index)))
+        case ColumnType::Categorical:
+            if(isnan(data(sample_index, variable_index)))
+            {
+                sample_string += missing_values_label;
+            }
+            else
+            {
+                const Index categories_number = columns(i).get_categories_number();
+
+                for(Index j = 0; j < categories_number; j++)
                 {
-                    sample_string += missing_values_label;
-                }
-                else
-                {
-                    const Index categories_number = columns(i).get_categories_number();
-
-                    for(Index j = 0; j < categories_number; j++)
+                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN))
                     {
-                        if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN))
-                        {
-                            sample_string += columns(i).categories(j);
-                            break;
-                        }
+                        sample_string += columns(i).categories(j);
+                        break;
                     }
-                    variable_index += categories_number;
                 }
-                break;
+                variable_index += categories_number;
+            }
+            break;
 
-            case ColumnType::Constant:
-                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-                else sample_string += to_string(double(data(sample_index, variable_index)));
-                variable_index++;
-                break;
+        case ColumnType::Constant:
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += to_string(double(data(sample_index, variable_index)));
+            variable_index++;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
         if(i != columns_number-1) sample_string += separator + " ";
     }
@@ -1561,8 +1768,20 @@ void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
 
 void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
 {
-    samples_uses(index) = new_use;
+    const Index samples_number = get_samples_number();
 
+    if(index >= samples_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_sample_use(const Index&, const SampleUse&) method.\n"
+               << "Index must be less than samples number.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    samples_uses(index) = new_use;
 }
 
 
@@ -1689,14 +1908,24 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
 }
 
 
+void DataSet::set_samples_uses(const Tensor<Index, 1>& indices, const SampleUse sample_use)
+{
+    for(Index i = 0; i < indices.size(); i++)
+    {
+        set_sample_use(indices(i), sample_use);
+    }
+
+}
+
+
 /// Creates new training, selection and testing indices at random.
 /// @param training_samples_ratio Ratio of training samples in the data set.
 /// @param selection_samples_ratio Ratio of selection samples in the data set.
 /// @param testing_samples_ratio Ratio of testing samples in the data set.
 
 void DataSet::split_samples_random(const type& training_samples_ratio,
-                                     const type& selection_samples_ratio,
-                                     const type& testing_samples_ratio)
+                                   const type& selection_samples_ratio,
+                                   const type& testing_samples_ratio)
 {
     std::random_device rng;
     std::mt19937 urng(rng());
@@ -1803,8 +2032,8 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 /// @param testing_samples_ratio Ratio of testing samples in the data set.
 
 void DataSet::split_samples_sequential(const type& training_samples_ratio,
-        const type& selection_samples_ratio,
-        const type& testing_samples_ratio)
+                                       const type& selection_samples_ratio,
+                                       const type& testing_samples_ratio)
 {
     const Index used_samples_number = get_used_samples_number();
 
@@ -2677,6 +2906,12 @@ Tensor<DataSet::Column, 1> DataSet::get_time_series_columns() const
 }
 
 
+Tensor<DataSet::Column, 1> DataSet::get_associative_columns() const
+{
+    return associative_columns;
+}
+
+
 Index DataSet::get_time_series_data_rows_number() const
 {
     return time_series_data.dimension(0);
@@ -2773,12 +3008,14 @@ Index DataSet::get_columns_number() const
     return columns.size();
 }
 
+
 /// Returns the number of channels of the images in the data set.
 
 Index DataSet::get_channels_number() const
 {
     return channels_number;
 }
+
 
 /// Returns the width of the images in the data set.
 
@@ -2787,11 +3024,26 @@ Index DataSet::get_image_width() const
     return image_width;
 }
 
+
 /// Returns the height of the images in the data set.
 
 Index DataSet::get_image_height() const
 {
     return image_height;
+}
+
+/// Returns the height of the images in the data set.
+
+Index DataSet::get_image_size() const
+{
+    return image_height*image_width*channels_number;
+}
+
+/// Returns the padding set in the BMP file.
+
+Index DataSet::get_image_padding() const
+{
+    return padding;
 }
 
 /// Returns the number of columns in the time series.
@@ -2944,7 +3196,7 @@ Index DataSet::get_variable_index(const string& name) const
 
     return 0;
 
-//    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
+    //    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
 }
 
 
@@ -3273,7 +3525,7 @@ void DataSet::set_column_use(const string& name, const VariableUse& new_use)
 
 void DataSet::set_column_type(const Index& index, const ColumnType& new_type)
 {
-   columns[index].type = new_type;
+    columns[index].type = new_type;
 }
 
 
@@ -3415,7 +3667,7 @@ void DataSet::set_columns_names(const Tensor<string, 1>& new_names)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        columns(i).name = new_names(i);
+        columns(i).name = get_trimmed(new_names(i));
     }
 }
 
@@ -3497,8 +3749,8 @@ void DataSet::set_binary_simple_columns()
             for(Index row_index = 0; row_index < data.dimension(0); row_index++)
             {
                 if(!isnan(data(row_index, variable_index))
-                && data(row_index, variable_index) != values(0)
-                && data(row_index, variable_index) != values(1))
+                        && data(row_index, variable_index) != values(0)
+                        && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
                     different_values++;
@@ -3526,31 +3778,88 @@ void DataSet::set_binary_simple_columns()
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 columns(column_index).categories.resize(2);
 
-                if(values(0) == type(0) && values(1) == type(1))
+                if((abs(values(0)-type(0))<NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1))<NUMERIC_LIMITS_MIN))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(1));
+
                 }
-                else if(values(0) == type(1) && values(1) == type(0))
+                else if(abs(values(0) - type(1))<NUMERIC_LIMITS_MIN && abs(values(1) - type(0))<NUMERIC_LIMITS_MIN)
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(1));
                 }
                 else if(values(0) > values(1))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(1));
                 }
                 else if(values(0) < values(1))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                    else
+                        columns(column_index).categories(1) = std::to_string(values(0));
+                    if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
+                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    else
+                        columns(column_index).categories(0) = std::to_string(values(1));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
                 columns(column_index).categories_uses.resize(2);
                 columns(column_index).categories_uses(0) = column_use;
                 columns(column_index).categories_uses(1) = column_use;
+            }
+
+            variable_index++;
+        }
+        else if(columns(column_index).type == ColumnType::Binary)
+        {
+            Tensor<string,1> positive_words(4);
+            Tensor<string,1> negative_words(4);
+
+            positive_words.setValues({"yes","positive","+","true"});
+            negative_words.setValues({"no","negative","-","false"});
+
+            string first_category = columns(column_index).categories(0);
+            string original_first_category = columns(column_index).categories(0);
+            trim(first_category);
+
+            string second_category = columns(column_index).categories(1);
+            string original_second_category = columns(column_index).categories(1);
+            trim(second_category);
+
+            transform(first_category.begin(), first_category.end(), first_category.begin(), ::tolower);
+            transform(second_category.begin(), second_category.end(), second_category.begin(), ::tolower);
+
+            if( contains(positive_words, first_category) && contains(negative_words, second_category) )
+            {
+                columns(column_index).categories(0) = original_first_category;
+                columns(column_index).categories(1) = original_second_category;
+            }
+            else if( contains(positive_words, second_category) && contains(negative_words, first_category) )
+            {
+                columns(column_index).categories(0) = original_second_category;
+                columns(column_index).categories(1) = original_first_category;
             }
 
             variable_index++;
@@ -3564,6 +3873,13 @@ void DataSet::set_binary_simple_columns()
             variable_index++;
         }
     }
+
+    if(display) cout << "Binary columns checked " << endl;
+}
+
+void DataSet::set_categories_number(const Index& new_categories_number)
+{
+    categories_number = new_categories_number;
 }
 
 void DataSet::check_constant_columns()
@@ -3576,7 +3892,6 @@ void DataSet::check_constant_columns()
     {
         if(columns(column).type == ColumnType::Numeric)
         {
-            // @todo avoid chip
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
             if(is_constant(numeric_column))
             {
@@ -3612,40 +3927,9 @@ void DataSet::check_constant_columns()
                 columns(column).column_use = VariableUse::Unused;
             }
 
+
             variable_index += columns(column).get_categories_number();
         }
-//        switch(columns(column).type)
-//        {
-//            case ColumnType::DateTime:
-//                columns(column).column_use = VariableUse::Unused;
-//                variable_index++;
-//                break;
-
-//            case ColumnType::Constant:
-//                variable_index++;
-//                break;
-
-//            case ColumnType::Binary:
-//                if(columns(column).get_categories_number() == 1)
-//                {
-//                    columns(column).type = ColumnType::Constant;
-//                    columns(column).column_use = VariableUse::Unused;
-//                }
-//                variable_index++;
-//                break;
-
-//            case ColumnType::Categorical:
-
-//                if(columns(column).get_categories_number() == 1)
-//                {
-//                    columns(column).type = ColumnType::Constant;
-//                    columns(column).column_use = VariableUse::Unused;
-//                }
-//                variable_index += columns(column).get_categories_number();
-//                break;
-
-//        default: break;
-//        }
     }
 }
 
@@ -3720,6 +4004,12 @@ Tensor<type, 2>* DataSet::get_data_pointer()
 const Tensor<type, 2>& DataSet::get_time_series_data() const
 {
     return time_series_data;
+}
+
+
+const Tensor<type, 2>& DataSet::get_associative_data() const
+{
+    return associative_data;
 }
 
 
@@ -3847,6 +4137,50 @@ string DataSet::get_separator_string() const
 }
 
 
+/// Returns the string which will be used as separator in the data file for Text Classification.
+
+string DataSet::get_text_separator_string() const
+{
+    switch(text_separator)
+    {
+    case Separator::Tab:
+        return "Tab";
+
+    case Separator::Semicolon:
+        return "Semicolon";
+
+    default:
+        return string();
+    }
+}
+
+
+/// Returns the string codification used in the data file.
+
+const DataSet::Codification DataSet::get_codification() const
+{
+    return codification;
+}
+
+
+/// Returns a string that contains the string codification used in the data file.
+
+const string DataSet::get_codification_string() const
+{
+    switch(codification)
+    {
+    case Codification::UTF8:
+        return "UTF-8";
+
+    case Codification::SHIFT_JIS:
+        return "SHIFT_JIS";
+
+    default:
+        return "UTF-8";
+    }
+}
+
+
 /// Returns the string which will be used as label for the missing values in the data file.
 
 const string& DataSet::get_missing_values_label() const
@@ -3887,6 +4221,24 @@ Index DataSet::get_time_series_time_column_index() const
     }
 
     return static_cast<Index>(NAN);
+}
+
+
+const Index& DataSet::get_short_words_length() const
+{
+    return short_words_length;
+}
+
+
+const Index& DataSet::get_long_words_length() const
+{
+    return long_words_length;
+}
+
+
+const Tensor<Index,1>& DataSet::get_words_frequencies() const
+{
+    return words_frequencies;
 }
 
 
@@ -3935,17 +4287,17 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
 Tensor<type, 2> DataSet::get_training_data() const
 {
 
-//       const Index variables_number = get_variables_number();
+    //       const Index variables_number = get_variables_number();
 
-//       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
+    //       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
 
-       Tensor<Index, 1> variables_indices = get_used_variables_indices();
+    Tensor<Index, 1> variables_indices = get_used_variables_indices();
 
-       const Tensor<Index, 1> training_indices = get_training_samples_indices();
+    const Tensor<Index, 1> training_indices = get_training_samples_indices();
 
-       return get_subtensor_data(training_indices, variables_indices);
+    return get_subtensor_data(training_indices, variables_indices);
 
-//    return Tensor<type, 2>();
+    //    return Tensor<type, 2>();
 }
 
 
@@ -4204,7 +4556,9 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
     Tensor<type, 2> inputs(1, input_variables_number);
 
     for(Index i = 0; i < input_variables_number; i++)
+    {
         inputs(0, i) = data(sample_index, input_variables_indices(i));
+    }
 
     return inputs;
 }
@@ -4236,7 +4590,7 @@ Index DataSet::get_column_index(const string& column_name) const
     ostringstream buffer;
 
     buffer << "OpenNN Exception: DataSet class.\n"
-           << "Index get_column_index(const string&&) const method.\n"
+           << "Index get_column_index(const string&) const method.\n"
            << "Cannot find " << column_name << "\n";
 
     throw invalid_argument(buffer.str());
@@ -4588,6 +4942,12 @@ Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
 }
 
 
+Tensor<string, 2> DataSet::get_text_data_file_preview() const
+{
+    return text_data_file_preview;
+}
+
+
 Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & variables_indices) const
 {
     const Index rows_number = rows_indices.size();
@@ -4620,8 +4980,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-//    ThreadPool* thread_pool = nullptr;
-//    ThreadPoolDevice* thread_pool_device = nullptr;
+    ThreadPool* thread_pool = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
 
@@ -4632,7 +4992,6 @@ void DataSet::set()
     time_series_data.resize(0,0);
 
     time_series_columns.resize(0);
-
 
     columns_missing_values_number.resize(0);
 }
@@ -4653,7 +5012,32 @@ void DataSet::set(const string& data_file_name, const char& separator, const boo
     read_csv();
 
     set_default_columns_scalers();
+
     set_default_columns_uses();
+
+}
+
+
+void DataSet::set(const string& data_file_name, const char& separator, const bool& new_has_columns_names, const DataSet::Codification& new_codification)
+{
+    set();
+
+    set_default();
+
+    set_data_file_name(data_file_name);
+
+    set_separator(separator);
+
+    set_has_columns_names(new_has_columns_names);
+
+    set_codification(new_codification);
+
+    read_csv();
+
+    set_default_columns_scalers();
+
+    set_default_columns_uses();
+
 }
 
 
@@ -4856,6 +5240,48 @@ void DataSet::set_default()
     input_variables_dimensions.setConstant(get_input_variables_number());
 }
 
+void DataSet::set_project_type_string(const string& new_project_type)
+{
+    if(new_project_type == "Approximation")
+    {
+        set_project_type(ProjectType::Approximation);
+    }
+    else if(new_project_type == "Classification")
+    {
+        set_project_type(ProjectType::Classification);
+    }
+    else if(new_project_type == "Forecasting")
+    {
+        set_project_type(ProjectType::Forecasting);
+    }
+    else if(new_project_type == "ImageClassification")
+    {
+        set_project_type(ProjectType::ImageClassification);
+    }
+    else if(new_project_type == "TextClassification")
+    {
+        set_project_type(ProjectType::TextClassification);
+    }
+    else if(new_project_type == "AutoAssociation")
+    {
+        set_project_type(ProjectType::AutoAssociation);
+    }
+    else
+    {
+        const string message =
+                "Data Set class exception:\n"
+                "void set_project_type_string(const string&)\n"
+                "Unknown project type: " + new_project_type + "\n";
+
+        throw logic_error(message);
+    }
+}
+
+void DataSet::set_project_type(const DataSet::ProjectType& new_project_type)
+{
+    project_type = new_project_type;
+}
+
 
 /// Sets a new data matrix.
 /// The number of rows must be equal to the number of
@@ -4873,15 +5299,35 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     data = new_data;
 }
 
+
 void DataSet::set_time_series_data(const Tensor<type, 2>& new_data)
 {
     time_series_data = new_data;
 }
 
 
+Index DataSet::get_associative_columns_number() const
+{
+    return associative_columns.size();
+}
+
+
+
+void DataSet::set_associative_data(const Tensor<type, 2>& new_data)
+{
+    associative_data = new_data;
+}
+
+
 void DataSet::set_time_series_columns_number(const Index& new_variables_number)
 {
     time_series_columns.resize(new_variables_number);
+}
+
+
+void DataSet::set_associative_columns_number(const Index& new_variables_number)
+{
+    associative_columns.resize(new_variables_number);
 }
 
 
@@ -4989,6 +5435,76 @@ void DataSet::set_separator(const string& new_separator_string)
 }
 
 
+/// Sets a new separator.
+/// @param new_separator Separator value.
+
+void DataSet::set_text_separator(const Separator& new_separator)
+{
+    separator = new_separator;
+}
+
+
+/// Sets a new separator from a string.
+/// @param new_separator Char with the separator value.
+
+void DataSet::set_text_separator(const string& new_separator_string)
+{
+    if(new_separator_string == "Tab")
+    {
+        text_separator = Separator::Tab;
+    }
+    else if(new_separator_string == "Semicolon")
+    {
+        text_separator = Separator::Semicolon;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_text_separator(const string&) method.\n"
+               << "Unknown separator: " << new_separator_string << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
+/// Sets a new string codification for the dataset.
+/// @param new_codification String codification for the dataset.
+
+void DataSet::set_codification(const DataSet::Codification& new_codification)
+{
+    codification = new_codification;
+}
+
+
+/// Sets a new string codification for the dataset.
+/// @param new_codification String codification for the dataset.
+
+void DataSet::set_codification(const string& new_codification_string)
+{
+    if(new_codification_string == "UTF-8")
+    {
+        codification = Codification::UTF8;
+    }
+    else if(new_codification_string == "SHIFT_JIS")
+    {
+        codification = Codification::SHIFT_JIS;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_codification(const string&) method.\n"
+               << "Unknown codification: " << new_codification_string << ".\n"
+               << "Available codifications: UTF-8, SHIFT_JIS.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
 
 /// Sets a new label for the missing values.
 /// @param new_missing_values_label Label for the missing values.
@@ -4999,13 +5515,13 @@ void DataSet::set_missing_values_label(const string& new_missing_values_label)
 
     if(get_trimmed(new_missing_values_label).empty())
     {
-       ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: DataSet class.\n"
-              << "void set_missing_values_label(const string&) method.\n"
-              << "Missing values label cannot be empty.\n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_missing_values_label(const string&) method.\n"
+               << "Missing values label cannot be empty.\n";
 
-       throw invalid_argument(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -5078,19 +5594,76 @@ void DataSet::set_time_column(const string& new_time_column)
     time_column = new_time_column;
 }
 
-void DataSet::set_channels_number(const int& channels)
+
+void DataSet::set_short_words_length(const Index& new_short_words_length)
 {
-    channels_number = channels;
+    short_words_length = new_short_words_length;
 }
 
-void DataSet::set_image_width(const int& width)
+
+void DataSet::set_long_words_length(const Index& new_long_words_length)
 {
-    image_width = width;
+    long_words_length = new_long_words_length;
 }
 
-void DataSet::set_image_height(const int& height)
+
+void DataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies)
 {
-    image_height = height;
+    words_frequencies = new_words_frequencies;
+}
+
+
+void DataSet::set_channels_number(const int& new_channels_number)
+{
+    channels_number = new_channels_number;
+}
+
+
+void DataSet::set_image_width(const int& new_width)
+{
+    image_width = new_width;
+}
+
+
+void DataSet::set_image_height(const int& new_height)
+{
+    image_height = new_height;
+}
+
+
+void DataSet::set_image_padding(const int& new_padding)
+{
+    padding = new_padding;
+}
+
+
+void DataSet::set_images_number(const Index & new_images_number)
+{
+    images_number = new_images_number;
+}
+
+type DataSet::calculate_intersection_over_union(const BoundingBox& gTruth_bounding_box, const BoundingBox& proposed_bounding_box)
+{
+    Index intersection_x_top_left = max(gTruth_bounding_box.x_top_left, proposed_bounding_box.x_top_left);
+    Index intersection_y_top_left = max(gTruth_bounding_box.y_top_left, proposed_bounding_box.y_top_left);
+    Index intersection_x_bottom_right = min(gTruth_bounding_box.x_bottom_right, proposed_bounding_box.x_bottom_right);
+    Index intersection_y_bottom_right = min(gTruth_bounding_box.y_bottom_right, proposed_bounding_box.y_bottom_right);
+
+    if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left)) return 0;
+
+    type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left) * (intersection_y_bottom_right - intersection_y_top_left));
+
+    type gTruth_bounding_box_area = (gTruth_bounding_box.x_bottom_right - gTruth_bounding_box.x_top_left) *
+                                    (gTruth_bounding_box.y_bottom_right - gTruth_bounding_box.y_top_left);
+
+    type proposed_bounding_box_area = (proposed_bounding_box.x_bottom_right - proposed_bounding_box.x_top_left) *
+                                        (proposed_bounding_box.y_bottom_right - proposed_bounding_box.y_top_left);
+
+    type union_area = gTruth_bounding_box_area + proposed_bounding_box_area - intersection_area;
+
+    type intersection_over_union = static_cast<type>(intersection_area / union_area);
+
+    return intersection_over_union;
 }
 
 void DataSet::set_threads_number(const int& new_threads_number)
@@ -5177,14 +5750,12 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
 
 #endif
 
-    Tensor<Index, 1> repeated_samples;
+    Tensor<Index, 1> repeated_samples(0);
 
     Tensor<type, 1> sample_i;
     Tensor<type, 1> sample_j;
 
-    #pragma omp parallel for private(sample_i, sample_j) schedule(dynamic)
-
-    for(Index i = 0; i < static_cast<Index>(samples_number); i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         sample_i = get_sample_data(i);
 
@@ -5227,8 +5798,8 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
         for(Index j = 0; j < target_columns_number; j++)
         {
             if(!isnan(correlations(i,j).r)
-            && abs(correlations(i,j).r) < minimum_correlation
-            && columns(input_column_index).column_use != VariableUse::Unused)
+                    && abs(correlations(i,j).r) < minimum_correlation
+                    && columns(input_column_index).column_use != VariableUse::Unused)
             {
                 columns(input_column_index).set_use(VariableUse::Unused);
 
@@ -5345,7 +5916,20 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else // Time @todo
+        else if(columns(i).type == ColumnType::DateTime)
+        {
+            // @todo
+
+            if(columns(i).column_use == VariableUse::Unused)
+            {
+            }
+            else
+            {
+            }
+
+            variable_index++;
+        }
+        else
         {
             variable_index++;
         }
@@ -5427,7 +6011,8 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
             {
                 negatives++;
             }
-            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)) // @todo check if condition is alright
+            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)
+                    || data(training_index, target_index) < type(0))
             {
                 ostringstream buffer;
 
@@ -5865,7 +6450,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     Tensor<type, 1> means(variables_number);
     means.setZero();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < variables_number; i++)
     {
@@ -5950,9 +6535,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
             const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_column_data, target_column_data);
-
-//            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
-
         }
     }
 
@@ -5960,13 +6542,44 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 }
 
 
+Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations_spearman() const
+{
+    const Index input_columns_number = get_input_columns_number();
+    const Index target_columns_number = get_target_columns_number();
+
+    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+
+    Tensor<Correlation, 2> correlations(input_columns_number, target_columns_number);
+
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        const Index input_index = input_columns_indices(i);
+
+        const Tensor<type, 2> input_column_data = get_column_data(input_index, used_samples_indices);
+
+        for(Index j = 0; j < target_columns_number; j++)
+        {
+            const Index target_index = target_columns_indices(j);
+
+            const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
+
+            correlations(i,j) = opennn::correlation_spearman(thread_pool_device, input_column_data, target_column_data);
+        }
+    }
+
+    return correlations;
+}
+
 /// Returns true if the data contain missing values.
 
 bool DataSet::has_nan() const
 {
     const type rows_number = data.dimension(0);
 
-//    const type columns_number = data.dimension(1);
+    //    const type columns_number = data.dimension(1);
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -5978,12 +6591,12 @@ bool DataSet::has_nan() const
 
     return false;
 
-//    for(Index i = 0; i < data.size(); i++)
-//    {
-//        if(isnan(data(i))) return true;
-//    }
+    //    for(Index i = 0; i < data.size(); i++)
+    //    {
+    //        if(isnan(data(i))) return true;
+    //    }
 
-//    return false;
+    //    return false;
 }
 
 
@@ -6030,17 +6643,14 @@ void DataSet::print_missing_values_information() const
 void DataSet::print_input_target_columns_correlations() const
 {
     const Index inputs_number = get_input_variables_number();
-    const Index columns_number = get_columns_number();
-    const Index targets_number = get_target_variables_number();
+    const Index targets_number = get_target_columns_number();
 
     const Tensor<string, 1> inputs_names = get_input_columns_names();
     const Tensor<string, 1> targets_name = get_target_columns_names();
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
-    cout << "correlations: " << get_correlation_values(correlations) << endl;
-
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < targets_number; j++)
     {
         for(Index i = 0; i < inputs_number; i++)
         {
@@ -6089,13 +6699,18 @@ void DataSet::print_top_input_target_columns_correlations() const
 /// Calculate the correlation between each input in the data set.
 /// Returns a matrix with the correlation values between variables in the data set.
 
-Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
+
+Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations() const
 {
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
     const Index input_columns_number = get_input_columns_number();
 
     Tensor<Correlation, 2> correlations(input_columns_number, input_columns_number);
+    Tensor<Correlation, 2> correlations_spearman(input_columns_number, input_columns_number);
+
+    // list to return
+    Tensor<Tensor<Correlation, 2>, 1> correlations_list(2);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -6103,7 +6718,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
         const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
 
-        cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
+        if(display) cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
         for(Index j = i; j < input_columns_number; j++)
         {
@@ -6112,12 +6727,17 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+            correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
 
             if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
             {
                 correlations(i,j).r = type(1);
             }
-         }
+            if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+            {
+                correlations_spearman(i,j).r = type(1);
+            }
+        }
     }
 
     for(Index i = 0; i < input_columns_number; i++)
@@ -6127,8 +6747,17 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             correlations(i,j) = correlations(j,i);
         }
     }
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        for(Index j = 0; j < i; j++)
+        {
+            correlations_spearman(i,j) = correlations_spearman(j,i);
+        }
+    }
 
-    return correlations;
+    correlations_list(0) = correlations;
+    correlations_list(1) = correlations_spearman;
+    return correlations_list;
 }
 
 
@@ -6136,7 +6765,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations());
+    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations()(0));
 
     cout << inputs_correlations << endl;
 }
@@ -6167,7 +6796,7 @@ void DataSet::print_top_inputs_correlations() const
 
     const Tensor<string, 1> variables_name = get_input_variables_names();
 
-    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations());
+    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations()(0));
 
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
@@ -6182,8 +6811,8 @@ void DataSet::print_top_inputs_correlations() const
             if(i == j) continue;
 
             top_correlation.insert(pair<type,string>(variables_correlations(i,j), variables_name(i) + " - " + variables_name(j)));
-         }
-     }
+        }
+    }
 
     map<type,string> ::iterator it;
 
@@ -6202,17 +6831,25 @@ void DataSet::set_default_columns_scalers()
 {
     const Index columns_number = columns.size();
 
-    for(Index i = 0; i < columns_number; i++)
+    if(project_type == ProjectType::ImageClassification)
     {
-        if(columns(i).type == ColumnType::Numeric)
+        set_columns_scalers(Scaler::MinimumMaximum);
+    }
+    else
+    {
+        for(Index i = 0; i < columns_number; i++)
         {
-            columns(i).scaler = Scaler::MeanStandardDeviation;
-        }
-        else
-        {
-            columns(i).scaler = Scaler::MinimumMaximum;
+            if(columns(i).type == ColumnType::Numeric)
+            {
+                columns(i).scaler = Scaler::MeanStandardDeviation;
+            }
+            else
+            {
+                columns(i).scaler = Scaler::MinimumMaximum;
+            }
         }
     }
+
 }
 
 
@@ -6232,23 +6869,23 @@ Tensor<Descriptives, 1> DataSet::scale_data()
         {
         case Scaler::NoScaling:
             // Do nothing
-        break;
+            break;
 
         case Scaler::MinimumMaximum:
             scale_minimum_maximum(data, i, variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::MeanStandardDeviation:
             scale_mean_standard_deviation(data, i, variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::StandardDeviation:
             scale_standard_deviation(data, i, variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::Logarithm:
             scale_logarithmic(data, i);
-        break;
+            break;
 
         default:
         {
@@ -6277,23 +6914,23 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
         {
         case Scaler::NoScaling:
             // Do nothing
-        break;
+            break;
 
         case Scaler::MinimumMaximum:
             unscale_minimum_maximum(data, i, variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::MeanStandardDeviation:
             unscale_mean_standard_deviation(data, i, variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::StandardDeviation:
             unscale_standard_deviation(data, i, variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::Logarithm:
             unscale_logarithmic(data, i);
-        break;
+            break;
 
         default:
         {
@@ -6315,69 +6952,69 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 
 Tensor<Descriptives, 1> DataSet::scale_input_variables()
 {
-//    if(input_variables_dimensions.size() == 2)
-//    {
-        const Index input_variables_number = get_input_variables_number();
+    //    if(input_variables_dimensions.size() == 2)
+    //    {
+    const Index input_variables_number = get_input_variables_number();
 
-        const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-        const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
 
-        for(Index i = 0; i < input_variables_number; i++)
+    for(Index i = 0; i < input_variables_number; i++)
+    {
+        switch(input_variables_scalers(i))
         {
-            switch(input_variables_scalers(i))
-            {
-            case Scaler::NoScaling:
-                // Do nothing
+        case Scaler::NoScaling:
+            // Do nothing
             break;
 
-            case Scaler::MinimumMaximum:
-                scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+        case Scaler::MinimumMaximum:
+            scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
             break;
 
-            case Scaler::MeanStandardDeviation:
-                scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+        case Scaler::MeanStandardDeviation:
+            scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
             break;
 
-            case Scaler::StandardDeviation:
-                scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+        case Scaler::StandardDeviation:
+            scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
             break;
 
-            case Scaler::Logarithm:
-                scale_logarithmic(data, input_variables_indices(i));
+        case Scaler::Logarithm:
+            scale_logarithmic(data, input_variables_indices(i));
             break;
 
-            default:
-            {
-                ostringstream buffer;
+        default:
+        {
+            ostringstream buffer;
 
-                buffer << "OpenNN Exception: DataSet class\n"
-                       << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                       << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
 
-                throw invalid_argument(buffer.str());
-            }
-            }
+            throw invalid_argument(buffer.str());
         }
+        }
+    }
 
-        return input_variables_descriptives;
-//    }
-//    else if(input_variables_dimensions.size() == 4)
-//    {
-//        const Index input_variables_number = get_input_variables_number();
-//        Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
+    return input_variables_descriptives;
+    //    }
+    //    else if(input_variables_dimensions.size() == 4)
+    //    {
+    //        const Index input_variables_number = get_input_variables_number();
+    //        Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
 
-//        for(Index i = 0; i < input_variables_number; i++)
-//        {
-//            input_variables_descriptives(i).minimum = 0;
-//            input_variables_descriptives(i).maximum = 255;
+    //        for(Index i = 0; i < input_variables_number; i++)
+    //        {
+    //            input_variables_descriptives(i).minimum = 0;
+    //            input_variables_descriptives(i).maximum = 255;
 
-//            data(i) = - static_cast<type>(1)+ static_cast<type>(2*data(i)/255);
-//        }
+    //            data(i) = - static_cast<type>(1)+ static_cast<type>(2*data(i)/255);
+    //        }
 
-//        return input_variables_descriptives;
-//    }
+    //        return input_variables_descriptives;
+    //    }
 }
 
 
@@ -6401,23 +7038,23 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
         {
         case Scaler::NoScaling:
             // Do nothing
-        break;
+            break;
 
         case Scaler::MinimumMaximum:
             scale_minimum_maximum(data, target_variables_indices(i), target_variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::MeanStandardDeviation:
             scale_mean_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::StandardDeviation:
             scale_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::Logarithm:
             scale_logarithmic(data, target_variables_indices(i));
-        break;
+            break;
 
         default:
         {
@@ -6453,23 +7090,23 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
         {
         case Scaler::NoScaling:
             // Do nothing
-        break;
+            break;
 
         case Scaler::MinimumMaximum:
             unscale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::MeanStandardDeviation:
             unscale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::StandardDeviation:
             unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
-        break;
+            break;
 
         case Scaler::Logarithm:
             unscale_logarithmic(data, input_variables_indices(i));
-        break;
+            break;
 
         default:
         {
@@ -6591,13 +7228,27 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataFile");
 
-    // File type
+    if(project_type != ProjectType::ImageClassification)
     {
-        file_stream.OpenElement("FileType");
+        // File type
+        {
+            file_stream.OpenElement("FileType");
 
-        file_stream.PushText("csv");
+            file_stream.PushText("csv");
 
-        file_stream.CloseElement();
+            file_stream.CloseElement();
+        }
+    }
+    else
+    {
+        // File type
+        {
+            file_stream.OpenElement("FileType");
+
+            file_stream.PushText("bmp");
+
+            file_stream.CloseElement();
+        }
     }
 
     // Data file name
@@ -6614,6 +7265,16 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("Separator");
 
         file_stream.PushText(get_separator_string().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Text Separator
+    if(project_type == ProjectType::TextClassification)
+    {
+        file_stream.OpenElement("TextSeparator");
+
+        file_stream.PushText(get_text_separator_string().c_str());
 
         file_stream.CloseElement();
     }
@@ -6652,8 +7313,10 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Channels
+    // Image classification
+    if(project_type == ProjectType::ImageClassification)
     {
+        // Channels
         file_stream.OpenElement("Channels");
 
         buffer.str("");
@@ -6662,10 +7325,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
-    }
 
-    // Width
-    {
+        // Width
         file_stream.OpenElement("Width");
 
         buffer.str("");
@@ -6674,14 +7335,22 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
-    }
 
-    // Height
-    {
+        // Height
         file_stream.OpenElement("Height");
 
         buffer.str("");
         buffer << get_image_height();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Padding
+        file_stream.OpenElement("Padding");
+
+        buffer.str("");
+        buffer << get_image_padding();
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -6723,6 +7392,61 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
+    // Text classification
+
+    if(project_type == ProjectType::TextClassification)
+    {
+        // Short words length
+        file_stream.OpenElement("ShortWordsLength");
+
+        buffer.str("");
+        buffer << get_short_words_length();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Long words length
+        file_stream.OpenElement("LongWordsLength");
+
+        buffer.str("");
+        buffer << get_long_words_length();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Stop words list
+        file_stream.OpenElement("StopWordsList");
+
+        const Index stop_words_number = stop_words.dimension(0);
+
+        buffer.str("");
+
+        for(Index i = 0; i < stop_words_number; i++)
+        {
+            buffer << stop_words(i);
+
+            if(i != stop_words_number-1) buffer << ",";
+        }
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Codification
+
+    file_stream.OpenElement("Codification");
+
+    buffer.str("");
+    buffer << get_codification_string();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     // Close DataFile
 
     file_stream.CloseElement();
@@ -6745,9 +7469,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Columns items
 
-    {
-        const Index columns_number = get_columns_number();
+    const Index columns_number = get_columns_number();
 
+    {
         for(Index i = 0; i < columns_number; i++)
         {
             file_stream.OpenElement("Column");
@@ -6944,6 +7668,25 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Frequencies
+
+    if(project_type == ProjectType::TextClassification)
+    {
+        file_stream.OpenElement("WordsFrequencies");
+
+        for(Index i = 0; i < words_frequencies.size(); i++)
+        {
+            buffer.str("");
+            buffer << words_frequencies(i);
+
+            file_stream.PushText(buffer.str().c_str());
+            if(i != words_frequencies.size()-1) file_stream.PushText(" ");
+
+        }
+
+        file_stream.CloseElement();
+    }
+
     // Preview data
 
     file_stream.OpenElement("PreviewData");
@@ -6951,29 +7694,63 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("PreviewSize");
 
     buffer.str("");
-    buffer << data_file_preview.size();
 
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    for(Index i = 0; i < data_file_preview.size(); i++)
+    if(project_type != ProjectType::TextClassification)
     {
-        file_stream.OpenElement("Row");
+        buffer << data_file_preview.size();
 
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-        for(Index j = 0; j < data_file_preview(i).size(); j++)
-        {
-            file_stream.PushText(data_file_preview(i)(j).c_str());
-
-            if(j != data_file_preview(i).size()-1)
-            {
-                file_stream.PushText(",");
-            }
-        }
+        file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
+
+        for(Index i = 0; i < data_file_preview.size(); i++)
+        {
+            file_stream.OpenElement("Row");
+
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+            for(Index j = 0; j < data_file_preview(i).size(); j++)
+            {
+                file_stream.PushText(data_file_preview(i)(j).c_str());
+
+                if(j != data_file_preview(i).size()-1)
+                {
+                    file_stream.PushText(",");
+                }
+            }
+
+            file_stream.CloseElement();
+        }
+    }
+    else
+    {
+        buffer << text_data_file_preview.dimension(0);
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        for(Index i = 0; i < text_data_file_preview.dimension(0); i++)
+        {
+            file_stream.OpenElement("Row");
+
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+            file_stream.PushText(text_data_file_preview(i,0).c_str());
+
+            file_stream.CloseElement();
+        }
+
+        for(Index i = 0; i < text_data_file_preview.dimension(0); i++)
+        {
+            file_stream.OpenElement("Target");
+
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+            file_stream.PushText(text_data_file_preview(i,1).c_str());
+
+            file_stream.CloseElement();
+        }
     }
 
     // Close preview data
@@ -7060,6 +7837,27 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_separator("Comma");
     }
 
+    // Text separator
+
+    const tinyxml2::XMLElement* text_separator_element = data_file_element->FirstChildElement("TextSeparator");
+
+    if(text_separator_element)
+    {
+        if(text_separator_element->GetText())
+        {
+            const string new_separator = text_separator_element->GetText();
+
+            try
+            {
+                set_text_separator(new_separator);
+            }
+            catch(const invalid_argument& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
     // Has columns names
 
     const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
@@ -7118,64 +7916,62 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_label("NA");
     }
 
+    // Image classification
+
     // Channels
 
     const tinyxml2::XMLElement* channels_number_element = data_file_element->FirstChildElement("Channels");
 
-    if(!channels_number_element)
+    if(channels_number_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Channels number element is nullptr.\n";
+        if(channels_number_element->GetText())
+        {
+            const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(channels_number_element->GetText())
-    {
-        const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
-
-        set_channels_number(channels);
+            set_channels_number(channels);
+        }
     }
 
     // Width
 
     const tinyxml2::XMLElement* image_width_element = data_file_element->FirstChildElement("Width");
 
-    if(!image_width_element)
+    if(image_width_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Image width element is nullptr.\n";
+        if(image_width_element->GetText())
+        {
+            const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
 
-        throw invalid_argument(buffer.str());
-    }
-
-    if(image_width_element->GetText())
-    {
-        const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
-
-        set_image_width(width);
+            set_image_width(width);
+        }
     }
 
     // Height
 
     const tinyxml2::XMLElement* image_height_element = data_file_element->FirstChildElement("Height");
 
-    if(!image_height_element)
+    if(image_height_element)
     {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Image height element is nullptr.\n";
+        if(image_height_element->GetText())
+        {
+            const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
 
-        throw invalid_argument(buffer.str());
+            set_image_height(height);
+        }
     }
 
-    if(image_height_element->GetText())
-    {
-        const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
+    // Padding
 
-        set_image_height(height);
+    const tinyxml2::XMLElement* image_padding_element = data_file_element->FirstChildElement("Padding");
+
+    if(image_padding_element)
+    {
+        if(image_padding_element->GetText())
+        {
+            const Index padding = static_cast<Index>(atoi(image_padding_element->GetText()));
+
+            set_image_padding(padding);
+        }
     }
 
     // Forecasting
@@ -7238,6 +8034,58 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const string new_time_column = time_column_element->GetText();
 
         set_time_column(new_time_column);
+    }
+
+    // Text classification
+
+    const tinyxml2::XMLElement* short_words_length_element = data_file_element->FirstChildElement("ShortWordsLength");
+
+    if(short_words_length_element)
+    {
+        if(short_words_length_element->GetText())
+        {
+            const int new_short_words_length = static_cast<Index>(atoi(short_words_length_element->GetText()));
+
+            set_short_words_length(new_short_words_length);
+        }
+    }
+
+    const tinyxml2::XMLElement* long_words_length_element = data_file_element->FirstChildElement("LongWordsLength");
+
+    if(long_words_length_element)
+    {
+        if(long_words_length_element->GetText())
+        {
+            const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
+
+            set_long_words_length(new_long_words_length);
+        }
+    }
+
+    const tinyxml2::XMLElement* stop_words_list_element = data_file_element->FirstChildElement("StopWordsList");
+
+    if(stop_words_list_element)
+    {
+        if(stop_words_list_element->GetText())
+        {
+            const string new_stop_words_list = stop_words_list_element->GetText();
+
+            stop_words = get_tokens(new_stop_words_list,",");
+        }
+    }
+
+    // Codification
+
+    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+
+    if(codification_element)
+    {
+        if(codification_element->GetText())
+        {
+            const string new_codification = codification_element->GetText();
+
+            set_codification(new_codification);
+        }
     }
 
     // Columns
@@ -7426,11 +8274,11 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(!time_series_columns_element)
     {
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "Time series columns element is nullptr.\n";
+        //        buffer << "OpenNN Exception: DataSet class.\n"
+        //               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+        //               << "Time series columns element is nullptr.\n";
 
-//        throw invalid_argument(buffer.str());
+        //        throw invalid_argument(buffer.str());
 
         // do nothing
     }
@@ -7778,6 +8626,36 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    // Words frequencies
+
+    if(project_type == ProjectType::TextClassification)
+    {
+        const tinyxml2::XMLElement* words_frequencies_element = data_set_element->FirstChildElement("WordsFrequencies");
+
+        if(!words_frequencies_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Words frequencies element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        if(words_frequencies_element->GetText())
+        {
+            Tensor<string, 1> new_words_frequencies = get_tokens(words_frequencies_element->GetText(), ' ');
+
+            words_frequencies.resize(new_words_frequencies.size());
+
+            for(Index i = 0; i < new_words_frequencies.size(); i++)
+            {
+                words_frequencies(i) = atoi(new_words_frequencies(i).c_str());
+            }
+
+        }
+
+    }
+
     // Preview data
 
     const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
@@ -7811,29 +8689,75 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
+        if(new_preview_size > 0) text_data_file_preview.resize(new_preview_size, 2);
     }
 
     // Preview data
 
     start_element = preview_size_element;
 
-    for(Index i = 0; i < new_preview_size; i++)
+    if(project_type != ProjectType::TextClassification)
     {
-        const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
-        start_element = row_element;
-
-        if(row_element->Attribute("Item") != to_string(i+1))
+        for(Index i = 0; i < new_preview_size; i++)
         {
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            start_element = row_element;
 
-            throw invalid_argument(buffer.str());
+            if(row_element->Attribute("Item") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(row_element->GetText())
+            {
+                data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+            }
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < new_preview_size; i++)
+        {
+            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            start_element = row_element;
+
+            if(row_element->Attribute("Item") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(row_element->GetText())
+            {
+                text_data_file_preview(i,0) = row_element->GetText();
+            }
         }
 
-        if(row_element->GetText())
+        for(Index i = 0; i < new_preview_size; i++)
         {
-            data_file_preview(i) = get_tokens(row_element->GetText(), ',');
+            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Target");
+            start_element = row_element;
+
+            if(row_element->Attribute("Item") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Target item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(row_element->GetText())
+            {
+                text_data_file_preview(i,1) = row_element->GetText();
+            }
         }
     }
 
@@ -8003,7 +8927,7 @@ void DataSet::print_data_preview() const
             cout  << first_sample(i) << "  ";
         }
 
-    cout << endl;
+        cout << endl;
     }
 
     if(samples_number > 1)
@@ -8044,13 +8968,13 @@ void DataSet::save_data() const
 
     if(!file.is_open())
     {
-      ostringstream buffer;
+        ostringstream buffer;
 
-      buffer << "OpenNN Exception: Matrix template." << endl
-             << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
-             << "Cannot open matrix data file: " << data_file_name << endl;
+        buffer << "OpenNN Exception: Matrix template." << endl
+               << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
+               << "Cannot open matrix data file: " << data_file_name << endl;
 
-      throw invalid_argument(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     file.precision(20);
@@ -8084,17 +9008,17 @@ void DataSet::save_data() const
         {
             file << rows_labels(i) << separator_char;
         }
-       for(Index j = 0; j < variables_number; j++)
-       {
-           file << data(i,j);
+        for(Index j = 0; j < variables_number; j++)
+        {
+            file << data(i,j);
 
-           if(j != variables_number-1)
-           {
-               file << separator_char;
-           }
-       }
+            if(j != variables_number-1)
+            {
+                file << separator_char;
+            }
+        }
 
-       file << endl;
+        file << endl;
     }
 
     file.close();
@@ -8199,10 +9123,62 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 }
 
 
+/// Saves to the data file the values of the auto associative data matrix in binary format.
+
+void DataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
+{
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class." << endl
+               << "void save_auto_associative_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = associative_data.dimension(1);
+    Index rows_number = associative_data.dimension(0);
+
+    cout << "Saving binary associative data file..." << endl;
+
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    for(int i = 0; i < columns_number; i++)
+    {
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = associative_data(j,i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+        }
+    }
+
+    file.close();
+
+    cout << "Binary data file saved." << endl;
+}
+
+
+
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 
 void DataSet::transform_time_series()
 {
+    cout << "Transforming time series..." << endl;
+
     if(lags_number == 0 || steps_ahead == 0) return;
 
     transform_time_series_data();
@@ -8212,6 +9188,20 @@ void DataSet::transform_time_series()
     split_samples_sequential();
 
     unuse_constant_columns();
+}
+
+
+/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
+
+void DataSet::transform_associative_dataset()
+{
+    transform_associative_data();
+
+    transform_associative_columns();
+
+    unuse_constant_columns();
+
+    set_training();
 }
 
 
@@ -8258,7 +9248,7 @@ void DataSet::load_data_binary()
 }
 
 
-/// This method loads time series data from a binary data.
+/// This method loads time series data from a binary data file.
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
@@ -8302,6 +9292,50 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 }
 
 
+/// This method loads associative data from a binary data file.
+
+void DataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
+{
+    std::ifstream file;
+
+    file.open(auto_associative_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load_auto_associative_data_binary(const string&) method.\n"
+               << "Cannot open binary file: " << auto_associative_data_file_name << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number;
+    Index rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    associative_data.resize(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number*columns_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        associative_data(i) = value;
+    }
+
+    file.close();
+}
+
+
 /// This method checks if the input data file has the correct format. Returns an error message.
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
@@ -8325,7 +9359,9 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
 
     Index tokens_count;
 
-    const Index columns_number = get_columns_number() - get_target_columns_number();
+    Index columns_number = get_columns_number() - get_target_columns_number();
+    if(project_type == ProjectType::AutoAssociation)
+        columns_number = get_columns_number() - get_target_columns_number() - get_unused_columns_number()/2;
 
     while(file.good())
     {
@@ -8403,7 +9439,9 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     Index tokens_count;
 
-    const Index columns_number = get_columns_number() - get_target_columns_number();
+    Index columns_number = get_columns_number() - get_target_columns_number();
+    if(project_type == ProjectType::AutoAssociation)
+        columns_number = get_columns_number() - get_target_columns_number() - get_unused_columns_number()/2;
 
     while(file.good())
     {
@@ -8441,7 +9479,8 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     if(has_columns_name) input_samples_count--;
 
-    Tensor<type, 2> input_data(input_samples_count, variables_number);
+    Tensor<type, 2> inputs_data(input_samples_count, variables_number);
+    inputs_data.setZero();
 
     // Fill input data
 
@@ -8523,15 +9562,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
+                    inputs_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = type(stof(tokens(token_index)));
+                    inputs_data(line_number, variable_index) = type(stof(tokens(token_index)));
                 }
 
                 variable_index++;
@@ -8541,15 +9580,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label)
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(columns(i).categories.size() > 0 && tokens(token_index) == columns(i).categories(0))
                 {
-                    input_data(line_number, variable_index) = type(1);
+                    inputs_data(line_number, variable_index) = type(1);
                 }
                 else if(tokens(token_index) == columns(i).name)
                 {
-                    input_data(line_number, variable_index) = type(1);
+                    inputs_data(line_number, variable_index) = type(1);
                 }
 
                 variable_index++;
@@ -8561,11 +9600,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                     if(tokens(token_index) == missing_values_label)
                     {
                         has_missing_values = true;
-                        input_data(line_number, variable_index) = static_cast<type>(NAN);
+                        inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                     }
                     else if(tokens(token_index) == columns(i).categories(k))
                     {
-                        input_data(line_number, variable_index) = type(1);
+                        inputs_data(line_number, variable_index) = type(1);
                     }
 
                     variable_index++;
@@ -8576,11 +9615,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = static_cast<type>(date_to_timestamp(tokens(token_index), gmt));
+                    inputs_data(line_number, variable_index) = static_cast<type>(date_to_timestamp(tokens(token_index), gmt));
                 }
 
                 variable_index++;
@@ -8590,15 +9629,15 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     has_missing_values = true;
-                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                    inputs_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
+                    inputs_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = type(stof(tokens(token_index)));
+                    inputs_data(line_number, variable_index) = type(stof(tokens(token_index)));
                 }
 
                 variable_index++;
@@ -8614,7 +9653,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     if(!has_missing_values)
     {
-        return input_data;
+        return inputs_data;
     }
     else
     {
@@ -8624,46 +9663,69 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(missing_values_method == MissingValuesMethod::Unuse || missing_values_method == MissingValuesMethod::Mean)
         {
-            const Tensor<type, 1> means = mean(input_data);
+            const Tensor<type, 1> means = mean(inputs_data);
 
-            const Index samples_number = input_data.dimension(0);
-            const Index variables_number = input_data.dimension(1);
+            const Index samples_number = inputs_data.dimension(0);
+            const Index variables_number = inputs_data.dimension(1);
 
-            #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 
             for(Index j = 0; j < variables_number; j++)
             {
                 for(Index i = 0; i < samples_number; i++)
                 {
-                    if(isnan(input_data(i, j)))
+                    if(isnan(inputs_data(i, j)))
                     {
-                        input_data(i,j) = means(j);
+                        inputs_data(i,j) = means(j);
                     }
                 }
             }
         }
         else
         {
-            const Tensor<type, 1> medians = median(input_data);
+            const Tensor<type, 1> medians = median(inputs_data);
 
-            const Index samples_number = input_data.dimension(0);
-            const Index variables_number = input_data.dimension(1);
+            const Index samples_number = inputs_data.dimension(0);
+            const Index variables_number = inputs_data.dimension(1);
 
-            #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 
             for(Index j = 0; j < variables_number; j++)
             {
                 for(Index i = 0; i < samples_number; i++)
                 {
-                    if(isnan(input_data(i, j)))
+                    if(isnan(inputs_data(i, j)))
                     {
-                        input_data(i,j) = medians(j);
+                        inputs_data(i,j) = medians(j);
                     }
                 }
             }
         }
 
-        return input_data;
+        return inputs_data;
+    }
+}
+
+
+/// This method parses a string decoded in non UTF8 decodification to UTF8
+/// @param input_string String to be parsed
+
+string DataSet::decode(const string& input_string) const
+{
+    switch(codification)
+    {
+    case DataSet::Codification::UTF8:
+    {
+        return input_string;
+    }
+
+    case DataSet::Codification::SHIFT_JIS:
+    {
+        return sj2utf8(input_string);
+    }
+
+    default:
+        return input_string;
     }
 }
 
@@ -8671,7 +9733,6 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 /// Returns a vector containing the number of samples of each class in the data set.
 /// If the number of target variables is one then the number of classes is two.
 /// If the number of target variables is greater than one then the number of classes is equal to the number of target variables.
-/// @todo Return class_distribution is wrong
 
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
@@ -8711,6 +9772,8 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     else // More than two classes
     {
         class_distribution = Tensor<Index, 1>(targets_number);
+
+        class_distribution.setZero();
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -8755,7 +9818,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
     Index used_column_index = 0;
     Index variable_index = 0;
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < columns_number; i++)
     {
@@ -8815,15 +9878,14 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 /// Calculate the outliers from the data set using Tukey's test and sets in samples object.
 /// @param cleaning_parameter Parameter used to detect outliers
-/// @todo
 
-void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter) const
+void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
     const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
-//    const Tensor<Index, 1> outliers_samples = outliers_indices(0).get_indices_greater_than(0);
+    const Tensor<Index, 1> outliers_samples = get_elements_greater_than(outliers_indices, 0);
 
-//    set_samples_unused(outliers_samples);
+    set_samples_uses(outliers_samples, DataSet::SampleUse::Unused);
 }
 
 
@@ -8846,7 +9908,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
     }
 
     sort(ordered_ranks.data(), ordered_ranks.data() + samples_number,
-        [](Tensor<type, 1> & a, Tensor<type, 1> & b)
+         [](Tensor<type, 1> & a, Tensor<type, 1> & b)
     {
         return a(1) < b(1);
     });
@@ -8929,7 +9991,7 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
     Tensor<type, 2> distance_matrix(samples_number, samples_number);
     distance_matrix.setZero();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < samples_number ; i++)
     {
@@ -8950,7 +10012,7 @@ Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type,
 
     Tensor<list<Index>, 1> neighbors_indices(samples_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9027,7 +10089,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::create_bounding_limits_kd_tree(const Index&
         for(Index j = 1; j < bounding_limits(i).size()-1; j = j+2)
         {
             bounding_limits(i)(j) = (bounding_limits(i-1)(j/2+1) - bounding_limits(i-1)(j/2))/2
-                                   + bounding_limits(i-1)(j/2);
+                    + bounding_limits(i-1)(j/2);
 
             bounding_limits(i)(j+1) = bounding_limits(i-1)(j/2+1);
         }
@@ -9044,7 +10106,7 @@ void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tens
     auto specific_sort = [&tree](const Index & first, const Index & last, const Index & split_variable)
     {
         sort(tree.data() + first, tree.data() + last,
-            [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b)
+             [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b)
         {
             return a(split_variable) > b(split_variable);
         });
@@ -9060,7 +10122,7 @@ void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tens
 
         specific_sort(bounding_limits(i)(0), bounding_limits(i)(1), split_variable);
 
-        #pragma omp parallel for
+#pragma omp parallel for
         for(Index j = 1; j < (Index)bounding_limits(i).size()-1; j++)
             specific_sort(bounding_limits(i)(j)+1, bounding_limits(i)(j+1), split_variable);
     }
@@ -9072,7 +10134,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
                                                                    const Index& depth,
                                                                    const Index& k_neighbors) const
 {
-/*
+    /*
     const Index used_samples_number = get_used_samples_number();
     const Index leaves_number = pow(2, depth);
 
@@ -9110,7 +10172,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
 
 Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
 {
-/*
+    /*
     const Index used_samples_number = get_used_samples_number();
 
     Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
@@ -9138,7 +10200,7 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
     Tensor<type, 1> average_reachability(samples_number);
     average_reachability.setZero();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9163,18 +10225,30 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
     return average_reachability;
 }
 
-/// @todo check average_reachabilities length
 
 Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& k_nearest_indexes,
                                                         const Tensor<type, 1>& average_reachabilities,
                                                         const Index & k) const
 {
     const Index samples_number = get_used_samples_number();
+
+    if(average_reachabilities.size() > samples_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "    Tensor<type, 1> calculate_local_outlier_factor(Tensor<list<Index>, 1>&, const Tensor<type, 1>&, const Index &) const method.\n"
+               << "Average reachibilities size must be less than samples number.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
     Tensor<type, 1> LOF_value(samples_number);
 
     long double sum;
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9246,7 +10320,7 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
     Tensor<list<Index>, 1> k_nearest_indexes;
 
     kdtree ? k_nearest_indexes = calculate_kd_tree_neighbors(k, min_samples_leaf_fix)
-           : k_nearest_indexes = calculate_k_nearest_neighbors(calculate_distance_matrix(get_used_samples_indices()), k);
+            : k_nearest_indexes = calculate_k_nearest_neighbors(calculate_distance_matrix(get_used_samples_indices()), k);
 
 
     const Tensor<type, 1> average_reachabilities = calculate_average_reachability(k_nearest_indexes, k);
@@ -9258,8 +10332,8 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
     Tensor<Index, 1> outlier_indexes;
 
     contamination > type(0)
-        ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
-                        : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, type(2.0), true);
+            ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
+            : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, type(2.0), true);
 
     return outlier_indexes;
 }
@@ -9280,7 +10354,7 @@ void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index&
 
 Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& tree_simulation, list<Index>& tree_index) const
 {
-/*
+    /*
     const Index current_tree_index = tree_index.front();
     const type current_variable = tree(current_tree_index, 1);
     const type division_value = tree(current_tree_index, 0);
@@ -9453,7 +10527,7 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
         value = data(sample_index, static_cast<Index>(tree(current_index, 1)));
 
         (value < tree(current_index, 0)) ? current_index = current_index*2 + 1
-                                         : current_index = current_index*2 + 2;
+                : current_index = current_index*2 + 2;
 
         current_depth++;
     }
@@ -9473,7 +10547,7 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
     Tensor<type, 1> average_paths(samples_number);
     average_paths.setZero();
 
-    # pragma omp parallel for
+# pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
         for(Index j = 0; j < n_trees; j++)
@@ -9500,7 +10574,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
     contamination > type(0)
             ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
-                      : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
+            : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
 
     return outlier_indexes;
 }
@@ -9573,11 +10647,11 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     Index new_lags_number;
 
-    if(samples_number == lags_number || samples_number < lags_number)
+    if((samples_number == lags_number || samples_number < lags_number) && lags_number > 2)
     {
         new_lags_number = lags_number - 2;
     }
-    else if(samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1 && lags_number > 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9742,12 +10816,52 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
             counter_j++;
         }
 
-    counter_i++;
+        counter_i++;
 
     }
 
     return cross_correlations;
 }
+
+
+/// Transforms a sentence to Tensor, according to dataset columns.
+/// @param sentence Sentence that we will transform
+
+Tensor<type,1> DataSet::sentence_to_data(const string& sentence) const
+{
+    Tensor<string, 1> tokens = get_tokens(sentence,' ');
+
+    Tensor<type, 1> vector(get_columns_number() - 1);
+
+    TextAnalytics text_analytics;
+    text_analytics.set_short_words_length(short_words_length);
+    text_analytics.set_long_words_length(long_words_length);
+
+    Tensor<Tensor<string,1>,1> words = text_analytics.preprocess(tokens);
+
+    TextAnalytics::WordBag word_bag = text_analytics.calculate_word_bag(words);
+
+    const Tensor<string,1> columns_names = get_columns_names();
+
+    const Index words_number = word_bag.words.size();
+
+    vector.setZero();
+
+    for(Index i = 0; i < words_number; i++)
+    {
+        if( contains(columns_names, word_bag.words(i)) )
+        {
+            auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), word_bag.words(i));
+            const Index index = it - columns_names.data();
+
+            vector(index) = word_bag.frequencies(i);
+        }
+    }
+
+    return vector;
+
+};
+
 
 /// Generates an artificial data_set with a given number of samples and number of variables
 /// by constant data.
@@ -9768,7 +10882,6 @@ void DataSet::generate_constant_data(const Index& samples_number, const Index& v
 /// using random data.
 /// @param samples_number Number of samples in the data_set.
 /// @param variables_number Number of variables in the data_set.
-/// @todo
 
 void DataSet::generate_random_data(const Index& samples_number, const Index& variables_number)
 {
@@ -9801,7 +10914,6 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 /// using the Rosenbrock function.
 /// @param samples_number Number of samples in the data_set.
 /// @param variables_number Number of variables in the data_set.
-/// @todo
 
 void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)
 {
@@ -9811,7 +10923,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
     data.setRandom();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9841,6 +10953,8 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 
     for(Index i = 0; i < samples_number; i++)
     {
+        data(i,variables_number-1) = 0;
+
         for(Index j = 0; j < variables_number-1; j++)
         {
             data(i,variables_number-1) += data(i,j);
@@ -9856,7 +10970,6 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 /// The size must be equal to the number of variables.
 /// @param maximums vector of maximum values in the range.
 /// The size must be equal to the number of variables.
-/// @todo
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
@@ -9913,7 +11026,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             if(isnan(data(sample_index, variable_index))) continue;
 
             if(abs(data(sample_index, variable_index) - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
-            || abs(data(sample_index, variable_index) - maximums(i)) <= type(NUMERIC_LIMITS_MIN)) continue;
+                    || abs(data(sample_index, variable_index) - maximums(i)) <= type(NUMERIC_LIMITS_MIN)) continue;
 
             if(data(sample_index,variable_index) < minimums(i)
                     || data(sample_index,variable_index) > maximums(i))
@@ -9928,7 +11041,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
     const Index filtered_samples_number =
             static_cast<Index>(count_if(filtered_indices.data(),
                                         filtered_indices.data()+filtered_indices.size(), [](type value)
-                                {return value > static_cast<type>(0.5);}));
+                               {return value > static_cast<type>(0.5);}));
 
     Tensor<Index, 1> filtered_samples_indices(filtered_samples_number);
 
@@ -9953,7 +11066,7 @@ void DataSet::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i <samples_number; i++)
     {
@@ -9980,44 +11093,10 @@ void DataSet::impute_missing_values_mean()
     Index current_sample;
 
     if(lags_number == 0 && steps_ahead == 0)
-{
+    {
 #pragma omp parallel for schedule(dynamic)
 
-    for(Index j = 0; j < variables_number - target_variables_number; j++)
-    {
-        current_variable = used_variables_indices(j);
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            current_sample = used_samples_indices(i);
-
-            if(isnan(data(current_sample, current_variable)))
-            {
-                data(current_sample,current_variable) = means(j);
-            }
-        }
-    }
-    for(Index j = 0; j < target_variables_number; j++)
-    {
-        current_variable = target_variables_indices(j);
-        for(Index i = 0; i < samples_number; i++)
-        {
-            current_sample = used_samples_indices(i);
-
-            if(isnan(data(current_sample, current_variable)))
-            {
-                set_sample_use(i, "Unused");
-            }
-        }
-
-    }
-}
-else
-{
-        type preview_value = 0;
-        type next_value = 0;
-
-        for(Index j = 0; j < lags_number + steps_ahead; j++)
+        for(Index j = 0; j < variables_number - target_variables_number; j++)
         {
             current_variable = used_variables_indices(j);
 
@@ -10025,8 +11104,44 @@ else
             {
                 current_sample = used_samples_indices(i);
 
+                if(isnan(data(current_sample, current_variable)))
+                {
+                    data(current_sample,current_variable) = means(j);
+                }
+            }
+        }
+
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            current_variable = target_variables_indices(j);
+            for(Index i = 0; i < samples_number; i++)
+            {
+                current_sample = used_samples_indices(i);
+
+                if(isnan(data(current_sample, current_variable)))
+                {
+                    set_sample_use(i, "Unused");
+                }
+            }
+        }
+
+    }
+    else
+    {
+        type preview_value = 0;
+        type next_value = 0;
+
+        for(Index j = 0; j < get_variables_number(); j++)
+        {
+            current_variable = j;
+
+            for(Index i = 0; i < samples_number; i++)
+            {
+                current_sample = used_samples_indices(i);
+
                 if(!isnan(data(current_sample,current_variable)))
                 {
+
                     preview_value = data(current_sample,current_variable);
                 }
 
@@ -10038,7 +11153,9 @@ else
                     }
                     else
                     {
+
                         Index k = i;
+
                         while(isnan(data(used_samples_indices(k), current_variable)) && k < samples_number)
                         {
                             k++;
@@ -10046,14 +11163,14 @@ else
 
                         if(k == samples_number && i < samples_number - steps_ahead)
                         {
-                                ostringstream buffer;
+                            ostringstream buffer;
 
-                                buffer << "OpenNN Exception: DataSet class.\n"
-                                       << "void DataSet::impute_missing_values_mean() const.\n"
-                                       << "The last " << (samples_number - i) + 1 << " samples are all missing, delete them.\n";
+                            buffer << "OpenNN Exception: DataSet class.\n"
+                                   << "void DataSet::impute_missing_values_mean() const.\n"
+                                   << "The last " << (samples_number - i) + 1 << " samples are all missing, delete them.\n";
 
-                                throw invalid_argument(buffer.str());
-                         }
+                            throw invalid_argument(buffer.str());
+                        }
 
                         next_value = data(used_samples_indices(k), current_variable);
 
@@ -10062,7 +11179,7 @@ else
                 }
             }
         }
-}
+    }
 
 }
 
@@ -10167,7 +11284,57 @@ void DataSet::read_csv()
 }
 
 
-vector<unsigned char> DataSet::read_bmp_image(const string& filename)
+/*
+Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
+{
+    Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
+
+    const int channels = 3;
+
+    if (rows_number % 4 ==0)
+    {
+        memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
+    }
+    else
+    {
+        for (int i = 0; i<rows_number; i++)
+        {
+            if(i==0)
+            {
+                memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+            }
+            else
+            {
+                memcpy(data_without_padding.data() + channels*cols_number*i, img.data() + channels*cols_number*i + padding*i, static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+            }
+        }
+    }
+    return data_without_padding;
+}
+*/
+
+/*
+void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
+{
+    unsigned char* aux_row = nullptr;
+
+    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
+
+    const int rows_number = static_cast<int>(original.size()/cols_number);
+
+    for(int i = 0; i <rows_number; i++)
+    {
+        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
+
+        //        reverse(aux_row, aux_row + cols_number); //uncomment this if the lower right corner px should be in the upper left corner.
+
+        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
+    }
+
+}
+*/
+
+Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
     FILE* f = fopen(filename.data(), "rb");
 
@@ -10182,28 +11349,65 @@ vector<unsigned char> DataSet::read_bmp_image(const string& filename)
         throw invalid_argument(buffer.str());
     }
 
-
     unsigned char info[54];
-
     fread(info, sizeof(unsigned char), 54, f);
-    const int width = *(int*)&info[18];
-    const int height = *(int*)&info[22];
-    const int bits_per_pixel = *(int*)&info[28];
+
+    const Index width_no_padding = *(int*)&info[18];
+    image_height = *(int*)&info[22];
+    const Index bits_per_pixel = *(int*)&info[28];
     int channels;
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
+    channels_number = channels;
+    padding = 0;
 
-    const size_t size = channels*width*height;
+    image_width = width_no_padding;
 
-    vector<unsigned char> image(size);
+    while((channels*image_width + padding)% 4 != 0)
+        padding++;
+
+    const size_t size = image_height*(channels_number*image_width + padding);
+
+    Tensor<unsigned char, 1> image(size);
+    image.setZero();
 
     int data_offset = *(int*)(&info[0x0A]);
     fseek(f, (long int)(data_offset - 54), SEEK_CUR);
 
-
     fread(image.data(), sizeof(unsigned char), size, f);
-
     fclose(f);
+
+    if(channels_number == 3)
+    {
+        const int rows_number = static_cast<int>(get_image_height());
+        const int cols_number = static_cast<int>(get_image_width());
+
+        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, cols_number, padding);
+
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, cols_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*cols_number};
+
+        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
+        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
+        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
+
+        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
+        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
+        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
+
+        red_channel_flatted_sorted.setZero();
+        green_channel_flatted_sorted.setZero();
+        blue_channel_flatted_sorted.setZero();
+
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, cols_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, cols_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,cols_number);
+
+        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
+        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
+
+        image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
+    }
 
     return image;
 }
@@ -10233,20 +11437,9 @@ void DataSet::read_bmp()
         throw invalid_argument(buffer.str());
     }
 
-//    if(data_file_name.)
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void read_bmp() method.\n"
-//               << "Data file name does not exist.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-
     has_columns_names = true;
     has_rows_labels = true;
+    convolutional_model = true;
 
     separator = Separator::None;
 
@@ -10258,7 +11451,9 @@ void DataSet::read_bmp()
         folder_paths.emplace_back(entry.path().string());
     }
 
-    for (Index i = 0 ; i < folder_paths.size() ; i++){
+
+    for (Index i = 0 ; i < folder_paths.size() ; i++)
+    {
         for (const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
             image_paths.emplace_back(entry.path().string());
@@ -10271,18 +11466,17 @@ void DataSet::read_bmp()
         {
             fs::remove_all(image_paths[i]);
 
-//            ostringstream buffer;
+            //            ostringstream buffer;
 
-//            buffer << "OpenNN Exception: DataSet class.\n"
-//                   << "void read_bmp() method.\n"
-//                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
+            //            buffer << "OpenNN Exception: DataSet class.\n"
+            //                   << "void read_bmp() method.\n"
+            //                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
 
-//            throw invalid_argument(buffer.str());
+            //            throw invalid_argument(buffer.str());
         }
     }
 
-    const Index classes_number = number_of_elements_in_directory(path);
-    Index images_number = 0;
+    Index classes_number = number_of_elements_in_directory(path);
     Tensor<Index, 1> images_numbers(classes_number);
 
     for(Index i = 0; i < classes_number; i++)
@@ -10291,7 +11485,7 @@ void DataSet::read_bmp()
     }
 
     string info_img;
-    vector<unsigned char> image;
+    Tensor<unsigned char,1> image;
     Index image_size;
     Index size_comprobation = 0;
 
@@ -10322,12 +11516,23 @@ void DataSet::read_bmp()
     const int width = *(int*)&info[18];
     const int height = *(int*)&info[22];
 
+    const int paddingAmount = (4 - (width) % 4) % 4;
+    const int paddingWidth = width + paddingAmount;
+
     const int bits_per_pixel = *(int*)&info[28];
     int channels;
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
-    data.resize(images_number, image_size + classes_number);
+    if(classes_number == 2)
+    {
+        Index binary_columns_number = 1;
+        data.resize(images_number, image_size + binary_columns_number);
+    }
+    else
+    {
+        data.resize(images_number, image_size + classes_number);
+    }
 
     data.setZero();
 
@@ -10355,10 +11560,20 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
-//                cout << data(row_index, k) << " ";
             }
 
-            data(row_index, image_size + i) = 1;
+            if(classes_number == 2 && i == 0)
+            {
+                data(row_index, image_size) = 1;
+            }
+            else if(classes_number == 2 && i == 1)
+            {
+                data(row_index, image_size) = 0;
+            }
+            else
+            {
+                data(row_index, image_size + i) = 1;
+            }
 
             rows_labels(row_index) = images_paths[j];
 
@@ -10374,13 +11589,14 @@ void DataSet::read_bmp()
 
     for(Index i = 0; i < channels; i++)
     {
-        for(Index j = 0; j < width; j++)
+        for(Index j = 0; j < paddingWidth; j++)
         {
             for(Index k = 0; k < height ; k++)
             {
                 columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
                 columns(column_index).type = ColumnType::Numeric;
                 columns(column_index).column_use = VariableUse::Input;
+                columns(column_index).scaler = Scaler::MinimumMaximum;
                 column_index++;
             }
         }
@@ -10403,47 +11619,942 @@ void DataSet::read_bmp()
 
     }else if(classes_number == 2)
     {
-        Index new_classes_number = 1;
+        Tensor<string, 1> categories(classes_number);
 
-        Tensor<string, 1> categories(new_classes_number);
-        categories(0) = "True";
+        for(Index i = 0 ; i < classes_number; i++)
+        {
+            categories(i) = folder_paths[i].filename().string();
+        }
 
-        columns(image_size).categories = categories;
         columns(image_size).column_use = VariableUse::Target;
+        columns(image_size).type = ColumnType::Binary;
+        columns(image_size).categories = categories;
 
-        columns(image_size).categories_uses.resize(new_classes_number);
+        columns(image_size).categories_uses.resize(classes_number);
         columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
     }else
     {
-
         Tensor<string, 1> categories(classes_number);
 
         for(Index i = 0 ; i < classes_number ; i++)
         {
-           categories(i) = folder_paths[i].filename().u8string();
+            categories(i) = folder_paths[i].filename().string();
         }
 
-        columns(image_size).categories = categories;
         columns(image_size).column_use = VariableUse::Target;
+        columns(image_size).type = ColumnType::Categorical;
+        columns(image_size).categories = categories;
 
         columns(image_size).categories_uses.resize(classes_number);
         columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
     }
-
-    columns(image_size).type = ColumnType::Categorical;
 
     samples_uses.resize(images_number);
     split_samples_random();
 
-    channels_number = channels;
-    image_width = width;
+    image_width = paddingWidth;
     image_height = height;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
+    input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
+
+/*
+Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
+                                               const Index &image_width,
+                                               const Index &image_height,
+                                               const Index &channels_number)
+{
+    const Index new_width = 224;
+    const Index new_height = 224;
+    Tensor<unsigned char, 1> new_bounding_box(channels_number * new_width * new_height);
+
+    const double scaleWidth = (double)new_width / (double)image_width;
+    const double scaleHeight = (double)new_height / (double)image_height;
+
+    for (Index i = 0; i < new_height; i++)
+    {
+        for (Index j = 0; j < new_width; j++)
+        {
+            const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
+            const int nearestMatch = (((int)(i / scaleHeight) * (image_width * channels_number)) +
+                                      ((int)(j / scaleWidth) * channels_number));
+
+            if (channels_number == 3)
+            {
+                new_bounding_box[pixel] = data[nearestMatch];
+                new_bounding_box[pixel + 1] = data[nearestMatch + 1];
+                new_bounding_box[pixel + 2] = data[nearestMatch + 2];
+            }
+            else
+            {
+                new_bounding_box[pixel] = data[nearestMatch];
+            }
+        }
+    }
+
+    return new_bounding_box;
+}
+*/
+
+DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
+{
+    const Index channels_number = get_channels_number();
+    const Index image_height = get_image_height();
+    const Index image_width = get_image_width();
+
+    Index x_center = rand() % image_width;
+    Index y_center = rand() % image_height;
+
+    Index x_top_left;
+    Index y_top_left;
+
+    if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
+    if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
+
+    Index x_bottom_right;
+
+    if(x_top_left == 0){x_bottom_right = rand()%(image_width - (x_center + 1) + 1) + (x_center + 1);}
+    else{x_bottom_right = rand()%(image_width - x_center + 1) + x_center;}
+
+    Index y_bottom_right;
+
+    if(y_top_left == 0){y_bottom_right = rand()%(image_height - (y_center + 1) + 1) + (y_center + 1);}
+    else{y_bottom_right = rand() % (image_height - y_center + 1) + y_center;}
+
+    BoundingBox random_region(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    random_region.data = get_bounding_box(image, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+    return random_region;
+}
+
+
+void DataSet::read_ground_truth()
+{
+    srand(time(NULL));
+
+    const Index classes_number = get_label_classes_number_from_XML(data_file_name);
+    const Index annotations_number = get_bounding_boxes_number_from_XML(data_file_name); // This function also save channels, width and height
+
+    const Index regions_number = 1000; // Number of region proposals per image
+    const Index region_width = 6; // Final region width to warp
+    const Index region_height = 6; // Final region height to warp
+
+    const Index target_variables_number = classes_number == 1 ? 1 : classes_number + 1; // 1 class for background
+
+    const Index samples_number = images_number * regions_number;
+    const Index variables_number = channels_number * region_width * region_height + target_variables_number;
+
+    const Index pixels_number = channels_number * region_width * region_height;
+
+    set(samples_number, variables_number);
+
+    data.setZero();
+
+    rows_labels.resize(samples_number);
+
+    Index row_index = 0;
+
+    //-----------------------------Load XML from string-----------------------------------//
+
+    tinyxml2::XMLDocument document;
+
+    if(document.LoadFile(data_file_name.c_str()))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << data_file_name << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    //----------------------Read ground Truth XML--------------------------------------//
+
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
+
+    if(!neural_labeler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuralLabeler element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images
+
+    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
+
+    if(!images_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "Images element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images Number
+
+    const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
+
+    if(!images_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+               << "ImagesNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+
+    const tinyxml2::XMLElement* start_images_element = images_number_element;
+
+    for(Index image_index = 0; image_index < images_number; image_index++)
+    {
+        // Image
+
+        const tinyxml2::XMLElement* image_element = start_images_element->NextSiblingElement("Image");
+        start_images_element = image_element;
+
+        if(!image_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                   << "Image element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        // Filename
+
+        const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
+
+        if(!file_name_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                   << "Filename element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const string image_filename = file_name_element->GetText();
+
+        const Tensor<unsigned char, 1> image_pixel_values = read_bmp_image(image_filename);
+
+        // Annotations Number
+
+        const tinyxml2::XMLElement* annotations_number_element = image_element->FirstChildElement("AnnotationsNumber");
+
+        if(!annotations_number_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                   << "AnnotationsNumber element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+
+        const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
+
+        for(Index j = 0; j < annotations_number; j++)
+        {
+            // Annotation
+
+            const tinyxml2::XMLElement* annotation_element = start_annotations_element->NextSiblingElement("Annotation");
+            start_annotations_element = annotation_element;
+
+            if(!annotation_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                       << "Annotation element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            // Label
+
+            const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
+
+            if(!label_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                       << "Label element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            const string gTruth_class = label_element->GetText();
+
+            // Points
+
+            const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
+
+            if(!points_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
+                       << "Points element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            const string bounding_box_points = points_element->GetText();
+            const Tensor<string, 1> splitted_points = get_tokens(bounding_box_points, ',');
+
+            const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
+            const int y_top_left = static_cast<int>(stoi(splitted_points[1]));
+            const int x_bottom_right = static_cast<int>(stoi(splitted_points[2]));
+            const int y_bottom_right = static_cast<int>(stoi(splitted_points[3]));
+
+            // Segmentation for region proposal (Not implemented, we use random region proposal)
+
+            const BoundingBox gTruth_bounding_box = BoundingBox(channels_number, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
+
+            Tensor<BoundingBox, 1> random_bounding_box(regions_number);
+
+            for(Index region_index = 0; region_index < regions_number; region_index++)
+            {
+                random_bounding_box(region_index) = propose_random_region(image_pixel_values);
+
+                type intersection_over_union = calculate_intersection_over_union(gTruth_bounding_box, random_bounding_box(region_index));
+
+//                cout << "intersection_over_union: " << intersection_over_union << endl;
+
+                if(intersection_over_union >= 0.3) // If IoU > 0.3 -> object class
+                {
+                    for(Index p = 1; p < labels_tokens.size() + 1; p++)
+                    {
+                        if(labels_tokens(p - 1) == gTruth_class)
+                        {
+                            if(classes_number == 1)
+                            {
+                                data(row_index, pixels_number) = 1;
+                            }
+                            else
+                            {
+                                data(row_index, pixels_number + p) = 1;
+                            }
+                        }
+                    }
+                }
+                else // If IoU < 0.3 -> background class
+                {
+                    if(classes_number == 1)
+                    {
+                        data(row_index, pixels_number) = 0;
+                    }
+                    else
+                    {
+                        data(row_index, pixels_number) = 1;
+                    }
+                }
+
+                BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_width, region_height);
+
+                for(Index j = 0; j < pixels_number; j++)
+                {
+                    data(row_index, j) = warped_bounding_box.data(j);
+                }
+
+                rows_labels(row_index) = image_filename;
+
+                row_index++;
+            }
+        }
+    }
+
+//    cout << data << endl;
+
+    // Input columns
+
+    Index column_index = 0;
+
+    for(Index i = 0; i < channels_number; i++)
+    {
+        for(Index j = 0; j < region_width; j++)
+        {
+            for(Index k = 0; k < region_height ; k++)
+            {
+                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                columns(column_index).type = ColumnType::Numeric;
+                columns(column_index).column_use = VariableUse::Input;
+                columns(column_index).scaler = Scaler::MinimumMaximum;
+                column_index++;
+            }
+        }
+    }
+
+    // Target columns
+
+    columns(pixels_number).name = "label";
+
+    if(classes_number == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_ground_truth() method.\n"
+               << "Invalid number of categories. The minimum is 1 and you have 0.\n";
+
+        throw invalid_argument(buffer.str());
+
+    }
+    else if(classes_number == 1) // Just one because we include background (1+1)
+    {
+        columns(pixels_number).column_use = VariableUse::Target;
+        columns(pixels_number).type = ColumnType::Binary;
+        columns(pixels_number).categories = labels_tokens;
+
+        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
+        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+    }
+    else
+    {
+        Tensor<string, 1> categories(target_variables_number);
+
+        columns(pixels_number).column_use = VariableUse::Target;
+        columns(pixels_number).type = ColumnType::Categorical;
+        columns(pixels_number).categories = labels_tokens;
+
+        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
+        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+    }
+
+    split_samples_random();
+
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions.setValues({region_height, region_width, channels_number});
+}
+
+
+Index DataSet::get_bounding_boxes_number_from_XML(const string& file_name)
+{
+    Index bounding_boxes_number = 0;
+    string image_filename;
+
+    /**********************Load XML from string**************************************/
+
+    tinyxml2::XMLDocument document;
+
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    /**********************Read ground Truth XML**************************************/
+
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
+
+    if(!neural_labeler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuralLabeler element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images
+
+    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
+
+    if(!images_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Images element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images Number
+
+    const tinyxml2::XMLElement* images_number_element = images_element -> FirstChildElement("ImagesNumber");
+
+    if(!images_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ImagesNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+
+    set_images_number(images_number);
+
+    const tinyxml2::XMLElement* start_image_element = images_number_element;
+
+    for(Index i = 0; i < images_number; i++)
+    {
+        // Image
+
+        const tinyxml2::XMLElement* image_element = start_image_element->NextSiblingElement("Image");
+        start_image_element = image_element;
+
+        if(!image_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Image element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        // Filename
+
+        const tinyxml2::XMLElement* file_name_element = image_element->FirstChildElement("Filename");
+
+        if(!file_name_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Filename element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        image_filename = file_name_element->GetText();
+
+        // Annotations Number
+
+        const tinyxml2::XMLElement* annotations_number_element = image_element->FirstChildElement("AnnotationsNumber");
+
+        if(!annotations_number_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "AnnotationsNumber element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+
+        const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
+
+        for(Index j = 0; j < annotations_number; j++)
+        {
+            // Annotation
+
+            const tinyxml2::XMLElement* annotation_element = start_annotations_element->NextSiblingElement("Annotation");
+            start_annotations_element = annotation_element;
+
+            if(!annotation_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Annotation element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            // Label
+
+            const tinyxml2::XMLElement* label_element = annotation_element->FirstChildElement("Label");
+
+            if(!label_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Label element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            string gTruth_class = label_element->GetText();
+
+            // Points
+
+            const tinyxml2::XMLElement* points_element = annotation_element->FirstChildElement("Points");
+
+            if(!points_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Points element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+        }
+
+        bounding_boxes_number += annotations_number;
+    }
+
+    read_bmp_image(image_filename); // Read an image to save initially the channels number
+
+    return bounding_boxes_number;
+}
+
+
+Index DataSet::get_label_classes_number_from_XML(const string& file_name)
+{
+    //-----------------------Load XML from string-----------------------------------/
+
+    tinyxml2::XMLDocument document;
+
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    //--------------------------------Read ground Truth XML-------------------------------------/
+
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* neural_labeler_element = document.FirstChildElement("NeuralLabeler");
+
+    if(!neural_labeler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuralLabeler element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Images
+
+    const tinyxml2::XMLElement* images_element = neural_labeler_element -> FirstChildElement("Images");
+
+    if(!images_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Images element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Labels
+
+    const tinyxml2::XMLElement* labels_element = neural_labeler_element -> FirstChildElement("Labels");
+
+    if(!labels_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Labels element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Labels Number
+
+    const tinyxml2::XMLElement* labels_number_element = labels_element -> FirstChildElement("LabelsNumber");
+
+    if(!labels_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "LabelsNumber element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(labels_number_element->GetText())
+    {
+        const Index labels_number = static_cast<Index>(atoi(labels_number_element->GetText()));
+
+        set_categories_number(labels_number);
+    }
+
+    labels_tokens.resize(categories_number);
+
+    const tinyxml2::XMLElement* start_label_element = labels_number_element;
+
+    for(Index i = 0; i < categories_number; i++)
+    {
+        // Label
+
+        const tinyxml2::XMLElement* label_element = start_label_element->NextSiblingElement("Label");
+        start_label_element = label_element;
+
+        if(!label_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Label element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        // Name
+
+        const tinyxml2::XMLElement* name_element = label_element->FirstChildElement("Name");
+
+        if(!name_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Name element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const string label_string = name_element->GetText();
+
+        labels_tokens(i) = label_string;
+
+        // Color
+
+        const tinyxml2::XMLElement* color_element = label_element->FirstChildElement("Color");
+
+        if(!color_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Color element is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+    }
+
+    return categories_number;
+}
+
+
+Tensor<type, 1> DataSet::get_bounding_box(const Tensor<unsigned char, 1>& image,
+                                          const Index& x_top_left, const Index& y_top_left,
+                                          const Index& x_bottom_right, const Index& y_bottom_right) const
+{
+    const Index channels_number = get_channels_number();
+    const Index height = get_image_height();
+    const Index width = get_image_width();
+    const Index image_size_single_channel = height * width;
+
+    const Index bounding_box_width = abs(x_top_left - x_bottom_right);
+    const Index bounding_box_height = abs(y_top_left - y_bottom_right);
+    const Index bounding_box_single_channel_size = bounding_box_width * bounding_box_height;
+
+    Tensor<type, 1> bounding_box_data;
+    bounding_box_data.resize(channels_number * bounding_box_single_channel_size);
+
+    const Index pixel_loop_start = width * (height - y_bottom_right) + x_top_left;
+    const Index pixel_loop_end = width * (height - 1 - y_top_left) + x_bottom_right;
+
+    if(channels_number == 3)
+    {
+        Tensor<unsigned char, 1> image_red_channel_flatted_sorted(image_size_single_channel);
+        Tensor<unsigned char, 1> image_green_channel_flatted_sorted(image_size_single_channel);
+        Tensor<unsigned char, 1> image_blue_channel_flatted_sorted(image_size_single_channel);
+
+        image_red_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+        image_green_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+        image_blue_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({2 * image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+
+        Tensor<type, 1> bounding_box_red_channel(bounding_box_single_channel_size);
+        Tensor<type, 1> bounding_box_green_channel(bounding_box_single_channel_size);
+        Tensor<type, 1> bounding_box_blue_channel(bounding_box_single_channel_size);
+
+        Index data_index = 0;
+
+        for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+        {
+            const int height_number = (int)(i/height);
+
+            const Index left_margin = height_number * width + x_top_left;
+            const Index right_margin = height_number * width + x_bottom_right;
+
+            if(i >= left_margin && i < right_margin)
+            {
+                bounding_box_red_channel(data_index) = static_cast<type>(image_red_channel_flatted_sorted[i]);
+                bounding_box_green_channel(data_index) = static_cast<type>(image_green_channel_flatted_sorted[i]);
+                bounding_box_blue_channel(data_index) = static_cast<type>(image_blue_channel_flatted_sorted[i]);
+
+                data_index++;
+            }
+        }
+
+        Tensor<type, 1> red_green_concatenation(bounding_box_red_channel.size() + bounding_box_green_channel.size());
+        red_green_concatenation = bounding_box_red_channel.concatenate(bounding_box_green_channel, 0); // To allow a double concatenation
+        bounding_box_data = red_green_concatenation.concatenate(bounding_box_blue_channel, 0);
+    }
+    else
+    {
+        Index data_index = 0;
+
+        for(Index i = pixel_loop_start; i <= pixel_loop_end - 1; i++)
+        {
+            const int height_number = (int)(i/height);
+
+            const Index left_margin = height_number * width + x_top_left;
+            const Index right_margin = height_number * width + x_bottom_right;
+
+            if(i >= left_margin && i < right_margin)
+            {
+                bounding_box_data(data_index) = static_cast<type>(image[i]);
+                data_index++;
+            }
+        }
+    }
+
+    return bounding_box_data;
+}
+
+// Function to slice a given vector from range X to Y
+/*Tensor<unsigned char, 1> DataSet::slicing(Tensor<unsigned char, 1>& arr, int& X, int& Y)
+{
+    // Starting and Ending iterators
+
+    auto start = X;
+    auto end = Y + 1;
+
+    Tensor<unsigned char, 1> result(Y - X + 1);
+
+    // Copy vector using copy function()
+    copy(start, end, result);
+
+    // Return the final sliced vector
+    return result;
+}*/
+
+
+void DataSet::read_txt()
+{
+    cout << "Reading .txt file..." << endl;
+
+    TextAnalytics text_analytics;
+
+    text_analytics.set_separator(get_text_separator_string());
+    text_analytics.set_short_words_length(short_words_length);
+    text_analytics.set_long_words_length(long_words_length);
+    text_analytics.set_stop_words(stop_words);
+
+    cout << "Loading documents..." << endl;
+
+    text_analytics.load_documents(data_file_name);
+
+    Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
+
+    Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
+
+    Tensor<string, 1> full_document = text_analytics.join(document);
+
+    cout << "Processing documents..." << endl;
+
+    Tensor<Tensor<string, 1>, 1> document_tokens = text_analytics.preprocess(full_document);
+
+    cout << "Calculating wordbag..." << endl;
+
+    TextAnalytics::WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
+    set_words_frequencies(document_word_bag.frequencies);
+
+    Tensor<string, 1> columns_names = document_word_bag.words;
+    const Index document_words_number = document_word_bag.words.size();
+
+    Tensor<type, 1> row(document_words_number);
+
+    // Output
+
+    cout << "Writting data file..." << endl;
+
+    string transformed_data_path = data_file_name;
+    replace(transformed_data_path,".txt","_data.txt");
+    replace(transformed_data_path,".csv","_data.csv");
+
+    std::ofstream file;
+    file.open(transformed_data_path);
+
+    for(Index i  = 0; i < document_words_number; i++)
+        file << columns_names(i) << ";";
+    file << "target_variable" << "\n";
+
+    // Data file preview
+
+    Index preview_size = 4;
+
+    text_data_file_preview.resize(preview_size,2);
+
+    for(Index i = 0; i < preview_size - 1; i++)
+    {
+        text_data_file_preview(i,0) = document(0)(i);
+        text_data_file_preview(i,1) = targets(0)(i);
+    }
+
+    text_data_file_preview(preview_size - 1, 0) = document(0)(document(0).size()-1);
+    text_data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size()-1);
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < document.size(); i++)
+    {
+        Tensor<string, 1> sheet = document(i);
+
+        for(Index j = 0; j < sheet.size(); j++)
+        {
+            row.setZero();
+
+            string line = sheet(j);
+
+            Tensor<string,1> tokens = get_tokens(line);
+
+            Tensor<Tensor<string, 1>,1> processed_tokens = text_analytics.preprocess(tokens);
+
+            TextAnalytics::WordBag line_word_bag = text_analytics.calculate_word_bag(processed_tokens);
+
+            Tensor<string, 1> line_words = line_word_bag.words;
+
+            Tensor<Index, 1> line_frequencies = line_word_bag.frequencies;
+
+            for(Index k = 0; k < line_words.size(); k++)
+            {
+                if( contains(columns_names, line_words(k)) )
+                {
+                    auto it = find(columns_names.data(), columns_names.data() + document_words_number, line_words(k));
+
+                    const Index word_index = it - columns_names.data();
+
+                    row(word_index) = type(line_frequencies(k));
+                }
+            }
+
+            for(Index k = 0; k < document_words_number; k++)
+                file << row(k) << ";";
+            std::for_each(targets(i)(j).begin(), targets(i)(j).end(), [](char & c){
+                c = ::tolower(c);});
+            file << "target_" + targets(i)(j) << "\n";
+        }
+    }
+
+    file.close();
+
+    data_file_name = transformed_data_path;
+    separator = Separator::Semicolon;
+    has_columns_names = true;
+
+    read_csv();
+
+    for(Index i = 0; i < get_input_columns_number(); i++)
+        set_column_type(i,ColumnType::Numeric);
+};
 
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)
@@ -10465,6 +12576,8 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
 
 void DataSet::read_csv_1()
 {
+    if(display) cout << "Path: " << data_file_name << endl;
+
     if(data_file_name.empty())
     {
         ostringstream buffer;
@@ -10505,6 +12618,8 @@ void DataSet::read_csv_1()
     {
         getline(file, line);
 
+        line = decode(line);
+
         trim(line);
 
         erase(line, '"');
@@ -10512,8 +12627,6 @@ void DataSet::read_csv_1()
         if(line.empty()) continue;
 
         check_separators(line);
-
-        check_special_characters(line);
 
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 
@@ -10524,7 +12637,7 @@ void DataSet::read_csv_1()
 
     file.close();
 
-    // Check empty file    @todo, size() methods returns 0
+    // Check empty file
 
     if(data_file_preview(0).size() == 0)
     {
@@ -10587,16 +12700,12 @@ void DataSet::read_csv_1()
         if(has_rows_labels && i == 0) continue;
 
         if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
-/*
-        || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
-                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i))
-                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
-*/
+                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(column_index).type = ColumnType::DateTime;
+            time_column = columns(column_index).name;
             column_index++;
         }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
@@ -10612,11 +12721,6 @@ void DataSet::read_csv_1()
             columns(column_index).type = ColumnType::Categorical;
             column_index++;
         }
-    }
-
-    if(time_column != "")
-    {
-        set_column_type(time_column, DataSet::ColumnType::DateTime);
     }
 }
 
@@ -10740,6 +12844,8 @@ void DataSet::read_csv_3_simple()
         {
             getline(file, line);
 
+            line = decode(line);
+
             if(line.empty()) continue;
 
             break;
@@ -10764,6 +12870,8 @@ void DataSet::read_csv_3_simple()
     while(file.good())
     {
         getline(file, line);
+
+        line = decode(line);
 
         trim(line);
 
@@ -10819,6 +12927,7 @@ void DataSet::read_csv_3_simple()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
 }
 
 
@@ -10884,7 +12993,11 @@ void DataSet::read_csv_2_complete()
     {
         getline(file, line);
 
+        line = decode(line);
+
         trim(line);
+
+        erase(line, '"');
 
         if(line.empty()) continue;
 
@@ -10895,9 +13008,9 @@ void DataSet::read_csv_2_complete()
         if(static_cast<unsigned>(tokens_count) != raw_columns_number)
         {
             const string message =
-                "Sample " + to_string(lines_count+1) + " error:\n"
-                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(raw_columns_number) + ").\n"
-                "Please check the format of the data file (e.g: Use of commas both as decimal and column separator)";
+                    "Sample " + to_string(lines_count+1) + " error:\n"
+                                                           "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(raw_columns_number) + ").\n"
+                                                                                                                                                                                    "Please check the format of the data file (e.g: Use of commas both as decimal and column separator)";
 
             throw invalid_argument(message);
         }
@@ -10906,13 +13019,11 @@ void DataSet::read_csv_2_complete()
         {
             if(has_rows_labels && j == 0) continue;
 
-            trim(tokens(j));
-
             if(columns(column_index).type == ColumnType::Categorical)
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
-                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != std::string::npos)
+                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                     {
                         column_index++;
                         continue;
@@ -11003,6 +13114,8 @@ void DataSet::read_csv_3_complete()
         {
             getline(file, line);
 
+            line = decode(line);
+
             trim(line);
 
             if(line.empty()) continue;
@@ -11018,6 +13131,8 @@ void DataSet::read_csv_3_complete()
     while(file.good())
     {
         getline(file, line);
+
+        line = decode(line);
 
         trim(line);
 
@@ -11102,11 +13217,11 @@ void DataSet::read_csv_3_complete()
                 trim(lower_case_token);
                 transform(lower_case_token.begin(), lower_case_token.end(), lower_case_token.begin(), ::tolower);
 
-                Tensor<string,1> positive_words(4);
-                Tensor<string,1> negative_words(4);
+                Tensor<string,1> positive_words(5);
+                Tensor<string,1> negative_words(5);
 
-                positive_words.setValues({"yes","positive","+","true"});
-                negative_words.setValues({"no","negative","-","false"});
+                positive_words.setValues({"yes","positive","+","true","si"});
+                negative_words.setValues({"no","negative","-","false","no"});
 
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
@@ -11155,23 +13270,24 @@ void DataSet::read_csv_3_complete()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
 }
 
 
 void DataSet::check_separators(const string& line) const
 {
     if(line.find(',') == string::npos
-    && line.find(';') == string::npos
-    && line.find(' ') == string::npos
-    && line.find('\t') == string::npos) return;
+            && line.find(';') == string::npos
+            && line.find(' ') == string::npos
+            && line.find('\t') == string::npos) return;
 
     const char separator_char = get_separator_char();
 
     if(line.find(separator_char) == string::npos)
     {
         const string message =
-            "Error: " + get_separator_string() + " separator not found in line data file " + data_file_name + ".\n"
-            "Line: '" + line + "'";
+                "Error: " + get_separator_string() + " separator not found in line data file " + data_file_name + ".\n"
+                                                                                                                  "Line: '" + line + "'";
 
         throw invalid_argument(message);
     }
@@ -11181,14 +13297,14 @@ void DataSet::check_separators(const string& line) const
         if(line.find(',') != string::npos)
         {
             const string message =
-                "Error: Found comma (',') in data file " + data_file_name + ", but separator is space (' ').";
+                    "Error: Found comma (',') in data file " + data_file_name + ", but separator is space (' ').";
 
             throw invalid_argument(message);
         }
         if(line.find(';') != string::npos)
         {
             const string message =
-                "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is space (' ').";
+                    "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is space (' ').";
 
             throw invalid_argument(message);
         }
@@ -11198,14 +13314,14 @@ void DataSet::check_separators(const string& line) const
         if(line.find(',') != string::npos)
         {
             const string message =
-                "Error: Found comma (',') in data file " + data_file_name + ", but separator is tab ('   ').";
+                    "Error: Found comma (',') in data file " + data_file_name + ", but separator is tab ('   ').";
 
             throw invalid_argument(message);
         }
         if(line.find(';') != string::npos)
         {
             const string message =
-                "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is tab ('   ').";
+                    "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is tab ('   ').";
 
             throw invalid_argument(message);
         }
@@ -11215,7 +13331,7 @@ void DataSet::check_separators(const string& line) const
         if(line.find(";") != string::npos)
         {
             const string message =
-                "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is comma (',').";
+                    "Error: Found semicolon (';') in data file " + data_file_name + ", but separator is comma (',').";
 
             throw invalid_argument(message);
         }
@@ -11225,7 +13341,7 @@ void DataSet::check_separators(const string& line) const
         if(line.find(",") != string::npos)
         {
             const string message =
-                "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';'). " + line;
+                    "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';'). " + line;
 
             throw invalid_argument(message);
         }
@@ -11235,22 +13351,21 @@ void DataSet::check_separators(const string& line) const
 
 void DataSet::check_special_characters(const string & line) const
 {
-    if(line.find_first_of("|@#~€¬^*") != string::npos)
+    if( line.find_first_of("|@#~€¬^*") != string::npos)
     {
         const string message =
-            "Error: found special characters in line: " + line + ". Please, review the file.";
-
+                "Error: found special characters in line: " + line + ". Please, review the file.";
         throw invalid_argument(message);
     }
 
-//#ifdef __unix__
-//    if(line.find("\r") != string::npos)
-//    {
-//        const string message =
-//                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
-//        throw invalid_argument(message);
-//    }
-//#endif
+    //#ifdef __unix__
+    //    if(line.find("\r") != string::npos)
+    //    {
+    //        const string message =
+    //                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
+    //        throw invalid_argument(message);
+    //    }
+    //#endif
 
 }
 
@@ -11314,6 +13429,7 @@ bool DataSet::has_selection() const
 
     return true;
 }
+
 
 
 Tensor<Index, 1> DataSet::count_nan_columns() const
@@ -11487,7 +13603,7 @@ void DataSet::fix_repeated_names()
 }
 
 void DataSet::initialize_sequential(Tensor<Index, 1>& new_tensor,
-        const Index& start, const Index& step, const Index& end) const
+                                    const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
 
@@ -11504,7 +13620,7 @@ void DataSet::initialize_sequential(Tensor<Index, 1>& new_tensor,
 
 
 void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
-        const type& start, const type& step, const type& end) const
+                                   const type& start, const type& step, const type& end) const
 {
     const Index new_size = Index((end-start)/type(step) + type(1));
 
@@ -11565,13 +13681,10 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_2d.data());
+        fill_submatrix(data, samples, inputs, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
     {
-        //@todo check that it works properly
-        //inputs_4d(row,column,channel,image)
-
         const Index channels_number = input_variables_dimensions(0);
 //        const Index columns_number = input_variables_dimensions(1);
 //        const Index rows_number = input_variables_dimensions(2);
@@ -11579,20 +13692,21 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
+        TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
+
         Index index = 0;
 
         for(Index image = 0; image < batch_size; image++)
         {
             index = 0;
 
-            for(Index row = 0; row < rows_number; row++)
+            for (Index row = rows_number - 1; row >= 0; row--)
             {
                 for(Index col = 0; col < columns_number; col++)
                 {
-                    for(Index channel = 0; channel < channels_number; channel++)
+                    for (Index channel = channels_number - 1; channel >= 0 ; channel--)
                     {
-                        inputs_4d(row, col, channel, image) = data(image, index);
-//                        cout << "Index: " << index << " " << data(image, index) << endl;
+                        inputs(row, col, channel, image) = data(image, index);
                         index++;
                     }
                 }
@@ -11600,7 +13714,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-    fill_submatrix(data, samples, targets, targets_2d.data());
+    fill_submatrix(data, samples, targets, targets_data);
 
 }
 
@@ -11624,7 +13738,11 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     if(input_variables_dimensions.size() == 1)
     {
-        inputs_2d.resize(batch_size, input_variables_number);
+        inputs_dimensions.resize(2);
+        inputs_dimensions.setValues({batch_size, input_variables_number});
+
+        //delete inputs_data;
+        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -11632,10 +13750,18 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(rows_number, columns_number, channels_number,batch_size);
-   }
+        inputs_dimensions.resize(4);
+        inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});
 
-    targets_2d.resize(batch_size, target_variables_number);
+        //delete inputs_data;
+        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
+    }
+
+    targets_dimensions.resize(2);
+    targets_dimensions.setValues({batch_size, target_variables_number});
+
+    //delete targets_data;
+    targets_data = (type*)malloc(static_cast<size_t>(batch_size*target_variables_number*sizeof(type)));
 }
 
 
@@ -11649,24 +13775,19 @@ void DataSetBatch::print() const
 {
     cout << "Batch" << endl;
 
-    if(inputs_2d.size() != 0)
-    {
-        cout << "Inputs 2D:" << endl;
-        cout << inputs_2d << endl;
-    }
+    cout << "Inputs dimensions:" << endl;
+    cout << inputs_dimensions << endl;
 
-    if(inputs_4d.size() != 0)
-    {
-        cout << "Inputs dimensions:" << endl;
-        cout << inputs_4d.dimensions() << endl;
+    cout << "Inputs:" << endl;
+    if(inputs_dimensions.size() == 2)
+        cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
+    else if(inputs_dimensions.size() == 4)
+        cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
+    cout << "Targets dimensions:" << endl;
+    cout << targets_dimensions << endl;
 
-        cout << "Inputs 4D:" << endl;
-        cout << inputs_4d << endl;
-    }
-
-    cout << endl;
     cout << "Targets:" << endl;
-    cout << targets_2d << endl;
+    cout << TensorMap<Tensor<type,2>>(targets_data, targets_dimensions(0), targets_dimensions(1)) << endl;
 }
 
 

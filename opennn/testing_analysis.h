@@ -64,10 +64,15 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       /// @todo
-
-       void save(const string&) const
+       void save(const string& file_name) const
        {
+           std::ofstream file;
+           file.open(file_name);
+
+           file << "Goodness-of-fit analysis\n";
+           file << "Determination: " << determination << endl;
+
+           file.close();
        }
 
        void print() const
@@ -280,7 +285,8 @@ public:
 
    // Multiple classification tests
 
-   Tensor<type, 1> calculate_multiple_classification_tests() const;
+   Tensor<type, 1> calculate_multiple_classification_precision() const;
+   Tensor<type, 2> calculate_multiple_classification_tests() const;
    void save_confusion(const string&) const;
    void save_multiple_classification_tests(const string&) const;
 

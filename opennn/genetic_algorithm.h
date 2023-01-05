@@ -19,6 +19,7 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <stdio.h>
 
 // OpenNN includes
 
@@ -51,45 +52,80 @@ public:
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
+    enum class InitializationMethod{Random,Correlations};
+
     // Get methods
 
-    const Tensor<bool, 2>& get_population() const;
+    const Tensor <bool, 2>& get_population() const;
 
-    const Tensor<type, 1>& get_fitness() const;
-    const Tensor<bool, 1>& get_selection() const;
+
+    const Tensor <type, 1>& get_training_errors() const;
+
+    const Tensor <type, 1>& get_selection_errors() const;
+
+
+    const Tensor <type, 1>& get_fitness() const;
+
+    const Tensor <bool, 1>& get_selection() const;
+
 
     Index get_individuals_number() const;
+
     Index get_genes_number() const;
+
 
     const type& get_mutation_rate() const;
 
     const Index& get_elitism_size() const;
+
+    const InitializationMethod& get_initialization_method() const;
 
     // Set methods
 
     virtual void set_default() final;
 
     void set_population(const Tensor<bool, 2>&);
-    void set_individuals_number(const Index&);
+
+    void set_individuals_number(const Index& new_individuals_number=4);
+
+    void set_genes_number(const Index&);  
+
+    void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
+
 
     void set_training_errors(const Tensor<type, 1>&);
+
     void set_selection_errors(const Tensor<type, 1>&);
+
 
     void set_fitness(const Tensor<type, 1>&);
 
     void set_mutation_rate(const type&);
 
+
     void set_elitism_size(const Index&);
 
-    // GENETIC METHODS
+    void set_maximum_epochs_number(const Index&);
+
+    // GENETIC OPERATORS METHODS
 
     // Population methods
 
     void initialize_population();
 
+    void initialize_population_random();
+
+    void calculate_inputs_activation_probabilities();
+    
+    void initialize_population_correlations();
+
+    type generate_random_between_0_and_1();
+
     void evaluate_population();
 
     void perform_fitness_assignment();
+
+    Tensor<type, 1> calculate_selection_probabilities();
 
     // Selection methods
 
@@ -103,13 +139,27 @@ public:
 
     void perform_mutation();
 
-    // Inputs selection methods
+    // Check  methods
 
-    InputsSelectionResults perform_inputs_selection()  final;
+    void check_categorical_columns();
 
-    // Serialization methods
+    Tensor <bool, 1> get_individual_variables_to_indexes (Tensor <bool, 1>&);
 
-    Tensor<string, 2> to_string_matrix() const;
+    Tensor <bool, 1> get_individual_columns(Tensor <bool, 1>&);
+
+    Tensor <bool, 1> get_individual_variables(Tensor <bool,1>&);
+
+    Tensor <Index, 1> get_selected_individuals_indices ();
+
+    Tensor <Index, 1> get_individual_as_columns_indexes_from_variables( Tensor <bool, 1>&);
+
+    InputsSelectionResults perform_inputs_selection ()  final;
+
+    // Serialization method
+
+    Tensor <string, 2> to_string_matrix() const;
+
+    bool calculate_random_bool();
 
     void from_XML(const tinyxml2::XMLDocument&);
 
@@ -118,14 +168,25 @@ public:
     void print() const;
     
     void save(const string&) const;
+
     void load(const string&);
 
-private:
+    Tensor <Tensor<type, 1>, 1> parameters;
 
+private:
+    
+    /// Activation probabilities.
+    
+    Tensor <type, 1> inputs_activation_probabilities;
 
     /// Population matrix.
 
-    Tensor<bool, 2> population;
+    Tensor <bool, 2> population;
+
+    Tensor <type, 1> training_errors;
+
+    Tensor <type, 1> selection_errors;
+
 
     /// Fitness of population.
 
@@ -133,12 +194,22 @@ private:
 
     Tensor<bool, 1> selection;
 
+
     /// Performance of population.
 
-    Tensor<Tensor<type, 1>, 1> parameters;
+    type mean_training_error;
 
-    Tensor<type, 1> training_errors;
-    Tensor<type, 1> selection_errors;
+    type mean_selection_error;
+
+    type mean_inputs_number;
+    
+    Tensor <bool, 2> optimal_individuals_history;
+
+    Tensor <Index, 1> original_input_columns_indices;
+
+    Tensor <Index, 1> original_target_columns_indices;
+
+    Index genes_number;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
@@ -151,6 +222,9 @@ private:
     /// This is a parameter of the selection operator.
 
     Index elitism_size;
+
+    InitializationMethod initialization_method;
+
 };
 
 }

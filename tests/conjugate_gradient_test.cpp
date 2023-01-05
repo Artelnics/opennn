@@ -52,14 +52,18 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 {
     cout << "test_calculate_PR_parameter\n";
 
-    Index size = 1 + rand()%10;
+    neural_network.set();
+    type PR_parameter;
+
+    Index size = 2*(1 + rand()%10);
+
+    PerceptronLayer *pl = new PerceptronLayer(1, size/2);
+    neural_network.add_layer(pl);
+
+    // Test
 
     Tensor<type, 1> old_gradient(size);
     Tensor<type, 1> gradient(size);
-
-    type PR_parameter;
-
-    // Test
 
     old_gradient.setRandom();
     gradient.setRandom();
@@ -75,19 +79,23 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 {
     cout << "test_calculate_FR_parameter\n";
 
-    Index size = 1 + rand()%10;
+    neural_network.set();
+    type FR_parameter;
+
+    Index size = 2*(1 + rand()%10);
+
+    PerceptronLayer *pl = new PerceptronLayer(1, size/2);
+    neural_network.add_layer(pl);
+
+    // Test
 
     Tensor<type, 1> old_gradient(size);
     Tensor<type, 1> gradient(size);
 
-    type FR_parameter;
-
-    // Test
-
     old_gradient.setRandom();
     gradient.setRandom();
 
-    FR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
+    FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
 
     assert_true(FR_parameter >= type(0), LOG);
     assert_true(FR_parameter <= type(1), LOG);
@@ -142,9 +150,11 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
     cout << "test_calculate_FR_training_direction\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
+    neural_network.set();
+
+    Index samples_number = 20;
+    Index inputs_number = 2;
+    Index targets_number = 1;
 
     Tensor<type, 1> old_gradient;
     Tensor<type, 1> gradient;
@@ -154,129 +164,113 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
     Index parameters_number;
 
     // Test
-    /*
-   data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_random();
 
-   parameters_number = neural_network.get_parameters_number();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
-   old_gradient.resize(parameters_number);
-   gradient.resize(parameters_number);
-   old_training_direction.resize(parameters_number);
-   training_direction.resize(parameters_number);
+    parameters_number = neural_network.get_parameters_number();
 
-   old_gradient.setRandom();
-   gradient.setRandom();
-   old_training_direction.setRandom();
-   training_direction.setRandom();
+    old_gradient.resize(parameters_number);
+    gradient.resize(parameters_number);
+    old_training_direction.resize(parameters_number);
+    training_direction.resize(parameters_number);
 
-   conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+    old_gradient.setRandom();
+    gradient.setRandom();
+    old_training_direction.setRandom();
+    training_direction.setRandom();
 
-   assert_true(training_direction.size() == parameters_number, LOG);
-*/
+    conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+
+    assert_true(training_direction.size() == parameters_number, LOG);
+
 }
 
 
 void ConjugateGradientTest::test_perform_training()
 {
     cout << "test_perform_training\n";
-    /*
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
 
-   type old_loss;
-   type loss;
+    type old_error = std::numeric_limits<float>::max();
 
-   type training_loss_goal;
+    type error;
 
-   
-   type minimum_loss_decrease;
+    // Test
 
-   TrainingResults training_results;
+    samples_number = 1;
+    inputs_number = 1;
+    outputs_number = 1;
 
-   // Test
+    data_set.set(1,1,1);
+    data_set.set_data_constant(type(1));
 
-   data_set.set(1, 1, 1);
-   data_set.set_data_constant(type(0));
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(type(1));
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
-   neural_network.set_parameters_constant(type(0));
+    conjugate_gradient.set_maximum_epochs_number(1);
+    conjugate_gradient.set_display(false);
+    training_results = conjugate_gradient.perform_training();
 
-   training_results = conjugate_gradient.perform_training();
+    assert_true(training_results.get_epochs_number() <= 1, LOG);
 
-   // Test
+    // Test
 
-   neural_network.set_parameters_constant(type(-1));
+    data_set.set(1,1,1);
+    data_set.set_data_random();
 
-   conjugate_gradient.set_maximum_epochs_number(1);
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(-1);
 
-   training_results = conjugate_gradient.perform_training();
+    conjugate_gradient.set_maximum_epochs_number(1);
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber, LOG);
+    training_results = conjugate_gradient.perform_training();
+    error = training_results.get_training_error();
 
-   // Minimum parameters increment norm
+    assert_true(error < old_error, LOG);
 
-   neural_network.set_parameters_constant(type(-1));
+    // Test
 
-   minimum_parameters_increment_norm = 0.1;
+    old_error = error;
 
-   conjugate_gradient.set_loss_goal(type(0));
-   conjugate_gradient.set_minimum_loss_decrease(0.0);
-   conjugate_gradient.set_maximum_epochs_number(1000);
-   conjugate_gradient.set_maximum_time(1000.0);
+    conjugate_gradient.set_maximum_epochs_number(2);
+    neural_network.set_parameters_constant(-1);
 
-   training_results = conjugate_gradient.perform_training();
+    training_results = conjugate_gradient.perform_training();
+    error = training_results.get_training_error();
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::MinimumParametersIncrementNorm, LOG);
+    assert_true(error <= old_error, LOG);
 
-   // Loss goal
+    // Loss goal
 
-   neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_constant(type(-1));
 
-   training_loss_goal = type(0.1);
+    type training_loss_goal = type(0.1);
 
-   conjugate_gradient.set_loss_goal(training_loss_goal);
-   conjugate_gradient.set_minimum_loss_decrease(0.0);
-   conjugate_gradient.set_maximum_epochs_number(1000);
-   conjugate_gradient.set_maximum_time(1000.0);
+    conjugate_gradient.set_loss_goal(training_loss_goal);
+    conjugate_gradient.set_minimum_loss_decrease(0.0);
+    conjugate_gradient.set_maximum_epochs_number(1000);
+    conjugate_gradient.set_maximum_time(1000.0);
 
-   training_results = conjugate_gradient.perform_training();
+    training_results = conjugate_gradient.perform_training();
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::LossGoal, LOG);
+    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
 
-   // Minimum loss decrease
+    // Minimum loss decrease
 
-   neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_constant(type(-1));
 
-   minimum_loss_decrease = type(0.1);
+    type minimum_loss_decrease = type(0.1);
 
-   conjugate_gradient.set_loss_goal(type(0));
-   conjugate_gradient.set_minimum_loss_decrease(minimum_loss_decrease);
-   conjugate_gradient.set_maximum_epochs_number(1000);
-   conjugate_gradient.set_maximum_time(1000.0);
+    conjugate_gradient.set_loss_goal(type(0));
+    conjugate_gradient.set_minimum_loss_decrease(minimum_loss_decrease);
+    conjugate_gradient.set_maximum_epochs_number(1000);
+    conjugate_gradient.set_maximum_time(1000.0);
 
-   training_results = conjugate_gradient.perform_training();
+    training_results = conjugate_gradient.perform_training();
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease, LOG);
-
-   // Gradient norm goal
-
-   neural_network.set_parameters_constant(type(-1));
-
-   gradient_norm_goal = 0.1;
-
-   conjugate_gradient.set_loss_goal(type(0));
-   conjugate_gradient.set_minimum_loss_decrease(0.0);
-   conjugate_gradient.set_maximum_epochs_number(1000);
-   conjugate_gradient.set_maximum_time(1000.0);
-
-   training_results = conjugate_gradient.perform_training();
-
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::GradientNormGoal, LOG);
-*/
+    assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
 }
 
 

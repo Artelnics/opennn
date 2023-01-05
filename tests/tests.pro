@@ -17,6 +17,7 @@ TEMPLATE = app
 DESTDIR = "$$PWD/bin"
 
 SOURCES += \
+    adaptive_moment_estimation_test.cpp \
     tensor_utilities_test.cpp \
     data_set_test.cpp \
     growing_neurons_test.cpp \
@@ -44,7 +45,6 @@ SOURCES += \
     neurons_selection_test.cpp \
     inputs_selection_test.cpp \
     growing_inputs_test.cpp \
-    pruning_inputs_test.cpp \
     genetic_algorithm_test.cpp \
     testing_analysis_test.cpp \
     numerical_differentiation_test.cpp \
@@ -55,9 +55,11 @@ SOURCES += \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
     response_optimization_test.cpp \
+    flatten_layer_test.cpp \
     main.cpp
 
 HEADERS += \
+    adaptive_moment_estimation_test.h \
     tensor_utilities_test.h \
     growing_neurons_test.h \
     growing_neurons_test.h \
@@ -87,7 +89,6 @@ HEADERS += \
     neurons_selection_test.h \
     inputs_selection_test.h \
     growing_inputs_test.h \
-    pruning_inputs_test.h \
     genetic_algorithm_test.h \
     testing_analysis_test.h  \
     numerical_differentiation_test.h \
@@ -98,27 +99,13 @@ HEADERS += \
     scaling_test.h \
     convolutional_layer_test.h \
     pooling_layer_test.h \
+    flatten_layer_test.h \
     response_optimization_test.h
 
 
 # OpenMP library
 
-win32{
-QMAKE_CXXFLAGS += -openmp
-QMAKE_LFLAGS += -openmp
-QMAKE_CXXFLAGS += -MP
-
-}
-
-unix:macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib
-}
-
-unix:!macx{
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS += -fopenmp
-}
+include(../opennmp.pri)
 
 
 # OpenNN library
@@ -130,9 +117,7 @@ else:unix: LIBS += -L$$OUT_PWD/../opennn/ -lopennn
 INCLUDEPATH += $$PWD/../opennn
 DEPENDPATH += $$PWD/../opennn
 
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/libopennn.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/libopennn.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/opennn.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
+win32:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/opennn.lib
+else:win32:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 

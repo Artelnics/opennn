@@ -455,6 +455,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Training strategy stuff
 
     bool stop_training = false;
+    bool switch_train = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -474,7 +475,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         // Neural network
 
         neural_network_pointer->forward_propagate(training_batch,
-                                                  training_forward_propagation);
+                                                  training_forward_propagation,
+                                                  switch_train);
 
         // Loss index
 
@@ -487,7 +489,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch,
-                                                      selection_forward_propagation);
+                                                      selection_forward_propagation,
+                                                      switch_train);
 
             loss_index_pointer->calculate_errors_lm(selection_batch,
                                                     selection_forward_propagation,
@@ -570,6 +573,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation_lm.loss;
+
+            results.loss_decrease = loss_decrease;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
@@ -631,11 +640,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
         loss_index_pointer->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
         loss_index_pointer->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
         loss_index_pointer->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        const type new_loss = back_propagation_lm.error
-                + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        type new_loss;
+
+        try{
+            new_loss = back_propagation_lm.error
+                    + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        }catch(invalid_argument)
+        {
+            new_loss = back_propagation_lm.loss;
+        }
 
         if(new_loss < back_propagation_lm.loss) // succesfull step
         {

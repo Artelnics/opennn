@@ -241,4 +241,7 @@ build-wrapper.log
 build-wrapper-dump.json
 .scannerwork/*
 
+#Tests tools
+tests/data/*.xml
+
 # Created by .ignore support plugin (hsz.mobi)

@@ -25,6 +25,8 @@
 #include "layer.h"
 #include "config.h"
 #include "perceptron_layer.h"
+#include "probabilistic_layer.h"
+#include "pooling_layer.h"
 
 namespace opennn
 {
@@ -32,9 +34,9 @@ namespace opennn
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
-class PoolingLayer;
-class PerceptronLayer;
-class ProbabilisticLayer;
+#ifdef OPENNN_CUDA
+    struct ConvolutionalLayerForwardPropagationCuda;
+#endif
 
 class ConvolutionalLayer : public Layer
 {
@@ -97,11 +99,10 @@ public:
     Index get_padding_width() const;
     Index get_padding_height() const;
 
+    Index get_inputs_images_number() const;
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
     Index get_inputs_columns_number() const;
-
-    Tensor<Index, 1> get_input_variables_dimenisons() const;
 
     Index get_inputs_number() const;
     Index get_neurons_number() const;
@@ -113,6 +114,8 @@ public:
 
     void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
     void set(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 1>&);
+
+    void set_name(const string&);
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
@@ -131,8 +134,6 @@ public:
     void set_column_stride(const Index&);
 
     void set_input_variables_dimenisons(const Tensor<Index,1>&);
-
-    void set_name(const string&);
 
     // Initialization
 
@@ -164,63 +165,39 @@ public:
 
    // Outputs
 
-   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*); //change
-
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type,1>, LayerForwardPropagation*); //change
+//   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*); //change
+//   void forward_propagate(const Tensor<type, 4>&, Tensor<type,1>, LayerForwardPropagation*); //change
+    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final; // --> New
 
 
 //   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 //   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
 //   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
 
+   // Outputs
+
+
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+                               LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          PerceptronLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               ConvolutionalLayerBackPropagation*) const;
 
-
-//   void calculate_hidden_delta_convolutional(ConvolutionalLayer*,
-//                                             const Tensor<type, 4>&,
-//                                             const Tensor<type, 4>&,
-//                                             const Tensor<type, 4>&,
-//                                             Tensor<type, 2>&) const;
-
-//   void calculate_hidden_delta_pooling(PoolingLayer*,
-//                                       const Tensor<type, 4>&,
-//                                       const Tensor<type, 4>&,
-//                                       const Tensor<type, 2>&,
-//                                       Tensor<type, 2>&) const;
-
-//   void calculate_hidden_delta_perceptron(const PerceptronLayer*,
-//                                          const Tensor<type, 4>&,
-//                                          const Tensor<type, 2>&,
-//                                          const Tensor<type, 2>&,
-//                                          Tensor<type, 2>&) const;
-
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          ConvolutionalLayerBackPropagation*) const;
-
-
-
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
-                                             const Tensor<type, 4>&,
-                                             const Tensor<type, 4>&,
-                                             const Tensor<type, 2>&,
-                                             Tensor<type, 2>&) const;
+   // @todo probabilistic hidden delta
 
    // Gradient methods
+
 
    void calculate_error_gradient(const Tensor<type, 4>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const; //change
 
-   void calculate_error_gradient(const Tensor<type, 2>&,
+//   void calculate_error_gradient(const Tensor<type, 2>&,
+   void calculate_error_gradient(type*,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const; //change
 
@@ -258,9 +235,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
-#endif
-
+#else
 };
+#endif
 
 
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
@@ -298,6 +275,9 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         combinations.setZero();
         activations.setZero();
         activations_derivatives.setZero();
+
+        outputs_data = activations.data();
+        outputs_dimensions = get_dimensions(activations);
     }
 
     void print() const
@@ -336,15 +316,20 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
 
         const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
-
         const Index synaptic_weights_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_synaptic_weights_number();
 
-        delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number);
+//        delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number); --> old
+        deltas_dimensions.resize(2);
+        deltas_dimensions.setValues({batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number});
+
+        //delete deltas_data;
+        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
         convolutional_delta.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
 
@@ -356,8 +341,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     void print() const
     {
-        cout << "Delta:" << endl;
-        cout << delta << endl;
+        cout << "Deltas:" << endl;
+        //cout << deltas << endl;
 
 //        cout << "Biases derivatives:" << endl;
 //        cout << biases_derivatives << endl;
@@ -367,14 +352,16 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     }
 
-    Tensor<type, 2> delta;
-    Tensor<type, 4> convolutional_delta;
+    Tensor<type, 2> delta; // --> delete?
+    Tensor<type, 4> convolutional_delta; // --> delete?
 
     Tensor<type, 1> biases_derivatives;
-
     Tensor<type, 1> synaptic_weights_derivatives;
 };
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+#endif
 
 }
 

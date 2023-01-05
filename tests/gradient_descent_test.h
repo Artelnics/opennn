@@ -21,37 +21,39 @@ class GradientDescentTest : public UnitTesting
 
 public:
 
-   explicit GradientDescentTest(); 
+    explicit GradientDescentTest();
 
-   virtual ~GradientDescentTest();  
+    virtual ~GradientDescentTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   void test_destructor();
+    void test_destructor();
 
-   // Training methods
+    // Training methods
 
-   void test_perform_training();
+    void test_perform_training();
 
-   // Unit testing methods
+    // Unit testing methods
 
-   void run_test_case();
+    void run_test_case();
 
 private:
 
-   Index samples_number;
-   Index inputs_number;
-   Index outputs_number;
+    Index samples_number;
+    Index inputs_number;
+    Index outputs_number;
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   SumSquaredError sum_squared_error;
+    SumSquaredError sum_squared_error;
 
-   GradientDescent gradient_descent;
+    GradientDescent gradient_descent;
+
+    TrainingResults training_results;
 
 };
 

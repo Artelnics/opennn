@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P E N   N E U R A L   N E T W O R K S   L I B R A R Y               
+//   O P E N   N E U R A L   N E T W O R K S   L I B R A R Y
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -28,6 +28,8 @@
 #include "recurrent_layer.h"
 #include "probabilistic_layer.h"
 #include "scaling_layer.h"
+#include "region_proposal_layer.h"
+#include "non_max_suppression_layer.h"
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
@@ -57,7 +59,6 @@
 #include "growing_neurons.h"
 #include "inputs_selection.h"
 #include "growing_inputs.h"
-#include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 
 // Testing analysis
@@ -70,9 +71,14 @@
 #include "correlations.h"
 #include "response_optimization.h"
 #include "opennn_strings.h"
+#include "opennn_images.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
 #include "scaling.h"
+#include "region_based_object_detector.h"
+#include "json_to_xml.h"
+#include "text_analytics.h"
+#include "codification.h"
 
 #endif
 

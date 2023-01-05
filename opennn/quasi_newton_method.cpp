@@ -481,7 +481,6 @@ void QuasiNewtonMethod::update_parameters(
 
     #endif
 
-
     optimization_data.parameters_difference.device(*thread_pool_device)
             = back_propagation.parameters - optimization_data.old_parameters;
 
@@ -514,7 +513,7 @@ void QuasiNewtonMethod::update_parameters(
         optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
     }
 
-     // Get learning rate
+    // Get learning rate
 
     optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
@@ -672,6 +671,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     // Optimization algorithm
 
     bool stop_training = false;
+    bool switch_train = true;
 
     Index selection_failures = 0;
 
@@ -695,21 +695,34 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);        
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
+
+        // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        // Update parameters
+
+//        cout << "------------------------------" << endl;
+
+//        optimization_data.print();
+
+//        cout << "------------------------------" << endl;
+
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
         // Selection error
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
 
             // Loss Index
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
+
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -732,7 +745,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: (" << minimum_loss_decrease << "): " <<loss_decrease << endl;
 
             stop_training = true;
 
@@ -776,7 +789,14 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation.loss;
+
+            results.loss_decrease = loss_decrease;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
+
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
 
@@ -788,8 +808,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         if(stop_training) break;
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);

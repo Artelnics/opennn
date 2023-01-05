@@ -24,6 +24,7 @@ public:
 
    void test_eigen_convolution();
    void test_eigen_convolution_3d();
+   void test_read_bmp();
 
    // Constructor and destructor methods
 

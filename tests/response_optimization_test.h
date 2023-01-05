@@ -70,7 +70,11 @@ private:
 
         // Simple outputs
 
-        Tensor<type,2> data(2000,3);
+        Index input_variables_number = 2;
+        Index target_variables_number = 1;
+        Index hidden_neurons_number = 2;
+
+        Tensor<type,2> data(15,3);
         data.setRandom();
 
         for(Index i = 0; i < data.dimension(0); i++)
@@ -83,18 +87,19 @@ private:
         Tensor<string,1> names(3);
         names.setValues({"x","y","z"});
         data_set.set_variables_names(names);
+        data_set.set_training();
 
         neural_network.set(NeuralNetwork::ProjectType::Approximation,
-                                     { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
+                                     { input_variables_number, hidden_neurons_number, target_variables_number});
 
         training_strategy.set(&neural_network, &data_set);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.set_display(false);
         training_strategy.perform_training();
 
         // Multiple outputs
 
-        data.resize(2000,4);
+        data.resize(15, 4);
         data.setRandom();
 
         for(Index i = 0; i < data.dimension(0); i++)
@@ -108,6 +113,7 @@ private:
         Tensor<string,1> names_2(4);
         names_2.setValues({"x","y","z","t"});
         data_set.set_variables_names(names_2);
+        data_set.set_training();
 
         Tensor<Index,1> inputs_index(2);
         Tensor<Index,1> outputs_index(2);
@@ -121,7 +127,7 @@ private:
                                      { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
 
         training_strategy.set(&neural_network_2, &data_set);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.set_display(false);
         training_strategy.perform_training();
 

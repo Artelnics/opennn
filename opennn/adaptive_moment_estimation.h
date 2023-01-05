@@ -51,7 +51,7 @@ struct AdaptiveMomentEstimationData;
 
 class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {
-
+    
 public:
 
    // Constructors
@@ -118,8 +118,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
-   void update_parameters(LossIndexBackPropagation& ,
-                         AdaptiveMomentEstimationData&) const;
+   void update_parameters(LossIndexBackPropagation&, AdaptiveMomentEstimationData&) const;
 
 private:
 
@@ -165,7 +164,9 @@ private:
 
    /// Training and selection batch size.
 
+
    Index batch_samples_number = 1000;
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"

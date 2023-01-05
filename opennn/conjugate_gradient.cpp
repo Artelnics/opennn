@@ -354,7 +354,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     }
 
     return PR_parameter;
-
 }
 
 
@@ -771,7 +770,7 @@ TrainingResults ConjugateGradient::perform_training()
     type loss_decrease = numeric_limits<type>::max();
 
     bool stop_training = false;
-
+    bool switch_train = true;
     Index selection_failures = 0;
 
     ConjugateGradientData optimization_data(this);
@@ -786,16 +785,20 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
 
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
+        // Update parameters
+
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -871,7 +874,14 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(stop_training)
         {
+            results.loss = training_back_propagation.loss;
+
+            results.loss_decrease = loss_decrease;
+
+            results.selection_failures = selection_failures;
+
             results.resize_training_error_history(epoch+1);
+
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
 
@@ -883,8 +893,6 @@ TrainingResults ConjugateGradient::perform_training()
         // Update stuff
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
@@ -978,7 +986,7 @@ void ConjugateGradient::update_parameters(
     }
 
     optimization_data.training_slope.device(*thread_pool_device)
-            = (back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+            = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
     if(optimization_data.training_slope(0) >= type(0))
     {

@@ -431,7 +431,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(1 <= results->optimal_variables(2) <= 3.0, LOG);
     assert_true(-1 <= results->optimal_variables(3) <= type(1), LOG);
 
-    // Multiple outputs case 1
+    // Multiple outputs case 2
 
     conditions_values.resize(1);
     conditions_values.setValues({1});
@@ -476,7 +476,6 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(3) >= type(-1), LOG);
     assert_true(results->optimal_variables(3) <= 0.0, LOG);
 
-
 };
 
 
@@ -508,7 +507,6 @@ void ResponseOptimizationTest::run_test_case()
 
     cout << "End of response optimization test case.\n\n";
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.

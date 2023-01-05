@@ -48,13 +48,13 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,
                                    const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation) < static_cast<type>(1e-3) ?
-                type(0) :
-                static_cast<type>(1)/column_descriptives.standard_deviation;
+    const type slope = (column_descriptives.standard_deviation) < static_cast<type>(1e-3)
+            ? type(1)
+            : static_cast<type>(1)/column_descriptives.standard_deviation;
 
-    const type intercept = (column_descriptives.standard_deviation) < static_cast<type>(1e-3) ?
-        type(0) :
-                -static_cast<type>(1)*column_descriptives.mean/column_descriptives.standard_deviation;
+    const type intercept = (column_descriptives.standard_deviation) < static_cast<type>(1e-3)
+            ? type(0)
+            : -static_cast<type>(1)*column_descriptives.mean/column_descriptives.standard_deviation;
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
@@ -213,11 +213,12 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
-    const type slope = abs(column_descriptives.mean) < static_cast<type>(1e-3) ? type(0)
+    const type slope = abs(column_descriptives.standard_deviation) < static_cast<type>(1e-3)
+            ? type(1)
             : column_descriptives.standard_deviation;
 
-    const type intercept = abs(column_descriptives.mean) < static_cast<type>(1e-3)
-            ? column_descriptives.minimum
+    const type intercept = abs(column_descriptives.standard_deviation) < static_cast<type>(1e-3)
+            ? type(0)
             : column_descriptives.mean;
 
     for(Index i = 0; i < matrix.dimension(0); i++)

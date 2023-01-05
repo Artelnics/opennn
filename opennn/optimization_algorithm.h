@@ -26,10 +26,6 @@
 #include "tensor_utilities.h"
 #include "loss_index.h"
 
-using namespace std;
-using namespace Eigen;
-
-
 namespace opennn
 {
 
@@ -189,6 +185,7 @@ struct OptimizationAlgorithmData
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
     type initial_learning_rate = type(0);
+
 };
 
 
@@ -231,6 +228,27 @@ struct TrainingResults
         return selection_error_history(size-1);
     }
 
+    type get_loss()
+    {
+        return loss;
+    }
+
+    type get_loss_decrease()
+    {
+        return loss_decrease;
+    }
+
+    Index get_selection_failures()
+    {
+        return selection_failures;
+    }
+
+    Index get_epochs_number()
+    {
+        return training_error_history.size() - 1;
+    }
+
+
     /// Returns a string representation of the results structure.
 
     void save(const string&) const;
@@ -270,7 +288,7 @@ struct TrainingResults
 
     // Training history
 
-    /// History of the loss function loss over the training iterations.
+    /// History of the loss function over the training iterations.
 
     Tensor<type, 1> training_error_history;
 
@@ -282,6 +300,11 @@ struct TrainingResults
 
     string elapsed_time;
 
+    type loss;
+
+    Index selection_failures;
+
+    type loss_decrease;
 };
 
 }

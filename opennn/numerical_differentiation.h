@@ -21,9 +21,6 @@
 
 #include "config.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn
 {
 
@@ -83,7 +80,6 @@ public:
     template<class T>
     Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
     {
-
         const Tensor<type, 1> h = calculate_h(x);
 
         const Tensor<type, 1> x_forward = x + h;

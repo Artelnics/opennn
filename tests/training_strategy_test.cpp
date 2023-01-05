@@ -56,23 +56,29 @@ void TrainingStrategyTest::test_perform_training()
 
     // Test
 
-    samples_number = 2;
-    inputs_number = 1;
+    samples_number = 5;
+    inputs_number = 2;
     targets_number = 1;
+    neurons_number = 4;
 
     data.resize(samples_number, inputs_number+targets_number);
     data.setValues({
-                       {type(0),type(1)},
-                       {type(0),type(1)}});
+                       {type(0),type(1), type(2)},
+                       {type(0),type(1), type(2)},
+                       {type(0),type(1), type(2)},
+                       {type(0),type(1), type(2)},
+                       {type(0),type(1), type(2)}});
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data(data);
+    data_set.set_training();
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
     neural_network.set_parameters_random();
 
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
     training_strategy.set_maximum_epochs_number(10);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L1);
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
@@ -91,7 +97,6 @@ void TrainingStrategyTest::test_to_XML()
 
     if(pFile)
     {
-
         tinyxml2::XMLPrinter document(pFile);
 
         training_strategy.write_XML(document);

@@ -20,6 +20,12 @@ void initialize_sequential(Tensor<type, 1>& vector)
 }
 
 
+void initialize_sequential(Tensor<Index, 1>& vector)
+{
+    for(Index i = 0; i < vector.size(); i++) vector(i) = i;
+}
+
+
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index columns_number = matrix.dimension(1);
@@ -74,6 +80,27 @@ bool is_zero(const Tensor<type,1>& tensor,const type& limit)
     {
         if(abs(tensor[i]) > type(limit)) return false;
     }
+
+    return true;
+}
+
+bool is_nan(const Tensor<type,1>& tensor)
+{
+    const Index size = tensor.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(!isnan(tensor[i])) return false;
+    }
+
+    return true;
+}
+
+
+bool is_nan(const type& value)
+{
+
+    if(!isnan(value)) return false;
 
     return true;
 }
@@ -162,6 +189,20 @@ bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2,
 }
 
 
+
+bool are_equal(const Tensor<bool, 1>& vector_1, const Tensor<bool, 1>& vector_2)
+{
+    const Index size = vector_1.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if( vector_1(i) != vector_2(i)) return false;
+    }
+
+    return true;
+}
+
+
 bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2, const type& tolerance)
 {
     const Index size = matrix_1.size();
@@ -169,6 +210,18 @@ bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2,
     for(Index i = 0; i < size; i++)
     {
         if(abs(matrix_1(i) - matrix_2(i)) > tolerance) return false;
+    }
+
+    return true;
+}
+
+bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
+{
+    const Index size = matrix_1.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if( matrix_1(i) != matrix_2(i)) return false;
     }
 
     return true;
@@ -191,7 +244,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
     for (int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
-    
+
     return result;
 }
 
@@ -233,8 +286,9 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     file.close();
 }
 
+
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
-{        
+{
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -267,6 +321,279 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
     std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
+
+
+Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank)
+{
+    const Index tokens_size = tokens.size();
+
+    if(tokens_size != rank.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Strings Class.\n"
+               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
+               << "Tokens and rank size must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<string,1> sorted_tokens(tokens_size);
+
+    for(Index i = 0; i < tokens_size; i++)
+    {
+        sorted_tokens(i) = tokens(rank(i));
+    }
+
+    return sorted_tokens;
+};
+
+
+
+Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1>&rank)
+{
+    const Index tokens_size = tokens.size();
+
+    if(tokens_size != rank.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Strings Class.\n"
+               << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
+               << "Tokens and rank size must be the same.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<Index,1> sorted_tokens(tokens_size);
+
+    for(Index i = 0; i < tokens_size; i++)
+    {
+        sorted_tokens(i) = tokens(rank(i));
+    }
+
+    return sorted_tokens;
+};
+
+
+
+Index count_elements_less_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    Index count = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(vector(i) < bound)
+            count++;
+    }
+
+    return count;
+};
+
+
+
+Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    const Index indices_size = count_elements_less_than(vector, bound);
+
+    Tensor<Index, 1> indices(indices_size);
+
+    Index index = 0;
+
+    for(Index i  = 0; i < vector.size(); i++)
+    {
+         if(vector(i) < bound)
+         {
+             indices(index) = i;
+             index++;
+         }
+    }
+
+    return indices;
+};
+
+
+
+Index count_elements_less_than(const Tensor<double,1>& vector, const double& bound)
+{
+    Index count = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(vector(i) < bound)
+            count++;
+    }
+
+    return count;
+};
+
+
+
+Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const double& bound)
+{
+    const Index indices_size = count_elements_less_than(vector, bound);
+
+    Tensor<Index, 1> indices(indices_size);
+
+    Index index = 0;
+
+    for(Index i  = 0; i < vector.size(); i++)
+    {
+         if(vector(i) < bound)
+         {
+             indices(index) = i;
+             index++;
+         }
+    }
+
+    return indices;
+};
+
+
+Index count_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    Index count = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(vector(i) > bound)
+            count++;
+    }
+
+    return count;
+};
+
+
+Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    const Index indices_size = count_elements_greater_than(vector, bound);
+
+    Tensor<Index, 1> indices(indices_size);
+
+    Index index = 0;
+
+    for(Index i  = 0; i < vector.size(); i++)
+    {
+         if(vector(i) > bound)
+         {
+             indices(index) = vector(i);
+             index++;
+         }
+    }
+
+    return indices;
+};
+
+
+Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vectors, const Index& bound)
+{
+    const Index vectors_number = vectors.size();
+
+    Tensor<Index, 1> indices(0);
+
+    for(Index i = 0; i < vectors_number; i++)
+    {
+        Tensor<Index, 1> indices_vector = get_elements_greater_than(vectors(i), bound);
+
+        indices = join_vector_vector(indices, indices_vector);
+    }
+
+    return indices;
+};
+
+
+void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
+{
+    const Index original_size = vector.size();
+
+    const Index new_size = vector.size() - indices.size();
+
+    Tensor<string,1> vector_copy(vector);
+
+    vector.resize(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        if( !contains(indices, i) )
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+
+void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
+{
+    const Index original_size = vector.size();
+
+    const Index new_size = vector.size() - indices.size();
+
+    Tensor<Index,1> vector_copy(vector);
+
+    vector.resize(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        if( !contains(indices, i) )
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+
+void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
+{
+    const Index original_size = vector.size();
+
+    const Index new_size = vector.size() - indices.size();
+
+    Tensor<double,1> vector_copy(vector);
+
+    vector.resize(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < original_size; i++)
+    {
+        if( !contains(indices, i) )
+        {
+            vector(index) = vector_copy(i);
+            index++;
+        }
+    }
+};
+
+
+
+Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
+{
+    Tensor<string, 1> new_vector(index);
+
+//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+
+    return new_vector;
+};
+
+
+
+Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
+{
+    Tensor<Index, 1> new_vector(index);
+
+//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+
+    return new_vector;
+};
+
 
 
 /// Returns the number of elements which are equal or greater than a minimum given value
@@ -444,7 +771,8 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: l2 norm of vector is not a number." << endl;
+        buffer << "OpenNN Exception: l2 norm of vector is not a number."
+               << endl;
 
         throw invalid_argument(buffer.str());
     }
@@ -480,6 +808,37 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
     }
 
     hessian.device(*thread_pool_device) = kronecker_product(vector, vector)/(norm*norm*norm);
+}
+
+
+type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
+{
+    if(x.size() != y.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Tensor utilites.\n"
+               << "type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&)\n"
+               << "x and y vector must  have the same dimensions.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+
+type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
+{
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
 }
 
 
@@ -564,6 +923,7 @@ Index count_NAN(const Tensor<type, 1>& x)
     return NAN_number;
 }
 
+
 Index count_NAN(const Tensor<type, 2>& x)
 {
     const Index rows_number = x.dimension(0);
@@ -583,6 +943,47 @@ Index count_NAN(const Tensor<type, 2>& x)
 
     return count;
 }
+
+
+bool has_NAN(const Tensor<type, 1>& x)
+{
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(isnan(x(i))) return true;
+    }
+
+    return false;
+}
+
+
+bool has_NAN(Tensor<type, 2>& x)
+{
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(isnan(x(i))) return true;
+    }
+
+    return false;
+}
+
+Index count_empty_values(const Tensor<string, 1>& vector)
+{
+    const Index words_number = vector.size();
+
+    Index count = 0;
+
+    string empty_string;
+
+    for( Index i = 0; i < words_number; i++)
+    {
+        string str = vector(i);
+        trim(str);
+        if(str == empty_string) count++;
+    }
+
+    return count;
+}
+
 
 void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
 {
@@ -635,6 +1036,7 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
     }
 }
 
+
 void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, const string& log)
 {
     if(matrix.dimension(1) != rows_number)
@@ -646,6 +1048,19 @@ void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, 
 
         throw invalid_argument(buffer.str());
     }
+}
+
+
+Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Index, 1>& y)
+{
+    const Index size = x.size() + y.size();
+
+    Tensor<Index, 1> data(size);
+
+    std::copy(x.data(), x.data() + x.size(), data.data());
+    std::copy(y.data(), y.data() + y.size(), data.data() + x.size());
+
+    return data;
 }
 
 
@@ -689,7 +1104,7 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<ty
 
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
-    const Index rows_number = x.size();
+    const Index rows_number = y.size();
     const Index columns_number = x.dimension(1) + 1;
 
     Tensor<type, 2> data(rows_number, columns_number);
@@ -947,6 +1362,50 @@ Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_val
     new_vector(new_size-1) = new_value;
 
     return new_vector;
+}
+
+
+Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
+{
+    Tensor<string, 1> vector(x.size());
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        vector(i) = std::to_string(x(i));
+    }
+    return vector;
+
+};
+
+
+void print_tensor(const float* vector, const int dims[])
+{
+    cout<<"Tensor"<<endl;
+
+    const int rows_number = dims[0];
+    const int cols_number = dims[1];
+    const int channels = dims[2];
+    const int batch = dims[3];
+
+    for (int l=0; l<batch; l++)
+    {
+        for (int k=0; k<channels; k++)
+        {
+            for (int i=0; i<rows_number; i++)
+            {
+                for (int j=0; j<cols_number; j++)
+                {
+                    if (i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+                        cout<< "<--Batch-->"<<endl;
+                    if (i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+                        cout<< "*--Channel--*"<<endl;
+
+                   cout<<*(vector + i + j*rows_number + k*rows_number*cols_number+ l*channels*rows_number*cols_number)<< " ";
+                }
+               cout<<" "<<endl;
+            }
+        }
+    }
 }
 
 }

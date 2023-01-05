@@ -1,115 +1,114 @@
-'''
+''' 
 Artificial Intelligence Techniques SL	
 artelnics@artelnics.com	
 
 Your model has been exported to this python file.
-You can manage it with the 'NeuralNetwork' class.	
-Example:
+You can manage it with the main method where you 	
+can change the values of your inputs. For example:
 
-	model = NeuralNetwork()	
-	sample = [input_1, input_2, input_3, input_4, ...]	
-	outputs = model.calculate_output(sample)
+if we want to add these 3 values (0.3, 2.5 and 1.8)
+to our 3 inputs (Input_1, Input_2 and Input_1), the
+main program has to look like this:
 
-	Inputs Names: 	
-	1 )sepal_lenght
-	2 )sepal_width
-	3 )petal_lenght
-	4 )petal_width
+def main ():
+	#default_val = 3.1416
+	inputs = [None]*3
+	
+	Id_1 = 0.3
+	Id_1 = 2.5
+	Id_1 = 1.8
+	
+	inputs[0] = Input_1
+	inputs[1] = Input_2
+	inputs[2] = Input_3
+	. . .
 
-You can predict with a batch of samples using calculate_batch_output method	
-IMPORTANT: input batch must be <class 'numpy.ndarray'> type	
-Example_1:	
-	model = NeuralNetwork()	
-	input_batch = np.array([[1, 2], [4, 5]], np.int32)	
-	outputs = model.calculate_batch_output(input_batch)
-Example_2:	
-	input_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})	
-	outputs = model.calculate_batch_output(input_batch.values)
-'''
 
+Inputs Names: 	
+	0) sepal_lenght
+	1) sepal_width
+	2) petal_lenght
+	3) petal_width
+
+
+''' 
+
+
+import math
 import numpy as np
 
+
 class NeuralNetwork:
- 
 	def __init__(self):
- 
-		self.parameters_number = 27
- 
-	def scaling_layer(self,inputs):
-
-		outputs = [None] * 4
-
-		outputs[0] = (inputs[0]-5.843333244)/0.8280661106
-		outputs[1] = (inputs[1]-3.057333231)/0.4358662963
-		outputs[2] = (inputs[2]-3.757999897)/1.765298247
-		outputs[3] = (inputs[3]-1.19933331)/0.762237668
-
-		return outputs;
+		self.inputs_number = 4
 
 
-	def perceptron_layer_1(self,inputs):
+	def calculate_outputs(self, inputs):
+		sepal_lenght = inputs[0]
+		sepal_width = inputs[1]
+		petal_lenght = inputs[2]
+		petal_width = inputs[3]
 
-		combinations = [None] * 3
-
-		combinations[0] = -0.648513 -0.310869*inputs[0] +0.46917*inputs[1] -0.8179*inputs[2] -0.712404*inputs[3] 
-		combinations[1] = -0.645249 -0.301602*inputs[0] +0.468052*inputs[1] -0.819502*inputs[2] -0.717822*inputs[3] 
-		combinations[2] = -2.53433 -0.717074*inputs[0] -0.212808*inputs[1] +3.04323*inputs[2] +1.531*inputs[3] 
+		scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.8280661106;
+		scaled_sepal_width = (sepal_width-3.057333231)/0.4358662963;
+		scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
+		scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 		
-		activations = [None] * 3
-
-		activations[0] = np.tanh(combinations[0])
-		activations[1] = np.tanh(combinations[1])
-		activations[2] = np.tanh(combinations[2])
-
-		return activations;
-
-
-	def probabilistic_layer(self, inputs):
-
-		combinations = [None] * 3
-
-		combinations[0] = 0.440813 +1.91102*inputs[0] +1.90659*inputs[1] -0.784815*inputs[2] 
-		combinations[1] = -0.758312 -1.31256*inputs[0] -1.311*inputs[1] -2.96961*inputs[2] 
-		combinations[2] = 0.316884 -0.59882*inputs[0] -0.595287*inputs[1] +3.75488*inputs[2] 
+<<<<<<< HEAD
+		perceptron_layer_1_output_0 = np.tanh( -1.67565 + (scaled_sepal_lenght*-0.219405) + (scaled_sepal_width*-0.283519) + (scaled_petal_lenght*1.24661) + (scaled_petal_width*1.58539) );
+		perceptron_layer_1_output_1 = np.tanh( 1.95591 + (scaled_sepal_lenght*0.518382) + (scaled_sepal_width*0.491331) + (scaled_petal_lenght*-1.4719) + (scaled_petal_width*-2.18824) );
+		perceptron_layer_1_output_2 = np.tanh( 1.36319 + (scaled_sepal_lenght*0.434006) + (scaled_sepal_width*-3.62986) + (scaled_petal_lenght*2.43801) + (scaled_petal_width*2.22975) );
 		
-		activations = [None] * 3
+		probabilistic_layer_combinations_0 = -0.543941 -3.34266*perceptron_layer_1_output_0 -0.158748*perceptron_layer_1_output_1 -3.90887*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_1 = 1.55881 -0.388061*perceptron_layer_1_output_0 +1.59409*perceptron_layer_1_output_1 +1.35736*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_2 = -1.31063 +3.76368*perceptron_layer_1_output_0 -1.55624*perceptron_layer_1_output_1 +2.54995*perceptron_layer_1_output_2 ;
+=======
+		perceptron_layer_1_output_0 = np.tanh( 0.398424 + (scaled_sepal_lenght*0.509155) + (scaled_sepal_width*-0.755941) + (scaled_petal_lenght*1.04209) + (scaled_petal_width*1.13809) );
+		perceptron_layer_1_output_1 = np.tanh( -3.23168 + (scaled_sepal_lenght*-0.176614) + (scaled_sepal_width*-0.910796) + (scaled_petal_lenght*2.20948) + (scaled_petal_width*2.42128) );
+		perceptron_layer_1_output_2 = np.tanh( 0.300156 + (scaled_sepal_lenght*0.382983) + (scaled_sepal_width*0.632999) + (scaled_petal_lenght*-0.888551) + (scaled_petal_width*-1.23076) );
+		
+		probabilistic_layer_combinations_0 = -0.45919 -1.31559*perceptron_layer_1_output_0 -1.20404*perceptron_layer_1_output_1 +3.04406*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_1 = 1.2198 +0.674133*perceptron_layer_1_output_0 -1.58597*perceptron_layer_1_output_1 -0.618454*perceptron_layer_1_output_2 ;
+		probabilistic_layer_combinations_2 = -0.850095 +1.07785*perceptron_layer_1_output_0 +2.88505*perceptron_layer_1_output_1 -2.82181*perceptron_layer_1_output_2 ;
+>>>>>>> dev
+			
+		sum = np.exp(probabilistic_layer_combinations_0) + np.exp(probabilistic_layer_combinations_1) + np.exp(probabilistic_layer_combinations_2);
+		
+		iris_setosa = np.exp(probabilistic_layer_combinations_0)/sum;
+		iris_versicolor = np.exp(probabilistic_layer_combinations_1)/sum;
+		iris_virginica = np.exp(probabilistic_layer_combinations_2)/sum;
+		
+		out = [None]*3
+		out[0] = iris_setosa
+		out[1] = iris_versicolor
+		out[2] = iris_virginica
 
-		sum_ = 0;
-
-		sum_ = 	np.exp(combinations[0]) + 	np.exp(combinations[1]) + 	np.exp(combinations[2]);
-
-		activations[0] = np.exp(combinations[0])/sum_;
-		activations[1] = np.exp(combinations[1])/sum_;
-		activations[2] = np.exp(combinations[2])/sum_;
-
-		return activations;
+		return out;
 
 
-	def calculate_output(self, inputs):
+	def main (self):
+		default_val = 3.1416
+		inputs = [None]*4
 
-		output_scaling_layer = self.scaling_layer(inputs)
+		sepal_lenght = default_val	#Change this value
+		inputs[0] = sepal_lenght
 
-		output_perceptron_layer_1 = self.perceptron_layer_1(output_scaling_layer)
+		sepal_width = default_val	#Change this value
+		inputs[1] = sepal_width
 
-		output_probabilistic_layer = self.probabilistic_layer(output_perceptron_layer_1)
+		petal_lenght = default_val	#Change this value
+		inputs[2] = petal_lenght
 
-		return output_probabilistic_layer
+		petal_width = default_val	#Change this value
+		inputs[3] = petal_width
 
 
-	def calculate_batch_output(self, input_batch):
+		outputs = NeuralNetwork.calculate_outputs(self, inputs)
 
-		output = []
+		print("\nThese are your outputs:\n")
+		print( "\t iris_setosa:" + str(outputs[0]) + "\n" )
+		print( "\t iris_versicolor:" + str(outputs[1]) + "\n" )
+		print( "\t iris_virginica:" + str(outputs[2]) + "\n" )
 
-		for i in range(input_batch.shape[0]):
-
-			inputs = list(input_batch[i])
-
-			output_scaling_layer = self.scaling_layer(inputs)
-
-			output_perceptron_layer_1 = self.perceptron_layer_1(output_scaling_layer)
-
-			output_probabilistic_layer = self.probabilistic_layer(output_perceptron_layer_1)
-
-			output = np.append(output,output_probabilistic_layer, axis=0)
-
-		return output
+nn = NeuralNetwork()
+nn.main()

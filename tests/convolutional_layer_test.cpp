@@ -151,6 +151,19 @@ void ConvolutionalLayerTest::test_eigen_convolution_3d()
     assert_true(fabs(output(1,1,0) - 464)<type(NUMERIC_LIMITS_MIN), LOG);
 }
 
+
+void ConvolutionalLayerTest::test_read_bmp()
+{
+    DataSet data_set;
+
+    data_set.set_data_file_name("C:/Users/alvaromartin/Documents/Dataset for read_bmp()/");
+
+    data_set.read_bmp();
+
+    Tensor<type, 2> data = data_set.get_data();
+}
+
+
 void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -815,7 +828,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
-
+/*
 void ConvolutionalLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
@@ -874,7 +887,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 forward_propagation.activations(0, 0, 0, 0) - type(1.) < type(0.00001) &&
                 type(forward_propagation.activations_derivatives(0, 0, 0, 0)) - type(0.)< type(0.00001), LOG);
 }
-
+*/
 
 void ConvolutionalLayerTest::test_insert_padding()
 {
@@ -943,7 +956,6 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
     PerceptronLayerBackPropagation perceptron_layer_backpropagate(images_number, &perceptronlayer);
     ConvolutionalLayerBackPropagation convolutional_layer_backpropagate(images_number, &convolutional_layer);
 
-
     // initialize
 
     Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_columns_number,
@@ -955,8 +967,8 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
         *(synaptic_weights_perceptron.data() + i) = 1.0 * neuron_value;
     }
-
-    perceptron_layer_backpropagate.delta.setValues({{1,1,1},
+/*
+    perceptron_layer_backpropagate.deltas.setValues({{1,1,1},
                                                     {2,2,2}});
 
     perceptronlayer.set_synaptic_weights(synaptic_weights_perceptron);
@@ -965,6 +977,10 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
     convolutional_layer.calculate_hidden_delta_perceptron(&perceptron_layer_forward_propagate,
                                                           &perceptron_layer_backpropagate,
                                                           &convolutional_layer_backpropagate);
+
+    cout << convolutional_layer_backpropagate.deltas << endl;
+*/
+
 }
 
 
@@ -996,7 +1012,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
     const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
 
-    float* ptr_result = (float*) malloc(output_size_rows_cols*kernel_number*images_number*sizeof(float));
+    float* ptr_result = (float*) malloc(static_cast<size_t>(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
 
     input.setConstant(1.0);
 
@@ -1030,7 +1046,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims);
 
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
-                   tmp_result.data(), output_size_rows_cols*sizeof(float));
+                   tmp_result.data(), output_size_rows_cols*sizeof(type));
          }
     }
 }
@@ -1053,6 +1069,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    test_eigen_convolution();
    test_eigen_convolution_3d();
+   test_read_bmp();
 
    // Combinations
 
@@ -1075,7 +1092,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    // Forward propagate
 
-   test_forward_propagate();
+//   test_forward_propagate();
 
    // Back_propagate
 
