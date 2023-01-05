@@ -705,12 +705,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Update parameters
 
-        cout << "------------------------------" << endl;
-
-        optimization_data.print();
-
-        cout << "------------------------------" << endl;
-
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Selection error
