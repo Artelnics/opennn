@@ -518,6 +518,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
+        cout << "back_propagation.parameters: " << endl << back_propagation.parameters << endl;
+        cout << "optimization_data.training_direction*triplet.B.first: " << endl << optimization_data.training_direction*triplet.B.first << endl;
+
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
         loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
@@ -528,7 +531,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         triplet.B.second = back_propagation.error + regularization_weight*regularization;
 
     } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance);
-
 
     if(triplet.A.second > triplet.B.second)
     {

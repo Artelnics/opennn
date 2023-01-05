@@ -424,28 +424,29 @@ void BoundingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>&
         const Index columns_number = inputs_dimensions(1);
 
         for(Index i = 0; i < rows_number; i++)
-        {
-            for(Index j = 0; j < columns_number; j++)
-            {
-                if(inputs(i,j) < lower_bounds(j))
                 {
-                    outputs(i,j) = lower_bounds(j);
+                    for(Index j = 0; j < columns_number; j++)
+                    {
+                        if(inputs(i,j) < lower_bounds(j))
+                        {
+                            outputs(i,j) = lower_bounds(j);
+                        }
+                        else if(inputs(i,j) > upper_bounds(j))
+                        {
+                            outputs(i,j) = upper_bounds(j);
+                        }
+                        else
+                        {
+                            outputs(i,j) = inputs(i,j);
+                        }
+                    }
                 }
-                else if(inputs(i,j) > upper_bounds(j))
-                {
-                    outputs(i,j) = upper_bounds(j);
-                }
-                else
-                {
-                    outputs(i,j) = inputs(i,j);
-                }
-            }
-        }
+
     }
     else
     {
         Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
-        copy(bounding_layer_forward_propagation->outputs_data, bounding_layer_forward_propagation->outputs_data + inputs_size(0), inputs_data);
+        copy(inputs_data, inputs_data + inputs_size(0), bounding_layer_forward_propagation->outputs_data);
     }
 }
 

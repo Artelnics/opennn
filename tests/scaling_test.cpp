@@ -146,6 +146,9 @@ void ScalingTest::test_unscale_data_mean_standard_deviation()
     data_set.set_columns_scalers(Scaler::MeanStandardDeviation);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
+
+    variables_descriptives[0].print();
+
     data_set.scale_data();
     data_set.unscale_data(variables_descriptives);
 

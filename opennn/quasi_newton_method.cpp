@@ -481,7 +481,6 @@ void QuasiNewtonMethod::update_parameters(
 
     #endif
 
-
     optimization_data.parameters_difference.device(*thread_pool_device)
             = back_propagation.parameters - optimization_data.old_parameters;
 
@@ -514,7 +513,7 @@ void QuasiNewtonMethod::update_parameters(
         optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
     }
 
-     // Get learning rate
+    // Get learning rate
 
     optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
@@ -706,6 +705,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Update parameters
 
+        cout << "------------------------------" << endl;
+
+        optimization_data.print();
+
+        cout << "------------------------------" << endl;
+
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Selection error
@@ -717,6 +722,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
             // Loss Index
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
+
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;

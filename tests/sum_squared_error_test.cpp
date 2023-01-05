@@ -332,7 +332,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = false;
+        bool switch_train = true;
 
         // Data set
 
@@ -378,14 +378,14 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-1)), LOG);
 
     }
-    
+
     // Test binary classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = false;
+        bool switch_train = true;
 
         // Data set
 
@@ -438,7 +438,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = false;
+        bool switch_train = true;
 
         // Data set
 
@@ -484,6 +484,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
 
     }
+
 
     // Forecasting incompatible with LM
 }

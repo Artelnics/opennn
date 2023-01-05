@@ -97,6 +97,7 @@ void Layer::set_parameters_constant(const type&)
 
 void Layer::set_parameters_random()
 {
+/*
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
@@ -104,6 +105,7 @@ void Layer::set_parameters_random()
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw invalid_argument(buffer.str());
+*/
 }
 
 

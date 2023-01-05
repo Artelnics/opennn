@@ -1573,13 +1573,14 @@ void NeuralNetwork::set_parameters_constant(const type& value) const
 
 void NeuralNetwork::set_parameters_random() const
 {
-    const Index trainable_layers_number = get_trainable_layers_number();
+    const Index layers_number = get_layers_number();
 
-    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+    Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
 
-    for(Index i = 0; i < trainable_layers_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
-        trainable_layers_pointers[i]->set_parameters_random();
+        layers_pointers[i]->set_parameters_random();
+
     }
 }
 

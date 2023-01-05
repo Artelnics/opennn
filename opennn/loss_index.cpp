@@ -536,24 +536,24 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     // Rest of the layers
 
-    for(Index i = first_trainable_layer_index+1; i <= last_trainable_layer_index; i++)
+    for(Index i = 1; i < trainable_layers_number; i++)
     {
-        switch (forward_propagation.layers(i-1)->layer_pointer->get_type())
+        switch (forward_propagation.layers(first_trainable_layer_index + i - 1)->layer_pointer->get_type())
         {
         case Layer::Type::Perceptron:
         {
             const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-                    = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1));
+                    = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(first_trainable_layer_index + i - 1));
 
             const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
 
             const TensorMap<Tensor<type, 2>> outputs(perceptron_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
-            layers_pointers(i)->calculate_squared_errors_Jacobian_lm(outputs,
-                                                                   forward_propagation.layers(i),
-                                                                    loss_index_back_propagation_lm.neural_network.layers(i));
+            trainable_layers_pointers(i)->calculate_squared_errors_Jacobian_lm(outputs,
+                                                                   forward_propagation.layers(first_trainable_layer_index + i),
+                                                                   loss_index_back_propagation_lm.neural_network.layers(i));
 
-            layers_pointers(i)->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(i),
+            trainable_layers_pointers(i)->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(i),
                                                                             mem_index,
                                                                             loss_index_back_propagation_lm.squared_errors_jacobian);
 

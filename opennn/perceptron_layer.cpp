@@ -507,13 +507,13 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 #endif
 
     const Index batch_samples_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
+    const Index biases_number = get_neurons_number();
 
-    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, neurons_number);
+    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, biases_number);
 
 //    TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
 
-    for (Index i = 0; i < neurons_number; i++)
+    for (Index i = 0; i < biases_number; i++)
     {
         fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
     }
@@ -736,7 +736,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                            combinations_data);
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-    const Tensor<Index, 1> activations_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
+    const Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
 
     if(switch_train) // Perform training
     {
@@ -745,14 +745,14 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                           perceptron_layer_forward_propagation->outputs_data,
                                           perceptron_layer_forward_propagation->outputs_dimensions,
                                           perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                          activations_dimensions);
+                                          activations_derivatives_dimensions);
     }
     else // Perform deployment
     {
         calculate_activations(perceptron_layer_forward_propagation->combinations.data(),
                               combinations_dimensions,
                               perceptron_layer_forward_propagation->outputs_data,
-                              activations_dimensions);
+                              perceptron_layer_forward_propagation->outputs_dimensions);
     }
 }
 
@@ -871,7 +871,7 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: perceptron layer class.\n"
-               << "void calculate_hidden_delta_perceptron(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
                << "NAN values found in deltas.";
 
         throw invalid_argument(buffer.str());
@@ -1019,7 +1019,7 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
         ostringstream buffer;
 
         buffer << "OpenNN Exception: perceptron layer class.\n"
-               << "void calculate_hidden_delta_probabilistic(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
                << "NAN values found in deltas.";
 
         throw invalid_argument(buffer.str());
