@@ -229,7 +229,8 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        bool switch_train = true;
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -271,7 +272,8 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        bool switch_train = true;
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -311,7 +313,8 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        bool switch_train = true;
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -453,7 +456,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        bool switch_train = true;
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -503,7 +507,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        bool switch_train = true;
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -554,7 +559,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        bool switch_train = true;
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
