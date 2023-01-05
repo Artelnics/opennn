@@ -150,23 +150,23 @@ public:
 
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const; //change
 
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,
                                 const Tensor<type, 4>&,
-                                Tensor<type, 4>&) const;
+                                Tensor<type, 4>&) const; //change
     // Activation
 
-    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const; //change
 
-    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const; //change
 
    // Outputs
 
-   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*); //change
 
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type,1>, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type,1>, LayerForwardPropagation*); //change
 
 
 //   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
@@ -218,15 +218,15 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 4>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const; //change
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const; //change
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
-                        Tensor<type, 1>&) const;
+                        Tensor<type, 1>&) const; // change
 
    void to_2d(const Tensor<type, 4>&, Tensor<type, 2>&) const;
 
