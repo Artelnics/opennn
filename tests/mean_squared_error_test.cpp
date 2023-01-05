@@ -203,8 +203,6 @@ void MeanSquaredErrorTest::test_back_propagate()
         assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
     }
 
-    /// @todo
-/*
     // Test binary classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -330,7 +328,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
     }
-*/
+
     // Test convolutional
    if(false)
     {
@@ -428,7 +426,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 void MeanSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
-/*
+
     // Test approximation random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -580,7 +578,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
 //        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
     }
-*/
+
 }
 
 

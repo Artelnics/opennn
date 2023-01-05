@@ -308,7 +308,6 @@ void ModelSelection::check() const
 
 /// Perform the neurons selection, returns a structure with the results of the neurons selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
-/// @todo
 
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {

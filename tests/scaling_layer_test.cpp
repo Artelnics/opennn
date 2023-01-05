@@ -359,6 +359,7 @@ void ScalingLayerTest::test_forward_propagate()
     bool switch_train = true;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
 
     inputs.resize(samples_number, inputs_number);
@@ -383,6 +384,7 @@ void ScalingLayerTest::test_forward_propagate()
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
 
     inputs.resize(samples_number, inputs_number);
@@ -409,6 +411,7 @@ void ScalingLayerTest::test_forward_propagate()
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
     inputs.resize(samples_number,inputs_number);
@@ -440,6 +443,7 @@ void ScalingLayerTest::test_forward_propagate()
     data_set.set_training();
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
     input_descriptives = data_set.calculate_input_variables_descriptives();
@@ -468,6 +472,7 @@ void ScalingLayerTest::test_forward_propagate()
     samples_number = 2;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
     data.resize(samples_number,inputs_number + 1);
@@ -494,6 +499,7 @@ void ScalingLayerTest::test_forward_propagate()
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
     data.resize(samples_number, inputs_number + 1);
@@ -519,10 +525,12 @@ void ScalingLayerTest::test_forward_propagate()
 
     // Test
 
+
     inputs_number = 2 + rand()%10;
     samples_number = 1;
 
     scaling_layer.set(inputs_number);
+    scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
     data.resize(samples_number, inputs_number + 1);

@@ -1416,7 +1416,6 @@ Tensor <bool, 1> GeneticAlgorithm::get_individual_variables_to_indexes(Tensor <b
 
 
 /// This method writes a matrix of strings the most representative atributes.
-/// @todo to many rows in string matrix.
 
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {

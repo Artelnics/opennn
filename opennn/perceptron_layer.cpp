@@ -522,8 +522,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-/* @todo
-MKL implementation
+/* @todo MKL implementation
 
 #ifdef OPENNN_MKL
 
@@ -949,9 +948,6 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
     {
         if(probabilistic_layer_pointer->get_activation_function() != ProbabilisticLayer::ActivationFunction::Softmax)
         {
-            /// ¿¿??
-            /// @todo Check
-
             deltas.device(*thread_pool_device) =
                     (next_deltas*next_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_forward_propagation->activations_derivatives.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
         }

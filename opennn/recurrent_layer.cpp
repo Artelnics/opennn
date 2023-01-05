@@ -537,11 +537,19 @@ void RecurrentLayer::set_recurrent_weights_constant(const type& value)
 }
 
 
-/// @todo
+/// Initializes the input weights of all the neurons in the layer of neurons neuron random.
 
-void RecurrentLayer::initialize_input_weights_Glorot(const type&, const type&)
+void RecurrentLayer::set_input_weights_random()
 {
     input_weights.setRandom();
+}
+
+
+/// Initializes the recurrent weights of all the neurons in the layer of neurons neuron random.
+
+void RecurrentLayer::set_recurrent_weights_random()
+{
+    recurrent_weights.setRandom();
 }
 
 
@@ -648,6 +656,17 @@ void RecurrentLayer::calculate_activations(Tensor<type, 1>& combinations_1d,
 
         default: return;
     }
+}
+
+
+Tensor<type, 1> RecurrentLayer::get_activations(const Tensor<type,1>& combinations) const
+{
+    Tensor<type, 1> combinations_copy(combinations);
+    Tensor<type, 1> activations(combinations);
+
+    calculate_activations(combinations_copy, activations);
+
+    return activations;
 }
 
 
@@ -921,6 +940,7 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
 //    for(Index i = 0; i < samples_number; i++) /// @todo use vector maps instead of chipping
 //    {
 //        if(i%timesteps == 0) hidden_states.setZero();
+
 
 //        current_inputs = inputs.chip(i, 0);
 
@@ -1295,7 +1315,6 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
 /// @param inputs_names Vector of strings with the name of the layer inputs.
 /// @param outputs_names Vector of strings with the name of the layer outputs.
-/// @todo Implement method
 
 string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
                                         const Tensor<string, 1>& outputs_names) const

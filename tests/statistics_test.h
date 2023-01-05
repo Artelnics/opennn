@@ -92,9 +92,6 @@ public:
    // Percentiles
    void test_percentiles();
 
-   // Means by categories
-   void test_means_by_categories();
-
    // Unit testing methods
 
    void run_test_case();

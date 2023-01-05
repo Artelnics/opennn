@@ -2333,7 +2333,6 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 
 */
 
-///@todo change loop to copy, doesnt work propperly with Tensor<Tensor<>>
 
 void TextAnalytics::load_documents(const string& path)
 {    
@@ -2466,7 +2465,7 @@ void TextAnalytics::load_documents(const string& path)
 }
 
 
-/// @todo Explain.
+/// @todo TEXT GENERATION Explain.
 
 TextGenerationAlphabet::TextGenerationAlphabet()
 {

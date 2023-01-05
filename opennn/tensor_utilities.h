@@ -53,20 +53,24 @@ void save_csv(const Tensor<type,2>&, const string&);
 
 // Rank and indices methods
 
-
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
 Index count_elements_less_than(const Tensor<Index,1>&, const Index&);
+bool is_less_than(const Tensor<type, 1>&, const type&);
 Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
 
 Index count_elements_less_than(const Tensor<double,1>&, const double&);
 Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
 
-void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
+Index count_elements_greater_than(const Tensor<Index,1>&, const Index&);
+Tensor<Index, 1> get_elements_greater_than(const Tensor<Index, 1>&, const Index&);
+Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>&, const Index&);
+
 void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
+void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
 void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 
 Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
@@ -113,10 +117,13 @@ void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const 
 void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 void check_rows_number(const Tensor<type, 2>&, const Index&, const string& );
 
-bool is_less_than(const Tensor<type, 1>&, const type&);
 bool contains(const Tensor<type,1>&, const type&);
 bool contains(const Tensor<string,1>&, const string&);
 bool contains(const Tensor<Index,1>&, const Index&);
+
+// Assemble methods
+
+Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
@@ -124,14 +131,14 @@ Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
-string tensor_string_to_text(const Tensor<string,1>&, string&);
-
-Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&);
 Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&);
 Tensor<type, 1> push_back(const Tensor<type, 1>&, const type&);
 
+Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
+
+string tensor_string_to_text(const Tensor<string,1>&, string&);
 Tensor<string, 1> to_string_tensor(const Tensor<type,1>&);
 
 template<class T, int N>

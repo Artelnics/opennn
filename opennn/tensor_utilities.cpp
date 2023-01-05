@@ -450,6 +450,57 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
 };
 
 
+Index count_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    Index count = 0;
+
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        if(vector(i) > bound)
+            count++;
+    }
+
+    return count;
+};
+
+
+Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+{
+    const Index indices_size = count_elements_greater_than(vector, bound);
+
+    Tensor<Index, 1> indices(indices_size);
+
+    Index index = 0;
+
+    for(Index i  = 0; i < vector.size(); i++)
+    {
+         if(vector(i) > bound)
+         {
+             indices(index) = vector(i);
+             index++;
+         }
+    }
+
+    return indices;
+};
+
+
+Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vectors, const Index& bound)
+{
+    const Index vectors_number = vectors.size();
+
+    Tensor<Index, 1> indices(0);
+
+    for(Index i = 0; i < vectors_number; i++)
+    {
+        Tensor<Index, 1> indices_vector = get_elements_greater_than(vectors(i), bound);
+
+        indices = join_vector_vector(indices, indices_vector);
+    }
+
+    return indices;
+};
+
 
 void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
 {
@@ -985,6 +1036,7 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
     }
 }
 
+
 void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, const string& log)
 {
     if(matrix.dimension(1) != rows_number)
@@ -996,6 +1048,19 @@ void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, 
 
         throw invalid_argument(buffer.str());
     }
+}
+
+
+Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Index, 1>& y)
+{
+    const Index size = x.size() + y.size();
+
+    Tensor<Index, 1> data(size);
+
+    std::copy(x.data(), x.data() + x.size(), data.data());
+    std::copy(y.data(), y.data() + y.size(), data.data() + x.size());
+
+    return data;
 }
 
 

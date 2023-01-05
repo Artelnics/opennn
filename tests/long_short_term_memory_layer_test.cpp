@@ -347,8 +347,8 @@ void LongShortTermMemoryLayerTest::test_set_parameters_random()
     long_short_term_memory_layer.set_parameters_random();
     parameters = long_short_term_memory_layer.get_parameters();
 
-//    assert_true(parameters(0) >= -1.0, LOG);
-//    assert_true(parameters(0) <= type(1), LOG); \\\@todo , use any
+    assert_true(parameters(0) >= -1.0, LOG);
+    assert_true(parameters(0) <= type(1), LOG);
 }
 
 

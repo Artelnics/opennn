@@ -524,10 +524,25 @@ string OptimizationAlgorithm::write_time(const type& time) const
 }
 
 
-/// @todo
+/// Saves the training results into a CSV document
+/// @param file_name Path to the output file.
 
-void TrainingResults::save(const string&) const
+void TrainingResults::save(const string& file_name) const
 {
+    Tensor<string, 2> final_results = write_final_results();
+
+    std::ofstream file;
+    file.open(file_name);
+
+    if(file)
+    {
+        for(Index i = 0; i < final_results.dimension(0); i++)
+        {
+            file << final_results(i,0) << "; " << final_results(i,1) << "\n";
+        }
+
+        file.close();
+    }
 
 }
 
@@ -588,7 +603,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     selection_error_history.size() == 0
             ? buffer << "NAN"
-            : buffer << setprecision(precision) << selection_error_history(size-1);
+                        : buffer << setprecision(precision) << selection_error_history(size-1);
 
     final_results(4,1) = buffer.str();
 
