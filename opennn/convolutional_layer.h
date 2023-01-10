@@ -151,7 +151,7 @@ public:
 
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const; //change
+    void calculate_convolutions(const Tensor<type, 4>&, type*) const; //change
 
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,
@@ -160,8 +160,14 @@ public:
     // Activation
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const; //change
+    void calculate_activations(type*, const Tensor<Index, 1>&,
+                               type*, const Tensor<Index, 1>&) const;
 
     void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const; //change
+    void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
+                                           type*, const Tensor<Index, 1>&,
+                                           type*, const Tensor<Index, 1>&) const;
+
 
    // Outputs
 
@@ -290,6 +296,11 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
+    }
+
+    type* get_combinations_data()
+    {
+        return combinations.data();
     }
 
     Tensor<type, 4> combinations;

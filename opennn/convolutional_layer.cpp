@@ -113,7 +113,7 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 
 /// Calculate convolutions
 
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, type* combinations) const
 {
     const Index inputs_rows_number = inputs.dimension(0);
     const Index inputs_columns_number = inputs.dimension(1);
@@ -178,7 +178,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, T
 
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + biases(j);
 
-            memcpy(combinations.data() +j*output_size_rows_columns +i*output_size_rows_columns*kernels_number,
+            memcpy(combinations +j*output_size_rows_columns +i*output_size_rows_columns*kernels_number,
                    tmp_result.data(), static_cast<size_t>(output_size_rows_columns)*sizeof(float));
         }
     }
@@ -233,6 +233,41 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
+void ConvolutionalLayer::calculate_activations(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
+                                               type* activations, const Tensor<Index, 1>& activations_dimensions) const
+{
+    //@todo debug checks
+
+    switch(activation_function)
+    {
+    case ActivationFunction::Linear: linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::Logistic: logistic(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::Threshold: threshold(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::SoftPlus: soft_plus(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::SoftSign: soft_sign(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+
+    default: return;
+    }
+
+}
+
+
 
 /// Calculates activations
 
@@ -266,6 +301,41 @@ void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Te
         case ActivationFunction::ExponentialLinear: exponential_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
     }
 */
+}
+
+
+void ConvolutionalLayer::calculate_activations_derivatives(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
+                                                           type* activations, const Tensor<Index, 1>& activations_dimensions,
+                                                           type* activations_derivatives, const Tensor<Index, 1>& activations_derivatives_dimensions) const
+{
+    // @todo debug checks
+
+    switch(activation_function)
+    {
+    case ActivationFunction::Linear: linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::Logistic: logistic_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::Threshold: threshold_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+
+    default: return;
+    }
 }
 
 
@@ -305,7 +375,6 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
     */
 }
 
-//@todo
 
 
 
@@ -315,6 +384,31 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                            LayerForwardPropagation* forward_propagation,
                                            bool& switch_train)
 {
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+            = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+    type* combinations_data = convolutional_layer_forward_propagation->get_combinations_data();
+
+    calculate_convolutions(inputs,
+                           combinations_data);
+
+    const Tensor<Index, 1> combinations_dimensions = get_dimensions(convolutional_layer_forward_propagation->combinations);
+    const Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(convolutional_layer_forward_propagation->activations_derivatives);
+
+    if(switch_train)
+    {
+
+    }
+    else
+    {
+
+    }
+
+
+
+
+
 
 }
 
