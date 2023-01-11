@@ -1072,7 +1072,8 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
     back_propagation->deltas.device(*thread_pool_device) =
-            (next_back_propagation->deltas*next_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_forward_propagation->activations_derivatives.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
+            (next_back_propagation->deltas*next_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_forward_propagation->activations_derivatives.dimension(0),next_forward_propagation->activations_derivatives.dimension(1)}}))
+            .contract(next_synaptic_weights, A_BT);
 }
 
 
