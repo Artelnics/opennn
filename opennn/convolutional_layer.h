@@ -159,11 +159,9 @@ public:
                                 Tensor<type, 4>&) const; //change
     // Activation
 
-    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const; //change
     void calculate_activations(type*, const Tensor<Index, 1>&,
                                type*, const Tensor<Index, 1>&) const;
 
-    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const; //change
     void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
                                            type*, const Tensor<Index, 1>&,
                                            type*, const Tensor<Index, 1>&) const;
@@ -275,15 +273,15 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         batch_samples_number = new_batch_samples_number;
 
         combinations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-        activations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
+        outputs.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
 
         combinations.setZero();
-        activations.setZero();
+        outputs.setZero();
         activations_derivatives.setZero();
 
-        outputs_data = activations.data();
-        outputs_dimensions = get_dimensions(activations);
+        outputs_data = outputs.data();
+        outputs_dimensions = get_dimensions(outputs);
     }
 
     void print() const
@@ -291,8 +289,8 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << "Combinations:" << endl;
         cout << combinations << endl;
 
-        cout << "Activations:" << endl;
-        cout << activations << endl;
+        cout << "Outputs:" << endl;
+        cout << outputs << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
@@ -303,8 +301,13 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         return combinations.data();
     }
 
+    type* get_activations_derivatives_data()
+    {
+        return activations_derivatives.data();
+    }
+
     Tensor<type, 4> combinations;
-    Tensor<type, 4> activations;
+    Tensor<type, 4> outputs;
     Tensor<type, 4> activations_derivatives;
 };
 

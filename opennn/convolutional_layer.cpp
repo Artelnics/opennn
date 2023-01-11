@@ -188,7 +188,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, t
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 const Tensor<type, 2>& potential_biases,
                                                 const Tensor<type, 4>& potential_synaptic_weights,
-                                                Tensor<type, 4>& convolutions) const
+                                                Tensor<type, 4>& convolutions) const // old version
 {
     const Index inputs_rows_number = inputs.dimension(0);
     const Index inputs_columns_number = inputs.dimension(1);
@@ -233,6 +233,8 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
+/// Calculates activations
+
 void ConvolutionalLayer::calculate_activations(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
                                                type* activations, const Tensor<Index, 1>& activations_dimensions) const
 {
@@ -269,40 +271,7 @@ void ConvolutionalLayer::calculate_activations(type* combinations, const Tensor<
 
 
 
-/// Calculates activations
-
-void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Tensor<type, 4>& activations) const
-{/*
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-    Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
-
-    switch(activation_function)
-    {
-        case ActivationFunction::Linear: linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::Logistic: logistic(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::Threshold: threshold(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::SymmetricThreshold: symmetric_threshold(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::RectifiedLinear: rectified_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::SoftPlus: soft_plus(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::SoftSign: soft_sign(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::HardSigmoid: hard_sigmoid(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-
-        case ActivationFunction::ExponentialLinear: exponential_linear(inputs.data(), inputs_dimensions, activations.data(), activations_dimensions); return;
-    }
-*/
-}
-
+/// Calculates activations derivatives
 
 void ConvolutionalLayer::calculate_activations_derivatives(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
                                                            type* activations, const Tensor<Index, 1>& activations_dimensions,
@@ -339,46 +308,6 @@ void ConvolutionalLayer::calculate_activations_derivatives(type* combinations, c
 }
 
 
-void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>& combinations_4d,
-                                                           Tensor<type, 4>& activations,
-                                                           Tensor<type, 4>& activations_derivatives) const
-{
-    /*
-    Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations_4d);
-    Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
-    Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(activations_derivatives);
-
-    switch(activation_function)
-    {
-        case ActivationFunction::Linear: linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::Logistic: logistic_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::Threshold: threshold_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-
-        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_4d.data(), combinations_dimensions, activations.data(), activations_dimensions, activations_derivatives.data(), activations_derivatives_dimensions); return;
-    }
-    */
-}
-
-
-
-
-
 void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
                                            LayerForwardPropagation* forward_propagation,
@@ -394,50 +323,22 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
                            combinations_data);
 
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(convolutional_layer_forward_propagation->combinations);
-    const Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(convolutional_layer_forward_propagation->activations_derivatives);
+    const Tensor<Index, 1> outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
 
-    if(switch_train)
+    if(switch_train) // Perform training
     {
+        const Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(convolutional_layer_forward_propagation->activations_derivatives);
 
+        calculate_activations_derivatives(combinations_data, combinations_dimensions,
+                                          convolutional_layer_forward_propagation->outputs_data, outputs_dimensions,
+                                          convolutional_layer_forward_propagation->get_activations_derivatives_data(), activations_derivatives_dimensions);
     }
-    else
+    else // Perform deployment
     {
-
+        calculate_activations(combinations_data, combinations_dimensions,
+                              convolutional_layer_forward_propagation->outputs_data, outputs_dimensions);
     }
-
-
-
-
-
-
 }
-
-/*
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
-                                           Tensor<type,1> potential_parameters,
-                                           LayerForwardPropagation* forward_propagation)
-{
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
-            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
-
-    const Index kernels_rows_number = get_kernels_rows_number();
-    const Index kernels_columns_number = get_kernels_columns_number();
-    const Index kernels_channels_number = get_kernels_channels_number();
-    const Index kernels_number = get_kernels_number();
-
-    TensorMap<Tensor<type,2>> potential_biases(potential_parameters.data(), kernels_number, 1);
-    TensorMap<Tensor<type,4>> potential_synaptic_weights(potential_parameters.data()+kernels_number, kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
-
-    calculate_convolutions(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           convolutional_layer_forward_propagation->combinations);
-
-    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
-                                      convolutional_layer_forward_propagation->activations,
-                                      convolutional_layer_forward_propagation->activations_derivatives);
-}
-*/
 
 void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
                                                 LayerBackPropagation* next_layer_back_propagation,
@@ -500,20 +401,6 @@ void ConvolutionalLayer::calculate_hidden_delta(PerceptronLayerForwardPropagatio
 
 }
 
-
-//void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>&inputs, LayerForwardPropagation* forward_propagation)
-//{
-//    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
-//                                                     input_variables_dimensions(2), // rows number
-//                                                     input_variables_dimensions(1), // channels number
-//                                                     inputs.dimension(0)}; // images number
-//    const Eigen::array<Eigen::Index, 2> shuffle_dims_2D = {1, 0};
-//    const Eigen::array<Eigen::Index, 4> shuffle_dims_4D = {3, 2, 1, 0};
-
-//    const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
-
-//    forward_propagate(inputs_4d, forward_propagation);
-//}
 
 /*
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,

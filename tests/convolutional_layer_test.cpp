@@ -478,7 +478,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
 void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
-
+/*
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations_4d;
     Tensor<type, 4> result;
@@ -603,14 +603,14 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 activations_4d(1,1,0,1) - type(2.212f) <type(NUMERIC_LIMITS_MIN)&&
                 activations_4d(1,1,1,0) - type(2.221f) <type(NUMERIC_LIMITS_MIN)&&
                 activations_4d(1,1,1,1) - type(2.222f) <type(NUMERIC_LIMITS_MIN), LOG);
-
+*/
 }
 
 
 void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
-
+/*
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations_derivatives;
     Tensor<type, 4> activations;
@@ -827,6 +827,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+                */
 }
 
 /*

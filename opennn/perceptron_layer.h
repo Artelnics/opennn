@@ -326,6 +326,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives << endl;
      }
+
      type* get_combinations_data()
      {
          return combinations.data();
