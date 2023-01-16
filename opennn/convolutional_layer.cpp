@@ -113,7 +113,8 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 
 /// Calculate convolutions
 
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, type* combinations) const
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
+                                                type* combinations) const
 {
     const Index inputs_rows_number = inputs.dimension(0);
     const Index inputs_columns_number = inputs.dimension(1);
@@ -396,6 +397,7 @@ void ConvolutionalLayer::calculate_hidden_delta(PerceptronLayerForwardPropagatio
         throw invalid_argument(buffer.str());
     }
 
+    // Old version
 //    convolutional_layer_back_propagation->delta.device(*thread_pool_device) =
 //            (perceptron_layer_back_propagation->delta*perceptron_layer_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
@@ -479,20 +481,83 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
 }
 */
 
-//void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
-//                                          const Tensor<type, 4>&,
-//                                          const Tensor<type, 4>&,
-//                                          const Tensor<type, 2>&,
-//                                          Tensor<type, 2>&) const
-//{
-
-//}
-
-void ConvolutionalLayer::calculate_error_gradient(type*,
-                                                  LayerForwardPropagation*,
-                                                  LayerBackPropagation*) const
+void ConvolutionalLayer::calculate_error_gradient(type* input_data,
+                                                  LayerForwardPropagation* forward_propagation,
+                                                  LayerBackPropagation* back_propagation) const
 {
+    const Index inputs_rows_number = get_inputs_rows_number();
+    const Index inputs_columns_number = get_inputs_columns_number();
+    const Index inputs_channels_number = get_inputs_channels_number();
+    const Index batch_samples_number =back_propagation->batch_samples_number;
 
+    const Index biases_number = get_biases_number();
+
+    const Index kernels_rows_number = get_kernels_rows_number();
+    const Index kernels_columns_number = get_kernels_columns_number();
+    const Index kernels_channels_number = get_kernels_channels_number();
+    const Index kernels_number = get_kernels_number();
+
+    const ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
+    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+            static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+
+    TensorMap<Tensor<type,4>> inputs(input_data, inputs_rows_number, inputs_columns_number, inputs_channels_number, batch_samples_number);
+
+    Tensor<type,3> partial_gradient;
+
+    Tensor<type,1> convolutional_gradient(biases_number+get_synaptic_weights_number());
+    convolutional_gradient.setZero();
+
+    const Index delta_slice_dimensions = (inputs_rows_number-kernels_rows_number+1)*(inputs_columns_number-kernels_columns_number+1);
+
+    // Biases gradient
+
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        Eigen::array<Eigen::Index, 2> offsets = {kernel_index, delta_slice_dimensions*kernel_index};
+        Eigen::array<Eigen::Index, 2> extents = {2, delta_slice_dimensions};
+
+        Tensor<type, 2> delta_slice = convolutional_layer_back_propagation->delta.slice(offsets, extents);
+
+        const Tensor<type, 0> current_sum = delta_slice.sum();
+
+        convolutional_layer_back_propagation->biases_derivatives(kernel_index) = current_sum();
+    }
+
+    // Weights gradient
+
+    const Index next_image = inputs_rows_number*inputs_columns_number*inputs_channels_number;
+    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        for(Index image_index = 0; image_index < batch_samples_number; image_index++)
+        {
+            Eigen::array<Eigen::Index, 2> offsets = {image_index, delta_slice_dimensions*kernel_index};
+            Eigen::array<Eigen::Index, 2> extents = {1, delta_slice_dimensions};
+
+            Tensor<type, 2> delta_slice = convolutional_layer_back_propagation->delta.slice(offsets, extents);
+
+            const TensorMap<Tensor<type, 3>> single_image(inputs.data()+image_index*next_image,
+                                                          inputs_rows_number,
+                                                          inputs_columns_number,
+                                                          inputs_channels_number);
+
+            TensorMap<Tensor<type,3>>delta_reshape(delta_slice.data(),
+                                                   inputs_rows_number - kernels_rows_number + 1,
+                                                   inputs_columns_number - kernels_columns_number + 1,
+                                                   1);
+
+            if(image_index == 0) partial_gradient = single_image.convolve(delta_reshape,dims);
+            else partial_gradient += single_image.convolve(delta_reshape,dims);
+        }
+
+        memcpy(convolutional_layer_back_propagation->synaptic_weights_derivatives.data()+partial_gradient.size()*kernel_index,
+               partial_gradient.data(),
+               static_cast<size_t>(partial_gradient.size())*sizeof(float));
+    }
 }
 
 /*
@@ -646,7 +711,6 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-/*
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
                                                      input_variables_dimensions(1), // channels number

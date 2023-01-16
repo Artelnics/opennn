@@ -1284,7 +1284,6 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
          perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
          gradient.data() + index);
 
-
     copy(perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
          perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
          gradient.data() + index + biases_number);

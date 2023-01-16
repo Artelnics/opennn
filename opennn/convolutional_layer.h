@@ -195,12 +195,11 @@ public:
 
    // Gradient methods
 
-
+//   void calculate_error_gradient(const Tensor<type, 2>&,
    void calculate_error_gradient(const Tensor<type, 4>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const; //change
 
-//   void calculate_error_gradient(const Tensor<type, 2>&,
    void calculate_error_gradient(type*,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const; //change
