@@ -1233,6 +1233,51 @@ void remove_not_alnum(string &str)
         str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
 }
 
+bool find_string_in_tensor(Tensor<string, 1>& t, string val)
+{
+    for (Index i = 0; i < t.dimension(0); ++i)
+    {
+        string elem = t(i);
+
+        if (elem == val)
+        {
+            return true;
+        }
+    }
+        return false;
+}
+
+string get_word_from_token(string& token)
+{
+    string word = "";
+    for (char& c : token)
+    {
+        if ( c!=' ' && c!='=' )
+        {
+            word += c;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return word;
+}
+
+Tensor<string, 1> push_back_string (Tensor<string, 1>& tens, const string& str)
+{
+    Tensor<string, 1> aux_tensor(tens.dimension(0)+1);
+
+    for (int i = 0; i < tens.dimension(0); i++)
+    {
+        aux_tensor(i) = tens(i);
+    }
+
+    aux_tensor(tens.dimension(0)) = str;
+
+    return aux_tensor;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

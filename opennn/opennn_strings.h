@@ -86,6 +86,10 @@ namespace opennn
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
+
+    bool find_string_in_tensor(Tensor<string, 1>& t, string val);
+    string get_word_from_token(string&);
+    Tensor<string, 1> push_back_string (Tensor<string, 1>&, const string&);
 }
 
 #endif // OPENNNSTRINGS_H
