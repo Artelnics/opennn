@@ -146,10 +146,7 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     {
         if(!x_binary && !y_binary)
         {
-            const Correlation linear_correlation
-                    = opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
-
-            return linear_correlation;
+            return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
         else if(!x_binary && y_binary)
         {
@@ -663,28 +660,13 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 
     Tensor<type,1> rank_x(n);
 
+    int r, s;
+
+#pragma omp parallel for
     for(int i = 0; i < n; i++)
     {
-        int r = 1, s = 1;
-
-        // Count no of smaller elements in 0 to i-1
-
-        for(int j = 0; j < i; j++)
-        {
-            if (x[j] < x[i] ) r++;
-            if (x[j] == x[i] ) s++;
-        }
-
-        // Count no of smaller elements in i+1 to N-1
-
-        for(int j = i+1; j < n; j++)
-        {
-            if (x[j] < x[i] ) r++;
-            if (x[j] == x[i] ) s++;
-        }
-
-        // Use Fractional Rank formula fractional_rank = r + (n-1)/2
-
+        s = std::count(x.data(), x.data() + x.size(), x[i]);
+        r = std::count_if(x.data(), x.data() + x.size(), [&x,i](type j) { return j < x[i];}) + 1;
         rank_x[i] = r + (s-1) * 0.5;
     }
 
