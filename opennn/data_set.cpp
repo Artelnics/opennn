@@ -6743,18 +6743,26 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(
         }
     }
 
-    for(Index i = 0; i < input_columns_number; i++)
+
+    if(calculate_pearson_correlations)
     {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations(i,j) = correlations(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations(i,j) = correlations(j,i);
+            }
         }
     }
-    for(Index i = 0; i < input_columns_number; i++)
+
+    if(calculate_spearman_correlations)
     {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations_spearman(i,j) = correlations_spearman(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations_spearman(i,j) = correlations_spearman(j,i);
+            }
         }
     }
 
