@@ -677,7 +677,7 @@ public:
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(/*CorrelationMethod::Both*/) const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(const bool& = true, const bool& = false) const;
 
     void print_inputs_correlations() const;
 
