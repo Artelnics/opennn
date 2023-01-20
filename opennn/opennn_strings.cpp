@@ -930,27 +930,66 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
 /// \brief replace_non_allowed_programming_characters
 /// \param s
 /// \return
-string replace_non_allowed_programming_characters(std::string& s)
+
+string replace_non_allowed_programming_expressions(string& s)
 {
-    string out = "";
-    if (s[0] == '$')
-        out=s;
+        string out = "";
 
-    for (char& c: s)
-    {
-        if (c=='/'){ out+="_div_"; }
-        if (c=='*'){ out+="_mul_"; }
-        if (c=='+'){ out+="_sum_"; }
-        if (c=='-'){ out+="_res_"; }
-        if (c=='='){ out+="_equ_"; }
-        if (c=='!'){ out+="_not_"; }
-        if (c=='<'){ out+="_lower_" ; }
-        if (c=='>'){ out+="_higher_"; }
-        if (isalnum(c)!=0){ out += c; }
-        if (isalnum(c)==0){ out+='_'; }
-    }
+        if (s[0] == '$')
+            out=s;
 
-    return out;
+        replace_all_appearances(s, "if","i_f");
+        replace_all_appearances(s, "new","ne_w");
+        replace_all_appearances(s, "for","fo_r");
+        replace_all_appearances(s, "try","tr_y");
+        replace_all_appearances(s, "var","va_r");
+        replace_all_appearances(s, "int","in_t");
+        replace_all_appearances(s, "case","ca_se");
+        replace_all_appearances(s, "rise","ri_se");
+        replace_all_appearances(s, "super","sup_er");
+        replace_all_appearances(s, "catch","cat_ch");
+        replace_all_appearances(s, "float","flo_at");
+        replace_all_appearances(s, "while","whi_le");
+        replace_all_appearances(s, "break","bre_ak");
+        replace_all_appearances(s, "import","im_port");
+        replace_all_appearances(s, "return","ret_urn");
+        replace_all_appearances(s, "switch","sw_itch");
+        replace_all_appearances(s, "string","str_ing");
+        replace_all_appearances(s, "double","dou_ble");
+        replace_all_appearances(s, "default","def_ault");
+        replace_all_appearances(s, "function","func_tion");
+
+        for (char& c: s)
+        {
+            if (c=='1'){ out+="_one_";   continue;}
+            if (c=='2'){ out+="_two_";   continue;}
+            if (c=='3'){ out+="_three_"; continue;}
+            if (c=='4'){ out+="_four_";  continue;}
+            if (c=='5'){ out+="_five_";  continue;}
+            if (c=='6'){ out+="_six_";   continue;}
+            if (c=='7'){ out+="_seven_"; continue;}
+            if (c=='8'){ out+="_eight_"; continue;}
+            if (c=='9'){ out+="_nine_";  continue;}
+            if (c=='0'){ out+="_zero_";  continue;}
+
+            if (c=='/'){ out+="_div_";   continue;}
+            if (c=='*'){ out+="_mul_";   continue;}
+            if (c=='+'){ out+="_sum_";   continue;}
+            if (c=='-'){ out+="_res_";   continue;}
+            if (c=='='){ out+="_equ_";   continue;}
+            if (c=='!'){ out+="_not_";   continue;}
+
+            if (c=='&'){ out+="_amprsn_"; continue;}
+            if (c=='?'){ out+="_ntrgtn_"; continue;}
+            if (c=='<'){ out+="_lower_" ; continue;}
+            if (c=='>'){ out+="_higher_"; continue;}
+
+            if (isalnum(c)!=0){ out += c; continue;}
+            if (isalnum(c)==0){ out+='_'; continue;}
+        }
+
+
+        return out;
 }
 
 
@@ -1277,6 +1316,170 @@ Tensor<string, 1> push_back_string (Tensor<string, 1>& tens, const string& str)
 
     return aux_tensor;
 }
+
+
+Tensor<string, 1> fix_write_expresion_outputs(const string &str, const Tensor<string, 1> &outputs, const string &programming_languaje)
+{
+    Tensor<string,1> out;
+    Tensor<string,1> tokens;
+    Tensor<string,1> found_tokens;
+
+    string token;
+    string out_string;
+    string new_variable;
+    string old_variable;
+    string expression = str;
+
+    stringstream ss(expression);
+
+    int option = 0;
+
+    if (programming_languaje == "javascript") { option = 1; }
+    else if (programming_languaje == "php")   { option = 2; }
+    else if (programming_languaje == "python"){ option = 3; }
+    else if (programming_languaje == "c")     { option = 4; }
+
+    int dimension = outputs.dimension(0);
+
+    while (getline(ss, token, '\n'))
+    {
+        if (token.size() > 1 && token.back() == '{'){ break; }
+        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+        tokens = push_back_string(tokens, token);
+    }
+
+    for (int i = 0; i < tokens.dimension(0); i++)
+    {
+        string s = tokens(i);
+        string word = "";
+
+        for (char& c : s)
+        {
+            if ( c!=' ' && c!='=' ){ word += c; }
+            else { break; }
+        }
+
+        if (word.size() > 1)
+        {
+            found_tokens = push_back_string(found_tokens, word);
+        }
+    }
+
+    new_variable = found_tokens[found_tokens.size()-1];
+    old_variable = outputs[dimension-1];
+
+    if (new_variable != old_variable)
+    {
+        int j = found_tokens.size();
+
+        for (int i = dimension; i --> 0;)
+        {
+            j -= 1;
+
+            new_variable = found_tokens[j];
+            old_variable = outputs[i];
+
+            switch(option)
+            {
+                //JavaScript
+                case 1:
+                    out_string = "\tvar ";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out = push_back_string(out, out_string);
+                break;
+
+                //Php
+                case 2:
+                    out_string = "$";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += "$";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out = push_back_string(out, out_string);
+                break;
+
+                //Python
+                case 3:
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out = push_back_string(out, out_string);
+                break;
+
+                //C
+                case 4:
+                    out_string = "double ";
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out = push_back_string(out, out_string);
+                break;
+
+                default:
+                break;
+            }
+        }
+    }
+    return out;
+}
+
+Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_names, Tensor<string, 1>& outputs_names, ostringstream& buffer_)
+{
+    //preparing output information
+    Tensor<Tensor<string,1>, 1> output(3);
+
+    ostringstream buffer;
+    buffer << buffer_.str();
+
+    Tensor<string, 1> outputs(outputs_names.dimension(0));
+    Tensor<string, 1> inputs(inputs_names.dimension(0));
+    Tensor<string,1> buffer_out;
+
+    string output_name_aux;
+    string input_name_aux;
+
+    for (int i = 0; i < inputs_names.dimension(0); i++)
+    {
+        if (inputs_names[i].empty())
+        {
+            inputs(i) = "input_" + to_string(i);
+            buffer << "\t" << to_string(i) + ") " << inputs_names(i) << endl;
+        }
+        else
+        {
+            input_name_aux = inputs_names[i];
+            inputs(i) = replace_non_allowed_programming_expressions(input_name_aux);
+            buffer << "\t" << to_string(i) + ") " << inputs(i) << endl;
+        }
+    }
+
+    for (int i = 0; i < outputs_names.dimension(0); i++)
+    {
+        if (outputs_names[i].empty())
+        {
+            outputs(i) = "output_" + to_string(i);
+        }
+        else
+        {
+            output_name_aux = outputs_names[i];
+            outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
+        }
+    }
+
+    buffer_out = push_back_string(buffer_out, buffer.str());
+
+    output(0) = inputs;
+    output(1) = outputs;
+    output(2) = buffer_out;
+
+    return output;
+}
+
 
 }
 

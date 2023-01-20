@@ -4151,7 +4151,17 @@ string NeuralNetwork::write_expression_javascript() const
 
     buffer << "" << endl;
 
-    found_tokens = get_variable_names_from_writted_expression(tokens, found_tokens );
+    //found_tokens = get_variable_names_from_writted_expression(tokens, found_tokens );
+
+    for (int i = 0; i < tokens.dimension(0); i++)
+    {
+        string word = get_word_from_token(tokens(i));
+
+        if (word.size() > 1)
+        {
+            found_tokens = push_back_string(found_tokens, word);
+        }
+    }
 
     if(LSTM_number > 0)
     {
@@ -5017,168 +5027,6 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
     return trainable_layers_pointers(trainable_layers_number-1);
 }
 
-
-Tensor<string, 1> fix_write_expresion_outputs(const string &str, const Tensor<string, 1> &outputs, const string &programming_languaje)
-{
-    Tensor<string,1> out;
-    Tensor<string,1> tokens;
-    Tensor<string,1> found_tokens;
-
-    string token;
-    string out_string;
-    string new_variable;
-    string old_variable;
-    string expression = str;
-
-    stringstream ss(expression);
-
-    int option = 0;
-
-    if (programming_languaje == "javascript") { option = 1; }
-    else if (programming_languaje == "php")   { option = 2; }
-    else if (programming_languaje == "python"){ option = 3; }
-    else if (programming_languaje == "c")     { option = 4; }
-
-    int dimension = outputs.dimension(0);
-
-    while (getline(ss, token, '\n'))
-    {
-        if (token.size() > 1 && token.back() == '{'){ break; }
-        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
-        tokens = push_back_string(tokens, token);
-    }
-
-    for (int i = 0; i < tokens.dimension(0); i++)
-    {
-        string s = tokens(i);
-        string word = "";
-
-        for (char& c : s)
-        {
-            if ( c!=' ' && c!='=' ){ word += c; }
-            else { break; }
-        }
-
-        if (word.size() > 1)
-        {
-            found_tokens = push_back_string(found_tokens, word);
-        }
-    }
-
-    new_variable = found_tokens[found_tokens.size()-1];
-    old_variable = outputs[dimension-1];
-
-    if (new_variable != old_variable)
-    {
-        int j = found_tokens.size();
-
-        for (int i = dimension; i --> 0;)
-        {
-            j -= 1;
-
-            new_variable = found_tokens[j];
-            old_variable = outputs[i];
-
-            switch(option)
-            {
-                //JavaScript
-                case 1:
-                    out_string = "\tvar ";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out_string += ";";
-                    out = push_back_string(out, out_string);
-                break;
-
-                //Php
-                case 2:
-                    out_string = "$";
-                    out_string += old_variable;
-                    out_string += " = ";
-                    out_string += "$";
-                    out_string += new_variable;
-                    out_string += ";";
-                    out = push_back_string(out, out_string);
-                break;
-
-                //Python
-                case 3:
-                    out_string = old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out = push_back_string(out, out_string);
-                break;
-
-                //C
-                case 4:
-                    out_string = "double ";
-                    out_string = old_variable;
-                    out_string += " = ";
-                    out_string += new_variable;
-                    out_string += ";";
-                    out = push_back_string(out, out_string);
-                break;
-
-                default:
-                break;
-            }
-        }
-    }
-    return out;
-}
-
-Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_names, Tensor<string, 1>& outputs_names, ostringstream& buffer_)
-{
-    //preparing output information
-    Tensor<Tensor<string,1>, 1> output(3);
-
-    ostringstream buffer;
-    buffer << buffer_.str();
-
-    Tensor<string, 1> outputs(outputs_names.dimension(0));
-    Tensor<string, 1> inputs(inputs_names.dimension(0));
-    Tensor<string,1> buffer_out;
-
-    string output_name_aux;
-    string input_name_aux;
-
-    for (int i = 0; i < inputs_names.dimension(0); i++)
-    {
-        if (inputs_names[i].empty())
-        {
-            inputs(i) = "input_" + to_string(i);
-            buffer << "\t" << to_string(i) + ") " << inputs_names(i) << endl;
-        }
-        else
-        {
-            input_name_aux = inputs_names[i];
-            inputs(i) = replace_non_allowed_programming_expressions(input_name_aux);
-            buffer << "\t" << to_string(i) + ") " << inputs(i) << endl;
-        }
-    }
-
-    for (int i = 0; i < outputs_names.dimension(0); i++)
-    {
-        if (outputs_names[i].empty())
-        {
-            outputs(i) = "output_" + to_string(i);
-        }
-        else
-        {
-            output_name_aux = outputs_names[i];
-            outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
-        }
-    }
-
-    buffer_out = push_back_string(buffer_out, buffer.str());
-
-    output(0) = inputs;
-    output(1) = outputs;
-    output(2) = buffer_out;
-
-    return output;
-}
 }
 
 // OpenNN: Open Neural Networks Library.

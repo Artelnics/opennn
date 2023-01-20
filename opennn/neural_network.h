@@ -256,9 +256,6 @@ public:
     void save_expression_api(const string&) const;
     void save_expression_javascript(const string&) const;
 
-    Tensor<string, 1> fix_write_expresion_outputs(const string&, const Tensor<string, 1>&, const string&);
-    Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
-
    void save_outputs(Tensor<type, 2>&, const string&);
 
    void save_autoassociation_outputs(const Tensor<type, 1>&,const Tensor<string, 1>&, const string&) const;

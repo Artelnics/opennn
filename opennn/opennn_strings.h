@@ -56,11 +56,11 @@ namespace opennn
     bool contains_substring(const string&, const string&);
 
     void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith);
-    string replace_non_allowed_programming_characters(std::string& s);
+    string replace_non_allowed_programming_expressions(std::string& s);
     vector<string> get_words_in_a_string(string str);
 
-    //string replace_non_allowed_programming_characters(std::string& s, int& api)
-
+    Tensor<string, 1> fix_write_expresion_outputs(const string&, const Tensor<string, 1>&, const string&);
+    Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
 
     int WordOccurrence(char *sentence, char *word);
 
