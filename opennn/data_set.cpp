@@ -6700,7 +6700,7 @@ void DataSet::print_top_input_target_columns_correlations() const
 /// Returns a matrix with the correlation values between variables in the data set.
 
 
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations() const
+Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(const bool& calculate_pearson_correlations, const bool& calculate_spearman_correlations) const
 {
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
@@ -6726,32 +6726,43 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(
 
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
-            correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
-            correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
-
-            if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+            if(calculate_pearson_correlations)
             {
-                correlations(i,j).r = type(1);
+                correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+                if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                    correlations(i,j).r = type(1);
             }
-            if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+
+            if(calculate_spearman_correlations)
             {
-                correlations_spearman(i,j).r = type(1);
+                correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+
+                if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                    correlations_spearman(i,j).r = type(1);
             }
         }
     }
 
-    for(Index i = 0; i < input_columns_number; i++)
+
+    if(calculate_pearson_correlations)
     {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations(i,j) = correlations(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations(i,j) = correlations(j,i);
+            }
         }
     }
-    for(Index i = 0; i < input_columns_number; i++)
+
+    if(calculate_spearman_correlations)
     {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations_spearman(i,j) = correlations_spearman(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations_spearman(i,j) = correlations_spearman(j,i);
+            }
         }
     }
 
