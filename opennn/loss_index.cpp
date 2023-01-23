@@ -808,6 +808,7 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
     trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data,
                                                            forward_propagation.layers(first_trainable_layers_index),
                                                            back_propagation.neural_network.layers(0));
+
     for(Index i = 1; i < trainable_layers_number; i++)
     {
         const LayerForwardPropagation* layer_forward_propagation = forward_propagation.layers(first_trainable_layers_index+i-1);

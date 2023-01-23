@@ -1347,7 +1347,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1 --> Working (4-Jan-23)
 
-/*    {
+    {
+        bool switch_train = true;
 
         const Index input_channels_number = 2;
         const Index input_rows_number = 3;
@@ -1534,7 +1535,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 //        forward_propagation.print();
 
 //        system("pause");
@@ -1545,13 +1546,12 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        cout << "Gradient: " << back_propagation.gradient << endl;
+//        cout << "Gradient: " << back_propagation.gradient << endl;
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
 
         cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
     }
-        */
 
 }
 

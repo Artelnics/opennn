@@ -167,7 +167,6 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
 
-
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
     TensorMap<Tensor<type, 2>> outputs(outputs_data, batch, channels*width*height);
@@ -179,7 +178,9 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
 //
 //void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
 // --> old
-void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
+void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                     LayerForwardPropagation* forward_propagation,
+                                     bool& switch_train)
 {
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
@@ -233,7 +234,7 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
         }
     }
 */ // check, old version
-/*
+
     if(inputs_dimensions.size() != 4)
     {
         ostringstream buffer;
@@ -252,10 +253,9 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-//    TensorMap<Tensor<type, 2>> outputs(flatten_layer_forward_propagation->outputs.data(), batch, channels*width*height);
+    TensorMap<Tensor<type, 2>> outputs(flatten_layer_forward_propagation->outputs.data(), batch, channels*width*height);
 
      flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
-*/ // --> check
 }
 
 
