@@ -9040,7 +9040,19 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ofstream file;
+
+    if (std::regex_search(binary_data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(binary_data_file_name);
+        file.open(file_name_wide, ios::binary);
+    }
+    else
+    {
+        file.open(binary_data_file_name.c_str(), ios::binary);
+    }
 
     if(!file.is_open())
     {
@@ -9220,16 +9232,26 @@ void DataSet::transform_associative_dataset()
 
 void DataSet::load_data_binary()
 {
+    std::regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
-    file.open(data_file_name.c_str(), ios::binary);
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide, ios::binary);
+    }
+    else
+    {
+        file.open(data_file_name.c_str(), ios::binary);
+    }
 
     if(!file.is_open())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void load_binary() method.\n"
+               << "void load_data_binary() method.\n"
                << "Cannot open binary file: " << data_file_name << "\n";
 
         throw invalid_argument(buffer.str());
@@ -12600,7 +12622,19 @@ void DataSet::read_csv_1()
         throw invalid_argument(buffer.str());
     }
 
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
+
 
     if(!file.is_open())
     {
@@ -12737,8 +12771,19 @@ void DataSet::read_csv_1()
 
 
 void DataSet::read_csv_2_simple()
-{
-    std::ifstream file(data_file_name.c_str());
+{   
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
 
     if(!file.is_open())
     {
@@ -12828,14 +12873,25 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
 
     if(!file.is_open())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_2_simple() method.\n"
+               << "void read_csv_3_simple() method.\n"
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw invalid_argument(buffer.str());
@@ -12944,7 +13000,19 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }
+    else
+    {
+        file.open(data_file_name.c_str());
+    }
 
     if(!file.is_open())
     {
@@ -13088,7 +13156,19 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }
+    else
+    {
+        file.open(data_file_name.c_str());
+    }
 
     if(!file.is_open())
     {

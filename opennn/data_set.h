@@ -32,6 +32,9 @@
 #include <filesystem>
 #include <experimental/filesystem>
 
+#include <regex>
+#include <codecvt>
+
 // OpenNN includes
 
 #include "config.h"
