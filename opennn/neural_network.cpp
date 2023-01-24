@@ -3434,7 +3434,7 @@ string NeuralNetwork::write_expression_c() const
 
     for (int i = 0; i < outputs.dimension(0); i++)
     {
-        buffer << fix_write_expresion_outputs(expression, outputs, "c")(i) << endl;
+        buffer << fix_write_expression_outputs(expression, outputs, "c")(i) << endl;
     }
 
     buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
@@ -3794,7 +3794,7 @@ string NeuralNetwork::write_expression_api() const
 
     for (int i = 0; i < outputs.dimension(0); i++)
     {
-        buffer << fix_write_expresion_outputs(expression, outputs, "php")(i) << endl;
+        buffer << fix_write_expression_outputs(expression, outputs, "php")(i) << endl;
     }
 
     buffer << "if ($status === 200){" << endl;
@@ -4263,7 +4263,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     for (int i = 0; i < outputs.dimension(0); i++)
     {
-        buffer << fix_write_expresion_outputs(expression, outputs, "javascript")(i) << endl;
+        buffer << fix_write_expression_outputs(expression, outputs, "javascript")(i) << endl;
     }
 
     buffer << "\t" << "var out = [];" << endl;
@@ -4428,12 +4428,16 @@ string NeuralNetwork::write_expression_javascript() const
 
 string NeuralNetwork::write_expression_python() const
 {
+
     ostringstream buffer;
 
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
+
     Tensor<string, 1> inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
+
+    const Index layers_number = get_layers_number();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
     int cell_state_counter = 0;
@@ -4453,39 +4457,39 @@ string NeuralNetwork::write_expression_python() const
     buffer << "Artificial Intelligence Techniques SL\t" << endl;
     buffer << "artelnics@artelnics.com\t" << endl;
     buffer << "" << endl;
-    buffer << "Your model has been exported to this python file." << endl;
-    buffer << "You can manage it with the main method where you \t" << endl;
-    buffer << "can change the values of your inputs. For example:" << endl;
+    buffer << "Your model has been exported to this python file."  << endl;
+    buffer << "You can manage it with the 'NeuralNetwork' class.\t" << endl;
+    buffer << "Example:" << endl;
     buffer << "" << endl;
-    buffer << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
-    buffer << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
-    buffer << "main program has to look like this:" << endl;
-    buffer << "" << endl;
-    buffer << "def main ():" << endl;
-    buffer << "\t" << "#default_val = 3.1416" << endl;
-    buffer << "\t" << "inputs = [None]*3" << endl;
-    buffer << "\t" <<  "" << endl;
-    buffer << "\t" << "Id_1 = 0.3" << endl;
-    buffer << "\t" << "Id_1 = 2.5" << endl;
-    buffer << "\t" << "Id_1 = 1.8" << endl;
-    buffer << "\t" << "" << endl;
-    buffer << "\t" << "inputs[0] = Input_1" << endl;
-    buffer << "\t" << "inputs[1] = Input_2" << endl;
-    buffer << "\t" << "inputs[2] = Input_3" << endl;
-    buffer << "\t" << ". . ." << endl;
+    buffer << "\tmodel = NeuralNetwork()\t" << endl;
+    buffer << "\tsample = [input_1, input_2, input_3, input_4, ...]\t" << endl;
+    buffer << "\toutputs = model.calculate_output(sample)" << endl;
     buffer << "\n" << endl;
     buffer << "Inputs Names: \t" << endl;
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
     for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
+    {
         inputs(i) = inputs_outputs_buffer(0)(i);
+        buffer << "\t" << i << ") " << inputs(i) << endl;
+    }
 
     for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
-    buffer << inputs_outputs_buffer(2)[0];
     buffer << "\n" << endl;
+
+    buffer << "You can predict with a batch of samples using calculate_batch_output method\t" << endl;
+    buffer << "IMPORTANT: input batch must be <class 'numpy.ndarray'> type\t" << endl;
+    buffer << "Example_1:\t" << endl;
+    buffer << "\tmodel = NeuralNetwork()\t" << endl;
+    buffer << "\tinput_batch = np.array([[1, 2], [4, 5]])\t" << endl;
+    buffer << "\toutputs = model.calculate_batch_output(input_batch)" << endl;
+    buffer << "Example_2:\t" << endl;
+    buffer << "\tinput_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})\t" << endl;
+    buffer << "\toutputs = model.calculate_batch_output(input_batch.values)" << endl;
+
     buffer << "\'\'\' " << endl;
     buffer << "\n" << endl;
 
@@ -4567,7 +4571,7 @@ string NeuralNetwork::write_expression_python() const
 
     if (LSTM_number > 0)
     {
-        buffer << "\t" << "def __init__(self, ts = 0):" << endl;
+        buffer << "\t" << "def __init__(self, ts = 1):" << endl;
         buffer << "\t\t" << "self.inputs_number = " << to_string(inputs.size()) << endl;
         buffer << "\t\t" << "self.time_steps = ts" << endl;
 
@@ -4756,12 +4760,14 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\t\t" << t << endl;
     }
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "python");
+
+    for (int i = 0; i < fixed_outputs.dimension(0); i++)
     {
-        buffer << fix_write_expresion_outputs(expression, outputs, "python")(i) << endl;
+        buffer << "\t\t" << fixed_outputs(i) << endl;
     }
 
-    buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "" << endl;
+    buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "\n" << endl;
 
     for (int i = 0; i < outputs.dimension(0); i++)
     {
@@ -4775,40 +4781,41 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "\n\t\t" << "return out;" << endl;
     buffer << "\n" << endl;
-    buffer << "\t"   << "def main (self):" << endl;
-    buffer << "\t\t" << "default_val = 3.1416" << endl;
-    buffer << "\t\t" << "inputs = [None]*" << to_string(inputs.size()) << "\n" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    buffer << "\t" << "def calculate_batch_output(self, input_batch):" << endl;
+
+    buffer << "\t\toutput_batch = [None]*input_batch.shape[0]\n" << endl;
+
+    buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
+
+    if(has_recurrent_layer())
     {
-        buffer << "\t\t" << inputs[i] << " = " << "default_val" << "\t" << "#Change this value" << endl;
-        buffer << "\t\t" << "inputs[" << to_string(i) << "] = " << inputs[i] << "\n" << endl;
+        buffer << "\t\t\tif(i%self.time_steps == 0):\n" << endl;
+
+        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
-    buffer << "" << endl;
-    buffer << "\t\t" << "outputs = NeuralNetwork.calculate_outputs(self, inputs)" << endl;
-    buffer << "" << endl;
-    buffer << "\t\t" << "print(\"\\nThese are your outputs:\\n\")" << endl;
-
-    for (int i = 0; i < outputs.dimension(0); i++)
+    if(has_long_short_term_memory_layer())
     {
-        buffer << "\t\t" << "print( \""<< "\\t " << outputs[i] << ":\" "<< "+ " << "str(outputs[" << to_string(i) << "])" << " + " << "\"\\n\" )" << endl;
+        buffer << "\t\t\tif(i%self.time_steps == 0):\n" << endl;
+
+        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
+
+        buffer << "\t\t\t\tself.cell_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
-    buffer << "\n";
+    buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
 
-    if (LSTM_number>0){
-        buffer << "steps = 3" << endl;
-        buffer << "nn = NeuralNetwork(steps)" << endl;
-        buffer << "nn.main()" << endl;
-    }
-    else
-    {
-        buffer << "nn = NeuralNetwork()" << endl;
-        buffer << "nn.main()" << endl;
-    }
+    buffer << "\t\t\toutput = self.calculate_outputs(inputs)\n" << endl;
+
+    buffer << "\t\t\toutput_batch[i] = output\n"<< endl;
+
+    buffer << "\t\treturn output_batch"<<endl;
 
     string out = buffer.str();
+
+    replace(out, ";", "");
+
     return out;
 }
 

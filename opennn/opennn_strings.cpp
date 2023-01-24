@@ -1025,6 +1025,8 @@ vector<string> get_words_in_a_string(string str)
 ///@param sentence
 ///@param word
 ///@return
+
+
 int WordOccurrence(char *sentence, char *word)
 {
     int slen = strlen(sentence);
@@ -1318,7 +1320,7 @@ Tensor<string, 1> push_back_string (Tensor<string, 1>& tens, const string& str)
 }
 
 
-Tensor<string, 1> fix_write_expresion_outputs(const string &str, const Tensor<string, 1> &outputs, const string &programming_languaje)
+Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<string, 1> &outputs, const string &programming_languaje)
 {
     Tensor<string,1> out;
     Tensor<string,1> tokens;
