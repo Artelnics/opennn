@@ -17,6 +17,42 @@ CorrelationsTest::~CorrelationsTest()
 {
 }
 
+void CorrelationsTest::test_spearman_linear_correlation()
+{
+    cout << "test_spearman_linear_correlation\n";
+
+    Index size;
+
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
+
+    type correlation;
+    type solution;
+
+    // Perfect case
+
+    size = 7;
+
+    x.resize(size);
+//    x.setRandom();
+    x.setValues({type(5), type(1), type(2),type(1), type(2), type(1), type(1)});
+
+    cout << "----------------------------------------" << endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    Tensor<type, 1> tensor = calculate_spearman_ranks(x);
+
+    // Code to be timed
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    std::cout << "Duration (in microseconds): " << duration.count() << std::endl;
+
+    cout << "----------------------------------------" << endl;
+
+}
 
 void CorrelationsTest::test_linear_correlation()
 {
@@ -324,6 +360,8 @@ void CorrelationsTest::run_test_case()
     // Correlation methods
 
     test_linear_correlation();
+
+    test_spearman_linear_correlation();
 
     test_logistic_correlation();
 

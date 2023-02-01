@@ -658,28 +658,45 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 {
     const int n = x.size();
 
-    Tensor<type,1> rank_x(n);
+    vector<pair<type, size_t> > v_sort(n);
 
-    int r, s;
-
-#pragma omp parallel for
-    for(int i = 0; i < n; i++)
+    for (size_t i = 0U; i < v_sort.size(); ++i)
     {
-        s = std::count(x.data(), x.data() + x.size(), x[i]);
-        r = std::count_if(x.data(), x.data() + x.size(), [&x,i](type j) { return j < x[i];}) + 1;
-        rank_x[i] = r + (s-1) * 0.5;
+        v_sort[i] = make_pair(x[i], i);
     }
 
+    sort(v_sort.begin(), v_sort.end());
+
+    vector<type> x_rank_vector(n);
+    type rank = 1.0;
+
+    #pragma omp parallel for
+
+    for (size_t i = 0U; i < v_sort.size(); ++i)
+    {
+        size_t repeated = 1U;
+        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
+        for (size_t k = 0; k < repeated; ++k)
+        {
+            x_rank_vector[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
+        }
+        i += repeated - 1;
+        rank += repeated;
+    }
+
+    TensorMap<Tensor<type, 1>> rank_x(x_rank_vector.data(), x_rank_vector.size());
+
     return rank_x;
+
 }
 
 
 Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
-    Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
-    Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
+    const Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
+    const Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
 
     const Tensor<type, 1> x_rank = calculate_spearman_ranks(x_filter);
     const Tensor<type, 1> y_rank = calculate_spearman_ranks(y_filter);
