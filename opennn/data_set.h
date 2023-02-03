@@ -634,6 +634,9 @@ public:
 
     void set_data_constant(const type&);
 
+    Tensor<type,2> data_round(Tensor<type,2>);
+    type round_to_precision(type, int);
+
     void set_data_random();
     void set_data_binary_random();
 

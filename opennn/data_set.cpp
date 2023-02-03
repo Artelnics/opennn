@@ -7186,6 +7186,21 @@ void DataSet::set_data_constant(const type& new_value)
 }
 
 
+Tensor<type,2> DataSet::data_round(Tensor<type,2> data){
+
+    Tensor<type,2> data_rounded = data.unaryExpr([precision = 3, this](type x){
+        return round_to_precision(x, precision);
+      });
+    return data_rounded;
+}
+
+
+type DataSet::round_to_precision(type x, int precision){
+    type factor = pow(10,precision);
+    return (round(factor*x))/factor;
+}
+
+
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
 
