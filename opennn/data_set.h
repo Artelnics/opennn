@@ -306,6 +306,7 @@ public:
     Tensor<Column, 1> get_used_columns() const;
 
     Index get_columns_number() const;
+    Index get_constant_columns_number() const;
 
     Index get_input_columns_number() const;
     Index get_input_time_series_columns_number() const;

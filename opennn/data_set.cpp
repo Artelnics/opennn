@@ -1005,33 +1005,43 @@ void DataSet::transform_associative_columns()
 
     const Index columns_number = get_columns_number();
 
+    const Index constant_columns_number = get_constant_columns_number();
+
     Tensor<Column, 1> new_columns;
 
-    new_columns.resize(2*columns_number);
+    new_columns.resize(2*(columns_number - constant_columns_number));
 
     Index column_index = 0;
+    Index index = 0;
 
     for(Index i = 0; i < 2*columns_number; i++)
     {
         column_index = i%columns_number;
 
+        if(columns(column_index).type == ColumnType::Constant)
+        {
+            continue;
+        }
+
         if(i < columns_number)
         {
-            new_columns(i).name = columns(column_index).name;
+            new_columns(index).name = columns(column_index).name;
 
-            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(i).set_use(DataSet::VariableUse::Input);
-            new_columns(i).type = columns(column_index).type;
-            new_columns(i).categories = columns(column_index).categories;
+            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(index).set_use(DataSet::VariableUse::Input);
+            new_columns(index).type = columns(column_index).type;
+            new_columns(index).categories = columns(column_index).categories;
+            index++;
         }
         else
         {
-            new_columns(i).name = columns(column_index).name + "_output";
+            new_columns(index).name = columns(column_index).name + "_output";
 
-            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(i).set_use(DataSet::VariableUse::Target);
-            new_columns(i).type = columns(column_index).type;
-            new_columns(i).categories = columns(column_index).categories;
+            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(index).set_use(DataSet::VariableUse::Target);
+            new_columns(index).type = columns(column_index).type;
+            new_columns(index).categories = columns(column_index).categories;
+            index++;
         }
     }
 
@@ -1045,7 +1055,9 @@ void DataSet::transform_associative_data()
 
     const Index samples_number = data.dimension(0);
 
-    const Index old_variables_number = data.dimension(1);
+    const Index constant_columns_number = get_constant_columns_number();
+
+    const Index old_variables_number = data.dimension(1) - constant_columns_number;
     const Index new_variables_number = 2 * old_variables_number;
 
     associative_data = data;
@@ -1054,23 +1066,23 @@ void DataSet::transform_associative_data()
 
     // Duplicate data
 
-    if(samples_number < 1000)
-    {
-        Eigen::array<int, 2> bcast({1, 2});
-        data = associative_data.broadcast(bcast);
-    }
-    else
-    {
-        for(Index i = 0; i < old_variables_number; i++)
-        {
-            std::copy(associative_data.data() + i * samples_number,
-                      associative_data.data() + (i+1) *  samples_number,
-                      data.data() + i * samples_number);
+    Index index = 0;
 
-            std::copy(associative_data.data() + i * samples_number,
-                      associative_data.data() + (i+1) *  samples_number,
-                      data.data() + samples_number * old_variables_number + i * samples_number);
+    for(Index i = 0; i < old_variables_number + constant_columns_number; i++)
+    {
+        if(columns(i).type == ColumnType::Constant)
+        {
+            index++;
+            continue;
         }
+
+        std::copy(associative_data.data() + (i - index) * samples_number,
+                  associative_data.data() + (i + 1 - index) *  samples_number,
+                  data.data() + (i - index) * samples_number);
+
+        std::copy(associative_data.data() + (i - index) * samples_number,
+                  associative_data.data() + (i + 1 - index) *  samples_number,
+                  data.data() + samples_number * old_variables_number + (i - index) * samples_number);
     }
 }
 
@@ -3007,6 +3019,24 @@ Index DataSet::get_columns_number() const
 {
     return columns.size();
 }
+
+
+/// Returns the number of constant columns in the data set.
+
+Index DataSet::get_constant_columns_number() const
+{
+    Index constant_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == ColumnType::Constant)
+            constant_number++;
+    }
+
+    return constant_number;
+}
+
+
 
 
 /// Returns the number of channels of the images in the data set.
