@@ -31,24 +31,75 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     // Perfect case
 
-    size = 7;
+    size = 500000;
 
     x.resize(size);
-//    x.setRandom();
-    x.setValues({type(5), type(1), type(2),type(1), type(2), type(1), type(1)});
+    x.setRandom();
+//    x.setValues({type(5), type(1), type(2),type(1), type(2), type(1), type(1)});
 
     cout << "----------------------------------------" << endl;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    cout << "Old function" << endl;
 
-    Tensor<type, 1> tensor = calculate_spearman_ranks(x);
+    auto start_1 = std::chrono::high_resolution_clock::now();
+
+    const int n = x.size();
+
+    Tensor<type,1> x_ranked_function(n);
+
+    int r, s;
+
+#pragma omp parallel for
+    for(int i = 0; i < n; i++)
+    {
+        s = std::count(x.data(), x.data() + x.size(), x[i]);
+        r = std::count_if(x.data(), x.data() + x.size(), [&x,i](type j) { return j < x[i];}) + 1;
+        x_ranked_function[i] = r + (s-1) * 0.5;
+    }
+
+    auto end_1 = std::chrono::high_resolution_clock::now();
+    auto duration_1 = std::chrono::duration_cast<std::chrono::microseconds>(end_1 - start_1);
+
+    std::cout << "Duration _function (in microseconds): " << duration_1.count() << std::endl;
+
+    cout << "----------------------------------------" << endl;
+
+    cout << "New function" << endl;
+
+    auto start_2 = std::chrono::high_resolution_clock::now();
+
+    vector<pair<type, size_t> > v_sort(x.size());
+
+    for (size_t i = 0U; i < v_sort.size(); ++i)
+    {
+        v_sort[i] = make_pair(x[i], i);
+    }
+
+    sort(v_sort.begin(), v_sort.end());
+
+    vector<type> x_rank(x.size());
+    type rank = 1.0;
+
+    for (size_t i = 0U; i < v_sort.size(); ++i)
+    {
+        size_t repeated = 1U;
+        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
+        for (size_t k = 0; k < repeated; ++k)
+        {
+            x_rank[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
+        }
+        i += repeated - 1;
+        rank += repeated;
+    }
+
+    TensorMap<Tensor<type, 1>> tensor(x_rank.data(), x_rank.size());
 
     // Code to be timed
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    auto end_2 = std::chrono::high_resolution_clock::now();
+    auto duration_2 = std::chrono::duration_cast<std::chrono::microseconds>(end_2 - start_2);
 
-    std::cout << "Duration (in microseconds): " << duration.count() << std::endl;
+    std::cout << "Duration (in microseconds): " << duration_2.count() << std::endl;
 
     cout << "----------------------------------------" << endl;
 
