@@ -679,6 +679,7 @@ public:
 
     // Box and whiskers
 
+    BoxPlot calculate_single_box_plot(Tensor<type,1>) const;
     Tensor<BoxPlot, 1> calculate_columns_box_plots() const;
 
     // Inputs correlations

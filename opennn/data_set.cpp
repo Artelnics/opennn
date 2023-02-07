@@ -5938,6 +5938,20 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
     return histograms;
 }
 
+BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1> values) const
+{
+    const Index n = values.size();
+
+    Tensor<Index, 1> indices(n);
+
+    for(Index i = 0; i < n; i++)
+    {
+        indices(i) = i;
+    }
+
+    return box_plot(values, indices);
+}
+
 
 /// Returns a vector of subvectors with the values of a box and whiskers plot.
 /// The size of the vector is equal to the number of used variables.
