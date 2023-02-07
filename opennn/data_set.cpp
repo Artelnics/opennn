@@ -5958,7 +5958,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    Tensor<BoxPlot, 1> box_plots(used_columns_number);
+    Tensor<BoxPlot, 1> box_plots(columns_number);
 
     Index used_column_index = 0;
     Index variable_index = 0;
@@ -5969,9 +5969,13 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         {
             if(columns(i).column_use != VariableUse::Unused)
             {
-                box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_samples_indices);
+                box_plots(i) = box_plot(data.chip(variable_index, 1), used_samples_indices);
 
                 used_column_index++;
+            }
+            else
+            {
+                box_plots(i) = BoxPlot();
             }
 
             variable_index++;
@@ -5979,10 +5983,13 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         else if(columns(i).type == ColumnType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
+
+            box_plots(i) = BoxPlot();
         }
         else
         {
             variable_index++;
+            box_plots(i) = BoxPlot();
         }
     }
 
