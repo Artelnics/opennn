@@ -1005,11 +1005,12 @@ void DataSet::transform_associative_columns()
 
     const Index columns_number = get_columns_number();
 
-    const Index constant_columns_number = get_constant_columns_number();
+//    const Index constant_columns_number = get_constant_columns_number();
 
     Tensor<Column, 1> new_columns;
 
-    new_columns.resize(2*(columns_number - constant_columns_number));
+//    new_columns.resize(2*(columns_number - constant_columns_number));
+    new_columns.resize(2*(columns_number));
 
     Index column_index = 0;
     Index index = 0;
@@ -1018,10 +1019,10 @@ void DataSet::transform_associative_columns()
     {
         column_index = i%columns_number;
 
-        if(columns(column_index).type == ColumnType::Constant)
-        {
-            continue;
-        }
+//        if(columns(column_index).type == ColumnType::Constant)
+//        {
+//            continue;
+//        }
 
         if(i < columns_number)
         {
@@ -1055,9 +1056,9 @@ void DataSet::transform_associative_data()
 
     const Index samples_number = data.dimension(0);
 
-    const Index constant_columns_number = get_constant_columns_number();
+//    const Index constant_columns_number = get_constant_columns_number();
 
-    const Index old_variables_number = data.dimension(1) - constant_columns_number;
+    const Index old_variables_number = data.dimension(1)/* - constant_columns_number*/;
     const Index new_variables_number = 2 * old_variables_number;
 
     associative_data = data;
@@ -1068,13 +1069,13 @@ void DataSet::transform_associative_data()
 
     Index index = 0;
 
-    for(Index i = 0; i < old_variables_number + constant_columns_number; i++)
+    for(Index i = 0; i < old_variables_number /*+ constant_columns_number*/; i++)
     {
-        if(columns(i).type == ColumnType::Constant)
-        {
-            index++;
-            continue;
-        }
+//        if(columns(i).type == ColumnType::Constant)
+//        {
+//            index++;
+//            continue;
+//        }
 
         std::copy(associative_data.data() + (i - index) * samples_number,
                   associative_data.data() + (i + 1 - index) *  samples_number,
