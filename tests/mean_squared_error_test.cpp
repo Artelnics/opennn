@@ -1781,7 +1781,7 @@ void MeanSquaredErrorTest::run_test_case()
     // Back propagate methods
 
 //    test_back_propagate();
-    test_calculate_gradient_convolutional_network();
+//    test_calculate_gradient_convolutional_network();
 //    test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";

@@ -1005,33 +1005,44 @@ void DataSet::transform_associative_columns()
 
     const Index columns_number = get_columns_number();
 
+//    const Index constant_columns_number = get_constant_columns_number();
+
     Tensor<Column, 1> new_columns;
 
-    new_columns.resize(2*columns_number);
+//    new_columns.resize(2*(columns_number - constant_columns_number));
+    new_columns.resize(2*(columns_number));
 
     Index column_index = 0;
+    Index index = 0;
 
     for(Index i = 0; i < 2*columns_number; i++)
     {
         column_index = i%columns_number;
 
+//        if(columns(column_index).type == ColumnType::Constant)
+//        {
+//            continue;
+//        }
+
         if(i < columns_number)
         {
-            new_columns(i).name = columns(column_index).name;
+            new_columns(index).name = columns(column_index).name;
 
-            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(i).set_use(DataSet::VariableUse::Input);
-            new_columns(i).type = columns(column_index).type;
-            new_columns(i).categories = columns(column_index).categories;
+            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(index).set_use(DataSet::VariableUse::Input);
+            new_columns(index).type = columns(column_index).type;
+            new_columns(index).categories = columns(column_index).categories;
+            index++;
         }
         else
         {
-            new_columns(i).name = columns(column_index).name + "_output";
+            new_columns(index).name = columns(column_index).name + "_output";
 
-            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(i).set_use(DataSet::VariableUse::Target);
-            new_columns(i).type = columns(column_index).type;
-            new_columns(i).categories = columns(column_index).categories;
+            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(index).set_use(DataSet::VariableUse::Target);
+            new_columns(index).type = columns(column_index).type;
+            new_columns(index).categories = columns(column_index).categories;
+            index++;
         }
     }
 
@@ -1045,7 +1056,9 @@ void DataSet::transform_associative_data()
 
     const Index samples_number = data.dimension(0);
 
-    const Index old_variables_number = data.dimension(1);
+//    const Index constant_columns_number = get_constant_columns_number();
+
+    const Index old_variables_number = data.dimension(1)/* - constant_columns_number*/;
     const Index new_variables_number = 2 * old_variables_number;
 
     associative_data = data;
@@ -1054,23 +1067,23 @@ void DataSet::transform_associative_data()
 
     // Duplicate data
 
-    if(samples_number < 1000)
-    {
-        Eigen::array<int, 2> bcast({1, 2});
-        data = associative_data.broadcast(bcast);
-    }
-    else
-    {
-        for(Index i = 0; i < old_variables_number; i++)
-        {
-            std::copy(associative_data.data() + i * samples_number,
-                      associative_data.data() + (i+1) *  samples_number,
-                      data.data() + i * samples_number);
+    Index index = 0;
 
-            std::copy(associative_data.data() + i * samples_number,
-                      associative_data.data() + (i+1) *  samples_number,
-                      data.data() + samples_number * old_variables_number + i * samples_number);
-        }
+    for(Index i = 0; i < old_variables_number /*+ constant_columns_number*/; i++)
+    {
+//        if(columns(i).type == ColumnType::Constant)
+//        {
+//            index++;
+//            continue;
+//        }
+
+        std::copy(associative_data.data() + (i - index) * samples_number,
+                  associative_data.data() + (i + 1 - index) *  samples_number,
+                  data.data() + (i - index) * samples_number);
+
+        std::copy(associative_data.data() + (i - index) * samples_number,
+                  associative_data.data() + (i + 1 - index) *  samples_number,
+                  data.data() + samples_number * old_variables_number + (i - index) * samples_number);
     }
 }
 
@@ -3007,6 +3020,24 @@ Index DataSet::get_columns_number() const
 {
     return columns.size();
 }
+
+
+/// Returns the number of constant columns in the data set.
+
+Index DataSet::get_constant_columns_number() const
+{
+    Index constant_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == ColumnType::Constant)
+            constant_number++;
+    }
+
+    return constant_number;
+}
+
+
 
 
 /// Returns the number of channels of the images in the data set.
@@ -5938,6 +5969,20 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
     return histograms;
 }
 
+BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1> values) const
+{
+    const Index n = values.size();
+
+    Tensor<Index, 1> indices(n);
+
+    for(Index i = 0; i < n; i++)
+    {
+        indices(i) = i;
+    }
+
+    return box_plot(values, indices);
+}
+
 
 /// Returns a vector of subvectors with the values of a box and whiskers plot.
 /// The size of the vector is equal to the number of used variables.
@@ -5958,7 +6003,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    Tensor<BoxPlot, 1> box_plots(used_columns_number);
+    Tensor<BoxPlot, 1> box_plots(columns_number);
 
     Index used_column_index = 0;
     Index variable_index = 0;
@@ -5969,9 +6014,13 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         {
             if(columns(i).column_use != VariableUse::Unused)
             {
-                box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_samples_indices);
+                box_plots(i) = box_plot(data.chip(variable_index, 1), used_samples_indices);
 
                 used_column_index++;
+            }
+            else
+            {
+                box_plots(i) = BoxPlot();
             }
 
             variable_index++;
@@ -5979,10 +6028,13 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         else if(columns(i).type == ColumnType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
+
+            box_plots(i) = BoxPlot();
         }
         else
         {
             variable_index++;
+            box_plots(i) = BoxPlot();
         }
     }
 
@@ -7183,6 +7235,24 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
 void DataSet::set_data_constant(const type& new_value)
 {
     data.setConstant(new_value);
+}
+
+
+Tensor<type,2> DataSet::data_round(Tensor<type,2>& data){
+
+    const Index precision = 3;
+
+    Tensor<type,2> data_rounded = data.unaryExpr([precision, this](type x){
+        return round_to_precision(x, precision);
+      });
+
+    return data_rounded;
+}
+
+
+type DataSet::round_to_precision(type& x, const Index& precision){
+    type factor = pow(10,precision);
+    return (round(factor*x))/factor;
 }
 
 
@@ -11125,6 +11195,7 @@ void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
@@ -11142,7 +11213,7 @@ void DataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < variables_number - target_variables_number; j++)
         {
-            current_variable = used_variables_indices(j);
+            current_variable = input_variables_indices(j);
 
             for(Index i = 0; i < samples_number; i++)
             {
@@ -11234,11 +11305,10 @@ void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
-
-    const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
@@ -11248,10 +11318,9 @@ void DataSet::impute_missing_values_median()
     Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
-
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = used_variables_indices(j);
+        current_variable = input_variables_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -11263,9 +11332,12 @@ void DataSet::impute_missing_values_median()
             }
         }
     }
+
+#pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < target_variables_number; j++)
     {
         current_variable = target_variables_indices(j);
+
         for(Index i = 0; i < samples_number; i++)
         {
             current_sample = used_samples_indices(i);

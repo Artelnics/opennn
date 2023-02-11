@@ -684,10 +684,9 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
         rank += repeated;
     }
 
-    TensorMap<Tensor<type, 1>> rank_x(x_rank_vector.data(), x_rank_vector.size());
+    TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
 
-    return rank_x;
-
+    return x_rank;
 }
 
 

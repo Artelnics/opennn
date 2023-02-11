@@ -306,6 +306,7 @@ public:
     Tensor<Column, 1> get_used_columns() const;
 
     Index get_columns_number() const;
+    Index get_constant_columns_number() const;
 
     Index get_input_columns_number() const;
     Index get_input_time_series_columns_number() const;
@@ -634,6 +635,9 @@ public:
 
     void set_data_constant(const type&);
 
+    Tensor<type,2> data_round(Tensor<type,2>&);
+    type round_to_precision(type&, const Index&);
+
     void set_data_random();
     void set_data_binary_random();
 
@@ -676,6 +680,7 @@ public:
 
     // Box and whiskers
 
+    BoxPlot calculate_single_box_plot(Tensor<type,1>) const;
     Tensor<BoxPlot, 1> calculate_columns_box_plots() const;
 
     // Inputs correlations
