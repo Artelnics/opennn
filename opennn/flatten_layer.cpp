@@ -160,16 +160,16 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    const Index height = inputs_dimensions(0);
-    const Index width = inputs_dimensions(1);
-    const Index channels = inputs_dimensions(2);
-    const Index batch = inputs_dimensions(3);
+    const Index rows_number = inputs_dimensions(0);
+    const Index columns_number = inputs_dimensions(1);
+    const Index channels_number = inputs_dimensions(2);
+    const Index batch_size = inputs_dimensions(3);
 
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
+    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*columns_number*rows_number}};
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch, channels*width*height);
+    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch_size, channels_number*columns_number*rows_number);
 
     outputs = inputs.reshape(new_dims);
 }
@@ -235,27 +235,50 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     }
 */ // check, old version
 
-    if(inputs_dimensions.size() != 4)
+//    if(inputs_dimensions.size() != 4)
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: FlattenLayer class.\n"
+//               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
+//               << "Inputs rank must be equal to 4.\n";
+
+//        throw invalid_argument(buffer.str());
+//    }
+
+//    const Index rows_number = inputs_dimensions(0);
+//    const Index columns_number = inputs_dimensions(1);
+//    const Index channels_number = inputs_dimensions(2);
+//    const Index batch_size = inputs_dimensions(3);
+
+//    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*columns_number*rows_number}};
+
+//    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+//    TensorMap<Tensor<type, 2>> outputs(flatten_layer_forward_propagation->outputs.data(), batch_size, channels_number*columns_number*rows_number);
+
+//     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
+
+    const Index rows_number = inputs_dimensions(0);
+    const Index columns_number = inputs_dimensions(1);
+    const Index channels_number = inputs_dimensions(2);
+        const Index batch_size = inputs_dimensions(3);
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data,rows_number,columns_number,channels_number,batch_size);
+
+    Index image_counter = 0;
+    Index variable_counter = 0;
+
+    for(Index i = 0; i < flatten_layer_forward_propagation->outputs.size(); i++)
     {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
-               << "Inputs rank must be equal to 4.\n";
+        flatten_layer_forward_propagation->outputs(image_counter,variable_counter) = inputs(i);
 
-        throw invalid_argument(buffer.str());
+        variable_counter++;
+
+        if(variable_counter == channels_number * rows_number * columns_number)
+        {
+            variable_counter = 0;
+            image_counter++;
+        }
     }
-
-    const Index height = inputs_dimensions(0);
-    const Index width = inputs_dimensions(1);
-    const Index channels = inputs_dimensions(2);
-    const Index batch = inputs_dimensions(3);
-
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
-
-    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-    TensorMap<Tensor<type, 2>> outputs(flatten_layer_forward_propagation->outputs.data(), batch, channels*width*height);
-
-     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }
 
 

@@ -170,6 +170,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                       inputs_rows_number,
                                                       inputs_columns_number,
                                                       inputs_channels_number);
+
         for(int j = 0; j<kernels_number; j++)
         {
             const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
@@ -433,6 +434,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     const Index delta_slice_dimensions = (inputs_rows_number-kernels_rows_number+1)*(inputs_columns_number-kernels_columns_number+1);
     const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
+    cout << "Deltas: " << endl << deltas << endl;
+
     // Biases gradient
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -460,6 +463,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
             Eigen::array<Eigen::Index, 2> extents = {1, delta_slice_dimensions};
 
             Tensor<type, 2> delta_slice = deltas.slice(offsets, extents);
+
+            cout << "Delta slice: " << endl << delta_slice << endl;
 
             const TensorMap<Tensor<type, 3>> single_image(inputs.data()+image_index*next_image,
                                                           inputs_rows_number,

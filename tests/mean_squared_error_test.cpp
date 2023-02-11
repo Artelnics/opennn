@@ -1624,6 +1624,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data_set.set_data(data); // 2d data
         data_set.set_data_random();
 
+        data_set.set_training();
+
         const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
 //        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
 //        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
@@ -1655,6 +1657,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
+//        batch.print();
+//        system("pause");
+
         Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
         convolutional_layer_inputs_dimensions(0) = input_rows_number;
         convolutional_layer_inputs_dimensions(1) = input_columns_number;
@@ -1676,7 +1681,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-        Tensor<type, 4> kernels(kernels_rows_number,kernels_columns_number,images_number,kernels_channels_number);
+        Tensor<type, 4> kernels(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
 
         kernels(0,0,0,0) = static_cast<type>(0.5);
         kernels(0,1,0,0) = static_cast<type>(0.5);
@@ -1698,9 +1703,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         kernels(1,0,1,1) = static_cast<type>(0.7);
         kernels(1,1,1,1) = static_cast<type>(0.7);
 
-//        convolutional_layer->set_synaptic_weights(kernels);
+        convolutional_layer->set_synaptic_weights(kernels);
 
-//        convolutional_layer->set_biases_constant(0);
+        convolutional_layer->set_biases_constant(0);
 
         convolutional_layer->set_parameters_random();
 
@@ -1739,9 +1744,11 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        synaptic_weights(2,1) = 2;
 //        synaptic_weights(3,1) = 2;
 
-//        perceptron_layer->set_synaptic_weights(synaptic_weights);
-//        perceptron_layer->set_biases_constant(0);
-//        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+        perceptron_layer->set_synaptic_weights(synaptic_weights);
+        perceptron_layer->set_biases_constant(0);
+        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        perceptron_layer->set_parameters_random();
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
@@ -1750,9 +1757,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
         neural_network.forward_propagate(batch, forward_propagation, switch_train);
-//        forward_propagation.print();
+        forward_propagation.print();
 
-//        system("pause");
+        system("pause");
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
@@ -1781,7 +1788,7 @@ void MeanSquaredErrorTest::run_test_case()
     // Back propagate methods
 
 //    test_back_propagate();
-//    test_calculate_gradient_convolutional_network();
+    test_calculate_gradient_convolutional_network();
 //    test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";
