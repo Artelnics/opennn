@@ -3432,9 +3432,11 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << calculate_outputs_string;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "c");
+
+    for (int i = 0; i < fixed_outputs.dimension(0); i++)
     {
-        buffer << fix_write_expression_outputs(expression, outputs, "c")(i) << endl;
+        buffer << fixed_outputs(i) << endl;
     }
 
     buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
@@ -3792,9 +3794,11 @@ string NeuralNetwork::write_expression_api() const
         buffer << t << endl;
     }
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");
+
+    for (int i = 0; i < fixed_outputs.dimension(0); i++)
     {
-        buffer << fix_write_expression_outputs(expression, outputs, "php")(i) << endl;
+        buffer << fixed_outputs(i) << endl;
     }
 
     buffer << "if ($status === 200){" << endl;
@@ -4227,15 +4231,15 @@ string NeuralNetwork::write_expression_javascript() const
         size_t substring_length_7 = t.find(target_string_7);
         size_t substring_length_8 = t.find(target_string_8);
 
-        if (substring_length_0 < t.size() && substring_length_0!=0){ logistic = true; }
         if (substring_length_1 < t.size() && substring_length_1!=0){ ReLU = true; }
-        if (substring_length_2 < t.size() && substring_length_2!=0){ Threshold = true; }
-        if (substring_length_3 < t.size() && substring_length_3!=0){ SymThreshold = true; }
-        if (substring_length_4 < t.size() && substring_length_4!=0){ ExpLinear = true; }
-        if (substring_length_5 < t.size() && substring_length_5!=0){ SExpLinear = true; }
+        if (substring_length_0 < t.size() && substring_length_0!=0){ logistic = true; }
         if (substring_length_6 < t.size() && substring_length_6!=0){ HSigmoid = true; }
         if (substring_length_7 < t.size() && substring_length_7!=0){ SoftPlus = true; }
         if (substring_length_8 < t.size() && substring_length_8!=0){ SoftSign = true; }
+        if (substring_length_2 < t.size() && substring_length_2!=0){ Threshold = true; }
+        if (substring_length_4 < t.size() && substring_length_4!=0){ ExpLinear = true; }
+        if (substring_length_5 < t.size() && substring_length_5!=0){ SExpLinear = true; }
+        if (substring_length_3 < t.size() && substring_length_3!=0){ SymThreshold = true; }
 
         for (int i = 0; i < found_mathematical_expressions.dimension(0); i++)
         {
@@ -4261,9 +4265,11 @@ string NeuralNetwork::write_expression_javascript() const
         buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
     }
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "javascript");
+
+    for (int i = 0; i < fixed_outputs.dimension(0); i++)
     {
-        buffer << fix_write_expression_outputs(expression, outputs, "javascript")(i) << endl;
+        buffer << fixed_outputs(i) << endl;
     }
 
     buffer << "\t" << "var out = [];" << endl;
