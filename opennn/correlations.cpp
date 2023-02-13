@@ -619,6 +619,14 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         }
     }
 
+    if(linear_correlation.r < -1 || linear_correlation.r  > 1)
+    {
+        linear_correlation.r = NAN;
+        linear_correlation.lower_confidence = NAN;
+        linear_correlation.upper_confidence = NAN;
+    }
+
+
     return linear_correlation;
 }
 
