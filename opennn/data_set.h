@@ -635,7 +635,6 @@ public:
 
     void set_data_constant(const type&);
 
-
     static type round_to_precision(type, const int&);
 
     void set_data_random();
