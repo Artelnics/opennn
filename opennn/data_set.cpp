@@ -7396,24 +7396,11 @@ void DataSet::set_data_constant(const type& new_value)
     data.setConstant(new_value);
 }
 
+type DataSet::round_to_precision(type x, const int& precision){
 
-Tensor<type,2> DataSet::data_round(Tensor<type,2>& data){
-
-    const Index precision = 3;
-
-    Tensor<type,2> data_rounded = data.unaryExpr([precision, this](type x){
-        return round_to_precision(x, precision);
-      });
-
-    return data_rounded;
-}
-
-
-type DataSet::round_to_precision(type& x, const Index& precision){
     type factor = pow(10,precision);
     return (round(factor*x))/factor;
 }
-
 
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
@@ -11356,6 +11343,7 @@ void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
@@ -11373,7 +11361,7 @@ void DataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < variables_number - target_variables_number; j++)
         {
-            current_variable = used_variables_indices(j);
+            current_variable = input_variables_indices(j);
 
             for(Index i = 0; i < samples_number; i++)
             {
@@ -11465,11 +11453,10 @@ void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
-
-    const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
@@ -11479,10 +11466,9 @@ void DataSet::impute_missing_values_median()
     Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
-
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = used_variables_indices(j);
+        current_variable = input_variables_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -11494,9 +11480,12 @@ void DataSet::impute_missing_values_median()
             }
         }
     }
+
+#pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < target_variables_number; j++)
     {
         current_variable = target_variables_indices(j);
+
         for(Index i = 0; i < samples_number; i++)
         {
             current_sample = used_samples_indices(i);
@@ -14057,6 +14046,23 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
 
         Index index = 0;
+
+//        for(Index image = 0; image < batch_size; image++)
+//        {
+//            index = 0;
+
+//            for(Index row = 0; row < rows_number; row++)
+//            {
+//                for(Index col = 0; col < columns_number; col++)
+//                {
+//                    for(Index channel = 0; channel < channels_number; channel++)
+//                    {
+//                        inputs(row, col, channel, image) = data(image, index);
+//                        index++;
+//                    }
+//                }
+//            }
+//        }
 
         for(Index image = 0; image < batch_size; image++)
         {
