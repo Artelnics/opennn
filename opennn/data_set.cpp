@@ -14047,7 +14047,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
         Index index = 0;
 
-        for(Index image = 0; image < batch_size; image++)
+        /*for(Index image = 0; image < batch_size; image++)
         {
             index = 0;
 
@@ -14062,9 +14062,9 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                     }
                 }
             }
-        }
+        }*/
 
-/*        for(Index image = 0; image < batch_size; image++)
+        for(Index image = 0; image < batch_size; image++)
         {
             index = 0;
 
@@ -14080,7 +14080,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }
-*/
     }
 
     fill_submatrix(data, samples, targets, targets_data);
