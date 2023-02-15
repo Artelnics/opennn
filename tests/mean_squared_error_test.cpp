@@ -1593,7 +1593,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(0,16) = 9;
         data(0,17) = 18;
 
-        data(0,18) = 0; // Target
+        data(0,18) = 1; // Target
 
         // Image 2
 
@@ -1616,7 +1616,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data(1,16) = 27;
         data(1,17) = 36;
 
-        data(1,18) = 1; // Target
+        data(1,18) = 0; // Target
 
         DataSet data_set(images_number,1,1);
         data_set.set_input_variables_dimensions(inputs_dimensions);
@@ -1728,11 +1728,13 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         {
             for(Index j = 0; j < perceptrons_number; j++)
             {
-                synaptic_weights(i,j) = static_cast<type>(j+1);
+                synaptic_weights(i,j) = static_cast<type>(1);//static_cast<type>(j+1);
             }
         }
 
-        perceptron_layer->set_parameters_random();
+//        cout << "Synaptic weights: " << synaptic_weights << endl;
+
+//        perceptron_layer->set_parameters_random();
 
 //        synaptic_weights(0,0) = 1;
 //        synaptic_weights(1,0) = 1;
@@ -1757,9 +1759,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
         neural_network.forward_propagate(batch, forward_propagation, switch_train);
-        forward_propagation.print();
+//        forward_propagation.print();
 
-        system("pause");
+//        system("pause");
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 

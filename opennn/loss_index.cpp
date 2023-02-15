@@ -721,7 +721,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
     calculate_output_delta(batch,forward_propagation,
                            back_propagation);
 
-
     // Hidden layers
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
