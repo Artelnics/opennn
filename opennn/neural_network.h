@@ -146,6 +146,16 @@ public:
    void set_inputs_number(const Index&);
    void set_inputs_number(const Tensor<bool, 1>&);
 
+   // AANN histogram
+
+   // Histogram parameters
+
+   void set_box_plot_minimum(const type&);
+   void set_box_plot_first_quartile(const type&);
+   void set_box_plot_median(const type&);
+   void set_box_plot_third_quartile(const type&);
+   void set_box_plot_maximum(const type&);
+
    virtual void set_default();
 
    void set_threads_number(const int&);
@@ -153,6 +163,8 @@ public:
    void set_scaling_layer(ScalingLayer&);
 
    void set_display(const bool&);
+
+   void set_distances_box_plot(BoxPlot&);
 
    // Layers
 
@@ -188,6 +200,15 @@ public:
 
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
+   // AANN histogram
+
+   BoxPlot get_auto_associative_distances_box_plot() const;
+   type get_box_plot_minimum() const;
+   type get_box_plot_first_quartile() const;
+   type get_box_plot_median() const;
+   type get_box_plot_third_quartile() const;
+   type get_box_plot_maximum() const;
+
    void set_parameters(Tensor<type, 1>&) const;
 
    // Parameters initialization methods
@@ -205,6 +226,7 @@ public:
    // Output
 
    Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_unscaled_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&, const string&);
@@ -229,6 +251,7 @@ public:
    void inputs_from_XML(const tinyxml2::XMLDocument&);
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
+   void box_plot_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML( );
@@ -268,6 +291,9 @@ public:
 
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
+   Tensor<type, 2> calculate_scaled_inputs(type*, Tensor<Index, 1>&);
+
+
 //   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
 
 
@@ -288,6 +314,10 @@ protected:
    /// Layers
 
    Tensor<Layer*, 1> layers_pointers;
+
+   /// AANN distances box plot
+
+   BoxPlot auto_associative_distances_box_plot = BoxPlot();
 
    /// Display messages to screen.
 

@@ -275,6 +275,36 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 }
 
 
+/// Returns a new vector with the elements of this string vector casted to type.
+
+
+Tensor<Index, 1> to_index_vector(const string& str, const char& separator)
+{
+    const Tensor<string, 1> tokens = get_tokens(str, separator);
+
+    const Index tokens_size = tokens.dimension(0);
+
+    Tensor<Index, 1> index_vector(tokens_size);
+
+    for(Index i = 0; i < tokens_size; i++)
+    {
+        try
+        {
+            stringstream buffer;
+
+            buffer << tokens[i];
+
+            index_vector(i) = Index(stoi(buffer.str()));
+        }
+        catch(const invalid_argument&)
+        {
+            index_vector(i) = Index(-1);
+        }
+    }
+
+    return index_vector;
+}
+
 
 Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 {

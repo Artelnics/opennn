@@ -35,6 +35,7 @@ namespace opennn
     Tensor<string, 1> get_tokens(const string&, const string&);
 
     Tensor<type, 1> to_type_vector(const string&, const char&);
+    Tensor<Index, 1> to_index_vector(const string&, const char&);
 
     Tensor<string, 1> get_unique_elements(const Tensor<string,1>&);
     Tensor<Index, 1> count_unique(const Tensor<string,1>&);

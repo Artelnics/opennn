@@ -65,7 +65,6 @@ Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
     return descriptives;
 }
 
-
 /// Returns a vector with the minimum values of all unscaling neurons.
 /// The size is the number of neurons in the layer.
 
@@ -400,7 +399,6 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
     min_range = min;
     max_range = max;
 }
-
 
 /// Sets the descriptives for all the neurons in the unscaling layer from a vector.
 /// The size of this vector must be equal to the number of unscaling neurons.

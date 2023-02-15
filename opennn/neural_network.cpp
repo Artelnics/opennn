@@ -1070,6 +1070,36 @@ void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
 }
 
 
+void NeuralNetwork::set_box_plot_minimum(const type& new_box_plot_minimum)
+{
+    auto_associative_distances_box_plot.minimum = new_box_plot_minimum;
+}
+
+
+void NeuralNetwork::set_box_plot_first_quartile(const type& new_box_plot_first_quartile)
+{
+    auto_associative_distances_box_plot.first_quartile = new_box_plot_first_quartile;
+}
+
+
+void NeuralNetwork::set_box_plot_median(const type& new_box_plot_median)
+{
+    auto_associative_distances_box_plot.median = new_box_plot_median;
+}
+
+
+void NeuralNetwork::set_box_plot_third_quartile(const type& new_box_plot_third_quartile)
+{
+    auto_associative_distances_box_plot.third_quartile = new_box_plot_third_quartile;
+}
+
+
+void NeuralNetwork::set_box_plot_maximum(const type& new_box_plot_maximum)
+{
+    auto_associative_distances_box_plot.maximum = new_box_plot_maximum;
+}
+
+
 /// Sets those members which are not pointer to their default values.
 
 void NeuralNetwork::set_default()
@@ -1283,6 +1313,36 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_parameters_numbers() const
     return trainable_layers_parameters_number;
 }
 
+BoxPlot NeuralNetwork::get_auto_associative_distances_box_plot() const
+{
+    return auto_associative_distances_box_plot;
+}
+
+type NeuralNetwork::get_box_plot_minimum() const
+{
+    return auto_associative_distances_box_plot.minimum;
+}
+
+type NeuralNetwork::get_box_plot_first_quartile() const
+{
+    return auto_associative_distances_box_plot.first_quartile;
+}
+
+type NeuralNetwork::get_box_plot_median() const
+{
+    return auto_associative_distances_box_plot.median;
+}
+
+type NeuralNetwork::get_box_plot_third_quartile() const
+{
+    return auto_associative_distances_box_plot.third_quartile;
+}
+
+type NeuralNetwork::get_box_plot_maximum() const
+{
+    return auto_associative_distances_box_plot.maximum;
+}
+
 
 /// Sets all the parameters(biases and synaptic weights) from a single vector.
 /// @param new_parameters New set of parameter values.
@@ -1333,6 +1393,11 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 void NeuralNetwork::set_display(const bool& new_display)
 {
     display = new_display;
+}
+
+void NeuralNetwork::set_distances_box_plot(BoxPlot& new_auto_associative_distances_box_plot)
+{
+    auto_associative_distances_box_plot = new_auto_associative_distances_box_plot;
 }
 
 
@@ -1730,6 +1795,55 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 }
 
 
+Tensor<type, 2> NeuralNetwork::calculate_scaled_inputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
+{
+    const Index inputs_rank = inputs_dimensions.size();
+
+    if(inputs_rank == 2)
+    {
+        DataSetBatch data_set_batch;
+
+        const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+
+        Tensor<type, 2> inputs = TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+        data_set_batch.set_inputs(inputs);
+
+        const Index batch_size = inputs.dimension(0);
+
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
+
+        forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0) return Tensor<type, 2>();
+
+        bool switch_train = false;
+
+        layers_pointers(0)->forward_propagate(data_set_batch.inputs_data, data_set_batch.inputs_dimensions,
+                                              neural_network_forward_propagation.layers(0), switch_train);
+
+        type* outputs_data = neural_network_forward_propagation.layers(0)->outputs_data;
+        const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(0)->outputs_dimensions;
+
+        return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Tensor<type, 2> calculate_outputs(type* , Tensor<Index, 1>&).\n"
+               << "Inputs rank must be 2.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
+}
+
+
 Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
 {
     const Index inputs_rank = inputs_dimensions.size();
@@ -1754,6 +1868,48 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
 
         type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
         const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
+
+        return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Tensor<type, 2> calculate_outputs(type* , Tensor<Index, 1>&).\n"
+               << "Inputs rank must be 2.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
+}
+
+
+Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
+{
+    const Index inputs_rank = inputs_dimensions.size();
+
+    if(inputs_rank == 2)
+    {
+        DataSetBatch data_set_batch;
+
+        Tensor<type, 2> inputs = TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+        data_set_batch.set_inputs(inputs);
+
+        const Index batch_size = inputs.dimension(0);
+
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
+
+        forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0) return Tensor<type, 2>();
+
+        type* outputs_data = neural_network_forward_propagation.layers(layers_number - 2)->outputs_data;
+        const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 2)->outputs_dimensions;
 
         return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
     }
@@ -2399,6 +2555,74 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // ******************** Distances histogram XML ******************* //
+
+    if(get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    {
+        // BoxPlot
+
+        file_stream.OpenElement("BoxPlotDistances");
+
+        // Minimum
+
+        file_stream.OpenElement("Minimum");
+
+        buffer.str("");
+        buffer << get_box_plot_minimum();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // First quartile
+
+        file_stream.OpenElement("FirstQuartile");
+
+        buffer.str("");
+        buffer << get_box_plot_first_quartile();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Median
+
+        file_stream.OpenElement("Median");
+
+        buffer.str("");
+        buffer << get_box_plot_median();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Third Quartile
+
+        file_stream.OpenElement("ThirdQuartile");
+
+        buffer.str("");
+        buffer << get_box_plot_third_quartile();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Maximum
+
+        file_stream.OpenElement("Maximum");
+
+        buffer.str("");
+        buffer << get_box_plot_maximum();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        //BoxPlotDistances (end tag)
+
+        file_stream.CloseElement();
+    }
+
     // Neural network (end tag)
 
     file_stream.CloseElement();
@@ -2463,7 +2687,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-
             tinyxml2::XMLDocument outputs_document;
             tinyxml2::XMLNode* element_clone;
 
@@ -2472,7 +2695,23 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             outputs_document.InsertFirstChild(element_clone);
 
             outputs_from_XML(outputs_document);
+        }
+    }
 
+    if(get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument box_plot_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&box_plot_document);
+
+            box_plot_document.InsertFirstChild(element_clone);
+
+            box_plot_from_XML(box_plot_document);
         }
     }
 
@@ -2823,7 +3062,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
     if(!outputs_number_element)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Outputs number element is nullptr.\n";
 
         throw invalid_argument(buffer.str());
@@ -2867,6 +3106,128 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                 outputs_names(i) = output_element->GetText();
             }
         }
+    }
+}
+
+
+void NeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "BoxPlotDistances element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Minimum
+
+    const tinyxml2::XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
+
+    if(!minimum_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Minimum element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_minimum = 0;
+
+    if(minimum_element->GetText())
+    {
+        new_minimum = static_cast<type>(stod(minimum_element->GetText()));
+        set_box_plot_minimum(new_minimum);
+    }
+
+    // First Quartile
+
+    const tinyxml2::XMLElement* first_quartile_element = root_element->FirstChildElement("FirstQuartile");
+
+    if(!first_quartile_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FirstQuartile element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_first_quartile = 0;
+
+    if(first_quartile_element->GetText())
+    {
+        new_first_quartile = static_cast<type>(stod(first_quartile_element->GetText()));
+        set_box_plot_first_quartile(new_first_quartile);
+    }
+
+    // Median
+
+    const tinyxml2::XMLElement* median_element = root_element->FirstChildElement("Median");
+
+    if(!median_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Median element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_median = 0;
+
+    if(median_element->GetText())
+    {
+        new_median = static_cast<type>(stod(median_element->GetText()));
+        set_box_plot_median(new_median);
+    }
+
+    // ThirdQuartile
+
+    const tinyxml2::XMLElement* third_quartile_element = root_element->FirstChildElement("ThirdQuartile");
+
+    if(!third_quartile_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ThirdQuartile element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_third_quartile = 0;
+
+    if(third_quartile_element->GetText())
+    {
+        new_third_quartile = static_cast<type>(stod(third_quartile_element->GetText()));
+        set_box_plot_third_quartile(new_third_quartile);
+    }
+
+    // Maximum
+
+    const tinyxml2::XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
+
+    if(!maximum_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Maximum element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_maximum = 0;
+
+    if(maximum_element->GetText())
+    {
+        new_maximum = static_cast<type>(stod(maximum_element->GetText()));
+        set_box_plot_maximum(new_maximum);
     }
 }
 

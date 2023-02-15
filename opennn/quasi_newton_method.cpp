@@ -804,6 +804,23 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(stop_training) break;
     }
 
+    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    {
+        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
+
+        type* inputs_data = training_batch.inputs_data;
+        Tensor<Index, 1> inputs_dimensions = training_batch.inputs_dimensions;
+
+        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(inputs_data, inputs_dimensions);
+        type* outputs_data = outputs.data();
+
+        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
+
+        BoxPlot distances_box_plot = calculate_distances_box_plot(inputs_data, inputs_dimensions, outputs_data, outputs_dimensions);
+
+        neural_network_pointer->set_distances_box_plot(distances_box_plot);
+    }
+
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())

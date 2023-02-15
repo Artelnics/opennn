@@ -53,8 +53,7 @@ public:
    Index get_inputs_number() const override;
    Index get_neurons_number() const final;
 
-   Tensor<Descriptives, 1> get_descriptives() const;
-   
+   Tensor<Descriptives, 1> get_descriptives() const; 
 
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
@@ -119,7 +118,6 @@ public:
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&) final;
-
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
    // Expression methods

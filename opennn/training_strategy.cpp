@@ -726,52 +726,51 @@ TrainingResults TrainingStrategy::perform_training()
 
     switch(optimization_method)
     {
-    case OptimizationMethod::GRADIENT_DESCENT:
-    {
-        gradient_descent.set_display(display);
+        case OptimizationMethod::GRADIENT_DESCENT:
+        {
+            gradient_descent.set_display(display);
 
-        return gradient_descent.perform_training();
+            return gradient_descent.perform_training();
+        }
+
+        case OptimizationMethod::CONJUGATE_GRADIENT:
+        {
+            conjugate_gradient.set_display(display);
+
+            return conjugate_gradient.perform_training();
+        }
+
+        case OptimizationMethod::QUASI_NEWTON_METHOD:
+        {
+            quasi_Newton_method.set_display(display);
+
+            return quasi_Newton_method.perform_training();
+        }
+
+        case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
+        {
+            Levenberg_Marquardt_algorithm.set_display(display);
+
+            return Levenberg_Marquardt_algorithm.perform_training();
+        }
+
+        case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
+        {
+            stochastic_gradient_descent.set_display(display);
+
+            return stochastic_gradient_descent.perform_training();
+        }
+
+        case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
+        {
+            adaptive_moment_estimation.set_display(display);
+
+            return adaptive_moment_estimation.perform_training();
+        }
+
+        default:
+            return TrainingResults(0);
     }
-
-    case OptimizationMethod::CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_display(display);
-
-        return conjugate_gradient.perform_training();
-    }
-
-    case OptimizationMethod::QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_display(display);
-
-        return quasi_Newton_method.perform_training();
-
-    }
-
-    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_display(display);
-
-        return Levenberg_Marquardt_algorithm.perform_training();
-    }
-
-    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_display(display);
-
-        return stochastic_gradient_descent.perform_training();
-    }
-
-    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_display(display);
-
-        return adaptive_moment_estimation.perform_training();
-    }
-    default:
-        return TrainingResults(0);
-    }
-
 }
 
 

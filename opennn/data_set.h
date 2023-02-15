@@ -294,6 +294,10 @@ public:
 
     string get_sample_string(const Index&, const string& = ",") const;
 
+    // Create Box plot from histogram
+
+    Tensor<type, 1> box_plot_from_histogram(Histogram&, const Index&) const;
+
     // Columns get methods
 
     Tensor<Column, 1> get_columns() const;
@@ -495,6 +499,7 @@ public:
     void set_training();
     void set_selection();
     void set_testing();
+    void set_auto_associative_samples_uses();
 
     void set_training(const Tensor<Index, 1>&);
     void set_selection(const Tensor<Index, 1>&);

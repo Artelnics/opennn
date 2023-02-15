@@ -284,6 +284,22 @@ Histogram::Histogram(const Tensor<type, 1>&new_centers,
 }
 
 
+/// Values constructor.
+/// @param new_centers Center values for the bins.
+/// @param new_frequencies Number of variates in each bin.
+
+Histogram::Histogram(const Tensor<Index, 1>& new_frequencies,
+                     const Tensor<type, 1>& new_centers,
+                     const Tensor<type, 1>& new_minimums,
+                     const Tensor<type, 1>& new_maximums)
+{
+    centers = new_centers;
+    frequencies = new_frequencies;
+    minimums = new_minimums;
+    maximums = new_maximums;
+}
+
+
 /// Data constructor
 /// @param data Numerical data.
 /// @param number_of_bins Number of bins.

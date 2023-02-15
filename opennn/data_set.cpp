@@ -1674,6 +1674,95 @@ void DataSet::set_training()
 }
 
 
+/// Sets the samples' uses in the auto associative data set.
+
+void DataSet::set_auto_associative_samples_uses()
+{
+    std::random_device rng;
+    std::mt19937 urng(rng());
+
+    const Index used_samples_number = get_used_samples_number();
+
+    if(used_samples_number == 0) return;
+
+    const type training_samples_ratio = 0.8;
+    const type testing_samples_ratio = 0.2;
+
+    const type total_ratio = training_samples_ratio + testing_samples_ratio;
+
+    // Get number of samples for training and testing
+
+    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
+    const Index training_samples_number = used_samples_number - testing_samples_number;
+
+    const Index sum_samples_number = training_samples_number + testing_samples_number;
+
+    if(sum_samples_number != used_samples_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Warning: DataSet class.\n"
+               << "void split_samples_random(const type&, const type&, const type&) method.\n"
+               << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index samples_number = get_samples_number();
+
+    Tensor<Index, 1> indices;
+
+    initialize_sequential(indices, 0, 1, samples_number-1);
+
+    std::shuffle(indices.data(), indices.data() + indices.size(), urng);
+
+    Index count = 0;
+
+    for(Index i = 0; i < samples_uses.size(); i++)
+    {
+        if(samples_uses(i) == SampleUse::Unused) count ++;
+    }
+
+    Index i = 0;
+    Index index;
+
+    // Training
+
+    Index count_training = 0;
+
+    while(count_training != training_samples_number)
+    {
+        index = indices(i);
+
+        if(samples_uses(index) != SampleUse::Unused)
+        {
+            samples_uses(index)= SampleUse::Training;
+            count_training++;
+        }
+
+        i++;
+    }
+
+    // Testing
+
+    Index count_testing = 0;
+
+    while(count_testing != testing_samples_number)
+    {
+        index = indices(i);
+
+        if(samples_uses(index) != SampleUse::Unused)
+        {
+            samples_uses(index) = SampleUse::Testing;
+            count_testing++;
+        }
+
+        i++;
+    }
+}
+
+
+
 /// Sets all the samples in the data set for selection.
 
 void DataSet::set_selection()
@@ -2903,6 +2992,76 @@ Index DataSet::get_used_columns_number() const
 
     return used_columns_number;
 }
+
+Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Index& bins_number) const
+{
+    const Index samples_number = get_training_samples_number();
+
+    Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
+           histogram.frequencies.constant(100.0) /
+           histogram.frequencies.constant(samples_number).cast<type>();
+
+    // Assuming you have the bin centers and relative frequencies in the following arrays:
+    Tensor<type, 1> binCenters = histogram.centers;
+    Tensor<type, 1> binFrequencies = relative_frequencies;
+
+    // Calculate the cumulative frequency distribution
+    type cumulativeFrequencies[1000];
+    cumulativeFrequencies[0] = binFrequencies[0];
+    for (int i = 1; i < 1000; i++) {
+        cumulativeFrequencies[i] = cumulativeFrequencies[i-1] + binFrequencies[i];
+    }
+
+    // Calculate total frequency
+    type totalFrequency = cumulativeFrequencies[999];
+
+    // Calculate quartile positions
+    type Q1Position = 0.25 * totalFrequency;
+    type Q2Position = 0.5 * totalFrequency;
+    type Q3Position = 0.75 * totalFrequency;
+
+    // Find quartile bin numbers
+    int Q1Bin = 0, Q2Bin = 0, Q3Bin = 0;
+    for (int i = 0; i < 1000; i++) {
+        if (cumulativeFrequencies[i] >= Q1Position) {
+            Q1Bin = i;
+            break;
+        }
+    }
+    for (int i = 0; i < 1000; i++) {
+        if (cumulativeFrequencies[i] >= Q2Position) {
+            Q2Bin = i;
+            break;
+        }
+    }
+    for (int i = 0; i < 1000; i++) {
+        if (cumulativeFrequencies[i] >= Q3Position) {
+            Q3Bin = i;
+            break;
+        }
+    }
+
+    // Calculate quartile values
+    type binWidth = binCenters[1] - binCenters[0];
+    type Q1Value = binCenters[Q1Bin] + ((Q1Position - cumulativeFrequencies[Q1Bin-1]) / binFrequencies[Q1Bin]) * binWidth;
+    type Q2Value = binCenters[Q2Bin] + ((Q2Position - cumulativeFrequencies[Q2Bin-1]) / binFrequencies[Q2Bin]) * binWidth;
+    type Q3Value = binCenters[Q3Bin] + ((Q3Position - cumulativeFrequencies[Q3Bin-1]) / binFrequencies[Q3Bin]) * binWidth;
+
+    // Calculate the maximum and minimum values
+    type minValue = binCenters[0] - binWidth / 2.0;
+    type maxValue = binCenters[999] + binWidth / 2.0;
+
+    // Create a Tensor object with the necessary values for the box plot
+    Tensor<type, 1> iqr_values(5);
+    iqr_values(0) = minValue;
+    iqr_values(1) = Q1Value;
+    iqr_values(2) = Q2Value;
+    iqr_values(3) = Q3Value;
+    iqr_values(4) = maxValue;
+
+    return iqr_values;
+}
+
 
 
 /// Returns the columns of the data set.
@@ -9300,7 +9459,9 @@ void DataSet::transform_associative_dataset()
 
     unuse_constant_columns();
 
-    set_training();
+//    set_training();
+
+    set_auto_associative_samples_uses();
 }
 
 
