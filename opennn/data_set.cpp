@@ -6128,7 +6128,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
     return histograms;
 }
 
-BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1> values) const
+BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1>& values) const
 {
     const Index n = values.size();
 
@@ -6140,6 +6140,19 @@ BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1> values) const
     }
 
     return box_plot(values, indices);
+}
+
+Tensor<BoxPlot, 1> DataSet::calculate_data_columns_box_plot(Tensor<type,2>& data) const
+{
+    const Index columns_number = data.dimension(1);
+    Tensor<BoxPlot, 1> box_plots(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        box_plots(i) = box_plot(data.chip(i, 1));
+    }
+
+    return box_plots;
 }
 
 
@@ -11527,7 +11540,6 @@ void DataSet::scrub_missing_values()
     }
 
 }
-
 
 void DataSet::read_csv()
 {
