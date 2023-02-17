@@ -434,8 +434,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     const Index delta_slice_dimensions = (inputs_rows_number-kernels_rows_number+1)*(inputs_columns_number-kernels_columns_number+1);
     const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
-    cout << "Deltas: " << endl << deltas << endl;
-
     // Biases gradient
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -464,8 +462,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
             Tensor<type, 2> delta_slice = deltas.slice(offsets, extents);
 
-            cout << "Delta slice: " << endl << delta_slice << endl;
-
             const TensorMap<Tensor<type, 3>> single_image(inputs.data()+image_index*next_image,
                                                           inputs_rows_number,
                                                           inputs_columns_number,
@@ -475,6 +471,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                                    inputs_rows_number - kernels_rows_number + 1,
                                                    inputs_columns_number - kernels_columns_number + 1,
                                                    1);
+
+            // --> multiply by convolutional activations derivatives?
 
             if(image_index == 0) partial_gradient = single_image.convolve(delta_reshape,dims);
             else partial_gradient += single_image.convolve(delta_reshape,dims);
@@ -1084,16 +1082,22 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
            new_parameters.data(),
            static_cast<size_t>(kernels_number)*sizeof(type));
 
+    memcpy(synaptic_weights.data(),
+           new_parameters.data()+ biases.size(),
+           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+
+
+/*
     Index element_index = kernels_number;
 
 #pragma omp for
-    for(Index i = 0; i < kernels_number; i++)
+    for(Index i = 0; i < kernels_rows_number; i++)
     {
-        for(Index j = 0; j < kernels_channels_number; j++)
+        for(Index j = 0; j < kernels_columns_number; j++)
         {
-            for(Index k = 0; k < kernels_rows_number; k++)
+            for(Index k = 0; k < kernels_channels_number; k++)
             {
-                for(Index l = 0; l < kernels_columns_number; l++)
+                for(Index l = 0; l < kernels_number; l++)
                 {
                     synaptic_weights(i ,j, k, l) = new_parameters(element_index);
                     element_index ++;
@@ -1101,6 +1105,7 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
             }
         }
     }
+    */
 }
 
 /// Returns the number of biases in the layer.

@@ -105,7 +105,8 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
-     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0),
+                                       output_layer_back_propagation->deltas_dimensions(1));
 
      deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 

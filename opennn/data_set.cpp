@@ -14145,22 +14145,22 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
         Index index = 0;
 
-//        for(Index image = 0; image < batch_size; image++)
-//        {
-//            index = 0;
+        /*for(Index image = 0; image < batch_size; image++)
+        {
+            index = 0;
 
-//            for(Index row = 0; row < rows_number; row++)
-//            {
-//                for(Index col = 0; col < columns_number; col++)
-//                {
-//                    for(Index channel = 0; channel < channels_number; channel++)
-//                    {
-//                        inputs(row, col, channel, image) = data(image, index);
-//                        index++;
-//                    }
-//                }
-//            }
-//        }
+            for(Index row = 0; row < rows_number; row++)
+            {
+                for(Index col = 0; col < columns_number; col++)
+                {
+                    for(Index channel = 0; channel < channels_number; channel++)
+                    {
+                        inputs(row, col, channel, image) = data(image, index);
+                        index++;
+                    }
+                }
+            }
+        }*/
 
         for(Index image = 0; image < batch_size; image++)
         {
