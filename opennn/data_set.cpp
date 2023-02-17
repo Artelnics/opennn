@@ -11453,7 +11453,7 @@ void DataSet::impute_missing_values_mean()
         }
     }
 
-}
+} // inter
 
 /// Substitutes all the missing values by the median of the corresponding variable.
 
