@@ -112,7 +112,7 @@ public:
 
     /// Enumeration of available methods for missing values in the data.
 
-    enum class MissingValuesMethod{Unuse, Mean, Median};
+    enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
     /// Enumeration of the learning tasks.
 
@@ -887,6 +887,8 @@ public:
     void impute_missing_values_unuse();
     void impute_missing_values_mean();
     void impute_missing_values_median();
+    void impute_missing_values_interpolate();
+
 
     void scrub_missing_values();
 

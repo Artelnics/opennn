@@ -5743,6 +5743,10 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
     {
         missing_values_method = MissingValuesMethod::Median;
     }
+    else if(new_missing_values_method == "Interpolation")
+    {
+        missing_values_method = MissingValuesMethod::Interpolation;
+    }
     else
     {
         ostringstream buffer;
@@ -7835,9 +7839,13 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.PushText("Median");
         }
-        else
+        else if(missing_values_method == MissingValuesMethod::Unuse)
         {
             file_stream.PushText("Unuse");
+        }
+        else if(missing_values_method == MissingValuesMethod::Interpolation)
+        {
+            file_stream.PushText("Interpolation");
         }
 
         file_stream.CloseElement();
@@ -11334,6 +11342,7 @@ void DataSet::impute_missing_values_unuse()
     {
         if(has_nan_row(i)) set_sample_use(i, "Unused");
     }
+
 }
 
 
@@ -11446,7 +11455,6 @@ void DataSet::impute_missing_values_mean()
 
 }
 
-
 /// Substitutes all the missing values by the median of the corresponding variable.
 
 void DataSet::impute_missing_values_median()
@@ -11499,6 +11507,91 @@ void DataSet::impute_missing_values_median()
     }
 }
 
+/// Substitutes all the missing values by the interpolation of the corresponding variable.
+
+void DataSet::impute_missing_values_interpolate()
+{
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+
+    const Index samples_number = used_samples_indices.size();
+    const Index variables_number = used_variables_indices.size();
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index current_variable;
+    Index current_sample;
+
+#pragma omp parallel for schedule(dynamic)
+    for(Index j = 0; j < variables_number - target_variables_number; j++)
+    {
+        current_variable = input_variables_indices(j);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                type x1 = 0;
+                type x2 = 0;
+                type y1 = 0;
+                type y2 = 0;
+                type x = 0;
+                type y = 0;
+                for(Index k = i - 1; k >= 0; k--)
+                {
+                    if(!isnan(data(used_samples_indices(k), current_variable)))
+                    {
+                        x1 = used_samples_indices(k);
+                        y1 = data(x1, current_variable);
+                        break;
+                    }
+                }
+                for(Index k = i + 1; k < samples_number; k++)
+                {
+                    if(!isnan(data(used_samples_indices(k), current_variable)))
+                    {
+                        x2 = used_samples_indices(k);
+                        y2 = data(x2, current_variable);
+                        break;
+                    }
+                }
+                if(x2 != x1)
+                {
+                    x = current_sample;
+                    y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+                }
+                else
+                {
+                    y = y1;
+                }
+                data(current_sample,current_variable) = y;
+            }
+        }
+    }
+
+#pragma omp parallel for schedule(dynamic)
+    for(Index j = 0; j < target_variables_number; j++)
+    {
+        current_variable = target_variables_indices(j);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                set_sample_use(i, "Unused");
+            }
+        }
+
+    }
+}
+
+
+
 /// General method for dealing with missing values.
 /// It switches among the different scrubbing methods available,
 /// according to the corresponding value in the missing values object.
@@ -11524,10 +11617,15 @@ void DataSet::scrub_missing_values()
         impute_missing_values_median();
 
         break;
+
+    case MissingValuesMethod::Interpolation:
+
+        impute_missing_values_interpolate();
+
+        break;
     }
 
 }
-
 
 void DataSet::read_csv()
 {
