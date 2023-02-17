@@ -6132,7 +6132,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
     return histograms;
 }
 
-BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1> values) const
+BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1>& values) const
 {
     const Index n = values.size();
 
@@ -6144,6 +6144,19 @@ BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1> values) const
     }
 
     return box_plot(values, indices);
+}
+
+Tensor<BoxPlot, 1> DataSet::calculate_data_columns_box_plot(Tensor<type,2>& data) const
+{
+    const Index columns_number = data.dimension(1);
+    Tensor<BoxPlot, 1> box_plots(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        box_plots(i) = box_plot(data.chip(i, 1));
+    }
+
+    return box_plots;
 }
 
 
@@ -11400,40 +11413,40 @@ void DataSet::impute_missing_values_mean()
     }
     else
     {
-        type preview_value = 0;
-        type next_value = 0;
 
-        for(Index j = 0; j < get_variables_number(); j++)
+        for (Index j = 0; j < get_variables_number(); j++)
         {
             current_variable = j;
 
-            for(Index i = 0; i < samples_number; i++)
+            for (Index i = 0; i < samples_number; i++)
             {
                 current_sample = used_samples_indices(i);
 
-                if(!isnan(data(current_sample,current_variable)))
+                if (isnan(data(current_sample, current_variable)))
                 {
-
-                    preview_value = data(current_sample,current_variable);
-                }
-
-                if(isnan(data(current_sample, current_variable)))
-                {
-                    if(i < lags_number || i > samples_number - steps_ahead)
+                    if (i < lags_number || i > samples_number - steps_ahead)
                     {
-                        data(current_sample,current_variable) = means(j);
+                        data(current_sample, current_variable) = means(j);
                     }
                     else
                     {
-
                         Index k = i;
+                        double preview_value = NAN, next_value = NAN;
 
-                        while(isnan(data(used_samples_indices(k), current_variable)) && k < samples_number)
+                        while (isnan(preview_value) && k > 0)
                         {
-                            k++;
+                            k--;
+                            preview_value = data(used_samples_indices(k), current_variable);
                         }
 
-                        if(k == samples_number && i < samples_number - steps_ahead)
+                        k = i;
+                        while (isnan(next_value) && k < samples_number)
+                        {
+                            k++;
+                            next_value = data(used_samples_indices(k), current_variable);
+                        }
+
+                        if (isnan(preview_value) && isnan(next_value))
                         {
                             ostringstream buffer;
 
@@ -11444,16 +11457,25 @@ void DataSet::impute_missing_values_mean()
                             throw invalid_argument(buffer.str());
                         }
 
-                        next_value = data(used_samples_indices(k), current_variable);
-
-                        data(current_sample,current_variable) = (preview_value + next_value)/2;
+                        if (isnan(preview_value))
+                        {
+                            data(current_sample, current_variable) = next_value;
+                        }
+                        else if (isnan(next_value))
+                        {
+                            data(current_sample, current_variable) = preview_value;
+                        }
+                        else
+                        {
+                            data(current_sample, current_variable) = (preview_value + next_value) / 2.0;
+                        }
                     }
                 }
             }
         }
     }
 
-} // inter
+}
 
 /// Substitutes all the missing values by the median of the corresponding variable.
 
