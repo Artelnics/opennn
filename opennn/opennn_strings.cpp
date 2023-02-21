@@ -1513,6 +1513,17 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
     return output;
 }
 
+string round_to_precision_string(type x, const int& precision)
+{
+
+    type factor = pow(10,precision);
+    type rounded_value = (round(factor*x))/factor;
+    stringstream ss;
+    ss << fixed << setprecision(precision) << rounded_value;
+    string result = ss.str();
+    return result;
+}
+
 
 }
 
