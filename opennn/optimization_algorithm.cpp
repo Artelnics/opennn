@@ -266,6 +266,43 @@ BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_d
 }
 
 
+Tensor<type, 2> OptimizationAlgorithm::calculate_multivariate_distances(type* & new_inputs_data, Tensor<Index,1>& inputs_dimensions,
+                                        type* & new_outputs_data, Tensor<Index,1>& outputs_dimensions)
+{
+    const Index samples_number = inputs_dimensions(0);
+    const Index inputs_number = inputs_dimensions(1);
+
+    TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
+    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    Tensor<type, 2> testing_samples_distances(samples_number, inputs_number);
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        Tensor<type, 1> input_row = inputs.chip(i, 0);
+        Tensor<type, 1> output_row = outputs.chip(i, 0);
+
+        for(Index j = 0; j < input_row.size(); j ++)
+        {
+            type variable_input_value = input_row(j);
+            const TensorMap<Tensor<type, 0>> input_variable(&variable_input_value);
+
+            type variable_output_value = output_row(j);
+            const TensorMap<Tensor<type, 0>> output_variable(&variable_output_value);
+
+            const type distance = l2_distance(input_variable, output_variable);
+
+            if(!isnan(distance))
+            {
+                testing_samples_distances(i,j) = distance;
+            }
+        }
+    }
+
+    return testing_samples_distances;
+}
+
+
 /// Sets the members of the optimization algorithm object to their default values.
 
 void OptimizationAlgorithm::set_default()

@@ -165,6 +165,8 @@ public:
    void set_display(const bool&);
 
    void set_distances_box_plot(BoxPlot&);
+   void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
+   void set_variables_distances_names(const Tensor<string, 1>&);
 
    // Layers
 
@@ -203,11 +205,19 @@ public:
    // AANN histogram
 
    BoxPlot get_auto_associative_distances_box_plot() const;
+
    type get_box_plot_minimum() const;
    type get_box_plot_first_quartile() const;
    type get_box_plot_median() const;
    type get_box_plot_third_quartile() const;
    type get_box_plot_maximum() const;
+
+   Tensor<BoxPlot, 1> get_multivariate_distances_box_plot() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_minimums() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_first_quartile() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_median() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_third_quartile() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_maximums() const;
 
    void set_parameters(Tensor<type, 1>&) const;
 
@@ -252,6 +262,7 @@ public:
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
    void box_plot_from_XML(const tinyxml2::XMLDocument&);
+   void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML( );
@@ -291,9 +302,6 @@ public:
 
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
-   Tensor<type, 2> calculate_scaled_inputs(type*, Tensor<Index, 1>&);
-
-
 //   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
 
 
@@ -318,6 +326,8 @@ protected:
    /// AANN distances box plot
 
    BoxPlot auto_associative_distances_box_plot = BoxPlot();
+   Tensor<BoxPlot, 1> multivariate_distances_box_plot = Tensor<BoxPlot, 1>();
+   Tensor<string, 1> variables_distances_names = Tensor<string, 1>();
 
    /// Display messages to screen.
 

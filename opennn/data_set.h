@@ -529,6 +529,7 @@ public:
     void set_columns_uses(const Tensor<VariableUse, 1>&);
     void set_columns_unused();
     void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_columns(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_columns_unused();
 
     void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);

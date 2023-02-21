@@ -489,6 +489,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
     {
+        // Distances
+
         const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
 
         type* inputs_data = batch_training.inputs_data;
@@ -500,7 +502,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
         BoxPlot distances_box_plot = calculate_distances_box_plot(inputs_data, inputs_dimensions, outputs_data, outputs_dimensions);
+
+        Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(inputs_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
+
         neural_network_pointer->set_distances_box_plot(distances_box_plot);
+        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
+        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
