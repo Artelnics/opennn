@@ -491,10 +491,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     {
         // Distances
 
-        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
+//        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
 
         type* inputs_data = batch_training.inputs_data;
         Tensor<Index, 1> inputs_dimensions = batch_training.inputs_dimensions;
+
+        cout << "batch_training dimensions: " << endl << inputs_dimensions << endl;
 
         Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(inputs_data, inputs_dimensions);
         type* outputs_data = outputs.data();

@@ -1940,10 +1940,26 @@ Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Ten
 
         if(layers_number == 0) return Tensor<type, 2>();
 
-        type* outputs_data = neural_network_forward_propagation.layers(layers_number - 2)->outputs_data;
-        const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 2)->outputs_dimensions;
+        if(neural_network_forward_propagation.layers(layers_number - 1)->layer_pointer->get_type_string() == "Unscaling")
+        {
+            cout << "Unscaling" << endl;
+            type* outputs_data = neural_network_forward_propagation.layers(layers_number - 2)->outputs_data;
+            const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 2)->outputs_dimensions;
 
-        return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+            return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+        }
+        else
+        {
+            cout << "Not unscaling" << endl;
+            type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
+            const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
+
+            return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+        }
+
+
+
+
     }
     else
     {
@@ -2098,7 +2114,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions, const string& project_type_string)
+Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
