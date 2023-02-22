@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <ctime>
 #include <exception>
+#include <algorithm>
 
 // OpenNN includes
 

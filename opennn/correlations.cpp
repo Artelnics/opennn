@@ -571,7 +571,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(abs(s_x()) < NUMERIC_LIMITS_MIN
     && abs(s_y()) < NUMERIC_LIMITS_MIN
     && abs(s_xx()) < NUMERIC_LIMITS_MIN
-    && abs(s_yy()) < NUMERIC_LIMITS_MIN
+        && abs(s_yy()) < NUMERIC_LIMITS_MIN
     && abs(s_xy()) < NUMERIC_LIMITS_MIN)
     {
         linear_correlation.a = type(0);
@@ -586,14 +586,10 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
+        const double denominator = sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) * (static_cast<double>(n) * s_yy() - s_y() * s_y()));
 
-        linear_correlation.a =
-            type((s_y() * s_xx() - s_x() * s_xy())/(static_cast<double>(n) * s_xx() - s_x() * s_x()));
-
-        linear_correlation.b =
-            type(((static_cast<double>(n) * s_xy()) - (s_x() * s_y())) /((static_cast<double>(n) * s_xx()) - (s_x() * s_x())));
-
-
+        linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(denominator);
+        linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(denominator);
 
         if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
         {
@@ -603,29 +599,19 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         }
         else
         {
-            linear_correlation.r =
-                type((static_cast<double>(n) * s_xy() - s_x() * s_y()) /
-                sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())));
-
-            // Confidence intervals, with transformation of coefficients to Z distribution and back
+            linear_correlation.r
+                    = static_cast<type>(s_xy() - s_x() * s_y() / static_cast<double>(n)) / static_cast<type>(sqrt((s_xx() - s_x() * s_x() / static_cast<double>(n)) * (s_yy() - s_y() * s_y() / static_cast<double>(n))));
 
             const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
-
             const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
-
             linear_correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
             linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
         }
-    }
 
-    if(linear_correlation.r < -1 || linear_correlation.r  > 1)
-    {
-        linear_correlation.r = NAN;
-        linear_correlation.lower_confidence = NAN;
-        linear_correlation.upper_confidence = NAN;
+        linear_correlation.r = clamp(linear_correlation.r, static_cast<type>(-1), static_cast<type>(1));
+        linear_correlation.lower_confidence = clamp(linear_correlation.lower_confidence, static_cast<type>(-1), static_cast<type>(1));
+        linear_correlation.upper_confidence = clamp(linear_correlation.upper_confidence, static_cast<type>(-1), static_cast<type>(1));
     }
-
 
     return linear_correlation;
 }
