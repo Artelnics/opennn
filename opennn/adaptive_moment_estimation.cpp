@@ -489,33 +489,28 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
     {
-        // Distances
+        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-//        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
+        type* input_data = inputs.data();
 
-        type* inputs_data = batch_training.inputs_data;
-        Tensor<Index, 1> inputs_dimensions = batch_training.inputs_dimensions;
-
-        cout << "batch_training dimensions: " << endl << inputs_dimensions << endl;
-
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(inputs_data, inputs_dimensions);
-        type* outputs_data = outputs.data();
-
+        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
-        Tensor<type, 1> samples_distances = calculate_samples_distances(inputs_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        type* outputs_data = outputs.data();
+
+        Tensor<type, 1> samples_distances = calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
         Descriptives distances_descriptives(samples_distances);
 
-        BoxPlot distances_box_plot = calculate_distances_box_plot(inputs_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
 
-        Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(inputs_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
         Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
 
         neural_network_pointer->set_distances_box_plot(distances_box_plot);
         neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
         neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
         neural_network_pointer->set_distances_descriptives(distances_descriptives);
-
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);

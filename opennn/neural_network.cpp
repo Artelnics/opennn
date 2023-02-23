@@ -1941,36 +1941,32 @@ Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Ten
 
         data_set_batch.set_inputs(inputs);
 
-        const Index batch_size = inputs.dimension(0);
+        const Index batch_size = inputs_dimensions(0);
 
         NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
 
         forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
 
-        const Index layers_number = get_layers_number();
+        const Index layers_number = neural_network_forward_propagation.layers.size();
 
-        if(layers_number == 0) return Tensor<type, 2>();
+        if(layers_number == 0) return inputs;
 
         if(neural_network_forward_propagation.layers(layers_number - 1)->layer_pointer->get_type_string() == "Unscaling")
         {
-            cout << "Unscaling" << endl;
             type* outputs_data = neural_network_forward_propagation.layers(layers_number - 2)->outputs_data;
+
             const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 2)->outputs_dimensions;
 
             return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
         }
         else
         {
-            cout << "Not unscaling" << endl;
             type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
+
             const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
 
             return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
         }
-
-
-
-
     }
     else
     {
@@ -1982,8 +1978,6 @@ Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Ten
 
         throw invalid_argument(buffer.str());
     }
-
-
 }
 
 /// Calculates the outputs vector from the neural network in response to an inputs vector.

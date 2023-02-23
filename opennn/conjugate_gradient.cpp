@@ -897,30 +897,22 @@ TrainingResults ConjugateGradient::perform_training()
 
     if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
     {
-        // Distances
+        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-        Tensor<type, 2> input_data = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> input_data_dimensions = get_dimensions(input_data);
+        type* input_data = inputs.data();
 
-        Tensor<type, 2> scaled_inputs_data(input_data_dimensions(0), input_data_dimensions(1));
-
-        neural_network_pointer->get_scaling_layer_pointer()->calculate_outputs(input_data.data(), input_data_dimensions,
-                                                                               scaled_inputs_data.data(), input_data_dimensions);
-
-        type* tensor_data = scaled_inputs_data.data();
-
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(tensor_data, input_data_dimensions);
+        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
+        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
         type* outputs_data = outputs.data();
 
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        Tensor<type, 1> samples_distances = calculate_samples_distances(tensor_data, input_data_dimensions, outputs_data, outputs_dimensions);
+        Tensor<type, 1> samples_distances = calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
         Descriptives distances_descriptives(samples_distances);
 
-        BoxPlot distances_box_plot = calculate_distances_box_plot(tensor_data, input_data_dimensions, outputs_data, outputs_dimensions);
+        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
 
-        Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(tensor_data, input_data_dimensions, outputs_data, outputs_dimensions);
+        Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
         Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
 
         neural_network_pointer->set_distances_box_plot(distances_box_plot);
