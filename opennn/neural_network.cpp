@@ -1318,6 +1318,11 @@ BoxPlot NeuralNetwork::get_auto_associative_distances_box_plot() const
     return auto_associative_distances_box_plot;
 }
 
+Descriptives NeuralNetwork::get_distances_descriptives() const
+{
+    return distances_descriptives;
+}
+
 type NeuralNetwork::get_box_plot_minimum() const
 {
     return auto_associative_distances_box_plot.minimum;
@@ -1473,6 +1478,12 @@ void NeuralNetwork::set_distances_box_plot(BoxPlot& new_auto_associative_distanc
 void NeuralNetwork::set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>& new_multivariate_distances_box_plot)
 {
     multivariate_distances_box_plot = new_multivariate_distances_box_plot;
+}
+
+
+void NeuralNetwork::set_distances_descriptives(Descriptives& new_distances_descriptives)
+{
+    distances_descriptives = new_distances_descriptives;
 }
 
 
@@ -2667,6 +2678,61 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
 
         // ---------------------------------------------
+
+        // DistancesDescriptives
+
+        Descriptives distances_descriptives = get_distances_descriptives();
+
+        file_stream.OpenElement("DistancesDescriptives");
+
+        // Minimum
+
+        file_stream.OpenElement("Minimum");
+
+        buffer.str("");
+        buffer << distances_descriptives.minimum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // First quartile
+
+        file_stream.OpenElement("Maximum");
+
+        buffer.str("");
+        buffer << distances_descriptives.maximum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Median
+
+        file_stream.OpenElement("Mean");
+
+        buffer.str("");
+        buffer << distances_descriptives.mean;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Third Quartile
+
+        file_stream.OpenElement("StandardDeviation");
+
+        buffer.str("");
+        buffer << distances_descriptives.standard_deviation;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        //DistancesDescriptives (end tag)
+
+        file_stream.CloseElement();
+
         /*
         // Multivariate BoxPlot
 
@@ -2813,6 +2879,22 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
                 box_plot_document.InsertFirstChild(element_clone);
 
                 box_plot_from_XML(box_plot_document);
+            }
+        }
+
+        {
+            const tinyxml2::XMLElement* element = root_element->FirstChildElement("DistancesDescriptives");
+
+            if(element)
+            {
+                tinyxml2::XMLDocument distances_descriptives_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = element->DeepClone(&distances_descriptives_document);
+
+                distances_descriptives_document.InsertFirstChild(element_clone);
+
+                distances_descriptives_from_XML(distances_descriptives_document);
             }
         }
 /*
@@ -3346,6 +3428,107 @@ void NeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
         new_maximum = static_cast<type>(stod(maximum_element->GetText()));
         set_box_plot_maximum(new_maximum);
     }            
+}
+
+void NeuralNetwork::distances_descriptives_from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("DistancesDescriptives");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "DistancesDescriptives element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Minimum
+
+    const tinyxml2::XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
+
+    if(!minimum_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Minimum element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_minimum = 0;
+
+    if(minimum_element->GetText())
+    {
+        new_minimum = static_cast<type>(stod(minimum_element->GetText()));
+        set_box_plot_minimum(new_minimum);
+    }
+
+    // First Quartile
+
+    const tinyxml2::XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
+
+    if(!maximum_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Maximum element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_maximum = 0;
+
+    if(maximum_element->GetText())
+    {
+        new_maximum = static_cast<type>(stod(maximum_element->GetText()));
+    }
+
+    // Median
+
+    const tinyxml2::XMLElement* mean_element = root_element->FirstChildElement("Mean");
+
+    if(!mean_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Mean element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_mean = 0;
+
+    if(mean_element->GetText())
+    {
+        new_mean = static_cast<type>(stod(mean_element->GetText()));
+    }
+
+    // ThirdQuartile
+
+    const tinyxml2::XMLElement* standard_deviation_element = root_element->FirstChildElement("StandardDeviation");
+
+    if(!standard_deviation_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "StandardDeviation element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    type new_standard_deviation = 0;
+
+    if(standard_deviation_element->GetText())
+    {
+        new_standard_deviation = static_cast<type>(stod(standard_deviation_element->GetText()));
+    }
+
+    Descriptives distances_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
+
+    set_distances_descriptives(distances_descriptives);
 }
 
 void NeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2::XMLDocument& document)

@@ -167,6 +167,7 @@ public:
    void set_distances_box_plot(BoxPlot&);
    void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
    void set_variables_distances_names(const Tensor<string, 1>&);
+   void set_distances_descriptives(Descriptives&);
 
    // Layers
 
@@ -205,6 +206,7 @@ public:
    // AANN histogram
 
    BoxPlot get_auto_associative_distances_box_plot() const;
+   Descriptives get_distances_descriptives() const;
 
    type get_box_plot_minimum() const;
    type get_box_plot_first_quartile() const;
@@ -262,6 +264,7 @@ public:
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
    void box_plot_from_XML(const tinyxml2::XMLDocument&);
+   void distances_descriptives_from_XML(const tinyxml2::XMLDocument&);
    void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -327,6 +330,7 @@ protected:
 
    BoxPlot auto_associative_distances_box_plot = BoxPlot();
    Tensor<BoxPlot, 1> multivariate_distances_box_plot = Tensor<BoxPlot, 1>();
+   Descriptives distances_descriptives = Descriptives();
    Tensor<string, 1> variables_distances_names = Tensor<string, 1>();
 
    /// Display messages to screen.

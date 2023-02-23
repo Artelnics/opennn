@@ -95,6 +95,7 @@ public:
 
    BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
    Tensor<type, 2> calculate_multivariate_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+   Tensor<type, 1> calculate_samples_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
    // Training methods
 

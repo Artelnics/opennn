@@ -617,6 +617,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
+        Tensor<type, 1> samples_distances = calculate_samples_distances(tensor_data, input_data_dimensions, outputs_data, outputs_dimensions);
+        Descriptives distances_descriptives(samples_distances);
+
         BoxPlot distances_box_plot = calculate_distances_box_plot(tensor_data, input_data_dimensions, outputs_data, outputs_dimensions);
 
         Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(tensor_data, input_data_dimensions, outputs_data, outputs_dimensions);
@@ -625,6 +628,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         neural_network_pointer->set_distances_box_plot(distances_box_plot);
         neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
         neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
+        neural_network_pointer->set_distances_descriptives(distances_descriptives);
+
     }
 
     if(neural_network_pointer->has_scaling_layer())
