@@ -230,7 +230,7 @@ void BoxPlot::set(const type& new_minimum,
 
 void Descriptives::save(const string &file_name) const
 {
-    ofstream file(file_name.c_str());
+    std::ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -590,7 +590,7 @@ Index Histogram::calculate_frequency(const type&value) const
 void Histogram::save(const string& histogram_file_name) const
 {
     const Index number_of_bins = centers.dimension(0);
-    ofstream histogram_file(histogram_file_name);
+    std::ofstream histogram_file(histogram_file_name);
 
     histogram_file << "centers,frequencies" << endl;
     for(Index i = 0; i < number_of_bins; i++)

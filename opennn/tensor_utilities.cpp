@@ -250,7 +250,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
-    ofstream file(filename);
+    std::ofstream file(filename);
 
     if(!file.is_open())
     {
