@@ -68,460 +68,31 @@ void MeanSquaredErrorTest::test_back_propagate()
     // mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test approximation all zero
-//    {
-//        samples_number = 1;
-//        inputs_number = 1;
-//        outputs_number = 1;
-//        neurons_number = 1;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_constant(type(0));
-
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_constant(type(0));
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
-//        assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
-
-//        assert_true(is_zero(back_propagation.gradient) , LOG);
-//    }
-
-//    // Test approximation all random
-//    {
-//        samples_number = 1 + rand()%5;
-//        inputs_number = 1 + rand()%5;
-//        outputs_number = 1 + rand()%5;
-//        neurons_number = 1 + rand()%5;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_random();
-
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_random();
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-
-
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
-//    }
-
-//    // Test binary classification trivial
-//    {
-//        inputs_number = 1;
-//        outputs_number = 1;
-//        samples_number = 1;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_constant(type(0));
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
-//        neural_network.set_parameters_constant(type(0));
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-
-
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-//        assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
-
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
-
-//    }
-
-//    // Test binary classification random samples, inputs, outputs, neurons
-//    {
-//        samples_number = 1 + rand()%10;
-//        inputs_number = 1 + rand()%10;
-//        outputs_number = 1 + rand()%10;
-//        neurons_number = 1 + rand()%10;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_binary_random();
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_random();
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-
-
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation.error >= 0, LOG);
-
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
-//    }
-
-
-//    // Test forecasting trivial
-//    {
-//        inputs_number = 1;
-//        outputs_number = 1;
-//        samples_number = 1;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_constant(type(0));
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, outputs_number});
-//        neural_network.set_parameters_constant(type(0));
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation.error < type(1e-1), LOG);
-//        assert_true(is_zero(back_propagation.gradient, type(1e-1)), LOG);
-//    }
-
-//    // Test forecasting random samples, inputs, outputs, neurons
-//    {
-//        samples_number = 1 + rand()%10;
-//        inputs_number = 1 + rand()%10;
-//        outputs_number = 1 + rand()%10;
-//        neurons_number = 1 + rand()%10;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_random();
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_random();
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-
-
-//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation.error >= type(0), LOG);
-
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
-//    }
-//}
-
-
-//void MeanSquaredErrorTest::test_back_propagate_lm()
-//{
-//    cout << "test_back_propagate_lm\n";
-
-//    // Test approximation random samples, inputs, outputs, neurons
-//    {
-//        samples_number = 1 + rand()%10;
-//        inputs_number = 1 + rand()%10;
-//        outputs_number = 1 + rand()%10;
-//        neurons_number = 1 + rand()%10;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_random();
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_random();
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-
-//        // not running in  visual studio
-//        /*
-//        back_propagation_lm.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-//        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
-
-//        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation_lm.error >= type(0), LOG);
-//        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
-
-//        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-1)), LOG);
-//        */
-//    }
-
-//    // Test binary classification random samples, inputs, outputs, neurons
-//    {
-//        samples_number = 1 + rand()%10;
-//        inputs_number = 1 + rand()%10;
-//        outputs_number = 1 + rand()%10;
-//        neurons_number = 1 + rand()%10;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_binary_random();
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_random();
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        // not running in visual studio
-//        /*
-//        back_propagation_lm.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-//        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
-
-//        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation_lm.error >= type(0), LOG);
-//        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
-
-//        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
-//        */
-//    }
-
-//    // Test multiple classification random samples, inputs, outputs, neurons
-//    {
-//        samples_number = 1 + rand()%10;
-//        inputs_number = 1 + rand()%10;
-//        outputs_number = 1 + rand()%10;
-//        neurons_number = 1 + rand()%10;
-
-//        // Data set
-
-//        data_set.set(samples_number, inputs_number, outputs_number);
-//        data_set.set_data_random();
-//        data_set.set_training();
-
-//        training_samples_indices = data_set.get_training_samples_indices();
-//        input_variables_indices = data_set.get_input_variables_indices();
-//        target_variables_indices = data_set.get_target_variables_indices();
-
-//        batch.set(samples_number, &data_set);
-//        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-//        // Neural network
-
-//        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
-//        neural_network.set_parameters_random();
-
-//        forward_propagation.set(samples_number, &neural_network);
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-//        // Loss index
-
-//        back_propagation.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-//        // not running in visual studio
-//        /*
-//        back_propagation_lm.set(samples_number, &mean_squared_error);
-//        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-//        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
-
-//        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
-
-//        assert_true(back_propagation_lm.error >= type(0), LOG);
-//        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
-
-//        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
-//        */
-//    }
-
-    // Test convolutional
     {
-/*
         samples_number = 1;
         inputs_number = 1;
         outputs_number = 1;
         neurons_number = 1;
-        bool switch_train = true;
 
-        const Index channels = 3;
+        // Data set
 
-        const Index rows_input = 4;
-        const Index cols_input = 4;
-        const Index rows_kernel = 3;
-        const Index cols_kernel = 3;
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_constant(type(0));
 
-        //set dimensions
+        data_set.set_training();
 
-        Tensor<type,4> input_batch(rows_input, cols_input, channels, input_images);
-        Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
-        Tensor<type,1> bias(input_kernels);
+        training_samples_indices = data_set.get_training_samples_indices();
 
-        const Index inputs_number_convolution = (rows_input)*(cols_input)*channels*input_images;
-        const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels*input_images;
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
-        //set values
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-        input_batch.setConstant(1.);
+        // Neural network
 
-        input_batch.chip(0,3).chip(0,2).setConstant(2.);
-        input_batch.chip(0,3).chip(1,2).setConstant(3.);
-        input_batch.chip(0,3).chip(2,2).setConstant(4.);
+        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch, forward_propagation, switch_train);
@@ -529,18 +100,446 @@ void MeanSquaredErrorTest::test_back_propagate()
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
-
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
-
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
 
         assert_true(is_zero(back_propagation.gradient) , LOG);
+    }
+
+    // Test approximation all random
+    {
+        samples_number = 1 + rand()%5;
+        inputs_number = 1 + rand()%5;
+        outputs_number = 1 + rand()%5;
+        neurons_number = 1 + rand()%5;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+    }
+
+    // Test binary classification trivial
+    {
+        inputs_number = 1;
+        outputs_number = 1;
+        samples_number = 1;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_constant(type(0));
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
+        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
+        assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+
+//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
+
+    }
+
+    // Test binary classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_binary_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation.error >= 0, LOG);
+
+//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+    }
+
+
+    // Test forecasting trivial
+    {
+        inputs_number = 1;
+        outputs_number = 1;
+        samples_number = 1;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_constant(type(0));
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation.error < type(1e-1), LOG);
+        assert_true(is_zero(back_propagation.gradient, type(1e-1)), LOG);
+    }
+
+    // Test forecasting random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation.error >= type(0), LOG);
+
+//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
+    }
+}
+
+
+void MeanSquaredErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+    // Test approximation random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+
+        // not running in  visual studio
+        /*
+        back_propagation_lm.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-1)), LOG);
+        */
+    }
+
+    // Test binary classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_binary_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        // not running in visual studio
+        /*
+        back_propagation_lm.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+        */
+    }
+
+    // Test multiple classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        // not running in visual studio
+        /*
+        back_propagation_lm.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+        */
+    }
+
+    // Test convolutional
+    {
+
+//        samples_number = 1;
+//        inputs_number = 1;
+//        outputs_number = 1;
+//        neurons_number = 1;
+//        bool switch_train = true;
+
+//        const Index channels = 3;
+
+//        const Index rows_input = 4;
+//        const Index cols_input = 4;
+//        const Index rows_kernel = 3;
+//        const Index cols_kernel = 3;
+
+//        //set dimensions
+
+//        Tensor<type,4> input_batch(rows_input, cols_input, channels, input_images);
+//        Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
+//        Tensor<type,1> bias(input_kernels);
+
+//        const Index inputs_number_convolution = (rows_input)*(cols_input)*channels*input_images;
+//        const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels*input_images;
+
+//        //set values
+
+//        input_batch.setConstant(1.);
+
+//        input_batch.chip(0,3).chip(0,2).setConstant(2.);
+//        input_batch.chip(0,3).chip(1,2).setConstant(3.);
+//        input_batch.chip(0,3).chip(2,2).setConstant(4.);
+
+//        forward_propagation.set(samples_number, &neural_network);
+//        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+//        // Loss index
+
+//        back_propagation.set(samples_number, &mean_squared_error);
+
+//        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+//        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+//        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+
+//        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
+//        assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
+
+//        assert_true(is_zero(back_propagation.gradient) , LOG);
 
     }
 
@@ -758,7 +757,6 @@ void MeanSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= type(0), LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
-*/
     }
 
     // Test convolutional
@@ -1556,6 +1554,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1
 
+    if(false)
     {
         bool switch_train = true;
 
@@ -1784,14 +1783,17 @@ void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
 
-//    test_constructor();
-//    test_destructor();
+    test_constructor();
+    test_destructor();
+
+    // Convolutional network methods
+
+//    test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
 
-//    test_back_propagate();
-    test_calculate_gradient_convolutional_network();
-//    test_back_propagate_lm();
+    test_back_propagate();
+    test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";
 }

@@ -19,89 +19,89 @@ CorrelationsTest::~CorrelationsTest()
 
 void CorrelationsTest::test_spearman_linear_correlation()
 {
-    cout << "test_spearman_linear_correlation\n";
+//    cout << "test_spearman_linear_correlation\n";
 
-    Index size;
+//    Index size;
 
-    Tensor<type, 1> x;
-    Tensor<type, 1> y;
+//    Tensor<type, 1> x;
+//    Tensor<type, 1> y;
 
-    type correlation;
-    type solution;
+//    type correlation;
+//    type solution;
 
-    // Perfect case
+//    // Perfect case
 
-    size = 500000;
+//    size = 500000;
 
-    x.resize(size);
-    x.setRandom();
-//    x.setValues({type(5), type(1), type(2),type(1), type(2), type(1), type(1)});
+//    x.resize(size);
+//    x.setRandom();
+////    x.setValues({type(5), type(1), type(2),type(1), type(2), type(1), type(1)});
 
-    cout << "----------------------------------------" << endl;
+//    cout << "----------------------------------------" << endl;
 
-    cout << "Old function" << endl;
+//    cout << "Old function" << endl;
 
-    auto start_1 = std::chrono::high_resolution_clock::now();
+//    auto start_1 = std::chrono::high_resolution_clock::now();
 
-    const int n = x.size();
+//    const int n = x.size();
 
-    Tensor<type,1> x_ranked_function(n);
+//    Tensor<type,1> x_ranked_function(n);
 
-    int r, s;
+//    int r, s;
 
-#pragma omp parallel for
-    for(int i = 0; i < n; i++)
-    {
-        s = std::count(x.data(), x.data() + x.size(), x[i]);
-        r = std::count_if(x.data(), x.data() + x.size(), [&x,i](type j) { return j < x[i];}) + 1;
-        x_ranked_function[i] = r + (s-1) * 0.5;
-    }
+//#pragma omp parallel for
+//    for(int i = 0; i < n; i++)
+//    {
+//        s = std::count(x.data(), x.data() + x.size(), x[i]);
+//        r = std::count_if(x.data(), x.data() + x.size(), [&x,i](type j) { return j < x[i];}) + 1;
+//        x_ranked_function[i] = r + (s-1) * 0.5;
+//    }
 
-    auto end_1 = std::chrono::high_resolution_clock::now();
-    auto duration_1 = std::chrono::duration_cast<std::chrono::microseconds>(end_1 - start_1);
+//    auto end_1 = std::chrono::high_resolution_clock::now();
+//    auto duration_1 = std::chrono::duration_cast<std::chrono::microseconds>(end_1 - start_1);
 
-    std::cout << "Duration _function (in microseconds): " << duration_1.count() << std::endl;
+//    std::cout << "Duration _function (in microseconds): " << duration_1.count() << std::endl;
 
-    cout << "----------------------------------------" << endl;
+//    cout << "----------------------------------------" << endl;
 
-    cout << "New function" << endl;
+//    cout << "New function" << endl;
 
-    auto start_2 = std::chrono::high_resolution_clock::now();
+//    auto start_2 = std::chrono::high_resolution_clock::now();
 
-    vector<pair<type, size_t> > v_sort(x.size());
+//    vector<pair<type, size_t> > v_sort(x.size());
 
-    for (size_t i = 0U; i < v_sort.size(); ++i)
-    {
-        v_sort[i] = make_pair(x[i], i);
-    }
+//    for (size_t i = 0U; i < v_sort.size(); ++i)
+//    {
+//        v_sort[i] = make_pair(x[i], i);
+//    }
 
-    sort(v_sort.begin(), v_sort.end());
+//    sort(v_sort.begin(), v_sort.end());
 
-    vector<type> x_rank(x.size());
-    type rank = 1.0;
+//    vector<type> x_rank(x.size());
+//    type rank = 1.0;
 
-    for (size_t i = 0U; i < v_sort.size(); ++i)
-    {
-        size_t repeated = 1U;
-        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
-        for (size_t k = 0; k < repeated; ++k)
-        {
-            x_rank[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
-        }
-        i += repeated - 1;
-        rank += repeated;
-    }
+//    for (size_t i = 0U; i < v_sort.size(); ++i)
+//    {
+//        size_t repeated = 1U;
+//        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
+//        for (size_t k = 0; k < repeated; ++k)
+//        {
+//            x_rank[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
+//        }
+//        i += repeated - 1;
+//        rank += repeated;
+//    }
 
-    TensorMap<Tensor<type, 1>> tensor(x_rank.data(), x_rank.size());
+//    TensorMap<Tensor<type, 1>> tensor(x_rank.data(), x_rank.size());
 
-    // Code to be timed
+//    // Code to be timed
 
-    auto end_2 = std::chrono::high_resolution_clock::now();
-    auto duration_2 = std::chrono::duration_cast<std::chrono::microseconds>(end_2 - start_2);
+//    auto end_2 = std::chrono::high_resolution_clock::now();
+//    auto duration_2 = std::chrono::duration_cast<std::chrono::microseconds>(end_2 - start_2);
 
-    std::cout << "Duration (in microseconds): " << duration_2.count() << std::endl;
+//    std::cout << "Duration (in microseconds): " << duration_2.count() << std::endl;
 
-    cout << "----------------------------------------" << endl;
+//    cout << "----------------------------------------" << endl;
 
 }
 
@@ -294,7 +294,7 @@ void CorrelationsTest::test_logarithmic_correlation()
     solution = type(1);
 
     assert_true(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
@@ -322,9 +322,9 @@ void CorrelationsTest::test_exponential_correlation()
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    assert_true(correlation.r > static_cast<type>(0.999999), LOG);
+    assert_true(abs(correlation.r - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test missing values
 

@@ -47,6 +47,8 @@ private:
     Index neurons_number;
     Index outputs_number;
 
+    bool switch_train = true;
+
     Tensor<Index, 1> training_samples_indices;
     Tensor<Index, 1> input_variables_indices;
     Tensor<Index, 1> target_variables_indices;
