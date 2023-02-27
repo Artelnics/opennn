@@ -19,90 +19,29 @@ CorrelationsTest::~CorrelationsTest()
 
 void CorrelationsTest::test_spearman_linear_correlation()
 {
-//    cout << "test_spearman_linear_correlation\n";
+    cout << "test_spearman_linear_correlation\n";
 
-//    Index size;
+    cout << "test_linear_correlation\n";
 
-//    Tensor<type, 1> x;
-//    Tensor<type, 1> y;
+    Index size;
 
-//    type correlation;
-//    type solution;
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
 
-//    // Perfect case
+    type correlation;
+    type solution;
 
-//    size = 500000;
+    size = 10;
 
-//    x.resize(size);
-//    x.setRandom();
-////    x.setValues({type(5), type(1), type(2),type(1), type(2), type(1), type(1)});
+    x.resize(size);
+    x.setValues({type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10)});
 
-//    cout << "----------------------------------------" << endl;
+    y.resize(size);
+    y.setValues({type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100)});
 
-//    cout << "Old function" << endl;
+    solution = type(1);
 
-//    auto start_1 = std::chrono::high_resolution_clock::now();
-
-//    const int n = x.size();
-
-//    Tensor<type,1> x_ranked_function(n);
-
-//    int r, s;
-
-//#pragma omp parallel for
-//    for(int i = 0; i < n; i++)
-//    {
-//        s = std::count(x.data(), x.data() + x.size(), x[i]);
-//        r = std::count_if(x.data(), x.data() + x.size(), [&x,i](type j) { return j < x[i];}) + 1;
-//        x_ranked_function[i] = r + (s-1) * 0.5;
-//    }
-
-//    auto end_1 = std::chrono::high_resolution_clock::now();
-//    auto duration_1 = std::chrono::duration_cast<std::chrono::microseconds>(end_1 - start_1);
-
-//    std::cout << "Duration _function (in microseconds): " << duration_1.count() << std::endl;
-
-//    cout << "----------------------------------------" << endl;
-
-//    cout << "New function" << endl;
-
-//    auto start_2 = std::chrono::high_resolution_clock::now();
-
-//    vector<pair<type, size_t> > v_sort(x.size());
-
-//    for (size_t i = 0U; i < v_sort.size(); ++i)
-//    {
-//        v_sort[i] = make_pair(x[i], i);
-//    }
-
-//    sort(v_sort.begin(), v_sort.end());
-
-//    vector<type> x_rank(x.size());
-//    type rank = 1.0;
-
-//    for (size_t i = 0U; i < v_sort.size(); ++i)
-//    {
-//        size_t repeated = 1U;
-//        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
-//        for (size_t k = 0; k < repeated; ++k)
-//        {
-//            x_rank[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
-//        }
-//        i += repeated - 1;
-//        rank += repeated;
-//    }
-
-//    TensorMap<Tensor<type, 1>> tensor(x_rank.data(), x_rank.size());
-
-//    // Code to be timed
-
-//    auto end_2 = std::chrono::high_resolution_clock::now();
-//    auto duration_2 = std::chrono::duration_cast<std::chrono::microseconds>(end_2 - start_2);
-
-//    std::cout << "Duration (in microseconds): " << duration_2.count() << std::endl;
-
-//    cout << "----------------------------------------" << endl;
-
+    assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 void CorrelationsTest::test_linear_correlation()
@@ -134,7 +73,6 @@ void CorrelationsTest::test_linear_correlation()
 
     const Tensor<type, 1> x1 = calculate_rank_greater(x).cast<type>();
     const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
-
 
     // Test
 
