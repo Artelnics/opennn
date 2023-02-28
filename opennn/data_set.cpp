@@ -13021,7 +13021,7 @@ void DataSet::read_csv_1()
 
     if(display) cout << "Setting data file preview..." << endl;
 
-    const Index lines_number = has_columns_names ? 4 : 3;
+    Index lines_number = has_columns_names ? 4 : 3;
 
     data_file_preview.resize(lines_number);
 
@@ -13104,6 +13104,74 @@ void DataSet::read_csv_1()
         set_columns_names(get_default_columns_names(columns_number));
     }
 
+    // Check columns with all missing values
+
+    bool has_nans_columns = false;
+
+    do
+    {
+        has_nans_columns = false;
+
+        if(lines_number > 10)
+            break;
+
+        for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
+        {
+            if(has_rows_labels && i == 0) continue;
+
+            // Check if all are missing values
+
+            if( data_file_preview(1)(i) == missing_values_label
+                    && data_file_preview(2)(i) == missing_values_label
+                    && data_file_preview(lines_number-2)(i) == missing_values_label
+                    && data_file_preview(lines_number-1)(i) == missing_values_label)
+            {
+                has_nans_columns = true;
+            }
+            else
+            {
+                has_nans_columns = false;
+            }
+
+            if(has_nans_columns)
+            {
+                lines_number++;
+                data_file_preview.resize(lines_number);
+
+                string line;
+                Index lines_count = 0;
+
+                file.open(data_file_name.c_str());
+
+                if(!file.is_open())
+                {
+                    ostringstream buffer;
+
+                    buffer << "OpenNN Exception: DataSet class.\n"
+                           << "void read_csv() method.\n"
+                           << "Cannot open data file: " << data_file_name << "\n";
+
+                    throw invalid_argument(buffer.str());
+                }
+
+                while(file.good())
+                {
+                    getline(file, line);
+                    line = decode(line);
+                    trim(line);
+                    erase(line, '"');
+                    if(line.empty()) continue;
+                    check_separators(line);
+                    data_file_preview(lines_count) = get_tokens(line, separator_char);
+                    lines_count++;
+                    if(lines_count == lines_number) break;
+                }
+
+                file.close();
+            }
+        }
+    }while(has_nans_columns);
+
     // Columns types
 
     if(display) cout << "Setting columns types..." << endl;
@@ -13114,19 +13182,24 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+        string data_file_preview_1 = data_file_preview(1)(i);
+        string data_file_preview_2 = data_file_preview(2)(i);
+        string data_file_preview_3 = data_file_preview(lines_number-2)(i);
+        string data_file_preview_4 = data_file_preview(lines_number-1)(i);
+
+        if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+                || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
+                || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
+                || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
         {
             columns(column_index).type = ColumnType::DateTime;
             time_column = columns(column_index).name;
             column_index++;
         }
-        else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(lines_number-1)(i).empty()))
+        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
+                || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
+                || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
+                || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
         {
             columns(column_index).type = ColumnType::Numeric;
             column_index++;
@@ -13137,6 +13210,24 @@ void DataSet::read_csv_1()
             column_index++;
         }
     }
+
+    // Resize data file preview to original
+
+    if(data_file_preview.size() > 4)
+    {
+        lines_number = has_columns_names ? 4 : 3;
+
+        Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
+
+        data_file_preview.resize(lines_number);
+
+        data_file_preview(0) = data_file_preview_copy(1);
+        data_file_preview(1) = data_file_preview_copy(1);
+        data_file_preview(2) = data_file_preview_copy(2);
+        data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
+        data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
+    }
+
 }
 
 
@@ -13908,7 +13999,6 @@ bool DataSet::has_time_time_series_columns() const
 }
 
 
-
 bool DataSet::has_selection() const
 {
     if(get_selection_samples_number() == 0) return false;
@@ -13917,13 +14007,12 @@ bool DataSet::has_selection() const
 }
 
 
-
 Tensor<Index, 1> DataSet::count_nan_columns() const
 {
     const Index columns_number = get_columns_number();
     const Index rows_number = get_samples_number();
 
-    Tensor<Index, 1> nan_columns(get_columns_number());
+    Tensor<Index, 1> nan_columns(columns_number);
     nan_columns.setZero();
 
     for(Index column_index = 0; column_index < columns_number; column_index++)
