@@ -7789,11 +7789,13 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(has_rows_labels)
     {
-        const Index rows_labels_number = rows_labels.dimension(0);
+        const Index rows_labels_number = rows_labels.size();
 
         file_stream.OpenElement("RowsLabels");
 
         buffer.str("");
+
+        cout << "ROWS LABELS NUMBER: " << rows_labels_number << endl;
 
         for(Index i = 0; i < rows_labels_number; i++)
         {
@@ -8737,7 +8739,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            rows_labels = get_tokens(new_rows_labels, ',');
+            char separator = ',';
+
+            if (new_rows_labels.find(",") == string::npos
+                    && new_rows_labels.find(";") != string::npos) {
+                separator = ';';
+            }
+
+            rows_labels = get_tokens(new_rows_labels, separator);
         }
     }
 
