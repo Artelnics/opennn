@@ -642,6 +642,7 @@ public:
     void set_data_constant(const type&);
 
     static type round_to_precision(type, const int&);
+    static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
 
     void set_data_random();
     void set_data_binary_random();

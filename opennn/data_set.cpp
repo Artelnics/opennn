@@ -7434,6 +7434,24 @@ type DataSet::round_to_precision(type x, const int& precision){
     return (round(factor*x))/factor;
 }
 
+Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const int& precision)
+{
+    Tensor<type, 2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
+
+    type factor = pow(10,precision);
+
+    for (int i = 0; i < matrix.dimension(0); i++)
+    {
+        for (int j = 0; j < matrix.dimension(1); j++)
+        {
+            matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
+        }
+    }
+
+    return matrix_rounded;
+}
+
+
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
 

@@ -1514,8 +1514,7 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
 }
 
 string round_to_precision_string(type x, const int& precision)
-{
-
+{    
     type factor = pow(10,precision);
     type rounded_value = (round(factor*x))/factor;
     stringstream ss;
@@ -1524,6 +1523,25 @@ string round_to_precision_string(type x, const int& precision)
     return result;
 }
 
+Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const int& precision)
+{
+    Tensor<string,2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
+
+    type factor = pow(10,precision);
+
+    for(int i = 0; i< matrix_rounded.dimension(0); i++)
+    {
+        for(int j = 0; j < matrix_rounded.dimension(1); j++)
+        {
+            type rounded_value = (round(factor*matrix(i,j)))/factor;
+            stringstream ss;
+            ss << fixed << setprecision(precision) << rounded_value;
+            string result = ss.str();
+            matrix_rounded(i,j) = result;
+        }
+    }
+    return matrix_rounded;
+}
 
 }
 
