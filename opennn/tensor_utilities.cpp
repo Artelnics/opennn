@@ -851,6 +851,20 @@ type l2_distance(const TensorMap<Tensor<type, 0>>&x, const TensorMap<Tensor<type
     return distance(0);
 }
 
+Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
+{
+    Tensor<type, 1> distance(size);
+
+    Tensor<type, 2> difference = x - y;
+
+    for(Index i = 0; i < difference.dimension(1); i ++)
+    {
+        distance(i) = abs(difference(i));
+    }
+
+    return distance;
+}
+
 
 void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {

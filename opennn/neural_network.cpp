@@ -2222,6 +2222,71 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
     return Tensor<type, 2>();
 }
 
+Tensor<type, 2> NeuralNetwork::calculate_multivariate_distances(type* & new_inputs_data, Tensor<Index,1>& inputs_dimensions,
+                                        type* & new_outputs_data, Tensor<Index,1>& outputs_dimensions)
+{
+    const Index samples_number = inputs_dimensions(0);
+    const Index inputs_number = inputs_dimensions(1);
+
+    TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
+    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    Tensor<type, 2> testing_samples_distances(samples_number, inputs_number);
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        Tensor<type, 1> input_row = inputs.chip(i, 0);
+        Tensor<type, 1> output_row = outputs.chip(i, 0);
+
+        for(Index j = 0; j < input_row.size(); j ++)
+        {
+            type variable_input_value = input_row(j);
+            const TensorMap<Tensor<type, 0>> input_variable(&variable_input_value);
+
+            type variable_output_value = output_row(j);
+            const TensorMap<Tensor<type, 0>> output_variable(&variable_output_value);
+
+            const type distance = l2_distance(input_variable, output_variable);
+
+            if(!isnan(distance))
+            {
+                testing_samples_distances(i,j) = distance;
+            }
+        }
+    }
+
+    return testing_samples_distances;
+}
+
+Tensor<type, 1> NeuralNetwork::calculate_samples_distances(type* & new_inputs_data, Tensor<Index,1>& inputs_dimensions,
+                                                            type* & new_outputs_data, Tensor<Index,1>& outputs_dimensions)
+{
+    const Index samples_number = inputs_dimensions(0);
+    const Index inputs_number = inputs_dimensions(1);
+
+    TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
+    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+
+    Tensor<type, 1> distances(samples_number);
+    Index distance_index = 0;
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        Tensor<type, 1> input_row = inputs.chip(i, 0);
+        Tensor<type, 1> output_row = outputs.chip(i, 0);
+
+        const type distance = l2_distance(input_row, output_row)/inputs_number;
+
+        if(!isnan(distance))
+        {
+            distances(distance_index) = l2_distance(input_row, output_row)/inputs_number;
+            distance_index++;
+        }
+    }
+
+    return distances;
+}
+
 
 /// Calculates the input data necessary to compute the output data from the neural network in some direction.
 /// @param direction Input index (must be between 0 and number of inputs - 1).
@@ -2727,7 +2792,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
-        /*
+        //*********************************************
         // Multivariate BoxPlot
 
         file_stream.OpenElement("MultivariateDistancesBoxPlot");
@@ -2780,7 +2845,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
         //MultivariateDistancesBoxPlot (end tag)
 
         file_stream.CloseElement();
-        */
+        //*************************************
     }
 
     // Neural network (end tag)
@@ -2891,7 +2956,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
                 distances_descriptives_from_XML(distances_descriptives_document);
             }
         }
-/*
+//**************************************
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
 
         if(element)
@@ -2905,7 +2970,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             multivariate_box_plot_from_XML(multivariate_box_plot_document);
         }
-        */
+//**************************************
     }
 
     // Display

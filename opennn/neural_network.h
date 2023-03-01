@@ -243,6 +243,9 @@ public:
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
+   Tensor<type, 2> calculate_multivariate_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+   Tensor<type, 1> calculate_samples_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    // Text generation
@@ -329,7 +332,7 @@ protected:
    /// AANN distances box plot
 
    BoxPlot auto_associative_distances_box_plot = BoxPlot();
-   Tensor<BoxPlot, 1> multivariate_distances_box_plot = Tensor<BoxPlot, 1>();
+   Tensor<BoxPlot, 1> multivariate_distances_box_plot;
    Descriptives distances_descriptives = Descriptives();
    Tensor<string, 1> variables_distances_names = Tensor<string, 1>();
 

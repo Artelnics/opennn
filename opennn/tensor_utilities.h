@@ -95,6 +95,8 @@ void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 type l2_distance(const TensorMap<Tensor<type, 0>>&, const TensorMap<Tensor<type, 0>>&);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
+Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
+
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 

@@ -907,12 +907,12 @@ TrainingResults ConjugateGradient::perform_training()
 
         type* outputs_data = outputs.data();
 
-        Tensor<type, 1> samples_distances = calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
         Descriptives distances_descriptives(samples_distances);
 
         BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
 
-        Tensor<type, 2> multivariate_distances = calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
         Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
 
         neural_network_pointer->set_distances_box_plot(distances_box_plot);
