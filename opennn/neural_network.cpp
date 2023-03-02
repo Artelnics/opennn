@@ -4355,6 +4355,18 @@ string NeuralNetwork::write_expression_api() const
     buffer << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl;
     buffer << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl;
     buffer << "</head>" << endl;
+    
+    buffer << "<style>" << endl;
+    buffer << ".btn{" << endl;
+    buffer << "background-color: #7393B3 /* Gray */" << endl;
+    buffer << "border: none;" << endl;
+    buffer << "color: white;" << endl;
+    buffer << "padding: 15px 32px;" << endl;
+    buffer << "text-align: center;" << endl;
+    buffer << "font-size: 16px;" << endl;
+    buffer << "}" << endl;
+    buffer << "</style>" << endl;
+    
     buffer << "<body>" << endl;
     buffer << "<div class = \"container\">" << endl;
     buffer << "<br></br>" << endl;
