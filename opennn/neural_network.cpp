@@ -4820,6 +4820,20 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "<link href=\"https://www.neuraldesigner.com/images/fav.ico\" rel=\"shortcut icon\" type=\"image/x-icon\" />" << endl;
     buffer << "</head>" << endl;
     buffer << "\n" << endl;
+
+    buffer << "<style>" << endl;
+    buffer << ".button" << endl;
+    buffer << "{" << endl;
+    buffer << "background-color: #6F8FAF;" << endl;
+    buffer << "border: none; color: white;" << endl;
+    buffer << "text-align: center;" << endl;
+    buffer << "font-size: 16px;" << endl;
+    buffer << "margin: 4px 4px;" << endl;
+    buffer << "cursor: pointer;" << endl;
+    buffer << "}" << endl;
+    buffer << "</style>" << endl;
+    buffer << "\n" << endl;
+
     buffer << "<body>" << endl;
     buffer << "\n" << endl;
     buffer << "<section>" << endl;
