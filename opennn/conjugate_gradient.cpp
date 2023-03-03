@@ -902,7 +902,8 @@ TrainingResults ConjugateGradient::perform_training()
 
         type* input_data = inputs.data();
 
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
+//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
+        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
         type* outputs_data = outputs.data();

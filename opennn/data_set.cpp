@@ -7813,8 +7813,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         buffer.str("");
 
-        cout << "ROWS LABELS NUMBER: " << rows_labels_number << endl;
-
         for(Index i = 0; i < rows_labels_number; i++)
         {
             buffer << rows_labels(i);

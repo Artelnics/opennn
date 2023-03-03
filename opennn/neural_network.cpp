@@ -2161,9 +2161,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         bool switch_train = false;
 
-        const Index first_trainable_layer_index = get_first_trainable_layer_index();
-        const Index last_trainable_layer_index = get_last_trainable_layer_index();
-
         if(layers_pointers(0)->get_type_string() != "Scaling")
         {
             layers_pointers(0)->forward_propagate(scaled_inputs_data, inputs_dimensions, forward_propagation.layers(0), switch_train);
