@@ -4352,6 +4352,18 @@ string NeuralNetwork::write_expression_api() const
     buffer << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl;
     buffer << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl;
     buffer << "</head>" << endl;
+    
+    buffer << "<style>" << endl;
+    buffer << ".btn{" << endl;
+    buffer << "background-color: #7393B3 /* Gray */" << endl;
+    buffer << "border: none;" << endl;
+    buffer << "color: white;" << endl;
+    buffer << "padding: 15px 32px;" << endl;
+    buffer << "text-align: center;" << endl;
+    buffer << "font-size: 16px;" << endl;
+    buffer << "}" << endl;
+    buffer << "</style>" << endl;
+    
     buffer << "<body>" << endl;
     buffer << "<div class = \"container\">" << endl;
     buffer << "<br></br>" << endl;
@@ -4817,6 +4829,20 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "<link href=\"https://www.neuraldesigner.com/images/fav.ico\" rel=\"shortcut icon\" type=\"image/x-icon\" />" << endl;
     buffer << "</head>" << endl;
     buffer << "\n" << endl;
+
+    buffer << "<style>" << endl;
+    buffer << ".button" << endl;
+    buffer << "{" << endl;
+    buffer << "background-color: #6F8FAF;" << endl;
+    buffer << "border: none; color: white;" << endl;
+    buffer << "text-align: center;" << endl;
+    buffer << "font-size: 16px;" << endl;
+    buffer << "margin: 4px 4px;" << endl;
+    buffer << "cursor: pointer;" << endl;
+    buffer << "}" << endl;
+    buffer << "</style>" << endl;
+    buffer << "\n" << endl;
+
     buffer << "<body>" << endl;
     buffer << "\n" << endl;
     buffer << "<section>" << endl;
