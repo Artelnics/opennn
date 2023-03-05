@@ -418,8 +418,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 //    const Index kernels_channels_number = get_kernels_channels_number();
     const Index kernels_number = get_kernels_number();
 
-//    const ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
-//            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+    const ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+            static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
@@ -434,6 +434,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     const Index delta_slice_dimensions = (inputs_rows_number-kernels_rows_number+1)*(inputs_columns_number-kernels_columns_number+1);
     const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
+    const Tensor<type, 2> deltas_times_derivatives = deltas * convolutional_layer_forward_propagation->activations_derivatives;
+
     // Biases gradient
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -441,7 +443,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
         Eigen::array<Eigen::Index, 2> offsets = {kernel_index, delta_slice_dimensions*kernel_index};
         Eigen::array<Eigen::Index, 2> extents = {2, delta_slice_dimensions};
 
-        Tensor<type, 2> delta_slice = deltas.slice(offsets, extents);
+        Tensor<type, 2> delta_slice = deltas_times_derivatives.slice(offsets, extents);
 
         const Tensor<type, 0> current_sum = delta_slice.sum();
 
@@ -460,7 +462,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
             Eigen::array<Eigen::Index, 2> offsets = {image_index, delta_slice_dimensions*kernel_index};
             Eigen::array<Eigen::Index, 2> extents = {1, delta_slice_dimensions};
 
-            Tensor<type, 2> delta_slice = deltas.slice(offsets, extents);
+            Tensor<type, 2> delta_slice = deltas_times_derivatives.slice(offsets, extents);
 
             const TensorMap<Tensor<type, 3>> single_image(inputs.data()+image_index*next_image,
                                                           inputs_rows_number,
@@ -471,8 +473,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                                    inputs_rows_number - kernels_rows_number + 1,
                                                    inputs_columns_number - kernels_columns_number + 1,
                                                    1);
-
-            // --> multiply by convolutional activations derivatives?
 
             if(image_index == 0) partial_gradient = single_image.convolve(delta_reshape,dims);
             else partial_gradient += single_image.convolve(delta_reshape,dims);

@@ -1680,31 +1680,31 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-        Tensor<type, 4> kernels(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
+//        Tensor<type, 4> kernels(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
 
-        kernels(0,0,0,0) = static_cast<type>(0.5);
-        kernels(0,1,0,0) = static_cast<type>(0.5);
-        kernels(1,0,0,0) = static_cast<type>(0.5);
-        kernels(1,1,0,0) = static_cast<type>(0.5);
+//        kernels(0,0,0,0) = static_cast<type>(0.5);
+//        kernels(0,1,0,0) = static_cast<type>(0.5);
+//        kernels(1,0,0,0) = static_cast<type>(0.5);
+//        kernels(1,1,0,0) = static_cast<type>(0.5);
 
-        kernels(0,0,0,1) = static_cast<type>(0.5);
-        kernels(0,1,0,1) = static_cast<type>(0.5);
-        kernels(1,0,0,1) = static_cast<type>(0.5);
-        kernels(1,1,0,1) = static_cast<type>(0.5);
+//        kernels(0,0,0,1) = static_cast<type>(0.5);
+//        kernels(0,1,0,1) = static_cast<type>(0.5);
+//        kernels(1,0,0,1) = static_cast<type>(0.5);
+//        kernels(1,1,0,1) = static_cast<type>(0.5);
 
-        kernels(0,0,1,0) = static_cast<type>(0.7);
-        kernels(0,1,1,0) = static_cast<type>(0.7);
-        kernels(1,0,1,0) = static_cast<type>(0.7);
-        kernels(1,1,1,0) = static_cast<type>(0.7);
+//        kernels(0,0,1,0) = static_cast<type>(0.7);
+//        kernels(0,1,1,0) = static_cast<type>(0.7);
+//        kernels(1,0,1,0) = static_cast<type>(0.7);
+//        kernels(1,1,1,0) = static_cast<type>(0.7);
 
-        kernels(0,0,1,1) = static_cast<type>(0.7);
-        kernels(0,1,1,1) = static_cast<type>(0.7);
-        kernels(1,0,1,1) = static_cast<type>(0.7);
-        kernels(1,1,1,1) = static_cast<type>(0.7);
+//        kernels(0,0,1,1) = static_cast<type>(0.7);
+//        kernels(0,1,1,1) = static_cast<type>(0.7);
+//        kernels(1,0,1,1) = static_cast<type>(0.7);
+//        kernels(1,1,1,1) = static_cast<type>(0.7);
 
-        convolutional_layer->set_synaptic_weights(kernels);
+//        convolutional_layer->set_synaptic_weights(kernels);
 
-        convolutional_layer->set_biases_constant(0);
+//        convolutional_layer->set_biases_constant(0);
 
         convolutional_layer->set_parameters_random();
 
@@ -1745,8 +1745,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        synaptic_weights(2,1) = 2;
 //        synaptic_weights(3,1) = 2;
 
-        perceptron_layer->set_synaptic_weights(synaptic_weights);
-        perceptron_layer->set_biases_constant(0);
+//        perceptron_layer->set_synaptic_weights(synaptic_weights);
+//        perceptron_layer->set_biases_constant(0);
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
         perceptron_layer->set_parameters_random();
