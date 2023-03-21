@@ -3789,6 +3789,7 @@ string NeuralNetwork::write_expression() const
     Tensor<string, 1> inputs_names_vector;
     inputs_names_vector = inputs_names;
     string aux_name = "";
+
     for (int i = 0; i < inputs_names.dimension(0); i++)
     {
         if (!inputs_names_vector[i].empty())
