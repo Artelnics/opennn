@@ -540,7 +540,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     const Index n = x_filter.size();
 
-    if(x_filter.size() == 0 )
+    if(x_filter.size() == 0)
     {
         cout << "Warning: Column X and Y hasn't common rows." << endl;
 
@@ -586,10 +586,8 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
-        const double denominator = sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) * (static_cast<double>(n) * s_yy() - s_y() * s_y()));
-
-        linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(denominator);
-        linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(denominator);
+        linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
+        linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
 
         if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
         {
