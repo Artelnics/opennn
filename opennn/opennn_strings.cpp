@@ -434,9 +434,10 @@ bool is_date_time_string(const string& str)
     const string format_12 = "^\\d{1,2}/\\d{1,2}/\\d{4}$";
     const string format_13 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_14 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 +"|" + format_15);
 
     if(regex_match(str, regular_expression))
     {
@@ -550,9 +551,10 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
     const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
+    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15);
 
     regex_search(date, matchs, regular_expression);
 
@@ -637,8 +639,8 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         }
         else
         {
-            time_structure.tm_year = stoi(matchs[17].str())-1900;
-            time_structure.tm_mon = stoi(matchs[16].str())-1;
+            time_structure.tm_year = stoi(matchs[17].str()) - 1900;
+            time_structure.tm_mon = stoi(matchs[16].str()) - 1;
             time_structure.tm_mday = stoi(matchs[15].str());
             time_structure.tm_hour = stoi(matchs[18].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[19].str());
@@ -868,7 +870,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = stoi(matchs[54].str());
         }
     }
-    else if(matchs[57] != "") // yyyy
+    else if(matchs[58] != "") // yyyy
     {
         time_structure.tm_year = stoi(matchs[57].str())-1900;
         time_structure.tm_mon = 0;
@@ -878,6 +880,28 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_sec = 0;
 
         return mktime(&time_structure);
+    }
+    else if(matchs[59] != "") // dd/mm/yyyy hh:mm:ss.ssssss
+    {
+        if(stoi(matchs[60].str()) < 1970)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet Class.\n"
+                   << "time_t date_to_timestamp(const string&) method.\n"
+                   << "Cannot convert dates below 1970.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+        else
+        {
+            time_structure.tm_year = stoi(matchs[60].str())-1900;
+            time_structure.tm_mon = stoi(matchs[59].str())-1;
+            time_structure.tm_mday = stoi(matchs[58].str());
+            time_structure.tm_hour = stoi(matchs[61].str()) - static_cast<int>(gmt);
+            time_structure.tm_min = stoi(matchs[62].str());
+            time_structure.tm_sec = stof(matchs[63].str());
+        }
     }
     else if(is_numeric_string(date)){
     }

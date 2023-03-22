@@ -4780,6 +4780,21 @@ Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) cons
 }
 
 
+/// Returns the index from the column with a given name,
+/// @param columns_names Names of the columns we want to know the index.
+
+Tensor<Index, 1> DataSet::get_columns_index(const Tensor<string, 1>& columns_names) const
+{
+    Tensor<Index, 1> columns_index(columns_names.size());
+
+    for(Index i = 0; i < columns_names.size(); i++)
+    {
+        columns_index(i) = get_column_index(columns_names(i));
+    }
+
+    return columns_index;
+}
+
 /// Returns the index of the column with the given name.
 /// @param column_name Name of the column to be found.
 
@@ -4897,6 +4912,32 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 }
 
 
+/// Returns the data from the data set column with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_index Index of the column.
+
+Tensor<type, 2> DataSet::get_columns_data(const Tensor<Index, 1>& selected_column_indices) const
+{
+    const Index columns_number = selected_column_indices.size();
+    const Index rows_number = data.dimension(0);
+
+    Tensor<type, 2> data_slice(rows_number, columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        Eigen::array<Index, 1> rows_number_to_reshape{{rows_number}};
+
+        Tensor<type, 2> single_column_data = get_column_data(selected_column_indices(i));
+
+        Tensor<type, 1> column_data = single_column_data.reshape(rows_number_to_reshape);
+
+        data_slice.chip(i,1) = column_data;
+    }
+
+    return data_slice;
+}
+
+
 /// Returns the data from the time series column with a given index,
 /// @param column_index Index of the column.
 
@@ -4927,7 +4968,6 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index, const Tensor
 {
     return get_subtensor_data(rows_indices, get_variable_indices(column_index));
 }
-
 
 /// Returns the data from the data set column with a given name,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
@@ -13792,7 +13832,6 @@ void DataSet::read_csv_3_complete()
                 else
                 {
                     data(sample_index, variable_index) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
-
                     variable_index++;
                 }
             }
@@ -13822,8 +13861,8 @@ void DataSet::read_csv_3_complete()
                 Tensor<string,1> positive_words(5);
                 Tensor<string,1> negative_words(5);
 
-                positive_words.setValues({"yes","positive","+","true","si"});
-                negative_words.setValues({"no","negative","-","false","no"});
+                positive_words.setValues({"yes", "positive", "+", "true", "si"});
+                negative_words.setValues({"no", "negative", "-", "false", "no"});
 
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {

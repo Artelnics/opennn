@@ -320,6 +320,8 @@ public:
     Index get_unused_columns_number() const;
     Index get_used_columns_number() const;
 
+    Tensor<Index, 1> get_columns_index(const Tensor<string, 1>&) const;
+
     Index get_column_index(const string&) const;
     Index get_column_index(const Index&) const;
 
@@ -416,6 +418,8 @@ public:
     Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
+
+    Tensor<type, 2> get_columns_data(const Tensor<Index, 1>&) const;
 
     Tensor<type, 2> get_column_data(const Index&) const;
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;

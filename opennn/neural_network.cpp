@@ -2121,6 +2121,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
+
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
     {
@@ -3776,10 +3777,29 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
     set_parameters(new_parameters);
 }
 
+
+string NeuralNetwork::write_expression_autoassociation_distances(string& input_variables_names, string& output_variables_names) const
+{
+    ostringstream buffer;
+
+    buffer << "sample_autoassociation_distance = calculate_distances(" + input_variables_names + "," + output_variables_names + ")\n";
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
+
+    return expression;
+}
+
+
 /// Returns a string with the mathematical expression that represents the neural network.
 
 string NeuralNetwork::write_expression() const
 {
+
+    NeuralNetwork::ProjectType project_type = get_project_type();
+
     const Index layers_number = get_layers_number();
 
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
@@ -3789,6 +3809,7 @@ string NeuralNetwork::write_expression() const
     Tensor<string, 1> inputs_names_vector;
     inputs_names_vector = inputs_names;
     string aux_name = "";
+
     for (int i = 0; i < inputs_names.dimension(0); i++)
     {
         if (!inputs_names_vector[i].empty())
@@ -3803,6 +3824,9 @@ string NeuralNetwork::write_expression() const
     }
 
     Index layer_neurons_number;
+
+    Tensor<string, 1> scaled_inputs_names(inputs_names.dimension(0));
+    Tensor<string, 1> unscaled_outputs_names(inputs_names.dimension(0));
 
     ostringstream buffer;
 
@@ -3836,6 +3860,7 @@ string NeuralNetwork::write_expression() const
                 {
                     aux_name = inputs_names(j);
                     outputs_names_vector(j) = "scaled_" + replace_non_allowed_programming_expressions(aux_name);
+                    scaled_inputs_names(j) = outputs_names_vector(j);
                 }
                 else
                 {
@@ -3844,7 +3869,25 @@ string NeuralNetwork::write_expression() const
             }
             buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
             inputs_names_vector = outputs_names_vector;
+            unscaled_outputs_names = inputs_names_vector;
         }
+    }
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        string input_list_string = "[";
+        string output_list_string = "[";
+
+        for(Index i = 0; i < inputs_names.dimension(0); i++)
+        {
+            input_list_string = input_list_string + scaled_inputs_names(i) + ",";
+            output_list_string = output_list_string + unscaled_outputs_names(i) + ",";
+        }
+
+        input_list_string = input_list_string + "]";
+        output_list_string = output_list_string + "]";
+
+        buffer << write_expression_autoassociation_distances(input_list_string, output_list_string) << endl;
     }
 
     string expression = buffer.str();
@@ -3859,7 +3902,6 @@ string NeuralNetwork::write_expression() const
 
 string NeuralNetwork::write_expression_c() const 
 {
-
     string aux = "";
     ostringstream buffer;
     ostringstream calculate_outputs_buffer;
@@ -3929,7 +3971,19 @@ string NeuralNetwork::write_expression_c() const
     buffer << "\n" << endl;
 
     string token;
-    string expression = write_expression();
+    string expression = write_expression();    
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        string word_to_delete = "sample_autoassociation_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if (index != std::string::npos) {
+            expression.erase(index, std::string::npos);
+        }
+    }
+
     stringstream ss(expression);
 
     Tensor<string, 1> tokens;
@@ -4380,6 +4434,18 @@ string NeuralNetwork::write_expression_api() const
 
     string token;
     string expression = write_expression();
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        string word_to_delete = "sample_autoassociation_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if (index != std::string::npos) {
+            expression.erase(index, std::string::npos);
+        }
+    }
+
     stringstream ss(expression);
     Tensor<string, 1> tokens;
 
@@ -4768,6 +4834,18 @@ string NeuralNetwork::write_expression_javascript() const
 
     string token;
     string expression = write_expression();
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        string word_to_delete = "sample_autoassociation_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if (index != std::string::npos) {
+            expression.erase(index, std::string::npos);
+        }
+    }
+
     stringstream ss(expression);
 
     int cell_state_counter = 0;
@@ -5377,6 +5455,14 @@ string NeuralNetwork::write_expression_python() const
     buffer << "import math" << endl;
     buffer << "import numpy as np" << endl;
     buffer << "\n" << endl;
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        buffer << "def calculate_distances(input, output):" << endl;
+        buffer << "\t" << "return math.sqrt(sum((p-q)**2 for p, q in zip(input, output)))" << endl;
+        buffer << "\n" << endl;
+    }
+
     buffer << "class NeuralNetwork:" << endl;
 
     if (LSTM_number > 0)
@@ -5572,9 +5658,12 @@ string NeuralNetwork::write_expression_python() const
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "python");
 
-    for (int i = 0; i < fixed_outputs.dimension(0); i++)
+    if(project_type != ProjectType::AutoAssociation)
     {
-        buffer << "\t\t" << fixed_outputs(i) << endl;
+        for (int i = 0; i < fixed_outputs.dimension(0); i++)
+        {
+            buffer << "\t\t" << fixed_outputs(i) << endl;
+        }
     }
 
     buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "\n" << endl;
@@ -5589,7 +5678,15 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\n\t\t" << "self.time_step_counter += 1" << endl;
     }
 
-    buffer << "\n\t\t" << "return out;" << endl;
+    if(project_type != ProjectType::AutoAssociation)
+    {
+        buffer << "\n\t\t" << "return out;" << endl;
+    }
+    else
+    {
+        buffer << "\n\t\t" << "return out, sample_autoassociation_distance;" << endl;
+    }
+
     buffer << "\n" << endl;
 
     buffer << "\t" << "def calculate_batch_output(self, input_batch):" << endl;

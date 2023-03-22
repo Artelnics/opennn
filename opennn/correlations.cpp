@@ -598,7 +598,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         else
         {
             linear_correlation.r
-                    = static_cast<type>(s_xy() - s_x() * s_y() / static_cast<double>(n)) / static_cast<type>(sqrt((s_xx() - s_x() * s_x() / static_cast<double>(n)) * (s_yy() - s_y() * s_y() / static_cast<double>(n))));
+                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) * (static_cast<double>(n) * s_yy() - s_y() * s_y())));
 
             const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
             const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
