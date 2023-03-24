@@ -158,19 +158,26 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
 void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 {
-    // Check negative values
+    type min_value = numeric_limits<type>::max();
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        if(!isnan(matrix(i,column_index)) && matrix(i,column_index) <= type(0))
+        if(!isnan(matrix(i,column_index)) && matrix(i,column_index) < min_value)
         {
-            ostringstream buffer;
+            min_value = matrix(i,column_index);
+        }
+    }
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void scale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&) method.\n"
-                   << "Logarithmic scale method cannot be used with non-positive variables. \n";
+    if(min_value <= type(0))
+    {
+        type offset = abs(min_value) + type(1);
 
-            throw invalid_argument(buffer.str());
+        for(Index i = 0; i < matrix.dimension(0); i++)
+        {
+            if(!isnan(matrix(i,column_index)))
+            {
+                matrix(i,column_index) += offset;
+            }
         }
     }
 
@@ -179,6 +186,7 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
         matrix(i,column_index) = log(matrix(i,column_index));
     }
 }
+
 
 
 /// Unscales the given input variable with given minimum and maximum values.
