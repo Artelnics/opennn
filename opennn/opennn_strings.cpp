@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
+#include "data_set.h"
 
 namespace opennn
 {
@@ -1120,6 +1121,9 @@ void trim(string& str)
     str.erase(0, str.find_first_not_of('\f'));
     str.erase(0, str.find_first_not_of('\v'));
 
+    replace_first_char_with_missing_label(str, ';', "NAN");
+    replace_first_char_with_missing_label(str, ',', "NAN");
+
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
@@ -1131,6 +1135,12 @@ void trim(string& str)
     str.erase(str.find_last_not_of('\b') + 1);
 }
 
+void replace_first_char_with_missing_label(string &str, char target_char, const string &missing_label) {
+    if (!str.empty() && str[0] == target_char) {
+        string new_string = missing_label + target_char;
+        str.replace(0, 1, new_string);
+    }
+}
 
 void erase(string& s, const char& c)
 {

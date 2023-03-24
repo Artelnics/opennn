@@ -67,6 +67,7 @@ namespace opennn
 
     void trim(string&);
     void erase(string&, const char&);
+    void replace_first_char_with_missing_label(string &str, char target_char, const string &missing_label);
 
     string get_trimmed(const string&);
 
