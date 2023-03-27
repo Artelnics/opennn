@@ -758,119 +758,119 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 {
     delete_layers();
 
-     if(architecture.size() <= 1) return;
+    if(architecture.size() <= 1) return;
 
-     const Index size = architecture.size();
+    const Index size = architecture.size();
 
-     const Index inputs_number = architecture[0];
-     const Index outputs_number = architecture[size-1];
+    const Index inputs_number = architecture[0];
+    const Index outputs_number = architecture[size-1];
 
-     inputs_names.resize(inputs_number);
+    inputs_names.resize(inputs_number);
 
-     ScalingLayer* scaling_layer_pointer = new ScalingLayer(inputs_number);
+    ScalingLayer* scaling_layer_pointer = new ScalingLayer(inputs_number);
 
-     this->add_layer(scaling_layer_pointer);
+    this->add_layer(scaling_layer_pointer);
 
-     if(model_type == ProjectType::Approximation)
-     {
-         for(Index i = 0; i < size-1; i++)
-         {
-             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
-             perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
+    if(model_type == ProjectType::Approximation)
+    {
+        for(Index i = 0; i < size-1; i++)
+        {
+            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
-             this->add_layer(perceptron_layer_pointer);
+            this->add_layer(perceptron_layer_pointer);
 
-             if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-         }
+            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+        }
 
-         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(outputs_number);
+        UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(outputs_number);
 
-         this->add_layer(unscaling_layer_pointer);
+        this->add_layer(unscaling_layer_pointer);
 
-         BoundingLayer* bounding_layer_pointer = new BoundingLayer(outputs_number);
+        BoundingLayer* bounding_layer_pointer = new BoundingLayer(outputs_number);
 
-         this->add_layer(bounding_layer_pointer);
-     }
-     else if(model_type == ProjectType::Classification || model_type == ProjectType::TextClassification)
-     {
-         for(Index i = 0; i < size-2; i++)
-         {
-             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
+        this->add_layer(bounding_layer_pointer);
+    }
+    else if(model_type == ProjectType::Classification || model_type == ProjectType::TextClassification)
+    {
+        for(Index i = 0; i < size-2; i++)
+        {
+            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-             perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
-             this->add_layer(perceptron_layer_pointer);
-         }
+            this->add_layer(perceptron_layer_pointer);
+        }
 
-         ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[size-2], architecture[size-1]);
+        ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[size-2], architecture[size-1]);
 
-         this->add_layer(probabilistic_layer_pointer);
-     }
-     else if(model_type == ProjectType::Forecasting)
-     {
-         //                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-         //                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+        this->add_layer(probabilistic_layer_pointer);
+    }
+    else if(model_type == ProjectType::Forecasting)
+    {
+        //                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        //                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-         //                this->add_layer(long_short_term_memory_layer_pointer);
+        //                this->add_layer(long_short_term_memory_layer_pointer);
 
-         for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
-         {
-             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
+        for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
+        {
+            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-             perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
-             this->add_layer(perceptron_layer_pointer);
+            this->add_layer(perceptron_layer_pointer);
 
-             if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-         }
+            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+        }
 
-         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(architecture[size-1]);
+        UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(architecture[size-1]);
 
-         this->add_layer(unscaling_layer_pointer);
+        this->add_layer(unscaling_layer_pointer);
 
-         BoundingLayer* bounding_layer_pointer = new BoundingLayer(outputs_number);
+        BoundingLayer* bounding_layer_pointer = new BoundingLayer(outputs_number);
 
-         this->add_layer(bounding_layer_pointer);
-     }
-     else if(model_type == ProjectType::ImageClassification)
-     {
-         // Use the set mode build specifically for image classification
-     }
-     else if(model_type == ProjectType::TextGeneration)
-     {
-         LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+        this->add_layer(bounding_layer_pointer);
+    }
+    else if(model_type == ProjectType::ImageClassification)
+    {
+        // Use the set mode build specifically for image classification
+    }
+    else if(model_type == ProjectType::TextGeneration)
+    {
+        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
-         ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
+        ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
 
-         this->add_layer(long_short_term_memory_layer_pointer);
-         this->add_layer(probabilistic_layer_pointer);
-     }
-     else if(model_type == ProjectType::AutoAssociation)
-     {
-         const Index mapping_neurons_number = 10;
-         const Index bottle_neck_neurons_number = architecture[1];
-         const Index target_variables_number = architecture[2];
+        this->add_layer(long_short_term_memory_layer_pointer);
+        this->add_layer(probabilistic_layer_pointer);
+    }
+    else if(model_type == ProjectType::AutoAssociation)
+    {
+        const Index mapping_neurons_number = 10;
+        const Index bottle_neck_neurons_number = architecture[1];
+        const Index target_variables_number = architecture[2];
 
-         PerceptronLayer *mapping_layer = new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-         mapping_layer->set_name("mapping_layer");
-         PerceptronLayer *bottle_neck_layer = new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear);
-         bottle_neck_layer->set_name("bottle_neck_layer");
-         PerceptronLayer *demapping_layer = new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-         demapping_layer->set_name("demapping_layer");
-         PerceptronLayer *output_layer = new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear);
-         output_layer->set_name("output_layer");
-         UnscalingLayer *unscaling_layer = new UnscalingLayer(target_variables_number);
+        PerceptronLayer *mapping_layer = new PerceptronLayer(architecture[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        mapping_layer->set_name("mapping_layer");
+        PerceptronLayer *bottle_neck_layer = new PerceptronLayer(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear);
+        bottle_neck_layer->set_name("bottle_neck_layer");
+        PerceptronLayer *demapping_layer = new PerceptronLayer(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        demapping_layer->set_name("demapping_layer");
+        PerceptronLayer *output_layer = new PerceptronLayer(mapping_neurons_number, target_variables_number, PerceptronLayer::ActivationFunction::Linear);
+        output_layer->set_name("output_layer");
+        UnscalingLayer *unscaling_layer = new UnscalingLayer(target_variables_number);
 
-         this->add_layer(mapping_layer);
-         this->add_layer(bottle_neck_layer);
-         this->add_layer(demapping_layer);
-         this->add_layer(output_layer);
-         this->add_layer(unscaling_layer);
-     }
+        this->add_layer(mapping_layer);
+        this->add_layer(bottle_neck_layer);
+        this->add_layer(demapping_layer);
+        this->add_layer(output_layer);
+        this->add_layer(unscaling_layer);
+    }
 
-     outputs_names.resize(outputs_number);
+    outputs_names.resize(outputs_number);
 
-     set_default();
+    set_default();
 }
 
 

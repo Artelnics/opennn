@@ -583,6 +583,7 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
+
 #ifdef OPENNN_DEBUG
 
     check();
