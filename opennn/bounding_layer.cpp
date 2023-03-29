@@ -547,7 +547,7 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
         for(Index i = 0; i < neurons_number; i++)
         {
             buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ")\n";
-            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << inputs_names[i] << ")\n";
+            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << outputs_names[i] << ")\n";
         }
     }
     else

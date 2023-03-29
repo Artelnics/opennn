@@ -284,18 +284,18 @@ public:
 
    // Expression methods
 
-    string write_expression() const;
+   string write_expression_autoassociation_distances(string&, string&) const;
+   string write_expression() const;
 
-    string write_expression_python() const;
-    string write_expression_c() const;
-    string write_expression_api() const;
-    string write_expression_javascript() const;
+   string write_expression_python() const;
+   string write_expression_c() const;
+   string write_expression_api() const;
+   string write_expression_javascript() const;
 
-    void save_expression_c(const string&) const;
-    void save_expression_python(const string&) const;
-    void save_expression_api(const string&) const;
-    void save_expression_javascript(const string&) const;
-
+   void save_expression_c(const string&) const;
+   void save_expression_python(const string&) const;
+   void save_expression_api(const string&) const;
+   void save_expression_javascript(const string&) const;
    void save_outputs(Tensor<type, 2>&, const string&);
 
    void save_autoassociation_outputs(const Tensor<type, 1>&,const Tensor<string, 1>&, const string&) const;
