@@ -522,13 +522,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        if(training_back_propagation_lm.loss < training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
-
             stop_training = true;
 
             results.stopping_condition = StoppingCondition::LossGoal;
+
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;

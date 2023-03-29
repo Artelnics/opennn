@@ -448,13 +448,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
-        if(training_loss < training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
-
             stop_training = true;
 
             results.stopping_condition  = StoppingCondition::LossGoal;
+
+            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
 
         if(selection_failures >= maximum_selection_failures)
