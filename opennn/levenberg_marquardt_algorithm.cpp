@@ -522,7 +522,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        if(training_back_propagation_lm.loss <= training_loss_goal)
+        if(training_back_propagation_lm.loss < training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
 

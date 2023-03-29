@@ -748,7 +748,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         old_loss = training_back_propagation.loss;
 
-        if(training_back_propagation.loss <= training_loss_goal)
+        if(training_back_propagation.loss < training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_back_propagation.loss << endl;
 

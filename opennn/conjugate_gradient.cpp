@@ -823,7 +823,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Stopping Criteria       
 
-        if(training_back_propagation.loss <= training_loss_goal)
+        if(training_back_propagation.loss < training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_back_propagation.loss << endl;
 
