@@ -317,7 +317,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                                                    forward_propagation,
                                                    back_propagation,
                                                    optimization_data);
-
     try
     {
         triplet.check();
@@ -505,7 +504,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     triplet.A.first = type(0);
     triplet.A.second = loss;
 
-    // Right point       
+    // Right point
 
     Index count = 0;
 
@@ -516,7 +515,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         triplet.B.first = optimization_data.initial_learning_rate*static_cast<type>(count);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
-                = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+                = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -527,7 +526,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.second = back_propagation.error + regularization_weight*regularization;
 
-    } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance);
+    } while((abs(triplet.A.second - triplet.B.second) < loss_tolerance) && (triplet.A.second != triplet.B.second));
 
     if(triplet.A.second > triplet.B.second)
     {

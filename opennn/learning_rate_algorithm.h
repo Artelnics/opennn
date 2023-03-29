@@ -158,7 +158,7 @@ public:
            {
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
-                     << "U is greater than A:\n"
+                     << "U is greater than B:\n"
                      << struct_to_string();
 
               throw invalid_argument(buffer.str());

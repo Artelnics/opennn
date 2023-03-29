@@ -343,9 +343,6 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
 #endif
 
-//    cout << "Outputs: " << endl << outputs << endl;
-//    cout << "Targets: " << endl << targets << endl;
-
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
     if(has_NAN(back_propagation.errors))
