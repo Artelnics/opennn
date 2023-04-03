@@ -490,7 +490,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 #endif
 
     Correlation linear_correlation;
-
     linear_correlation.correlation_type = CorrelationType::Linear;
 
     if(is_constant(x) && !is_constant(y))
@@ -912,7 +911,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 }
 
 
-
 Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 2>& y)
@@ -961,7 +959,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
@@ -1087,8 +1085,8 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);

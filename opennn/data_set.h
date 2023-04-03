@@ -648,6 +648,10 @@ public:
     static type round_to_precision(type, const int&);
     static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
 
+    static type r_distribution_to_z_distribution(const type&);
+    static type z_distribution_to_r_distribution(const type&);
+    static Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+
     void set_data_random();
     void set_data_binary_random();
 

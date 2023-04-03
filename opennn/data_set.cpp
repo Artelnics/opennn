@@ -7491,6 +7491,32 @@ Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const in
     return matrix_rounded;
 }
 
+//type DataSet::r_distribution_to_z_distribution(const type& r_distribution)
+//{
+//    const type z_distribution = 0.5*log((1+r_distribution)/(1 - r_distribution));
+
+//    return z_distribution;
+//}
+
+//type DataSet::z_distribution_to_r_distribution(const type& z_distribution)
+//{
+//    const type r_distribution = (exp(2*z_distribution)-1) / (exp(2*z_distribution)+1);
+
+//    return r_distribution;
+//}
+
+//Tensor<type,1> DataSet::confidence_interval_z_correlation(const type& z_distribution, const Index& n)
+//{
+//    Tensor<type, 1> confidence_interval(2);
+
+//    const type z_standard_error = 1.959964;
+
+//    confidence_interval(0) = z_distribution - z_standard_error * 1/sqrt(n - 3);
+
+//    confidence_interval(1) = z_distribution + z_standard_error * 1/sqrt(n - 3);
+
+//    return confidence_interval;
+//}
 
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
