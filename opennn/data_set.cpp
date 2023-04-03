@@ -10270,8 +10270,6 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
 {
-//    const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
-
     const Index samples_number = get_used_samples_number();
     const Tensor<Index, 1> samples_indices = get_used_samples_indices();
 
@@ -10338,15 +10336,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
                     columns_outliers++;
 
-                    cout << "------ ANTES " << j << "-----" << endl;
-
-                    cout << data(samples_indices(static_cast<Index>(j)), variable_index) << endl;
-
                     data(samples_indices(static_cast<Index>(j)), variable_index) = numeric_limits<type>::quiet_NaN();
-
-                    cout << data(samples_indices(static_cast<Index>(j)), variable_index) << endl;
-
-                    cout << "------ DESPUES " << j << "-----" << endl;
 
                 }
             }
