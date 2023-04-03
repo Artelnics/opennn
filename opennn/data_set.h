@@ -745,6 +745,8 @@ public:
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
+    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
+
     void unuse_Tukey_outliers(const type& = type(1.5));
 
     // Local outlier factor
