@@ -22,7 +22,7 @@ public:
 
     virtual ~BatchNormalizationLayerTest();
 
-//    // Constructor and destructor methods
+    // Constructor and destructor methods
 
     void test_perform_inputs_normalization();
 

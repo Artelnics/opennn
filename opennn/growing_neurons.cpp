@@ -192,7 +192,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             neural_network->set_parameters_random();
 
-            training_results = training_strategy_pointer->perform_training();            
+            training_results = training_strategy_pointer->perform_training();
 
             if(display)
             {

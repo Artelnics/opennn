@@ -47,37 +47,37 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
 
-void PoolingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-    if(inputs_dimensions.size() != 4)
-    {
-        ostringstream buffer;
+//void PoolingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//    if(inputs_dimensions.size() != 4)
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
-               << "Number of inputs dimensions (" << inputs_dimensions.size() << ") must be 4: (batch, filters, rows, columns).\n";
+//        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
+//               << "Number of inputs dimensions (" << inputs_dimensions.size() << ") must be 4: (batch, filters, rows, columns).\n";
 
-        throw invalid_argument(buffer.str());
-    }
-    /// @todo Change everything
+//        throw invalid_argument(buffer.str());
+//    }
+//    /// @todo Change everything
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
+//    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+//    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
 
-    switch(pooling_method)
-    {
-    case PoolingMethod::NoPooling:
-        outputs = calculate_no_pooling_outputs(inputs);
+//    switch(pooling_method)
+//    {
+//    case PoolingMethod::NoPooling:
+//        outputs = calculate_no_pooling_outputs(inputs);
 
-    case PoolingMethod::MaxPooling:
-        outputs = calculate_max_pooling_outputs(inputs);
+//    case PoolingMethod::MaxPooling:
+//        outputs = calculate_max_pooling_outputs(inputs);
 
-    case PoolingMethod::AveragePooling:
-        outputs = calculate_average_pooling_outputs(inputs);
-    }
+//    case PoolingMethod::AveragePooling:
+//        outputs = calculate_average_pooling_outputs(inputs);
+//    }
 
-}
+//}
 
 
 /// Returns the result of applying average pooling to a batch of images.

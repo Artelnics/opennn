@@ -30,6 +30,8 @@ public:
 
     // Back-propagation methods
 
+    void test_calculate_gradient_convolutional_network();
+
     void test_back_propagate();
 
     void test_back_propagate_lm();
@@ -44,6 +46,8 @@ private:
     Index inputs_number;
     Index neurons_number;
     Index outputs_number;
+
+    bool switch_train = true;
 
     Tensor<Index, 1> training_samples_indices;
     Tensor<Index, 1> input_variables_indices;

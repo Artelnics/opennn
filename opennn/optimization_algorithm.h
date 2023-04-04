@@ -91,6 +91,10 @@ public:
    void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
 
+   // Calculate distances for AANN histogram
+
+   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+
    // Training methods
 
    virtual void check() const;
@@ -128,6 +132,10 @@ protected:
    Index epochs_number = 10000;
 
    // UTILITIES
+
+   /// Create an histogram for distances in autoassociative NN
+
+   BoxPlot auto_association_box_plot;
 
    ///Hardware use
 

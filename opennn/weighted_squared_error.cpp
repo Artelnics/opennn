@@ -125,7 +125,7 @@ void WeightedSquaredError::set_weights()
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary)
+    else if((data_set_pointer) && (data_set_pointer->get_target_columns().size() == 1) && (data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary))
     {
         const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
@@ -162,7 +162,7 @@ void WeightedSquaredError::set_normalization_coefficient()
     {
         normalization_coefficient = static_cast<type>(1);
     }
-    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary)
+    else if((data_set_pointer) && (data_set_pointer->get_target_columns().size() == 1) && (data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary))
     {
         const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
@@ -197,7 +197,10 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+    const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
@@ -228,6 +231,17 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const type coefficient = (static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient;
 
     back_propagation.error = weighted_sum_squared_error(0)/coefficient;
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: weighted_squared_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -283,6 +297,19 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
 
     deltas.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
+
+    Tensor<type, 2> output_deltas(deltas);
+
+    if(has_NAN(output_deltas))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: weighted_squared_error class.\n"
+               << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in deltas.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -504,7 +531,10 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+    const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 

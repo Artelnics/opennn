@@ -100,9 +100,11 @@ public:
 
     // Outputs
 
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) = 0;
+
     virtual void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
+//    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
     virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas

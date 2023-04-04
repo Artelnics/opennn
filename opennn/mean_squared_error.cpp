@@ -45,13 +45,27 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
+    // Check if works for convolutional
     const Index batch_samples_number = batch.get_batch_size();
 
-    const type coefficient = static_cast<type>(batch_samples_number);
+// This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
+
+    const type coefficient = batch_samples_number > 0 ? static_cast<type>(batch_samples_number) : 1;
 
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: mean_squared_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -83,14 +97,31 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
+     // Check if works for convolutional
      const Index batch_samples_number = batch.get_batch_size();
+
+//     This line was written in convolutional. Without it, batch samples number was 0.
+//     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
-     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0),
+                                       output_layer_back_propagation->deltas_dimensions(1));
 
      deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 
+     Tensor<type, 2> output_deltas(deltas);
+
+     if(has_NAN(output_deltas))
+     {
+         ostringstream buffer;
+
+         buffer << "OpenNN Exception: mean_squared_error class.\n"
+                << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+                << "NAN values found in deltas.";
+
+         throw invalid_argument(buffer.str());
+     }
 }
 
 

@@ -163,7 +163,6 @@ public:
 
     TrainingResults perform_training();
 
-
     // Check methods
 
     void fix_forecasting();

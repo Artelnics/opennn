@@ -701,27 +701,28 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 /// @param inputs Set of inputs to the probabilistic layer.
 
 
-void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                           type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-    if(inputs_dimensions.size() != 2)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "tuple<type*, Tensor<Index,1>> PerceptronLayer::calculate_outputs(const tuple<type*, Tensor<Index,1>>& tensor)"
-               << "Inputs dimensions must be equal to 2.\n";
-        throw invalid_argument(buffer.str());
-    }
+//void ProbabilisticLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                           type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//    if(inputs_dimensions.size() != 2)
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+//               << "tuple<type*, Tensor<Index,1>> PerceptronLayer::calculate_outputs(const tuple<type*, Tensor<Index,1>>& tensor)"
+//               << "Inputs dimensions must be equal to 2.\n";
+//        throw invalid_argument(buffer.str());
+//    }
 
-    calculate_combinations(inputs_data, inputs_dimensions, biases, synaptic_weights, outputs_data, outputs_dimensions);
+//    calculate_combinations(inputs_data, inputs_dimensions, biases, synaptic_weights, outputs_data, outputs_dimensions);
 
-    calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
-}
+//    calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
+//}
 
 
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
-                                           LayerForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation,
+                                           bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -750,12 +751,22 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                            perceptron_layer_forward_propagation->combinations.data(),
                            combinations_dimensions);
 
-    calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                      combinations_dimensions,
-                                      perceptron_layer_forward_propagation->outputs_data,
-                                      activations_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                      derivatives_dimensions);
+    if(switch_train) // Perform training
+    {
+        calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
+                                          combinations_dimensions,
+                                          perceptron_layer_forward_propagation->outputs_data,
+                                          activations_dimensions,
+                                          perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                          derivatives_dimensions);
+    }
+    else // perform deploy
+    {
+        calculate_activations(perceptron_layer_forward_propagation->combinations.data(),
+                              combinations_dimensions,
+                              perceptron_layer_forward_propagation->outputs_data,
+                              activations_dimensions);
+    }
 }
 
 
@@ -790,6 +801,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
 
     const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
                                                                 inputs_number, neurons_number);
+
     const Tensor<Index, 1> combinations_dimensions = get_dimensions(probabilistic_layer_forward_propagation->combinations);
     const Tensor<Index, 1> activations_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
     const Tensor<Index, 1> derivatives_dimensions = get_dimensions(probabilistic_layer_forward_propagation->activations_derivatives);

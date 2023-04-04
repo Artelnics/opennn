@@ -41,6 +41,17 @@ void SumSquaredError::calculate_error(const DataSetBatch&,
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0);
+
+    if(is_nan(back_propagation.error))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: sum_squared_error class.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "NAN values found in back propagation error.";
+
+        throw invalid_argument(buffer.str());
+    }
 }
 
 
@@ -75,6 +86,19 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
      TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
 
      deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+     Tensor<type, 2> output_deltas(deltas);
+
+     if(has_NAN(output_deltas))
+     {
+         ostringstream buffer;
+
+         buffer << "OpenNN Exception: sum_squared_error class.\n"
+                << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+                << "NAN values found in deltas.";
+
+         throw invalid_argument(buffer.str());
+     }
 }
 
 

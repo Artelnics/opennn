@@ -1504,15 +1504,17 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 #endif
 
     const Tensor<type, 0> targets_mean = targets.mean();
+    const Tensor<type, 0> outputs_mean = outputs.mean();
 
-    Tensor<type, 0> numerator = ((targets-outputs)*(targets-outputs)).sum();
-    Tensor<type, 0> denominator = ((- targets_mean(0) + targets)*(- targets_mean(0) + targets)).sum();
+    Tensor<type,0> numerator = (( - targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
+    Tensor<type,0> denominator = (( - targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
 
     denominator(0) == 0 ? denominator(0) = 1 : 0;
 
-    type determination_coefficient = type(1) - (numerator(0)/denominator(0));
+    type determination_coefficient = ((numerator(0)/denominator(0))*(numerator(0)/denominator(0)));
 
     return determination_coefficient;
+
 };
 
 

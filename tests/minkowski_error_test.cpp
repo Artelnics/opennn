@@ -66,6 +66,7 @@ void MinkowskiErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         neurons_number = 1;
+        bool switch_train = true;
 
         // Data set
 
@@ -87,7 +88,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -109,6 +110,7 @@ void MinkowskiErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%5;
         outputs_number = 1 + rand()%5;
         neurons_number = 1 + rand()%5;
+        bool switch_train = true;
 
         // Data set
 
@@ -130,9 +132,13 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+
+        neural_network.print();
 
         // Loss index
+
+        Tensor<Layer*,1> trainable_layers = neural_network.get_trainable_layers_pointers();
 
         back_propagation.set(samples_number, &minkowski_error);
 
@@ -151,6 +157,7 @@ void MinkowskiErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
+        bool switch_train = true;
 
         // Data set
 
@@ -170,7 +177,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -197,6 +204,7 @@ void MinkowskiErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
+        bool switch_train = true;
 
         // Data set
 
@@ -217,15 +225,15 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
         back_propagation.set(samples_number, &minkowski_error);
+
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
         numerical_differentiation_gradient = minkowski_error.calculate_numerical_differentiation_gradient();
-
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -240,6 +248,7 @@ void MinkowskiErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
+        bool switch_train = true;
 
         // Data set
 
@@ -259,7 +268,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 
@@ -278,6 +287,7 @@ void MinkowskiErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
+        bool switch_train = true;
 
         // Data set
 
@@ -298,7 +308,7 @@ void MinkowskiErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation);
+        neural_network.forward_propagate(batch, forward_propagation, switch_train);
 
         // Loss index
 

@@ -97,6 +97,14 @@ bool is_nan(const Tensor<type,1>& tensor)
 }
 
 
+bool is_nan(const type& value)
+{
+
+    if(!isnan(value)) return false;
+
+    return true;
+}
+
 
 bool is_false(const Tensor<bool, 1>& tensor)
 {
@@ -242,7 +250,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
-    ofstream file(filename);
+    std::ofstream file(filename);
 
     if(!file.is_open())
     {
@@ -834,6 +842,30 @@ type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
 }
 
 
+type l2_distance(const TensorMap<Tensor<type, 0>>&x, const TensorMap<Tensor<type, 0>>&y)
+{
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
+{
+    Tensor<type, 1> distance(size);
+
+    Tensor<type, 2> difference = x - y;
+
+    for(Index i = 0; i < difference.dimension(1); i ++)
+    {
+        distance(i) = abs(difference(i));
+    }
+
+    return distance;
+}
+
+
 void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {
     const Index rows_number = matrix.dimension(0);
@@ -936,6 +968,27 @@ Index count_NAN(const Tensor<type, 2>& x)
     return count;
 }
 
+
+bool has_NAN(const Tensor<type, 1>& x)
+{
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(isnan(x(i))) return true;
+    }
+
+    return false;
+}
+
+
+bool has_NAN(Tensor<type, 2>& x)
+{
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(isnan(x(i))) return true;
+    }
+
+    return false;
+}
 
 Index count_empty_values(const Tensor<string, 1>& vector)
 {

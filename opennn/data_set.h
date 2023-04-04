@@ -32,6 +32,9 @@
 #include <filesystem>
 #include <experimental/filesystem>
 
+#include <regex>
+#include <codecvt>
+
 // OpenNN includes
 
 #include "config.h"
@@ -109,7 +112,7 @@ public:
 
     /// Enumeration of available methods for missing values in the data.
 
-    enum class MissingValuesMethod{Unuse, Mean, Median};
+    enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
     /// Enumeration of the learning tasks.
 
@@ -291,6 +294,10 @@ public:
 
     string get_sample_string(const Index&, const string& = ",") const;
 
+    // Create Box plot from histogram
+
+    Tensor<type, 1> box_plot_from_histogram(Histogram&, const Index&) const;
+
     // Columns get methods
 
     Tensor<Column, 1> get_columns() const;
@@ -303,6 +310,7 @@ public:
     Tensor<Column, 1> get_used_columns() const;
 
     Index get_columns_number() const;
+    Index get_constant_columns_number() const;
 
     Index get_input_columns_number() const;
     Index get_input_time_series_columns_number() const;
@@ -311,6 +319,8 @@ public:
     Index get_time_columns_number() const;
     Index get_unused_columns_number() const;
     Index get_used_columns_number() const;
+
+    Tensor<Index, 1> get_columns_index(const Tensor<string, 1>&) const;
 
     Index get_column_index(const string&) const;
     Index get_column_index(const Index&) const;
@@ -409,6 +419,8 @@ public:
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
 
+    Tensor<type, 2> get_columns_data(const Tensor<Index, 1>&) const;
+
     Tensor<type, 2> get_column_data(const Index&) const;
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
@@ -491,6 +503,7 @@ public:
     void set_training();
     void set_selection();
     void set_testing();
+    void set_auto_associative_samples_uses();
 
     void set_training(const Tensor<Index, 1>&);
     void set_selection(const Tensor<Index, 1>&);
@@ -520,6 +533,7 @@ public:
     void set_columns_uses(const Tensor<VariableUse, 1>&);
     void set_columns_unused();
     void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_columns(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_columns_unused();
 
     void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
@@ -631,6 +645,13 @@ public:
 
     void set_data_constant(const type&);
 
+    static type round_to_precision(type, const int&);
+    static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
+
+    static type r_distribution_to_z_distribution(const type&);
+    static type z_distribution_to_r_distribution(const type&);
+    static Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+
     void set_data_random();
     void set_data_binary_random();
 
@@ -673,11 +694,13 @@ public:
 
     // Box and whiskers
 
+    BoxPlot calculate_single_box_plot(Tensor<type,1>&) const;
     Tensor<BoxPlot, 1> calculate_columns_box_plots() const;
+    Tensor<BoxPlot, 1> calculate_data_columns_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(/*CorrelationMethod::Both*/) const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(const bool& = true, const bool& = false) const;
 
     void print_inputs_correlations() const;
 
@@ -721,6 +744,8 @@ public:
     // Tuckey outlier detection
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
+
+    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 
@@ -875,6 +900,8 @@ public:
     void impute_missing_values_unuse();
     void impute_missing_values_mean();
     void impute_missing_values_median();
+    void impute_missing_values_interpolate();
+
 
     void scrub_missing_values();
 
@@ -1123,6 +1150,12 @@ struct DataSetBatch
     Index get_batch_size() const;
 
     void set(const Index&, DataSet*);
+
+    void set_inputs(Tensor<type, 2>& new_inputs)
+    {
+        inputs_data = new_inputs.data();
+        inputs_dimensions = get_dimensions(new_inputs);
+    }
 
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 

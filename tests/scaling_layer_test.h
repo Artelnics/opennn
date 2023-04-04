@@ -54,7 +54,7 @@ public:
 
     // Scaling
 
-    void test_calculate_outputs();
+    void test_forward_propagate();
     void test_calculate_minimum_maximum_output();
     void test_calculate_mean_standard_deviation_output();
 
@@ -69,7 +69,12 @@ public:
 
 private:
 
+    Index inputs_number;
+    Index samples_number;
+
     ScalingLayer scaling_layer;
+
+    ScalingLayerForwardPropagation scaling_layer_forward_propagation;
 
     Tensor<Descriptives, 1> descriptives;
 };

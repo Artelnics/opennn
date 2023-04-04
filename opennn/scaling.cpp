@@ -49,7 +49,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Descriptives& column_descriptives)
 {
     const type slope = (column_descriptives.standard_deviation) < static_cast<type>(1e-3)
-            ? type(0)
+            ? type(1)
             : static_cast<type>(1)/column_descriptives.standard_deviation;
 
     const type intercept = (column_descriptives.standard_deviation) < static_cast<type>(1e-3)
@@ -158,26 +158,36 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
 void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 {
-    // Check negative values
+    type min_value = numeric_limits<type>::max();
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        if(!isnan(matrix(i,column_index)) && matrix(i,column_index) <= type(0))
+        if(!isnan(matrix(i,column_index)) && matrix(i,column_index) < min_value)
         {
-            ostringstream buffer;
+            min_value = matrix(i,column_index);
+        }
+    }
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void scale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&) method.\n"
-                   << "Logarithmic scale method cannot be used with non-positive variables. \n";
+    if(min_value <= type(0))
+    {
+        type offset = abs(min_value) + type(1) + NUMERIC_LIMITS_MIN;
 
-            throw invalid_argument(buffer.str());
+        for(Index i = 0; i < matrix.dimension(0); i++)
+        {
+            if(!isnan(matrix(i,column_index)))
+            {
+                matrix(i,column_index) += offset;
+            }
         }
     }
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
+    {   cout << "----- " << column_index << "::" << i << "-----" << endl;
+        cout << "matrix(i,column_index :" << matrix(i,column_index) << endl;
         matrix(i,column_index) = log(matrix(i,column_index));
+        cout << "matrix(i,column_index :" << log(matrix(i,column_index)) << endl;
     }
+
 }
 
 
@@ -214,7 +224,7 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
     const type slope = abs(column_descriptives.standard_deviation) < static_cast<type>(1e-3)
-            ? type(0)
+            ? type(1)
             : column_descriptives.standard_deviation;
 
     const type intercept = abs(column_descriptives.standard_deviation) < static_cast<type>(1e-3)

@@ -730,7 +730,7 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 }
 
 
-void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -799,12 +799,20 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
         activations_derivatives_dimensions = get_dimensions(recurrent_layer_forward_propagation->current_activations_derivatives);
 
 
-        calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
-                                          combinations_dimensions,
-                                          hidden_states.data(),
-                                          activations_dimensions,
-                                          recurrent_layer_forward_propagation->current_activations_derivatives.data(),
-                                          activations_derivatives_dimensions);
+        if(switch_train) // Perform training
+        {
+            calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
+                                              combinations_dimensions,
+                                              hidden_states.data(),
+                                              activations_dimensions,
+                                              recurrent_layer_forward_propagation->current_activations_derivatives.data(),
+                                              activations_derivatives_dimensions);
+       }
+       else // Perform deploy
+       {
+            calculate_activations(recurrent_layer_forward_propagation->current_combinations, hidden_states);
+       }
+
 
         for(Index j = 0; j < neurons_number; j++)
         {
@@ -885,65 +893,66 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
 }
 
 
-void RecurrentLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                       type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-    if(inputs_dimensions.size() != 2)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void RecurrentLayer::calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&).\n"
-               << "Inputs dimensions must be equal to 2.\n";
-        throw invalid_argument(buffer.str());
-    }
+//void RecurrentLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+//                                       type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+//{
+//    if(inputs_dimensions.size() != 2)
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+//               << "void RecurrentLayer::calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&).\n"
+//               << "Inputs dimensions must be equal to 2.\n";
+//        throw invalid_argument(buffer.str());
+//    }
 
-    if(outputs_dimensions.size() != 2)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void RecurrentLayer::calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&).\n"
-               << "Outputs dimensions must be equal to 2.\n";
-        throw invalid_argument(buffer.str());
-    }
+//    if(outputs_dimensions.size() != 2)
+//    {
+//        ostringstream buffer;
+//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+//               << "void RecurrentLayer::calculate_outputs(type*, Tensor<Index, 1>&,  type*, Tensor<Index, 1>&).\n"
+//               << "Outputs dimensions must be equal to 2.\n";
+//        throw invalid_argument(buffer.str());
+//    }
 
-    if(inputs_dimensions(1) != get_inputs_number())
-    {
-        ostringstream buffer;
+//    if(inputs_dimensions(1) != get_inputs_number())
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-               << "void RecurrentLayer::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions,  type* outputs_data, Tensor<Index, 1>&).\n"
-               << "Number of columns("<< inputs_dimensions(1) <<") of inputs matrix must be equal to number of inputs("<< inputs_dimensions(1) <<").\n";
+//        buffer << "OpenNN Exception: RecurrentLayer class.\n"
+//               << "void RecurrentLayer::calculate_outputs(type* inputs_data, Tensor<Index, 1>& inputs_dimensions,  type* outputs_data, Tensor<Index, 1>&).\n"
+//               << "Number of columns("<< inputs_dimensions(1) <<") of inputs matrix must be equal to number of inputs("<< inputs_dimensions(1) <<").\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
 
-    const Index samples_number = inputs_dimensions(0);
+//    const Index samples_number = inputs_dimensions(0);
 
-    const Index neurons_number = get_neurons_number();
+//    const Index neurons_number = get_neurons_number();
 
-    Tensor<type, 1> current_inputs(neurons_number);
+//    Tensor<type, 1> current_inputs(neurons_number);
 
-    Tensor<type, 1> current_outputs(neurons_number);
+//    Tensor<type, 1> current_outputs(neurons_number);
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+//    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+//    TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
-    for(Index i = 0; i < samples_number; i++)
-    {
-        if(i%timesteps == 0) hidden_states.setZero();
+//    for(Index i = 0; i < samples_number; i++) /// @todo use vector maps instead of chipping
+//    {
+//        if(i%timesteps == 0) hidden_states.setZero();
 
-        current_inputs = inputs.chip(i, 0);
 
-        calculate_combinations(current_inputs, input_weights, recurrent_weights, biases, current_outputs);
+//        current_inputs = inputs.chip(i, 0);
 
-        calculate_activations(current_outputs, hidden_states);
+//        calculate_combinations(current_inputs, input_weights, recurrent_weights, biases, current_outputs);
 
-        for(Index j = 0; j < neurons_number; j++)
-            outputs(i,j) = hidden_states(j);
-    }
+//        calculate_activations(current_outputs, hidden_states);
 
-}
+//        for(Index j = 0; j < neurons_number; j++)
+//            outputs(i,j) = hidden_states(j);
+//    }
+
+//}
 
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,

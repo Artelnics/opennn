@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
+#include "data_set.h"
 
 namespace opennn
 {
@@ -275,6 +276,36 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 }
 
 
+/// Returns a new vector with the elements of this string vector casted to type.
+
+
+Tensor<Index, 1> to_index_vector(const string& str, const char& separator)
+{
+    const Tensor<string, 1> tokens = get_tokens(str, separator);
+
+    const Index tokens_size = tokens.dimension(0);
+
+    Tensor<Index, 1> index_vector(tokens_size);
+
+    for(Index i = 0; i < tokens_size; i++)
+    {
+        try
+        {
+            stringstream buffer;
+
+            buffer << tokens[i];
+
+            index_vector(i) = Index(stoi(buffer.str()));
+        }
+        catch(const invalid_argument&)
+        {
+            index_vector(i) = Index(-1);
+        }
+    }
+
+    return index_vector;
+}
+
 
 Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
 {
@@ -401,11 +432,13 @@ bool is_date_time_string(const string& str)
     const string format_9 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
     const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
-    const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+    const string format_12 = "^\\d{1,2}/\\d{1,2}/\\d{4}$";
+    const string format_13 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_14 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 +"|" + format_15);
 
     if(regex_match(str, regular_expression))
     {
@@ -519,9 +552,10 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
     const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
+    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15);
 
     regex_search(date, matchs, regular_expression);
 
@@ -606,8 +640,8 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         }
         else
         {
-            time_structure.tm_year = stoi(matchs[17].str())-1900;
-            time_structure.tm_mon = stoi(matchs[16].str())-1;
+            time_structure.tm_year = stoi(matchs[17].str()) - 1900;
+            time_structure.tm_mon = stoi(matchs[16].str()) - 1;
             time_structure.tm_mday = stoi(matchs[15].str());
             time_structure.tm_hour = stoi(matchs[18].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[19].str());
@@ -837,7 +871,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = stoi(matchs[54].str());
         }
     }
-    else if(matchs[57] != "") // yyyy
+    else if(matchs[58] != "") // yyyy
     {
         time_structure.tm_year = stoi(matchs[57].str())-1900;
         time_structure.tm_mon = 0;
@@ -847,6 +881,28 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_sec = 0;
 
         return mktime(&time_structure);
+    }
+    else if(matchs[59] != "") // dd/mm/yyyy hh:mm:ss.ssssss
+    {
+        if(stoi(matchs[60].str()) < 1970)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet Class.\n"
+                   << "time_t date_to_timestamp(const string&) method.\n"
+                   << "Cannot convert dates below 1970.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+        else
+        {
+            time_structure.tm_year = stoi(matchs[60].str())-1900;
+            time_structure.tm_mon = stoi(matchs[59].str())-1;
+            time_structure.tm_mday = stoi(matchs[58].str());
+            time_structure.tm_hour = stoi(matchs[61].str()) - static_cast<int>(gmt);
+            time_structure.tm_min = stoi(matchs[62].str());
+            time_structure.tm_sec = stof(matchs[63].str());
+        }
     }
     else if(is_numeric_string(date)){
     }
@@ -930,27 +986,66 @@ void replace_all_appearances(std::string& s, std::string const& toReplace, std::
 /// \brief replace_non_allowed_programming_characters
 /// \param s
 /// \return
-string replace_non_allowed_programming_characters(std::string& s)
+
+string replace_non_allowed_programming_expressions(string& s)
 {
-    string out = "";
-    if (s[0] == '$')
-        out=s;
+        string out = "";
 
-    for (char& c: s)
-    {
-        if (c=='/'){ out+="_div_"; }
-        if (c=='*'){ out+="_mul_"; }
-        if (c=='+'){ out+="_sum_"; }
-        if (c=='-'){ out+="_res_"; }
-        if (c=='='){ out+="_equ_"; }
-        if (c=='!'){ out+="_not_"; }
-        if (c=='<'){ out+="_lower_" ; }
-        if (c=='>'){ out+="_higher_"; }
-        if (isalnum(c)!=0){ out += c; }
-        if (isalnum(c)==0){ out+='_'; }
-    }
+        if (s[0] == '$')
+            out=s;
 
-    return out;
+        replace_all_appearances(s, "if","i_f");
+        replace_all_appearances(s, "new","ne_w");
+        replace_all_appearances(s, "for","fo_r");
+        replace_all_appearances(s, "try","tr_y");
+        replace_all_appearances(s, "var","va_r");
+        replace_all_appearances(s, "int","in_t");
+        replace_all_appearances(s, "case","ca_se");
+        replace_all_appearances(s, "rise","ri_se");
+        replace_all_appearances(s, "super","sup_er");
+        replace_all_appearances(s, "catch","cat_ch");
+        replace_all_appearances(s, "float","flo_at");
+        replace_all_appearances(s, "while","whi_le");
+        replace_all_appearances(s, "break","bre_ak");
+        replace_all_appearances(s, "import","im_port");
+        replace_all_appearances(s, "return","ret_urn");
+        replace_all_appearances(s, "switch","sw_itch");
+        replace_all_appearances(s, "string","str_ing");
+        replace_all_appearances(s, "double","dou_ble");
+        replace_all_appearances(s, "default","def_ault");
+        replace_all_appearances(s, "function","func_tion");
+
+        for (char& c: s)
+        {
+            if (c=='1'){ out+="_one_";   continue;}
+            if (c=='2'){ out+="_two_";   continue;}
+            if (c=='3'){ out+="_three_"; continue;}
+            if (c=='4'){ out+="_four_";  continue;}
+            if (c=='5'){ out+="_five_";  continue;}
+            if (c=='6'){ out+="_six_";   continue;}
+            if (c=='7'){ out+="_seven_"; continue;}
+            if (c=='8'){ out+="_eight_"; continue;}
+            if (c=='9'){ out+="_nine_";  continue;}
+            if (c=='0'){ out+="_zero_";  continue;}
+
+            if (c=='/'){ out+="_div_";   continue;}
+            if (c=='*'){ out+="_mul_";   continue;}
+            if (c=='+'){ out+="_sum_";   continue;}
+            if (c=='-'){ out+="_res_";   continue;}
+            if (c=='='){ out+="_equ_";   continue;}
+            if (c=='!'){ out+="_not_";   continue;}
+
+            if (c=='&'){ out+="_amprsn_"; continue;}
+            if (c=='?'){ out+="_ntrgtn_"; continue;}
+            if (c=='<'){ out+="_lower_" ; continue;}
+            if (c=='>'){ out+="_higher_"; continue;}
+
+            if (isalnum(c)!=0){ out += c; continue;}
+            if (isalnum(c)==0){ out+='_'; continue;}
+        }
+
+
+        return out;
 }
 
 
@@ -986,6 +1081,8 @@ vector<string> get_words_in_a_string(string str)
 ///@param sentence
 ///@param word
 ///@return
+
+
 int WordOccurrence(char *sentence, char *word)
 {
     int slen = strlen(sentence);
@@ -1024,6 +1121,9 @@ void trim(string& str)
     str.erase(0, str.find_first_not_of('\f'));
     str.erase(0, str.find_first_not_of('\v'));
 
+    replace_first_char_with_missing_label(str, ';', "NAN");
+    replace_first_char_with_missing_label(str, ',', "NAN");
+
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
@@ -1035,6 +1135,12 @@ void trim(string& str)
     str.erase(str.find_last_not_of('\b') + 1);
 }
 
+void replace_first_char_with_missing_label(string &str, char target_char, const string &missing_label) {
+    if (!str.empty() && str[0] == target_char) {
+        string new_string = missing_label + target_char;
+        str.replace(0, 1, new_string);
+    }
+}
 
 void erase(string& s, const char& c)
 {
@@ -1231,6 +1337,244 @@ bool isNotAlnum (char &c)
 void remove_not_alnum(string &str)
 {
         str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
+}
+
+bool find_string_in_tensor(Tensor<string, 1>& t, string val)
+{
+    for (Index i = 0; i < t.dimension(0); ++i)
+    {
+        string elem = t(i);
+
+        if (elem == val)
+        {
+            return true;
+        }
+    }
+        return false;
+}
+
+string get_word_from_token(string& token)
+{
+    string word = "";
+    for (char& c : token)
+    {
+        if ( c!=' ' && c!='=' )
+        {
+            word += c;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return word;
+}
+
+Tensor<string, 1> push_back_string (Tensor<string, 1>& tens, const string& str)
+{
+    Tensor<string, 1> aux_tensor(tens.dimension(0)+1);
+
+    for (int i = 0; i < tens.dimension(0); i++)
+    {
+        aux_tensor(i) = tens(i);
+    }
+
+    aux_tensor(tens.dimension(0)) = str;
+
+    return aux_tensor;
+}
+
+
+Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<string, 1> &outputs, const string &programming_languaje)
+{
+    Tensor<string,1> out;
+    Tensor<string,1> tokens;
+    Tensor<string,1> found_tokens;
+
+    string token;
+    string out_string;
+    string new_variable;
+    string old_variable;
+    string expression = str;
+
+    stringstream ss(expression);
+
+    int option = 0;
+
+    if (programming_languaje == "javascript") { option = 1; }
+    else if (programming_languaje == "php")   { option = 2; }
+    else if (programming_languaje == "python"){ option = 3; }
+    else if (programming_languaje == "c")     { option = 4; }
+
+    int dimension = outputs.dimension(0);
+
+    while (getline(ss, token, '\n'))
+    {
+        if (token.size() > 1 && token.back() == '{'){ break; }
+        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
+        tokens = push_back_string(tokens, token);
+    }
+
+    for (int i = 0; i < tokens.dimension(0); i++)
+    {
+        string s = tokens(i);
+        string word = "";
+
+        for (char& c : s)
+        {
+            if ( c!=' ' && c!='=' ){ word += c; }
+            else { break; }
+        }
+
+        if (word.size() > 1)
+        {
+            found_tokens = push_back_string(found_tokens, word);
+        }
+    }
+
+    new_variable = found_tokens[found_tokens.size()-1];
+    old_variable = outputs[dimension-1];
+
+    if (new_variable != old_variable)
+    {
+        int j = found_tokens.size();
+
+        for (int i = dimension; i --> 0;)
+        {
+            j -= 1;
+
+            new_variable = found_tokens[j];
+            old_variable = outputs[i];
+
+            switch(option)
+            {
+                //JavaScript
+                case 1:
+                    out_string = "\tvar ";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out = push_back_string(out, out_string);
+                break;
+
+                //Php
+                case 2:
+                    out_string = "$";
+                    out_string += old_variable;
+                    out_string += " = ";
+                    out_string += "$";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out = push_back_string(out, out_string);
+                break;
+
+                //Python
+                case 3:
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out = push_back_string(out, out_string);
+                break;
+
+                //C
+                case 4:
+                    out_string = "double ";
+                    out_string = old_variable;
+                    out_string += " = ";
+                    out_string += new_variable;
+                    out_string += ";";
+                    out = push_back_string(out, out_string);
+                break;
+
+                default:
+                break;
+            }
+        }
+    }
+    return out;
+}
+
+Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs_names, Tensor<string, 1>& outputs_names, ostringstream& buffer_)
+{
+    //preparing output information
+    Tensor<Tensor<string,1>, 1> output(3);
+
+    ostringstream buffer;
+    buffer << buffer_.str();
+
+    Tensor<string, 1> outputs(outputs_names.dimension(0));
+    Tensor<string, 1> inputs(inputs_names.dimension(0));
+    Tensor<string,1> buffer_out;
+
+    string output_name_aux;
+    string input_name_aux;
+
+    for (int i = 0; i < inputs_names.dimension(0); i++)
+    {
+        if (inputs_names[i].empty())
+        {
+            inputs(i) = "input_" + to_string(i);
+            buffer << "\t" << to_string(i) + ") " << inputs_names(i) << endl;
+        }
+        else
+        {
+            input_name_aux = inputs_names[i];
+            inputs(i) = replace_non_allowed_programming_expressions(input_name_aux);
+            buffer << "\t" << to_string(i) + ") " << inputs(i) << endl;
+        }
+    }
+
+    for (int i = 0; i < outputs_names.dimension(0); i++)
+    {
+        if (outputs_names[i].empty())
+        {
+            outputs(i) = "output_" + to_string(i);
+        }
+        else
+        {
+            output_name_aux = outputs_names[i];
+            outputs(i) = replace_non_allowed_programming_expressions(output_name_aux);
+        }
+    }
+
+    buffer_out = push_back_string(buffer_out, buffer.str());
+
+    output(0) = inputs;
+    output(1) = outputs;
+    output(2) = buffer_out;
+
+    return output;
+}
+
+string round_to_precision_string(type x, const int& precision)
+{    
+    type factor = pow(10,precision);
+    type rounded_value = (round(factor*x))/factor;
+    stringstream ss;
+    ss << fixed << setprecision(precision) << rounded_value;
+    string result = ss.str();
+    return result;
+}
+
+Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const int& precision)
+{
+    Tensor<string,2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
+
+    type factor = pow(10,precision);
+
+    for(int i = 0; i< matrix_rounded.dimension(0); i++)
+    {
+        for(int j = 0; j < matrix_rounded.dimension(1); j++)
+        {
+            type rounded_value = (round(factor*matrix(i,j)))/factor;
+            stringstream ss;
+            ss << fixed << setprecision(precision) << rounded_value;
+            string result = ss.str();
+            matrix_rounded(i,j) = result;
+        }
+    }
+    return matrix_rounded;
 }
 
 }

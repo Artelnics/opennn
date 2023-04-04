@@ -1005,33 +1005,44 @@ void DataSet::transform_associative_columns()
 
     const Index columns_number = get_columns_number();
 
+//    const Index constant_columns_number = get_constant_columns_number();
+
     Tensor<Column, 1> new_columns;
 
-    new_columns.resize(2*columns_number);
+//    new_columns.resize(2*(columns_number - constant_columns_number));
+    new_columns.resize(2*(columns_number));
 
     Index column_index = 0;
+    Index index = 0;
 
     for(Index i = 0; i < 2*columns_number; i++)
     {
         column_index = i%columns_number;
 
+//        if(columns(column_index).type == ColumnType::Constant)
+//        {
+//            continue;
+//        }
+
         if(i < columns_number)
         {
-            new_columns(i).name = columns(column_index).name;
+            new_columns(index).name = columns(column_index).name;
 
-            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(i).set_use(DataSet::VariableUse::Input);
-            new_columns(i).type = columns(column_index).type;
-            new_columns(i).categories = columns(column_index).categories;
+            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(index).set_use(DataSet::VariableUse::Input);
+            new_columns(index).type = columns(column_index).type;
+            new_columns(index).categories = columns(column_index).categories;
+            index++;
         }
         else
         {
-            new_columns(i).name = columns(column_index).name + "_output";
+            new_columns(index).name = columns(column_index).name + "_output";
 
-            new_columns(i).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(i).set_use(DataSet::VariableUse::Target);
-            new_columns(i).type = columns(column_index).type;
-            new_columns(i).categories = columns(column_index).categories;
+            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(index).set_use(DataSet::VariableUse::Target);
+            new_columns(index).type = columns(column_index).type;
+            new_columns(index).categories = columns(column_index).categories;
+            index++;
         }
     }
 
@@ -1045,7 +1056,9 @@ void DataSet::transform_associative_data()
 
     const Index samples_number = data.dimension(0);
 
-    const Index old_variables_number = data.dimension(1);
+//    const Index constant_columns_number = get_constant_columns_number();
+
+    const Index old_variables_number = data.dimension(1)/* - constant_columns_number*/;
     const Index new_variables_number = 2 * old_variables_number;
 
     associative_data = data;
@@ -1054,23 +1067,23 @@ void DataSet::transform_associative_data()
 
     // Duplicate data
 
-    if(samples_number < 1000)
-    {
-        Eigen::array<int, 2> bcast({1, 2});
-        data = associative_data.broadcast(bcast);
-    }
-    else
-    {
-        for(Index i = 0; i < old_variables_number; i++)
-        {
-            std::copy(associative_data.data() + i * samples_number,
-                      associative_data.data() + (i+1) *  samples_number,
-                      data.data() + i * samples_number);
+    Index index = 0;
 
-            std::copy(associative_data.data() + i * samples_number,
-                      associative_data.data() + (i+1) *  samples_number,
-                      data.data() + samples_number * old_variables_number + i * samples_number);
-        }
+    for(Index i = 0; i < old_variables_number /*+ constant_columns_number*/; i++)
+    {
+//        if(columns(i).type == ColumnType::Constant)
+//        {
+//            index++;
+//            continue;
+//        }
+
+        std::copy(associative_data.data() + (i - index) * samples_number,
+                  associative_data.data() + (i + 1 - index) *  samples_number,
+                  data.data() + (i - index) * samples_number);
+
+        std::copy(associative_data.data() + (i - index) * samples_number,
+                  associative_data.data() + (i + 1 - index) *  samples_number,
+                  data.data() + samples_number * old_variables_number + (i - index) * samples_number);
     }
 }
 
@@ -1659,6 +1672,95 @@ void DataSet::set_training()
         samples_uses(i) = SampleUse::Training;
     }
 }
+
+
+/// Sets the samples' uses in the auto associative data set.
+
+void DataSet::set_auto_associative_samples_uses()
+{
+    std::random_device rng;
+    std::mt19937 urng(rng());
+
+    const Index used_samples_number = get_used_samples_number();
+
+    if(used_samples_number == 0) return;
+
+    const type training_samples_ratio = 0.8;
+    const type testing_samples_ratio = 0.2;
+
+    const type total_ratio = training_samples_ratio + testing_samples_ratio;
+
+    // Get number of samples for training and testing
+
+    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
+    const Index training_samples_number = used_samples_number - testing_samples_number;
+
+    const Index sum_samples_number = training_samples_number + testing_samples_number;
+
+    if(sum_samples_number != used_samples_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Warning: DataSet class.\n"
+               << "void split_samples_random(const type&, const type&, const type&) method.\n"
+               << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index samples_number = get_samples_number();
+
+    Tensor<Index, 1> indices;
+
+    initialize_sequential(indices, 0, 1, samples_number-1);
+
+    std::shuffle(indices.data(), indices.data() + indices.size(), urng);
+
+    Index count = 0;
+
+    for(Index i = 0; i < samples_uses.size(); i++)
+    {
+        if(samples_uses(i) == SampleUse::Unused) count ++;
+    }
+
+    Index i = 0;
+    Index index;
+
+    // Training
+
+    Index count_training = 0;
+
+    while(count_training != training_samples_number)
+    {
+        index = indices(i);
+
+        if(samples_uses(index) != SampleUse::Unused)
+        {
+            samples_uses(index)= SampleUse::Training;
+            count_training++;
+        }
+
+        i++;
+    }
+
+    // Testing
+
+    Index count_testing = 0;
+
+    while(count_testing != testing_samples_number)
+    {
+        index = indices(i);
+
+        if(samples_uses(index) != SampleUse::Unused)
+        {
+            samples_uses(index) = SampleUse::Testing;
+            count_testing++;
+        }
+
+        i++;
+    }
+}
+
 
 
 /// Sets all the samples in the data set for selection.
@@ -2891,6 +2993,76 @@ Index DataSet::get_used_columns_number() const
     return used_columns_number;
 }
 
+Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Index& bins_number) const
+{
+    const Index samples_number = get_training_samples_number();
+
+    Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
+           histogram.frequencies.constant(100.0) /
+           histogram.frequencies.constant(samples_number).cast<type>();
+
+    // Assuming you have the bin centers and relative frequencies in the following arrays:
+    Tensor<type, 1> binCenters = histogram.centers;
+    Tensor<type, 1> binFrequencies = relative_frequencies;
+
+    // Calculate the cumulative frequency distribution
+    type cumulativeFrequencies[1000];
+    cumulativeFrequencies[0] = binFrequencies[0];
+    for (int i = 1; i < 1000; i++) {
+        cumulativeFrequencies[i] = cumulativeFrequencies[i-1] + binFrequencies[i];
+    }
+
+    // Calculate total frequency
+    type totalFrequency = cumulativeFrequencies[999];
+
+    // Calculate quartile positions
+    type Q1Position = 0.25 * totalFrequency;
+    type Q2Position = 0.5 * totalFrequency;
+    type Q3Position = 0.75 * totalFrequency;
+
+    // Find quartile bin numbers
+    int Q1Bin = 0, Q2Bin = 0, Q3Bin = 0;
+    for (int i = 0; i < 1000; i++) {
+        if (cumulativeFrequencies[i] >= Q1Position) {
+            Q1Bin = i;
+            break;
+        }
+    }
+    for (int i = 0; i < 1000; i++) {
+        if (cumulativeFrequencies[i] >= Q2Position) {
+            Q2Bin = i;
+            break;
+        }
+    }
+    for (int i = 0; i < 1000; i++) {
+        if (cumulativeFrequencies[i] >= Q3Position) {
+            Q3Bin = i;
+            break;
+        }
+    }
+
+    // Calculate quartile values
+    type binWidth = binCenters[1] - binCenters[0];
+    type Q1Value = binCenters[Q1Bin] + ((Q1Position - cumulativeFrequencies[Q1Bin-1]) / binFrequencies[Q1Bin]) * binWidth;
+    type Q2Value = binCenters[Q2Bin] + ((Q2Position - cumulativeFrequencies[Q2Bin-1]) / binFrequencies[Q2Bin]) * binWidth;
+    type Q3Value = binCenters[Q3Bin] + ((Q3Position - cumulativeFrequencies[Q3Bin-1]) / binFrequencies[Q3Bin]) * binWidth;
+
+    // Calculate the maximum and minimum values
+    type minValue = binCenters[0] - binWidth / 2.0;
+    type maxValue = binCenters[999] + binWidth / 2.0;
+
+    // Create a Tensor object with the necessary values for the box plot
+    Tensor<type, 1> iqr_values(5);
+    iqr_values(0) = minValue;
+    iqr_values(1) = Q1Value;
+    iqr_values(2) = Q2Value;
+    iqr_values(3) = Q3Value;
+    iqr_values(4) = maxValue;
+
+    return iqr_values;
+}
+
+
 
 /// Returns the columns of the data set.
 
@@ -3007,6 +3179,24 @@ Index DataSet::get_columns_number() const
 {
     return columns.size();
 }
+
+
+/// Returns the number of constant columns in the data set.
+
+Index DataSet::get_constant_columns_number() const
+{
+    Index constant_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == ColumnType::Constant)
+            constant_number++;
+    }
+
+    return constant_number;
+}
+
+
 
 
 /// Returns the number of channels of the images in the data set.
@@ -3458,6 +3648,21 @@ void DataSet::set_columns_unused()
 
 
 void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, const Tensor<Index, 1>& target_columns)
+{
+    set_columns_unused();
+
+    for(Index i = 0; i < input_columns.size(); i++)
+    {
+        set_column_use(input_columns(i), VariableUse::Input);
+    }
+
+    for(Index i = 0; i < target_columns.size(); i++)
+    {
+        set_column_use(target_columns(i), VariableUse::Target);
+    }
+}
+
+void DataSet::set_input_target_columns(const Tensor<string, 1>& input_columns, const Tensor<string, 1>& target_columns)
 {
     set_columns_unused();
 
@@ -4575,6 +4780,21 @@ Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) cons
 }
 
 
+/// Returns the index from the column with a given name,
+/// @param columns_names Names of the columns we want to know the index.
+
+Tensor<Index, 1> DataSet::get_columns_index(const Tensor<string, 1>& columns_names) const
+{
+    Tensor<Index, 1> columns_index(columns_names.size());
+
+    for(Index i = 0; i < columns_names.size(); i++)
+    {
+        columns_index(i) = get_column_index(columns_names(i));
+    }
+
+    return columns_index;
+}
+
 /// Returns the index of the column with the given name.
 /// @param column_name Name of the column to be found.
 
@@ -4692,6 +4912,32 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 }
 
 
+/// Returns the data from the data set column with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_index Index of the column.
+
+Tensor<type, 2> DataSet::get_columns_data(const Tensor<Index, 1>& selected_column_indices) const
+{
+    const Index columns_number = selected_column_indices.size();
+    const Index rows_number = data.dimension(0);
+
+    Tensor<type, 2> data_slice(rows_number, columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        Eigen::array<Index, 1> rows_number_to_reshape{{rows_number}};
+
+        Tensor<type, 2> single_column_data = get_column_data(selected_column_indices(i));
+
+        Tensor<type, 1> column_data = single_column_data.reshape(rows_number_to_reshape);
+
+        data_slice.chip(i,1) = column_data;
+    }
+
+    return data_slice;
+}
+
+
 /// Returns the data from the time series column with a given index,
 /// @param column_index Index of the column.
 
@@ -4722,7 +4968,6 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index, const Tensor
 {
     return get_subtensor_data(rows_indices, get_variable_indices(column_index));
 }
-
 
 /// Returns the data from the data set column with a given name,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
@@ -5126,6 +5371,8 @@ void DataSet::set(const Index& new_samples_number,
     data_file_name = "";
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
+
+    // @todo check for 4d data
 
     data.resize(new_samples_number, new_variables_number);
 
@@ -5551,6 +5798,10 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
     {
         missing_values_method = MissingValuesMethod::Median;
     }
+    else if(new_missing_values_method == "Interpolation")
+    {
+        missing_values_method = MissingValuesMethod::Interpolation;
+    }
     else
     {
         ostringstream buffer;
@@ -5936,6 +6187,33 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
     return histograms;
 }
 
+BoxPlot DataSet::calculate_single_box_plot(Tensor<type,1>& values) const
+{
+    const Index n = values.size();
+
+    Tensor<Index, 1> indices(n);
+
+    for(Index i = 0; i < n; i++)
+    {
+        indices(i) = i;
+    }
+
+    return box_plot(values, indices);
+}
+
+Tensor<BoxPlot, 1> DataSet::calculate_data_columns_box_plot(Tensor<type,2>& data) const
+{
+    const Index columns_number = data.dimension(1);
+    Tensor<BoxPlot, 1> box_plots(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        box_plots(i) = box_plot(data.chip(i, 1));
+    }
+
+    return box_plots;
+}
+
 
 /// Returns a vector of subvectors with the values of a box and whiskers plot.
 /// The size of the vector is equal to the number of used variables.
@@ -5956,7 +6234,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    Tensor<BoxPlot, 1> box_plots(used_columns_number);
+    Tensor<BoxPlot, 1> box_plots(columns_number);
 
     Index used_column_index = 0;
     Index variable_index = 0;
@@ -5967,9 +6245,13 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         {
             if(columns(i).column_use != VariableUse::Unused)
             {
-                box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_samples_indices);
+                box_plots(i) = box_plot(data.chip(variable_index, 1), used_samples_indices);
 
                 used_column_index++;
+            }
+            else
+            {
+                box_plots(i) = BoxPlot();
             }
 
             variable_index++;
@@ -5977,10 +6259,13 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         else if(columns(i).type == ColumnType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
+
+            box_plots(i) = BoxPlot();
         }
         else
         {
             variable_index++;
+            box_plots(i) = BoxPlot();
         }
     }
 
@@ -6698,7 +6983,7 @@ void DataSet::print_top_input_target_columns_correlations() const
 /// Returns a matrix with the correlation values between variables in the data set.
 
 
-Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations() const
+Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(const bool& calculate_pearson_correlations, const bool& calculate_spearman_correlations) const
 {
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
@@ -6724,32 +7009,43 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(
 
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
-            correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
-            correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
-
-            if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+            if(calculate_pearson_correlations)
             {
-                correlations(i,j).r = type(1);
+                correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+                if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                    correlations(i,j).r = type(1);
             }
-            if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+
+            if(calculate_spearman_correlations)
             {
-                correlations_spearman(i,j).r = type(1);
+                correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+
+                if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                    correlations_spearman(i,j).r = type(1);
             }
         }
     }
 
-    for(Index i = 0; i < input_columns_number; i++)
+
+    if(calculate_pearson_correlations)
     {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations(i,j) = correlations(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations(i,j) = correlations(j,i);
+            }
         }
     }
-    for(Index i = 0; i < input_columns_number; i++)
+
+    if(calculate_spearman_correlations)
     {
-        for(Index j = 0; j < i; j++)
+        for(Index i = 0; i < input_columns_number; i++)
         {
-            correlations_spearman(i,j) = correlations_spearman(j,i);
+            for(Index j = 0; j < i; j++)
+            {
+                correlations_spearman(i,j) = correlations_spearman(j,i);
+            }
         }
     }
 
@@ -7172,6 +7468,55 @@ void DataSet::set_data_constant(const type& new_value)
     data.setConstant(new_value);
 }
 
+type DataSet::round_to_precision(type x, const int& precision){
+
+    type factor = pow(10,precision);
+    return (round(factor*x))/factor;
+}
+
+Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const int& precision)
+{
+    Tensor<type, 2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
+
+    type factor = pow(10,precision);
+
+    for (int i = 0; i < matrix.dimension(0); i++)
+    {
+        for (int j = 0; j < matrix.dimension(1); j++)
+        {
+            matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
+        }
+    }
+
+    return matrix_rounded;
+}
+
+//type DataSet::r_distribution_to_z_distribution(const type& r_distribution)
+//{
+//    const type z_distribution = 0.5*log((1+r_distribution)/(1 - r_distribution));
+
+//    return z_distribution;
+//}
+
+//type DataSet::z_distribution_to_r_distribution(const type& z_distribution)
+//{
+//    const type r_distribution = (exp(2*z_distribution)-1) / (exp(2*z_distribution)+1);
+
+//    return r_distribution;
+//}
+
+//Tensor<type,1> DataSet::confidence_interval_z_correlation(const type& z_distribution, const Index& n)
+//{
+//    Tensor<type, 1> confidence_interval(2);
+
+//    const type z_standard_error = 1.959964;
+
+//    confidence_interval(0) = z_distribution - z_standard_error * 1/sqrt(n - 3);
+
+//    confidence_interval(1) = z_distribution + z_standard_error * 1/sqrt(n - 3);
+
+//    return confidence_interval;
+//}
 
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
@@ -7528,7 +7873,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(has_rows_labels)
     {
-        const Index rows_labels_number = rows_labels.dimension(0);
+        const Index rows_labels_number = rows_labels.size();
 
         file_stream.OpenElement("RowsLabels");
 
@@ -7606,9 +7951,13 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.PushText("Median");
         }
-        else
+        else if(missing_values_method == MissingValuesMethod::Unuse)
         {
             file_stream.PushText("Unuse");
+        }
+        else if(missing_values_method == MissingValuesMethod::Interpolation)
+        {
+            file_stream.PushText("Interpolation");
         }
 
         file_stream.CloseElement();
@@ -8472,7 +8821,14 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             const string new_rows_labels = rows_labels_element->GetText();
 
-            rows_labels = get_tokens(new_rows_labels, ',');
+            char separator = ',';
+
+            if (new_rows_labels.find(",") == string::npos
+                    && new_rows_labels.find(";") != string::npos) {
+                separator = ';';
+            }
+
+            rows_labels = get_tokens(new_rows_labels, separator);
         }
     }
 
@@ -9027,7 +9383,25 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ofstream file;
+
+    #ifdef _WIN32
+
+    if (std::regex_search(binary_data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(binary_data_file_name);
+        file.open(file_name_wide, ios::binary);
+    }
+    else
+    {
+        file.open(binary_data_file_name.c_str(), ios::binary);
+    }
+
+    #else
+        file.open(binary_data_file_name.c_str(), ios::binary);
+    #endif
 
     if(!file.is_open())
     {
@@ -9199,7 +9573,9 @@ void DataSet::transform_associative_dataset()
 
     unuse_constant_columns();
 
-    set_training();
+//    set_training();
+
+    set_auto_associative_samples_uses();
 }
 
 
@@ -9207,16 +9583,31 @@ void DataSet::transform_associative_dataset()
 
 void DataSet::load_data_binary()
 {
+    std::regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
-    file.open(data_file_name.c_str(), ios::binary);
+    #ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide, ios::binary);
+    }
+    else
+    {
+        file.open(data_file_name.c_str(), ios::binary);
+    }
+    #else
+        file.open(data_file_name.c_str(), ios::binary);
+    #endif
 
     if(!file.is_open())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void load_binary() method.\n"
+               << "void load_data_binary() method.\n"
                << "Cannot open binary file: " << data_file_name << "\n";
 
         throw invalid_argument(buffer.str());
@@ -9876,6 +10267,89 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 /// Calculate the outliers from the data set using Tukey's test and sets in samples object.
 /// @param cleaning_parameter Parameter used to detect outliers
+
+Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
+{
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+
+    const Index columns_number = get_columns_number();
+    const Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+
+    Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
+
+    Index used_column_index = 0;
+    Index variable_index = 0;
+
+    Tensor<Tensor<Index, 1>, 1> return_values(2);
+
+    return_values(0) = Tensor<Index, 1>(samples_number);
+    return_values(1) = Tensor<Index, 1>(used_columns_number);
+
+    return_values(0).setZero();
+    return_values(1).setZero();
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
+        {
+            variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else if(columns(i).column_use == VariableUse::Unused) // Numeric, Binary or DateTime
+        {
+            variable_index++;
+            continue;
+        }
+
+        if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        {
+            used_column_index++;
+            columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else // Numeric
+        {
+            Index columns_outliers = 0;
+
+            const type interquartile_range = box_plots(used_column_index).third_quartile - box_plots(used_column_index).first_quartile;
+
+            if(interquartile_range < numeric_limits<type>::epsilon())
+            {
+                used_column_index++;
+                variable_index++;
+                continue;
+            }
+
+            for(Index j = 0; j < samples_number; j++)
+            {
+                const Tensor<type, 1> sample = get_sample_data(samples_indices(static_cast<Index>(j)));
+
+                if(sample(variable_index) < (box_plots(used_column_index).first_quartile - cleaning_parameter*interquartile_range) ||
+                        sample(variable_index) > (box_plots(used_column_index).third_quartile + cleaning_parameter*interquartile_range))
+                {
+
+                    return_values(0)(static_cast<Index>(j)) = 1;
+
+                    columns_outliers++;
+
+                    data(samples_indices(static_cast<Index>(j)), variable_index) = numeric_limits<type>::quiet_NaN();
+
+                }
+            }
+
+            return_values(1)(used_column_index) = columns_outliers;
+
+            used_column_index++;
+            variable_index++;
+        }
+    }
+
+    return return_values;
+}
 
 void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
@@ -11070,6 +11544,7 @@ void DataSet::impute_missing_values_unuse()
     {
         if(has_nan_row(i)) set_sample_use(i, "Unused");
     }
+
 }
 
 
@@ -11079,6 +11554,7 @@ void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
@@ -11096,7 +11572,7 @@ void DataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < variables_number - target_variables_number; j++)
         {
-            current_variable = used_variables_indices(j);
+            current_variable = input_variables_indices(j);
 
             for(Index i = 0; i < samples_number; i++)
             {
@@ -11126,40 +11602,40 @@ void DataSet::impute_missing_values_mean()
     }
     else
     {
-        type preview_value = 0;
-        type next_value = 0;
 
-        for(Index j = 0; j < get_variables_number(); j++)
+        for (Index j = 0; j < get_variables_number(); j++)
         {
             current_variable = j;
 
-            for(Index i = 0; i < samples_number; i++)
+            for (Index i = 0; i < samples_number; i++)
             {
                 current_sample = used_samples_indices(i);
 
-                if(!isnan(data(current_sample,current_variable)))
+                if (isnan(data(current_sample, current_variable)))
                 {
-
-                    preview_value = data(current_sample,current_variable);
-                }
-
-                if(isnan(data(current_sample, current_variable)))
-                {
-                    if(i < lags_number || i > samples_number - steps_ahead)
+                    if (i < lags_number || i > samples_number - steps_ahead)
                     {
-                        data(current_sample,current_variable) = means(j);
+                        data(current_sample, current_variable) = means(j);
                     }
                     else
                     {
-
                         Index k = i;
+                        double preview_value = NAN, next_value = NAN;
 
-                        while(isnan(data(used_samples_indices(k), current_variable)) && k < samples_number)
+                        while (isnan(preview_value) && k > 0)
                         {
-                            k++;
+                            k--;
+                            preview_value = data(used_samples_indices(k), current_variable);
                         }
 
-                        if(k == samples_number && i < samples_number - steps_ahead)
+                        k = i;
+                        while (isnan(next_value) && k < samples_number)
+                        {
+                            k++;
+                            next_value = data(used_samples_indices(k), current_variable);
+                        }
+
+                        if (isnan(preview_value) && isnan(next_value))
                         {
                             ostringstream buffer;
 
@@ -11170,9 +11646,18 @@ void DataSet::impute_missing_values_mean()
                             throw invalid_argument(buffer.str());
                         }
 
-                        next_value = data(used_samples_indices(k), current_variable);
-
-                        data(current_sample,current_variable) = (preview_value + next_value)/2;
+                        if (isnan(preview_value))
+                        {
+                            data(current_sample, current_variable) = next_value;
+                        }
+                        else if (isnan(next_value))
+                        {
+                            data(current_sample, current_variable) = preview_value;
+                        }
+                        else
+                        {
+                            data(current_sample, current_variable) = (preview_value + next_value) / 2.0;
+                        }
                     }
                 }
             }
@@ -11181,18 +11666,16 @@ void DataSet::impute_missing_values_mean()
 
 }
 
-
 /// Substitutes all the missing values by the median of the corresponding variable.
 
 void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
-
-    const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
@@ -11202,10 +11685,9 @@ void DataSet::impute_missing_values_median()
     Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
-
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = used_variables_indices(j);
+        current_variable = input_variables_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -11217,9 +11699,12 @@ void DataSet::impute_missing_values_median()
             }
         }
     }
+
+#pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < target_variables_number; j++)
     {
         current_variable = target_variables_indices(j);
+
         for(Index i = 0; i < samples_number; i++)
         {
             current_sample = used_samples_indices(i);
@@ -11232,6 +11717,91 @@ void DataSet::impute_missing_values_median()
 
     }
 }
+
+/// Substitutes all the missing values by the interpolation of the corresponding variable.
+
+void DataSet::impute_missing_values_interpolate()
+{
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+
+    const Index samples_number = used_samples_indices.size();
+    const Index variables_number = used_variables_indices.size();
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index current_variable;
+    Index current_sample;
+
+#pragma omp parallel for schedule(dynamic)
+    for(Index j = 0; j < variables_number - target_variables_number; j++)
+    {
+        current_variable = input_variables_indices(j);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                type x1 = 0;
+                type x2 = 0;
+                type y1 = 0;
+                type y2 = 0;
+                type x = 0;
+                type y = 0;
+                for(Index k = i - 1; k >= 0; k--)
+                {
+                    if(!isnan(data(used_samples_indices(k), current_variable)))
+                    {
+                        x1 = used_samples_indices(k);
+                        y1 = data(x1, current_variable);
+                        break;
+                    }
+                }
+                for(Index k = i + 1; k < samples_number; k++)
+                {
+                    if(!isnan(data(used_samples_indices(k), current_variable)))
+                    {
+                        x2 = used_samples_indices(k);
+                        y2 = data(x2, current_variable);
+                        break;
+                    }
+                }
+                if(x2 != x1)
+                {
+                    x = current_sample;
+                    y = y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+                }
+                else
+                {
+                    y = y1;
+                }
+                data(current_sample,current_variable) = y;
+            }
+        }
+    }
+
+#pragma omp parallel for schedule(dynamic)
+    for(Index j = 0; j < target_variables_number; j++)
+    {
+        current_variable = target_variables_indices(j);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                set_sample_use(i, "Unused");
+            }
+        }
+
+    }
+}
+
+
 
 /// General method for dealing with missing values.
 /// It switches among the different scrubbing methods available,
@@ -11258,10 +11828,15 @@ void DataSet::scrub_missing_values()
         impute_missing_values_median();
 
         break;
+
+    case MissingValuesMethod::Interpolation:
+
+        impute_missing_values_interpolate();
+
+        break;
     }
 
 }
-
 
 void DataSet::read_csv()
 {
@@ -12587,7 +13162,23 @@ void DataSet::read_csv_1()
         throw invalid_argument(buffer.str());
     }
 
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+#ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
+#else
+    file.open(data_file_name.c_str());
+#endif
 
     if(!file.is_open())
     {
@@ -12604,7 +13195,7 @@ void DataSet::read_csv_1()
 
     if(display) cout << "Setting data file preview..." << endl;
 
-    const Index lines_number = has_columns_names ? 4 : 3;
+    Index lines_number = has_columns_names ? 4 : 3;
 
     data_file_preview.resize(lines_number);
 
@@ -12687,6 +13278,74 @@ void DataSet::read_csv_1()
         set_columns_names(get_default_columns_names(columns_number));
     }
 
+    // Check columns with all missing values
+
+    bool has_nans_columns = false;
+
+    do
+    {
+        has_nans_columns = false;
+
+        if(lines_number > 10)
+            break;
+
+        for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
+        {
+            if(has_rows_labels && i == 0) continue;
+
+            // Check if all are missing values
+
+            if( data_file_preview(1)(i) == missing_values_label
+                    && data_file_preview(2)(i) == missing_values_label
+                    && data_file_preview(lines_number-2)(i) == missing_values_label
+                    && data_file_preview(lines_number-1)(i) == missing_values_label)
+            {
+                has_nans_columns = true;
+            }
+            else
+            {
+                has_nans_columns = false;
+            }
+
+            if(has_nans_columns)
+            {
+                lines_number++;
+                data_file_preview.resize(lines_number);
+
+                string line;
+                Index lines_count = 0;
+
+                file.open(data_file_name.c_str());
+
+                if(!file.is_open())
+                {
+                    ostringstream buffer;
+
+                    buffer << "OpenNN Exception: DataSet class.\n"
+                           << "void read_csv() method.\n"
+                           << "Cannot open data file: " << data_file_name << "\n";
+
+                    throw invalid_argument(buffer.str());
+                }
+
+                while(file.good())
+                {
+                    getline(file, line);
+                    line = decode(line);
+                    trim(line);
+                    erase(line, '"');
+                    if(line.empty()) continue;
+                    check_separators(line);
+                    data_file_preview(lines_count) = get_tokens(line, separator_char);
+                    lines_count++;
+                    if(lines_count == lines_number) break;
+                }
+
+                file.close();
+            }
+        }
+    }while(has_nans_columns);
+
     // Columns types
 
     if(display) cout << "Setting columns types..." << endl;
@@ -12697,19 +13356,24 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+        string data_file_preview_1 = data_file_preview(1)(i);
+        string data_file_preview_2 = data_file_preview(2)(i);
+        string data_file_preview_3 = data_file_preview(lines_number-2)(i);
+        string data_file_preview_4 = data_file_preview(lines_number-1)(i);
+
+        if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+                || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
+                || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
+                || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
         {
             columns(column_index).type = ColumnType::DateTime;
             time_column = columns(column_index).name;
             column_index++;
         }
-        else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(lines_number-1)(i).empty()))
+        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
+                || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
+                || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
+                || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
         {
             columns(column_index).type = ColumnType::Numeric;
             column_index++;
@@ -12720,12 +13384,47 @@ void DataSet::read_csv_1()
             column_index++;
         }
     }
+
+    // Resize data file preview to original
+
+    if(data_file_preview.size() > 4)
+    {
+        lines_number = has_columns_names ? 4 : 3;
+
+        Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
+
+        data_file_preview.resize(lines_number);
+
+        data_file_preview(0) = data_file_preview_copy(1);
+        data_file_preview(1) = data_file_preview_copy(1);
+        data_file_preview(2) = data_file_preview_copy(2);
+        data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
+        data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
+    }
+
 }
 
 
 void DataSet::read_csv_2_simple()
-{
-    std::ifstream file(data_file_name.c_str());
+{   
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    #ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
+
+    #else
+        file.open(data_file_name.c_str());
+    #endif
 
     if(!file.is_open())
     {
@@ -12815,14 +13514,31 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    #ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
+
+    #else
+        file.open(data_file_name.c_str());
+    #endif
 
     if(!file.is_open())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_2_simple() method.\n"
+               << "void read_csv_3_simple() method.\n"
                << "Cannot open data file: " << data_file_name << "\n";
 
         throw invalid_argument(buffer.str());
@@ -12931,7 +13647,25 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    #ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }
+    else
+    {
+        file.open(data_file_name.c_str());
+    }
+#else
+    file.open(data_file_name.c_str());
+#endif
+
 
     if(!file.is_open())
     {
@@ -13075,7 +13809,26 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
-    std::ifstream file(data_file_name.c_str());
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+    #ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }
+    else
+    {
+        file.open(data_file_name.c_str());
+    }
+
+    #else
+        file.open(data_file_name.c_str());
+    #endif
+
 
     if(!file.is_open())
     {
@@ -13188,7 +13941,6 @@ void DataSet::read_csv_3_complete()
                 else
                 {
                     data(sample_index, variable_index) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
-
                     variable_index++;
                 }
             }
@@ -13218,8 +13970,8 @@ void DataSet::read_csv_3_complete()
                 Tensor<string,1> positive_words(5);
                 Tensor<string,1> negative_words(5);
 
-                positive_words.setValues({"yes","positive","+","true","si"});
-                negative_words.setValues({"no","negative","-","false","no"});
+                positive_words.setValues({"yes", "positive", "+", "true", "si"});
+                negative_words.setValues({"no", "negative", "-", "false", "no"});
 
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
@@ -13420,7 +14172,6 @@ bool DataSet::has_time_time_series_columns() const
 }
 
 
-
 bool DataSet::has_selection() const
 {
     if(get_selection_samples_number() == 0) return false;
@@ -13429,13 +14180,12 @@ bool DataSet::has_selection() const
 }
 
 
-
 Tensor<Index, 1> DataSet::count_nan_columns() const
 {
     const Index columns_number = get_columns_number();
     const Index rows_number = get_samples_number();
 
-    Tensor<Index, 1> nan_columns(get_columns_number());
+    Tensor<Index, 1> nan_columns(columns_number);
     nan_columns.setZero();
 
     for(Index column_index = 0; column_index < columns_number; column_index++)
@@ -13684,12 +14434,32 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index rows_number = input_variables_dimensions(2);
+//        const Index columns_number = input_variables_dimensions(1);
+//        const Index rows_number = input_variables_dimensions(2);
+
+        const Index rows_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(2);
 
         TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
 
         Index index = 0;
+
+        /*for(Index image = 0; image < batch_size; image++)
+        {
+            index = 0;
+
+            for(Index row = 0; row < rows_number; row++)
+            {
+                for(Index col = 0; col < columns_number; col++)
+                {
+                    for(Index channel = 0; channel < channels_number; channel++)
+                    {
+                        inputs(row, col, channel, image) = data(image, index);
+                        index++;
+                    }
+                }
+            }
+        }*/
 
         for(Index image = 0; image < batch_size; image++)
         {

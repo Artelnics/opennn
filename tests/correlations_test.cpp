@@ -17,6 +17,32 @@ CorrelationsTest::~CorrelationsTest()
 {
 }
 
+void CorrelationsTest::test_spearman_linear_correlation()
+{
+    cout << "test_spearman_linear_correlation\n";
+
+    cout << "test_linear_correlation\n";
+
+    Index size;
+
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
+
+    type correlation;
+    type solution;
+
+    size = 10;
+
+    x.resize(size);
+    x.setValues({type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10)});
+
+    y.resize(size);
+    y.setValues({type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100)});
+
+    solution = type(1);
+
+    assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
+}
 
 void CorrelationsTest::test_linear_correlation()
 {
@@ -47,7 +73,6 @@ void CorrelationsTest::test_linear_correlation()
 
     const Tensor<type, 1> x1 = calculate_rank_greater(x).cast<type>();
     const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
-
 
     // Test
 
@@ -207,7 +232,7 @@ void CorrelationsTest::test_logarithmic_correlation()
     solution = type(1);
 
     assert_true(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
@@ -235,9 +260,9 @@ void CorrelationsTest::test_exponential_correlation()
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    assert_true(correlation.r > static_cast<type>(0.999999), LOG);
+    assert_true(abs(correlation.r - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test missing values
 
@@ -324,6 +349,8 @@ void CorrelationsTest::run_test_case()
     // Correlation methods
 
     test_linear_correlation();
+
+    test_spearman_linear_correlation();
 
     test_logistic_correlation();
 

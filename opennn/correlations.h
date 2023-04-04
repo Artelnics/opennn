@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <ctime>
 #include <exception>
+#include <algorithm>
 
 // OpenNN includes
 
@@ -126,6 +127,17 @@ struct Correlation
     type z_correlation_to_r_correlation(const type&);
 
     Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+
+    template<typename T>
+    const T& clamp(const T& value, const T& min, const T& max) {
+        if (value < min) {
+            return min;
+        } else if (value > max) {
+            return max;
+        } else {
+            return value;
+        }
+    }
 
 
     // Time series correlation methods

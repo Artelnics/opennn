@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <string>
 #include <string_view>
-#include <iostream>
 #include <cctype>
+#include <iomanip>
 
 // Eigen includes
 
@@ -35,6 +35,7 @@ namespace opennn
     Tensor<string, 1> get_tokens(const string&, const string&);
 
     Tensor<type, 1> to_type_vector(const string&, const char&);
+    Tensor<Index, 1> to_index_vector(const string&, const char&);
 
     Tensor<string, 1> get_unique_elements(const Tensor<string,1>&);
     Tensor<Index, 1> count_unique(const Tensor<string,1>&);
@@ -56,16 +57,17 @@ namespace opennn
     bool contains_substring(const string&, const string&);
 
     void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith);
-    string replace_non_allowed_programming_characters(std::string& s);
+    string replace_non_allowed_programming_expressions(std::string& s);
     vector<string> get_words_in_a_string(string str);
 
-    //string replace_non_allowed_programming_characters(std::string& s, int& api)
-
+    Tensor<string, 1> fix_write_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
+    Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
 
     int WordOccurrence(char *sentence, char *word);
 
     void trim(string&);
     void erase(string&, const char&);
+    void replace_first_char_with_missing_label(string &str, char target_char, const string &missing_label);
 
     string get_trimmed(const string&);
 
@@ -86,6 +88,13 @@ namespace opennn
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
+
+    bool find_string_in_tensor(Tensor<string, 1>& t, string val);
+    string get_word_from_token(string&);
+    Tensor<string, 1> push_back_string (Tensor<string, 1>&, const string&);
+
+    string round_to_precision_string(type,const int&);
+    Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2>, const int&);
 }
 
 #endif // OPENNNSTRINGS_H

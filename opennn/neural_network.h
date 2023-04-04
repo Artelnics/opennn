@@ -146,6 +146,16 @@ public:
    void set_inputs_number(const Index&);
    void set_inputs_number(const Tensor<bool, 1>&);
 
+   // AANN histogram
+
+   // Histogram parameters
+
+   void set_box_plot_minimum(const type&);
+   void set_box_plot_first_quartile(const type&);
+   void set_box_plot_median(const type&);
+   void set_box_plot_third_quartile(const type&);
+   void set_box_plot_maximum(const type&);
+
    virtual void set_default();
 
    void set_threads_number(const int&);
@@ -154,12 +164,19 @@ public:
 
    void set_display(const bool&);
 
+   void set_distances_box_plot(BoxPlot&);
+   void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
+   void set_variables_distances_names(const Tensor<string, 1>&);
+   void set_distances_descriptives(Descriptives&);
+
    // Layers
 
    Index get_layers_number() const;
    Tensor<Index, 1> get_layers_neurons_numbers() const;
 
    Index get_trainable_layers_number() const;
+   Index get_first_trainable_layer_index() const;
+   Index get_last_trainable_layer_index() const;
 
    Index get_perceptron_layers_number() const;
    Index get_probabilistic_layers_number() const;
@@ -186,6 +203,24 @@ public:
 
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
+   // AANN histogram
+
+   BoxPlot get_auto_associative_distances_box_plot() const;
+   Descriptives get_distances_descriptives() const;
+
+   type get_box_plot_minimum() const;
+   type get_box_plot_first_quartile() const;
+   type get_box_plot_median() const;
+   type get_box_plot_third_quartile() const;
+   type get_box_plot_maximum() const;
+
+   Tensor<BoxPlot, 1> get_multivariate_distances_box_plot() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_minimums() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_first_quartile() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_median() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_third_quartile() const;
+   Tensor<type, 1> get_multivariate_distances_box_plot_maximums() const;
+
    void set_parameters(Tensor<type, 1>&) const;
 
    // Parameters initialization methods
@@ -202,9 +237,14 @@ public:
 
    // Output
 
-   Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_unscaled_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
+
+   Tensor<type, 2> calculate_multivariate_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+   Tensor<type, 1> calculate_samples_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
@@ -226,6 +266,9 @@ public:
    void inputs_from_XML(const tinyxml2::XMLDocument&);
    void layers_from_XML(const tinyxml2::XMLDocument&);
    void outputs_from_XML(const tinyxml2::XMLDocument&);
+   void box_plot_from_XML(const tinyxml2::XMLDocument&);
+   void distances_descriptives_from_XML(const tinyxml2::XMLDocument&);
+   void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML( );
@@ -241,27 +284,32 @@ public:
 
    // Expression methods
 
-    string write_expression() const;
+   string write_expression_autoassociation_distances(string&, string&) const;
+   string write_expression() const;
 
-    string write_expression_python() const;
-    string write_expression_c() const;
-    string write_expression_api() const;
-    string write_expression_javascript() const;
+   string write_expression_python() const;
+   string write_expression_c() const;
+   string write_expression_api() const;
+   string write_expression_javascript() const;
 
-    void save_expression_c(const string&) const;
-    void save_expression_python(const string&) const;
-    void save_expression_api(const string&) const;
-    void save_expression_javascript(const string&) const;
-
+   void save_expression_c(const string&) const;
+   void save_expression_python(const string&) const;
+   void save_expression_api(const string&) const;
+   void save_expression_javascript(const string&) const;
    void save_outputs(Tensor<type, 2>&, const string&);
 
    void save_autoassociation_outputs(const Tensor<type, 1>&,const Tensor<string, 1>&, const string&) const;
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&, bool&) const;
+
+   void forward_propagate_deploy(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
 
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
+
+//   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+
 
 protected:
 
@@ -280,6 +328,13 @@ protected:
    /// Layers
 
    Tensor<Layer*, 1> layers_pointers;
+
+   /// AANN distances box plot
+
+   BoxPlot auto_associative_distances_box_plot = BoxPlot();
+   Tensor<BoxPlot, 1> multivariate_distances_box_plot;
+   Descriptives distances_descriptives = Descriptives();
+   Tensor<string, 1> variables_distances_names = Tensor<string, 1>();
 
    /// Display messages to screen.
 
@@ -313,61 +368,73 @@ struct NeuralNetworkForwardPropagation
 
         neural_network_pointer = new_neural_network_pointer;
 
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
 
-        const Index trainable_layers_number = trainable_layers_pointers.size();
+        const Index layers_number = layers_pointers.size();
 
-        layers.resize(trainable_layers_number);
+        layers.resize(layers_number);
 
-        for(Index i = 0; i < trainable_layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
-            switch (trainable_layers_pointers(i)->get_type())
+            switch (layers_pointers(i)->get_type())
             {
             case Layer::Type::Perceptron:
             {
-                layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Probabilistic:
             {
-                layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Recurrent:
             {
-                layers(i) = new RecurrentLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new RecurrentLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::LongShortTermMemory:
             {
-                layers(i) = new LongShortTermMemoryLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new LongShortTermMemoryLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Flatten:
             {
-                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::BatchNormalization:
             {
-                layers(i) = new BatchNormalizationLayerForwardPropagation(batch_samples_number, trainable_layers_pointers(i));;
+                layers(i) = new BatchNormalizationLayerForwardPropagation(batch_samples_number, layers_pointers(i));;
             }
             break;
 
-            case Layer::Type::Resnet50:
+            case Layer::Type::Scaling:
             {
-                //layers(i) = new Resnet50LayerForwardPropagation(trainable_layers_pointers(i));
+                layers(i) = new ScalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::Unscaling:
+            {
+                layers(i) = new UnscalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::Bounding:
+            {
+                layers(i) = new BoundingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
@@ -384,11 +451,11 @@ struct NeuralNetworkForwardPropagation
 
         for(Index i = 0; i < layers_number; i++)
         {
-            cout << "Layer " << i + 1 << ": " << neural_network_pointer->get_trainable_layers_pointers()(i)->get_type_string() << endl;
+            cout << "Layer " << i + 1 << " " << layers(i)->layer_pointer->get_name() << endl;
 
             layers(i)->print();
 
-            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
+//            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
         }
     }
 

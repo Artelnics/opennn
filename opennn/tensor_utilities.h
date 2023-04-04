@@ -33,6 +33,7 @@ void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);
 bool is_nan(const Tensor<type,1>&);
+bool is_nan(const type&);
 bool is_constant(const Tensor<type, 1>&);
 
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
@@ -91,8 +92,11 @@ type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
 void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
+type l2_distance(const TensorMap<Tensor<type, 0>>&, const TensorMap<Tensor<type, 0>>&);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
+Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
+
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
@@ -103,6 +107,9 @@ void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tenso
 
 Index count_NAN(const Tensor<type, 1>&);
 Index count_NAN(const Tensor<type, 2>&);
+
+bool has_NAN(const Tensor<type, 1>&);
+bool has_NAN(Tensor<type, 2>&);
 
 Index count_empty_values(const Tensor<string, 1>&);
 

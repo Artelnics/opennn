@@ -98,6 +98,9 @@ void GradientDescentTest::test_perform_training()
     training_results = gradient_descent.perform_training();
     error = training_results.get_training_error();
 
+    cout << "error: " << endl << error << endl;
+    cout << "old_error: " << endl << old_error << endl;
+
     assert_true(error < old_error, LOG);
 
     // Loss goal

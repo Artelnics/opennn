@@ -29,6 +29,8 @@ public:
 
     void test_linear_correlation();
 
+    void test_spearman_linear_correlation();
+
     void test_logistic_correlation();
 
     void test_logarithmic_correlation();
