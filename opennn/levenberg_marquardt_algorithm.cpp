@@ -522,13 +522,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        if(training_back_propagation_lm.loss <= training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
-
             stop_training = true;
 
             results.stopping_condition = StoppingCondition::LossGoal;
+
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
@@ -1029,7 +1029,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

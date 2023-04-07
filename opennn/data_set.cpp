@@ -7491,6 +7491,32 @@ Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const in
     return matrix_rounded;
 }
 
+//type DataSet::r_distribution_to_z_distribution(const type& r_distribution)
+//{
+//    const type z_distribution = 0.5*log((1+r_distribution)/(1 - r_distribution));
+
+//    return z_distribution;
+//}
+
+//type DataSet::z_distribution_to_r_distribution(const type& z_distribution)
+//{
+//    const type r_distribution = (exp(2*z_distribution)-1) / (exp(2*z_distribution)+1);
+
+//    return r_distribution;
+//}
+
+//Tensor<type,1> DataSet::confidence_interval_z_correlation(const type& z_distribution, const Index& n)
+//{
+//    Tensor<type, 1> confidence_interval(2);
+
+//    const type z_standard_error = 1.959964;
+
+//    confidence_interval(0) = z_distribution - z_standard_error * 1/sqrt(n - 3);
+
+//    confidence_interval(1) = z_distribution + z_standard_error * 1/sqrt(n - 3);
+
+//    return confidence_interval;
+//}
 
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
@@ -10241,6 +10267,89 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 /// Calculate the outliers from the data set using Tukey's test and sets in samples object.
 /// @param cleaning_parameter Parameter used to detect outliers
+
+Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
+{
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+
+    const Index columns_number = get_columns_number();
+    const Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+
+    Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
+
+    Index used_column_index = 0;
+    Index variable_index = 0;
+
+    Tensor<Tensor<Index, 1>, 1> return_values(2);
+
+    return_values(0) = Tensor<Index, 1>(samples_number);
+    return_values(1) = Tensor<Index, 1>(used_columns_number);
+
+    return_values(0).setZero();
+    return_values(1).setZero();
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
+        {
+            variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else if(columns(i).column_use == VariableUse::Unused) // Numeric, Binary or DateTime
+        {
+            variable_index++;
+            continue;
+        }
+
+        if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        {
+            used_column_index++;
+            columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else // Numeric
+        {
+            Index columns_outliers = 0;
+
+            const type interquartile_range = box_plots(used_column_index).third_quartile - box_plots(used_column_index).first_quartile;
+
+            if(interquartile_range < numeric_limits<type>::epsilon())
+            {
+                used_column_index++;
+                variable_index++;
+                continue;
+            }
+
+            for(Index j = 0; j < samples_number; j++)
+            {
+                const Tensor<type, 1> sample = get_sample_data(samples_indices(static_cast<Index>(j)));
+
+                if(sample(variable_index) < (box_plots(used_column_index).first_quartile - cleaning_parameter*interquartile_range) ||
+                        sample(variable_index) > (box_plots(used_column_index).third_quartile + cleaning_parameter*interquartile_range))
+                {
+
+                    return_values(0)(static_cast<Index>(j)) = 1;
+
+                    columns_outliers++;
+
+                    data(samples_indices(static_cast<Index>(j)), variable_index) = numeric_limits<type>::quiet_NaN();
+
+                }
+            }
+
+            return_values(1)(used_column_index) = columns_outliers;
+
+            used_column_index++;
+            variable_index++;
+        }
+    }
+
+    return return_values;
+}
 
 void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
@@ -14492,7 +14601,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

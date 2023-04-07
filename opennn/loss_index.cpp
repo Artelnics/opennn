@@ -343,9 +343,6 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
 #endif
 
-//    cout << "Outputs: " << endl << outputs << endl;
-//    cout << "Targets: " << endl << targets << endl;
-
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
     if(has_NAN(back_propagation.errors))
@@ -1171,7 +1168,7 @@ type LossIndex::calculate_h(const type& x) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -648,6 +648,10 @@ public:
     static type round_to_precision(type, const int&);
     static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
 
+    static type r_distribution_to_z_distribution(const type&);
+    static type z_distribution_to_r_distribution(const type&);
+    static Tensor<type,1> confidence_interval_z_correlation(const type&, const Index&);
+
     void set_data_random();
     void set_data_binary_random();
 
@@ -740,6 +744,8 @@ public:
     // Tuckey outlier detection
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
+
+    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 
@@ -1175,7 +1181,7 @@ struct DataSetBatch
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

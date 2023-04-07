@@ -749,13 +749,13 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         old_loss = training_back_propagation.loss;
 
-        if(training_back_propagation.loss <= training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_back_propagation.loss << endl;
-
             stop_training = true;
 
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
+
+            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -1160,7 +1160,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

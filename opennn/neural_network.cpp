@@ -5325,6 +5325,7 @@ string NeuralNetwork::write_expression_python() const
     Tensor<string, 1> found_mathematical_expressions;
 
     Tensor<string, 1> inputs =  get_inputs_names();
+    Tensor<string, 1> original_inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
 
     const Index layers_number = get_layers_number();
@@ -5487,8 +5488,18 @@ string NeuralNetwork::write_expression_python() const
     }
     else
     {
+        std::string inputs_list;
+        for (int i = 0; i < original_inputs.size(); ++i) {
+            inputs_list += "'" + original_inputs(i) + "'";
+            if (i < original_inputs.size() - 1) {
+                inputs_list += ", ";
+            }
+        }
+
         buffer << "\t" << "def __init__(self):" << endl;
         buffer << "\t\t" << "self.inputs_number = " << to_string(inputs.size()) << endl;
+        buffer << "\t\t" << "self.inputs_names = [" << inputs_list << "]" << endl;
+
     }
 
     buffer << "\n" << endl;
@@ -5946,7 +5957,7 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
