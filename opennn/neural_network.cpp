@@ -1451,6 +1451,8 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
+        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten) continue;
+
         trainable_layers_pointers(i)->set_parameters(new_parameters, index);
 
         index += trainable_layers_parameters_numbers(i);
@@ -1788,7 +1790,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation,
                                       bool& switch_train) const
-{
+{    
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();

@@ -33,7 +33,7 @@ FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
-
+    return;
 }
 
 
