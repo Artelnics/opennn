@@ -6061,6 +6061,36 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 }
 
 
+Tensor<string, 1> DataSet::unuse_multicollinear_columns(Tensor<Index, 1>& original_columns_indices, Tensor<Index, 1>& final_columns_indices)
+{
+    Tensor<string, 1> unused_columns;
+
+    for (Index i = 0; i < original_columns_indices.size(); i++)
+    {
+        Index original_column_index = original_columns_indices(i);
+        bool found = false;
+
+        for (Index j = 0; j < final_columns_indices.size(); j++)
+        {
+            if (original_column_index == final_columns_indices(j))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found && columns(original_column_index).column_use != VariableUse::Unused)
+        {
+            columns(original_column_index).set_use(VariableUse::Unused);
+            unused_columns = push_back(unused_columns, columns(original_column_index).name);
+        }
+    }
+
+    return unused_columns;
+}
+
+
+
 /// Returns the distribution of each of the columns. In the case of numeric columns, it returns a
 /// histogram, for the case of categorical columns, it returns the frequencies of each category and for the
 /// binary columns it returns the frequencies of the positives and negatives.
@@ -10275,6 +10305,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
 {
+//    const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
+
     const Index samples_number = get_used_samples_number();
     const Tensor<Index, 1> samples_indices = get_used_samples_indices();
 
