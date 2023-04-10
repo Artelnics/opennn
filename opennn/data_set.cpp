@@ -10204,11 +10204,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
     Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
 
-    Index used_column_index = 0;
     Index variable_index = 0;
+    Index used_variable_index = 0;
 
 #pragma omp parallel for
-
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
@@ -10222,20 +10221,26 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             continue;
         }
 
-        if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        if(columns(i).type == ColumnType::Categorical)
         {
-            used_column_index++;
-            columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
+            variable_index += columns(i).get_categories_number();
+            used_variable_index++;
+            continue;
+        }
+        else if(columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        {
+            variable_index++;
+            used_variable_index++;
             continue;
         }
         else // Numeric
         {
-            const type interquartile_range = box_plots(used_column_index).third_quartile - box_plots(used_column_index).first_quartile;
+            const type interquartile_range = box_plots(i).third_quartile - box_plots(i).first_quartile;
 
             if(interquartile_range < numeric_limits<type>::epsilon())
             {
-                used_column_index++;
                 variable_index++;
+                used_variable_index++;
                 continue;
             }
 
@@ -10245,8 +10250,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             {
                 const Tensor<type, 1> sample = get_sample_data(samples_indices(static_cast<Index>(j)));
 
-                if(sample(variable_index) <(box_plots(used_column_index).first_quartile - cleaning_parameter*interquartile_range) ||
-                        sample(variable_index) >(box_plots(used_column_index).third_quartile + cleaning_parameter*interquartile_range))
+                if(sample(variable_index) < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range) ||
+                    sample(variable_index) > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
                 {
                     return_values(0)(static_cast<Index>(j)) = 1;
 
@@ -10254,10 +10259,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
                 }
             }
 
-            return_values(1)(used_column_index) = columns_outliers;
+            return_values(1)(used_variable_index) = columns_outliers;
 
-            used_column_index++;
             variable_index++;
+            used_variable_index++;
         }
     }
 
@@ -10277,11 +10282,6 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
     const Index used_columns_number = get_used_columns_number();
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-    Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
-
-    Index used_column_index = 0;
-    Index variable_index = 0;
-
     Tensor<Tensor<Index, 1>, 1> return_values(2);
 
     return_values(0) = Tensor<Index, 1>(samples_number);
@@ -10290,8 +10290,12 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
     return_values(0).setZero();
     return_values(1).setZero();
 
-#pragma omp parallel for
+    Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
 
+    Index variable_index = 0;
+    Index used_variable_index = 0;
+
+#pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
@@ -10305,46 +10309,50 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
             continue;
         }
 
-        if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        if(columns(i).type == ColumnType::Categorical)
         {
-            used_column_index++;
-            columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
+            variable_index += columns(i).get_categories_number();
+            used_variable_index++;
+            continue;
+        }
+        else if(columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        {
+            variable_index++;
+            used_variable_index++;
             continue;
         }
         else // Numeric
         {
-            Index columns_outliers = 0;
-
-            const type interquartile_range = box_plots(used_column_index).third_quartile - box_plots(used_column_index).first_quartile;
+            const type interquartile_range = box_plots(i).third_quartile - box_plots(i).first_quartile;
 
             if(interquartile_range < numeric_limits<type>::epsilon())
             {
-                used_column_index++;
                 variable_index++;
+                used_variable_index++;
                 continue;
             }
+
+            Index columns_outliers = 0;
 
             for(Index j = 0; j < samples_number; j++)
             {
                 const Tensor<type, 1> sample = get_sample_data(samples_indices(static_cast<Index>(j)));
 
-                if(sample(variable_index) < (box_plots(used_column_index).first_quartile - cleaning_parameter*interquartile_range) ||
-                        sample(variable_index) > (box_plots(used_column_index).third_quartile + cleaning_parameter*interquartile_range))
+                if(sample(variable_index) < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range) ||
+                    sample(variable_index) > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
                 {
-
                     return_values(0)(static_cast<Index>(j)) = 1;
 
                     columns_outliers++;
 
                     data(samples_indices(static_cast<Index>(j)), variable_index) = numeric_limits<type>::quiet_NaN();
-
                 }
             }
 
-            return_values(1)(used_column_index) = columns_outliers;
+            return_values(1)(used_variable_index) = columns_outliers;
 
-            used_column_index++;
             variable_index++;
+            used_variable_index++;
         }
     }
 
