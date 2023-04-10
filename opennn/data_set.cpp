@@ -10300,8 +10300,11 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
 {
+<<<<<<< Updated upstream
+=======
 //    const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
+>>>>>>> Stashed changes
     const Index samples_number = get_used_samples_number();
     const Tensor<Index, 1> samples_indices = get_used_samples_indices();
 
@@ -10368,6 +10371,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
                     columns_outliers++;
 
+<<<<<<< Updated upstream
+                    data(samples_indices(static_cast<Index>(j)), variable_index) = numeric_limits<type>::quiet_NaN();
+
+=======
                     cout << "------ ANTES " << j << "-----" << endl;
 
                     cout << data(samples_indices(static_cast<Index>(j)), variable_index) << endl;
@@ -10378,6 +10385,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
                     cout << "------ DESPUES " << j << "-----" << endl;
 
+>>>>>>> Stashed changes
                 }
             }
 
@@ -14641,7 +14649,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
