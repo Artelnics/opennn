@@ -640,6 +640,7 @@ public:
     Tensor<Index, 1> unuse_repeated_samples();
 
     Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
+    Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
 
     // Initialization methods
 
