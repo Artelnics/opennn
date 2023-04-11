@@ -331,6 +331,7 @@ public:
     Tensor<Index, 1> get_target_time_series_columns_indices() const;
     Tensor<Index, 1> get_unused_columns_indices() const;
     Tensor<Index, 1> get_used_columns_indices() const;
+    Tensor<Index, 1> get_numerical_input_columns() const;
 
     Tensor<string, 1> get_columns_names() const;
 
@@ -352,6 +353,7 @@ public:
     Index get_target_variables_number() const;
     Index get_unused_variables_number() const;
     Index get_used_variables_number() const;
+    Index get_numerical_input_columns_number() const;
 
     string get_variable_name(const Index&) const;
     Tensor<string, 1> get_variables_names() const;
@@ -366,6 +368,7 @@ public:
     Tensor<Index, 1> get_unused_variables_indices() const;
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
+    Tensor<Index, 1> get_numerical_input_variables_indices() const;
     Tensor<Index, 1> get_target_variables_indices() const;
 
     VariableUse get_variable_use(const Index&) const;

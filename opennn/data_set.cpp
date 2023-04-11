@@ -3496,7 +3496,6 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-
         if(columns(i).type == ColumnType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
@@ -3525,6 +3524,89 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
     }
 
     return input_variables_indices;
+}
+
+
+/// Returns the number of numeric inputs columns
+
+Index DataSet::get_numerical_input_columns_number() const
+{
+    Index numeric_input_columns_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        {
+            numeric_input_columns_number++;
+        }
+    }
+
+    return numeric_input_columns_number;
+}
+
+/// Returns the numeric inputs columns indices
+
+Tensor<Index, 1> DataSet::get_numerical_input_columns() const
+{
+    Index numeric_input_columns_number = get_numerical_input_columns_number();
+
+    Tensor<Index, 1> numeric_columns_indices(numeric_input_columns_number);
+
+    Index numeric_columns_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        {
+            numeric_columns_indices(numeric_columns_index) = i;
+            numeric_columns_index++;
+        }
+    }
+
+    return numeric_columns_indices;
+}
+
+
+/// Returns the indices of the numeric input variables.
+
+Tensor<Index, 1> DataSet::get_numerical_input_variables_indices() const
+{
+    Index numeric_input_columns_number = get_numerical_input_columns_number();
+
+    Index numeric_input_index = 0;
+    Index input_variable_index = 0;
+
+    Tensor<Index, 1> numeric_input_variables_indices(numeric_input_columns_number);
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == ColumnType::Categorical)
+        {
+            const Index current_categories_number = columns(i).get_categories_number();
+
+            for(Index j = 0; j < current_categories_number; j++)
+            {
+                input_variable_index++;
+            }
+        }
+        else if((columns(i).type == ColumnType::Binary) && (columns(i).column_use == VariableUse::Input))
+        {
+            input_variable_index++;
+        }
+        else if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        {
+            numeric_input_variables_indices(numeric_input_index) = input_variable_index;
+
+            numeric_input_index++;
+            input_variable_index++;
+        }
+        else
+        {
+            input_variable_index++;
+        }
+    }
+
+    return numeric_input_variables_indices;
 }
 
 
@@ -6061,28 +6143,33 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 }
 
 
-Tensor<string, 1> DataSet::unuse_multicollinear_columns(Tensor<Index, 1>& original_columns_indices, Tensor<Index, 1>& final_columns_indices)
+Tensor<string, 1> DataSet::unuse_multicollinear_columns(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& final_variable_indices)
 {
+
+    // Original_columns_indices and final_columns_indices refers to the indices of the variables
+
     Tensor<string, 1> unused_columns;
 
-    for (Index i = 0; i < original_columns_indices.size(); i++)
+    for (Index i = 0; i < original_variable_indices.size(); i++)
     {
-        Index original_column_index = original_columns_indices(i);
+        Index original_column_index = original_variable_indices(i);
         bool found = false;
 
-        for (Index j = 0; j < final_columns_indices.size(); j++)
+        for (Index j = 0; j < final_variable_indices.size(); j++)
         {
-            if (original_column_index == final_columns_indices(j))
+            if (original_column_index == final_variable_indices(j))
             {
                 found = true;
                 break;
             }
         }
 
-        if (!found && columns(original_column_index).column_use != VariableUse::Unused)
+        Index column_index = get_column_index(original_column_index);
+
+        if (!found && columns(column_index).column_use != VariableUse::Unused)
         {
-            columns(original_column_index).set_use(VariableUse::Unused);
-            unused_columns = push_back(unused_columns, columns(original_column_index).name);
+            columns(column_index).set_use(VariableUse::Unused);
+            unused_columns = push_back(unused_columns, columns(column_index).name);
         }
     }
 
