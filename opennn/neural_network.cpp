@@ -5461,6 +5461,14 @@ string NeuralNetwork::write_expression_python() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
+        buffer << "minimum = " << to_string(distances_descriptives.minimum) << endl;
+        buffer << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
+        buffer << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
+        buffer << "mean = " << to_string(distances_descriptives.mean) << endl;
+        buffer << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
+        buffer << "maximum = " << to_string(distances_descriptives.maximum) << endl;
+        buffer << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
+        buffer << "" << endl;
         buffer << "def calculate_distances(input, output):" << endl;
         buffer << "\t" << "return math.sqrt(sum((p-q)**2 for p, q in zip(input, output)))" << endl;
         buffer << "\n" << endl;
