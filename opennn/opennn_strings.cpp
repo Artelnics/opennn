@@ -1014,6 +1014,8 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "double","dou_ble");
         replace_all_appearances(s, "default","def_ault");
         replace_all_appearances(s, "function","func_tion");
+        replace_all_appearances(s, "class","cla_ss");
+        replace_all_appearances(s, "max","ma_x");
 
         for (char& c: s)
         {
