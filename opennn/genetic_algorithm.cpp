@@ -646,6 +646,8 @@ void GeneticAlgorithm::evaluate_population()
 
         data_set_pointer->set_input_target_columns(individual_columns_indexes, original_target_columns_indices);
 
+        cout << "Inputs number: " << data_set_pointer->get_input_columns_number() << endl;
+
         data_set_pointer->scrub_missing_values();
 
         inputs_names = data_set_pointer->get_input_variables_names();
@@ -676,6 +678,7 @@ void GeneticAlgorithm::evaluate_population()
         }
            
         data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
+
     }
 
     // Mean generational selection and training error calculation (primitive way)
@@ -923,8 +926,6 @@ void GeneticAlgorithm::perform_crossover()
 
     Tensor <bool,1 > descendent_genes(genes_number);
 
-    cout << "columns_number: " << columns_number << endl;
-
     Tensor <bool, 1> parent_1_columns;
 
     Tensor <bool, 1> parent_2_columns;
@@ -1111,8 +1112,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
-        cout << "SELECTION ERROR (en cada iteracion uno): " << selection_errors(optimal_individual_index) << endl;
-
         // Store mean errors histories
 
         inputs_selection_results.mean_selection_error_history(epoch) = mean_selection_error;
@@ -1146,7 +1145,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             data_set_pointer->set_input_target_columns(original_input_columns_indices,original_target_columns_indices);
         }
 
-        data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices); //?? siempre ponemos los mismos valores por defecto, explicaria las graficas¿?
+        data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
 
         opennn::time(&current_time);
 
@@ -1175,8 +1174,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
 
 //            cout << "numeric_limits<type>::max(): " << numeric_limits<type>::max() << endl;
-
-            cout << "optimal_inputs_columns_indexes: " << optimal_inputs_columns_indexes << endl;
 
         }
 
@@ -1689,6 +1686,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Population size
+
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("PopulationSize");
 
