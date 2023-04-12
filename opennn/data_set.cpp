@@ -3496,7 +3496,6 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-
         if(columns(i).type == ColumnType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
@@ -3525,6 +3524,89 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
     }
 
     return input_variables_indices;
+}
+
+
+/// Returns the number of numeric inputs columns
+
+Index DataSet::get_numerical_input_columns_number() const
+{
+    Index numeric_input_columns_number = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        {
+            numeric_input_columns_number++;
+        }
+    }
+
+    return numeric_input_columns_number;
+}
+
+/// Returns the numeric inputs columns indices
+
+Tensor<Index, 1> DataSet::get_numerical_input_columns() const
+{
+    Index numeric_input_columns_number = get_numerical_input_columns_number();
+
+    Tensor<Index, 1> numeric_columns_indices(numeric_input_columns_number);
+
+    Index numeric_columns_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        {
+            numeric_columns_indices(numeric_columns_index) = i;
+            numeric_columns_index++;
+        }
+    }
+
+    return numeric_columns_indices;
+}
+
+
+/// Returns the indices of the numeric input variables.
+
+Tensor<Index, 1> DataSet::get_numerical_input_variables_indices() const
+{
+    Index numeric_input_columns_number = get_numerical_input_columns_number();
+
+    Index numeric_input_index = 0;
+    Index input_variable_index = 0;
+
+    Tensor<Index, 1> numeric_input_variables_indices(numeric_input_columns_number);
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).type == ColumnType::Categorical)
+        {
+            const Index current_categories_number = columns(i).get_categories_number();
+
+            for(Index j = 0; j < current_categories_number; j++)
+            {
+                input_variable_index++;
+            }
+        }
+        else if((columns(i).type == ColumnType::Binary) && (columns(i).column_use == VariableUse::Input))
+        {
+            input_variable_index++;
+        }
+        else if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        {
+            numeric_input_variables_indices(numeric_input_index) = input_variable_index;
+
+            numeric_input_index++;
+            input_variable_index++;
+        }
+        else
+        {
+            input_variable_index++;
+        }
+    }
+
+    return numeric_input_variables_indices;
 }
 
 
@@ -6059,6 +6141,41 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 
     return unused_columns;
 }
+
+
+Tensor<string, 1> DataSet::unuse_multicollinear_columns(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& final_variable_indices)
+{
+
+    // Original_columns_indices and final_columns_indices refers to the indices of the variables
+
+    Tensor<string, 1> unused_columns;
+
+    for (Index i = 0; i < original_variable_indices.size(); i++)
+    {
+        Index original_column_index = original_variable_indices(i);
+        bool found = false;
+
+        for (Index j = 0; j < final_variable_indices.size(); j++)
+        {
+            if (original_column_index == final_variable_indices(j))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        Index column_index = get_column_index(original_column_index);
+
+        if (!found && columns(column_index).column_use != VariableUse::Unused)
+        {
+            columns(column_index).set_use(VariableUse::Unused);
+            unused_columns = push_back(unused_columns, columns(column_index).name);
+        }
+    }
+
+    return unused_columns;
+}
+
 
 
 /// Returns the distribution of each of the columns. In the case of numeric columns, it returns a
@@ -10204,11 +10321,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
     Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
 
-    Index used_column_index = 0;
     Index variable_index = 0;
+    Index used_variable_index = 0;
 
 #pragma omp parallel for
-
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
@@ -10222,20 +10338,26 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             continue;
         }
 
-        if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        if(columns(i).type == ColumnType::Categorical)
         {
-            used_column_index++;
-            columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
+            variable_index += columns(i).get_categories_number();
+            used_variable_index++;
+            continue;
+        }
+        else if(columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        {
+            variable_index++;
+            used_variable_index++;
             continue;
         }
         else // Numeric
         {
-            const type interquartile_range = box_plots(used_column_index).third_quartile - box_plots(used_column_index).first_quartile;
+            const type interquartile_range = box_plots(i).third_quartile - box_plots(i).first_quartile;
 
             if(interquartile_range < numeric_limits<type>::epsilon())
             {
-                used_column_index++;
                 variable_index++;
+                used_variable_index++;
                 continue;
             }
 
@@ -10245,8 +10367,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             {
                 const Tensor<type, 1> sample = get_sample_data(samples_indices(static_cast<Index>(j)));
 
-                if(sample(variable_index) <(box_plots(used_column_index).first_quartile - cleaning_parameter*interquartile_range) ||
-                        sample(variable_index) >(box_plots(used_column_index).third_quartile + cleaning_parameter*interquartile_range))
+                if(sample(variable_index) < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range) ||
+                    sample(variable_index) > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
                 {
                     return_values(0)(static_cast<Index>(j)) = 1;
 
@@ -10254,10 +10376,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
                 }
             }
 
-            return_values(1)(used_column_index) = columns_outliers;
+            return_values(1)(used_variable_index) = columns_outliers;
 
-            used_column_index++;
             variable_index++;
+            used_variable_index++;
         }
     }
 
@@ -10267,6 +10389,94 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
 /// Calculate the outliers from the data set using Tukey's test and sets in samples object.
 /// @param cleaning_parameter Parameter used to detect outliers
+
+Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
+{
+//    const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
+
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+
+    const Index columns_number = get_columns_number();
+    const Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+
+    Tensor<Tensor<Index, 1>, 1> return_values(2);
+
+    return_values(0) = Tensor<Index, 1>(samples_number);
+    return_values(1) = Tensor<Index, 1>(used_columns_number);
+
+    return_values(0).setZero();
+    return_values(1).setZero();
+
+    Tensor<BoxPlot, 1> box_plots = calculate_columns_box_plots();
+
+    Index variable_index = 0;
+    Index used_variable_index = 0;
+
+#pragma omp parallel for
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
+        {
+            variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else if(columns(i).column_use == VariableUse::Unused) // Numeric, Binary or DateTime
+        {
+            variable_index++;
+            continue;
+        }
+
+        if(columns(i).type == ColumnType::Categorical)
+        {
+            variable_index += columns(i).get_categories_number();
+            used_variable_index++;
+            continue;
+        }
+        else if(columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        {
+            variable_index++;
+            used_variable_index++;
+            continue;
+        }
+        else // Numeric
+        {
+            const type interquartile_range = box_plots(i).third_quartile - box_plots(i).first_quartile;
+
+            if(interquartile_range < numeric_limits<type>::epsilon())
+            {
+                variable_index++;
+                used_variable_index++;
+                continue;
+            }
+
+            Index columns_outliers = 0;
+
+            for(Index j = 0; j < samples_number; j++)
+            {
+                const Tensor<type, 1> sample = get_sample_data(samples_indices(static_cast<Index>(j)));
+
+                if(sample(variable_index) < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range) ||
+                    sample(variable_index) > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
+                {
+                    return_values(0)(static_cast<Index>(j)) = 1;
+
+                    columns_outliers++;
+
+                    data(samples_indices(static_cast<Index>(j)), variable_index) = numeric_limits<type>::quiet_NaN();
+                }
+            }
+
+            return_values(1)(used_variable_index) = columns_outliers;
+
+            variable_index++;
+            used_variable_index++;
+        }
+    }
+
+    return return_values;
+}
 
 void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
@@ -14518,7 +14728,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

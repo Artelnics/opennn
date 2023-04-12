@@ -331,6 +331,7 @@ public:
     Tensor<Index, 1> get_target_time_series_columns_indices() const;
     Tensor<Index, 1> get_unused_columns_indices() const;
     Tensor<Index, 1> get_used_columns_indices() const;
+    Tensor<Index, 1> get_numerical_input_columns() const;
 
     Tensor<string, 1> get_columns_names() const;
 
@@ -352,6 +353,7 @@ public:
     Index get_target_variables_number() const;
     Index get_unused_variables_number() const;
     Index get_used_variables_number() const;
+    Index get_numerical_input_columns_number() const;
 
     string get_variable_name(const Index&) const;
     Tensor<string, 1> get_variables_names() const;
@@ -366,6 +368,7 @@ public:
     Tensor<Index, 1> get_unused_variables_indices() const;
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
+    Tensor<Index, 1> get_numerical_input_variables_indices() const;
     Tensor<Index, 1> get_target_variables_indices() const;
 
     VariableUse get_variable_use(const Index&) const;
@@ -640,6 +643,7 @@ public:
     Tensor<Index, 1> unuse_repeated_samples();
 
     Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
+    Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
 
     // Initialization methods
 
@@ -741,6 +745,8 @@ public:
     // Tuckey outlier detection
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
+
+    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 
@@ -1176,7 +1182,7 @@ struct DataSetBatch
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

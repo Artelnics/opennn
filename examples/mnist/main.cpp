@@ -78,8 +78,8 @@ int main()
         convolutional_layer_inputs_dimensions[2] = inputs_channels_number;
         convolutional_layer_inputs_dimensions[3] = samples_number;
 
-        const Index kernels_rows_number = 1;
-        const Index kernels_columns_number = 1;
+        const Index kernels_rows_number = 2;
+        const Index kernels_columns_number = 2;
         const Index kernels_number = 1;
         const Index kernels_channels_number = inputs_channels_number;
 
@@ -95,6 +95,9 @@ int main()
         flatten_layer_inputs_dimensions(2) = kernels_number;
         flatten_layer_inputs_dimensions(3) = samples_number;
 
+        cout << "flatten layer inputs dimensions: " << flatten_layer_inputs_dimensions << endl;
+
+
         // Neural network
 
         NeuralNetwork neural_network;
@@ -108,15 +111,15 @@ int main()
         FlattenLayer flatten_layer(flatten_layer_inputs_dimensions);
         neural_network.add_layer(&flatten_layer);
 
-        PerceptronLayer perceptron_layer(input_variables_number, target_variables_number);
+        PerceptronLayer perceptron_layer(flatten_layer.get_outputs_dimensions()[0], target_variables_number);
         neural_network.add_layer(&perceptron_layer);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(1000);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);

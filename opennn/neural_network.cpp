@@ -1451,6 +1451,8 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
+        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten) continue;
+
         trainable_layers_pointers(i)->set_parameters(new_parameters, index);
 
         index += trainable_layers_parameters_numbers(i);
@@ -1788,7 +1790,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation,
                                       bool& switch_train) const
-{
+{    
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
@@ -5323,6 +5325,7 @@ string NeuralNetwork::write_expression_python() const
     Tensor<string, 1> found_mathematical_expressions;
 
     Tensor<string, 1> inputs =  get_inputs_names();
+    Tensor<string, 1> original_inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
 
     const Index layers_number = get_layers_number();
@@ -5458,6 +5461,14 @@ string NeuralNetwork::write_expression_python() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
+        buffer << "minimum = " << to_string(distances_descriptives.minimum) << endl;
+        buffer << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
+        buffer << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
+        buffer << "mean = " << to_string(distances_descriptives.mean) << endl;
+        buffer << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
+        buffer << "maximum = " << to_string(distances_descriptives.maximum) << endl;
+        buffer << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
+        buffer << "" << endl;
         buffer << "def calculate_distances(input, output):" << endl;
         buffer << "\t" << "return math.sqrt(sum((p-q)**2 for p, q in zip(input, output)))" << endl;
         buffer << "\n" << endl;
@@ -5485,8 +5496,18 @@ string NeuralNetwork::write_expression_python() const
     }
     else
     {
+        std::string inputs_list;
+        for (int i = 0; i < original_inputs.size(); ++i) {
+            inputs_list += "'" + original_inputs(i) + "'";
+            if (i < original_inputs.size() - 1) {
+                inputs_list += ", ";
+            }
+        }
+
         buffer << "\t" << "def __init__(self):" << endl;
         buffer << "\t\t" << "self.inputs_number = " << to_string(inputs.size()) << endl;
+        buffer << "\t\t" << "self.inputs_names = [" << inputs_list << "]" << endl;
+
     }
 
     buffer << "\n" << endl;
@@ -5944,7 +5965,7 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
