@@ -131,6 +131,8 @@ public:
 
     void perform_selection();
 
+    Index weighted_random(const Tensor<type, 1>&);
+
     // Crossover methods
 
     void perform_crossover();
