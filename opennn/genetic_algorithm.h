@@ -107,6 +107,8 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
+    void set_initial_input_columns_indices(const Tensor<Index ,1>&);
+
     // GENETIC OPERATORS METHODS
 
     // Population methods
@@ -177,6 +179,10 @@ public:
 
 private:
     
+    /// Initial inputs columns
+
+    Tensor <Index, 1> initial_input_columns_indices;
+
     /// Activation probabilities.
     
     Tensor <type, 1> inputs_activation_probabilities;
