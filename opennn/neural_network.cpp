@@ -5455,26 +5455,30 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    buffer << "import math" << endl;
     buffer << "import numpy as np" << endl;
     buffer << "\n" << endl;
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        buffer << "minimum = " << to_string(distances_descriptives.minimum) << endl;
-        buffer << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
-        buffer << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
-        buffer << "mean = " << to_string(distances_descriptives.mean) << endl;
-        buffer << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
-        buffer << "maximum = " << to_string(distances_descriptives.maximum) << endl;
-        buffer << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
-        buffer << "" << endl;
         buffer << "def calculate_distances(input, output):" << endl;
-        buffer << "\t" << "return math.sqrt(sum((p-q)**2 for p, q in zip(input, output)))" << endl;
+        buffer << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)" << endl;
+
         buffer << "\n" << endl;
     }
 
     buffer << "class NeuralNetwork:" << endl;
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        buffer << "\t" << "minimum = " << to_string(distances_descriptives.minimum) << endl;
+        buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
+        buffer << "\t" << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
+        buffer << "\t" << "mean = " << to_string(distances_descriptives.mean) << endl;
+        buffer << "\t" << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
+        buffer << "\t" << "maximum = " << to_string(distances_descriptives.maximum) << endl;
+        buffer << "\t" << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
+        buffer << "\n" << endl;
+    }
 
     if (LSTM_number > 0)
     {
