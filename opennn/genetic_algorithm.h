@@ -92,7 +92,6 @@ public:
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
-
     void set_training_errors(const Tensor<type, 1>&);
 
     void set_selection_errors(const Tensor<type, 1>&);
@@ -107,7 +106,7 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
-    void set_initial_input_columns_indices(const Tensor<Index ,1>&);
+    void set_initial_columns_indices(const Tensor<Index ,1>&);
 
     // GENETIC OPERATORS METHODS
 
@@ -157,6 +156,8 @@ public:
 
     Tensor <Index, 1> get_individual_as_columns_indexes_from_variables( Tensor <bool, 1>&);
 
+    void set_unused_columns(Tensor<Index, 1>&);
+
     InputsSelectionResults perform_inputs_selection ()  final;
 
     // Serialization method
@@ -181,7 +182,11 @@ private:
     
     /// Initial inputs columns
 
-    Tensor <Index, 1> initial_input_columns_indices;
+    Tensor <Index, 1> initial_columns_indices;
+
+    /// Initial columns unused
+
+    Tensor <Index, 1> initial_unused_columns_indices;
 
     /// Activation probabilities.
     
