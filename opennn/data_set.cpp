@@ -2666,9 +2666,8 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
     Index index = 0;
 
-    for(Index i = 0; i < unused_columns_number; i++)
+    for(Index i = 0; i < columns.size(); i++)
     {
-
         if(columns(i).column_use == VariableUse::Unused)
         {
             unused_columns_indices(index) = i;
