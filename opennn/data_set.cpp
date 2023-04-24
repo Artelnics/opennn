@@ -2666,7 +2666,7 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
     Index index = 0;
 
-    for(Index i = 0; i < unused_columns_number; i++)
+    for(Index i = 0; i < columns.size(); i++)
     {
         if(columns(i).column_use == VariableUse::Unused)
         {
@@ -6952,6 +6952,10 @@ void DataSet::set_gmt(Index& new_gmt)
 
 Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() const
 {
+    const int number_of_thread = omp_get_max_threads();
+    ThreadPool* correlations_thread_pool = new ThreadPool(number_of_thread);
+    ThreadPoolDevice* correlations_thread_pool_device = new ThreadPoolDevice(correlations_thread_pool, number_of_thread);
+
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
 
@@ -6962,6 +6966,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
     Tensor<Correlation, 2> correlations(input_columns_number, target_columns_number);
 
+#pragma omp parallel for
     for(Index i = 0; i < input_columns_number; i++)
     {
         const Index input_index = input_columns_indices(i);
@@ -6974,9 +6979,12 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
             const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
 
-            correlations(i,j) = opennn::correlation(thread_pool_device, input_column_data, target_column_data);
+            correlations(i,j) = opennn::correlation(correlations_thread_pool_device, input_column_data, target_column_data);
         }
     }
+
+    delete correlations_thread_pool;
+    delete correlations_thread_pool_device;
 
     return correlations;
 }

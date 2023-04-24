@@ -26,6 +26,7 @@
     <ClCompile Include="correlations_test.cpp" />
     <ClCompile Include="cross_entropy_error_test.cpp" />
     <ClCompile Include="data_set_test.cpp" />
+    <ClCompile Include="flatten_layer_test.cpp" />
     <ClCompile Include="genetic_algorithm_test.cpp" />
     <ClCompile Include="gradient_descent_test.cpp" />
     <ClCompile Include="growing_inputs_test.cpp" />
@@ -67,6 +68,7 @@
     <ClInclude Include="correlations_test.h" />
     <ClInclude Include="cross_entropy_error_test.h" />
     <ClInclude Include="data_set_test.h" />
+    <ClInclude Include="flatten_layer_test.h" />
     <ClInclude Include="genetic_algorithm_test.h" />
     <ClInclude Include="gradient_descent_test.h" />
     <ClInclude Include="growing_inputs_test.h" />
