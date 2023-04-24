@@ -6928,8 +6928,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 #pragma omp parallel for
     for(Index i = 0; i < input_columns_number; i++)
     {
-        cout << "Column name: " << columns(i).name << endl;
-
         const Index input_index = input_columns_indices(i);
 
         const Tensor<type, 2> input_column_data = get_column_data(input_index, used_samples_indices);
