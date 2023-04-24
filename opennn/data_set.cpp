@@ -2668,7 +2668,6 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
     for(Index i = 0; i < unused_columns_number; i++)
     {
-
         if(columns(i).column_use == VariableUse::Unused)
         {
             unused_columns_indices(index) = i;
@@ -2991,6 +2990,40 @@ Index DataSet::get_used_columns_number() const
     }
 
     return used_columns_number;
+}
+
+Index DataSet::get_variables_less_target() const
+{
+    Index columns_number = 0;
+
+    for (Index i = 0; i < columns.size(); i++)
+    {
+
+        if(columns(i).type == ColumnType::Categorical)
+        {
+            if(columns(i).column_use == VariableUse::Input)
+            {
+                columns_number += columns(i).categories_uses.size();
+            }
+            else if(columns(i).column_use == VariableUse::Unused)
+            {
+                columns_number += columns(i).categories_uses.size();
+            }
+        }
+        else
+        {
+            if(columns(i).column_use == VariableUse::Input)
+            {
+                columns_number ++;
+            }
+            else if(columns(i).column_use == VariableUse::Unused)
+            {
+                columns_number  ++;
+            }
+        }
+    }
+
+    return columns_number;
 }
 
 Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Index& bins_number) const
@@ -3798,6 +3831,13 @@ void DataSet::set_column_use(const Index& index, const VariableUse& new_use)
     }
 }
 
+void DataSet::set_columns_unused(const Tensor<Index, 1>& unused_columns_index)
+{
+    for(Index i = 0; i < unused_columns_index.size(); i++)
+    {
+        set_column_use(unused_columns_index(i), VariableUse::Unused);
+    }
+}
 
 /// Sets the use of a single column.
 /// @param name Name of column.

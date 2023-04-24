@@ -320,6 +320,8 @@ public:
     Index get_unused_columns_number() const;
     Index get_used_columns_number() const;
 
+    Index get_variables_less_target() const;
+
     Tensor<Index, 1> get_columns_index(const Tensor<string, 1>&) const;
 
     Index get_column_index(const string&) const;
@@ -538,6 +540,8 @@ public:
     void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
     void set_input_target_columns(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_columns_unused();
+
+    void set_columns_unused(const Tensor<Index, 1>&);
 
     void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 

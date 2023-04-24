@@ -20,6 +20,7 @@
 #include <limits>
 #include <numeric>
 #include <stdio.h>
+#include <random>
 
 // OpenNN includes
 
@@ -158,6 +159,8 @@ public:
 
     void set_unused_columns(Tensor<Index, 1>&);
 
+    Tensor<Index, 1> get_original_unused_columns();
+
     InputsSelectionResults perform_inputs_selection ()  final;
 
     // Serialization method
@@ -183,10 +186,12 @@ private:
     /// Initial inputs columns
 
     Tensor <Index, 1> initial_columns_indices;
+    Tensor <bool, 1> original_input_columns;
 
     /// Initial columns unused
 
-    Tensor <Index, 1> initial_unused_columns_indices;
+    Tensor <Index, 1> original_unused_columns_indices;
+    Tensor<bool, 1> original_unused_columns;
 
     /// Activation probabilities.
     
