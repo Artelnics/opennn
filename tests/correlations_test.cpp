@@ -225,7 +225,7 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     y.resize(size);
 
-    for(Index i = 0; i < size; i++) y[i] = type(1)*log(x[i]);
+    for(Index i = 0; i < size; i++) y[i] = type(4)*log(x[i]);
 
     correlation = logarithmic_correlation(thread_pool_device, x, y );
 
@@ -256,7 +256,7 @@ void CorrelationsTest::test_exponential_correlation()
     initialize_sequential(x);
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * exp(static_cast<type>(1)*x[i]);
+    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * exp(static_cast<type>(0.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
