@@ -5565,6 +5565,7 @@ void DataSet::set_default()
     input_variables_dimensions.resize(1);
 
     input_variables_dimensions.setConstant(get_input_variables_number());
+
 }
 
 void DataSet::set_project_type_string(const string& new_project_type)

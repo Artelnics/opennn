@@ -103,7 +103,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     neural_network.set_parameters_constant(type(-1));
 
-    type training_loss_goal = type(0.1);
+    type training_loss_goal = type(0.05);
 
     adaptive_moment_estimation.set_loss_goal(training_loss_goal);
     adaptive_moment_estimation.set_maximum_epochs_number(10000);

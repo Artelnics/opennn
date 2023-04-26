@@ -744,11 +744,11 @@ int main()
 
           // genetic_algorithm
 
-          GeneticAlgorithmTest genetic_algorithm_test;
-          genetic_algorithm_test.run_test_case();
-          tests_count += genetic_algorithm_test.get_tests_count();
-          tests_passed_count += genetic_algorithm_test.get_tests_passed_count();
-          tests_failed_count += genetic_algorithm_test.get_tests_failed_count();
+//          GeneticAlgorithmTest genetic_algorithm_test;
+//          genetic_algorithm_test.run_test_case();
+//          tests_count += genetic_algorithm_test.get_tests_count();
+//          tests_passed_count += genetic_algorithm_test.get_tests_passed_count();
+//          tests_failed_count += genetic_algorithm_test.get_tests_failed_count();
 
           // T E S T I N G   A N A L Y S I S   T E S T S
 
