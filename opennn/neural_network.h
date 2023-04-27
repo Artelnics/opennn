@@ -591,6 +591,16 @@ struct NeuralNetworkBackPropagationLM
         neural_network_pointer = new_neural_network_pointer;
     }
 
+    virtual ~NeuralNetworkBackPropagationLM()
+    {
+        const Index layers_number = layers.size();
+
+        for(Index i = 0; i < layers_number; i++)
+        {
+            delete layers(i);
+        }
+    }
+
     void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
         batch_samples_number = new_batch_samples_number;

@@ -306,6 +306,11 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
         set(new_batch_samples_number, new_layer_pointer);
     }
 
+    virtual ~ProbabilisticLayerBackPropagationLM()
+    {
+
+    }
+
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {

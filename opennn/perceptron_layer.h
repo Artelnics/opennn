@@ -358,6 +358,12 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     }
 
 
+    virtual ~PerceptronLayerBackPropagationLM()
+    {
+
+    }
+
+
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;

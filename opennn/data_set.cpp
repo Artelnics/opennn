@@ -10637,8 +10637,8 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     Tensor<type, 2> distance_matrix(samples_number, samples_number);
-    distance_matrix.setZero();
 
+    distance_matrix.setZero();
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number ; i++)
