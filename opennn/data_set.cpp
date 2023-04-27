@@ -14604,7 +14604,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_data);
+        fill_submatrix(data, samples, inputs, inputs_data.get());
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -14615,7 +14615,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
+        TensorMap<Tensor<type, 4>> inputs(inputs_data.get(), rows_number, columns_number, channels_number, batch_size);
 
         Index index = 0;
 
@@ -14676,13 +14676,17 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
+    size_t inputs_data_size = 0;
+    size_t targets_data_size = batch_size*target_variables_number*sizeof(type);
+
     if(input_variables_dimensions.size() == 1)
     {
         inputs_dimensions.resize(2);
         inputs_dimensions.setValues({batch_size, input_variables_number});
 
-        //delete inputs_data;
-        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
+//        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
+
+        inputs_data_size = batch_size*input_variables_number*sizeof(type);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -14694,14 +14698,18 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});
 
         //delete inputs_data;
-        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
+//        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
+        inputs_data_size = rows_number*columns_number*channels_number*batch_size*sizeof(type);
     }
 
     targets_dimensions.resize(2);
     targets_dimensions.setValues({batch_size, target_variables_number});
 
     //delete targets_data;
-    targets_data = (type*)malloc(static_cast<size_t>(batch_size*target_variables_number*sizeof(type)));
+//    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
+
+    inputs_data = make_unique<type[]>(inputs_data_size);
+    targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
 }
 
 
@@ -14720,9 +14728,9 @@ void DataSetBatch::print() const
 
     cout << "Inputs:" << endl;
     if(inputs_dimensions.size() == 2)
-        cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type, 2>>(inputs_data.get(), inputs_dimensions(0), inputs_dimensions(1)) << endl;
     else if(inputs_dimensions.size() == 4)
-        cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
+        cout << TensorMap<Tensor<type, 4>>(inputs_data.get(), inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
     cout << "Targets dimensions:" << endl;
     cout << targets_dimensions << endl;
 
@@ -14776,7 +14784,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

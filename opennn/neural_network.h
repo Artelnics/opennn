@@ -360,7 +360,16 @@ struct NeuralNetworkForwardPropagation
 
     /// Destructor.
 
-    virtual ~NeuralNetworkForwardPropagation() {}
+    virtual ~NeuralNetworkForwardPropagation()
+    {
+        const Index layers_number = layers.size();
+
+        for(Index i = 0; i < layers_number; i++)
+        {
+            delete layers(i);
+        }
+    }
+
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
@@ -470,6 +479,16 @@ struct NeuralNetworkForwardPropagation
 struct NeuralNetworkBackPropagation
 {
     NeuralNetworkBackPropagation() {}
+
+    virtual ~NeuralNetworkBackPropagation()
+    {
+        const Index layers_number = layers.size();
+
+        for(Index i = 0; i < layers_number; i++)
+        {
+            delete layers(i);
+        }
+    }
 
     NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network_pointer)
     {
@@ -641,7 +660,7 @@ struct NeuralNetworkBackPropagationLM
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

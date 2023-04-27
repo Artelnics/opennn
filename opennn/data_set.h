@@ -1150,7 +1150,10 @@ struct DataSetBatch
 
     /// Destructor.
 
-    virtual ~DataSetBatch() {}
+    virtual ~DataSetBatch()
+    {
+        if(targets_data != nullptr) free(targets_data);
+    }
 
     Index get_batch_size() const;
 
@@ -1158,7 +1161,10 @@ struct DataSetBatch
 
     void set_inputs(Tensor<type, 2>& new_inputs)
     {
-        inputs_data = new_inputs.data();
+        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
+        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
+
+        inputs_data = move(new_inputs_data);
         inputs_dimensions = get_dimensions(new_inputs);
     }
 
@@ -1170,14 +1176,15 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-    type* inputs_data;
+//    type* inputs_data = nullptr;
+
+    unique_ptr<type[]> inputs_data;
 
     Tensor<Index, 1> inputs_dimensions;
 
-    type* targets_data;
+    type* targets_data = nullptr;
 
     Tensor<Index, 1> targets_dimensions;
-
 };
 
 
@@ -1186,7 +1193,7 @@ struct DataSetBatch
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

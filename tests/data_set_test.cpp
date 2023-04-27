@@ -2299,7 +2299,7 @@ void DataSetTest::test_fill()
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
 
-    const TensorMap<Tensor<type, 2>> inputs(data_set_batch.inputs_data, data_set_batch.inputs_dimensions(0), data_set_batch.inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs(data_set_batch.inputs_data.get(), data_set_batch.inputs_dimensions(0), data_set_batch.inputs_dimensions(1));
     const TensorMap<Tensor<type, 2>> targets(data_set_batch.targets_data, data_set_batch.targets_dimensions(0), data_set_batch.targets_dimensions(1));
 
     assert_true(are_equal(inputs, input_data), LOG);
