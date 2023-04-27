@@ -1016,6 +1016,7 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "function","func_tion");
         replace_all_appearances(s, "class","cla_ss");
         replace_all_appearances(s, "max","ma_x");
+        replace_all_appearances(s, "min","mi_n");
 
         for (char& c: s)
         {

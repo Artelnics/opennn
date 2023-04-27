@@ -1076,8 +1076,6 @@ private:
 
     bool display = true;
 
-    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
     // Image treatment
 
     static size_t number_of_elements_in_directory(const fs::path& path);

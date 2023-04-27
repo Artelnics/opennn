@@ -182,10 +182,8 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
     }
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {   cout << "----- " << column_index << "::" << i << "-----" << endl;
-        cout << "matrix(i,column_index :" << matrix(i,column_index) << endl;
+    {
         matrix(i,column_index) = log(matrix(i,column_index));
-        cout << "matrix(i,column_index :" << log(matrix(i,column_index)) << endl;
     }
 
 }
