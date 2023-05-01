@@ -23,5 +23,6 @@ SUBDIRS += blank
 CONFIG += ordered
 
 
+
 # OpenMP library
 include(../opennn/opennmp.pri)

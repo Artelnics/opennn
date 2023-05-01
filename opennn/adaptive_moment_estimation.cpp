@@ -447,7 +447,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
-        if(results.training_error_history(epoch) < training_loss_goal)
+        if(results.loss < training_loss_goal)
         {
             stop_training = true;
 
@@ -876,7 +876,7 @@ void AdaptiveMomentEstimationData::print() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

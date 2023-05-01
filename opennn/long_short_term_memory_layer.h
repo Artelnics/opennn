@@ -467,6 +467,10 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     {
     }
 
+    virtual ~LongShortTermMemoryLayerBackPropagation()
+    {
+    }
+
 
     explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
@@ -631,7 +635,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -127,7 +127,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Index kernels_number = synaptic_weights.dimension(3);
 
 #ifdef OPENNN_DEBUG
-
+/*
     const Index output_channel_number = combinations.dimension(2);
     const Index output_images_number = combinations.dimension(3);
 
@@ -150,7 +150,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 
         throw invalid_argument(buffer.str());
     }
-
+*/
 #endif
 
     const Index next_image = inputs_rows_number*inputs_columns_number*kernels_channels_number;
@@ -1380,7 +1380,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

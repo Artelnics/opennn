@@ -38,7 +38,7 @@ int main()
 
         // Neural network
 
-        const Index neurons_number = 100;
+        const Index neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, neurons_number, target_variables_number});
 
@@ -49,6 +49,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_maximum_epochs_number(10);
 
         training_strategy.perform_training();
 

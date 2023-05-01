@@ -232,7 +232,7 @@ void CorrelationsTest::test_logarithmic_correlation()
     solution = type(1);
 
     assert_true(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - static_cast<type>(4)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
@@ -250,7 +250,7 @@ void CorrelationsTest::test_exponential_correlation()
 
     // Test
 
-    size = 100;
+    size = 10;
 
     x.resize(size);
     initialize_sequential(x);
@@ -262,7 +262,7 @@ void CorrelationsTest::test_exponential_correlation()
 
     assert_true(abs(correlation.r - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test missing values
 

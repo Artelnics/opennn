@@ -1014,6 +1014,9 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "double","dou_ble");
         replace_all_appearances(s, "default","def_ault");
         replace_all_appearances(s, "function","func_tion");
+        replace_all_appearances(s, "class","cla_ss");
+        replace_all_appearances(s, "max","ma_x");
+        replace_all_appearances(s, "min","mi_n");
 
         for (char& c: s)
         {
@@ -1580,7 +1583,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

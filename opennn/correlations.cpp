@@ -661,9 +661,7 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
     vector<type> x_rank_vector(n);
     type rank = 1.0;
 
-    #pragma omp parallel for
-
-    for (size_t i = 0U; i < v_sort.size(); ++i)
+    for (int i = 0U; i < v_sort.size(); ++i)
     {
         size_t repeated = 1U;
         for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
@@ -960,7 +958,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -1086,7 +1084,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -1190,7 +1188,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

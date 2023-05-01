@@ -1796,7 +1796,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(first_trainable_layer_index), switch_train);
+    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data.get(), batch.inputs_dimensions, forward_propagation.layers(first_trainable_layer_index), switch_train);
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
@@ -1817,7 +1817,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     bool switch_train = false;
 
-    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
+    layers_pointers(0)->forward_propagate(batch.inputs_data.get(), batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
 
     for(Index i = 1; i < layers_number; i++)
     {
@@ -5455,18 +5455,30 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    buffer << "import math" << endl;
     buffer << "import numpy as np" << endl;
     buffer << "\n" << endl;
 
     if(project_type == ProjectType::AutoAssociation)
     {
         buffer << "def calculate_distances(input, output):" << endl;
-        buffer << "\t" << "return math.sqrt(sum((p-q)**2 for p, q in zip(input, output)))" << endl;
+        buffer << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)" << endl;
+
         buffer << "\n" << endl;
     }
 
     buffer << "class NeuralNetwork:" << endl;
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        buffer << "\t" << "minimum = " << to_string(distances_descriptives.minimum) << endl;
+        buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
+        buffer << "\t" << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
+        buffer << "\t" << "mean = " << to_string(distances_descriptives.mean) << endl;
+        buffer << "\t" << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
+        buffer << "\t" << "maximum = " << to_string(distances_descriptives.maximum) << endl;
+        buffer << "\t" << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
+        buffer << "\n" << endl;
+    }
 
     if (LSTM_number > 0)
     {
@@ -5957,7 +5969,7 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

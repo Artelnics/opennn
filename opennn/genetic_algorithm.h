@@ -20,6 +20,7 @@
 #include <limits>
 #include <numeric>
 #include <stdio.h>
+#include <random>
 
 // OpenNN includes
 
@@ -92,7 +93,6 @@ public:
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
-
     void set_training_errors(const Tensor<type, 1>&);
 
     void set_selection_errors(const Tensor<type, 1>&);
@@ -106,6 +106,8 @@ public:
     void set_elitism_size(const Index&);
 
     void set_maximum_epochs_number(const Index&);
+
+    void set_initial_columns_indices(const Tensor<Index ,1>&);
 
     // GENETIC OPERATORS METHODS
 
@@ -131,6 +133,8 @@ public:
 
     void perform_selection();
 
+    Index weighted_random(const Tensor<type, 1>&);
+
     // Crossover methods
 
     void perform_crossover();
@@ -152,6 +156,10 @@ public:
     Tensor <Index, 1> get_selected_individuals_indices ();
 
     Tensor <Index, 1> get_individual_as_columns_indexes_from_variables( Tensor <bool, 1>&);
+
+    void set_unused_columns(Tensor<Index, 1>&);
+
+    Tensor<Index, 1> get_original_unused_columns();
 
     InputsSelectionResults perform_inputs_selection ()  final;
 
@@ -175,6 +183,16 @@ public:
 
 private:
     
+    /// Initial inputs columns
+
+    Tensor <Index, 1> initial_columns_indices;
+    Tensor <bool, 1> original_input_columns;
+
+    /// Initial columns unused
+
+    Tensor <Index, 1> original_unused_columns_indices;
+    Tensor<bool, 1> original_unused_columns;
+
     /// Activation probabilities.
     
     Tensor <type, 1> inputs_activation_probabilities;
