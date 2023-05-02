@@ -499,6 +499,7 @@ public:
     void set_project_type_string(const string&);
     void set_project_type(const ProjectType&);
 
+    void set_threads();
     void set_threads_number(const int&);
 
     // Samples set methods
@@ -1130,7 +1131,6 @@ private:
     type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
 
     Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
-
 };
 
 

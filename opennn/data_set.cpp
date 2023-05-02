@@ -23,6 +23,8 @@ namespace opennn
 
 DataSet::DataSet()
 {
+    set_threads();
+
     set();
 
     set_default();
@@ -35,6 +37,8 @@ DataSet::DataSet()
 
 DataSet::DataSet(const Tensor<type, 2>& data)
 {
+    set_threads();
+
     set(data);
 
     set_default();
@@ -50,6 +54,8 @@ DataSet::DataSet(const Tensor<type, 2>& data)
 
 DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_number)
 {
+    set_threads();
+
     set(new_samples_number, new_variables_number);
 
     set_default();
@@ -65,6 +71,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_num
 
 DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number, const Index& new_targets_number)
 {
+    set_threads();
+
     set(new_samples_number, new_inputs_number, new_targets_number);
 
     set_default();
@@ -80,6 +88,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names, const Codification& data_codification)
 {
+    set_threads();
+
     set(data_file_name, separator, has_columns_names, data_codification);
 }
 
@@ -5347,8 +5357,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+//    ThreadPool* thread_pool = nullptr;
+//    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
 
@@ -5549,6 +5559,9 @@ void DataSet::set(const DataSet& other_data_set)
 
 void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 {
+//    if(thread_pool != nullptr) delete thread_pool;
+//    if(thread_pool_device != nullptr) delete thread_pool_device; // alvarommm
+
     set_default();
 
     from_XML(data_set_document);
@@ -5581,12 +5594,12 @@ void DataSet::set_display(const bool& new_display)
 
 void DataSet::set_default()
 {
-    delete thread_pool;
-    delete thread_pool_device;
+//    delete thread_pool;
+//    delete thread_pool_device;
 
-    const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+//    const int n = omp_get_max_threads();
+//    thread_pool = new ThreadPool(n);
+//    thread_pool_device = new ThreadPoolDevice(thread_pool, n); // alvarom
 
     has_columns_names = false;
 
@@ -6037,6 +6050,16 @@ type DataSet::calculate_intersection_over_union(const BoundingBox& gTruth_boundi
 
     return intersection_over_union;
 }
+
+
+void DataSet::set_threads()
+{
+    int new_threads_number = omp_get_max_threads();
+
+    thread_pool = new ThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+}
+
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
@@ -7151,9 +7174,14 @@ void DataSet::print_top_input_target_columns_correlations() const
 
 Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(const bool& calculate_pearson_correlations, const bool& calculate_spearman_correlations) const
 {
+    cout << "DataSet: " << data << endl;
+
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
     const Index input_columns_number = get_input_columns_number();
+
+    cout << "input_columns_indices: " << input_columns_indices << endl;
+    cout << "input_columns_number: " << input_columns_number << endl;
 
     Tensor<Correlation, 2> correlations(input_columns_number, input_columns_number);
     Tensor<Correlation, 2> correlations_spearman(input_columns_number, input_columns_number);
@@ -7171,23 +7199,61 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(
 
         for(Index j = i; j < input_columns_number; j++)
         {
-            const Index current_input_index_j = input_columns_indices(j);
-
-            const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
-
-            if(calculate_pearson_correlations)
+            if(j == i)
             {
-                correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
-                if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                if(calculate_pearson_correlations)
+                {
                     correlations(i,j).r = type(1);
-            }
+                    correlations(i,j).b = type(1);
+                    correlations(i,j).a = type(0);
 
-            if(calculate_spearman_correlations)
-            {
-                correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+                    correlations(i,j).upper_confidence = type(1);
+                    correlations(i,j).lower_confidence = type(1);
+                    correlations(i,j).correlation_type = CorrelationType::Linear;
+                    correlations(i,j).correlation_method = CorrelationMethod::Pearson;
+                }
 
-                if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                if(calculate_spearman_correlations)
+                {
                     correlations_spearman(i,j).r = type(1);
+                    correlations_spearman(i,j).b = type(1);
+                    correlations_spearman(i,j).a = type(0);
+
+                    correlations_spearman(i,j).upper_confidence = type(1);
+                    correlations_spearman(i,j).lower_confidence = type(1);
+                    correlations_spearman(i,j).correlation_type = CorrelationType::Linear;
+                    correlations_spearman(i,j).correlation_method = CorrelationMethod::Spearman;
+                }
+            }
+            else
+            {
+                cout << "(i,j): " << "(" << i << ", " << j << ")" << endl;
+                const Index current_input_index_j = input_columns_indices(j);
+
+                const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
+
+                cout << "input_i: " << input_i << endl;
+                cout << "input_j: " << input_j << endl;
+
+                if(calculate_pearson_correlations)
+                {
+                    correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+                    cout << "correlations(i,j).r: " << correlations(i,j).r << endl;
+                    if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                        correlations(i,j).r = type(1);
+                }
+
+                cout << "calculate_pearson_correlations done!" << endl;
+
+                if(calculate_spearman_correlations)
+                {
+                    correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+
+                    if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                        correlations_spearman(i,j).r = type(1);
+                }
+
+                cout << "calculate_spearman_correlations done!" << endl;
             }
         }
     }
