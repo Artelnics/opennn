@@ -126,6 +126,7 @@ struct BatchNormalizationLayerForwardPropagation : LayerForwardPropagation
 
         outputs_dimensions.resize(2);
         outputs_dimensions.setValues({batch_samples_number, inputs_number});
+
         outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * inputs_number*sizeof(type)) );
 
         // fixed parameters
@@ -142,7 +143,7 @@ struct BatchNormalizationLayerForwardPropagation : LayerForwardPropagation
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

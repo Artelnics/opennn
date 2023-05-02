@@ -23,6 +23,8 @@ namespace opennn
 
 DataSet::DataSet()
 {
+    set_threads();
+
     set();
 
     set_default();
@@ -35,6 +37,8 @@ DataSet::DataSet()
 
 DataSet::DataSet(const Tensor<type, 2>& data)
 {
+    set_threads();
+
     set(data);
 
     set_default();
@@ -50,6 +54,8 @@ DataSet::DataSet(const Tensor<type, 2>& data)
 
 DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_number)
 {
+    set_threads();
+
     set(new_samples_number, new_variables_number);
 
     set_default();
@@ -65,6 +71,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_num
 
 DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number, const Index& new_targets_number)
 {
+    set_threads();
+
     set(new_samples_number, new_inputs_number, new_targets_number);
 
     set_default();
@@ -80,6 +88,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names, const Codification& data_codification)
 {
+    set_threads();
+
     set(data_file_name, separator, has_columns_names, data_codification);
 }
 
@@ -5347,8 +5357,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+//    ThreadPool* thread_pool = nullptr;
+//    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
 
@@ -5549,6 +5559,9 @@ void DataSet::set(const DataSet& other_data_set)
 
 void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 {
+//    if(thread_pool != nullptr) delete thread_pool;
+//    if(thread_pool_device != nullptr) delete thread_pool_device; // alvarommm
+
     set_default();
 
     from_XML(data_set_document);
@@ -5581,12 +5594,12 @@ void DataSet::set_display(const bool& new_display)
 
 void DataSet::set_default()
 {
-    delete thread_pool;
-    delete thread_pool_device;
+//    delete thread_pool;
+//    delete thread_pool_device;
 
-    const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+//    const int n = omp_get_max_threads();
+//    thread_pool = new ThreadPool(n);
+//    thread_pool_device = new ThreadPoolDevice(thread_pool, n); // alvarom
 
     has_columns_names = false;
 
@@ -5605,6 +5618,7 @@ void DataSet::set_default()
     input_variables_dimensions.resize(1);
 
     input_variables_dimensions.setConstant(get_input_variables_number());
+
 }
 
 void DataSet::set_project_type_string(const string& new_project_type)
@@ -6036,6 +6050,16 @@ type DataSet::calculate_intersection_over_union(const BoundingBox& gTruth_boundi
 
     return intersection_over_union;
 }
+
+
+void DataSet::set_threads()
+{
+    int new_threads_number = omp_get_max_threads();
+
+    thread_pool = new ThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+}
+
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
@@ -7150,9 +7174,14 @@ void DataSet::print_top_input_target_columns_correlations() const
 
 Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(const bool& calculate_pearson_correlations, const bool& calculate_spearman_correlations) const
 {
+    cout << "DataSet: " << data << endl;
+
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
     const Index input_columns_number = get_input_columns_number();
+
+    cout << "input_columns_indices: " << input_columns_indices << endl;
+    cout << "input_columns_number: " << input_columns_number << endl;
 
     Tensor<Correlation, 2> correlations(input_columns_number, input_columns_number);
     Tensor<Correlation, 2> correlations_spearman(input_columns_number, input_columns_number);
@@ -7170,23 +7199,61 @@ Tensor<Tensor<Correlation, 2>, 1> DataSet::calculate_input_columns_correlations(
 
         for(Index j = i; j < input_columns_number; j++)
         {
-            const Index current_input_index_j = input_columns_indices(j);
-
-            const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
-
-            if(calculate_pearson_correlations)
+            if(j == i)
             {
-                correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
-                if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                if(calculate_pearson_correlations)
+                {
                     correlations(i,j).r = type(1);
-            }
+                    correlations(i,j).b = type(1);
+                    correlations(i,j).a = type(0);
 
-            if(calculate_spearman_correlations)
-            {
-                correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+                    correlations(i,j).upper_confidence = type(1);
+                    correlations(i,j).lower_confidence = type(1);
+                    correlations(i,j).correlation_type = CorrelationType::Linear;
+                    correlations(i,j).correlation_method = CorrelationMethod::Pearson;
+                }
 
-                if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                if(calculate_spearman_correlations)
+                {
                     correlations_spearman(i,j).r = type(1);
+                    correlations_spearman(i,j).b = type(1);
+                    correlations_spearman(i,j).a = type(0);
+
+                    correlations_spearman(i,j).upper_confidence = type(1);
+                    correlations_spearman(i,j).lower_confidence = type(1);
+                    correlations_spearman(i,j).correlation_type = CorrelationType::Linear;
+                    correlations_spearman(i,j).correlation_method = CorrelationMethod::Spearman;
+                }
+            }
+            else
+            {
+                cout << "(i,j): " << "(" << i << ", " << j << ")" << endl;
+                const Index current_input_index_j = input_columns_indices(j);
+
+                const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
+
+                cout << "input_i: " << input_i << endl;
+                cout << "input_j: " << input_j << endl;
+
+                if(calculate_pearson_correlations)
+                {
+                    correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+                    cout << "correlations(i,j).r: " << correlations(i,j).r << endl;
+                    if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                        correlations(i,j).r = type(1);
+                }
+
+                cout << "calculate_pearson_correlations done!" << endl;
+
+                if(calculate_spearman_correlations)
+                {
+                    correlations_spearman(i,j) = opennn::correlation_spearman(thread_pool_device, input_i, input_j);
+
+                    if(correlations_spearman(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
+                        correlations_spearman(i,j).r = type(1);
+                }
+
+                cout << "calculate_spearman_correlations done!" << endl;
             }
         }
     }
@@ -10636,8 +10703,8 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     Tensor<type, 2> distance_matrix(samples_number, samples_number);
-    distance_matrix.setZero();
 
+    distance_matrix.setZero();
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number ; i++)
@@ -14604,7 +14671,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_data);
+        fill_submatrix(data, samples, inputs, inputs_data.get());
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -14615,7 +14682,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
+        TensorMap<Tensor<type, 4>> inputs(inputs_data.get(), rows_number, columns_number, channels_number, batch_size);
 
         Index index = 0;
 
@@ -14676,13 +14743,17 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
+    size_t inputs_data_size = 0;
+    size_t targets_data_size = batch_size*target_variables_number*sizeof(type);
+
     if(input_variables_dimensions.size() == 1)
     {
         inputs_dimensions.resize(2);
         inputs_dimensions.setValues({batch_size, input_variables_number});
 
-        //delete inputs_data;
-        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
+//        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
+
+        inputs_data_size = batch_size*input_variables_number*sizeof(type);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -14694,14 +14765,18 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});
 
         //delete inputs_data;
-        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
+//        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
+        inputs_data_size = rows_number*columns_number*channels_number*batch_size*sizeof(type);
     }
 
     targets_dimensions.resize(2);
     targets_dimensions.setValues({batch_size, target_variables_number});
 
     //delete targets_data;
-    targets_data = (type*)malloc(static_cast<size_t>(batch_size*target_variables_number*sizeof(type)));
+//    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
+
+    inputs_data = make_unique<type[]>(inputs_data_size);
+    targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
 }
 
 
@@ -14720,9 +14795,9 @@ void DataSetBatch::print() const
 
     cout << "Inputs:" << endl;
     if(inputs_dimensions.size() == 2)
-        cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type, 2>>(inputs_data.get(), inputs_dimensions(0), inputs_dimensions(1)) << endl;
     else if(inputs_dimensions.size() == 4)
-        cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
+        cout << TensorMap<Tensor<type, 4>>(inputs_data.get(), inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
     cout << "Targets dimensions:" << endl;
     cout << targets_dimensions << endl;
 
@@ -14776,7 +14851,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

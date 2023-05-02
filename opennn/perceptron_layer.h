@@ -275,6 +275,11 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
      {
      }
 
+     virtual ~PerceptronLayerForwardPropagation()
+     {
+     }
+
+
      explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
          : LayerForwardPropagation()
      {
@@ -294,9 +299,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          outputs_dimensions.resize(2);
          outputs_dimensions.setValues({batch_samples_number, neurons_number});
 
-         // delete outputs_data;
-
-         outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+         outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
          // Rest of quantities
 
@@ -355,6 +358,12 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     }
 
 
+    virtual ~PerceptronLayerBackPropagationLM()
+    {
+
+    }
+
+
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
@@ -393,6 +402,10 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     }
 
+    virtual ~PerceptronLayerBackPropagation()
+    {
+    }
+
 
     explicit PerceptronLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
@@ -413,16 +426,13 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
         deltas_dimensions.resize(2);
         deltas_dimensions.setValues({batch_samples_number, neurons_number});
 
-        //delete deltas_data;
         deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-
         deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
-
     }
 
     Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
@@ -464,7 +474,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

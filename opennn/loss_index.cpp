@@ -504,7 +504,8 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data, batch.inputs_dimensions(0), batch.inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data.get(), batch.inputs_dimensions(0), batch.inputs_dimensions(1));
+
     const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
     // Layer 0
@@ -801,7 +802,7 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data,
+    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data.get(),
                                                            forward_propagation.layers(first_trainable_layers_index),
                                                            back_propagation.neural_network.layers(0));
 
@@ -1168,7 +1169,7 @@ type LossIndex::calculate_h(const type& x) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

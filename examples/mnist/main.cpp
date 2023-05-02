@@ -95,9 +95,6 @@ int main()
         flatten_layer_inputs_dimensions(2) = kernels_number;
         flatten_layer_inputs_dimensions(3) = samples_number;
 
-        cout << "flatten layer inputs dimensions: " << flatten_layer_inputs_dimensions << endl;
-
-
         // Neural network
 
         NeuralNetwork neural_network;
@@ -119,16 +116,15 @@ int main()
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(1000);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);
 
-        cout << "Before training " << endl;
         training_strategy.perform_training();
 
         // Testing analysis
-/*
+
         Tensor<type, 4> inputs_4d;
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -161,7 +157,7 @@ int main()
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
-*/
+
         cout << "Bye!" << endl;
 
         return 0;

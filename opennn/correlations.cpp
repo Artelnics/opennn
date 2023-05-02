@@ -61,23 +61,42 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
+    cout << "x_columns number: " << x_columns << endl;
+    cout << "y_columns number: " << y_columns << endl;
+
+    if(x_binary)
+    {cout << "X is binary" << endl;}else
+    {cout << "X is NOT binary" << endl;}
+
+    if(y_binary)
+    {cout << "Y is binary" << endl;}else
+    {cout << "Y is NOT binary" << endl;}
+
     const Eigen::array<Index, 1> vector{{x_rows}};
 
     if(x_columns == 1 && y_columns == 1)
     {
         if(!x_binary && !y_binary)
         {
+            cout << "Linear correlation" << endl;
             const Correlation linear_correlation
                     = opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            cout << "linear_correlation: " << linear_correlation.r << endl;
 
+            cout << "Exponential correlation" << endl;
             const Correlation exponential_correlation
                     = opennn::exponential_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            cout << "exponential_correlation: " << exponential_correlation.r << endl;
 
+            cout << "Logarithmic correlation" << endl;
             const Correlation logarithmic_correlation
                     = opennn::logarithmic_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            cout << "logarithmic_correlation: " << logarithmic_correlation.r << endl;
 
+            cout << "Power correlation" << endl;
             const Correlation power_correlation
                     = opennn::power_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            cout << "power_correlation: " << power_correlation.r << endl;
 
             Correlation strongest_correlation = linear_correlation;
 
@@ -265,10 +284,17 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 
     exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
 
-    exponential_correlation.correlation_type = CorrelationType::Exponential;
+//    exponential_correlation.correlation_type = CorrelationType::Exponential;
+
+    cout << "Setted correlation type" << endl;
 
     exponential_correlation.a = exp(exponential_correlation.a);
+
+    cout << "Setted a" << endl;
+
     exponential_correlation.b = exponential_correlation.b;
+
+    cout << "Setted b" << endl;
 
     return exponential_correlation;
 }
@@ -489,6 +515,8 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 #endif
 
+    cout << "Linear corr 1" << endl;
+
     Correlation linear_correlation;
     linear_correlation.correlation_type = CorrelationType::Linear;
 
@@ -532,6 +560,8 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         return linear_correlation;
     }
 
+    cout << "Linear corr 2" << endl;
+
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
@@ -552,6 +582,8 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         return linear_correlation;
     }
+
+    cout << "Linear corr 3" << endl;
 
     Tensor<double, 0> s_x;
     Tensor<double, 0> s_y;
@@ -588,7 +620,11 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
         linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
 
-        if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
+        cout << "Linear corr 4" << endl;
+
+        const double denominator = sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y()));
+
+        if(denominator < NUMERIC_LIMITS_MIN)
         {
             linear_correlation.r = NAN;
             linear_correlation.lower_confidence = NAN;
@@ -597,18 +633,37 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         else
         {
             linear_correlation.r
-                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) * (static_cast<double>(n) * s_yy() - s_y() * s_y())));
+                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(denominator);
+
+            cout << "To z correlation" << endl;
 
             const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
+
+            cout << "To z correlation done" << endl;
+
             const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
+
+            cout << "confidence interval z" << endl;
+
             linear_correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
+
+            cout << "lower confidence interval" << endl;
+
             linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
+
+            cout << "upper confidence interval" << endl;
         }
+
+        cout << "Linear corr 5" << endl;
 
         linear_correlation.r = clamp(linear_correlation.r, static_cast<type>(-1), static_cast<type>(1));
         linear_correlation.lower_confidence = clamp(linear_correlation.lower_confidence, static_cast<type>(-1), static_cast<type>(1));
         linear_correlation.upper_confidence = clamp(linear_correlation.upper_confidence, static_cast<type>(-1), static_cast<type>(1));
+
+        cout << "Linear corr 6" << endl;
     }
+
+    cout << "Returning value" << endl;
 
     return linear_correlation;
 }
@@ -768,6 +823,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
+    cout << "logistic_correlation_vector_vector" << endl;
+
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(data);
@@ -805,6 +862,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Eigen::array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+
+    cout << "correlation.r: " << correlation.r << endl;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -1188,7 +1247,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

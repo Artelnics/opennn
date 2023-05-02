@@ -182,10 +182,8 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
     }
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {   cout << "----- " << column_index << "::" << i << "-----" << endl;
-        cout << "matrix(i,column_index :" << matrix(i,column_index) << endl;
+    {
         matrix(i,column_index) = log(matrix(i,column_index));
-        cout << "matrix(i,column_index :" << log(matrix(i,column_index)) << endl;
     }
 
 }
@@ -276,7 +274,7 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
