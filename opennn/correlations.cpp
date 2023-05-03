@@ -265,17 +265,11 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 
     exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
 
-//    exponential_correlation.correlation_type = CorrelationType::Exponential;
-
-    cout << "Setted correlation type" << endl;
+    exponential_correlation.correlation_type = CorrelationType::Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
 
-    cout << "Setted a" << endl;
-
     exponential_correlation.b = exponential_correlation.b;
-
-    cout << "Setted b" << endl;
 
     return exponential_correlation;
 }
