@@ -499,7 +499,7 @@ public:
     void set_project_type_string(const string&);
     void set_project_type(const ProjectType&);
 
-    void set_threads();
+//    void set_threads();
     void set_threads_number(const int&);
 
     // Samples set methods
