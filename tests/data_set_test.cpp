@@ -1604,12 +1604,11 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test 5 (categorical and categorical)
 
-    cout << "ARRIVED HERE" << endl;
-
     data_set = opennn::DataSet();
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
 
+    cout << "Correlation tests datafile read" << endl;
 //    data_set.print_data();
 
 //    input_columns_indices.resize(2);
@@ -1772,6 +1771,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 1 (numeric and numeric trivial case)
 
+    cout << "Test 1" << endl;
+
     data.resize(3, 4);
 
     data.setValues({
@@ -1800,11 +1801,14 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 2 (numeric and numeric non trivial case)
 
+    cout << "Test 2" << endl;
+
     data.resize(3, 4);
     data.setValues({
                        {type(1), type(2), type(4), type(1)},
                        {type(2), type(3), type(9), type(2)},
-                       {type(3), type(1), type(10), type(2)} });
+                       {type(3), type(1), type(10), type(2)}
+                   });
 
     data_set.set_data(data);
 
@@ -1826,6 +1830,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
     }
 
     // Test 3 (binary and binary non trivial case)
+
+    cout << "Test 3" << endl;
 
     data.setValues({
                        {type(0), type(0), type(1), type(1)},
@@ -1863,6 +1869,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 4 (binary and binary trivial case)
 
+    cout << "Test 4" << endl;
+
     data.setValues({
                        {type(0), type(0), type(0), type(1)},
                        {type(1), type(1), type(1), type(2)},
@@ -1890,7 +1898,9 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 5 (categorical and categorical)
 
-    data_set.set("../../../opennn/datasets/correlation_tests.csv",',', false);
+    cout << "Test 5" << endl;
+
+    data_set.set("../../datasets/correlation_tests.csv",',', false);
 
     input_columns_indices.resize(3);
     input_columns_indices.setValues({0, 3, 4});
@@ -1922,6 +1932,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 6 (numeric and binary)
 
+    cout << "Test 6" << endl;
+
     input_variables_indices.resize(3);
     input_variables_indices.setValues({1, 2, 5});
 
@@ -1951,6 +1963,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 7 (numeric and categorical)
 
+    cout << "Test 7" << endl;
+
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 1, 3});
 
@@ -1978,6 +1992,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
 
     // Test 8 (binary and categorical)
+
+    cout << "Test 8" << endl;
 
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 2, 3});
@@ -2010,6 +2026,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
     // With missing values or NAN
 
     // Test 9 (categorical and categorical)
+
+    cout << "Test 9" << endl;
 
     data_set.set_missing_values_label("NA");
     data_set.set("../../datasets/correlation_tests_with_nan.csv",',', false);
@@ -2044,6 +2062,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 10 (numeric and binary)
 
+    cout << "Test 10" << endl;
+
     input_variables_indices.resize(3);
     input_variables_indices.setValues({1, 2, 5});
 
@@ -2073,6 +2093,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 11 (numeric and categorical)
 
+    cout << "Test 11" << endl;
+
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 1, 3});
 
@@ -2101,6 +2123,8 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     // Test 12 (binary and categorical)
 
+    cout << "Test 12" << endl;
+
     input_variables_indices.resize(3);
     input_variables_indices.setValues({0, 2, 3});
 
@@ -2128,7 +2152,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
-
 }
 
 

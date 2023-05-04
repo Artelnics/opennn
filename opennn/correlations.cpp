@@ -268,6 +268,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
     exponential_correlation.correlation_type = CorrelationType::Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
+
     exponential_correlation.b = exponential_correlation.b;
 
     return exponential_correlation;
@@ -588,7 +589,9 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
         linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
 
-        if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
+        const double denominator = sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y()));
+
+        if(denominator < NUMERIC_LIMITS_MIN)
         {
             linear_correlation.r = NAN;
             linear_correlation.lower_confidence = NAN;
@@ -597,11 +600,14 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         else
         {
             linear_correlation.r
-                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) * (static_cast<double>(n) * s_yy() - s_y() * s_y())));
+                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(denominator);
 
             const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
+
             const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
+
             linear_correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
+
             linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
         }
 
@@ -768,6 +774,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
+    cout << "logistic_correlation_vector_vector" << endl;
+
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(data);
@@ -805,6 +813,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Eigen::array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+
+    cout << "correlation.r: " << correlation.r << endl;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 

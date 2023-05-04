@@ -124,7 +124,7 @@ void GeneticAlgorithm::set_default()
         genes_number = training_strategy_pointer->get_data_set_pointer()->get_variables_less_target();
     }
 
-    Index individuals_number = 20;
+    Index individuals_number = 40;
 
     maximum_epochs_number = 100;
 
@@ -481,6 +481,26 @@ void GeneticAlgorithm::initialize_population_random()
 
     const Index random_columns_number = data_set_pointer->get_input_columns_number();
 
+    type percentage = 1;
+
+    if(random_columns_number > 10000)
+    {
+        percentage = 0.1;
+    }
+    else if(random_columns_number > 5000)
+    {
+        percentage = 0.2;
+    }
+    else if (random_columns_number > 1000)
+    {
+        percentage = 0.4;
+    }
+    else if (random_columns_number > 500)
+    {
+       percentage = 0.6;
+    }
+    cout << "Percentage: " << percentage << endl;
+
         //Original inputs columns
 
     original_input_columns.resize(columns_number);
@@ -514,7 +534,6 @@ void GeneticAlgorithm::initialize_population_random()
         std::mt19937 g(rd());
 
         individual_columns.setConstant(false);
-        type percentage = 1;
 
         int upper_limit = static_cast<int>(ceil(random_columns_number * percentage) - 1);
         int random_number = (rand() % upper_limit) + 1;
@@ -1185,6 +1204,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     training_strategy_pointer->get_optimization_algorithm_pointer()->set_display(false);
 
+    Index generation_selected = 0;
+
     for (Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         if (display) cout << "Generation: " << epoch + 1 << endl;
@@ -1213,6 +1234,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         if (selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
         {
+            generation_selected = epoch;
+
             data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
 
             // Neural network
@@ -1267,6 +1290,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
 
+            cout << "Best selection error in generation: " << generation_selected << endl;
+
         }
 
         // Stopping criteria
@@ -1304,7 +1329,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         perform_crossover();
 
-        if(mutation_rate!=0) perform_mutation();
+        if(mutation_rate!=0 && epoch > maximum_epochs_number*0.5 && epoch < maximum_epochs_number*0.8) perform_mutation();
     }
 
     // Set data set stuff
