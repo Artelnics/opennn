@@ -558,6 +558,8 @@ public:
 
     void set_columns_scalers(const Scaler&);
 
+    void set_columns_scalers(const Tensor<Scaler, 1>&);
+
     void set_binary_simple_columns();
 
     void set_categories_number(const Index&);
@@ -833,6 +835,7 @@ public:
     void print_columns() const;
     void print_columns_types() const;
     void print_columns_uses() const;
+    void print_columns_scalers() const;
 
     void print_data() const;
     void print_data_preview() const;

@@ -4066,6 +4066,30 @@ void DataSet::set_columns_scalers(const Scaler& scalers)
     }
 }
 
+
+void DataSet::set_columns_scalers(const Tensor<Scaler, 1>& new_scalers)
+{
+    const Index columns_number = get_columns_number();
+
+    if(new_scalers.size() != columns_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void set_columns_scalers(const Tensor<Scaler, 1>& new_scalers) method.\n"
+               << "Size of column scalers(" << new_scalers.size() << ") has to be the same as columns numbers(" << columns_number << ").\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns(i).scaler = new_scalers[i];
+    }
+
+}
+
+
 void DataSet::set_binary_simple_columns()
 {
     bool is_binary = true;
@@ -9469,6 +9493,30 @@ void DataSet::print_columns_uses() const
         if(columns(i).column_use == VariableUse::Input) cout << "Input ";
         else if(columns(i).column_use == VariableUse::Target) cout << "Target ";
         else if(columns(i).column_use == VariableUse::Unused) cout << "Unused ";
+    }
+
+    cout << endl;
+}
+
+
+void DataSet::print_columns_scalers() const
+{
+    const Index columns_number = get_columns_number();
+
+    const Tensor<Scaler, 1> scalers = get_columns_scalers();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(scalers[i] == Scaler::NoScaling)
+            cout << "NoScaling" << endl;
+        else if(scalers[i] == Scaler::MinimumMaximum)
+            cout << "MinimumMaximum" << endl;
+        else if(scalers[i] == Scaler::MeanStandardDeviation)
+            cout << "MeanStandardDeviation" << endl;
+        else if(scalers[i] == Scaler::StandardDeviation)
+            cout << "StandardDeviation" << endl;
+        else if(scalers[i] == Scaler::Logarithm)
+            cout << "Logarithm" << endl;
     }
 
     cout << endl;
