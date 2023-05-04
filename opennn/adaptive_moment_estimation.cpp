@@ -84,7 +84,7 @@ const type& AdaptiveMomentEstimation::get_initial_learning_rate() const
 /// Returns the goal value for the loss.
 /// This is a stopping criterion when training a neural network.
 
-const type& AdaptiveMomentEstimation::get_loss_goal() const
+const type& AdaptiveMomentEstimation::get_loss_goal() const //alvaros
 {
     return training_loss_goal;
 }
@@ -447,7 +447,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
-        if(results.loss < training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
             stop_training = true;
 
