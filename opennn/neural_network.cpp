@@ -5629,6 +5629,7 @@ string NeuralNetwork::write_expression_python() const
     buffer << "" << endl;
 
     found_tokens.resize(0);
+    found_tokens = push_back_string(found_tokens, "log");
     found_tokens = push_back_string(found_tokens, "exp");
     found_tokens = push_back_string(found_tokens, "tanh");
 
