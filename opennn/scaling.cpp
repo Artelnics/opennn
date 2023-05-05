@@ -48,11 +48,11 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,
                                    const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation) < static_cast<type>(1e-3)
+    const type slope = (column_descriptives.standard_deviation) < static_cast<type>(NUMERIC_LIMITS_MIN)
             ? type(1)
             : static_cast<type>(1)/column_descriptives.standard_deviation;
 
-    const type intercept = (column_descriptives.standard_deviation) < static_cast<type>(1e-3)
+    const type intercept = (column_descriptives.standard_deviation) < static_cast<type>(NUMERIC_LIMITS_MIN)
             ? type(0)
             : -static_cast<type>(1)*column_descriptives.mean/column_descriptives.standard_deviation;
 
