@@ -7723,6 +7723,20 @@ Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const in
     return matrix_rounded;
 }
 
+Tensor<type, 1> DataSet::round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
+{
+    Tensor<type, 1> tensor_rounded(tensor.size());
+
+    type factor = pow (10,precision);
+
+    for (Index i = 0; i < tensor.size(); i++)
+    {
+        tensor_rounded(i) = (round(factor*tensor(i)))/factor;
+    }
+
+    return tensor_rounded;
+}
+
 //type DataSet::r_distribution_to_z_distribution(const type& r_distribution)
 //{
 //    const type z_distribution = 0.5*log((1+r_distribution)/(1 - r_distribution));

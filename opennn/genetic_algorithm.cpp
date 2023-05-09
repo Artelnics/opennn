@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "genetic_algorithm.h"
-
 namespace opennn
 {
 
@@ -499,9 +498,8 @@ void GeneticAlgorithm::initialize_population_random()
     {
        percentage = 0.6;
     }
-    cout << "Percentage: " << percentage << endl;
 
-        //Original inputs columns
+    //Original inputs columns
 
     original_input_columns.resize(columns_number);
     original_input_columns.setConstant(false);
@@ -572,8 +570,6 @@ void GeneticAlgorithm::initialize_population_random()
                 individual_variables(j) = true;
             }
         }
-
-
 
         population.chip(i,0) = individual_variables;
     }
