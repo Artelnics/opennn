@@ -7686,6 +7686,10 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
             unscale_mean_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
+        case Scaler::StandardDeviation:
+            unscale_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
+            break;
+
         case Scaler::Logarithm:
             unscale_logarithmic(data, target_variables_indices(i));
             break;
