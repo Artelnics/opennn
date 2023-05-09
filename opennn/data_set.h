@@ -499,7 +499,7 @@ public:
     void set_project_type_string(const string&);
     void set_project_type(const ProjectType&);
 
-    void set_threads();
+//    void set_threads();
     void set_threads_number(const int&);
 
     // Samples set methods
@@ -557,6 +557,8 @@ public:
     void set_columns_number(const Index&);
 
     void set_columns_scalers(const Scaler&);
+
+    void set_columns_scalers(const Tensor<Scaler, 1>&);
 
     void set_binary_simple_columns();
 
@@ -833,6 +835,7 @@ public:
     void print_columns() const;
     void print_columns_types() const;
     void print_columns_uses() const;
+    void print_columns_scalers() const;
 
     void print_data() const;
     void print_data_preview() const;

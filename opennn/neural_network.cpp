@@ -5629,6 +5629,7 @@ string NeuralNetwork::write_expression_python() const
     buffer << "" << endl;
 
     found_tokens.resize(0);
+    found_tokens = push_back_string(found_tokens, "log");
     found_tokens = push_back_string(found_tokens, "exp");
     found_tokens = push_back_string(found_tokens, "tanh");
 
@@ -5865,8 +5866,8 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
-               << "Cannot open expression text file.\n";
+               << "void save_outputs(const string&) method.\n"
+               << "Cannot open " << file_name << " file.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -5910,7 +5911,7 @@ void NeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distance
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
+               << "void  save_autoassociation_outputs(const string&) method.\n"
                << "Distances and types vectors must have the same dimensions.\n";
 
         throw invalid_argument(buffer.str());
@@ -5921,8 +5922,8 @@ void NeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distance
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
-               << "Cannot open expression text file.\n";
+               << "void save_autoassociation_outputs(const string&) method.\n"
+               << "Cannot open " << file_name << " file.\n";
 
         throw invalid_argument(buffer.str());
     }

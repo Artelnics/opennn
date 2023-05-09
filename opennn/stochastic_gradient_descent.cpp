@@ -532,7 +532,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
-        if(results.loss < training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
             stop_training = true;
 

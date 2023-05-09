@@ -31,17 +31,6 @@ int main(int argc, char *argv[])
     {
         cout << "Hello OpenNN" << endl;
 
-        DataSet data_set("C:/Users/alvaromartin/Documents/leukemiamicroarray.csv", ';', true);
-
-//        DataSet data_set("C:/Users/alvaromartin/Documents/leukemiamicroarray.csv", ';', true);
-
-//        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-//        data_set.calculate_input_target_columns_correlations();
-//        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-//        cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() << " [s]" << std::endl;
-
-
         cout << "Good bye!" << endl;
 
         return 0;

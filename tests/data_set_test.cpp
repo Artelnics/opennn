@@ -1604,11 +1604,9 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test 5 (categorical and categorical)
 
-    cout << "ARRIVED HERE" << endl;
+    data_set = opennn::DataSet();
 
-//    data_set = opennn::DataSet();
-
-//    data_set.set("../../datasets/correlation_tests.csv",',', false);
+    data_set.set("../../datasets/correlation_tests.csv",',', false);
 
     cout << "Correlation tests datafile read" << endl;
 //    data_set.print_data();
@@ -1801,10 +1799,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(2,1).r == -1, LOG);
     assert_true(inputs_correlations(2,2).r == 1, LOG);
 
-    cout << "Test 1 done" << endl;
-
-    cout << "********************************" << endl;
-
     // Test 2 (numeric and numeric non trivial case)
 
     cout << "Test 2" << endl;
@@ -1826,8 +1820,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     inputs_correlations = data_set.calculate_input_columns_correlations()(0);
 
-    cout << "Calculated input columns corr" << endl;
-
     for(Index i = 0; i <  data_set.get_input_columns_number() ; i++)
     {
         assert_true( inputs_correlations(i,i).r == 1, LOG);
@@ -1836,10 +1828,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
             assert_true(-1 < inputs_correlations(i,j).r && inputs_correlations(i,j).r < 1, LOG);
         }
     }
-
-    cout << "Test 2 done" << endl;
-
-    cout << "********************************" << endl;
 
     // Test 3 (binary and binary non trivial case)
 
@@ -1879,10 +1867,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Linear, LOG);
 
-    cout << "Test 3 done" << endl;
-
-    cout << "********************************" << endl;
-
     // Test 4 (binary and binary trivial case)
 
     cout << "Test 4" << endl;
@@ -1912,17 +1896,11 @@ void DataSetTest::test_calculate_input_columns_correlations()
         }
     }
 
-    cout << "Test 4 done" << endl;
-
-    cout << "********************************" << endl;
-
     // Test 5 (categorical and categorical)
 
     cout << "Test 5" << endl;
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
-
-    cout << "Data set read" << endl;
 
     input_columns_indices.resize(3);
     input_columns_indices.setValues({0, 3, 4});
@@ -1932,11 +1910,7 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
-    cout << "setted columns" << endl;
-
     inputs_correlations = data_set.calculate_input_columns_correlations()(0);
-
-    cout << "calculated input column correlations" << endl;
 
     assert_true(inputs_correlations(0,0).r == 1, LOG);
     assert_true(inputs_correlations(0,0).correlation_type == CorrelationType::Logistic, LOG);
@@ -1955,10 +1929,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG); // CHECK
-
-    cout << "Test 5 done" << endl;
-
-    cout << "********************************" << endl;
 
     // Test 6 (numeric and binary)
 
@@ -1991,10 +1961,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Linear, LOG);
 
-    cout << "Test 6 done" << endl;
-
-    cout << "********************************" << endl;
-
     // Test 7 (numeric and categorical)
 
     cout << "Test 7" << endl;
@@ -2024,10 +1990,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
-
-    cout << "Test 7 done" << endl;
-
-    cout << "********************************" << endl;
 
     // Test 8 (binary and categorical)
 
@@ -2060,10 +2022,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
-
-    cout << "Test 8 done" << endl;
-
-    cout << "********************************" << endl;
 
     // With missing values or NAN
 
@@ -2102,10 +2060,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG); // CHECK
 
-    cout << "Test 9 done" << endl;
-
-    cout << "********************************" << endl;
-
     // Test 10 (numeric and binary)
 
     cout << "Test 10" << endl;
@@ -2137,10 +2091,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Linear, LOG);
 
-    cout << "Test 10 done" << endl;
-
-    cout << "********************************" << endl;
-
     // Test 11 (numeric and categorical)
 
     cout << "Test 11" << endl;
@@ -2170,10 +2120,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
-
-    cout << "Test 11 done" << endl;
-
-    cout << "********************************" << endl;
 
     // Test 12 (binary and categorical)
 
@@ -2206,8 +2152,6 @@ void DataSetTest::test_calculate_input_columns_correlations()
 
     assert_true(inputs_correlations(2,2).r == 1, LOG);
     assert_true(inputs_correlations(2,2).correlation_type == CorrelationType::Logistic, LOG);
-
-    cout << "Test 12 done" << endl;
 }
 
 
