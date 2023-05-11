@@ -4831,7 +4831,7 @@ string NeuralNetwork::write_expression_javascript() const
     Tensor<string, 1> inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
 
-    ostringstream buffer;
+    ostringstream buffer_to_fix;
 
     string token;
     string expression = write_expression();
@@ -4863,39 +4863,41 @@ string NeuralNetwork::write_expression_javascript() const
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer << "<!--" << endl;
-    buffer << "Artificial Intelligence Techniques SL\t" << endl;
-    buffer << "artelnics@artelnics.com\t" << endl;
-    buffer << "" << endl;
-    buffer << "Your model has been exported to this JavaScript file." << endl;
-    buffer << "You can manage it with the main method, where you \t" << endl;
-    buffer << "can change the values of your inputs. For example:" << endl;
-    buffer << "can change the values of your inputs. For example:" << endl;
-    buffer << "" << endl;
-    buffer << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
-    buffer << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
-    buffer << "main program has to look like this:" << endl;
-    buffer << "\t" << endl;
-    buffer << "int neuralNetwork(){ " << endl;
-    buffer << "\t" << "vector<float> inputs(3);"<< endl;
-    buffer << "\t" << endl;
-    buffer << "\t" << "const float asdas  = 0.3;" << endl;
-    buffer << "\t" << "inputs[0] = asdas;"        << endl;
-    buffer << "\t" << "const float input2 = 2.5;" << endl;
-    buffer << "\t" << "inputs[1] = input2;"       << endl;
-    buffer << "\t" << "const float input3 = 1.8;" << endl;
-    buffer << "\t" << "inputs[2] = input3;"       << endl;
-    buffer << "\t" << ". . ." << endl;
-    buffer << "\n" << endl;
-    buffer << "Inputs Names:" <<endl;
+    buffer_to_fix << "<!--" << endl;
+    buffer_to_fix << "Artificial Intelligence Techniques SL\t" << endl;
+    buffer_to_fix << "artelnics@artelnics.com\t" << endl;
+    buffer_to_fix << "" << endl;
+    buffer_to_fix << "Your model has been exported to this JavaScript file." << endl;
+    buffer_to_fix << "You can manage it with the main method, where you \t" << endl;
+    buffer_to_fix << "can change the values of your inputs. For example:" << endl;
+    buffer_to_fix << "can change the values of your inputs. For example:" << endl;
+    buffer_to_fix << "" << endl;
+    buffer_to_fix << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
+    buffer_to_fix << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
+    buffer_to_fix << "main program has to look like this:" << endl;
+    buffer_to_fix << "\t" << endl;
+    buffer_to_fix << "int neuralNetwork(){ " << endl;
+    buffer_to_fix << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer_to_fix << "\t" << endl;
+    buffer_to_fix << "\t" << "const float asdas  = 0.3;" << endl;
+    buffer_to_fix << "\t" << "inputs[0] = asdas;"        << endl;
+    buffer_to_fix << "\t" << "const float input2 = 2.5;" << endl;
+    buffer_to_fix << "\t" << "inputs[1] = input2;"       << endl;
+    buffer_to_fix << "\t" << "const float input3 = 1.8;" << endl;
+    buffer_to_fix << "\t" << "inputs[2] = input3;"       << endl;
+    buffer_to_fix << "\t" << ". . ." << endl;
+    buffer_to_fix << "\n" << endl;
+    buffer_to_fix << "Inputs Names:" <<endl;
 
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
+    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
 
     for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
     for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
+
+    ostringstream buffer;
 
     buffer << inputs_outputs_buffer(2)[0];
     buffer << "-->" << endl;

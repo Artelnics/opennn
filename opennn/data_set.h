@@ -658,7 +658,7 @@ public:
 
     static type round_to_precision(type, const int&);
     static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
-
+    static Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
     void set_data_random();
     void set_data_binary_random();

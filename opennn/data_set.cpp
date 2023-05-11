@@ -7686,6 +7686,10 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
             unscale_mean_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
+        case Scaler::StandardDeviation:
+            unscale_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
+            break;
+
         case Scaler::Logarithm:
             unscale_logarithmic(data, target_variables_indices(i));
             break;
@@ -7734,6 +7738,20 @@ Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const in
     }
 
     return matrix_rounded;
+}
+
+Tensor<type, 1> DataSet::round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision)
+{
+    Tensor<type, 1> tensor_rounded(tensor.size());
+
+    type factor = pow (10,precision);
+
+    for (Index i = 0; i < tensor.size(); i++)
+    {
+        tensor_rounded(i) = (round(factor*tensor(i)))/factor;
+    }
+
+    return tensor_rounded;
 }
 
 //type DataSet::r_distribution_to_z_distribution(const type& r_distribution)
