@@ -768,7 +768,6 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     inputs_names.resize(inputs_number);
 
     ScalingLayer* scaling_layer_pointer = new ScalingLayer(inputs_number);
-
     this->add_layer(scaling_layer_pointer);
 
     if(model_type == ProjectType::Approximation)
@@ -1790,7 +1789,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation,
                                       bool& switch_train) const
-{    
+{
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
@@ -3486,7 +3485,7 @@ void NeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
     {
         new_maximum = static_cast<type>(stod(maximum_element->GetText()));
         set_box_plot_maximum(new_maximum);
-    }            
+    }
 }
 
 void NeuralNetwork::distances_descriptives_from_XML(const tinyxml2::XMLDocument& document)
@@ -3902,7 +3901,7 @@ string NeuralNetwork::write_expression() const
 
 /// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_c() const 
+string NeuralNetwork::write_expression_c() const
 {
     string aux = "";
     ostringstream buffer;
@@ -3973,7 +3972,7 @@ string NeuralNetwork::write_expression_c() const
     buffer << "\n" << endl;
 
     string token;
-    string expression = write_expression();    
+    string expression = write_expression();
 
     if(project_type == ProjectType::AutoAssociation)
     {
@@ -4408,7 +4407,7 @@ string NeuralNetwork::write_expression_api() const
     buffer << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl;
     buffer << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl;
     buffer << "</head>" << endl;
-    
+
     buffer << "<style>" << endl;
     buffer << ".btn{" << endl;
     buffer << "background-color: #7393B3 /* Gray */" << endl;
@@ -4419,7 +4418,7 @@ string NeuralNetwork::write_expression_api() const
     buffer << "font-size: 16px;" << endl;
     buffer << "}" << endl;
     buffer << "</style>" << endl;
-    
+
     buffer << "<body>" << endl;
     buffer << "<div class = \"container\">" << endl;
     buffer << "<br></br>" << endl;
@@ -4972,6 +4971,14 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "</table>" << endl;
     buffer << "</form>" << endl;
     buffer << "\n" << endl;
+
+    buffer << "<!-- HIDDEN INPUTS -->" << endl;
+    for (int i = 0; i < outputs.dimension(0); i++)
+    {
+        buffer << "<input type=\"hidden\" id=\"" << outputs[i] << "\" value=\"\">" << endl;
+    }
+    buffer << "\n" << endl;
+
     buffer << "<div align=\"center\">" << endl;
     buffer << "<!-- BUTTON HERE -->" << endl;
     buffer << "<button class=\"btn\" onclick=\"neuralNetwork()\">calculate outputs</button>" << endl;
@@ -4982,16 +4989,28 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "<table border=\"1px\" class=\"form\">" << endl;
     buffer << "OUTPUTS" << endl;
 
+    buffer << "<tr style=\"height:3.5em\">" << endl;
+    buffer << "<td> Target </td>" << endl;
+    buffer << "<td>" << endl;
+    buffer << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
+
     for (int i = 0; i < outputs.dimension(0); i++)
     {
-        buffer << "<tr style=\"height:3.5em\">" << endl;
-        buffer << "<td> " << outputs_names[i] << " </td>" << endl;
-        buffer << "<td>" << endl;
-        buffer << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << outputs[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl;
-        buffer << "</td>" << endl;
-        buffer << "</tr>" << endl;
-        buffer << "\n" << endl;
+        buffer << "<option value=\"" << outputs[i] << "\">" << outputs_names[i] << "</option>" << endl;
     }
+
+    buffer << "</select>" << endl;
+    buffer << "</td>" << endl;
+    buffer << "</tr>" << endl;
+    buffer << "\n" << endl;
+
+    buffer << "<tr style=\"height:3.5em\">" << endl;
+    buffer << "<td> Value </td>" << endl;
+    buffer << "<td>" << endl;
+    buffer << "<input style=\"text-align:right; padding-right:20px;\" id=\"selected_value\" value=\"\" type=\"text\"  disabled/>" << endl;
+    buffer << "</td>" << endl;
+    buffer << "</tr>" << endl;
+    buffer << "\n" << endl;
 
     buffer << "</table>" << endl;
     buffer << "\n" << endl;
@@ -5000,7 +5019,22 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "\n" << endl;
     buffer << "</section>" << endl;
     buffer << "\n" << endl;
+
     buffer << "<script>" << endl;
+
+    buffer << "function updateSelectedCategory() {" << endl;
+    buffer << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl;
+    buffer << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
+
+    for (int i = 0; i < outputs.dimension(0); i++) {
+        buffer << "\tif (selectedCategory === \"" << outputs[i] << "\") {" << endl;
+        buffer << "\t\tselectedValueElement.value = document.getElementById(\"" << outputs[i] << "\").value;" << endl;
+        buffer << "\t}" << endl;
+    }
+
+    buffer << "}" << endl;
+    buffer << "\n" << endl;
+
     buffer << "function neuralNetwork()" << endl;
     buffer << "{" << endl;
     buffer << "\t" << "var inputs = [];" << endl;
@@ -5019,6 +5053,7 @@ string NeuralNetwork::write_expression_javascript() const
         buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
     }
 
+    buffer << "\t" << "updateSelectedCategory();" << endl;
     buffer << "\t" << "update_LSTM();" << endl;
     buffer << "}" << "\n" << endl;
 
