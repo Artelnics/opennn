@@ -67,7 +67,7 @@ namespace opennn
 
     void trim(string&);
     void erase(string&, const char&);
-    void replace_first_char_with_missing_label(string &str, char target_char, const string &missing_label);
+    void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label);
 
     string get_trimmed(const string&);
 
@@ -85,6 +85,8 @@ namespace opennn
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
+    void replace_double_char_with_label(string&, const string&, const string&);
+    void replac_substring_within_quotes(string&, const string&, const string&);
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
