@@ -1756,9 +1756,6 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
     const Index samples_number = inputs_dimensions(0);
     const Index neurons_number = get_neurons_number();
 
-    Tensor<Index, 1> current_inputs_dimensions(samples_number);
-    Tensor<Index, 1> current_outputs_dimensions(neurons_number);
-
     if(inputs_dimensions.size() != 2)
     {
         ostringstream buffer;
@@ -1774,10 +1771,10 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    Tensor<Index, 1> current_inputs_dimensions = get_dimensions(Tensor<Index, 1>(samples_number));
+    Tensor<Index, 1> current_outputs_dimensions = get_dimensions(Tensor<Index, 1>(neurons_number));
 
-    current_inputs_dimensions = get_dimensions(current_inputs_dimensions);
-    current_outputs_dimensions = get_dimensions(current_outputs_dimensions);
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
     type* current_inputs_data = long_short_term_memory_layer_forward_propagation->current_inputs.data();
     type* current_forget_combinations_data = long_short_term_memory_layer_forward_propagation->current_forget_combinations.data();
@@ -1930,36 +1927,27 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                   current_outputs_dimensions);
         }
 
-//        Tensor<Index, 1> combinations_dimensions;
-        Tensor<Index, 1> activations_dimensions;
-        Tensor<Index, 1> derivatives_dimensions;
-
         // C_t = f_t * C_(t-1) + i_t * C~_t
 
         cell_states = long_short_term_memory_layer_forward_propagation->current_forget_activations * cell_states +
                 long_short_term_memory_layer_forward_propagation->current_input_activations * long_short_term_memory_layer_forward_propagation->current_state_activations;
 
-//        combinations_dimensions = get_dimensions(cell_states);
-        activations_dimensions = get_dimensions(hidden_states);
-        derivatives_dimensions = get_dimensions(long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives);
-
-        // 5
-
         if(switch_train)
         {
+
             calculate_activations_derivatives(cell_states_data,
                                               current_outputs_dimensions,
                                               hidden_states_data,
-                                              activations_dimensions,
+                                              current_outputs_dimensions,
                                               current_hidden_states_derivatives_data,
-                                              derivatives_dimensions);
+                                              current_outputs_dimensions);
         }
         else
         {
             calculate_activations(cell_states_data,
                                   current_outputs_dimensions,
                                   hidden_states_data,
-                                  activations_dimensions);
+                                  current_outputs_dimensions);
         }
 
         // h_t = o_t * tanh(C_t)
@@ -2034,6 +2022,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
 }
 
 
+//remove?
 void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, Tensor<type, 1>& parameters, LayerForwardPropagation* forward_propagation)
 {
 
@@ -2310,6 +2299,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(type* inputs_data,
                                                         LayerForwardPropagation* forward_propagation,
     LayerBackPropagation* back_propagation) const
 {
+
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
@@ -2318,61 +2308,72 @@ void LongShortTermMemoryLayer::calculate_error_gradient(type* inputs_data,
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
 
-//#pragma omp parallel
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, batch_samples_number, get_inputs_number());
+
+    #pragma omp parallel
     {
         // Biases
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_data, batch_samples_number, get_inputs_number());
-
-
+        #pragma omp single nowait
         calculate_forget_biases_error_gradient(inputs,
                                                long_short_term_memory_layer_forward_propagation,
                                                long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_input_biases_error_gradient(inputs,
                                               long_short_term_memory_layer_forward_propagation,
                                               long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_state_biases_error_gradient(inputs,
                                               long_short_term_memory_layer_forward_propagation,
                                               long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_output_biases_error_gradient(inputs,
                                                long_short_term_memory_layer_forward_propagation,
                                                long_short_term_memory_layer_back_propagation);
 
         // Weights
 
+        #pragma omp single nowait
         calculate_forget_weights_error_gradient(inputs,
                                                 long_short_term_memory_layer_forward_propagation,
                                                 long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_input_weights_error_gradient(inputs,
                                                long_short_term_memory_layer_forward_propagation,
                                                long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_state_weights_error_gradient(inputs,
                                                long_short_term_memory_layer_forward_propagation,
                                                long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_output_weights_error_gradient(inputs,
                                                 long_short_term_memory_layer_forward_propagation,
                                                 long_short_term_memory_layer_back_propagation);
 
         // Recurrent weights
 
+        #pragma omp single nowait
         calculate_forget_recurrent_weights_error_gradient(inputs,
                                                           long_short_term_memory_layer_forward_propagation,
                                                           long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_input_recurrent_weights_error_gradient(inputs,
                                                          long_short_term_memory_layer_forward_propagation,
                                                          long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_state_recurrent_weights_error_gradient(inputs,
                                                          long_short_term_memory_layer_forward_propagation,
                                                          long_short_term_memory_layer_back_propagation);
 
+        #pragma omp single nowait
         calculate_output_recurrent_weights_error_gradient(inputs,
                                                           long_short_term_memory_layer_forward_propagation,
                                                           long_short_term_memory_layer_back_propagation);
@@ -2380,10 +2381,12 @@ void LongShortTermMemoryLayer::calculate_error_gradient(type* inputs_data,
 }
 
 
+
 void LongShortTermMemoryLayer::calculate_forget_weights_error_gradient(const Tensor<type, 2>& inputs,
                                                                        LongShortTermMemoryLayerForwardPropagation* forward_propagation,
                                                                        LongShortTermMemoryLayerBackPropagation* back_propagation) const
 {
+
     const Index samples_number = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
@@ -2413,6 +2416,7 @@ void LongShortTermMemoryLayer::calculate_forget_weights_error_gradient(const Ten
 
     back_propagation->forget_weights_derivatives.setZero();
 
+    #pragma omp parallel for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         const Tensor<type, 1> current_inputs = inputs.chip(sample, 0); // memcpy?
@@ -2582,6 +2586,7 @@ void LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tens
 
     back_propagation->input_weights_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         forward_propagation->current_inputs = inputs.chip(sample, 0); // memcpy?
@@ -2749,6 +2754,7 @@ void LongShortTermMemoryLayer::calculate_state_weights_error_gradient(const Tens
 
     back_propagation->state_weights_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         forward_propagation->current_inputs = inputs.chip(sample, 0); // memcpy?
@@ -2893,6 +2899,7 @@ void LongShortTermMemoryLayer::calculate_output_weights_error_gradient(const Ten
 
     back_propagation->output_weights_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         forward_propagation->current_inputs = inputs.chip(sample, 0); // memcpy?
@@ -3161,6 +3168,7 @@ void LongShortTermMemoryLayer::calculate_input_recurrent_weights_error_gradient(
 
     back_propagation->input_recurrent_weights_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
@@ -3285,6 +3293,7 @@ void LongShortTermMemoryLayer::calculate_state_recurrent_weights_error_gradient(
 
     back_propagation->state_recurrent_weights_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
@@ -3407,6 +3416,7 @@ void LongShortTermMemoryLayer::calculate_output_recurrent_weights_error_gradient
 
     back_propagation->output_recurrent_weights_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
@@ -3533,6 +3543,7 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
 
     back_propagation->forget_biases_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
@@ -3677,6 +3688,7 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
 
     back_propagation->input_biases_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
@@ -3819,6 +3831,7 @@ void LongShortTermMemoryLayer::calculate_state_biases_error_gradient(const Tenso
 
     back_propagation->state_biases_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
@@ -3954,6 +3967,7 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
 
     back_propagation->output_biases_derivatives.setZero();
 
+    #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
