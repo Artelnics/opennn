@@ -1,11 +1,3 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B L A N K   A P P L I C A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // System includes
 
 #include <stdio.h>
@@ -15,7 +7,8 @@
 #include <sstream>
 #include <string>
 #include <time.h>
-#include <chrono>
+#include <sys/stat.h>
+
 
 // OpenNN includes
 
@@ -24,12 +17,11 @@
 using namespace opennn;
 using namespace std;
 
-
 int main(int argc, char *argv[])
 {
     try
     {
-        cout << "Hello OpenNN" << endl;
+        std::cout << "Hello OpenNN" << std::endl;
 
         cout << "Good bye!" << endl;
 
