@@ -31,7 +31,9 @@ class UnitTesting
 
 public:
 
-   explicit UnitTesting();   
+   explicit UnitTesting();
+
+   virtual ~UnitTesting();
 
    // Get methods
 

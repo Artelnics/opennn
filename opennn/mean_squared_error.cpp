@@ -45,8 +45,10 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
+    Index outputs_number = neural_network_pointer->get_outputs_number();
+
     // Check if works for convolutional
-    const Index batch_samples_number = batch.get_batch_size();
+    const Index batch_samples_number = outputs_number * batch.get_batch_size();
 
 // This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
 
@@ -75,7 +77,9 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    const Index batch_samples_number = batch.get_batch_size();
+    Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    const Index batch_samples_number = outputs_number * batch.get_batch_size();
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
@@ -98,7 +102,10 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
      const LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      // Check if works for convolutional
-     const Index batch_samples_number = batch.get_batch_size();
+
+     Index outputs_number = neural_network_pointer->get_outputs_number();
+
+     const Index batch_samples_number = outputs_number * batch.get_batch_size();
 
 //     This line was written in convolutional. Without it, batch samples number was 0.
 //     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
@@ -108,7 +115,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
      TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0),
                                        output_layer_back_propagation->deltas_dimensions(1));
 
-     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     deltas.device(*thread_pool_device) = coefficient * back_propagation.errors;
 
      Tensor<type, 2> output_deltas(deltas);
 
@@ -137,7 +144,7 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;  
+    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
     if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
     {
@@ -166,7 +173,9 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 
 #endif
 
-    const Index batch_size = batch.get_batch_size();
+    Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    const Index batch_size = outputs_number * batch.get_batch_size();
 
     const type coefficient = type(2)/static_cast<type>(batch_size);
 
@@ -185,7 +194,9 @@ void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
      check();
      #endif
 
-     const Index batch_samples_number = batch.get_batch_size();
+     Index outputs_number = neural_network_pointer->get_outputs_number();
+
+     const Index batch_samples_number = outputs_number * batch.get_batch_size();
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
@@ -229,7 +240,7 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

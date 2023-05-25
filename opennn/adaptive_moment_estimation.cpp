@@ -360,7 +360,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-
             // Data set
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
@@ -483,7 +482,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         }
 
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
     }
 
     if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
@@ -878,7 +876,7 @@ void AdaptiveMomentEstimationData::print() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

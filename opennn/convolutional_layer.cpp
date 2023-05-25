@@ -127,7 +127,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Index kernels_number = synaptic_weights.dimension(3);
 
 #ifdef OPENNN_DEBUG
-
+/*
     const Index output_channel_number = combinations.dimension(2);
     const Index output_images_number = combinations.dimension(3);
 
@@ -150,7 +150,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 
         throw invalid_argument(buffer.str());
     }
-
+*/
 #endif
 
     const Index next_image = inputs_rows_number*inputs_columns_number*kernels_channels_number;
@@ -382,8 +382,6 @@ void ConvolutionalLayer::calculate_hidden_delta(PerceptronLayerForwardPropagatio
     const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
-
-    deltas.device(*thread_pool_device) = (next_deltas*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
     Tensor<type, 2> output_deltas(deltas);
 
@@ -1075,7 +1073,7 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
 
-    synaptic_weights.resize(kernels_number, kernels_channels_number, kernels_rows_number, kernels_columns_number);
+    synaptic_weights.resize(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
     biases.resize(kernels_number);
 
     memcpy(biases.data(),
@@ -1382,7 +1380,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

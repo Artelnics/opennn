@@ -768,7 +768,6 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     inputs_names.resize(inputs_number);
 
     ScalingLayer* scaling_layer_pointer = new ScalingLayer(inputs_number);
-
     this->add_layer(scaling_layer_pointer);
 
     if(model_type == ProjectType::Approximation)
@@ -1451,6 +1450,8 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
+        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten) continue;
+
         trainable_layers_pointers(i)->set_parameters(new_parameters, index);
 
         index += trainable_layers_parameters_numbers(i);
@@ -1794,7 +1795,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(first_trainable_layer_index), switch_train);
+    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data.get(), batch.inputs_dimensions, forward_propagation.layers(first_trainable_layer_index), switch_train);
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
@@ -1815,7 +1816,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     bool switch_train = false;
 
-    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
+    layers_pointers(0)->forward_propagate(batch.inputs_data.get(), batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
 
     for(Index i = 1; i < layers_number; i++)
     {
@@ -3484,7 +3485,7 @@ void NeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
     {
         new_maximum = static_cast<type>(stod(maximum_element->GetText()));
         set_box_plot_maximum(new_maximum);
-    }            
+    }
 }
 
 void NeuralNetwork::distances_descriptives_from_XML(const tinyxml2::XMLDocument& document)
@@ -3900,7 +3901,7 @@ string NeuralNetwork::write_expression() const
 
 /// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_expression_c() const 
+string NeuralNetwork::write_expression_c() const
 {
     string aux = "";
     ostringstream buffer;
@@ -3971,7 +3972,7 @@ string NeuralNetwork::write_expression_c() const
     buffer << "\n" << endl;
 
     string token;
-    string expression = write_expression();    
+    string expression = write_expression();
 
     if(project_type == ProjectType::AutoAssociation)
     {
@@ -4406,7 +4407,7 @@ string NeuralNetwork::write_expression_api() const
     buffer << "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>" << endl;
     buffer << "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>" << endl;
     buffer << "</head>" << endl;
-    
+
     buffer << "<style>" << endl;
     buffer << ".btn{" << endl;
     buffer << "background-color: #7393B3 /* Gray */" << endl;
@@ -4417,7 +4418,7 @@ string NeuralNetwork::write_expression_api() const
     buffer << "font-size: 16px;" << endl;
     buffer << "}" << endl;
     buffer << "</style>" << endl;
-    
+
     buffer << "<body>" << endl;
     buffer << "<div class = \"container\">" << endl;
     buffer << "<br></br>" << endl;
@@ -4830,7 +4831,7 @@ string NeuralNetwork::write_expression_javascript() const
     Tensor<string, 1> inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
 
-    ostringstream buffer;
+    ostringstream buffer_to_fix;
 
     string token;
     string expression = write_expression();
@@ -4862,39 +4863,41 @@ string NeuralNetwork::write_expression_javascript() const
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer << "<!--" << endl;
-    buffer << "Artificial Intelligence Techniques SL\t" << endl;
-    buffer << "artelnics@artelnics.com\t" << endl;
-    buffer << "" << endl;
-    buffer << "Your model has been exported to this JavaScript file." << endl;
-    buffer << "You can manage it with the main method, where you \t" << endl;
-    buffer << "can change the values of your inputs. For example:" << endl;
-    buffer << "can change the values of your inputs. For example:" << endl;
-    buffer << "" << endl;
-    buffer << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
-    buffer << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
-    buffer << "main program has to look like this:" << endl;
-    buffer << "\t" << endl;
-    buffer << "int neuralNetwork(){ " << endl;
-    buffer << "\t" << "vector<float> inputs(3);"<< endl;
-    buffer << "\t" << endl;
-    buffer << "\t" << "const float asdas  = 0.3;" << endl;
-    buffer << "\t" << "inputs[0] = asdas;"        << endl;
-    buffer << "\t" << "const float input2 = 2.5;" << endl;
-    buffer << "\t" << "inputs[1] = input2;"       << endl;
-    buffer << "\t" << "const float input3 = 1.8;" << endl;
-    buffer << "\t" << "inputs[2] = input3;"       << endl;
-    buffer << "\t" << ". . ." << endl;
-    buffer << "\n" << endl;
-    buffer << "Inputs Names:" <<endl;
+    buffer_to_fix << "<!--" << endl;
+    buffer_to_fix << "Artificial Intelligence Techniques SL\t" << endl;
+    buffer_to_fix << "artelnics@artelnics.com\t" << endl;
+    buffer_to_fix << "" << endl;
+    buffer_to_fix << "Your model has been exported to this JavaScript file." << endl;
+    buffer_to_fix << "You can manage it with the main method, where you \t" << endl;
+    buffer_to_fix << "can change the values of your inputs. For example:" << endl;
+    buffer_to_fix << "can change the values of your inputs. For example:" << endl;
+    buffer_to_fix << "" << endl;
+    buffer_to_fix << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
+    buffer_to_fix << "to our 3 inputs (Input_1, Input_2 and Input_1), the" << endl;
+    buffer_to_fix << "main program has to look like this:" << endl;
+    buffer_to_fix << "\t" << endl;
+    buffer_to_fix << "int neuralNetwork(){ " << endl;
+    buffer_to_fix << "\t" << "vector<float> inputs(3);"<< endl;
+    buffer_to_fix << "\t" << endl;
+    buffer_to_fix << "\t" << "const float asdas  = 0.3;" << endl;
+    buffer_to_fix << "\t" << "inputs[0] = asdas;"        << endl;
+    buffer_to_fix << "\t" << "const float input2 = 2.5;" << endl;
+    buffer_to_fix << "\t" << "inputs[1] = input2;"       << endl;
+    buffer_to_fix << "\t" << "const float input3 = 1.8;" << endl;
+    buffer_to_fix << "\t" << "inputs[2] = input3;"       << endl;
+    buffer_to_fix << "\t" << ". . ." << endl;
+    buffer_to_fix << "\n" << endl;
+    buffer_to_fix << "Inputs Names:" <<endl;
 
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
+    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
 
     for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
     for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
+
+    ostringstream buffer;
 
     buffer << inputs_outputs_buffer(2)[0];
     buffer << "-->" << endl;
@@ -4970,6 +4973,14 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "</table>" << endl;
     buffer << "</form>" << endl;
     buffer << "\n" << endl;
+
+    buffer << "<!-- HIDDEN INPUTS -->" << endl;
+    for (int i = 0; i < outputs.dimension(0); i++)
+    {
+        buffer << "<input type=\"hidden\" id=\"" << outputs[i] << "\" value=\"\">" << endl;
+    }
+    buffer << "\n" << endl;
+
     buffer << "<div align=\"center\">" << endl;
     buffer << "<!-- BUTTON HERE -->" << endl;
     buffer << "<button class=\"btn\" onclick=\"neuralNetwork()\">calculate outputs</button>" << endl;
@@ -4980,16 +4991,28 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "<table border=\"1px\" class=\"form\">" << endl;
     buffer << "OUTPUTS" << endl;
 
+    buffer << "<tr style=\"height:3.5em\">" << endl;
+    buffer << "<td> Target </td>" << endl;
+    buffer << "<td>" << endl;
+    buffer << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
+
     for (int i = 0; i < outputs.dimension(0); i++)
     {
-        buffer << "<tr style=\"height:3.5em\">" << endl;
-        buffer << "<td> " << outputs_names[i] << " </td>" << endl;
-        buffer << "<td>" << endl;
-        buffer << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << outputs[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl;
-        buffer << "</td>" << endl;
-        buffer << "</tr>" << endl;
-        buffer << "\n" << endl;
+        buffer << "<option value=\"" << outputs[i] << "\">" << outputs_names[i] << "</option>" << endl;
     }
+
+    buffer << "</select>" << endl;
+    buffer << "</td>" << endl;
+    buffer << "</tr>" << endl;
+    buffer << "\n" << endl;
+
+    buffer << "<tr style=\"height:3.5em\">" << endl;
+    buffer << "<td> Value </td>" << endl;
+    buffer << "<td>" << endl;
+    buffer << "<input style=\"text-align:right; padding-right:20px;\" id=\"selected_value\" value=\"\" type=\"text\"  disabled/>" << endl;
+    buffer << "</td>" << endl;
+    buffer << "</tr>" << endl;
+    buffer << "\n" << endl;
 
     buffer << "</table>" << endl;
     buffer << "\n" << endl;
@@ -4998,7 +5021,22 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "\n" << endl;
     buffer << "</section>" << endl;
     buffer << "\n" << endl;
+
     buffer << "<script>" << endl;
+
+    buffer << "function updateSelectedCategory() {" << endl;
+    buffer << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl;
+    buffer << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
+
+    for (int i = 0; i < outputs.dimension(0); i++) {
+        buffer << "\tif (selectedCategory === \"" << outputs[i] << "\") {" << endl;
+        buffer << "\t\tselectedValueElement.value = document.getElementById(\"" << outputs[i] << "\").value;" << endl;
+        buffer << "\t}" << endl;
+    }
+
+    buffer << "}" << endl;
+    buffer << "\n" << endl;
+
     buffer << "function neuralNetwork()" << endl;
     buffer << "{" << endl;
     buffer << "\t" << "var inputs = [];" << endl;
@@ -5017,6 +5055,7 @@ string NeuralNetwork::write_expression_javascript() const
         buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
     }
 
+    buffer << "\t" << "updateSelectedCategory();" << endl;
     buffer << "\t" << "update_LSTM();" << endl;
     buffer << "}" << "\n" << endl;
 
@@ -5453,18 +5492,30 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    buffer << "import math" << endl;
     buffer << "import numpy as np" << endl;
     buffer << "\n" << endl;
 
     if(project_type == ProjectType::AutoAssociation)
     {
         buffer << "def calculate_distances(input, output):" << endl;
-        buffer << "\t" << "return math.sqrt(sum((p-q)**2 for p, q in zip(input, output)))" << endl;
+        buffer << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)" << endl;
+
         buffer << "\n" << endl;
     }
 
     buffer << "class NeuralNetwork:" << endl;
+
+    if(project_type == ProjectType::AutoAssociation)
+    {
+        buffer << "\t" << "minimum = " << to_string(distances_descriptives.minimum) << endl;
+        buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
+        buffer << "\t" << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
+        buffer << "\t" << "mean = " << to_string(distances_descriptives.mean) << endl;
+        buffer << "\t" << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
+        buffer << "\t" << "maximum = " << to_string(distances_descriptives.maximum) << endl;
+        buffer << "\t" << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
+        buffer << "\n" << endl;
+    }
 
     if (LSTM_number > 0)
     {
@@ -5615,6 +5666,7 @@ string NeuralNetwork::write_expression_python() const
     buffer << "" << endl;
 
     found_tokens.resize(0);
+    found_tokens = push_back_string(found_tokens, "log");
     found_tokens = push_back_string(found_tokens, "exp");
     found_tokens = push_back_string(found_tokens, "tanh");
 
@@ -5851,8 +5903,8 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
-               << "Cannot open expression text file.\n";
+               << "void save_outputs(const string&) method.\n"
+               << "Cannot open " << file_name << " file.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -5896,7 +5948,7 @@ void NeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distance
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
+               << "void  save_autoassociation_outputs(const string&) method.\n"
                << "Distances and types vectors must have the same dimensions.\n";
 
         throw invalid_argument(buffer.str());
@@ -5907,8 +5959,8 @@ void NeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distance
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_python(const string&) method.\n"
-               << "Cannot open expression text file.\n";
+               << "void save_autoassociation_outputs(const string&) method.\n"
+               << "Cannot open " << file_name << " file.\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -5955,7 +6007,7 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

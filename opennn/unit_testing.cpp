@@ -12,6 +12,13 @@ UnitTesting::UnitTesting()
 {
 }
 
+/// Destructor.
+
+UnitTesting::~UnitTesting()
+{
+    delete thread_pool;
+    delete thread_pool_device;
+}
 
 /// Returns the number of tests which have been performed by the test case.
 

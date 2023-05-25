@@ -3013,6 +3013,30 @@ Index maximal_index(const Tensor<type, 1>& vector)
 }
 
 
+/// Returns the index of the largest element in the vector.
+
+Index maximal_index_from_indices(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+    const Index size = vector.dimension(0);
+
+    if(size == 0) return Index();
+
+    Index maximal_index = 0;
+    type maximum = vector[0];
+
+    for(Index i = 1; i < size; i++)
+    {
+        if(vector(i) > maximum)
+        {
+            maximal_index = indices(i);
+            maximum = vector(i);
+        }
+    }
+
+    return maximal_index;
+}
+
+
 /// Returns the indices of the smallest elements in the vector.
 /// @param number Number of minimal indices to be computed.
 
@@ -3298,7 +3322,7 @@ Index count_nan(const Tensor<type, 1>& vector)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

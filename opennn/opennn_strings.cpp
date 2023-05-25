@@ -1014,6 +1014,9 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "double","dou_ble");
         replace_all_appearances(s, "default","def_ault");
         replace_all_appearances(s, "function","func_tion");
+        replace_all_appearances(s, "class","cla_ss");
+        replace_all_appearances(s, "max","ma_x");
+        replace_all_appearances(s, "min","mi_n");
 
         for (char& c: s)
         {
@@ -1121,9 +1124,6 @@ void trim(string& str)
     str.erase(0, str.find_first_not_of('\f'));
     str.erase(0, str.find_first_not_of('\v'));
 
-    replace_first_char_with_missing_label(str, ';', "NAN");
-    replace_first_char_with_missing_label(str, ',', "NAN");
-
     // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
@@ -1133,14 +1133,77 @@ void trim(string& str)
     str.erase(str.find_last_not_of('\f') + 1);
     str.erase(str.find_last_not_of('\v') + 1);
     str.erase(str.find_last_not_of('\b') + 1);
+
+    // Special character and string modifications
+
+    replace_first_and_last_char_with_missing_label(str, ';', "NA");
+    replace_first_and_last_char_with_missing_label(str, ',', "NA");
+
+    replace_double_char_with_label(str, ";", "NA");
+    replace_double_char_with_label(str, ",", "NA");
+
+    replac_substring_within_quotes(str, ",", "");
+    replac_substring_within_quotes(str, ";", "");
 }
 
-void replace_first_char_with_missing_label(string &str, char target_char, const string &missing_label) {
-    if (!str.empty() && str[0] == target_char) {
-        string new_string = missing_label + target_char;
-        str.replace(0, 1, new_string);
+
+void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label)
+{
+    if (!str.empty())
+    {
+        if (str[0] == target_char)
+        {
+            string new_string = missing_label + target_char;
+            str.replace(0, 1, new_string);
+        }
+
+        if (str[str.length() - 1] == target_char)
+        {
+            string new_string = target_char + missing_label;
+            str.replace(str.length() - 1, 1, new_string);
+        }
     }
 }
+
+
+void replace_double_char_with_label(string &str, const string &target_char, const string &missing_label)
+{
+    string target_pattern = target_char + target_char;
+    string new_pattern = target_char + missing_label + target_char;
+
+    size_t pos = 0;
+    while ((pos = str.find(target_pattern, pos)) != string::npos)
+    {
+        str.replace(pos, target_pattern.length(), new_pattern);
+        pos += new_pattern.length();
+    }
+}
+
+
+void replac_substring_within_quotes(string &str, const string &target, const string &replacement)
+{
+    regex r("\"([^\"]*)\"");
+    smatch match;
+    string result = "";
+    string prefix = str;
+
+    while (std::regex_search(prefix, match, r))
+    {
+        string match_str = match.str();
+        string replaced_str = match_str;
+        size_t pos = 0;
+        while ((pos = replaced_str.find(target, pos)) != string::npos)
+        {
+            replaced_str.replace(pos, target.length(), replacement);
+            pos += replacement.length();
+        }
+        result += match.prefix().str() + replaced_str;
+        prefix = match.suffix().str();
+    }
+    result += prefix;
+    str = result;
+}
+
 
 void erase(string& s, const char& c)
 {
@@ -1580,7 +1643,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
