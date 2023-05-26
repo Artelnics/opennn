@@ -545,49 +545,54 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     {
         Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(30);
 
-        auto createTensorMap = [&](auto &v, size_t i)
+        auto create_TensorMap_one_dim = [&](Tensor<type, 1> &v, size_t i)
         {
             layer_gradient(i) = new TensorMap<Tensor<type, 1>>(v.data(), v.size());
         };
 
-        createTensorMap(input_biases_derivatives, 0);
-        createTensorMap(forget_biases_derivatives, 1);
-        createTensorMap(state_biases_derivatives, 2);
-        createTensorMap(output_biases_derivatives, 3);
+        auto create_TensorMap_two_dims = [&](Tensor<type, 2> &v, size_t i)
+        {
+            layer_gradient(i) = new TensorMap<Tensor<type, 1>>(v.data(), v.size());
+        };
 
-        createTensorMap(input_weights_derivatives, 4);
-        createTensorMap(forget_weights_derivatives, 5);
-        createTensorMap(state_weights_derivatives, 6);
-        createTensorMap(output_weights_derivatives, 7);
+        create_TensorMap_one_dim(input_biases_derivatives, 0);
+        create_TensorMap_one_dim(forget_biases_derivatives, 1);
+        create_TensorMap_one_dim(state_biases_derivatives, 2);
+        create_TensorMap_one_dim(output_biases_derivatives, 3);
 
-        createTensorMap(input_recurrent_weights_derivatives, 8);
-        createTensorMap(forget_recurrent_weights_derivatives, 9);
-        createTensorMap(state_recurrent_weights_derivatives, 10);
-        createTensorMap(output_recurrent_weights_derivatives, 11);
+        create_TensorMap_one_dim(input_weights_derivatives, 4);
+        create_TensorMap_one_dim(forget_weights_derivatives, 5);
+        create_TensorMap_one_dim(state_weights_derivatives, 6);
+        create_TensorMap_one_dim(output_weights_derivatives, 7);
 
-        createTensorMap(input_combinations_biases_derivatives, 12);
-        createTensorMap(forget_combinations_biases_derivatives, 13);
-        createTensorMap(state_combinations_biases_derivatives, 14);
-        createTensorMap(output_combinations_biases_derivatives, 15);
+        create_TensorMap_one_dim(input_recurrent_weights_derivatives, 8);
+        create_TensorMap_one_dim(forget_recurrent_weights_derivatives, 9);
+        create_TensorMap_one_dim(state_recurrent_weights_derivatives, 10);
+        create_TensorMap_one_dim(output_recurrent_weights_derivatives, 11);
 
-        createTensorMap(hidden_states_biases_derivatives, 16);
-        createTensorMap(cell_state_biases_derivatives, 17);
+        create_TensorMap_two_dims(input_combinations_biases_derivatives, 12);
+        create_TensorMap_two_dims(forget_combinations_biases_derivatives, 13);
+        create_TensorMap_two_dims(state_combinations_biases_derivatives, 14);
+        create_TensorMap_two_dims(output_combinations_biases_derivatives, 15);
 
-        createTensorMap(input_combinations_weights_derivatives, 18);
-        createTensorMap(forget_combinations_weights_derivatives, 19);
-        createTensorMap(state_combinations_weights_derivatives, 20);
-        createTensorMap(output_combinations_weights_derivatives, 21);
+        create_TensorMap_two_dims(hidden_states_biases_derivatives, 16);
+        create_TensorMap_two_dims(cell_state_biases_derivatives, 17);
 
-        createTensorMap(hidden_states_weights_derivatives, 22);
-        createTensorMap(cell_state_weights_derivatives, 23);
+        create_TensorMap_two_dims(input_combinations_weights_derivatives, 18);
+        create_TensorMap_two_dims(forget_combinations_weights_derivatives, 19);
+        create_TensorMap_two_dims(state_combinations_weights_derivatives, 20);
+        create_TensorMap_two_dims(output_combinations_weights_derivatives, 21);
 
-        createTensorMap(input_combinations_recurrent_weights_derivatives, 24);
-        createTensorMap(forget_combinations_recurrent_weights_derivatives, 25);
-        createTensorMap(state_combinations_recurrent_weights_derivatives, 26);
-        createTensorMap(output_combinations_recurrent_weights_derivatives, 27);
+        create_TensorMap_two_dims(hidden_states_weights_derivatives, 22);
+        create_TensorMap_two_dims(cell_state_weights_derivatives, 23);
 
-        createTensorMap(hidden_states_recurrent_weights_derivatives, 28);
-        createTensorMap(cell_state_recurrent_weights_derivatives, 29);
+        create_TensorMap_two_dims(input_combinations_recurrent_weights_derivatives, 24);
+        create_TensorMap_two_dims(forget_combinations_recurrent_weights_derivatives, 25);
+        create_TensorMap_two_dims(state_combinations_recurrent_weights_derivatives, 26);
+        create_TensorMap_two_dims(output_combinations_recurrent_weights_derivatives, 27);
+
+        create_TensorMap_two_dims(hidden_states_recurrent_weights_derivatives, 28);
+        create_TensorMap_two_dims(cell_state_recurrent_weights_derivatives, 29);
 
         return layer_gradient;
     }

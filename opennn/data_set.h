@@ -1162,7 +1162,8 @@ struct DataSetBatch
 
     void set_inputs(Tensor<type, 2>& new_inputs)
     {
-        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
+//        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
+        auto new_inputs_data = unique_ptr<type[]>(new type[new_inputs.size()]);
         copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
 
         inputs_data = move(new_inputs_data);

@@ -14830,7 +14830,10 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     //delete targets_data;
 //    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
 
-    inputs_data = make_unique<type[]>(inputs_data_size);
+//    inputs_data = make_unique<type[]>(inputs_data_size);
+    inputs_data = unique_ptr<type[]>(new type[inputs_data_size]);
+
+
     targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
 }
 
