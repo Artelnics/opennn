@@ -33,8 +33,6 @@ using namespace Eigen;
 namespace opennn
 {
 
-    Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string&);
-
     Tensor<type, 1> resize_image(Tensor<type, 1>&);
 
     Tensor<Tensor<type, 1>, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>&, const Index&, const Index&);

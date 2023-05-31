@@ -3239,9 +3239,6 @@ Index DataSet::get_constant_columns_number() const
     return constant_number;
 }
 
-
-
-
 /// Returns the number of channels of the images in the data set.
 
 Index DataSet::get_channels_number() const
@@ -12228,7 +12225,9 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
     int channels;
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
+
     channels_number = channels;
+
     padding = 0;
 
     image_width = width_no_padding;
@@ -12261,6 +12260,7 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
 
+
         Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
         Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
         Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
@@ -12277,6 +12277,9 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
 
         image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
+
+
+
     }
 
     return image;
@@ -12292,7 +12295,7 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 }
 
 
-void DataSet::read_bmp()
+void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
 {
     const fs::path path = data_file_name;
 
@@ -12330,23 +12333,8 @@ void DataSet::read_bmp()
         }
     }
 
-    for(Index i = 0; i < image_paths.size(); i++)
-    {
-        if(image_paths[i].extension() != ".bmp")
-        {
-            fs::remove_all(image_paths[i]);
-
-            //            ostringstream buffer;
-
-            //            buffer << "OpenNN Exception: DataSet class.\n"
-            //                   << "void read_bmp() method.\n"
-            //                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
-
-            //            throw invalid_argument(buffer.str());
-        }
-    }
-
     Index classes_number = number_of_elements_in_directory(path);
+
     Tensor<Index, 1> images_numbers(classes_number);
 
     for(Index i = 0; i < classes_number; i++)
@@ -12354,45 +12342,7 @@ void DataSet::read_bmp()
         images_number += number_of_elements_in_directory(folder_paths[i]);
     }
 
-    string info_img;
-    Tensor<unsigned char,1> image;
-    Index image_size;
-    Index size_comprobation = 0;
-
-    for(Index i = 0; i < image_paths.size(); i++)
-    {
-        info_img = image_paths[i].string();
-        image = read_bmp_image(info_img);
-        image_size = image.size();
-        size_comprobation += image_size;
-    }
-
-    if(image_size != size_comprobation/image_paths.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Some images of the dataset have different channel number, width and/or height.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    FILE* f = fopen(info_img.data(), "rb");
-
-    unsigned char info[54];
-
-    fread(info, sizeof(unsigned char), 54, f);
-    const int width = *(int*)&info[18];
-    const int height = *(int*)&info[22];
-
-    const int paddingAmount = (4 - (width) % 4) % 4;
-    const int paddingWidth = width + paddingAmount;
-
-    const int bits_per_pixel = *(int*)&info[28];
-    int channels;
-
-    bits_per_pixel == 24 ? channels = 3 : channels = 1;
+    const int image_size = width * height * channels;
 
     if(classes_number == 2)
     {
@@ -12424,13 +12374,8 @@ void DataSet::read_bmp()
         images_number = images_paths.size();
 
         for(Index j = 0;  j < images_number; j++)
-        {
-            image = read_bmp_image(images_paths[j]);
-
-            for(Index k = 0; k < image_size; k++)
-            {
-                data(row_index, k) = static_cast<type>(image[k]);
-            }
+        {            
+            data.chip(row_index, 0) = imageData.chip(row_index, 0);
 
             if(classes_number == 2 && i == 0)
             {
@@ -12457,20 +12402,22 @@ void DataSet::read_bmp()
 
     Index column_index = 0;
 
-    for(Index i = 0; i < channels; i++)
-    {
-        for(Index j = 0; j < paddingWidth; j++)
+        for(Index i = 0; i < channels; i++)
         {
-            for(Index k = 0; k < height ; k++)
+            for(Index j = 0; j < width; j++)
             {
-                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                columns(column_index).type = ColumnType::Numeric;
-                columns(column_index).column_use = VariableUse::Input;
-                columns(column_index).scaler = Scaler::MinimumMaximum;
-                column_index++;
+                for(Index k = 0; k < height ; k++)
+                {
+                    columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                    columns(column_index).type = ColumnType::Numeric;
+                    columns(column_index).column_use = VariableUse::Input;
+                    columns(column_index).scaler = Scaler::MinimumMaximum;
+                    column_index++;
+                }
             }
         }
-    }
+
+
 
     // Target columns
 
@@ -12487,7 +12434,8 @@ void DataSet::read_bmp()
         throw invalid_argument(buffer.str());
 
 
-    }else if(classes_number == 2)
+    }
+    else if(classes_number == 2)
     {
         Tensor<string, 1> categories(classes_number);
 
@@ -12502,7 +12450,8 @@ void DataSet::read_bmp()
 
         columns(image_size).categories_uses.resize(classes_number);
         columns(image_size).categories_uses.setConstant(VariableUse::Target);
-    }else
+    }
+    else
     {
         Tensor<string, 1> categories(classes_number);
 
@@ -12522,50 +12471,13 @@ void DataSet::read_bmp()
     samples_uses.resize(images_number);
     split_samples_random();
 
-    image_width = paddingWidth;
+    image_width = width;
     image_height = height;
+    channels_number = channels;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, paddingWidth, height});
+    input_variables_dimensions.setValues({channels, width, height});
 }
-
-/*
-Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
-                                               const Index &image_width,
-                                               const Index &image_height,
-                                               const Index &channels_number)
-{
-    const Index new_width = 224;
-    const Index new_height = 224;
-    Tensor<unsigned char, 1> new_bounding_box(channels_number * new_width * new_height);
-
-    const double scaleWidth = (double)new_width / (double)image_width;
-    const double scaleHeight = (double)new_height / (double)image_height;
-
-    for (Index i = 0; i < new_height; i++)
-    {
-        for (Index j = 0; j < new_width; j++)
-        {
-            const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
-            const int nearestMatch = (((int)(i / scaleHeight) * (image_width * channels_number)) +
-                                      ((int)(j / scaleWidth) * channels_number));
-
-            if (channels_number == 3)
-            {
-                new_bounding_box[pixel] = data[nearestMatch];
-                new_bounding_box[pixel + 1] = data[nearestMatch + 1];
-                new_bounding_box[pixel + 2] = data[nearestMatch + 2];
-            }
-            else
-            {
-                new_bounding_box[pixel] = data[nearestMatch];
-            }
-        }
-    }
-
-    return new_bounding_box;
-}
-*/
 
 DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {

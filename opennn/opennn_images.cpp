@@ -122,15 +122,15 @@ namespace opennn
 
         const int channels = 3;
 
-        if (rows_number % 4 ==0)
+        if (rows_number % 4 == 0)
         {
             memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
         }
         else
         {
-            for (int i = 0; i<rows_number; i++)
+            for (int i = 0; i < rows_number; i++)
             {
-                if(i==0)
+                if(i == 0)
                 {
                     memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
                 }

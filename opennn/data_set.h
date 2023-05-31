@@ -868,7 +868,7 @@ public:
 
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
-    void read_bmp();
+    void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
 
     void read_ground_truth();
 
@@ -880,7 +880,7 @@ public:
 
 //    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
 
-//    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
+    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &, const Index &, const Index &);
 
     BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
