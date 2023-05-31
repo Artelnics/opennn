@@ -3041,7 +3041,7 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
     const Index samples_number = get_training_samples_number();
 
     Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
-           histogram.frequencies.constant(100.0) /
+           histogram.frequencies.constant(100.0).cast<type>() /
            histogram.frequencies.constant(samples_number).cast<type>();
 
     // Assuming you have the bin centers and relative frequencies in the following arrays:
@@ -14742,7 +14742,10 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     //delete targets_data;
 //    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
 
-    inputs_data = make_unique<type[]>(inputs_data_size);
+//    inputs_data = make_unique<type[]>(inputs_data_size);
+    inputs_data = unique_ptr<type[]>(new type[inputs_data_size]);
+
+
     targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
 }
 
