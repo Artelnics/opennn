@@ -12309,7 +12309,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
         throw invalid_argument(buffer.str());
     }
-
     has_columns_names = true;
     has_rows_labels = true;
     convolutional_model = true;
@@ -12323,7 +12322,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     {
         folder_paths.emplace_back(entry.path().string());
     }
-
 
     for (Index i = 0 ; i < folder_paths.size() ; i++)
     {
@@ -12344,14 +12342,19 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
     const int image_size = width * height * channels;
 
+    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
+    imageDataAux = imageData;
+
     if(classes_number == 2)
     {
         Index binary_columns_number = 1;
         data.resize(images_number, image_size + binary_columns_number);
+        imageDataAux.resize(images_number, image_size + binary_columns_number);
     }
     else
     {
         data.resize(images_number, image_size + classes_number);
+        imageDataAux.resize(images_number, image_size + classes_number);
     }
 
     data.setZero();
@@ -12374,8 +12377,8 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
         images_number = images_paths.size();
 
         for(Index j = 0;  j < images_number; j++)
-        {            
-            data.chip(row_index, 0) = imageData.chip(row_index, 0);
+        {
+            data.chip(row_index, 0) = imageDataAux.chip(row_index, 0);
 
             if(classes_number == 2 && i == 0)
             {
@@ -12416,8 +12419,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
                 }
             }
         }
-
-
 
     // Target columns
 
