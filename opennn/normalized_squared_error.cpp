@@ -292,10 +292,10 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
     sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);    
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_used_samples_number();
 
-    const type coefficient = ((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
 
@@ -334,10 +334,10 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = ((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
 }
@@ -358,11 +358,11 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const type coefficient
-            = static_cast<type>(2)/(static_cast<type>(batch_size)/static_cast<type>(total_samples_number)*normalization_coefficient);
+            = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
 
     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
 
@@ -418,10 +418,10 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
 void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
                                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -439,10 +439,10 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batc
 
 #endif
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) =
             loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);

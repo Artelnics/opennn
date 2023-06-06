@@ -743,7 +743,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     Index inputs_number;
     Index neurons_number;
     Index outputs_number;
-    Index batch_size;
+    Index batch_samples_number;
 
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
@@ -756,7 +756,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test
 
-    batch_size = 1;
+    batch_samples_number = 1;
     inputs_number = 3;
     neurons_number = 2;
     outputs_number = 3;
@@ -764,13 +764,13 @@ void NeuralNetworkTest::test_calculate_outputs()
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
     neural_network.set_parameters_constant(type(0));
 
-    inputs.resize(batch_size, inputs_number);
+    inputs.resize(batch_samples_number, inputs_number);
     inputs.setConstant(type(1));
     inputs_dimensions = get_dimensions(inputs);
 
     outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
-    assert_true(outputs.dimension(0) == batch_size, LOG);
+    assert_true(outputs.dimension(0) == batch_samples_number, LOG);
     assert_true(outputs.dimension(1) == outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -778,7 +778,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test
 
-    batch_size = 1;
+    batch_samples_number = 1;
     inputs_number = 2;
     neurons_number = 1;
     outputs_number = 5;
@@ -787,13 +787,13 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     neural_network.set_parameters_constant(type(0));
 
-    inputs.resize(batch_size, inputs_number);
+    inputs.resize(batch_samples_number, inputs_number);
     inputs.setConstant(type(0));
     inputs_dimensions = get_dimensions(inputs);
 
     outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
-    assert_true(outputs.size() == batch_size * outputs_number, LOG);
+    assert_true(outputs.size() == batch_samples_number * outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(0,2)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -900,11 +900,11 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,3,3,3,1});
 
-    batch_size = 2;
+    batch_samples_number = 2;
     inputs_number = neural_network.get_inputs_number();
     outputs_number = neural_network.get_outputs_number();
 
-    inputs.resize(batch_size, inputs_number);
+    inputs.resize(batch_samples_number, inputs_number);
     inputs.setConstant(type(0));
 
     parameters_number = neural_network.get_parameters_number();
@@ -1041,10 +1041,10 @@ void NeuralNetworkTest::test_forward_propagate()
 
     inputs_number = 2;
     outputs_number = 1;
-    batch_size = 5;
+    batch_samples_number = 5;
     bool switch_train = false;
 
-    data.resize(batch_size, inputs_number + outputs_number);
+    data.resize(batch_samples_number, inputs_number + outputs_number);
 
     data.setValues({{1,1,1},
                     {2,2,2},
@@ -1060,7 +1060,7 @@ void NeuralNetworkTest::test_forward_propagate()
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
-    batch.set(batch_size, &data_set);
+    batch.set(batch_samples_number, &data_set);
 
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 

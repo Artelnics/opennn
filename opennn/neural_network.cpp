@@ -1904,9 +1904,9 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
 
         data_set_batch.set_inputs(inputs);
 
-        const Index batch_size = inputs.dimension(0);
+        const Index batch_samples_number = inputs.dimension(0);
 
-        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
         forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
 
@@ -1946,9 +1946,9 @@ Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Ten
 
         data_set_batch.set_inputs(inputs);
 
-        const Index batch_size = inputs_dimensions(0);
+        const Index batch_samples_number = inputs_dimensions(0);
 
-        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
         forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
 
@@ -2107,9 +2107,9 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
     data_set_batch.set_inputs(inputs);
 
-    const Index batch_size = inputs.dimension(0);
+    const Index batch_samples_number = inputs.dimension(0);
 
-    NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, this);
+    NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
     forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
 

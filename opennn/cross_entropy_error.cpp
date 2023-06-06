@@ -77,7 +77,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
                                                const NeuralNetworkForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
     const Index last_trainable_layers_number = neural_network_pointer->get_last_trainable_layer_index();
@@ -115,7 +115,7 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
                                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                                  LossIndexBackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
@@ -182,7 +182,7 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 
     TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
 
-    const Index batch_samples_number = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
@@ -220,7 +220,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
-    const Index batch_samples_number = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 

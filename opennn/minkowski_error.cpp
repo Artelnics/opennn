@@ -94,9 +94,9 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     minkowski_error.device(*thread_pool_device)
             = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
-    back_propagation.error = minkowski_error(0)/type(batch_size);
+    back_propagation.error = minkowski_error(0)/type(batch_samples_number);
 
     if(is_nan(back_propagation.error))
     {
@@ -127,7 +127,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
@@ -137,7 +137,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     {
         deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
-        deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
+        deltas.device(*thread_pool_device) = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
 
         std::replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
     }

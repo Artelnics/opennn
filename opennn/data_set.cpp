@@ -14902,7 +14902,7 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 }
 
 
-Index DataSetBatch::get_batch_size() const
+Index DataSetBatch::get_batch_samples_number() const
 {
     return batch_size;
 }

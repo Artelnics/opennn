@@ -149,13 +149,13 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
     const Index rows_number = inputs_dimensions(0);
     const Index columns_number = inputs_dimensions(1);
     const Index channels_number = inputs_dimensions(2);
-    const Index batch_size = inputs_dimensions(3);
+    const Index batch_samples_number = inputs_dimensions(3);
 
-    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*columns_number*rows_number}};
+    const Eigen::array<Index, 2> new_dims{{batch_samples_number, channels_number*columns_number*rows_number}};
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch_size, channels_number*columns_number*rows_number);
+    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch_samples_number, channels_number*columns_number*rows_number);
 
     outputs = inputs.reshape(new_dims);
 }

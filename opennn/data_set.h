@@ -1162,7 +1162,7 @@ struct DataSetBatch
         if(targets_data != nullptr) free(targets_data);
     }
 
-    Index get_batch_size() const;
+    Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
 

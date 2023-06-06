@@ -71,10 +71,10 @@ Tensor<type, 2> BatchNormalizationLayer::perform_inputs_normalization(const Tens
     const int rows_number = static_cast<int>(inputs.dimension(0));
     const int cols_number = static_cast<int>(inputs.dimension(1));
 
-    Tensor<float,1>batch_size(cols_number);
+    Tensor<float,1>batch_samples_number(cols_number);
     Tensor<float,2>epsilon(rows_number, cols_number);
 
-    batch_size.setConstant(rows_number);
+    batch_samples_number.setConstant(rows_number);
     epsilon.setConstant(numeric_limits<type>::epsilon());
 
     const Eigen::array<ptrdiff_t, 1> dims = {0};
@@ -82,7 +82,7 @@ Tensor<type, 2> BatchNormalizationLayer::perform_inputs_normalization(const Tens
     const Eigen::array<Index, 2> bcast({rows_number, 1});
 
     batch_norm_forward_propagation->mean = inputs.mean(dims);
-    batch_norm_forward_propagation->variance = ((batch_norm_forward_propagation->mean.reshape(dims_2D).broadcast(bcast) - inputs).square()).sum(dims)/batch_size;
+    batch_norm_forward_propagation->variance = ((batch_norm_forward_propagation->mean.reshape(dims_2D).broadcast(bcast) - inputs).square()).sum(dims)/batch_samples_number;
 
     Tensor<type,2> outputs = (inputs - inputs.mean(dims).reshape(dims_2D).broadcast(bcast))/
           (batch_norm_forward_propagation->variance.reshape(dims_2D).broadcast(bcast) + epsilon).sqrt();

@@ -175,7 +175,6 @@ public:
                                            type*, const Tensor<Index, 1>&,
                                            type*, const Tensor<Index, 1>&) const;
 
-
    // Outputs
 
     void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;

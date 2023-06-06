@@ -262,28 +262,28 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
-    Index batch_size_training = 0;
-    Index batch_size_selection = 0;
+    Index batch_samples_number_training = 0;
+    Index batch_samples_number_selection = 0;
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     training_samples_number < batch_samples_number
-            ? batch_size_training = training_samples_number
-            : batch_size_training = batch_samples_number;
+            ? batch_samples_number_training = training_samples_number
+            : batch_samples_number_training = batch_samples_number;
 
     selection_samples_number < batch_samples_number && selection_samples_number != 0
-            ? batch_size_selection = selection_samples_number
-            : batch_size_selection = batch_samples_number;
+            ? batch_samples_number_selection = selection_samples_number
+            : batch_samples_number_selection = batch_samples_number;
 
-    DataSetBatch batch_training(batch_size_training, data_set_pointer);
-    DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
+    DataSetBatch batch_training(batch_samples_number_training, data_set_pointer);
+    DataSetBatch batch_selection(batch_samples_number_selection, data_set_pointer);
 
-    const Index training_batches_number = training_samples_number/batch_size_training;
-    const Index selection_batches_number = selection_samples_number/batch_size_selection;
+    const Index training_batches_number = training_samples_number/batch_samples_number_training;
+    const Index selection_batches_number = selection_samples_number/batch_samples_number_selection;
 
-    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
-    Tensor<Index, 2> selection_batches(selection_batches_number, batch_size_selection);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_samples_number_training);
+    Tensor<Index, 2> selection_batches(selection_batches_number, batch_samples_number_selection);
 
     // Neural network
 
@@ -306,16 +306,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_samples_number_training, neural_network_pointer);
 
-    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_samples_number_selection, neural_network_pointer);
 
     // Loss index
 
     loss_index_pointer->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(batch_samples_number_training, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(batch_samples_number_selection, loss_index_pointer);
 
     type training_error = type(0);
     type training_loss = type(0);
@@ -350,7 +350,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
+        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_samples_number_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -391,7 +391,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
+            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_samples_number_selection, shuffle);
 
             selection_error = type(0);
 
@@ -733,15 +733,15 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
     // DataSetBatch size
 
-    const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
+    const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
 
-    if(batch_size_element)
+    if(batch_samples_number_element)
     {
-        const Index new_batch_size = static_cast<Index>(atoi(batch_size_element->GetText()));
+        const Index new_batch_samples_number = static_cast<Index>(atoi(batch_samples_number_element->GetText()));
 
         try
         {
-            set_batch_samples_number(new_batch_size);
+            set_batch_samples_number(new_batch_samples_number);
         }
         catch(const invalid_argument& e)
         {
