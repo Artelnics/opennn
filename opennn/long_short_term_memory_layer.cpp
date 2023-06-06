@@ -1747,7 +1747,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(ProbabilisticLayerForwardP
 void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                                  const Tensor<Index, 1>& inputs_dimensions,
                                                  LayerForwardPropagation* forward_propagation,
-                                                 bool& switch_train)
+                                                 const bool& switch_train)
 {
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation

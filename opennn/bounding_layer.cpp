@@ -397,7 +397,10 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
+void BoundingLayer::forward_propagate(type* inputs_data,
+                                      const Tensor<Index, 1>& inputs_dimensions,
+                                      LayerForwardPropagation* forward_propagation,
+                                      const bool& switch_train)
 {
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);

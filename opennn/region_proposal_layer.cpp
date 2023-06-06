@@ -180,7 +180,7 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
 void RegionProposalLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation,
-                          bool& switch_train)
+                          const bool& switch_train)
 {
     RegionProposalLayerForwardPropagation* region_proposal_layer_forward_propagation
             = static_cast<RegionProposalLayerForwardPropagation*>(forward_propagation);
@@ -193,7 +193,6 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
 
     const Tensor<Index, 1> outputs_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs);
     const Tensor<Index, 1> regions_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs_regions);
-
 
     // Propose random region for each image
 

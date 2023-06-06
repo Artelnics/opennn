@@ -593,7 +593,7 @@ Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 
 Index PoolingLayer::get_inputs_number() const
 {
-    return input_variables_dimensions.size();
+    return inputs_dimensions.size();
 }
 
 
@@ -713,9 +713,9 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 
 /// Returns the input_variables_dimensions.
 
-Tensor<Index, 1> PoolingLayer::get_input_variables_dimensions() const
+Tensor<Index, 1> PoolingLayer::get_inputs_dimensions() const
 {
-    return input_variables_dimensions;
+    return inputs_dimensions;
 }
 
 
@@ -743,9 +743,9 @@ string PoolingLayer::write_pooling_method() const
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_input_variables_dimensions(const Tensor<Index, 1>& new_input_variables_dimensions)
+void PoolingLayer::set_inputs_dimensions(const Tensor<Index, 1>& new_inputs_dimensions)
 {
-    input_variables_dimensions = new_input_variables_dimensions;
+    inputs_dimensions = new_inputs_dimensions;
 }
 
 
@@ -856,7 +856,7 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("InputDimensions");
 
     buffer.str("");
-    buffer << get_input_variables_dimensions();
+    buffer << get_inputs_dimensions();
 
     file_stream.PushText(buffer.str().c_str());
 

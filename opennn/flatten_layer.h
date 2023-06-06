@@ -47,7 +47,7 @@ public:
 
     // Get methods
 
-    Tensor<Index, 1> get_input_variables_dimensions() const;
+    Tensor<Index, 1> get_inputs_dimensions() const;
     Index get_outputs_number() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
 
@@ -87,7 +87,12 @@ public:
 
     void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
+    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+
+    void calculate_hidden_delta(LayerForwardPropagation*,
+                                LayerBackPropagation*,
+                                LayerBackPropagation*) const;
+
 
     // Serialization methods
 
@@ -97,7 +102,7 @@ public:
 
 protected:
 
-    Tensor<Index, 1> input_variables_dimensions;
+    Tensor<Index, 1> inputs_dimensions;
 
     /// Display warning messages to screen.
 
@@ -122,31 +127,35 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    }
 
 
-   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-   {
-       layer_pointer = new_layer_pointer;
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        batch_samples_number = new_batch_samples_number;
 
-       const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
+        layer_pointer = new_layer_pointer;
 
-       batch_samples_number = new_batch_samples_number;
+        const FlattenLayer* flatten_layer_pointer = static_cast<FlattenLayer*>(layer_pointer);
 
-       outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
+        const Index input_variables_dimension_0 = flatten_layer_pointer->get_inputs_dimensions()(0);
+        const Index input_variables_dimension_1 = flatten_layer_pointer->get_inputs_dimensions()(1);
+        const Index input_variables_dimension_2 = flatten_layer_pointer->get_inputs_dimensions()(2);
 
-       outputs_data = outputs.data();
+        outputs_dimensions.resize(2);
 
-       outputs_dimensions = get_dimensions(outputs);
-   }
+        outputs_dimensions.setValues({batch_samples_number,
+                                      input_variables_dimension_0*input_variables_dimension_1*input_variables_dimension_2});
+
+        outputs_data = (type*) malloc(static_cast<size_t>(input_variables_dimension_0*input_variables_dimension_1*input_variables_dimension_2*batch_samples_number*sizeof(type)));
+    }
 
 
    void print() const
    {
        cout << "Outputs:" << endl;
 
-       cout << outputs << endl;
+       //cout << outputs << endl;
    }
-
-   Tensor<type, 2> outputs;
 };
+
 
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
@@ -177,11 +186,13 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
         batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = new_layer_pointer->get_neurons_number();
-//        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
-//        deltas.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
+        deltas_dimensions.resize(2);
 
-        deltas.resize(batch_samples_number, neurons_number);
+        deltas_dimensions.setValues({batch_samples_number,
+                                     neurons_number});
+
+        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
     }
 
 
@@ -189,11 +200,8 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     {
         cout << "Deltas: " << endl;
 
-        cout << deltas << endl;
+//        cout << deltas << endl;
     }
-
-    Tensor<type, 2> deltas;
-
 };
 
 

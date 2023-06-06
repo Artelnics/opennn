@@ -85,6 +85,7 @@ void Layer::set_threads_number(const int& new_threads_number)
 
 void Layer::set_parameters_constant(const type&)
 {
+    /*
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
@@ -92,6 +93,8 @@ void Layer::set_parameters_constant(const type&)
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw invalid_argument(buffer.str());
+    */
+
 }
 
 
@@ -169,7 +172,7 @@ void Layer::calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tens
 };
 
 
-void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)
+void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&)
 {
     ostringstream buffer;
 

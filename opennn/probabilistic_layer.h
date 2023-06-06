@@ -148,7 +148,7 @@ public:
 
 //   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void forward_propagate(type*,
                           const Tensor<Index, 1>&,
@@ -239,7 +239,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     {
     }
 
-    void set(const Index new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
 

@@ -85,7 +85,7 @@ public:
 
     PoolingMethod get_pooling_method() const;
 
-    Tensor<Index, 1> get_input_variables_dimensions() const;
+    Tensor<Index, 1> get_inputs_dimensions() const;
 
     string write_pooling_method() const;
 
@@ -94,7 +94,7 @@ public:
     void set_inputs_number(const Index&) {}
     void set_neurons_number(const Index&) {}
 
-    void set_input_variables_dimensions(const Tensor<Index, 1>&);
+    void set_inputs_dimensions(const Tensor<Index, 1>&);
 
     void set_padding_width(const Index&);
 
@@ -110,10 +110,6 @@ public:
     void set_default();
 
     // Outputs
-
-//    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
-
-//    void calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&) final;
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) {}
 
@@ -135,7 +131,7 @@ public:
     // First order activations
 
     void forward_propagate(type*, const Tensor<Index, 1>&,
-                           LayerForwardPropagation*, bool&) final {}
+                           LayerForwardPropagation*, const bool&) final {}
 
     void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*)
     {
@@ -159,7 +155,7 @@ public:
 
 protected:
 
-    Tensor<Index, 1> input_variables_dimensions;
+    Tensor<Index, 1> inputs_dimensions;
 
     Index pool_rows_number = 2;
 

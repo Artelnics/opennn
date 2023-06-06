@@ -79,6 +79,9 @@ public:
         return layer_name;
     }
 
+    virtual Tensor<Index,  1> get_inputs_dimensions() const {return Tensor<Index,1>();}
+    virtual Tensor<Index,  1> get_outputs_dimensions() const {return Tensor<Index,1>();}
+
     // Parameters initialization methods
 
     virtual void set_parameters_constant(const type&);
@@ -100,11 +103,10 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) = 0;
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) = 0;
 
     virtual void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-//    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
     virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
@@ -205,7 +207,6 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
 #else
@@ -224,7 +225,7 @@ struct LayerForwardPropagation
         free(outputs_data);
     }
 
-    virtual void set(const Index&, Layer*) {}
+    virtual void set(const Index&, Layer*) = 0;
 
     virtual void print() const {}
 
@@ -253,7 +254,8 @@ struct LayerBackPropagation
 
     virtual void print() const {}   
 
-    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() {
+    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+    {
         {
             ostringstream buffer;
 

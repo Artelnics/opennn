@@ -54,8 +54,6 @@ int main()
 
         data_set.set_data_file_name("../data/images/");
 
-        data_set.read_bmp();
-
         data_set.scale_input_variables();
 
         const Index input_variables_number = data_set.get_input_variables_number();

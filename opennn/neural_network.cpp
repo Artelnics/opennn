@@ -1790,12 +1790,16 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation,
                                       bool& switch_train) const
 {
+
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data.get(), batch.inputs_dimensions, forward_propagation.layers(first_trainable_layer_index), switch_train);
+    layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data,
+                                                                    batch.inputs_dimensions,
+                                                                    forward_propagation.layers(first_trainable_layer_index),
+                                                                    switch_train);
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
@@ -1816,7 +1820,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     bool switch_train = false;
 
-    layers_pointers(0)->forward_propagate(batch.inputs_data.get(), batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
+    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
 
     for(Index i = 1; i < layers_number; i++)
     {

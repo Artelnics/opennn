@@ -730,7 +730,10 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 }
 
 
-void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
+void RecurrentLayer::forward_propagate(type* inputs_data,
+                                       const Tensor<Index, 1>& inputs_dimensions,
+                                       LayerForwardPropagation* forward_propagation,
+                                       const bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())

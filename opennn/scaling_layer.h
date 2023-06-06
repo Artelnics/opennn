@@ -57,7 +57,7 @@ public:
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const final;
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_inputs_dimensions() const;
    Index get_neurons_number() const final;
 
    // Inputs descriptives
@@ -129,7 +129,7 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
@@ -157,7 +157,7 @@ protected:
 
    ScalingLayer::ProjectType project_type;
 
-   Tensor<Index, 1> input_variables_dimensions;
+   Tensor<Index, 1> inputs_dimensions;
 
    /// Descriptives of input variables.
 
@@ -203,12 +203,10 @@ struct ScalingLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;
 
-        const Tensor<Index, 1> input_variables_dimensions = static_cast<ScalingLayer*>(layer_pointer)->get_input_variables_dimensions();
+        const Tensor<Index, 1> input_variables_dimensions = static_cast<ScalingLayer*>(layer_pointer)->get_inputs_dimensions();
         const Index neurons_number = layer_pointer->get_neurons_number();
 
         batch_samples_number = new_batch_samples_number;
-
-//        free(outputs_data);
 
         // Allocate memory for outputs_data
 

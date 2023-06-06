@@ -230,6 +230,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
+
     TrainingResults results(maximum_epochs_number + 1);
 
     check();
@@ -273,9 +274,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     selection_samples_number < batch_samples_number && selection_samples_number != 0
             ? batch_size_selection = selection_samples_number
-
-            : batch_size_selection = batch_samples_number;   
-
+            : batch_size_selection = batch_samples_number;
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -305,9 +304,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
-    }    
+    }
 
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
@@ -347,6 +347,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
@@ -360,14 +361,19 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
+
             // Data set
+
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
+
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
 
             // Loss index
+
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
+/*
             results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
@@ -401,7 +407,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 // Loss
 
-                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);               
+                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
@@ -413,6 +419,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             results.selection_error_history(epoch) = selection_error;
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
+        */
         }
 
         // Elapsed time
@@ -464,7 +471,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
-
+/*
         if(stop_training)
         {
             results.loss = training_back_propagation.loss;
@@ -480,7 +487,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             break;
         }
-
+*/
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
 
@@ -519,6 +526,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     if(display) results.print();
 
     return results;
+
+
 }
 
 

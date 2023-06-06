@@ -76,8 +76,12 @@ public:
 
    bool is_empty() const;
 
+
    Index get_inputs_number() const override;
    Index get_neurons_number() const final;
+
+   Tensor<Index, 1> get_inputs_dimensions() const final;
+   Tensor<Index, 1> get_outputs_dimensions() const final;
 
    // Parameters
 
@@ -159,14 +163,7 @@ public:
 
    // Perceptron layer outputs
 
-
-//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
-
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
-
-//   void forward_propagate(type*, const Tensor<Index, 1>&,
-//                          LayerForwardPropagation*) final;
-
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void forward_propagate(type*,
                           const Tensor<Index, 1>&,
@@ -267,6 +264,7 @@ protected:
 };
 #endif
 
+
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
@@ -315,7 +313,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives.dimensions() << endl;
-
 
          cout << "Outputs dimensions:" << endl;
          cout << outputs_dimensions << endl;

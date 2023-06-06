@@ -30,7 +30,7 @@
 #include <limits.h>
 #include <list>
 #include <filesystem>
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 
 #include <regex>
 #include <codecvt>
@@ -92,6 +92,10 @@ public:
     explicit DataSet(const Index&, const Index&);
 
     explicit DataSet(const Index&, const Index&, const Index&);
+
+    explicit DataSet(const Tensor<type, 1>&, const Index&);
+
+    explicit DataSet(const Index&, const Index&, const Index&, const Index&, const Index&);
 
     /// This enumeration represents the data file string codification
     /// (utf8, shift_jis)
@@ -488,11 +492,13 @@ public:
     void set(const Tensor<type, 2>&);
     void set(const Index&, const Index&);
     void set(const Index&, const Index&, const Index&);
+    void set(const Index&, const Index&, const Index&, const Index&, const Index&);
     void set(const DataSet&);
     void set(const tinyxml2::XMLDocument&);
     void set(const string&);
     void set(const string&, const char&, const bool&);
     void set(const string&, const char&, const bool&, const DataSet::Codification&);
+    void set(const Tensor<type, 1>&, const Index&);
 
     void set_default();
 
@@ -1162,10 +1168,11 @@ struct DataSetBatch
 
     void set_inputs(Tensor<type, 2>& new_inputs)
     {
-        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
-        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
+//        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
+//        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
 
-        inputs_data = move(new_inputs_data);
+//        inputs_data = move(new_inputs_data);
+        inputs_data = new_inputs.data();
         inputs_dimensions = get_dimensions(new_inputs);
     }
 
@@ -1177,9 +1184,9 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-//    type* inputs_data = nullptr;
+    type* inputs_data = nullptr;
 
-    unique_ptr<type[]> inputs_data;
+ //   unique_ptr<type[]> inputs_data;
 
     Tensor<Index, 1> inputs_dimensions;
 

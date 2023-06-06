@@ -50,6 +50,25 @@ Index PerceptronLayer::get_inputs_number() const
 }
 
 
+Tensor<Index, 1> PerceptronLayer::get_inputs_dimensions() const
+{
+    Tensor<Index, 1> inputs_dimensions(1);
+
+    inputs_dimensions(0) = get_inputs_number();
+
+    return inputs_dimensions;
+}
+
+Tensor<Index, 1> PerceptronLayer::get_outputs_dimensions() const
+{
+    Tensor<Index, 1> outputs_dimensions(1);
+
+    outputs_dimensions(0) = get_neurons_number();
+
+    return outputs_dimensions;
+}
+
+
 /// Returns the number of neurons in the layer.
 
 Index PerceptronLayer::get_neurons_number() const
@@ -709,7 +728,7 @@ void PerceptronLayer::calculate_activations_derivatives(type* combinations, cons
 void PerceptronLayer::forward_propagate(type* inputs_data,
                                         const Tensor<Index,1>& inputs_dimensions,
                                         LayerForwardPropagation* forward_propagation,
-                                        bool& switch_train)
+                                        const bool& switch_train)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -934,7 +953,6 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
     const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));;
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
-
 
     if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
     {

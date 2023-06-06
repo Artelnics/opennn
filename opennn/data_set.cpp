@@ -78,6 +78,29 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
     set_default();
 }
 
+
+DataSet::DataSet(const Index& new_images_number,
+                 const Index& new_channels_number,
+                 const Index& new_width,
+                 const Index& new_height,
+                 const Index& new_targets_number)
+{
+    set(new_images_number, new_channels_number, new_width, new_height, new_targets_number);
+
+    set_default();
+}
+
+
+
+DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels_number)
+{
+//    set_threads();
+
+    set(inputs_variables_dimensions, channels_number);
+
+    set_default();
+}
+
 /// File and separator constructor. It creates a data set object by loading the object members from a data file.
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
@@ -2268,7 +2291,7 @@ void DataSet::set_default_columns_uses()
             }
         }
 
-        input_variables_dimensions.resize(1);
+//        input_variables_dimensions.resize(1);
     }
 }
 
@@ -5397,6 +5420,29 @@ void DataSet::set()
     columns_missing_values_number.resize(0);
 }
 
+void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Index& channels_number)
+{
+    // Set data
+    const Index variables_number = inputs_variables_dimensions.dimension(0) + channels_number;
+    const Index samples_number = 1;
+    data.resize(samples_number, variables_number);
+
+    // Set columns
+    for (Index i = 0; i < inputs_variables_dimensions.dimension(0); ++i) {
+        for (Index j = 0; j < inputs_variables_dimensions(i); ++j) {
+            columns(i+j).name = "column_" + to_string(i+j+1);
+            columns(i+j).column_use = VariableUse::Input;
+            columns(i+j).type = ColumnType::Numeric;
+        }
+    }
+    for (Index i = 0; i < channels_number; ++i) {
+        columns(inputs_variables_dimensions.dimension(0) + i).name = "column_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
+        columns(inputs_variables_dimensions.dimension(0) + i).column_use = VariableUse::Target;
+        columns(inputs_variables_dimensions.dimension(0) + i).type = ColumnType::Numeric;
+    }
+
+}
+
 
 void DataSet::set(const string& data_file_name, const char& separator, const bool& new_has_columns_names)
 {
@@ -5528,8 +5574,6 @@ void DataSet::set(const Index& new_samples_number,
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
 
-    // @todo check for 4d data
-
     data.resize(new_samples_number, new_variables_number);
 
     columns.resize(new_variables_number);
@@ -5553,6 +5597,49 @@ void DataSet::set(const Index& new_samples_number,
     input_variables_dimensions.resize(1);
 
     samples_uses.resize(new_samples_number);
+    split_samples_random();
+}
+
+
+void DataSet::set(const Index& new_images_number,
+                  const Index& new_channels_number,
+                  const Index& new_width,
+                  const Index& new_height,
+                  const Index& new_targets_number)
+{
+
+    data_file_name = "";
+
+    const Index new_inputs_number = new_channels_number*new_width*new_height;
+
+    const Index new_variables_number = new_channels_number*new_width*new_height +  new_targets_number;
+
+    data.resize(new_images_number, new_variables_number);
+
+    columns.resize(new_variables_number);
+
+    for(Index i = 0; i < new_variables_number; i++)
+    {
+        if(i < new_inputs_number)
+        {
+            columns(i).name = "column_" + to_string(i+1);
+            columns(i).column_use = VariableUse::Input;
+            columns(i).type = ColumnType::Numeric;
+        }
+        else
+        {
+            columns(i).name = "column_" + to_string(i+1);
+            columns(i).column_use = VariableUse::Target;
+            columns(i).type = ColumnType::Numeric;
+        }
+    }
+
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions(0) = new_channels_number;
+    input_variables_dimensions(1) = new_width;
+    input_variables_dimensions(2) = new_height;
+
+    samples_uses.resize(new_images_number);
     split_samples_random();
 }
 
@@ -5639,9 +5726,9 @@ void DataSet::set_default()
 
     set_default_columns_names();
 
-    input_variables_dimensions.resize(1);
+ //   input_variables_dimensions.resize(1);
 
-    input_variables_dimensions.setConstant(get_input_variables_number());
+ //   input_variables_dimensions.setConstant(get_input_variables_number());
 
 }
 
@@ -14726,49 +14813,29 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_data.get());
+        fill_submatrix(data, samples, inputs, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
-//        const Index columns_number = input_variables_dimensions(1);
-//        const Index rows_number = input_variables_dimensions(2);
-
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs(inputs_data.get(), rows_number, columns_number, channels_number, batch_size);
+        TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
 
-        Index index = 0;
-
-        /*for(Index image = 0; image < batch_size; image++)
-        {
-            index = 0;
-
-            for(Index row = 0; row < rows_number; row++)
-            {
-                for(Index col = 0; col < columns_number; col++)
-                {
-                    for(Index channel = 0; channel < channels_number; channel++)
-                    {
-                        inputs(row, col, channel, image) = data(image, index);
-                        index++;
-                    }
-                }
-            }
-        }*/
+        #pragma omp parallel for
 
         for(Index image = 0; image < batch_size; image++)
         {
-            index = 0;
+            Index index = 0;
 
             for (Index row = rows_number - 1; row >= 0; row--)
             {
-                for(Index col = 0; col < columns_number; col++)
+                for(Index column = 0; column < columns_number; column++)
                 {
                     for (Index channel = channels_number - 1; channel >= 0 ; channel--)
                     {
-                        inputs(row, col, channel, image) = data(image, index);
+                        inputs(row, column, channel, image) = data(image, index);
                         index++;
                     }
                 }
@@ -14828,9 +14895,9 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     targets_dimensions.setValues({batch_size, target_variables_number});
 
     //delete targets_data;
-//    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
+    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
 
-    inputs_data = make_unique<type[]>(inputs_data_size);
+//    inputs_data = make_unique<type[]>(inputs_data_size);
     targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
 }
 
@@ -14848,11 +14915,14 @@ void DataSetBatch::print() const
     cout << "Inputs dimensions:" << endl;
     cout << inputs_dimensions << endl;
 
+    cout << "Dimensions " << endl;
+    cout << inputs_dimensions.dimensions() << endl;
+
     cout << "Inputs:" << endl;
     if(inputs_dimensions.size() == 2)
-        cout << TensorMap<Tensor<type, 2>>(inputs_data.get(), inputs_dimensions(0), inputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
     else if(inputs_dimensions.size() == 4)
-        cout << TensorMap<Tensor<type, 4>>(inputs_data.get(), inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
+        cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
     cout << "Targets dimensions:" << endl;
     cout << targets_dimensions << endl;
 

@@ -93,7 +93,7 @@ string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& ne
 
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
-    return input_variables_dimensions;
+    return inputs_dimensions;
 }
 
 
@@ -103,9 +103,9 @@ Index ScalingLayer::get_inputs_number() const
 }
 
 
-Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
+Tensor<Index, 1> ScalingLayer::get_inputs_dimensions() const
 {
-    return input_variables_dimensions;
+    return inputs_dimensions;
 }
 
 
@@ -363,9 +363,9 @@ void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
     scalers.resize(dimension_product(0));
     scalers.setConstant(Scaler::MeanStandardDeviation);
 
-    input_variables_dimensions.resize(new_inputs_dimensions.size());
+    inputs_dimensions.resize(new_inputs_dimensions.size());
 
-    input_variables_dimensions = new_inputs_dimensions;
+    inputs_dimensions = new_inputs_dimensions;
 
     set_default();
 }
@@ -837,7 +837,10 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
+void ScalingLayer::forward_propagate(type* inputs_data,
+                                     const Tensor<Index, 1>& inputs_dimensions,
+                                     LayerForwardPropagation* forward_propagation,
+                                     const bool& switch_train)
 {
 
 #ifdef OPENNN_DEBUG
@@ -945,8 +948,17 @@ void ScalingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     }
     else if(input_rank == 4)
     {
-        TensorMap<Tensor<type, 4>> input(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+        TensorMap<Tensor<type, 4>> input(inputs_data,
+                                         inputs_dimensions(0),
+                                         inputs_dimensions(1),
+                                         inputs_dimensions(2),
+                                         inputs_dimensions(3));
+
+        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data,
+                                          inputs_dimensions(0),
+                                          inputs_dimensions(1),
+                                          inputs_dimensions(2),
+                                          inputs_dimensions(3));
 
         for(Index i = 0; i < input.size(); i++)
         {

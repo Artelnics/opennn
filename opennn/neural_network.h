@@ -450,7 +450,9 @@ struct NeuralNetworkForwardPropagation
             default: break;
             }
         }
+
     }
+
 
     void print() const
     {
@@ -464,7 +466,7 @@ struct NeuralNetworkForwardPropagation
 
             layers(i)->print();
 
-//            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
+            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
         }
     }
 
@@ -473,6 +475,7 @@ struct NeuralNetworkForwardPropagation
     NeuralNetwork* neural_network_pointer = nullptr;
 
     Tensor<LayerForwardPropagation*, 1> layers;
+
 };
 
 
