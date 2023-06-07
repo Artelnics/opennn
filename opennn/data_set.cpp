@@ -12319,28 +12319,38 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
-    for (const auto & entry : fs::directory_iterator(path))
-    {
-        folder_paths.emplace_back(entry.path().string());
-    }
+    int classes_number = 0;
+    int images_total_number = 0;
 
-
-    for (Index i = 0 ; i < folder_paths.size() ; i++)
+    for (const auto & entry_path : fs::directory_iterator(path))
     {
-        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        if(entry_path.path().string().find(".DS_Store") != string::npos)
         {
-            image_paths.emplace_back(entry.path().string());
+            cout << ".DS_Store found in : " << entry_path << endl;
+        }
+        else
+        {
+            fs::path actual_directory = entry_path.path().string();
+
+            folder_paths.emplace_back(actual_directory);
+            classes_number++;
+
+            for (const auto & entry_image : fs::directory_iterator(actual_directory))
+            {
+                if(entry_image.path().string().find(".DS_Store") != string::npos)
+                {
+                    cout << ".DS_Store found in : " << entry_image.path() << endl;
+                }
+                else
+                {
+                    image_paths.emplace_back(entry_image.path().string());
+                    images_total_number++;
+                }
+            }
         }
     }
 
-    Index classes_number = number_of_elements_in_directory(path);
-
-    Tensor<Index, 1> images_numbers(classes_number);
-
-    for(Index i = 0; i < classes_number; i++)
-    {
-        images_number += number_of_elements_in_directory(folder_paths[i]);
-    }
+    images_number = images_total_number;
 
     const int image_size = width * height * channels;
 
@@ -12354,7 +12364,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
         data.resize(images_number, image_size + classes_number);
     }
 
-    data.setZero();
+    memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
 
     rows_labels.resize(images_number);
 
@@ -12362,21 +12372,24 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
     for(Index i = 0; i < classes_number; i++)
     {
-        Index images_number = 0;
-
         vector<string> images_paths;
+        Index images_in_folder = 0;
 
         for (const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
-            images_paths.emplace_back(entry.path().string());
+            if(entry.path().string().find(".DS_Store") != string::npos)
+            {
+                cout << ".DS_Store found in : " << entry << endl;
+            }
+            else
+            {
+                images_paths.emplace_back(entry.path().string());
+                images_in_folder++;
+            }
         }
 
-        images_number = images_paths.size();
-
-        for(Index j = 0;  j < images_number; j++)
-        {            
-            data.chip(row_index, 0) = imageData.chip(row_index, 0);
-
+        for(Index j = 0;  j < images_in_folder; j++)
+        {
             if(classes_number == 2 && i == 0)
             {
                 data(row_index, image_size) = 1;
@@ -12417,8 +12430,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
             }
         }
 
-
-
     // Target columns
 
     columns(image_size).name = "class";
@@ -12435,37 +12446,27 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
 
     }
-    else if(classes_number == 2)
+
+    Tensor<string, 1> categories(classes_number);
+
+    for(Index i = 0 ; i < classes_number; i++)
     {
-        Tensor<string, 1> categories(classes_number);
+        categories(i) = folder_paths[i].filename().string();
+    }
 
-        for(Index i = 0 ; i < classes_number; i++)
-        {
-            categories(i) = folder_paths[i].filename().string();
-        }
+    columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).categories = categories;
 
-        columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
+    if(classes_number == 2)
+    {
         columns(image_size).type = ColumnType::Binary;
-        columns(image_size).categories = categories;
-
-        columns(image_size).categories_uses.resize(classes_number);
-        columns(image_size).categories_uses.setConstant(VariableUse::Target);
     }
     else
     {
-        Tensor<string, 1> categories(classes_number);
-
-        for(Index i = 0 ; i < classes_number ; i++)
-        {
-            categories(i) = folder_paths[i].filename().string();
-        }
-
-        columns(image_size).column_use = VariableUse::Target;
         columns(image_size).type = ColumnType::Categorical;
-        columns(image_size).categories = categories;
-
-        columns(image_size).categories_uses.resize(classes_number);
-        columns(image_size).categories_uses.setConstant(VariableUse::Target);
     }
 
     samples_uses.resize(images_number);
