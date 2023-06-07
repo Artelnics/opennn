@@ -169,10 +169,10 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
 
-    const Index rows_number = inputs_dimensions(0);
-    const Index columns_number = inputs_dimensions(1);
-    const Index channels_number = inputs_dimensions(2);
     const Index batch_samples_number = flatten_layer_forward_propagation->batch_samples_number;
+    const Index channels_number = inputs_dimensions(0);
+    const Index rows_number = inputs_dimensions(1);
+    const Index columns_number = inputs_dimensions(2);
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,

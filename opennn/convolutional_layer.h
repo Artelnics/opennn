@@ -108,7 +108,6 @@ public:
     Index get_padding_width() const;
     Index get_padding_height() const;
 
-    Index get_inputs_images_number() const;
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
     Index get_inputs_columns_number() const;
@@ -122,7 +121,6 @@ public:
     // Set methods
 
     void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-    void set(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 1>&);
 
     void set_name(const string&);
 
@@ -211,8 +209,6 @@ public:
                         const Index&,
                         Tensor<type, 1>&) const; // change
 
-   void to_2d(const Tensor<type, 4>&, Tensor<type, 2>&) const;
-
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
@@ -231,13 +227,13 @@ protected:
 
    Index column_stride = 1;
 
-   // 0->rows, 1->cols, 2->channels, 3->batch
-
    Tensor<Index, 1> inputs_dimensions;
 
    ConvolutionType convolution_type = ConvolutionType::Valid;
 
    ActivationFunction activation_function = ActivationFunction::Linear;
+
+   const Eigen::array<ptrdiff_t, 3> convolution_dimensions = {0, 1, 2};
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
@@ -296,7 +292,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << "Convolutions:" << endl;
         cout << convolutions << endl;
 
-        cout << "Outputs:" << endl;
+//        cout << "Outputs:" << endl;
 //        cout << outputs << endl;
 
         cout << "Activations derivatives:" << endl;
