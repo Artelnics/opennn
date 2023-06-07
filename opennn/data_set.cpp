@@ -12309,7 +12309,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
         throw invalid_argument(buffer.str());
     }
-
     has_columns_names = true;
     has_rows_labels = true;
     convolutional_model = true;
@@ -12354,14 +12353,19 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
     const int image_size = width * height * channels;
 
+    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
+    imageDataAux = imageData;
+
     if(classes_number == 2)
     {
         Index binary_columns_number = 1;
         data.resize(images_number, image_size + binary_columns_number);
+        imageDataAux.resize(images_number, image_size + binary_columns_number);
     }
     else
     {
         data.resize(images_number, image_size + classes_number);
+        imageDataAux.resize(images_number, image_size + classes_number);
     }
 
     memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
@@ -12390,6 +12394,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 
         for(Index j = 0;  j < images_in_folder; j++)
         {
+
             if(classes_number == 2 && i == 0)
             {
                 data(row_index, image_size) = 1;
