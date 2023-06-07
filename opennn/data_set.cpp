@@ -12294,6 +12294,243 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
     return size_t();
 }
 
+void DataSet::read_bmp()
+{
+    const fs::path path = data_file_name;
+
+    if(data_file_name.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Data file name is empty.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    has_columns_names = true;
+    has_rows_labels = true;
+    convolutional_model = true;
+
+    separator = Separator::None;
+
+    vector<fs::path> folder_paths;
+    vector<fs::path> image_paths;
+
+    for (const auto & entry : fs::directory_iterator(path))
+    {
+        folder_paths.emplace_back(entry.path().string());
+    }
+
+
+    for (Index i = 0 ; i < folder_paths.size() ; i++)
+    {
+        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        {
+            image_paths.emplace_back(entry.path().string());
+        }
+    }
+
+    for(Index i = 0; i < image_paths.size(); i++)
+    {
+        if(image_paths[i].extension() != ".bmp")
+        {
+            fs::remove_all(image_paths[i]);
+
+            //            ostringstream buffer;
+
+            //            buffer << "OpenNN Exception: DataSet class.\n"
+            //                   << "void read_bmp() method.\n"
+            //                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
+
+            //            throw invalid_argument(buffer.str());
+        }
+    }
+
+    Index classes_number = number_of_elements_in_directory(path);
+    Tensor<Index, 1> images_numbers(classes_number);
+
+    for(Index i = 0; i < classes_number; i++)
+    {
+        images_number += number_of_elements_in_directory(folder_paths[i]);
+    }
+
+    string info_img;
+    Tensor<unsigned char,1> image;
+    Index image_size;
+    Index size_comprobation = 0;
+
+    for(Index i = 0; i < image_paths.size(); i++)
+    {
+        info_img = image_paths[i].string();
+        image = read_bmp_image(info_img);
+        image_size = image.size();
+        size_comprobation += image_size;
+    }
+
+    if(image_size != size_comprobation/image_paths.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Some images of the dataset have different channel number, width and/or height.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    FILE* f = fopen(info_img.data(), "rb");
+
+    unsigned char info[54];
+
+    fread(info, sizeof(unsigned char), 54, f);
+    const int width = *(int*)&info[18];
+    const int height = *(int*)&info[22];
+
+    const int paddingAmount = (4 - (width) % 4) % 4;
+    const int paddingWidth = width + paddingAmount;
+
+    const int bits_per_pixel = *(int*)&info[28];
+    int channels;
+
+    bits_per_pixel == 24 ? channels = 3 : channels = 1;
+
+    if(classes_number == 2)
+    {
+        Index binary_columns_number = 1;
+        data.resize(images_number, image_size + binary_columns_number);
+    }
+    else
+    {
+        data.resize(images_number, image_size + classes_number);
+    }
+
+    data.setZero();
+
+    rows_labels.resize(images_number);
+
+    Index row_index = 0;
+
+    for(Index i = 0; i < classes_number; i++)
+    {
+        Index images_number = 0;
+
+        vector<string> images_paths;
+
+        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        {
+            images_paths.emplace_back(entry.path().string());
+        }
+
+        images_number = images_paths.size();
+
+        for(Index j = 0;  j < images_number; j++)
+        {
+            image = read_bmp_image(images_paths[j]);
+
+            for(Index k = 0; k < image_size; k++)
+            {
+                data(row_index, k) = static_cast<type>(image[k]);
+            }
+
+            if(classes_number == 2 && i == 0)
+            {
+                data(row_index, image_size) = 1;
+            }
+            else if(classes_number == 2 && i == 1)
+            {
+                data(row_index, image_size) = 0;
+            }
+            else
+            {
+                data(row_index, image_size + i) = 1;
+            }
+
+            rows_labels(row_index) = images_paths[j];
+
+            row_index++;
+        }
+    }
+
+    columns.resize(image_size + 1);
+
+    // Input columns
+
+    Index column_index = 0;
+
+    for(Index i = 0; i < channels; i++)
+    {
+        for(Index j = 0; j < paddingWidth; j++)
+        {
+            for(Index k = 0; k < height ; k++)
+            {
+                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                columns(column_index).type = ColumnType::Numeric;
+                columns(column_index).column_use = VariableUse::Input;
+                columns(column_index).scaler = Scaler::MinimumMaximum;
+                column_index++;
+            }
+        }
+    }
+
+    // Target columns
+
+    columns(image_size).name = "class";
+
+    if(classes_number == 1)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+        throw invalid_argument(buffer.str());
+
+
+    }else if(classes_number == 2)
+    {
+        Tensor<string, 1> categories(classes_number);
+
+        for(Index i = 0 ; i < classes_number; i++)
+        {
+            categories(i) = folder_paths[i].filename().string();
+        }
+
+        columns(image_size).column_use = VariableUse::Target;
+        columns(image_size).type = ColumnType::Binary;
+        columns(image_size).categories = categories;
+
+        columns(image_size).categories_uses.resize(classes_number);
+        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+    }else
+    {
+        Tensor<string, 1> categories(classes_number);
+
+        for(Index i = 0 ; i < classes_number ; i++)
+        {
+            categories(i) = folder_paths[i].filename().string();
+        }
+
+        columns(image_size).column_use = VariableUse::Target;
+        columns(image_size).type = ColumnType::Categorical;
+        columns(image_size).categories = categories;
+
+        columns(image_size).categories_uses.resize(classes_number);
+        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+    }
+
+    samples_uses.resize(images_number);
+    split_samples_random();
+
+    image_width = paddingWidth;
+    image_height = height;
+
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions.setValues({channels, paddingWidth, height});
+}
+
 
 void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
 {

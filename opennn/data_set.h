@@ -876,6 +876,8 @@ public:
 
     // Image methods
 
+    void read_bmp();
+
 //    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
 
 //    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
