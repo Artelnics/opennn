@@ -24,7 +24,6 @@
 
 #include "layer.h"
 #include "config.h"
-#include "perceptron_layer.h"
 #include "probabilistic_layer.h"
 #include "flatten_layer.h"
 #include "pooling_layer.h"
@@ -185,10 +184,6 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                               PerceptronLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                FlattenLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
@@ -196,10 +191,6 @@ public:
    // @todo probabilistic hidden delta
 
    // Gradient methods
-
-   void calculate_error_gradient(const Tensor<type, 4>&,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const; //change
 
    void calculate_error_gradient(type*,
                                  LayerForwardPropagation*,
@@ -272,16 +263,16 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
 
-        convolutions.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-        activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
+        convolutions.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
+        activations_derivatives.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
 
         convolutions.setZero();
         activations_derivatives.setZero();
 
         outputs_dimensions.resize(4);
-        outputs_dimensions.setValues({outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number});
+        outputs_dimensions.setValues({batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number});
 
-        outputs_data = (type*) malloc(static_cast<size_t>(outputs_rows_number*outputs_columns_number*kernels_number*batch_samples_number*sizeof(type)));
+        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
     }
 
 
@@ -335,13 +326,17 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
-        layer_pointer = new_layer_pointer;
-
         batch_samples_number = new_batch_samples_number;
+
+        layer_pointer = new_layer_pointer;
 
         const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
         const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
+        const Index kernels_channels_number = convolutional_layer_pointer->get_kernels_channels_number();
+        const Index kernesl_rows_number = convolutional_layer_pointer->get_kernels_rows_number();
+        const Index kernels_columns_number = convolutional_layer_pointer->get_kernels_columns_number();
+
         const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
         const Index synaptic_weights_number = convolutional_layer_pointer->get_synaptic_weights_number();
@@ -355,9 +350,17 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
         deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
+        deltas_times_activations_derivatives.resize(batch_samples_number,
+                                                    kernels_number,
+                                                    outputs_rows_number,
+                                                    outputs_columns_number);
+
         biases_derivatives.resize(kernels_number);
 
-        synaptic_weights_derivatives.resize(kernels_number+synaptic_weights_number);
+        synaptic_weights_derivatives.resize(kernels_number,
+                                            kernels_channels_number,
+                                            kernesl_rows_number,
+                                            kernels_columns_number);
     }
 
 
@@ -374,8 +377,10 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     }
 
+    Tensor<type, 4> deltas_times_activations_derivatives;
+
     Tensor<type, 1> biases_derivatives;
-    Tensor<type, 1> synaptic_weights_derivatives;
+    Tensor<type, 4> synaptic_weights_derivatives;
 };
 
 #ifdef OPENNN_CUDA
@@ -383,7 +388,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 #endif
 
 }
-
 
 #endif
 

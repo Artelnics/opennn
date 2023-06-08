@@ -21,6 +21,7 @@
 // OpenNN includes
 
 #include "layer.h"
+#include "perceptron_layer.h"
 #include "config.h"
 
 namespace opennn
@@ -52,10 +53,9 @@ public:
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
-    Index get_inputs_batch_number() const;
     Index get_inputs_channels_number() const;
-    Index get_input_width() const;
-    Index get_input_height() const;
+    Index get_inputs_rows_number() const;
+    Index get_inputs_columns_number() const;
     Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const final;
@@ -84,8 +84,6 @@ public:
     bool is_empty() const;
 
     // Outputs
-
-    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
     void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
@@ -133,18 +131,13 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
         layer_pointer = new_layer_pointer;
 
-        const FlattenLayer* flatten_layer_pointer = static_cast<FlattenLayer*>(layer_pointer);
-
-        const Index input_variables_dimension_0 = flatten_layer_pointer->get_inputs_dimensions()(0);
-        const Index input_variables_dimension_1 = flatten_layer_pointer->get_inputs_dimensions()(1);
-        const Index input_variables_dimension_2 = flatten_layer_pointer->get_inputs_dimensions()(2);
+        const Index neurons_number = layer_pointer->get_neurons_number();
 
         outputs_dimensions.resize(2);
 
-        outputs_dimensions.setValues({batch_samples_number,
-                                      input_variables_dimension_0*input_variables_dimension_1*input_variables_dimension_2});
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
 
-        outputs_data = (type*) malloc(static_cast<size_t>(input_variables_dimension_0*input_variables_dimension_1*input_variables_dimension_2*batch_samples_number*sizeof(type)));
+        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
     }
 
 
@@ -189,8 +182,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
         deltas_dimensions.resize(2);
 
-        deltas_dimensions.setValues({batch_samples_number,
-                                     neurons_number});
+        deltas_dimensions.setValues({batch_samples_number, neurons_number});
 
         deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
     }

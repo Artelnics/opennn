@@ -73,27 +73,22 @@ Index FlattenLayer::get_inputs_number() const
 }
 
 
-Index FlattenLayer::get_input_height() const
-{
-    return inputs_dimensions(2);
-}
-
-
-Index FlattenLayer::get_input_width() const
-{
-    return inputs_dimensions(1);
-}
-
-
 Index FlattenLayer::get_inputs_channels_number() const
 {
     return inputs_dimensions(0);
 }
 
 
-Index FlattenLayer::get_inputs_batch_number() const
+
+Index FlattenLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions(3);
+    return inputs_dimensions(1);
+}
+
+
+Index FlattenLayer::get_inputs_columns_number() const
+{
+    return inputs_dimensions(2);
 }
 
 
@@ -142,7 +137,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 /// of a neural network. That is a matrix which links to the perceptron layer.
 /// @param inputs 4d tensor(batch, channels, width, height)
 /// @return result 2d tensor(batch, number of pixels)
-
+/*
 void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
@@ -159,48 +154,49 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
 
     outputs = inputs.reshape(new_dims);
 }
-
+*/
 
 void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                     LayerForwardPropagation* forward_propagation,
+                                     LayerForwardPropagation* layer_forward_propagation,
                                      const bool& switch_train)
 {
-
-    FlattenLayerForwardPropagation* flatten_layer_forward_propagation
-            = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
-
-    const Index batch_samples_number = flatten_layer_forward_propagation->batch_samples_number;
-    const Index channels_number = inputs_dimensions(0);
-    const Index rows_number = inputs_dimensions(1);
-    const Index columns_number = inputs_dimensions(2);
-
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data,
-                                            batch_samples_number,
-                                            rows_number,
-                                            columns_number,
-                                            channels_number);
+    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
     const Index neurons_number = get_neurons_number();
 
-    type* outputs_data = flatten_layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data;
 
     memcpy(outputs_data,
            inputs_data,
-           batch_samples_number * neurons_number);
+           batch_samples_number*neurons_number);
 }
 
 
 void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
                                           LayerBackPropagation* next_layer_back_propagation,
-                                          LayerBackPropagation* layer_back_propagation) const
+                                          LayerBackPropagation* flatten_layer_back_propagation) const
 {
-//  @todo
-//    const Index batch_samples_number = next_layer_forward_propagation->batch_samples_number;
-//    const Index neurons_number = get_neurons_number();
+    PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
+            static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
 
-//    memcpy(layer_back_propagation->deltas_data,
-//           next_layer_back_propagation->deltas_data,
-//           batch_samples_number*neurons_number);
+    PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
+            static_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
+
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_perceptron_layer_back_propagation->layer_pointer)->get_synaptic_weights();
+
+    const TensorMap<Tensor<type, 2>> next_deltas(next_perceptron_layer_back_propagation->deltas_data,
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(0),
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(1));
+
+    const Index batch_samples_number = flatten_layer_back_propagation->batch_samples_number;
+    const Index neurons_number = get_neurons_number();
+
+    TensorMap<Tensor<type, 2>> deltas(flatten_layer_back_propagation->deltas_data,
+                                      batch_samples_number,
+                                      neurons_number);
+
+    deltas.device(*thread_pool_device) = (next_deltas*next_perceptron_layer_forward_propagation->activations_derivatives)
+            .contract(next_synaptic_weights, A_BT);
 }
 
 
@@ -217,14 +213,14 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("InputHeight");
     buffer.str("");
-    buffer << get_input_height();
+    buffer << get_inputs_rows_number();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
 
     file_stream.OpenElement("InputWidth");
     buffer.str("");
-    buffer << get_input_width();
+    buffer << get_inputs_columns_number();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();

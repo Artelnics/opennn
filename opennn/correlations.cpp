@@ -132,7 +132,6 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 {
     Correlation correlation;
 
-
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
