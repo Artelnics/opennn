@@ -122,38 +122,13 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Index kernels_rows_number = synaptic_weights.dimension(2);
     const Index kernels_columns_number = synaptic_weights.dimension(3);
 
-#ifdef OPENNN_DEBUG
-/*
-    const Index output_channel_number = combinations.dimension(2);
-    const Index output_images_number = combinations.dimension(3);
-
-    if(output_channel_number != kernels_number)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer::calculate_convolutions.\n"
-               << "output_channel_number" <<output_channel_number <<"must me equal to" << kernels_number<<".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(output_images_number != images_number)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "ConvolutionalLayer::calculate_convolutions.\n"
-               << "output_images_number" <<output_images_number <<"must me equal to" << images_number<<".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
-    const Index image_size = inputs_channels_number*inputs_rows_number*inputs_columns_number;
+    const Index input_image_size = inputs_channels_number*inputs_rows_number*inputs_columns_number;
     const Index kernel_size = kernels_channels_number*kernels_rows_number*kernels_columns_number;
 
     const Index outputs_rows_number = get_outputs_rows_number();
     const Index outputs_columns_number = get_outputs_columns_number();
+
+    const Index output_image_size = kernels_number*outputs_rows_number*outputs_columns_number;
 
     type* inputs_pointer = const_cast<type*>(inputs.data());
     type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
@@ -162,23 +137,25 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 
     #pragma omp parallel for
 
-    for(int i = 0; i < images_number ;i++)
+    for(int image_index = 0; image_index < images_number ;image_index++)
     {
-        const TensorMap<Tensor<type, 3>> image(inputs_pointer + i*image_size,
+        const TensorMap<Tensor<type, 3>> image(inputs_pointer + image_index*input_image_size,
                                                inputs_channels_number,
                                                inputs_rows_number,
                                                inputs_columns_number);
 
-        for(int j = 0; j < kernels_number; j++)
+        for(int kernel_index = 0; kernel_index < kernels_number; kernel_index++)
         {
-            const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + j*kernel_size,
+            const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index*kernel_size,
                                                     kernels_channels_number,
                                                     kernels_rows_number,
                                                     kernels_columns_number);
 
-            convolved_image = image.convolve(kernel, convolution_dimensions) + biases(j);
+            convolved_image = image.convolve(kernel, convolution_dimensions) + biases(kernel_index);
 
-            memcpy(convolutions_data + j*outputs_rows_number*outputs_columns_number + i*outputs_rows_number*outputs_columns_number*kernels_number,
+            // @todo check this
+
+            memcpy(convolutions_data + kernel_index*outputs_rows_number*outputs_columns_number + image_index*output_image_size,
                    convolved_image.data(), static_cast<size_t>(outputs_rows_number*outputs_columns_number)*sizeof(type));
         }
     }
@@ -448,18 +425,22 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     const Index delta_slice_dimensions = outputs_rows_number*outputs_columns_number;
 
-    Eigen::array<Eigen::Index, 2> offsets;
-    Eigen::array<Eigen::Index, 2> extents;
+    Eigen::array<Eigen::Index, 4> offsets;
+    Eigen::array<Eigen::Index, 4> extents;
 
     // Biases derivatives
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
-        extents = {2, delta_slice_dimensions};
+//        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
+//        extents = {2, delta_slice_dimensions};
 
-        // delta_slice;// @todo compilation error because change of dimensions !!!
-        //= deltas_times_activations_derivatives.slice(offsets, extents);
+//         delta_slice;// @todo compilation error because change of dimensions !!!
+//        = deltas_times_activations_derivatives.slice(offsets, extents);
+
+        offsets = {kernel_index, 0, 0, delta_slice_dimensions*kernel_index};
+        extents = {1, kernels_channels_number, outputs_rows_number, delta_slice_dimensions};
+        delta_slice = deltas.slice(offsets, extents);
 
         const Tensor<type, 0> current_sum = delta_slice.sum();
 
@@ -481,11 +462,16 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
         for(Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
-            offsets = {image_index, delta_slice_dimensions*kernel_index};
-            extents = {1, delta_slice_dimensions};
+//            offsets = {image_index, delta_slice_dimensions*kernel_index};
+//            extents = {1, delta_slice_dimensions};
 
-            // delta_slice; // @todo compilation error because change of dimensions !!! = deltas_times_derivatives.slice(offsets, extents);
-            //  = deltas_times_derivatives.slice(offsets, extents);
+//             delta_slice; // @todo compilation error because change of dimensions !!! = deltas_times_derivatives.slice(offsets, extents);
+//              = deltas_times_derivatives.slice(offsets, extents);
+
+            offsets = {image_index, 0, 0, delta_slice_dimensions*kernel_index};
+            extents = {1, kernels_channels_number, outputs_rows_number, delta_slice_dimensions};
+
+            delta_slice = deltas.slice(offsets, extents);
 
             const TensorMap<Tensor<type, 3>> image(inputs.data() + image_index*image_size,
                                                    inputs_channels_number,
@@ -493,24 +479,26 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                                    inputs_columns_number);
 
             const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
-                                                           1, // inputs_channels_number?
+                                                           get_outputs_dimensions()[0], // check it!!! kernels_channels_number ??
                                                            outputs_rows_number,
                                                            outputs_columns_number);
 
             if(image_index == 0)
             {
-                kernel_synaptic_weights_derivatives = image.convolve(delta_reshape, convolution_dimensions);
+                kernel_synaptic_weights_derivatives = image.convolve(delta_reshape, convolution_dimensions); // check convolution_dimensions
             }
             else
             {
                 kernel_synaptic_weights_derivatives += image.convolve(delta_reshape, convolution_dimensions);
             }
+
         }
 
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,
                kernel_synaptic_weights_derivatives.data(),
                static_cast<size_t>(kernel_synaptic_weights_number)*sizeof(type));
     }
+
 }
 
 
@@ -847,7 +835,7 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 #endif
 
     const Index kernels_number = new_kernels_dimensions[0];
-    const Index kernels_channels_number = new_inputs_dimensions[1];
+    const Index kernels_channels_number = new_inputs_dimensions[0]; // or new_kernels_dimensions[1] !!!
     const Index kernels_rows_number = new_kernels_dimensions[2];
     const Index kernels_columns_number = new_kernels_dimensions[3];
 

@@ -936,7 +936,7 @@ void ConvolutionalLayerTest::test_insert_padding()
 void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 {
     cout<< "calculate_hidden_delta_perceptron_test"<<endl;
-
+/*
     // Current layer's values
 
     const Index images_number = 2;
@@ -969,7 +969,7 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
         *(synaptic_weights_perceptron.data() + i) = 1.0 * neuron_value;
     }
-/*
+
     perceptron_layer_backpropagate.deltas.setValues({{1,1,1},
                                                     {2,2,2}});
 

@@ -270,7 +270,9 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         activations_derivatives.setZero();
 
         outputs_dimensions.resize(4);
-        outputs_dimensions.setValues({batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number});
+        outputs_dimensions.setValues({batch_samples_number,
+                                      kernels_number,
+                                      outputs_rows_number, outputs_columns_number});
 
         outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
     }
@@ -281,13 +283,13 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << "Convolutional" << endl;
 
         cout << "Convolutions:" << endl;
-        cout << convolutions << endl;
+//        cout << convolutions << endl;
 
-//        cout << "Outputs:" << endl;
-//        cout << outputs << endl;
+        cout << "Outputs:" << endl;
+        //cout << "outputs" << endl;
 
         cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
+//        cout << activations_derivatives << endl;
     }
 
     type* get_convolutions_data()

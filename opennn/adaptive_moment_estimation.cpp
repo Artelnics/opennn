@@ -368,13 +368,17 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
+
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
 
             // Loss index
 
-            loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
-/*
+            loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation); // !!!
+
             results.training_error_history(epoch) = training_back_propagation.error;
+
+
+
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
@@ -419,7 +423,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             results.selection_error_history(epoch) = selection_error;
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
-        */
+
         }
 
         // Elapsed time
@@ -471,7 +475,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
-/*
+
         if(stop_training)
         {
             results.loss = training_back_propagation.loss;
@@ -487,7 +491,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             break;
         }
-*/
+
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
 

@@ -29,80 +29,58 @@ int main(int argc, char *argv[])
 {
    try
    {
-       cout << "OpenNN. Custom Convolutional Neural Network Example." << endl;
+        cout << "OpenNN. Conv2D Example." << endl;
+        srand(static_cast<unsigned>(time(nullptr)));
 
-       srand(static_cast<unsigned>(time(nullptr)));
+        const Index batch_samples_number = 3;
 
-       // Data set
+        const Index inputs_channels_number = 3;
+        const Index inputs_rows_number = 28;
+        const Index inputs_columns_number = 12;
 
-       Index images_number = 1;
-       Index channels_number = 1;
-       Index height = 1;
-       Index width = 1;
-       Index outputs_number = 1;
+        const Index kernels_number = 27;
+        const Index kernels_channels_number = inputs_channels_number;
+        const Index kernels_rows_number = 3;
+        const Index kernels_columns_number = 3;
 
-       DataSet data_set(images_number,
-                        channels_number,
-                        height,
-                        width,
-                        outputs_number);
+        Tensor<Index, 1> input_variables_dimensions(3);
+        input_variables_dimensions(0) = inputs_channels_number;
+        input_variables_dimensions(1) = inputs_rows_number;
+        input_variables_dimensions(2) = inputs_columns_number;
 
-       data_set.set_data_constant(1);
+        Tensor<Index, 1> kernels_dimensions(4);
+        kernels_dimensions(0) = kernels_number;
+        kernels_dimensions(1) = kernels_channels_number;
+        kernels_dimensions(2) = kernels_rows_number;
+        kernels_dimensions(3) = kernels_columns_number;
 
-       data_set.set_training();
+        ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
+        convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
+        convolutional_layer.set_biases_constant(1.0);
+        convolutional_layer.set_synaptic_weights_constant(1.0);
 
-       Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
+        ConvolutionalLayerForwardPropagation convolutional_layer_forward_propagation(batch_samples_number,
+                                                                                     &convolutional_layer);
 
-       // Neural network
+        Tensor<type, 4> x(batch_samples_number,
+                          inputs_channels_number,
+                          inputs_rows_number,
+                          inputs_columns_number);
 
-       NeuralNetwork neural_network;
+        x.setConstant(type(1));
 
-//        ScalingLayer scaling_layer(input_variables_dimensions);
-//        neural_network.add_layer(&scaling_layer);
+        bool switch_train = false;
 
-       Tensor<Index, 1> kernels_dimensions(4); // rows, cols, channels, number => // number, channels, rows, cols,
-       kernels_dimensions.setConstant(1);
+        convolutional_layer.forward_propagate(x.data(),
+                                              input_variables_dimensions,
+                                              &convolutional_layer_forward_propagation,
+                                              switch_train);
 
-       ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
 
-       neural_network.add_layer(&convolutional_layer);
+    convolutional_layer_forward_propagation.print();
+        cout << "Bye!" << endl;
 
-       Tensor<Index, 1> outputs_dimensions_convolutional_layer = convolutional_layer.get_outputs_dimensions();
-
-//       const Index flattened_dimensions_to_perceptron = outputs_dimensions_convolutional_layer(0) *
-//               outputs_dimensions_convolutional_layer(1) *
-//               outputs_dimensions_convolutional_layer(2);
-
-       FlattenLayer flatten_layer(outputs_dimensions_convolutional_layer);
-       neural_network.add_layer(&flatten_layer);
-
-       cout << "outputs_dimensions_convolutional_layer: " << outputs_dimensions_convolutional_layer << endl;
-       Tensor<Index, 1> flatten_layer_outputs_dimensions = flatten_layer.get_outputs_dimensions();
-
-       cout << "flatten_layer_outputs_dimensions: " << flatten_layer_outputs_dimensions << endl;
-
-       PerceptronLayer perceptron_layer(flatten_layer_outputs_dimensions(0), 1);
-       perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
-
-       neural_network.add_layer(&perceptron_layer);
-
-       neural_network.set_parameters_constant(1.0);
-
-//       // Training strategy
-
-       TrainingStrategy training_strategy(&neural_network, &data_set);
-
-       training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-       training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-       training_strategy.set_maximum_epochs_number(5);
-       training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-       training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(1);
-
-       training_strategy.perform_training();
-
-       cout << "Bye!" << endl;
-
-       return 0;
+        return 0;
    }
    catch (const exception& e)
    {
