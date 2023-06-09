@@ -32,16 +32,16 @@ int main(int argc, char *argv[])
         cout << "OpenNN. Conv2D Example." << endl;
         srand(static_cast<unsigned>(time(nullptr)));
 
-        const Index batch_samples_number = 3;
+        const Index batch_samples_number = 1;
 
-        const Index inputs_channels_number = 3;
-        const Index inputs_rows_number = 28;
-        const Index inputs_columns_number = 12;
+        const Index inputs_channels_number = 1;
+        const Index inputs_rows_number = 1;
+        const Index inputs_columns_number = 1;
 
-        const Index kernels_number = 27;
+        const Index kernels_number = 1;
         const Index kernels_channels_number = inputs_channels_number;
-        const Index kernels_rows_number = 3;
-        const Index kernels_columns_number = 3;
+        const Index kernels_rows_number = 1;
+        const Index kernels_columns_number = 1;
 
         Tensor<Index, 1> input_variables_dimensions(3);
         input_variables_dimensions(0) = inputs_channels_number;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         kernels_dimensions(3) = kernels_columns_number;
 
         ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
-        convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
+        convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Logistic);
         convolutional_layer.set_biases_constant(1.0);
         convolutional_layer.set_synaptic_weights_constant(1.0);
 
@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
                                               &convolutional_layer_forward_propagation,
                                               switch_train);
 
+        cout << "dimensions:" << convolutional_layer_forward_propagation.outputs_dimensions << endl;
 
     convolutional_layer_forward_propagation.print();
         cout << "Bye!" << endl;

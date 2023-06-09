@@ -359,6 +359,12 @@ void Layer::logistic(type* x_data, const Tensor<Index, 1>& x_dimensions, type* y
         TensorMap<Tensor<type, 2>> y(y_data, y_dimensions(0), y_dimensions(1));
         y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
     }
+    else if(rank == 3)
+    {
+        const TensorMap<Tensor<type, 3>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2));
+        TensorMap<Tensor<type, 3>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2));
+        y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+    }
     else if(rank == 4)
     {
         const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
@@ -750,6 +756,12 @@ void Layer::hyperbolic_tangent(type* x_data, const Tensor<Index, 1>& x_dimension
     {
         const TensorMap<Tensor<type, 2>> x(x_data, x_dimensions(0), x_dimensions(1));
         TensorMap<Tensor<type, 2>> y(y_data, y_dimensions(0), y_dimensions(1));
+        y.device(*thread_pool_device) = x.tanh();
+    }
+    else if(rank == 3)
+    {
+        const TensorMap<Tensor<type, 3>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2));
+        TensorMap<Tensor<type, 3>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2));
         y.device(*thread_pool_device) = x.tanh();
     }
     else if(rank == 4)

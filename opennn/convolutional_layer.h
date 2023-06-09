@@ -286,7 +286,11 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 //        cout << convolutions << endl;
 
         cout << "Outputs:" << endl;
-        //cout << "outputs" << endl;
+        cout << TensorMap<Tensor<type,4>>(outputs_data,
+                                          outputs_dimensions(0),
+                                          outputs_dimensions(1),
+                                          outputs_dimensions(2),
+                                          outputs_dimensions(3)) << endl;
 
         cout << "Activations derivatives:" << endl;
 //        cout << activations_derivatives << endl;
