@@ -3783,7 +3783,7 @@ string NeuralNetwork::write_expression_autoassociation_distances(string& input_v
 {
     ostringstream buffer;
 
-    buffer << "sample_autoassociation_distance =  calculate_distances(" + input_variables_names + "," + output_variables_names + ")\n";
+    buffer << "sample_autoassociation_distance = calculate_distances(" + input_variables_names + "," + output_variables_names + ")\n";
 
     string expression = buffer.str();
 
@@ -3797,7 +3797,7 @@ string NeuralNetwork::write_expression_autoassociation_variables_distances(strin
 {
     ostringstream buffer;
 
-    buffer << "sample_autoassociation_variables_distance =  calculate_variables_distances(" + input_variables_names + "," + output_variables_names + ")\n";
+    buffer << "sample_autoassociation_variables_distance = calculate_variables_distances(" + input_variables_names + "," + output_variables_names + ")\n";
 
     string expression = buffer.str();
 
