@@ -5571,7 +5571,7 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\t" << "length_vector = len(input)" << endl;
         buffer << "\t" << "variables_distances = [None] * length_vector" << endl;
         buffer << "\t" << "for i in range(length_vector):" << endl;
-        buffer << "\t\t" << "variables_distances[i] = (np.linalg.norm(np.array(input[i])-np.array(output[i])))/length_vector" << endl;
+        buffer << "\t\t" << "variables_distances[i] = (np.linalg.norm(np.array(input[i])-np.array(output[i])))" << endl;
         buffer << "\t" << "return variables_distances" << endl;
 
         buffer << "\n" << endl;
