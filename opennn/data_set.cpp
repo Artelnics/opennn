@@ -81,11 +81,11 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 
 DataSet::DataSet(const Index& new_images_number,
                  const Index& new_channels_number,
-                 const Index& new_width,
                  const Index& new_height,
+                 const Index& new_width,
                  const Index& new_targets_number)
 {
-    set(new_images_number, new_channels_number, new_width, new_height, new_targets_number);
+    set(new_images_number, new_channels_number, new_height, new_width, new_targets_number);
 
     set_default();
 }
@@ -5603,18 +5603,20 @@ void DataSet::set(const Index& new_samples_number,
 
 void DataSet::set(const Index& new_images_number,
                   const Index& new_channels_number,
-                  const Index& new_width,
                   const Index& new_height,
+                  const Index& new_width,
                   const Index& new_targets_number)
 {
 
     data_file_name = "";
 
-    const Index new_inputs_number = new_channels_number*new_width*new_height;
+    const Index new_inputs_number = new_channels_number * new_width * new_height;
 
-    const Index new_variables_number = new_channels_number*new_width*new_height +  new_targets_number;
+    const Index new_variables_number = new_channels_number * new_width * new_height + new_targets_number;
 
     data.resize(new_images_number, new_variables_number);
+
+    data.setRandom();
 
     columns.resize(new_variables_number);
 
@@ -5636,8 +5638,8 @@ void DataSet::set(const Index& new_images_number,
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions(0) = new_channels_number;
-    input_variables_dimensions(1) = new_width;
-    input_variables_dimensions(2) = new_height;
+    input_variables_dimensions(1) = new_height;
+    input_variables_dimensions(2) = new_width;
 
     samples_uses.resize(new_images_number);
     split_samples_random();

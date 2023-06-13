@@ -292,6 +292,9 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                           outputs_dimensions(2),
                                           outputs_dimensions(3)) << endl;
 
+        cout << "Outputs dimensions:" << endl;
+        cout << outputs_dimensions << endl;
+
         cout << "Activations derivatives:" << endl;
 //        cout << activations_derivatives << endl;
     }
