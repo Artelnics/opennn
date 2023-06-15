@@ -5635,9 +5635,7 @@ void DataSet::set(const Index& new_images_number,
     }
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions(0) = new_channels_number;
-    input_variables_dimensions(1) = new_height;
-    input_variables_dimensions(2) = new_width;
+    input_variables_dimensions.setValues({new_channels_number, new_height, new_width});
 
     samples_uses.resize(new_images_number);
     split_samples_random();
@@ -5726,9 +5724,9 @@ void DataSet::set_default()
 
     set_default_columns_names();
 
- //   input_variables_dimensions.resize(1);
+    input_variables_dimensions.resize(1);
 
- //   input_variables_dimensions.setConstant(get_input_variables_number());
+    input_variables_dimensions.setConstant(get_input_variables_number());
 
 }
 

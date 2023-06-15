@@ -377,9 +377,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.training_error_history(epoch) = training_back_propagation.error;
 
-
-
-
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
