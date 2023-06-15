@@ -219,7 +219,7 @@ public:
         TIXMLASSERT(_size < INT_MAX );
         EnsureCapacity(_size+1 );
         _mem[_size] = t;
-        ++_size;
+       ++_size;
     }
 
     T* PushArr(int count ) {
@@ -372,7 +372,7 @@ public:
             _blockPtrs.Push(block );
 
             Item* blockItems = block->items;
-            for(int i = 0; i < ITEMS_PER_BLOCK - 1; ++i ) {
+            for(int i = 0; i < ITEMS_PER_BLOCK - 1;++i ) {
                 blockItems[i].next = &(blockItems[i + 1]);
             }
             blockItems[ITEMS_PER_BLOCK - 1].next = 0;
@@ -382,12 +382,12 @@ public:
         TIXMLASSERT(result != 0 );
         _root = _root->next;
 
-        ++_currentAllocs;
+       ++_currentAllocs;
         if(_currentAllocs > _maxAllocs ) {
             _maxAllocs = _currentAllocs;
         }
-        ++_nAllocs;
-        ++_nUntracked;
+       ++_nAllocs;
+       ++_nUntracked;
         return result;
     }
     
@@ -550,9 +550,9 @@ public:
 
         while(IsWhiteSpace(*p)) {
             if(curLineNumPtr && *p == '\n') {
-                ++ (*curLineNumPtr);
+               ++ (*curLineNumPtr);
             }
-            ++p;
+           ++p;
         }
         TIXMLASSERT(p );
         return p;

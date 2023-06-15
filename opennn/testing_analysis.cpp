@@ -3231,7 +3231,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
             well_lassified_samples(number_of_well_classified, 2) = class_name;
             well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
 
-            number_of_well_classified ++;
+            number_of_well_classified++;
         }
     }
 

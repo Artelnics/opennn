@@ -368,7 +368,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     Index index;
 
-    for(Index i = 0; i < variables_number; i ++)
+    for(Index i = 0; i < variables_number; i++)
     {
         if(contains(inputs_names,names[i]))
         {

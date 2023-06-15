@@ -168,7 +168,7 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 
     memcpy(outputs_data,
            inputs_data,
-           batch_samples_number*neurons_number);
+           batch_samples_number*neurons_number*sizeof(type));
 }
 
 

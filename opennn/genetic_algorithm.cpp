@@ -1482,7 +1482,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_columns_indexes_from_variab
         if(inputs_pre_indexes(i) == true)
         {
             indexes(cont) = i;
-            cont ++;
+            cont++;
         }
     }
 

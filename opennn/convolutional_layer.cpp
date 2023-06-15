@@ -299,6 +299,10 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     const Index inputs_rows_number = get_inputs_rows_number();
     const Index inputs_columns_number = get_inputs_columns_number();
 
+    const Index kernels_number = get_kernels_number();
+    const Index outputs_rows_number = get_outputs_rows_number();
+    const Index outputs_columns_number = get_outputs_columns_number();
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,
                                             inputs_channels_number,
@@ -310,7 +314,13 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     calculate_convolutions(inputs,
                            convolutions_data);
 
-     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+    Tensor<Index, 1> outputs_dimensions(4);
+
+    outputs_dimensions.setValues({batch_samples_number,
+                                  kernels_number,
+                                  outputs_rows_number,
+                                  outputs_columns_number});
+
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
@@ -326,6 +336,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     }
     else // Perform deployment
     {
+
         calculate_activations(convolutions_data,
                               outputs_dimensions,
                               outputs_data,

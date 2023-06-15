@@ -2241,7 +2241,7 @@ Tensor<type, 2> NeuralNetwork::calculate_multivariate_distances(type* & new_inpu
         Tensor<type, 1> input_row = inputs.chip(i, 0);
         Tensor<type, 1> output_row = outputs.chip(i, 0);
 
-        for(Index j = 0; j < input_row.size(); j ++)
+        for(Index j = 0; j < input_row.size(); j++)
         {
             type variable_input_value = input_row(j);
             const TensorMap<Tensor<type, 0>> input_variable(&variable_input_value);
@@ -3958,10 +3958,10 @@ string NeuralNetwork::write_expression_c() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
@@ -4392,10 +4392,10 @@ string NeuralNetwork::write_expression_api() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
@@ -4895,10 +4895,10 @@ string NeuralNetwork::write_expression_javascript() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     ostringstream buffer;
@@ -5401,13 +5401,13 @@ string NeuralNetwork::write_expression_python() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
     {
         inputs(i) = inputs_outputs_buffer(0)(i);
         buffer << "\t" << i << ") " << inputs(i) << endl;
     }
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0); ++i)
+    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << "\n" << endl;
@@ -5542,7 +5542,7 @@ string NeuralNetwork::write_expression_python() const
     else
     {
         std::string inputs_list;
-        for (int i = 0; i < original_inputs.size(); ++i) {
+        for (int i = 0; i < original_inputs.size();++i) {
             inputs_list += "'" + original_inputs(i) + "'";
             if (i < original_inputs.size() - 1) {
                 inputs_list += ", ";

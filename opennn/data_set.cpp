@@ -87,7 +87,7 @@ DataSet::DataSet(const Index& new_images_number,
 {
     set(new_images_number, new_channels_number, new_height, new_width, new_targets_number);
 
-    set_default();
+//    set_default();
 }
 
 
@@ -1753,7 +1753,7 @@ void DataSet::set_auto_associative_samples_uses()
 
     for(Index i = 0; i < samples_uses.size(); i++)
     {
-        if(samples_uses(i) == SampleUse::Unused) count ++;
+        if(samples_uses(i) == SampleUse::Unused) count++;
     }
 
     Index i = 0;
@@ -2102,7 +2102,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     for(Index i = 0; i < samples_uses.size(); i++)
     {
-        if(samples_uses(i) == SampleUse::Unused) count ++;
+        if(samples_uses(i) == SampleUse::Unused) count++;
     }
 
     Index i = 0;
@@ -2291,7 +2291,7 @@ void DataSet::set_default_columns_uses()
             }
         }
 
-//        input_variables_dimensions.resize(1);
+        input_variables_dimensions.resize(1);
     }
 }
 
@@ -3047,11 +3047,11 @@ Index DataSet::get_variables_less_target() const
         {
             if(columns(i).column_use == VariableUse::Input)
             {
-                columns_number ++;
+                columns_number++;
             }
             else if(columns(i).column_use == VariableUse::Unused)
             {
-                columns_number  ++;
+                columns_number ++;
             }
         }
     }
@@ -5428,14 +5428,14 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
     data.resize(samples_number, variables_number);
 
     // Set columns
-    for (Index i = 0; i < inputs_variables_dimensions.dimension(0); ++i) {
-        for (Index j = 0; j < inputs_variables_dimensions(i); ++j) {
+    for (Index i = 0; i < inputs_variables_dimensions.dimension(0);++i) {
+        for (Index j = 0; j < inputs_variables_dimensions(i);++j) {
             columns(i+j).name = "column_" + to_string(i+j+1);
             columns(i+j).column_use = VariableUse::Input;
             columns(i+j).type = ColumnType::Numeric;
         }
     }
-    for (Index i = 0; i < channels_number; ++i) {
+    for (Index i = 0; i < channels_number;++i) {
         columns(inputs_variables_dimensions.dimension(0) + i).name = "column_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
         columns(inputs_variables_dimensions.dimension(0) + i).column_use = VariableUse::Target;
         columns(inputs_variables_dimensions.dimension(0) + i).type = ColumnType::Numeric;
@@ -5615,8 +5615,6 @@ void DataSet::set(const Index& new_images_number,
     const Index new_variables_number = new_channels_number * new_width * new_height + new_targets_number;
 
     data.resize(new_images_number, new_variables_number);
-
-    data.setRandom();
 
     columns.resize(new_variables_number);
 
@@ -14791,9 +14789,9 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
 
     Index count = 0;
 
-    for(Index i = 0; i < batches_number; ++i)
+    for(Index i = 0; i < batches_number;++i)
     {
-        for(Index j = 0; j < batch_size; ++j)
+        for(Index j = 0; j < batch_size;++j)
         {
             batches(i,j) = samples_indices(count);
 
@@ -14823,7 +14821,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number, columns_number, channels_number, batch_size);
+        TensorMap<Tensor<type, 4>> inputs(inputs_data, batch_size, channels_number, rows_number, columns_number);
 
         #pragma omp parallel for
 
@@ -14837,7 +14835,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 {
                     for (Index channel = channels_number - 1; channel >= 0 ; channel--)
                     {
-                        inputs(row, column, channel, image) = data(image, index);
+                        inputs(image, channel, row, column) = data(image, index);
                         index++;
                     }
                 }
@@ -14882,11 +14880,11 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index rows_number = input_variables_dimensions(2);
+        const Index rows_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(2);
 
         inputs_dimensions.resize(4);
-        inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});
+        inputs_dimensions.setValues({batch_size, channels_number, rows_number, columns_number});
 
         //delete inputs_data;
 //        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));

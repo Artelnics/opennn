@@ -1749,7 +1749,6 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                                  LayerForwardPropagation* forward_propagation,
                                                  const bool& switch_train)
 {
-
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
 
@@ -2586,28 +2585,6 @@ void LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tens
 
     back_propagation->input_weights_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-    type* previous_cell_state_activations = forward_propagation->previous_cell_state_activations.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
@@ -2615,46 +2592,45 @@ void LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tens
 
         back_propagation->current_layer_deltas = deltas.chip(sample,0); // memcpy?
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
-
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -2670,9 +2646,9 @@ void LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tens
         }
         else
         {
-            copy(cell_states_activations + (copy_index-neurons_number),
-                 cell_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_cell_state_activations);
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_weights_derivatives = hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B);
 
@@ -2777,28 +2753,6 @@ void LongShortTermMemoryLayer::calculate_state_weights_error_gradient(const Tens
 
     back_propagation->state_weights_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-    type* previous_cell_state_activations = forward_propagation->previous_cell_state_activations.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
@@ -2806,45 +2760,45 @@ void LongShortTermMemoryLayer::calculate_state_weights_error_gradient(const Tens
 
         back_propagation->current_layer_deltas = deltas.chip(sample,0); // memcpy?
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -2859,9 +2813,9 @@ void LongShortTermMemoryLayer::calculate_state_weights_error_gradient(const Tens
         }
         else
         {
-            copy(cell_states_activations + (copy_index - neurons_number),
-            cell_states_activations + (copy_index - neurons_number) + neurons_number,
-            previous_cell_state_activations);
+            copy(forward_propagation->cell_states_activations.data() + (copy_index - neurons_number),
+            forward_propagation->cell_states_activations.data() + (copy_index - neurons_number) + neurons_number,
+            forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_weights_derivatives = hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B);
             multiply_rows(forget_combinations_weights_derivatives, forward_propagation->current_forget_activations_derivatives);
@@ -2944,37 +2898,6 @@ void LongShortTermMemoryLayer::calculate_output_weights_error_gradient(const Ten
 
     back_propagation->output_weights_derivatives.setZero();
 
-
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
@@ -2982,46 +2905,45 @@ void LongShortTermMemoryLayer::calculate_output_weights_error_gradient(const Ten
 
         back_propagation->current_layer_deltas = deltas.chip(sample,0); // memcpy?
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
-
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -3113,84 +3035,49 @@ void LongShortTermMemoryLayer::calculate_forget_recurrent_weights_error_gradient
 
     back_propagation->forget_recurrent_weights_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-
-    type* hidden_states_activations = forward_propagation->hidden_states_activations.data();
-    type* previous_hidden_state_activations = forward_propagation->previous_hidden_state_activations.data();
-    type* previous_cell_state_activations = forward_propagation->previous_cell_state_activations.data();
-
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
-
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -3199,13 +3086,13 @@ void LongShortTermMemoryLayer::calculate_forget_recurrent_weights_error_gradient
         }
         else
         {
-            copy(hidden_states_activations + (copy_index-neurons_number),
-                 hidden_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_hidden_state_activations);
+            copy(forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_hidden_state_activations.data());
 
-            copy(cell_states_activations + (copy_index-neurons_number),
-                 cell_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_cell_state_activations);
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B);
             input_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(input_recurrent_weights, A_B);
@@ -3280,85 +3167,50 @@ void LongShortTermMemoryLayer::calculate_input_recurrent_weights_error_gradient(
 
     back_propagation->input_recurrent_weights_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-
-    type* hidden_states_activations = forward_propagation->hidden_states_activations.data();
-    type* previous_hidden_state_activations = forward_propagation->previous_hidden_state_activations.data();
-    type* previous_cell_state_activations = forward_propagation->previous_cell_state_activations.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
-
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -3367,13 +3219,13 @@ void LongShortTermMemoryLayer::calculate_input_recurrent_weights_error_gradient(
         }
         else
         {
-            copy(hidden_states_activations + (copy_index-neurons_number),
-                 hidden_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_hidden_state_activations);
+            copy(forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_hidden_state_activations.data());
 
-            copy(cell_states_activations + (copy_index-neurons_number),
-                 cell_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_cell_state_activations);
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B);
             multiply_rows(forget_combinations_recurrent_weights_derivatives, forward_propagation->current_forget_activations_derivatives);
@@ -3440,85 +3292,50 @@ void LongShortTermMemoryLayer::calculate_state_recurrent_weights_error_gradient(
 
     back_propagation->state_recurrent_weights_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-
-    type* hidden_states_activations = forward_propagation->hidden_states_activations.data();
-    type* previous_hidden_state_activations = forward_propagation->previous_hidden_state_activations.data();
-    type* previous_cell_state_activations = forward_propagation->previous_cell_state_activations.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
-
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -3527,13 +3344,13 @@ void LongShortTermMemoryLayer::calculate_state_recurrent_weights_error_gradient(
         }
         else
         {
-            copy(hidden_states_activations + (copy_index-neurons_number),
-                 hidden_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_hidden_state_activations);
+            copy(forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_hidden_state_activations.data());
 
-            copy(cell_states_activations + (copy_index-neurons_number),
-                 cell_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_cell_state_activations);
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             back_propagation->forget_combinations_recurrent_weights_derivatives = back_propagation->hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B);
             multiply_rows(back_propagation->forget_combinations_recurrent_weights_derivatives, forward_propagation->current_forget_activations_derivatives);
@@ -3598,83 +3415,50 @@ void LongShortTermMemoryLayer::calculate_output_recurrent_weights_error_gradient
 
     back_propagation->output_recurrent_weights_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-
-    type* state_activations = forward_propagation->state_activations.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-
-    type* output_activations = forward_propagation->output_activations.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-    type* hidden_states_activations = forward_propagation->hidden_states_activations.data();
-    type* previous_hidden_state_activations = forward_propagation->previous_hidden_state_activations.data();
-    type* previous_cell_state_activations = forward_propagation->previous_cell_state_activations.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -3683,13 +3467,13 @@ void LongShortTermMemoryLayer::calculate_output_recurrent_weights_error_gradient
         }
         else
         {
-            copy(hidden_states_activations + (copy_index-neurons_number),
-                 hidden_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_hidden_state_activations);
+            copy(forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_hidden_state_activations.data());
 
-            copy(cell_states_activations + (copy_index-neurons_number),
-                 cell_states_activations + (copy_index-neurons_number) + neurons_number,
-                 previous_cell_state_activations);
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             back_propagation->forget_combinations_recurrent_weights_derivatives = back_propagation->hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B);
             multiply_rows(back_propagation->forget_combinations_recurrent_weights_derivatives, forward_propagation->current_forget_activations_derivatives);
@@ -3758,81 +3542,50 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
 
     back_propagation->forget_biases_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data() + copy_index;
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data() + copy_index;
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-
-    type* input_activations = forward_propagation->input_activations.data() + copy_index;
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data() + copy_index;
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-
-    type* state_activations = forward_propagation->state_activations.data() + copy_index;
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data() + copy_index;
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-
-    type* output_activations = forward_propagation->output_activations.data() + copy_index;
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data() + copy_index;
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
-    type* cell_states_activations = forward_propagation->cell_states_activations.data() + copy_index;
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data() + copy_index;
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        copy(forget_activations,
-             forget_activations + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives,
-             forget_activations_derivatives + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations,
-             input_activations + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives,
-             input_activations_derivatives + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations,
-             state_activations + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives,
-             state_activations_derivatives + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations,
-             output_activations + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives,
-             output_activations_derivatives + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations,
-             cell_states_activations + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives,
-             hidden_states_activations_derivatives + neurons_number,
-             current_hidden_states_derivatives);
-
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -3934,73 +3687,50 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
 
     back_propagation->input_biases_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* input_activations = forward_propagation->input_activations.data();
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* state_activations = forward_propagation->state_activations.data();
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* output_activations = forward_propagation->output_activations.data();
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
 
-        copy(forget_activations + copy_index,
-             forget_activations + copy_index + neurons_number,
-             current_forget_activations);
+        copy(forward_propagation->forget_activations.data() + copy_index,
+             forward_propagation->forget_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations.data());
 
-        copy(forget_activations_derivatives + copy_index,
-             forget_activations_derivatives + copy_index + neurons_number,
-             current_forget_activations_derivatives);
+        copy(forward_propagation->forget_activations_derivatives.data() + copy_index,
+             forward_propagation->forget_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_forget_activations_derivatives.data());
 
-        copy(input_activations + copy_index,
-             input_activations + copy_index + neurons_number,
-             current_input_activations);
+        copy(forward_propagation->input_activations.data() + copy_index,
+             forward_propagation->input_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations.data());
 
-        copy(input_activations_derivatives + copy_index,
-             input_activations_derivatives + copy_index + neurons_number,
-             current_input_activations_derivatives);
+        copy(forward_propagation->input_activations_derivatives.data() + copy_index,
+             forward_propagation->input_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_input_activations_derivatives.data());
 
-        copy(state_activations + copy_index,
-             state_activations + copy_index + neurons_number,
-             current_state_activations);
+        copy(forward_propagation->state_activations.data() + copy_index,
+             forward_propagation->state_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations.data());
 
-        copy(state_activations_derivatives + copy_index,
-             state_activations_derivatives + copy_index + neurons_number,
-             current_state_activations_derivatives);
+        copy(forward_propagation->state_activations_derivatives.data() + copy_index,
+             forward_propagation->state_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_state_activations_derivatives.data());
 
-        copy(output_activations + copy_index,
-             output_activations + copy_index + neurons_number,
-             current_output_activations);
+        copy(forward_propagation->output_activations.data() + copy_index,
+             forward_propagation->output_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations.data());
 
-        copy(output_activations_derivatives + copy_index,
-             output_activations_derivatives + copy_index + neurons_number,
-             current_output_activations_derivatives);
+        copy(forward_propagation->output_activations_derivatives.data() + copy_index,
+             forward_propagation->output_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_output_activations_derivatives.data());
 
-        copy(cell_states_activations + copy_index,
-             cell_states_activations + copy_index + neurons_number,
-             current_cell_state_activations);
+        copy(forward_propagation->cell_states_activations.data() + copy_index,
+             forward_propagation->cell_states_activations.data() + copy_index + neurons_number,
+             forward_propagation->current_cell_state_activations.data());
 
-        copy(hidden_states_activations_derivatives + copy_index,
-             hidden_states_activations_derivatives + copy_index + neurons_number,
-             current_hidden_states_derivatives);
-
+        copy(forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
+             forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
+             forward_propagation->current_hidden_states_derivatives.data());
 
         if(sample%timesteps == 0)
         {
@@ -4014,8 +3744,8 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
         }
         else
         {
-            copy(cell_states_activations + (copy_index-neurons_number),
-                 cell_states_activations + (copy_index-neurons_number) + neurons_number,
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
                  previous_cell_state_activations.data());
 
             back_propagation->forget_combinations_biases_derivatives
@@ -4100,61 +3830,42 @@ void LongShortTermMemoryLayer::calculate_state_biases_error_gradient(const Tenso
 
     back_propagation->state_biases_derivatives.setZero();
 
-    type* forget_activations = forward_propagation->forget_activations.data();
-    type* forget_activations_derivatives = forward_propagation->forget_activations_derivatives.data();
-    type* input_activations = forward_propagation->input_activations.data();
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* state_activations = forward_propagation->state_activations.data();
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* output_activations = forward_propagation->output_activations.data();
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         const Tensor<type, 1> current_layer_deltas = deltas.chip(sample, 0);
 
-        memcpy(current_forget_activations,
-               forget_activations + copy_index,
+        memcpy(forward_propagation->current_forget_activations.data(),
+               forward_propagation->forget_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_forget_activations_derivatives,
-               forget_activations_derivatives + copy_index,
+        memcpy(forward_propagation->current_forget_activations_derivatives.data(),
+               forward_propagation->forget_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_input_activations,
-               input_activations + copy_index,
+        memcpy(forward_propagation->current_input_activations.data(),
+               forward_propagation->input_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_input_activations_derivatives,
-               input_activations_derivatives + copy_index,
+        memcpy(forward_propagation->current_input_activations_derivatives.data(),
+               forward_propagation->input_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_state_activations,
-               state_activations + copy_index,
+        memcpy(forward_propagation->current_state_activations.data(),
+               forward_propagation->state_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_state_activations_derivatives,
-               state_activations_derivatives + copy_index,
+        memcpy(forward_propagation->current_state_activations_derivatives.data(),
+               forward_propagation->state_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_output_activations,
-               output_activations + copy_index,
+        memcpy(forward_propagation->current_output_activations.data(),
+               forward_propagation->output_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_output_activations_derivatives,
-               output_activations_derivatives + copy_index,
+        memcpy(forward_propagation->current_output_activations_derivatives.data(),
+               forward_propagation->output_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
-
 
         memcpy(forward_propagation->current_cell_state_activations.data(),
                forward_propagation->cell_states_activations.data()+copy_index,
@@ -4255,68 +3966,49 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
 
     back_propagation->output_biases_derivatives.setZero();
 
-    type* current_forget_activations = forward_propagation->current_forget_activations.data();
-    type* current_forget_activations_derivatives = forward_propagation->current_forget_activations_derivatives.data();
-    type* current_input_activations = forward_propagation->current_input_activations.data();
-    type* input_activations = forward_propagation->input_activations.data();
-    type* current_input_activations_derivatives = forward_propagation->current_input_activations_derivatives.data();
-    type* input_activations_derivatives = forward_propagation->input_activations_derivatives.data();
-    type* current_state_activations = forward_propagation->current_state_activations.data();
-    type* state_activations = forward_propagation->state_activations.data();
-    type* state_activations_derivatives = forward_propagation->state_activations_derivatives.data();
-    type* current_state_activations_derivatives = forward_propagation->current_state_activations_derivatives.data();
-    type* current_output_activations = forward_propagation->current_output_activations.data();
-    type* current_output_activations_derivatives = forward_propagation->current_output_activations_derivatives.data();
-    type* current_cell_state_activations = forward_propagation->current_cell_state_activations.data();
-    type* current_hidden_states_derivatives = forward_propagation->current_hidden_states_derivatives.data();
-    type* output_activations = forward_propagation->output_activations.data();
-    type* output_activations_derivatives = forward_propagation->output_activations_derivatives.data();
-    type* cell_states_activations = forward_propagation->cell_states_activations.data();
-    type* hidden_states_activations_derivatives = forward_propagation->hidden_states_activations_derivatives.data();
-
     #pragma omp for
     for(Index sample = 0; sample < samples_number; sample++)
     {
         back_propagation->current_layer_deltas = deltas.chip(sample, 0);
 
-        memcpy(current_forget_activations,
-               current_forget_activations+copy_index,
+        memcpy(forward_propagation->current_forget_activations.data(),
+               forward_propagation->forget_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_forget_activations_derivatives,
-               current_forget_activations_derivatives+copy_index,
+        memcpy(forward_propagation->current_forget_activations_derivatives.data(),
+               forward_propagation->forget_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_input_activations,
-               input_activations+copy_index,
+        memcpy(forward_propagation->current_input_activations.data(),
+               forward_propagation->input_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_input_activations_derivatives,
-               input_activations_derivatives+copy_index,
+        memcpy(forward_propagation->current_input_activations_derivatives.data(),
+               forward_propagation->input_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_state_activations,
-               state_activations+copy_index,
+        memcpy(forward_propagation->current_state_activations.data(),
+               forward_propagation->state_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_state_activations_derivatives,
-               state_activations_derivatives+copy_index,
+        memcpy(forward_propagation->current_state_activations_derivatives.data(),
+               forward_propagation->state_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_output_activations,
-               output_activations+copy_index,
+        memcpy(forward_propagation->current_output_activations.data(),
+               forward_propagation->output_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_output_activations_derivatives,
-               output_activations_derivatives+copy_index,
+        memcpy(forward_propagation->current_output_activations_derivatives.data(),
+               forward_propagation->output_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_cell_state_activations,
-               cell_states_activations+copy_index,
+        memcpy(forward_propagation->current_cell_state_activations.data(),
+               forward_propagation->cell_states_activations.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        memcpy(current_hidden_states_derivatives,
-               hidden_states_activations_derivatives+copy_index,
+        memcpy(forward_propagation->current_hidden_states_derivatives.data(),
+               forward_propagation->hidden_states_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
         if(sample%timesteps == 0)
@@ -4335,36 +4027,30 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
                    forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
                    static_cast<size_t>(neurons_number)*sizeof(type));
 
-            back_propagation->forget_combinations_biases_derivatives
-                    = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
+            back_propagation->forget_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->forget_combinations_biases_derivatives,
                           forward_propagation->current_forget_activations_derivatives);
 
-            back_propagation->input_combinations_biases_derivatives
-                    = back_propagation->hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
+            back_propagation->input_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->input_combinations_biases_derivatives,
                           forward_propagation->current_input_activations_derivatives);
 
-            back_propagation->state_combinations_biases_derivatives
-                    = back_propagation->hidden_states_biases_derivatives.contract(state_recurrent_weights, A_B);
+            back_propagation->state_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(state_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->state_combinations_biases_derivatives,
                           forward_propagation->current_state_activations_derivatives);
 
-            back_propagation->output_combinations_biases_derivatives
-                    = back_propagation->hidden_states_biases_derivatives.contract(output_recurrent_weights, A_B);
+            back_propagation->output_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(output_recurrent_weights, A_B);
         }
 
-        for(Index row = 0; row < parameters_number; row++)
-            back_propagation->output_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
+        for(Index row = 0; row < parameters_number; row++) back_propagation->output_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
 
-        multiply_rows(back_propagation->forget_combinations_biases_derivatives,
-                      forward_propagation->previous_cell_state_activations);
+        multiply_rows(back_propagation->forget_combinations_biases_derivatives, forward_propagation->previous_cell_state_activations);
 
         back_propagation->cell_state_biases_derivatives += back_propagation->forget_combinations_biases_derivatives;
 
@@ -4388,8 +4074,7 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
 
         back_propagation->hidden_states_biases_derivatives += back_propagation->output_combinations_biases_derivatives;
 
-        back_propagation->output_biases_derivatives
-                += back_propagation->hidden_states_biases_derivatives.contract(back_propagation->current_layer_deltas, A_B);
+        back_propagation->output_biases_derivatives += back_propagation->hidden_states_biases_derivatives.contract(back_propagation->current_layer_deltas, A_B);
 
         copy_index += neurons_number;
     }

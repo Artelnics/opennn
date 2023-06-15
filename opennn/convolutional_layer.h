@@ -24,7 +24,6 @@
 
 #include "layer.h"
 #include "config.h"
-#include "probabilistic_layer.h"
 #include "flatten_layer.h"
 #include "pooling_layer.h"
 
@@ -63,7 +62,9 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const Index&, const Index&, const ActivationFunction& = ConvolutionalLayer::ActivationFunction::Linear);
+    explicit ConvolutionalLayer(const Index&,
+                                const Index&,
+                                const ActivationFunction& = ConvolutionalLayer::ActivationFunction::Linear);
 
     explicit ConvolutionalLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
@@ -174,7 +175,10 @@ public:
 
    // Outputs
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+    void forward_propagate(type*,
+                           const Tensor<Index, 1>&,
+                           LayerForwardPropagation*,
+                           const bool&) final;
 
    // Outputs
 
@@ -183,6 +187,10 @@ public:
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
+
+   void calculate_hidden_delta(PoolingLayerForwardPropagation*,
+                               PoolingLayerBackPropagation*,
+                               ConvolutionalLayerBackPropagation*) const;
 
    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                FlattenLayerBackPropagation*,

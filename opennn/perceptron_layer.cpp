@@ -833,6 +833,7 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
                                              LayerBackPropagation* next_layer_back_propagation,
                                              LayerBackPropagation* layer_back_propagation) const
 {
+    cout << "----- perceptron calculate_hidden_delta (1) -----" << endl;
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);
 
@@ -874,6 +875,7 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
                                              PerceptronLayerBackPropagation* next_back_propagation,
                                              PerceptronLayerBackPropagation* back_propagation) const
 {
+    cout << "----- perceptron calculate_hidden_delta (2) -----" << endl;
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
     const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));
@@ -942,7 +944,10 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
                                              ProbabilisticLayerBackPropagation* next_back_propagation,
                                              PerceptronLayerBackPropagation* back_propagation) const
 {
+    cout << "----- perceptron calculate_hidden_delta (3) -----" << endl;
     const Index batch_samples_number = back_propagation->batch_samples_number;
+
+    cout << "batch_samples_number: " << batch_samples_number << endl;
 
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
@@ -971,7 +976,7 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
         }
         else
         {
-            const Index samples_number = next_deltas.dimension(0);
+            const Index samples_number = next_deltas.dimension(0); //aqui?
             const Index outputs_number = next_deltas.dimension(1);
             const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
 
@@ -1045,6 +1050,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
                                                 LayerBackPropagationLM* next_layer_back_propagation,
                                                 LayerBackPropagationLM* layer_back_propagation) const
 {
+    cout << "------ calculate_hidden_delta_lm (1) -----" << endl;
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
 
@@ -1087,6 +1093,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
                                                            PerceptronLayerBackPropagationLM* next_back_propagation,
                                                            PerceptronLayerBackPropagationLM* back_propagation) const
 {
+    cout << "------ calculate_hidden_delta_lm (1) -----" << endl;
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
     back_propagation->deltas.device(*thread_pool_device) =
@@ -1098,7 +1105,8 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
 void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation* next_forward_propagation,
                                                               ProbabilisticLayerBackPropagationLM* next_back_propagation,
                                                               PerceptronLayerBackPropagationLM* back_propagation) const
-{           
+{
+    cout << "------ calculate_hidden_delta_lm (1) -----" << endl;
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();

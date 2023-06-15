@@ -857,7 +857,7 @@ Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, co
 
     Tensor<type, 2> difference = x - y;
 
-    for(Index i = 0; i < difference.dimension(1); i ++)
+    for(Index i = 0; i < difference.dimension(1); i++)
     {
         distance(i) = abs(difference(i));
     }

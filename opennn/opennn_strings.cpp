@@ -190,7 +190,7 @@ Index count_tokens(const string& s, const string& sep)
     while ( s.find(sep, pos) != std::string::npos )
     {
         pos = s.find(sep, pos);
-        ++ tokens_number;
+       ++ tokens_number;
         pos += sep.length();
     }
 
@@ -1404,7 +1404,7 @@ void remove_not_alnum(string &str)
 
 bool find_string_in_tensor(Tensor<string, 1>& t, string val)
 {
-    for (Index i = 0; i < t.dimension(0); ++i)
+    for (Index i = 0; i < t.dimension(0);++i)
     {
         string elem = t(i);
 

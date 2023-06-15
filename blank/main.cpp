@@ -31,24 +31,18 @@ int main(int argc, char *argv[])
    {
         cout << "OpenNN. Conv2D Example." << endl;
 
-        const Index batch_samples_number = 1;
+        const Index batch_samples_number = 5;
 
         const Index inputs_channels_number = 3;
-        const Index inputs_rows_number = 8;
-        const Index inputs_columns_number = 8;
+        const Index inputs_rows_number = 5;
+        const Index inputs_columns_number = 4;
 
-        const Index targets_number = 1;
-
-        const Index kernels_number = 3;
+        const Index kernels_number = 2;
         const Index kernels_channels_number = inputs_channels_number;
         const Index kernels_rows_number = 3;
         const Index kernels_columns_number = 3;
 
-        Tensor<type, 4> x(batch_samples_number,
-                          inputs_channels_number,
-                          inputs_rows_number,
-                          inputs_columns_number);
-        x.setConstant(1);
+        const Index targets_number = 1;
 
         DataSet data_set(batch_samples_number,
                          inputs_channels_number,
@@ -56,7 +50,7 @@ int main(int argc, char *argv[])
                          inputs_columns_number,
                          targets_number);
 
-        data_set.set_training();
+        data_set.set_data_constant(static_cast<type>(1));
 
         Tensor<Index, 1> input_variables_dimensions(3);
         input_variables_dimensions.setValues({inputs_channels_number,
@@ -72,35 +66,53 @@ int main(int argc, char *argv[])
         NeuralNetwork neural_network;
 
         ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
-        neural_network.add_layer(&convolutional_layer);
         convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
+        convolutional_layer.set_biases_constant(1.0);
+        convolutional_layer.set_synaptic_weights_constant(1.0);
+        convolutional_layer.set_name("convolutional_layer");
+
+        neural_network.add_layer(&convolutional_layer);
 
         Tensor<Index, 1> convolutional_layer_outputs_dimensions = convolutional_layer.get_outputs_dimensions();
+//        cout << "convolutional_layer_outputs_dimensions: " << convolutional_layer_outputs_dimensions << endl;
 
         FlattenLayer flatten_layer(convolutional_layer_outputs_dimensions);
         neural_network.add_layer(&flatten_layer);
 
         Tensor<Index, 1> flatten_layer_outputs_dimensions = flatten_layer.get_outputs_dimensions();
+//        cout << "flatten_layer_outputs_dimensions: " << flatten_layer_outputs_dimensions << endl;
 
         PerceptronLayer perceptron_layer(flatten_layer_outputs_dimensions(0), 1);
-        perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+        perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         neural_network.add_layer(&perceptron_layer);
 
-        neural_network.set_parameters_constant(1.0);
+        neural_network.set_parameters_constant(type(1));
 
+        // Forward Propagation
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+       DataSetBatch batch(batch_samples_number, &data_set);
 
-        training_strategy.perform_training();
+       const Tensor<Index, 1>& samples(batch_samples_number);
+       const Tensor<Index, 1>& inputs = data_set.get_input_columns_indices();
+       const Tensor<Index, 1>& targets = data_set.get_target_columns_indices();
 
-//        Tensor<type, 2> inputs = data_set.get_input_data();
-//        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+       batch.fill(samples, inputs, targets);
 
-//        Tensor<type, 2> outputs(neural_network.get_outputs_number(), inputs_dimensions[0]);
+       NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-//        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+       bool switch_train = false;
 
-//        cout << "outputs: " << outputs << endl;
+       neural_network.forward_propagate(batch,
+                                        forward_propagation,
+                                        switch_train);
+
+       type* forward_outputs_data = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_data;
+       Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_dimensions;
+
+       cout << "Outputs forward: " <<
+               TensorMap<Tensor<type, 2>>(forward_outputs_data,
+                                          outputs_dimensions(0),
+                                          outputs_dimensions(1)) << endl;
 
         cout << "Bye!" << endl;
 
