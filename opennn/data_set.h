@@ -876,6 +876,8 @@ public:
 
     void read_bmp();
 
+    void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
+
     void read_ground_truth();
 
     void read_txt();

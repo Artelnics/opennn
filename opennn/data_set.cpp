@@ -12616,6 +12616,198 @@ void DataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
+void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
+{
+    const fs::path path = data_file_name;
+
+
+
+    if(data_file_name.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Data file name is empty.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+    has_columns_names = true;
+    has_rows_labels = true;
+    convolutional_model = true;
+
+    separator = Separator::None;
+
+    vector<fs::path> folder_paths;
+    vector<fs::path> image_paths;
+
+    int classes_number = 0;
+    int images_total_number = 0;
+
+    for (const auto & entry_path : fs::directory_iterator(path))
+    {
+        if(entry_path.path().string().find(".DS_Store") != string::npos)
+        {
+            cout << ".DS_Store found in : " << entry_path << endl;
+        }
+        else
+        {
+            fs::path actual_directory = entry_path.path().string();
+
+            folder_paths.emplace_back(actual_directory);
+            classes_number++;
+
+            for (const auto & entry_image : fs::directory_iterator(actual_directory))
+            {
+                if(entry_image.path().string().find(".DS_Store") != string::npos)
+                {
+                    cout << ".DS_Store found in : " << entry_image.path() << endl;
+                }
+                else
+                {
+                    image_paths.emplace_back(entry_image.path().string());
+                    images_total_number++;
+                }
+            }
+        }
+    }
+
+    images_number = images_total_number;
+
+    const int image_size = width * height * channels;
+
+    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
+    imageDataAux = imageData;
+
+    if(classes_number == 2)
+    {
+        Index binary_columns_number = 1;
+        data.resize(images_number, image_size + binary_columns_number);
+        imageDataAux.resize(images_number, image_size + binary_columns_number);
+    }
+    else
+    {
+        data.resize(images_number, image_size + classes_number);
+        imageDataAux.resize(images_number, image_size + classes_number);
+    }
+
+    memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
+
+    rows_labels.resize(images_number);
+
+    Index row_index = 0;
+
+    for(Index i = 0; i < classes_number; i++)
+    {
+        vector<string> images_paths;
+        Index images_in_folder = 0;
+
+        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        {
+            if(entry.path().string().find(".DS_Store") != string::npos)
+            {
+                cout << ".DS_Store found in : " << entry << endl;
+            }
+            else
+            {
+                images_paths.emplace_back(entry.path().string());
+                images_in_folder++;
+            }
+        }
+
+        for(Index j = 0;  j < images_in_folder; j++)
+        {
+
+            if(classes_number == 2 && i == 0)
+            {
+                data(row_index, image_size) = 1;
+            }
+            else if(classes_number == 2 && i == 1)
+            {
+                data(row_index, image_size) = 0;
+            }
+            else
+            {
+                data(row_index, image_size + i) = 1;
+            }
+
+            rows_labels(row_index) = images_paths[j];
+
+            row_index++;
+        }
+    }
+
+    columns.resize(image_size + 1);
+
+    // Input columns
+
+    Index column_index = 0;
+
+        for(Index i = 0; i < channels; i++)
+        {
+            for(Index j = 0; j < width; j++)
+            {
+                for(Index k = 0; k < height ; k++)
+                {
+                    columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                    columns(column_index).type = ColumnType::Numeric;
+                    columns(column_index).column_use = VariableUse::Input;
+                    columns(column_index).scaler = Scaler::MinimumMaximum;
+                    column_index++;
+                }
+            }
+        }
+
+    // Target columns
+
+    columns(image_size).name = "class";
+
+    if(classes_number == 1)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+        throw invalid_argument(buffer.str());
+
+
+    }
+
+    Tensor<string, 1> categories(classes_number);
+
+    for(Index i = 0 ; i < classes_number; i++)
+    {
+        categories(i) = folder_paths[i].filename().string();
+    }
+
+    columns(image_size).column_use = VariableUse::Target;
+    columns(image_size).categories = categories;
+
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
+    if(classes_number == 2)
+    {
+        columns(image_size).type = ColumnType::Binary;
+    }
+    else
+    {
+        columns(image_size).type = ColumnType::Categorical;
+    }
+
+    samples_uses.resize(images_number);
+    split_samples_random();
+
+    image_width = width;
+    image_height = height;
+    channels_number = channels;
+
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions.setValues({channels, width, height});
+}
+
 /*
 Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
                                                const Index &image_width,
