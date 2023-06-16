@@ -435,10 +435,13 @@ bool is_date_time_string(const string& str)
     const string format_12 = "^\\d{1,2}/\\d{1,2}/\\d{4}$";
     const string format_13 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_14 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
-    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
+//    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/|-](0[1-9]|1[0-2])[.|/|-](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
+    const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
+    const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 +"|" + format_15);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15
+                                   + "|" + format_16);
 
     if(regex_match(str, regular_expression))
     {
@@ -552,10 +555,13 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
     const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
-    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
+//    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
+    const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
+    const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15
+                                   + "|" + format_16);
 
     regex_search(date, matchs, regular_expression);
 
@@ -882,7 +888,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
         return mktime(&time_structure);
     }
-    else if(matchs[59] != "") // dd/mm/yyyy hh:mm:ss.ssssss
+    else if(matchs[59] != "") // yyyy/mm/dd hh:mm:ss.ssssss
     {
         if(stoi(matchs[60].str()) < 1970)
         {
