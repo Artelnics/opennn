@@ -285,6 +285,7 @@ public:
    // Expression methods
 
    string write_expression_autoassociation_distances(string&, string&) const;
+   string write_expression_autoassociation_variables_distances(string&, string&) const;
    string write_expression() const;
 
    string write_expression_python() const;

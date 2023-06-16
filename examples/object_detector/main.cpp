@@ -67,14 +67,14 @@ int main(int argc, char *argv[])
 
         cout << "input_variables_dimensions: " << input_variables_dimensions << endl;
         */
-
+/*
         NeuralNetwork neural_network;
 
         RegionProposalLayer region_proposal_layer;
         neural_network.add_layer(&region_proposal_layer);
 
         const string filename = "Z:/Images/DatasetRedDots-bmp/9.bmp";
-        const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image_data(filename);
+        const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image(filename);
 
         Tensor<type, 2> image(1, input_image(0).dimensions()[0] + input_image(1).dimensions()[0]);
 
