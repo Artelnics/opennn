@@ -3797,6 +3797,20 @@ string NeuralNetwork::write_expression_autoassociation_distances(string& input_v
     return expression;
 }
 
+string NeuralNetwork::write_expression_autoassociation_variables_distances(string& input_variables_names, string& output_variables_names) const
+{
+    ostringstream buffer;
+
+    buffer << "sample_autoassociation_variables_distance = calculate_variables_distances(" + input_variables_names + "," + output_variables_names + ")\n";
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
+
+    return expression;
+}
+
 
 /// Returns a string with the mathematical expression that represents the neural network.
 
@@ -3893,6 +3907,7 @@ string NeuralNetwork::write_expression() const
         output_list_string = output_list_string + "]";
 
         buffer << write_expression_autoassociation_distances(input_list_string, output_list_string) << endl;
+        buffer << write_expression_autoassociation_variables_distances(input_list_string, output_list_string) << endl;
     }
 
     string expression = buffer.str();
@@ -3980,12 +3995,30 @@ string NeuralNetwork::write_expression_c() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        string word_to_delete = "sample_autoassociation_distance =";
+        // Delete intermediate calculations
 
-        size_t index = expression.find(word_to_delete);
+        // sample_autoassociation_distance
 
-        if (index != std::string::npos) {
-            expression.erase(index, std::string::npos);
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != std::string::npos) {
+                expression.erase(index, std::string::npos);
+            }
+
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != std::string::npos) {
+                expression.erase(index, std::string::npos);
+            }
         }
     }
 
@@ -4442,12 +4475,28 @@ string NeuralNetwork::write_expression_api() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        string word_to_delete = "sample_autoassociation_distance =";
+        // Delete intermediate calculations
 
-        size_t index = expression.find(word_to_delete);
+        // sample_autoassociation_distance
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
 
-        if (index != std::string::npos) {
-            expression.erase(index, std::string::npos);
+            size_t index = expression.find(word_to_delete);
+
+            if (index != std::string::npos) {
+                expression.erase(index, std::string::npos);
+            }
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != std::string::npos) {
+                expression.erase(index, std::string::npos);
+            }
         }
     }
 
@@ -4842,12 +4891,28 @@ string NeuralNetwork::write_expression_javascript() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        string word_to_delete = "sample_autoassociation_distance =";
+        // Delete intermediate calculations
 
-        size_t index = expression.find(word_to_delete);
+        // sample_autoassociation_distance
+        {
+            string word_to_delete = "sample_autoassociation_distance =";
 
-        if (index != std::string::npos) {
-            expression.erase(index, std::string::npos);
+            size_t index = expression.find(word_to_delete);
+
+            if (index != std::string::npos) {
+                expression.erase(index, std::string::npos);
+            }
+        }
+
+        // sample_autoassociation_variables_distance
+        {
+            string word_to_delete = "sample_autoassociation_variables_distance =";
+
+            size_t index = expression.find(word_to_delete);
+
+            if (index != std::string::npos) {
+                expression.erase(index, std::string::npos);
+            }
         }
     }
 
@@ -5505,6 +5570,15 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)" << endl;
 
         buffer << "\n" << endl;
+
+        buffer << "def calculate_variables_distances(input, output):" << endl;
+        buffer << "\t" << "length_vector = len(input)" << endl;
+        buffer << "\t" << "variables_distances = [None] * length_vector" << endl;
+        buffer << "\t" << "for i in range(length_vector):" << endl;
+        buffer << "\t\t" << "variables_distances[i] = (np.linalg.norm(np.array(input[i])-np.array(output[i])))" << endl;
+        buffer << "\t" << "return variables_distances" << endl;
+
+        buffer << "\n" << endl;
     }
 
     buffer << "class NeuralNetwork:" << endl;
@@ -5751,7 +5825,7 @@ string NeuralNetwork::write_expression_python() const
     }
     else
     {
-        buffer << "\n\t\t" << "return out, sample_autoassociation_distance;" << endl;
+        buffer << "\n\t\t" << "return out, sample_autoassociation_distance, sample_autoassociation_variables_distance;" << endl;
     }
 
     buffer << "\n" << endl;

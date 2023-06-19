@@ -874,7 +874,7 @@ public:
 
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
-    void read_bmp();
+    void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
 
     void read_ground_truth();
 
@@ -882,11 +882,13 @@ public:
 
     // Image methods
 
+    void read_bmp();
+
 //    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
 
 //    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
 
-//    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &);
+    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &, const Index &, const Index &);
 
     BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
@@ -1170,6 +1172,7 @@ struct DataSetBatch
     {
 //        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
 //        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
+
 
 //        inputs_data = move(new_inputs_data);
         inputs_data = new_inputs.data();
