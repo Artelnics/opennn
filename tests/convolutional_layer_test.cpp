@@ -975,6 +975,7 @@ void ConvolutionalLayerTest::test_forward_propagation()
     {
         assert_true(abs(outputs(i, 0) - 337) < type(NUMERIC_LIMITS_MIN), LOG);
     }
+
 }
 
 
@@ -1181,6 +1182,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    // Forward propagate
 
+    test_forward_propagation();
 //   test_forward_propagate();
 
    // Back_propagate

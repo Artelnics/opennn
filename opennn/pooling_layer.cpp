@@ -35,9 +35,10 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
 PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
-{
-    pool_rows_number = pool_dimensions[0];
+{ 
+    inputs_dimensions = new_input_variables_dimensions;
 
+    pool_rows_number = pool_dimensions[0];
     pool_columns_number = pool_dimensions[1];
 
     set_default();
@@ -57,6 +58,7 @@ Index PoolingLayer::get_neurons_number() const
 Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
+
 
 //    outputs_dimensions[0] = input_variables_dimensions[0];
 //    outputs_dimensions[1] = get_outputs_rows_number();
@@ -317,8 +319,9 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& switch_train)
 {
+    cout << "----- forward_propagate_average_pooling ---- " << endl;
 
-    const Index batch_samples_number = inputs_dimensions(0);
+    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
     const Index channels_number = get_channels_number();
 
@@ -330,6 +333,8 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
 
     const Index outputs_columns_number = get_outputs_columns_number();
 
+    const type kernel_size = static_cast<type>(pool_rows_number * pool_columns_number);
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,
                                             channels_number,
@@ -338,48 +343,27 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
 
     type* outputs_data = layer_forward_propagation->outputs_data;
 
-    const TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                            batch_samples_number,
-                                            channels_number,
-                                            outputs_rows_number,
-                                            outputs_columns_number);
+    TensorMap<Tensor<type, 4>> outputs(outputs_data,
+                                       batch_samples_number,
+                                       channels_number,
+                                       outputs_rows_number,
+                                       outputs_columns_number);
 
-    #pragma omp parallel for
+    Tensor<type, 4> kernel(1, 1, pool_rows_number, pool_columns_number);
 
-    for(Index image_index = 0; image_index < batch_samples_number; image_index++)
-    {
-        for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-        {
-            for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
-            {
-                for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
-                {
-                    outputs(image_index, channel_index, row_index, column_index) = type(0);
+    kernel.setConstant(static_cast<type>(1.0/kernel_size));
 
-                    for(Index window_row = 0; window_row < pool_rows_number; window_row++)
-                    {
-                        const Index row = row_index*row_stride + window_row;
+    outputs = inputs.convolve(kernel, convolution_dimensions);
 
-                        for(Index window_column = 0; window_column < pool_columns_number; window_column++)
-                        {
-                            const Index column = column_index*column_stride + window_column;
+    cout << "kernel: " << kernel << endl;
+    cout << "kernel dimensions: " << kernel.dimensions() << endl;
 
-                            /// @todo matrix operation???
 
-                            outputs(image_index, channel_index, row_index, column_index) += inputs(image_index, channel_index, row, column);
-                        }
-                    }
+    cout << "inputs: " << inputs << endl;
+    cout << "inputs dimensions: " << inputs.dimensions() << endl;
 
-                    /// @todo matrix operation???
 
-                    outputs(image_index, channel_index, row_index, column_index) /= type(pool_rows_number*pool_columns_number);
-                }
-            }
-        }
-    }
 }
-
-
 /// Returns the result of applying no pooling to a batch of images.
 /// @param inputs The batch of images.
 
@@ -388,7 +372,15 @@ void PoolingLayer::forward_propagate_no_pooling(type* inputs_data,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& switch_train)
 {
-/// @todo memcopy inputs data to outptus data
+    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+
+    const Index neurons_number = get_neurons_number();
+
+    type* outputs_data = layer_forward_propagation->outputs_data;
+
+    memcpy(outputs_data,
+           inputs_data,
+           batch_samples_number*neurons_number*sizeof(type));
 }
 
 
