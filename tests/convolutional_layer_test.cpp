@@ -154,13 +154,13 @@ void ConvolutionalLayerTest::test_eigen_convolution_3d()
 
 void ConvolutionalLayerTest::test_read_bmp()
 {
-    DataSet data_set;
+//    DataSet data_set;
 
-    data_set.set_data_file_name("C:/Users/alvaromartin/Documents/Dataset for read_bmp()/");
+//    data_set.set_data_file_name("C:/Users/alvaromartin/Documents/Dataset for read_bmp()/");
 
-    data_set.read_bmp();
+//    data_set.read_bmp();
 
-    Tensor<type, 2> data = data_set.get_data();
+//    Tensor<type, 2> data = data_set.get_data();
 }
 
 
@@ -890,6 +890,93 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 type(forward_propagation.activations_derivatives(0, 0, 0, 0)) - type(0.)< type(0.00001), LOG);
 }
 */
+
+void ConvolutionalLayerTest::test_forward_propagation()
+{
+    cout << "test_forward_propagation\n";
+
+    const Index batch_samples_number = 5;
+
+    const Index inputs_channels_number = 3;
+    const Index inputs_rows_number = 5;
+    const Index inputs_columns_number = 4;
+
+    const Index kernels_number = 2;
+    const Index kernels_channels_number = inputs_channels_number;
+    const Index kernels_rows_number = 3;
+    const Index kernels_columns_number = 3;
+
+    const Index targets_number = 1;
+
+    DataSet data_set(batch_samples_number,
+                     inputs_channels_number,
+                     inputs_rows_number,
+                     inputs_columns_number,
+                     targets_number);
+
+    data_set.set_data_constant(static_cast<type>(1));
+
+    Tensor<Index, 1> input_variables_dimensions(3);
+    input_variables_dimensions.setValues({inputs_channels_number,
+                                          inputs_rows_number,
+                                          inputs_columns_number});
+
+    Tensor<Index, 1> kernels_dimensions(4);
+    kernels_dimensions.setValues({kernels_number,
+                                  kernels_channels_number,
+                                  kernels_rows_number,
+                                  kernels_columns_number});
+
+    NeuralNetwork neural_network;
+
+    ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
+    convolutional_layer.set_biases_constant(1.0);
+    convolutional_layer.set_synaptic_weights_constant(1.0);
+    convolutional_layer.set_name("convolutional_layer");
+
+    neural_network.add_layer(&convolutional_layer);
+
+    FlattenLayer flatten_layer(convolutional_layer.get_outputs_dimensions());
+    neural_network.add_layer(&flatten_layer);
+
+    PerceptronLayer perceptron_layer(flatten_layer.get_outputs_dimensions()(0), 1);
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+    neural_network.add_layer(&perceptron_layer);
+
+    neural_network.set_parameters_constant(type(1));
+
+    // Forward Propagation
+
+    DataSetBatch batch(batch_samples_number, &data_set);
+
+    const Tensor<Index, 1>& samples(batch_samples_number);
+    const Tensor<Index, 1>& inputs = data_set.get_input_columns_indices();
+    const Tensor<Index, 1>& targets = data_set.get_target_columns_indices();
+
+    batch.fill(samples, inputs, targets);
+
+    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
+
+    bool switch_train = false;
+
+    neural_network.forward_propagate(batch,
+                                     forward_propagation,
+                                     switch_train);
+
+    type* forward_outputs_data = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_data;
+    Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_dimensions;
+
+    TensorMap<Tensor<type, 2>> outputs(forward_outputs_data,
+                                       outputs_dimensions(0),
+                                       outputs_dimensions(1));
+
+    for(Index i = 0; i < batch_samples_number; i++)
+    {
+        assert_true(abs(outputs(i, 0) - 337) < type(NUMERIC_LIMITS_MIN), LOG);
+    }
+}
+
 
 void ConvolutionalLayerTest::test_insert_padding()
 {

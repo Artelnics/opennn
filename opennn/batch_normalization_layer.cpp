@@ -71,8 +71,8 @@ Tensor<type, 2> BatchNormalizationLayer::perform_inputs_normalization(const Tens
     const int rows_number = static_cast<int>(inputs.dimension(0));
     const int cols_number = static_cast<int>(inputs.dimension(1));
 
-    Tensor<float,1>batch_samples_number(cols_number);
-    Tensor<float,2>epsilon(rows_number, cols_number);
+    Tensor<type,1>batch_samples_number(cols_number);
+    Tensor<type,2>epsilon(rows_number, cols_number);
 
     batch_samples_number.setConstant(rows_number);
     epsilon.setConstant(numeric_limits<type>::epsilon());
