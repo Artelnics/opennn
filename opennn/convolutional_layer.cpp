@@ -144,6 +144,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                inputs_rows_number,
                                                inputs_columns_number);
 
+
         for(int kernel_index = 0; kernel_index < kernels_number; kernel_index++)
         {
             const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index*kernel_size,
@@ -303,44 +304,49 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     const Index outputs_rows_number = get_outputs_rows_number();
     const Index outputs_columns_number = get_outputs_columns_number();
 
+//    const Tensor<Index, 1> forward_propagation_inputs_dimensions = convolutional_layer_forward_propagation->get_
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,
                                             inputs_channels_number,
                                             inputs_rows_number,
                                             inputs_columns_number);
 
+    const Tensor<Index, 1> forward_propagation_outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
+
+    //const TensorMap<Tensor<type, 4>> inputsx(inputs_data, forward_propagation_outputs_dimensions);
+
+    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
+
+    // Convolutions
+
     type* convolutions_data = convolutional_layer_forward_propagation->get_convolutions_data();
 
     calculate_convolutions(inputs,
                            convolutions_data);
 
-    Tensor<Index, 1> outputs_dimensions(4);
-
-    outputs_dimensions.setValues({batch_samples_number,
-                                  kernels_number,
-                                  outputs_rows_number,
-                                  outputs_columns_number});
+    // Batch normalization
 
 
-    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
-    if(switch_train) // Perform training
+    // Activations
+
+    if(switch_train)
     {
         calculate_activations_derivatives(convolutions_data,
-                                          outputs_dimensions,
+                                          forward_propagation_outputs_dimensions,
                                           outputs_data,
-                                          outputs_dimensions,
+                                          forward_propagation_outputs_dimensions,
                                           convolutional_layer_forward_propagation->get_activations_derivatives_data(),
-                                          outputs_dimensions);
+                                          forward_propagation_outputs_dimensions);
 
     }
-    else // Perform deployment
+    else
     {
-
         calculate_activations(convolutions_data,
-                              outputs_dimensions,
+                              forward_propagation_outputs_dimensions,
                               outputs_data,
-                              outputs_dimensions);
+                              forward_propagation_outputs_dimensions);
     }
 
 }

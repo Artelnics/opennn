@@ -211,6 +211,137 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+
+   void calculate_means(const Tensor<type, 4>& inputs)
+   {
+       const Index batch_samples_number = 0;
+       const Index channels_number = 0;
+
+       Tensor<type, 1> means(channels_number);
+
+       const DimensionList<Index, 1> dimension_list;
+
+       means = inputs.mean(dimension_list);
+
+
+       //inputs.std
+
+       means.setZero();
+
+       for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+       {
+           for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+           {
+               //means(channel_index) += inputs.row(channel_index + channels_number * sample_index).mean();
+           }
+       }
+*/
+       means /= batch_samples_number;
+   }
+
+
+   void calculate_standard_deviations(const Tensor<type, 2>& inputs)
+   {
+       const Index batch_samples_number = 0;
+       const Index channels_number = 0;
+       const Index rows_number = 0;
+       const Index columns_number = 0;
+       const Index channel_size = rows_number*columns_number;
+
+       Tensor<type, 1> means;
+       Tensor<type, 1> standard_deviations;
+
+       standard_deviations.setZero();
+
+       for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+       {
+           for (Index channel_index = 0; channel_index < channels_number; channel_index++)
+           {
+               Index i = channel_index + channels_number * sample_index;
+               type v = 0.f;
+
+               for(Index j = 0; j < channel_size; j++)
+               {
+                   // is calculating variances
+                   type diff = inputs(i, j) - means(channel_index);
+                   v += diff * diff;
+               }
+
+               standard_deviations[channel_index] += v / channel_size / batch_samples_number;
+           }
+       }
+   }
+
+
+   void normalize_and_shift(const Tensor<type, 2>& inputs, bool is_training)
+   {
+       Tensor<type, 2> outputs;
+       Tensor<type, 2> normalized_inputs;
+
+       const Index batch_samples_number = 0;
+       const Index channels_number = 0;
+       const Index rows_number = 0;
+       const Index columns_number = 0;
+
+       const Index channel_size = rows_number*columns_number;
+
+       Tensor<type, 1> means(channels_number);
+       Tensor<type, 1> standard_deviations(channels_number);
+
+//       const type* M = channels_mean.data();
+//       const type* V = channels_variance.data();
+
+//       if(!is_training)
+//       {
+//           M = move_mean.data();
+//           V = move_variance.data();
+//       }
+
+       //outputs = scales*(inputs - moving_means) / (moving_standard_deviations + epsilon) + offsets;
+
+       for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+       {
+           for (Index channel_index = 0; channel_index < channels_number; channel_index++)
+           {
+               Index i = channel_index + channels_number*sample_index;
+
+               for(Index j = 0; j < channel_size; j++)
+               {
+                   normalized_inputs(i, j) = (inputs(i, j) - moving_means(channel_index)) / (sqrt(moving_standard_deviations(channel_index) + epsilon));
+
+                   outputs(i, j) = scales(channel_index)*normalized_inputs(i, j) + offsets(channel_index);
+               }
+           }
+       }
+   }
+
+
+   void forward(const Tensor<type, 2>& inputs, bool is_training)
+   {
+       if(is_training)
+       {
+           const Index channels_number = 0;
+
+           Tensor<type, 1> means(channels_number);
+           Tensor<type, 1> standard_deviations(channels_number);
+
+           calculate_means(inputs);
+
+           calculate_standard_deviations(inputs);
+
+           normalize_and_shift(inputs, is_training);
+
+           // update moving mu and var
+
+           moving_means = moving_means * momentum + means * (1 - momentum);
+           moving_standard_deviations = moving_standard_deviations * momentum + standard_deviations * (1 - momentum);
+       }
+       else
+       {
+           normalize_and_shift(inputs, is_training);
+       }
+   }
+
 protected:
 
    /// This tensor containing conection strengths from a layer's inputs to its neurons.
@@ -233,6 +364,17 @@ protected:
    ActivationFunction activation_function = ActivationFunction::Linear;
 
    const Eigen::array<ptrdiff_t, 3> convolution_dimensions = {0, 1, 2};
+
+   // Batch normalization
+
+   Tensor<type, 1> moving_means;
+   Tensor<type, 1> moving_standard_deviations;
+
+   type momentum = 0.9;
+   const type epsilon = 1.0e-5;
+
+   Tensor<type, 1> scales;
+   Tensor<type, 1> offsets;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
@@ -379,7 +521,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
                                             kernesl_rows_number,
                                             kernels_columns_number);
     }
-
 
     void print() const
     {
