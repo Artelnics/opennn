@@ -319,8 +319,6 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& switch_train)
 {
-    cout << "----- forward_propagate_average_pooling ---- " << endl;
-
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
     const Index channels_number = get_channels_number();
@@ -354,15 +352,6 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
     kernel.setConstant(static_cast<type>(1.0/kernel_size));
 
     outputs = inputs.convolve(kernel, convolution_dimensions);
-
-    cout << "kernel: " << kernel << endl;
-    cout << "kernel dimensions: " << kernel.dimensions() << endl;
-
-
-    cout << "inputs: " << inputs << endl;
-    cout << "inputs dimensions: " << inputs.dimensions() << endl;
-
-
 }
 /// Returns the result of applying no pooling to a batch of images.
 /// @param inputs The batch of images.

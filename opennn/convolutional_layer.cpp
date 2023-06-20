@@ -327,7 +327,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     // Batch normalization
 
-
+///alvaros @todo
 
     // Activations
 
@@ -1136,6 +1136,126 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
     return inputs_dimensions[2];
 }
 
+
+void ConvolutionalLayer::calculate_means(const Tensor<type, 4>& inputs)
+{
+    current_means = inputs.mean(mean_dimensions);
+}
+
+
+void ConvolutionalLayer::calculate_standard_deviations(const Tensor<type, 4>& inputs, Tensor<type, 1>& means)
+{
+    Index outputs_channels_number =  get_kernels_number();
+
+    if(outputs_channels_number != inputs.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void calculate_standard_deviations() method.\n"
+               << "Input channels numbers dont match. \n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<type, 4> means_matrix(inputs);
+    means_matrix.setConstant(1.0);
+
+    const type denominator = static_cast<type>(inputs.size()/outputs_channels_number) - 1.0;
+
+#pragma omp for
+
+    for(Index channel_index = 0; channel_index < outputs_channels_number; channel_index++)
+    {
+        means_matrix.chip(channel_index, 1) = means(channel_index) * means_matrix.chip(channel_index, 1);
+
+        Tensor<type, 0> current_deviation = (inputs.chip(channel_index, 1) - means_matrix.chip(channel_index, 1)).square().sum();
+
+        current_standard_deviations(channel_index) = sqrt(current_deviation(0)/denominator);
+    }
+}
+
+
+void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, bool switch_train)
+{
+    Tensor<type, 4> outputs;
+    Tensor<type, 4> normalized_inputs;
+
+    //@todo change the inputs.dimension
+    const Index batch_samples_number = inputs.dimension(0);
+    const Index channels_number = inputs.dimension(1);
+    const Index rows_number = inputs.dimension(2);
+    const Index columns_number = inputs.dimension(3);
+
+    Tensor<type, 1> mean;
+    Tensor<type, 1> variance;
+
+    if(switch_train)
+    {
+        mean = current_means;
+
+        variance = current_standard_deviations;
+
+        moving_means = moving_means * momentum + mean * (type(1.0) - momentum);
+
+        moving_standard_deviations = moving_standard_deviations * momentum + variance.sqrt() * (type(1.0) - momentum);
+    }
+    else
+    {
+        mean = moving_means;
+
+        variance = moving_standard_deviations;
+    }
+
+    const Eigen::array<ptrdiff_t, 4> reshape_dims = {1, channels_number, 1, 1};
+
+    const Eigen::array<ptrdiff_t, 4> broadcast_dims = {batch_samples_number,
+                                                       1,
+                                                       rows_number,
+                                                       columns_number};
+
+    Tensor<type, 4> tensor_epsilon(inputs);
+    tensor_epsilon.setConstant(epsilon);
+
+    normalized_inputs = (inputs - mean.reshape(reshape_dims).broadcast(broadcast_dims)) /
+                        (variance.reshape(reshape_dims).broadcast(broadcast_dims).sqrt() + tensor_epsilon);
+
+    outputs = scales.reshape(reshape_dims).broadcast(broadcast_dims) * normalized_inputs +
+              offsets.reshape(reshape_dims).broadcast(broadcast_dims);
+
+}
+
+
+void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)
+{
+
+    const Index batch_samples_number = inputs.dimension(0);
+    const Index channels_number = get_kernels_number();
+
+
+    moving_means.resize(channels_number);
+    moving_standard_deviations.resize(channels_number);
+    scales.resize(channels_number);
+    offsets.resize(channels_number);
+
+    if(is_training)
+    {
+        calculate_means(inputs);
+
+        calculate_standard_deviations(inputs, current_means);
+
+        normalize_and_shift(inputs, is_training);
+
+        moving_means = moving_means * momentum + current_means * (1 - momentum);
+        moving_standard_deviations = moving_standard_deviations * momentum + current_standard_deviations * (1 - momentum);
+    }
+    else
+    {
+        normalize_and_shift(inputs, is_training);
+    }
+
+
+}
 
 /// Serializes the convolutional layer object into an XML document of the TinyXML.
 /// See the OpenNN manual for more information about the format of this document.

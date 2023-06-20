@@ -29,90 +29,109 @@ int main(int argc, char *argv[])
 {
    try
    {
-        cout << "OpenNN. Conv2D Example." << endl;
+        cout << "OpenNN. Average Pooling Example." << endl;
 
-        const Index batch_samples_number = 5;
+        const Index batch_samples_number = 2;
+        const Index channels_number = 3;
+        const Index input_rows_number = 5;
+        const Index input_columns_number = 5;
 
-        const Index inputs_channels_number = 3;
-        const Index inputs_rows_number = 5;
-        const Index inputs_columns_number = 4;
+        Tensor<type, 4> inputs(batch_samples_number,
+                               channels_number,
+                               input_rows_number,
+                               input_columns_number);
 
-        const Index kernels_number = 2;
-        const Index kernels_channels_number = inputs_channels_number;
-        const Index kernels_rows_number = 3;
-        const Index kernels_columns_number = 3;
+        inputs.setValues({
+                {
+                    {
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0}
+                    },
+                    {
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0}
+                    },
+                    {
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0},
+                        {0.0, 1.0, 2.0, 2.0, 2.0}
+                    }
+                },
 
-        const Index targets_number = 1;
+                {
+                    {
+                      {0.0, 5.0, 2.0, 2.0, 2.0},
+                      {0.0, 5.0, 2.0, 2.0, 2.0},
+                      {0.0, 5.0, 2.0, 2.0, 2.0},
+                      {0.0, 5.0, 2.0, 2.0, 2.0},
+                      {0.0, 5.0, 2.0, 2.0, 2.0}
+                    },
+                    {
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0}
+                    },
+                    {
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0},
+                      {0.0, 1.0, 2.0, 2.0, 2.0}
+                    }
+                }
 
-        DataSet data_set(batch_samples_number,
-                         inputs_channels_number,
-                         inputs_rows_number,
-                         inputs_columns_number,
-                         targets_number);
+            });
 
-        data_set.set_data_constant(static_cast<type>(1));
+        const Eigen::array<ptrdiff_t, 3> mean_dimensions = {0, 2, 3};
+        const Eigen::array<ptrdiff_t, 4> reshape_dims = {1, channels_number, 1, 1};
 
-        Tensor<Index, 1> input_variables_dimensions(3);
-        input_variables_dimensions.setValues({inputs_channels_number,
-                                              inputs_rows_number,
-                                              inputs_columns_number});
+        Tensor<type, 1> means = inputs.mean(mean_dimensions);
 
-        Tensor<Index, 1> kernels_dimensions(4);
-        kernels_dimensions.setValues({kernels_number,
-                                      kernels_channels_number,
-                                      kernels_rows_number,
-                                      kernels_columns_number});
+        cout << "means_dimensions: " << means.dimensions() << endl;
+        cout << "means: " << means << endl;
 
-        NeuralNetwork neural_network;
+        cout << "means_reshape_dimensions: " << means << endl;
 
-        ConvolutionalLayer convolutional_layer(input_variables_dimensions, kernels_dimensions);
-        convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::Linear);
-        convolutional_layer.set_biases_constant(1.0);
-        convolutional_layer.set_synaptic_weights_constant(1.0);
-        convolutional_layer.set_name("convolutional_layer");
+        cout << "inputs_dimensions: " << inputs.dimensions() << endl;
+//        cout << "inputs: " << inputs << endl;
 
-        neural_network.add_layer(&convolutional_layer);
+//        Tensor<type, 4> outputs = inputs - means.reshape(reshape_dims);
 
-        Tensor<Index, 1> convolutional_layer_outputs_dimensions = convolutional_layer.get_outputs_dimensions();
-//        cout << "convolutional_layer_outputs_dimensions: " << convolutional_layer_outputs_dimensions << endl;
+        const Eigen::array<ptrdiff_t, 4> broadcast_dims = {batch_samples_number,
+                                                           1,
+                                                           input_rows_number,
+                                                           input_columns_number};
 
-        FlattenLayer flatten_layer(convolutional_layer_outputs_dimensions);
-        neural_network.add_layer(&flatten_layer);
+        Tensor<type, 4> reshaped_means = means.reshape(reshape_dims).broadcast(broadcast_dims);
+        //means.reshape(reshape_dims).broadcast(broadcast_dims);
+        Tensor<type, 4> means_matrix(inputs);
+        means_matrix.setConstant(5.0);
+        cout << "------------" << endl;
+        cout << "reshaped_means_dimensions: " << reshaped_means.dimensions() << endl;
+        cout << "reshaped_means: " << reshaped_means << endl;
+        cout << "reshaped_means chip: " << reshaped_means.chip(1,1) << endl;
+cout << "------------" << endl;
+        Tensor<type, 4> outputs = inputs - reshaped_means + means_matrix;
 
-        Tensor<Index, 1> flatten_layer_outputs_dimensions = flatten_layer.get_outputs_dimensions();
-//        cout << "flatten_layer_outputs_dimensions: " << flatten_layer_outputs_dimensions << endl;
+//        Tensor<type, 4> broadcasted_tensor = scalar_tensor.broadcast(broadcast_dims);
 
-        PerceptronLayer perceptron_layer(flatten_layer_outputs_dimensions(0), 1);
-        perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-        neural_network.add_layer(&perceptron_layer);
+//        cout << "test: " << broadcasted_tensor << endl;
 
-        neural_network.set_parameters_constant(type(1));
+        cout << "outputs: " << outputs << endl;
+//        normalized_inputs = (inputs - mean.reshape(reshape_dims)) /
+//                            (variance.reshape(reshape_dims).sqrt() + epsilon);
 
-        // Forward Propagation
 
-       DataSetBatch batch(batch_samples_number, &data_set);
-
-       const Tensor<Index, 1>& samples(batch_samples_number);
-       const Tensor<Index, 1>& inputs = data_set.get_input_columns_indices();
-       const Tensor<Index, 1>& targets = data_set.get_target_columns_indices();
-
-       batch.fill(samples, inputs, targets);
-
-       NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
-
-       bool switch_train = false;
-
-       neural_network.forward_propagate(batch,
-                                        forward_propagation,
-                                        switch_train);
-
-       type* forward_outputs_data = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_data;
-       Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_dimensions;
-
-       cout << "Outputs forward: " <<
-               TensorMap<Tensor<type, 2>>(forward_outputs_data,
-                                          outputs_dimensions(0),
-                                          outputs_dimensions(1)) << endl;
 
         cout << "Bye!" << endl;
 
