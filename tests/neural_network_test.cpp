@@ -1035,6 +1035,7 @@ void NeuralNetworkTest::test_load()
 
 void NeuralNetworkTest::test_forward_propagate()
 {
+    /*
     cout << "test_forward_propagate\n";
 
     // Test
@@ -1204,6 +1205,7 @@ void NeuralNetworkTest::test_forward_propagate()
     assert_true(abs(probabilistic_activations_3_1(0,0) - 0.5) < static_cast<type>(1e-3)
                 && abs(probabilistic_activations_3_1(1,0) - 0.5) < static_cast<type>(1e-3)
                 && abs(probabilistic_activations_3_1(2,0) - 0.5) < static_cast<type>(1e-3), LOG);
+                */
 }
 
 

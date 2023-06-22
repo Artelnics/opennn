@@ -301,6 +301,8 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     const Index inputs_rows_number = get_inputs_rows_number();
     const Index inputs_columns_number = get_inputs_columns_number();
 
+    //convolutional_layer_forward_propagation.
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,
                                             inputs_channels_number,
@@ -309,12 +311,28 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
-    const Tensor<Index, 1> outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
+    //const Tensor<Index, 1> outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
+
+    type* activations_derivatives_data = convolutional_layer_forward_propagation->get_activations_derivatives_data();
+
+    Eigen::array<ptrdiff_t, 4> outputs_dimensions = get_dimensions_4(convolutional_layer_forward_propagation->outputs_dimensions);
+
+    const TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions);
+
+    // Convolutions
 
     calculate_convolutions(inputs,
                            outputs_data);
 
     // Batch normalization
+
+//    convolutional_layer_forward_propagation->means = outputs.mean(mean_dimensions);
+
+//    convolutional_layer_forward_propagation->standard_deviations = outputs.mean(mean_dimensions);
+
+    //outputs = outputs - means/standard_deviations;
+
+    // outputs =
 
 ///alvaros @todo
 
@@ -326,7 +344,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                           outputs_dimensions,
                                           outputs_data,
                                           outputs_dimensions,
-                                          convolutional_layer_forward_propagation->get_activations_derivatives_data(),
+                                          activations_derivatives_data,
                                           outputs_dimensions);
 
     }
@@ -854,6 +872,12 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
     synaptic_weights.setRandom();
 
+    moving_means.resize(kernels_number);
+    moving_standard_deviations.resize(kernels_number);
+
+    scales.resize(kernels_number);
+    offsets.resize(kernels_number);
+
     inputs_dimensions = new_inputs_dimensions;
 }
 
@@ -1127,13 +1151,14 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 
 void ConvolutionalLayer::calculate_means(const Tensor<type, 4>& inputs)
 {
-    current_means = inputs.mean(mean_dimensions);
+//    current_means = inputs.mean(mean_dimensions);
 }
 
 
-void ConvolutionalLayer::calculate_standard_deviations(const Tensor<type, 4>& inputs, Tensor<type, 1>& means)
+void ConvolutionalLayer::calculate_standard_deviations(const Tensor<type, 4>& inputs, const Tensor<type, 1>& means)
 {
-    Index outputs_channels_number =  get_kernels_number();
+/*
+    const Index outputs_channels_number =  get_kernels_number();
 
     if(outputs_channels_number != inputs.dimension(1))
     {
@@ -1161,56 +1186,75 @@ void ConvolutionalLayer::calculate_standard_deviations(const Tensor<type, 4>& in
 
         current_standard_deviations(channel_index) = sqrt(current_deviation(0)/denominator);
     }
+*/
 }
 
 
-void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, bool switch_train)
+void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, const bool& switch_train)
 {
-    Tensor<type, 4> outputs;
-    Tensor<type, 4> normalized_inputs;
-
     //@todo change the inputs.dimension
+
     const Index batch_samples_number = inputs.dimension(0);
-    const Index channels_number = inputs.dimension(1);
+    const Index kernels_number = get_kernels_number();
     const Index rows_number = inputs.dimension(2);
     const Index columns_number = inputs.dimension(3);
-
-    Tensor<type, 1> mean;
-    Tensor<type, 1> variance;
-
+/*
     if(switch_train)
     {
-        mean = current_means;
+        moving_means = moving_means * momentum + current_means * (type(1.0) - momentum);
 
-        variance = current_standard_deviations;
-
-        moving_means = moving_means * momentum + mean * (type(1.0) - momentum);
-
-        moving_standard_deviations = moving_standard_deviations * momentum + variance.sqrt() * (type(1.0) - momentum);
+        moving_standard_deviations = moving_standard_deviations * momentum + current_standard_deviations * (type(1.0) - momentum);
     }
     else
     {
-        mean = moving_means;
+//        mean = moving_means;
 
-        variance = moving_standard_deviations;
+//        variance = moving_standard_deviations;
     }
+    const Eigen::array<ptrdiff_t, 4> reshape_dimensions = {1, channels_number, 1, 1};
 
-    const Eigen::array<ptrdiff_t, 4> reshape_dims = {1, channels_number, 1, 1};
+    const Eigen::array<ptrdiff_t, 4> broadcast_dimensions = {batch_samples_number,
+                                                             1,
+                                                             rows_number,
+                                                             columns_number};
+*/
 
-    const Eigen::array<ptrdiff_t, 4> broadcast_dims = {batch_samples_number,
-                                                       1,
-                                                       rows_number,
-                                                       columns_number};
+    // Normalize
 
-    Tensor<type, 4> tensor_epsilon(inputs);
-    tensor_epsilon.setConstant(epsilon);
+    Tensor<type, 1> means(kernels_number);
+/*    Tensor<type, 2> outputs(2,2);
 
-    normalized_inputs = (inputs - mean.reshape(reshape_dims).broadcast(broadcast_dims)) /
-                        (variance.reshape(reshape_dims).broadcast(broadcast_dims).sqrt() + tensor_epsilon);
+    DimensionList<Index,1> dl;
 
-    outputs = scales.reshape(reshape_dims).broadcast(broadcast_dims) * normalized_inputs +
+    outputs.sum(means, dl);
+
+    outputs.diff(
+*/
+
+//    for(Index i = 0;  i < batch_samples_number; i++)
+//    {
+//        for(Index j = 0;  j < kernels_number; j++)
+//        {
+//            TensorMap<type, 2> x(inputs.data(),
+//                                 rows_number,
+//                                 columns_number);
+
+//            x = x - means(j) / standard_deviation(j);
+//        }
+//    }
+
+
+
+    /*
+    outputs = (inputs - current_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
+                        (current_standard_deviation.reshape(reshape_dims).broadcast(broadcast_dims)
+                         + epsilon);
+
+    // Shift
+
+    outputs = scales.reshape(reshape_dims).broadcast(broadcast_dims) * outputs +
               offsets.reshape(reshape_dims).broadcast(broadcast_dims);
-
+*/
 }
 
 
@@ -1220,12 +1264,7 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
     const Index batch_samples_number = inputs.dimension(0);
     const Index channels_number = get_kernels_number();
 
-
-    moving_means.resize(channels_number);
-    moving_standard_deviations.resize(channels_number);
-    scales.resize(channels_number);
-    offsets.resize(channels_number);
-
+/*
     if(is_training)
     {
         calculate_means(inputs);
@@ -1241,8 +1280,7 @@ void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training
     {
         normalize_and_shift(inputs, is_training);
     }
-
-
+    */
 }
 
 /// Serializes the convolutional layer object into an XML document of the TinyXML.

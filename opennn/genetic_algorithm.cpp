@@ -554,7 +554,7 @@ void GeneticAlgorithm::initialize_population_random()
 
             for(Index j = 0; j < columns_number; j++)
             {
-                if(original_input_columns(j) == true)
+                if(original_input_columns(j))
                 {
                     individual_columns_false(j) = true;
                 }
@@ -1050,7 +1050,7 @@ void GeneticAlgorithm::perform_crossover()
 
                 for(Index j = 0; j < columns_number; j++)
                 {
-                    if(original_input_columns(j) == true /*&& columns(j).type != DataSet::ColumnType::Categorical*/)
+                    if(original_input_columns(j) /*&& columns(j).type != DataSet::ColumnType::Categorical*/)
                     {
                         individual_columns_false(j) = true;
                     }
@@ -1122,7 +1122,7 @@ void GeneticAlgorithm::perform_mutation()
 
             for(Index j = 0; j < columns_number; j++)
             {
-                if(original_input_columns(j) == true)
+                if(original_input_columns(j))
                 {
                     individual_columns_false(j) = true;
                 }
@@ -1449,7 +1449,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_columns_indexes_from_variab
 
     for (Index i = 0; i < original_input_columns.size(); i++)
     {
-        if (individual_columns(i) == true && original_input_columns(i) == true)
+        if (individual_columns(i) && original_input_columns(i))
         {
             inputs_pre_indexes(i) = true;
 
@@ -1461,7 +1461,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_columns_indexes_from_variab
 
     for(Index i = 0; i < individual_columns.size(); i++)
     {
-        if(inputs_pre_indexes(i) == true)
+        if(inputs_pre_indexes(i))
         {
             indexes_dimension++;
         }
@@ -1479,7 +1479,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_columns_indexes_from_variab
 
     for (Index i = 0; i < individual_columns.size(); i++)
     {
-        if(inputs_pre_indexes(i) == true)
+        if(inputs_pre_indexes(i))
         {
             indexes(cont) = i;
             cont++;
@@ -1505,7 +1505,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
 
     for (Index i = 0; i < columns_number; i++)
     {
-        if(individual_columns(i) == true)
+        if(individual_columns(i))
         {
             if(columns(i).type == DataSet::ColumnType::Categorical)
             {
@@ -1554,7 +1554,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
 
     for (Index i = 0; i < columns_number; i++)
     {
-        if(original_input_columns(i) == true)
+        if(original_input_columns(i))
         {
             if(columns(i).type == DataSet::ColumnType::Categorical)
             {
@@ -1593,7 +1593,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
 
     for(Index i = 0; i < genes_number; i++)
     {
-        if(individual_columns_to_variables(i) == true && original_inputs_variables(i) == true)
+        if(individual_columns_to_variables(i) && original_inputs_variables(i))
         {
             individual_columns_to_variables_returned(i) = true;
         }

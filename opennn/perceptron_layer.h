@@ -75,7 +75,6 @@ public:
 
    bool is_empty() const;
 
-
    Index get_inputs_number() const override;
    Index get_neurons_number() const final;
 
@@ -285,6 +284,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
      {
          set(new_batch_samples_number, new_layer_pointer);
      }
+
 
      void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
      {

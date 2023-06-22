@@ -526,14 +526,12 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
     TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, biases_number);
 
-//    TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
-
     for (Index i = 0; i < biases_number; i++)
     {
-        fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
-    }
+            TensorMap<Tensor<type,1>>combinations_biases(combinations.data() + i * batch_samples_number, batch_samples_number);
 
-    combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+            combinations_biases = combinations_biases + biases(i);
+    }
 }
 
 /* @todo MKL implementation
@@ -731,12 +729,14 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                            outputs_data);
 
     if(switch_train) // Perform training
-    {
+    {   
+        type* activations_derivatives_data = perceptron_layer_forward_propagation->activations_derivatives.data();
+
         calculate_activations_derivatives(outputs_data,
                                           outputs_dimensions,
                                           outputs_data,
                                           outputs_dimensions,
-                                          perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                          activations_derivatives_data,
                                           outputs_dimensions);
     }
     else // Perform deployment
@@ -776,14 +776,18 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), 1, neurons_number);
 
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data() + neurons_number,
+                                                                inputs_number,
+                                                                neurons_number);
+
+    type* outputs_data = forward_propagation->outputs_data;
+
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
-    type* outputs_data = perceptron_layer_forward_propagation->outputs_data;
-
-    const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
+    type* activations_derivatives_data = perceptron_layer_forward_propagation->activations_derivatives.data();
 
     calculate_combinations(inputs,
                            potential_biases,
@@ -794,7 +798,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                       outputs_dimensions,
                                       outputs_data,
                                       outputs_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                      activations_derivatives_data,
                                       outputs_dimensions);
 }
 
@@ -846,24 +850,28 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));
+    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data,
+                                                 next_back_propagation->deltas_dimensions(0),
+                                                 next_back_propagation->deltas_dimensions(1));
 
-    TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
+    TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data,
+                                      back_propagation->deltas_dimensions(0),
+                                      back_propagation->deltas_dimensions(1));
 
     deltas.device(*thread_pool_device) = (next_deltas*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
-    Tensor<type, 2> output_deltas(deltas);
+//    Tensor<type, 2> output_deltas(deltas);
 
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
+//    if(has_NAN(output_deltas))
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: perceptron layer class.\n"
-               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
+//        buffer << "OpenNN Exception: perceptron layer class.\n"
+//               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+//               << "NAN values found in deltas.";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
 //#ifdef OPENNN_MKL
 
