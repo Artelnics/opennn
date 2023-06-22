@@ -76,7 +76,6 @@ public:
 
    bool is_empty() const;
 
-
    Index get_inputs_number() const override;
    Index get_neurons_number() const final;
 
@@ -284,6 +283,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          set(new_batch_samples_number, new_layer_pointer);
      }
 
+
      void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
      {
          layer_pointer = new_layer_pointer;
@@ -301,7 +301,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
          // Rest of quantities
 
-         combinations.resize(batch_samples_number, neurons_number);
+//         combinations.resize(batch_samples_number, neurons_number);
 
          activations_derivatives.resize(batch_samples_number, neurons_number);
      }
@@ -309,7 +309,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
      void print() const
      {
          cout << "Combinations:" << endl;
-         cout << combinations.dimensions() << endl;
+         //cout << combinations.dimensions() << endl;
 
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives.dimensions() << endl;
@@ -321,19 +321,18 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
          cout << "Combinations:" << endl;
-         cout << combinations << endl;
+         //cout << combinations << endl;
 
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives << endl;
      }
 
-     type* get_combinations_data()
-     {
-         return combinations.data();
+//     type* get_combinations_data()
+//     {
+//         return combinations.data();
+//     }
 
-     }
-
-     Tensor<type, 2> combinations;
+//     Tensor<type, 2> combinations;
      Tensor<type, 2> activations_derivatives;
 };
 
