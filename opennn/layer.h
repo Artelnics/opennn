@@ -105,8 +105,6 @@ public:
 
     virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) = 0;
 
-    virtual void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
-
     virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
@@ -118,6 +116,11 @@ public:
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
                                            LayerBackPropagationLM*,
                                            LayerBackPropagationLM*) const {}
+
+    // Jacobian
+
+    virtual void calculate_inputs_outputs_derivatives(LayerForwardPropagation*) const {}
+
 
     // Error gradient
 
@@ -236,6 +239,10 @@ struct LayerForwardPropagation
     type* outputs_data = nullptr;
 
     Tensor<Index, 1> outputs_dimensions;
+
+    type* inputs_outputs_derivatives_data = nullptr;
+
+    Tensor<Index, 1> inputs_outputs_derivatives_dimensions;
 };
 
 

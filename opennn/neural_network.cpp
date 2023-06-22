@@ -1844,51 +1844,12 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     Tensor<type, 1> original_parameters = get_parameters();
 
     set_parameters(new_parameters);
-    //    const Tensor<Index, 1> inputs_dimensions = get_dimensions(batch);
 
     bool switch_train = true;
+
     forward_propagate(batch, forward_propagation, switch_train);
 
     set_parameters(original_parameters);
-
-    /*
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    const Index trainable_layers_number = trainable_layers_pointers.size();
-
-    const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
-
-    Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data(), parameters_number);
-
-// This part was in convolutional
-//    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
-//    {
-//        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, potential_parameters, forward_propagation.layers(0));
-//    }
-//    else
-//    {
-//        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
-//    }
-
-    trainable_layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions,  potential_parameters, forward_propagation.layers(0));
-
-    Index index = parameters_number;
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-
-        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
-
-        Tensor<type, 1> potential_parameters = TensorMap<Tensor<type, 1>>(parameters.data() + index, parameters_number);
-
-        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
-                                                        forward_propagation.layers(i-1)->outputs_dimensions,
-                                                        potential_parameters,
-                                                        forward_propagation.layers(i));
-
-//        index += parameters_number;
-    }
-*/
 }
 
 
@@ -2672,8 +2633,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // ******************** Distances histogram XML ******************* //
-
     if(get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
     {
         // BoxPlot
@@ -2795,7 +2754,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
-        //*********************************************
         // Multivariate BoxPlot
 
         file_stream.OpenElement("MultivariateDistancesBoxPlot");
@@ -2848,7 +2806,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
         //MultivariateDistancesBoxPlot (end tag)
 
         file_stream.CloseElement();
-        //*************************************
     }
 
     // Neural network (end tag)
@@ -2959,7 +2916,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
                 distances_descriptives_from_XML(distances_descriptives_document);
             }
         }
-//**************************************
+
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
 
         if(element)
@@ -2973,7 +2930,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             multivariate_box_plot_from_XML(multivariate_box_plot_document);
         }
-//**************************************
     }
 
     // Display

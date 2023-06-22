@@ -85,30 +85,11 @@ void Layer::set_threads_number(const int& new_threads_number)
 
 void Layer::set_parameters_constant(const type&)
 {
-    /*
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters_constant(const type&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw invalid_argument(buffer.str());
-    */
-
 }
 
 
 void Layer::set_parameters_random()
 {
-/*
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters_random() method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw invalid_argument(buffer.str());
-*/
 }
 
 
@@ -158,18 +139,6 @@ Tensor<type, 1> Layer::get_parameters() const
 
     throw invalid_argument(buffer.str());
 }
-
-
-void Layer::calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&)
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<type, 2>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw invalid_argument(buffer.str());
-};
 
 
 void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&)

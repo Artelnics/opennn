@@ -162,7 +162,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     }
 }
 
-
+/*
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 const Tensor<type, 2>& potential_biases,
                                                 const Tensor<type, 4>& potential_synaptic_weights,
@@ -188,7 +188,6 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     Tensor<type, 4> inputs_pointer = inputs;
     Tensor<type, 4> synaptic_weights_pointer = potential_synaptic_weights; // ??
 
-#pragma omp parallel for
     for(int i = 0; i < images_number ;i++)
     {
         const TensorMap<Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
@@ -196,12 +195,14 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                       inputs_rows_number,
                                                       inputs_columns_number);
 
-        for(int j = 0; j<kernels_number; j++)
+        for(int j = 0; j < kernels_number; j++)
         {
             const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
                                                            kernels_channels_number,
                                                            kernels_rows_number,
                                                            kernels_columns_number);
+
+            // @todo Put direcly in the outputs tensor via a
 
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + potential_biases(j,0);
 
@@ -210,7 +211,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
         }
     }
 }
-
+*/
 
 /// Calculates activations
 
@@ -245,8 +246,8 @@ void ConvolutionalLayer::calculate_activations(type* convolutions, const Tensor<
 
     default: return;
     }
-
 }
+
 
 /// Calculates activations derivatives
 
@@ -300,30 +301,18 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     const Index inputs_rows_number = get_inputs_rows_number();
     const Index inputs_columns_number = get_inputs_columns_number();
 
-    const Index kernels_number = get_kernels_number();
-    const Index outputs_rows_number = get_outputs_rows_number();
-    const Index outputs_columns_number = get_outputs_columns_number();
-
-//    const Tensor<Index, 1> forward_propagation_inputs_dimensions = convolutional_layer_forward_propagation->get_
-
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,
                                             inputs_channels_number,
                                             inputs_rows_number,
                                             inputs_columns_number);
 
-    const Tensor<Index, 1> forward_propagation_outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
-
-    //const TensorMap<Tensor<type, 4>> inputsx(inputs_data, forward_propagation_outputs_dimensions);
-
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
-    // Convolutions
-
-    type* convolutions_data = convolutional_layer_forward_propagation->get_convolutions_data();
+    const Tensor<Index, 1> outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
 
     calculate_convolutions(inputs,
-                           convolutions_data);
+                           outputs_data);
 
     // Batch normalization
 
@@ -333,22 +322,21 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     if(switch_train)
     {
-        calculate_activations_derivatives(convolutions_data,
-                                          forward_propagation_outputs_dimensions,
+        calculate_activations_derivatives(outputs_data,
+                                          outputs_dimensions,
                                           outputs_data,
-                                          forward_propagation_outputs_dimensions,
+                                          outputs_dimensions,
                                           convolutional_layer_forward_propagation->get_activations_derivatives_data(),
-                                          forward_propagation_outputs_dimensions);
+                                          outputs_dimensions);
 
     }
     else
     {
-        calculate_activations(convolutions_data,
-                              forward_propagation_outputs_dimensions,
+        calculate_activations(outputs_data,
+                              outputs_dimensions,
                               outputs_data,
-                              forward_propagation_outputs_dimensions);
+                              outputs_dimensions);
     }
-
 }
 
 
