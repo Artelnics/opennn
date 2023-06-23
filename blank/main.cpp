@@ -29,67 +29,53 @@ int main(int argc, char *argv[])
 {
    try
    {
-        cout << "OpenNN. Average Pooling Example." << endl;
-
+        cout << "OpenNN. Conv2D Example." << endl;
+/*
         const Index batch_samples_number = 1;
-        const Index channels_number = 3;
-        const Index input_rows_number = 3;
-        const Index input_columns_number = 2;
 
-        Tensor<string, 4> inputs(batch_samples_number,
-                                   channels_number,
-                                   input_rows_number,
-                                   input_columns_number);
+        const Index inputs_channels_number = 3;
+        const Index inputs_rows_number = 8;
+        const Index inputs_columns_number = 8;
 
-        inputs.setValues({
-            {  // Batch 1
-                {  // Channel 1
-                    {"r1", "r1"},  // Row 1
-                    {"r1", "r1"},  // Row 2
-                    {"r1", "r1"}   // Row 3
-                },
-                {  // Channel 2
-                   {"g1", "g1"},  // Row 1
-                   {"g1", "g1"},  // Row 2
-                   {"g1", "g1"}   // Row 3
-                },
-                {  // Channel 3
-                   {"b1", "b1"},  // Row 1
-                   {"b1", "b1"},  // Row 2
-                   {"b1", "b1"}   // Row 3
-                }
-            },
-        });
+        const Index kernels_number = 4;
+        const Index kernels_channels_number = inputs_channels_number;
+        const Index kernels_rows_number = 2;
+        const Index kernels_columns_number = 2;
 
-        string* inputs_pointer = const_cast<string*>(inputs.data());
+        Tensor<Index, 1> input_variables_dimensions(3);
+        input_variables_dimensions.setValues({inputs_rows_number, inputs_columns_number, inputs_channels_number});
 
-        const Index single_channel_size = input_columns_number * input_rows_number;
-        const Index image_size = channels_number * input_columns_number * input_rows_number;
+        Tensor<Index, 1> kernels_dimensions(4);
+        kernels_dimensions.setValues({kernels_number, kernels_rows_number, kernels_columns_number, kernels_channels_number});
 
-        const Index next_image = input_rows_number*input_columns_number*channels_number;
+        Tensor<type, 4> inputs(batch_samples_number, inputs_rows_number, inputs_columns_number, inputs_channels_number);
+        Tensor<type, 4> kernels(kernels_number, kernels_rows_number, kernels_columns_number, kernels_channels_number);
 
-    #pragma omp parallel for
-        for(int i = 0; i < batch_samples_number ;i++)
-        {
-            const TensorMap<Tensor<string, 3>> single_image(inputs_pointer+i*batch_samples_number,
-                                                          channels_number,
-                                                          input_rows_number,
-                                                          input_columns_number);
+        cout << "inputs dimensions: " << inputs.dimensions() << endl;
 
-            cout << "single_image: " << single_image << endl;
-        }
+        cout << "kernels dimensions: " << kernels.dimensions() << endl;
 
-        cout << "chip" << inputs.chip(1, 1) << endl;
+        const Eigen::array<ptrdiff_t, 2> convolution_dimensions = {2, 3};
 
-        cout << "--------------------------" << endl;
+        Tensor<type, 4> convolved_image = inputs.convolve(kernels, convolution_dimensions);
 
-        for(Index i = 0; i < inputs.size(); i++)
-        {
-            cout << inputs(i) << " ";
-        }
+        cout << "convolved_image: " << convolved_image.dimensions() << endl;
+*/
+
+        Tensor<float, 4> input(1, 3, 3, 3);
+        Tensor<float, 4> kernel(3, 2, 2, 1);
+
+        input.setConstant(1.0f);
+        kernel.setConstant(2.0f);
+
+        Eigen::array<ptrdiff_t, 4> dims({3,1,2,0});  // Specify second and third dimension for convolution.
+        Tensor<float, 4> output = input.convolve(kernel, dims);
+
+        cout << "output_dims: " << output.dimensions() << endl;
+
+        cout << "Bye!" << endl;
 
         return 0;
-
    }
    catch (const exception& e)
    {

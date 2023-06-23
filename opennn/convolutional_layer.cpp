@@ -84,8 +84,8 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 
     case ConvolutionType::Same:
     {
-        const Index input_rows_number = inputs.dimension(2);
-        const Index input_cols_number = inputs.dimension(3);
+        const Index input_rows_number = inputs.dimension(1);
+        const Index input_cols_number = inputs.dimension(2);
 
         const Index kernel_rows_number = get_kernels_rows_number();
         const Index kernel_cols_number = get_kernels_columns_number();
@@ -113,14 +113,14 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 type* convolutions_data) const
 {
     const Index images_number = inputs.dimension(0);
-    const Index inputs_channels_number = inputs.dimension(1);
-    const Index inputs_rows_number = inputs.dimension(2);
-    const Index inputs_columns_number = inputs.dimension(3);
+    const Index inputs_rows_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(2);
+    const Index inputs_channels_number = inputs.dimension(3);
 
     const Index kernels_number = synaptic_weights.dimension(0);
-    const Index kernels_channels_number = synaptic_weights.dimension(1);
-    const Index kernels_rows_number = synaptic_weights.dimension(2);
-    const Index kernels_columns_number = synaptic_weights.dimension(3);
+    const Index kernels_rows_number = synaptic_weights.dimension(1);
+    const Index kernels_columns_number = synaptic_weights.dimension(2);
+    const Index kernels_channels_number = synaptic_weights.dimension(3);
 
     const Index input_image_size = inputs_channels_number*inputs_rows_number*inputs_columns_number;
     const Index kernel_size = kernels_channels_number*kernels_rows_number*kernels_columns_number;
@@ -133,24 +133,24 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     type* inputs_pointer = const_cast<type*>(inputs.data());
     type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
 
-    Tensor<type, 3> convolved_image(kernels_number, outputs_rows_number, outputs_columns_number);
+    Tensor<type, 3> convolved_image(outputs_rows_number, outputs_columns_number, kernels_number);
 
     #pragma omp parallel for
 
     for(int image_index = 0; image_index < images_number ;image_index++)
     {
         const TensorMap<Tensor<type, 3>> image(inputs_pointer + image_index*input_image_size,
-                                               inputs_channels_number,
                                                inputs_rows_number,
-                                               inputs_columns_number);
+                                               inputs_columns_number,
+                                               inputs_channels_number);
 
 
         for(int kernel_index = 0; kernel_index < kernels_number; kernel_index++)
         {
             const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index*kernel_size,
-                                                    kernels_channels_number,
                                                     kernels_rows_number,
-                                                    kernels_columns_number);
+                                                    kernels_columns_number,
+                                                    kernels_channels_number);
 
             convolved_image = image.convolve(kernel, convolution_dimensions) + biases(kernel_index);
 
@@ -166,17 +166,18 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 const Tensor<type, 2>& potential_biases,
                                                 const Tensor<type, 4>& potential_synaptic_weights,
-                                                Tensor<type, 4>& convolutions) const // old version
+                                                Tensor<type, 4>& convolutions) const
 {
+
     const Index images_number = inputs.dimension(0);
-    const Index inputs_channels_number = inputs.dimension(1);
-    const Index inputs_rows_number = inputs.dimension(2);
-    const Index inputs_columns_number = inputs.dimension(3);
+    const Index inputs_rows_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(2);
+    const Index inputs_channels_number = inputs.dimension(3);
 
     const Index kernels_number = potential_synaptic_weights.dimension(0);
-    const Index kernels_channels_number = potential_synaptic_weights.dimension(1);
-    const Index kernels_rows_number = potential_synaptic_weights.dimension(2);
-    const Index kernels_columns_number = potential_synaptic_weights.dimension(3);
+    const Index kernels_rows_number = potential_synaptic_weights.dimension(1);
+    const Index kernels_columns_number = potential_synaptic_weights.dimension(2);
+    const Index kernels_channels_number = potential_synaptic_weights.dimension(3);
 
     const Index next_image = inputs_rows_number*inputs_columns_number*inputs_channels_number;
     const Index next_kernel = kernels_rows_number*kernels_columns_number*kernels_channels_number;
@@ -186,21 +187,21 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 4> inputs_pointer = inputs;
-    Tensor<type, 4> synaptic_weights_pointer = potential_synaptic_weights; // ??
+    Tensor<type, 4> synaptic_weights_pointer = potential_synaptic_weights;
 
     for(int i = 0; i < images_number ;i++)
     {
         const TensorMap<Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
-                                                      inputs_channels_number,
                                                       inputs_rows_number,
-                                                      inputs_columns_number);
+                                                      inputs_columns_number,
+                                                      inputs_channels_number);
 
         for(int j = 0; j < kernels_number; j++)
         {
             const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
-                                                           kernels_channels_number,
                                                            kernels_rows_number,
-                                                           kernels_columns_number);
+                                                           kernels_columns_number,
+                                                           kernels_channels_number);
 
             // @todo Put direcly in the outputs tensor via a
 
@@ -291,23 +292,23 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& switch_train)
 {
-
+/*
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
-    const Index inputs_channels_number = get_inputs_channels_number();
     const Index inputs_rows_number = get_inputs_rows_number();
     const Index inputs_columns_number = get_inputs_columns_number();
+    const Index inputs_channels_number = get_inputs_channels_number();
 
     //convolutional_layer_forward_propagation.
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                             batch_samples_number,
-                                            inputs_channels_number,
                                             inputs_rows_number,
-                                            inputs_columns_number);
+                                            inputs_columns_number,
+                                            inputs_channels_number);
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
@@ -323,6 +324,8 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     calculate_convolutions(inputs,
                            outputs_data);
+
+    cout << "2 conv forward propagation" << endl;
 
     // Batch normalization
 
@@ -350,11 +353,18 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     }
     else
     {
+        cout << "conv activations" << endl;
+
+        cout << "outputs_dimensions: " << outputs_dimensions << endl;
+
         calculate_activations(outputs_data,
                               outputs_dimensions,
                               outputs_data,
                               outputs_dimensions);
+
+        cout << "outputs_dimensions: " << outputs_dimensions << endl;
     }
+    */
 }
 
 
@@ -408,15 +418,15 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-    const Index batch_samples_number = back_propagation->batch_samples_number;
-    const Index inputs_channels_number = get_inputs_channels_number();
+    const Index batch_samples_number = back_propagation->batch_samples_number;   
     const Index inputs_rows_number = get_inputs_rows_number();
     const Index inputs_columns_number = get_inputs_columns_number();
+    const Index inputs_channels_number = get_inputs_channels_number();
 
-    const Index kernels_number = get_kernels_number();
-    const Index kernels_channels_number = get_kernels_channels_number();
+    const Index kernels_number = get_kernels_number(); 
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
+    const Index kernels_channels_number = get_kernels_channels_number();
 
     const Index outputs_rows_number = get_outputs_rows_number();
     const Index outputs_columns_number = get_outputs_columns_number();
@@ -431,9 +441,9 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     const TensorMap<Tensor<type,4>> inputs(input_data,
                                      batch_samples_number,
-                                     inputs_channels_number,
                                      inputs_rows_number,
-                                     inputs_columns_number);
+                                     inputs_columns_number,
+                                     inputs_channels_number);
 
     const TensorMap<Tensor<type, 4>> deltas(back_propagation->deltas_data,
                                             batch_samples_number,
@@ -479,9 +489,9 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         TensorMap<Tensor<type, 3>> kernel_synaptic_weights_derivatives(synaptic_weights_derivatives_data + kernel_index*kernel_synaptic_weights_number,
-                                                                       kernels_channels_number,
                                                                        kernels_rows_number,
-                                                                       kernels_columns_number);
+                                                                       kernels_columns_number,
+                                                                       kernels_channels_number);
 
         for(Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
@@ -497,14 +507,14 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
             delta_slice = deltas.slice(offsets, extents);
 
             const TensorMap<Tensor<type, 3>> image(inputs.data() + image_index*image_size,
-                                                   inputs_channels_number,
                                                    inputs_rows_number,
-                                                   inputs_columns_number);
+                                                   inputs_columns_number,
+                                                   inputs_channels_number);
 
             const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
-                                                           get_outputs_dimensions()[0], // check it!!! kernels_channels_number ??
                                                            outputs_rows_number,
-                                                           outputs_columns_number);
+                                                           outputs_columns_number,
+                                                           get_outputs_dimensions()[0]); // check it!!! kernels_channels_number ??
 
             if(image_index == 0)
             {
@@ -652,9 +662,9 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
 
-    outputs_dimensions(0) = get_kernels_number();
-    outputs_dimensions(1) = get_outputs_rows_number();
-    outputs_dimensions(2) = get_outputs_columns_number();
+    outputs_dimensions(0) = get_outputs_rows_number();
+    outputs_dimensions(1) = get_outputs_columns_number();
+    outputs_dimensions(2) = get_kernels_number();
 
     return outputs_dimensions;
 }
@@ -710,19 +720,11 @@ Index ConvolutionalLayer::get_kernels_number() const
 }
 
 
-/// Returns the number of channels of the layer's kernels.
-
-Index ConvolutionalLayer::get_kernels_channels_number() const
-{
-    return synaptic_weights.dimension(1);
-}
-
-
 /// Returns the number of rows of the layer's kernels.
 
 Index  ConvolutionalLayer::get_kernels_rows_number() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(1);
 }
 
 
@@ -730,9 +732,16 @@ Index  ConvolutionalLayer::get_kernels_rows_number() const
 
 Index ConvolutionalLayer::get_kernels_columns_number() const
 {
-    return synaptic_weights.dimension(3);
+    return synaptic_weights.dimension(2);
 }
 
+
+/// Returns the number of channels of the layer's kernels.
+
+Index ConvolutionalLayer::get_kernels_channels_number() const
+{
+    return synaptic_weights.dimension(3);
+}
 
 /// Returns the total number of columns of zeroes to be added to an image before applying a kernel, which depends on the padding option set.
 
@@ -858,17 +867,17 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 #endif
 
     const Index kernels_number = new_kernels_dimensions[0];
-    const Index kernels_channels_number = new_inputs_dimensions[0]; // or new_kernels_dimensions[1] !!!
-    const Index kernels_rows_number = new_kernels_dimensions[2];
-    const Index kernels_columns_number = new_kernels_dimensions[3];
+    const Index kernels_rows_number = new_kernels_dimensions[1];
+    const Index kernels_columns_number = new_kernels_dimensions[2];
+    const Index kernels_channels_number = new_inputs_dimensions[3];
 
     biases.resize(kernels_number);
     biases.setRandom();
 
     synaptic_weights.resize(kernels_number,
-                            kernels_channels_number,
                             kernels_rows_number,
-                            kernels_columns_number);
+                            kernels_columns_number,
+                            kernels_channels_number);
 
     synaptic_weights.setRandom();
 
@@ -1089,14 +1098,14 @@ void ConvolutionalLayer::set_inputs_dimenisons(const Tensor<Index,1>& new_inputs
 void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& )
 {
     const Index kernels_number = get_kernels_number();
-    const Index kernels_channels_number = get_kernels_channels_number();
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
+    const Index kernels_channels_number = get_kernels_channels_number();
 
     synaptic_weights.resize(kernels_number,
-                            kernels_channels_number,
                             kernels_rows_number,
-                            kernels_columns_number);
+                            kernels_columns_number,
+                            kernels_channels_number);
 
     biases.resize(kernels_number);
 
@@ -1125,19 +1134,11 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 }
 
 
-/// Returns the number of channels of the input.
-
-Index ConvolutionalLayer::get_inputs_channels_number() const
-{
-    return inputs_dimensions[0];
-}
-
-
 /// Returns the number of rows of the input.
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[1];
+    return inputs_dimensions[0];
 }
 
 
@@ -1145,9 +1146,16 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[2];
+    return inputs_dimensions[1];
 }
 
+
+/// Returns the number of channels of the input.
+
+Index ConvolutionalLayer::get_inputs_channels_number() const
+{
+    return inputs_dimensions[2];
+}
 
 void ConvolutionalLayer::calculate_means(const Tensor<type, 4>& inputs)
 {
