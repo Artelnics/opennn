@@ -113,8 +113,6 @@ public:
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
-   //   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
-
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&) final;

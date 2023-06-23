@@ -166,8 +166,6 @@ public:
 
    // neuron layer outputs
 
-//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
-
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;

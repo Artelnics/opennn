@@ -159,11 +159,12 @@ public:
     // Combinations
 
     void calculate_convolutions(const Tensor<type, 4>&, type*) const; //change
-
+/*
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,
                                 const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const; //change
+*/
     // Activation
 
     void calculate_activations(type*, const Tensor<Index, 1>&,
@@ -207,12 +208,14 @@ public:
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
                         Tensor<type, 1>&) const; // change
-//BATCH NORMALIZATION
+
+    // Batch normalization
+
    void calculate_means(const Tensor<type, 4>&);
 
-   void calculate_standard_deviations(const Tensor<type, 4>&, Tensor<type, 1>&);
+   void calculate_standard_deviations(const Tensor<type, 4>&, const Tensor<type, 1>&);
 
-   void normalize_and_shift(const Tensor<type, 4>&, bool);
+   void normalize_and_shift(const Tensor<type, 4>&, const bool&);
 
    void forward(const Tensor<type, 4>&, bool);
 
@@ -248,11 +251,8 @@ protected:
    Tensor<type, 1> moving_means;
    Tensor<type, 1> moving_standard_deviations;
 
-   Tensor<type, 1> current_means;
-   Tensor<type, 1> current_standard_deviations;
-
-   type momentum = 0.9;
-   const type epsilon = 1.0e-5;
+   type momentum = type(0.9);
+   const type epsilon = type(1.0e-5);
 
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
@@ -294,30 +294,26 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
 
-        convolutions.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-        activations_derivatives.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-
-        convolutions.setZero();
-        activations_derivatives.setZero();
-
-        means.resize(kernels_number);
-        standard_deviations.resize(kernels_number);
+        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
         outputs_dimensions.resize(4);
         outputs_dimensions.setValues({batch_samples_number,
                                       kernels_number,
-                                      outputs_rows_number, outputs_columns_number});
+                                      outputs_rows_number,
+                                      outputs_columns_number});
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
+        means.resize(kernels_number);
+        standard_deviations.resize(kernels_number);
+
+        activations_derivatives.resize(batch_samples_number,
+                                       kernels_number,
+                                       outputs_rows_number,
+                                       outputs_columns_number);
     }
-
 
     void print() const
     {
         cout << "Convolutional" << endl;
-
-        cout << "Convolutions:" << endl;
-//        cout << convolutions << endl;
 
         cout << "Outputs:" << endl;
         cout << TensorMap<Tensor<type,4>>(outputs_data,
@@ -330,20 +326,14 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << outputs_dimensions << endl;
 
         cout << "Activations derivatives:" << endl;
-//        cout << activations_derivatives << endl;
+        cout << activations_derivatives << endl;
     }
 
-    type* get_convolutions_data()
-    {
-        return convolutions.data();
-    }
 
     type* get_activations_derivatives_data()
     {
         return activations_derivatives.data();
     }
-
-    Tensor<type, 4> convolutions;
 
     Tensor<type, 1> means;
     Tensor<type, 1> standard_deviations;
@@ -358,6 +348,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
     {
     }
+
 
     virtual ~ConvolutionalLayerBackPropagation()
     {

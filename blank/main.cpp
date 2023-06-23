@@ -31,111 +31,65 @@ int main(int argc, char *argv[])
    {
         cout << "OpenNN. Average Pooling Example." << endl;
 
-        const Index batch_samples_number = 2;
+        const Index batch_samples_number = 1;
         const Index channels_number = 3;
-        const Index input_rows_number = 5;
-        const Index input_columns_number = 5;
+        const Index input_rows_number = 3;
+        const Index input_columns_number = 2;
 
-        Tensor<type, 4> inputs(batch_samples_number,
-                               channels_number,
-                               input_rows_number,
-                               input_columns_number);
+        Tensor<string, 4> inputs(batch_samples_number,
+                                   channels_number,
+                                   input_rows_number,
+                                   input_columns_number);
 
         inputs.setValues({
-                {
-                    {
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0}
-                    },
-                    {
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0}
-                    },
-                    {
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0},
-                        {0.0, 1.0, 2.0, 2.0, 2.0}
-                    }
+            {  // Batch 1
+                {  // Channel 1
+                    {"r1", "r1"},  // Row 1
+                    {"r1", "r1"},  // Row 2
+                    {"r1", "r1"}   // Row 3
                 },
-
-                {
-                    {
-                      {0.0, 5.0, 2.0, 2.0, 2.0},
-                      {0.0, 5.0, 2.0, 2.0, 2.0},
-                      {0.0, 5.0, 2.0, 2.0, 2.0},
-                      {0.0, 5.0, 2.0, 2.0, 2.0},
-                      {0.0, 5.0, 2.0, 2.0, 2.0}
-                    },
-                    {
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0}
-                    },
-                    {
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0},
-                      {0.0, 1.0, 2.0, 2.0, 2.0}
-                    }
+                {  // Channel 2
+                   {"g1", "g1"},  // Row 1
+                   {"g1", "g1"},  // Row 2
+                   {"g1", "g1"}   // Row 3
+                },
+                {  // Channel 3
+                   {"b1", "b1"},  // Row 1
+                   {"b1", "b1"},  // Row 2
+                   {"b1", "b1"}   // Row 3
                 }
+            },
+        });
 
-            });
+        string* inputs_pointer = const_cast<string*>(inputs.data());
 
-        const Eigen::array<ptrdiff_t, 3> mean_dimensions = {0, 2, 3};
-        const Eigen::array<ptrdiff_t, 4> reshape_dims = {1, channels_number, 1, 1};
+        const Index single_channel_size = input_columns_number * input_rows_number;
+        const Index image_size = channels_number * input_columns_number * input_rows_number;
 
-        Tensor<type, 1> means = inputs.mean(mean_dimensions);
+        const Index next_image = input_rows_number*input_columns_number*channels_number;
 
-        cout << "means_dimensions: " << means.dimensions() << endl;
-        cout << "means: " << means << endl;
+    #pragma omp parallel for
+        for(int i = 0; i < batch_samples_number ;i++)
+        {
+            const TensorMap<Tensor<string, 3>> single_image(inputs_pointer+i*batch_samples_number,
+                                                          channels_number,
+                                                          input_rows_number,
+                                                          input_columns_number);
 
-        cout << "means_reshape_dimensions: " << means << endl;
+            cout << "single_image: " << single_image << endl;
+        }
 
-        cout << "inputs_dimensions: " << inputs.dimensions() << endl;
-//        cout << "inputs: " << inputs << endl;
+        cout << "chip" << inputs.chip(1, 1) << endl;
 
-//        Tensor<type, 4> outputs = inputs - means.reshape(reshape_dims);
+        cout << "--------------------------" << endl;
 
-        const Eigen::array<ptrdiff_t, 4> broadcast_dims = {batch_samples_number,
-                                                           1,
-                                                           input_rows_number,
-                                                           input_columns_number};
-
-        Tensor<type, 4> reshaped_means = means.reshape(reshape_dims).broadcast(broadcast_dims);
-        //means.reshape(reshape_dims).broadcast(broadcast_dims);
-        Tensor<type, 4> means_matrix(inputs);
-        means_matrix.setConstant(5.0);
-        cout << "------------" << endl;
-        cout << "reshaped_means_dimensions: " << reshaped_means.dimensions() << endl;
-        cout << "reshaped_means: " << reshaped_means << endl;
-        cout << "reshaped_means chip: " << reshaped_means.chip(1,1) << endl;
-cout << "------------" << endl;
-        Tensor<type, 4> outputs = inputs - reshaped_means + means_matrix;
-
-//        Tensor<type, 4> broadcasted_tensor = scalar_tensor.broadcast(broadcast_dims);
-
-//        cout << "test: " << broadcasted_tensor << endl;
-
-        cout << "outputs: " << outputs << endl;
-//        normalized_inputs = (inputs - mean.reshape(reshape_dims)) /
-//                            (variance.reshape(reshape_dims).sqrt() + epsilon);
-
-
-
-        cout << "Bye!" << endl;
+        for(Index i = 0; i < inputs.size(); i++)
+        {
+            cout << inputs(i) << " ";
+        }
 
         return 0;
+
    }
    catch (const exception& e)
    {

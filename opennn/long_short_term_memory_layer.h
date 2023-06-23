@@ -201,8 +201,6 @@ public:
 
    // Long short-term memory layer outputs
 
-//   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
-
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;

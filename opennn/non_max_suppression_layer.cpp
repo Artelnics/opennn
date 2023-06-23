@@ -65,7 +65,7 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
 
     for(Index i = 0; i < regions_number; i++)
     {
-        if(mask_regions(i) == true)
+        if(mask_regions(i))
         {
             filtered_proposals(filtered_proposals_index) = region_inputs(i);
             filtered_proposals_score(filtered_proposals_index) = inputs_confidence_score(i);
@@ -121,14 +121,13 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
 
     for(Index i = 0; i < higher_score_regions_number; i++)
     {
-        if(final_detections_boolean(i) == true)
+        if(final_detections_boolean(i))
         {
             outputs(final_detections_index) = filtered_proposals(i);
             outputs_score(final_detections_index) = filtered_proposals_score(i);
             final_detections_index++;
         }
     }
-
 }
 
 

@@ -327,10 +327,6 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
 
     const Index inputs_columns_number = get_inputs_columns_number();
 
-    const Index outputs_rows_number = get_outputs_rows_number();
-
-    const Index outputs_columns_number = get_outputs_columns_number();
-
     const type kernel_size = static_cast<type>(pool_rows_number * pool_columns_number);
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data,
@@ -339,13 +335,15 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
                                             inputs_rows_number,
                                             inputs_columns_number);
 
+
+    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
+            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
+
     type* outputs_data = layer_forward_propagation->outputs_data;
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                       batch_samples_number,
-                                       channels_number,
-                                       outputs_rows_number,
-                                       outputs_columns_number);
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions = get_dimensions_4(pooling_layer_forward_propagation->outputs_dimensions);
+
+    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions);
 
     Tensor<type, 4> kernel(1, 1, pool_rows_number, pool_columns_number);
 

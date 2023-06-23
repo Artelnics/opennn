@@ -56,7 +56,6 @@ struct ProbabilisticLayerBackPropagationLM;
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
 
 class PerceptronLayer : public Layer
-
 {
 
 public:
@@ -75,7 +74,6 @@ public:
    // Get methods
 
    bool is_empty() const;
-
 
    Index get_inputs_number() const override;
    Index get_neurons_number() const final;
@@ -163,7 +161,10 @@ public:
 
    // Perceptron layer outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(type*,
+                          const Tensor<Index, 1>&,
+                          LayerForwardPropagation*,
+                          const bool&) final;
 
    void forward_propagate(type*,
                           const Tensor<Index, 1>&,
@@ -183,6 +184,13 @@ public:
    void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
                                ProbabilisticLayerBackPropagation*,
                                PerceptronLayerBackPropagation*) const;
+
+
+   void calculate_inputs_outputs_derivatives(LayerForwardPropagation* layer_forward_propagation) const
+   {
+
+   }
+
 
    // Delta LM
 
@@ -233,13 +241,6 @@ protected:
 
    // MEMBERS
 
-   /// Inputs
-
-   Tensor<type, 2> inputs;
-
-   /// Outputs
-
-   Tensor<type, 2> outputs;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's transfer function to generate the neuron's output.
@@ -284,6 +285,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          set(new_batch_samples_number, new_layer_pointer);
      }
 
+
      void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
      {
          layer_pointer = new_layer_pointer;
@@ -301,16 +303,11 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
          // Rest of quantities
 
-         combinations.resize(batch_samples_number, neurons_number);
-
          activations_derivatives.resize(batch_samples_number, neurons_number);
      }
 
      void print() const
      {
-         cout << "Combinations:" << endl;
-         cout << combinations.dimensions() << endl;
-
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives.dimensions() << endl;
 
@@ -320,20 +317,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          cout << "Outputs:" << endl;
          cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
-         cout << "Combinations:" << endl;
-         cout << combinations << endl;
-
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives << endl;
      }
 
-     type* get_combinations_data()
-     {
-         return combinations.data();
-
-     }
-
-     Tensor<type, 2> combinations;
      Tensor<type, 2> activations_derivatives;
 };
 

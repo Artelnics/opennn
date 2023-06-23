@@ -228,13 +228,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
                                       outputs_rows_number,
                                       outputs_columns_number});
 
-//        convolutions.resize(batch_samples_number,
-//                            channels_number,
-//                            outputs_rows_number,
-//                            outputs_columns_number);
-
 /*
-        convolutions.setZero();
         activations_derivatives.setZero();
 
         outputs_dimensions.resize(4);
