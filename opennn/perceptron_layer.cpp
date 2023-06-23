@@ -530,15 +530,13 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
     TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, biases_number);
 
-//    TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
-
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
     for (Index i = 0; i < biases_number; i++)
     {
-            TensorMap<Tensor<type,1>>combinations_biases(combinations.data() + i * batch_samples_number, batch_samples_number);
+         TensorMap<Tensor<type,1>>column(combinations_data + i * batch_samples_number, batch_samples_number);
 
-            combinations_biases = combinations_biases + biases(i);
+         column.device(*thread_pool_device) = column + biases(i);
     }
 }
 
