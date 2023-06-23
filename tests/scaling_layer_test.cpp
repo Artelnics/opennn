@@ -356,7 +356,7 @@ void ScalingLayerTest::test_forward_propagate()
 
     inputs_number = 1;
     samples_number = 1;
-    bool switch_train = true;
+    bool is_training = true;
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
@@ -367,7 +367,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -392,7 +392,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -419,7 +419,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -453,7 +453,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -486,7 +486,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -512,7 +512,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),
@@ -543,7 +543,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, switch_train);
+    scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
                                          scaling_layer_forward_propagation.outputs_dimensions(0),

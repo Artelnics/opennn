@@ -208,6 +208,16 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
+    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
+    {
+        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+    }
+
+    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
+    {
+        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+    }
+
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         batch_samples_number = new_batch_samples_number;
@@ -223,24 +233,16 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         const Index channels_number = pooling_layer_pointer->get_channels_number();
 
         outputs_dimensions.resize(4);
+
         outputs_dimensions.setValues({batch_samples_number,
                                       channels_number,
                                       outputs_rows_number,
                                       outputs_columns_number});
 
-/*
-        activations_derivatives.setZero();
-
-        outputs_dimensions.resize(4);
-        outputs_dimensions.setValues({batch_samples_number,
-                                      kernels_number,
-                                      outputs_rows_number, outputs_columns_number});
-*/
         outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number *
                                                           channels_number *
                                                           outputs_rows_number *
                                                           outputs_columns_number*sizeof(type)));
-
     }
 
 
@@ -253,13 +255,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data,
-                                          outputs_dimensions(0),
-                                          outputs_dimensions(1),
-                                          outputs_dimensions(2),
-                                          outputs_dimensions(3)) << endl;
-
-
+        cout << TensorMap<Tensor<type,4>>(outputs_data, get_outputs_dimensions_array()) << endl;
     }
 };
 

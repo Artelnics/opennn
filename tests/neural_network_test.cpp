@@ -1043,7 +1043,7 @@ void NeuralNetworkTest::test_forward_propagate()
     inputs_number = 2;
     outputs_number = 1;
     batch_samples_number = 5;
-    bool switch_train = false;
+    bool is_training = false;
 
     data.resize(batch_samples_number, inputs_number + outputs_number);
 
@@ -1087,7 +1087,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
-    neural_network.forward_propagate(batch, forward_propagation, switch_train);
+    neural_network.forward_propagate(batch, forward_propagation, is_training);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1]);
@@ -1169,7 +1169,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     NeuralNetworkForwardPropagation forward_propagation_3(data_set.get_training_samples_number(), &neural_network);
 
-    neural_network.forward_propagate(batch, forward_propagation_3, switch_train);
+    neural_network.forward_propagate(batch, forward_propagation_3, is_training);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation_3
             = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation_3.layers[0]);

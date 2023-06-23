@@ -264,7 +264,7 @@ void Layer::linear_derivatives(type* combinations_data,
         throw invalid_argument(buffer.str());
     }
 
-    Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {

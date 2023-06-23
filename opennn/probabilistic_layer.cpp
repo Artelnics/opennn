@@ -698,7 +698,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
                                            LayerForwardPropagation* forward_propagation,
-                                           const bool& switch_train)
+                                           const bool& is_training)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -726,7 +726,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
                            outputs_data,
                            outputs_dimensions);
 
-    if(switch_train) // Perform training
+    if(is_training) // Perform training
     {
         calculate_activations_derivatives(outputs_data,
                                           outputs_dimensions,

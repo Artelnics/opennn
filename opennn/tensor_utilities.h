@@ -145,37 +145,13 @@ string tensor_string_to_text(const Tensor<string,1>&, string&);
 Tensor<string, 1> to_string_tensor(const Tensor<type,1>&);
 
 template<class T, int n>
-Tensor<Index, 1> get_dimensions(const Tensor<T, n>&tensor)
+Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 {
     Tensor<Index, 1> dimensions(n);
 
     memcpy(dimensions.data(), tensor.dimensions().data(), static_cast<size_t>(n)*sizeof(Index));
 
     return dimensions;
-}
-
-
-Eigen::array<ptrdiff_t, 1> get_dimensions_1(const Tensor<Index, 1>& dimensions_tensor)
-{
-    return Eigen::array<ptrdiff_t, 1>({dimensions_tensor(0)});
-}
-
-
-Eigen::array<ptrdiff_t, 2> get_dimensions_2(const Tensor<Index, 1>& dimensions_tensor)
-{
-    return Eigen::array<ptrdiff_t, 2>({dimensions_tensor(0), dimensions_tensor(1)});
-}
-
-
-Eigen::array<ptrdiff_t, 3> get_dimensions_3(const Tensor<Index, 1>& dimensions_tensor)
-{
-    return Eigen::array<ptrdiff_t, 3>({dimensions_tensor(0), dimensions_tensor(1), dimensions_tensor(2)});
-}
-
-
-Eigen::array<ptrdiff_t, 4> get_dimensions_4(const Tensor<Index, 1>& dimensions_tensor)
-{
-    return Eigen::array<ptrdiff_t, 4>({dimensions_tensor(0), dimensions_tensor(1), dimensions_tensor(2), dimensions_tensor(3)});
 }
 
 

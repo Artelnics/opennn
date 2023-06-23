@@ -44,7 +44,7 @@ void FlattenLayerTest::test_forward_propagate()
     const Index image_channels_number= 3;
     const Index images_number = 2;
     const Index pixels_number = image_height * image_width * image_channels_number;
-    bool switch_train = true;
+    bool is_training = true;
 
     Tensor<type, 4> inputs(image_height, image_width, image_channels_number, images_number);
     inputs.setRandom();
@@ -61,7 +61,7 @@ void FlattenLayerTest::test_forward_propagate()
 
     flatten_layer_forward_propagation.set(images_number, &flatten_layer);
 
-    flatten_layer.forward_propagate(inputs.data(), inputs_dimensions, &flatten_layer_forward_propagation, switch_train);
+    flatten_layer.forward_propagate(inputs.data(), inputs_dimensions, &flatten_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(flatten_layer_forward_propagation.outputs_data,
                                          flatten_layer_forward_propagation.outputs_dimensions(0),

@@ -782,7 +782,7 @@ TrainingResults ConjugateGradient::perform_training()
     type loss_decrease = numeric_limits<type>::max();
 
     bool stop_training = false;
-    bool switch_train = true;
+    bool is_training = true;
     Index selection_failures = 0;
 
     ConjugateGradientData optimization_data(this);
@@ -811,7 +811,7 @@ TrainingResults ConjugateGradient::perform_training()
 //        training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
 
         // Loss index
 
@@ -830,7 +830,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);

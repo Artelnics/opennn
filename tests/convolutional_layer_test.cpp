@@ -958,11 +958,11 @@ void ConvolutionalLayerTest::test_forward_propagation()
 
     NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-    bool switch_train = false;
+    bool is_training = false;
 
     neural_network.forward_propagate(batch,
                                      forward_propagation,
-                                     switch_train);
+                                     is_training);
 
     type* forward_outputs_data = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_data;
     Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_dimensions;

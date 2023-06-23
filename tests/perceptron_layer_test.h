@@ -101,10 +101,10 @@ private:
 
         Tensor<Index, 1> combinations_dims = get_dimensions(combinations);
         Tensor<Index, 1> activations_dims = get_dimensions(activations);
-
+/*
         perceptron_layer.calculate_activations(combinations_copy.data(), combinations_dims,
                                                activations.data(), activations_dims);
-
+*/
         return activations;
     }
 };

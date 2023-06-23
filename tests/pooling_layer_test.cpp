@@ -214,12 +214,12 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 });
 
 
-    bool switch_train = true;
+    bool is_training = true;
 
     pooling_layer.forward_propagate_average_pooling(inputs_data.data(),
                                                     input_variables_dimensions,
                                                     &pooling_layer_forward,
-                                                    switch_train);
+                                                    is_training);
 
     Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
 

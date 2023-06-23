@@ -138,7 +138,6 @@ void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
     NonMaxSuppressionLayerForwardPropagation* non_max_suppression_layer_forward_propagation
             = static_cast<NonMaxSuppressionLayerForwardPropagation*>(forward_propagation);
 
-
     // Propose random region for each image
 
 //    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);

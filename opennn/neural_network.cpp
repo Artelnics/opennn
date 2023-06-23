@@ -1788,7 +1788,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation,
-                                      bool& switch_train) const
+                                      bool& is_training) const
 {
 
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
@@ -1799,14 +1799,14 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     layers_pointers(first_trainable_layer_index)->forward_propagate(batch.inputs_data,
                                                                     batch.inputs_dimensions,
                                                                     forward_propagation.layers(first_trainable_layer_index),
-                                                                    switch_train);
+                                                                    is_training);
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
         layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                               forward_propagation.layers(i-1)->outputs_dimensions,
                                               forward_propagation.layers(i),
-                                              switch_train);
+                                              is_training);
     }
 }
 
@@ -1818,16 +1818,16 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     const Index layers_number = layers_pointers.size();
 
-    bool switch_train = false;
+    bool is_training = false;
 
-    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), switch_train);
+    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), is_training);
 
     for(Index i = 1; i < layers_number; i++)
     {
         layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                               forward_propagation.layers(i-1)->outputs_dimensions,
                                               forward_propagation.layers(i),
-                                              switch_train);
+                                              is_training);
     }
 }
 
@@ -1845,9 +1845,9 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     set_parameters(new_parameters);
 
-    bool switch_train = true;
+    bool is_training = true;
 
-    forward_propagate(batch, forward_propagation, switch_train);
+    forward_propagate(batch, forward_propagation, is_training);
 
     set_parameters(original_parameters);
 }
@@ -2126,11 +2126,11 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         NeuralNetworkForwardPropagation forward_propagation(inputs_dimensions(0), this);
 
-        bool switch_train = false;
+        bool is_training = false;
 
         if(layers_pointers(0)->get_type_string() != "Scaling")
         {
-            layers_pointers(0)->forward_propagate(scaled_inputs_data, inputs_dimensions, forward_propagation.layers(0), switch_train);
+            layers_pointers(0)->forward_propagate(scaled_inputs_data, inputs_dimensions, forward_propagation.layers(0), is_training);
 
             scaled_outputs = TensorMap<Tensor<type,2>>(forward_propagation.layers(0)->outputs_data,
                                                        forward_propagation.layers(0)->outputs_dimensions(0),
@@ -2155,7 +2155,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
                 layers_pointers(i)->forward_propagate(last_layer_outputs.data(),
                                                       last_layer_outputs_dimensions,
                                                       forward_propagation.layers(i),
-                                                      switch_train);
+                                                      is_training);
 
                 scaled_outputs = TensorMap<Tensor<type,2>>(forward_propagation.layers(i)->outputs_data,
                                                            forward_propagation.layers(i)->outputs_dimensions(0),

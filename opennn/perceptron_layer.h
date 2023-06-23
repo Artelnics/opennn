@@ -145,19 +145,16 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>&,
+   void calculate_combinations(type*,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
-                               type*) const;
+                               LayerForwardPropagation*) const;
 
    // Perceptron layer activations
 
-   void calculate_activations(type*, const Tensor<Index, 1>&,
-                              type*, const Tensor<Index, 1>&) const;
+   void calculate_activations(LayerForwardPropagation*) const;
 
-   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&) const;
+   void calculate_activations_derivatives(LayerForwardPropagation*) const;
 
    // Perceptron layer outputs
 
@@ -185,12 +182,12 @@ public:
                                ProbabilisticLayerBackPropagation*,
                                PerceptronLayerBackPropagation*) const;
 
-
+/*
    void calculate_inputs_outputs_derivatives(LayerForwardPropagation* layer_forward_propagation) const
    {
 
    }
-
+*/
 
    // Delta LM
 
@@ -284,6 +281,21 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
      {
          set(new_batch_samples_number, new_layer_pointer);
      }
+
+    Eigen::array<ptrdiff_t, 2> get_inputs_dimensions_array() const
+    {
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        return Eigen::array<ptrdiff_t, 2>({batch_samples_number, inputs_number});
+    }
+
+
+    Eigen::array<ptrdiff_t, 2> get_outputs_dimensions_array() const
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        return Eigen::array<ptrdiff_t, 2>({batch_samples_number, neurons_number});
+    }
 
 
      void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)

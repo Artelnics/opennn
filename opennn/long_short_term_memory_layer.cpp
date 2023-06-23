@@ -1620,7 +1620,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(ProbabilisticLayerForwardP
 void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                                  const Tensor<Index, 1>& inputs_dimensions,
                                                  LayerForwardPropagation* forward_propagation,
-                                                 const bool& switch_train)
+                                                 const bool& is_training)
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -1701,7 +1701,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                current_forget_combinations_data,
                                current_outputs_dimensions);
 
-        if(switch_train)
+        if(is_training)
         {
             calculate_recurrent_activations_derivatives(current_forget_combinations_data,
                                                         current_outputs_dimensions,
@@ -1728,7 +1728,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                current_input_combinations_data,
                                current_outputs_dimensions);
 
-        if(switch_train)
+        if(is_training)
         {
             calculate_recurrent_activations_derivatives(current_input_combinations_data,
                                                         current_outputs_dimensions,
@@ -1755,7 +1755,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                current_state_combinations_data,
                                current_outputs_dimensions);
 
-        if(switch_train)
+        if(is_training)
         {
             calculate_activations_derivatives(current_state_combinations_data,
                                                         current_outputs_dimensions,
@@ -1782,7 +1782,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
                                current_output_combinations_data,
                                current_outputs_dimensions);
 
-        if(switch_train)
+        if(is_training)
         {
             calculate_recurrent_activations_derivatives(current_output_combinations_data,
                                                         current_outputs_dimensions,
@@ -1804,7 +1804,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         cell_states = long_short_term_memory_layer_forward_propagation->current_forget_activations * cell_states +
                 long_short_term_memory_layer_forward_propagation->current_input_activations * long_short_term_memory_layer_forward_propagation->current_state_activations;
 
-        if(switch_train)
+        if(is_training)
         {
 
             calculate_activations_derivatives(cell_states_data,

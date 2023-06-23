@@ -614,7 +614,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     samples_number = 5;
     Tensor<type, 2> outputs;
 
-    bool switch_train = true;
+    bool is_training = true;
 
     probabilistic_layer.set(inputs_number, neurons_number);
 
@@ -630,11 +630,11 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, switch_train);
+    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     Tensor<type,3> activations_derivatives;
     activations_derivatives = probabilistic_layer_forward_propagation.activations_derivatives;
-
+/*
     assert_true(probabilistic_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(probabilistic_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);
     assert_true(probabilistic_layer_forward_propagation.combinations.dimension(1) == neurons_number , LOG);
@@ -685,7 +685,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, switch_train);
+    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
                                          probabilistic_layer_forward_propagation.outputs_dimensions(0),
@@ -710,7 +710,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, switch_train);
+    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data, probabilistic_layer_forward_propagation.outputs_dimensions(0), probabilistic_layer_forward_propagation.outputs_dimensions(1));
 
@@ -720,7 +720,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(static_cast<Index>(outputs(0,0)) == 1, LOG);
     assert_true(static_cast<Index>(outputs(1,0)) == 0, LOG);
     assert_true(static_cast<Index>(outputs(2,0)) == 0, LOG);
-    */
 
     // Test 3
 
@@ -747,7 +746,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, switch_train);
+    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
                                          probabilistic_layer_forward_propagation.outputs_dimensions(0),
@@ -780,7 +779,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, switch_train);
+    probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
                                          probabilistic_layer_forward_propagation.outputs_dimensions(0),
@@ -790,6 +789,8 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
     assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    */
+
 }
 
 

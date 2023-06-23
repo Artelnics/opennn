@@ -329,7 +329,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     AdaptiveMomentEstimationData optimization_data(this);
 
     bool stop_training = false;
-    bool switch_train = true;
+    bool is_training = true;
 
     time_t beginning_time;
     time_t current_time;
@@ -369,7 +369,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Neural network
 
 
-            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, switch_train);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, is_training);
 
             // Loss index
 
@@ -404,7 +404,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, switch_train);
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, is_training);
 
                 // Loss
 

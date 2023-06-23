@@ -110,7 +110,7 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
 void RegionProposalLayer::forward_propagate(type* inputs_data,
                           const Tensor<Index,1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation,
-                          const bool& switch_train)
+                          const bool& is_training)
 {
     RegionProposalLayerForwardPropagation* region_proposal_layer_forward_propagation
             = static_cast<RegionProposalLayerForwardPropagation*>(forward_propagation);

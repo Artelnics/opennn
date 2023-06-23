@@ -109,9 +109,18 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 
 /// Calculate convolutions
 
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
-                                                type* convolutions_data) const
+void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
+                                                LayerForwardPropagation* layer_forward_propagation) const
 {
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+
+    Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
+
+    type* outputs_data = layer_forward_propagation->outputs_data;
+
     const Index images_number = inputs.dimension(0);
     const Index inputs_channels_number = inputs.dimension(1);
     const Index inputs_rows_number = inputs.dimension(2);
@@ -122,7 +131,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Index kernels_rows_number = synaptic_weights.dimension(2);
     const Index kernels_columns_number = synaptic_weights.dimension(3);
 
-    const Index input_image_size = inputs_channels_number*inputs_rows_number*inputs_columns_number;
+    const Index input_image_size = inputs_channels_number*inputs_rows_number * inputs_columns_number;
     const Index kernel_size = kernels_channels_number*kernels_rows_number*kernels_columns_number;
 
     const Index outputs_rows_number = get_outputs_rows_number();
@@ -134,8 +143,6 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
 
     Tensor<type, 3> convolved_image(kernels_number, outputs_rows_number, outputs_columns_number);
-
-    #pragma omp parallel for
 
     for(int image_index = 0; image_index < images_number ;image_index++)
     {
@@ -152,11 +159,11 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                     kernels_rows_number,
                                                     kernels_columns_number);
 
-            convolved_image = image.convolve(kernel, convolution_dimensions) + biases(kernel_index);
+            convolved_image/*.device(thread_pool_device)*/ = image.convolve(kernel, convolutions_dimensions)/* + biases(kernel_index)*/;
 
             // @todo check this
 
-            memcpy(convolutions_data + kernel_index*outputs_rows_number*outputs_columns_number + image_index*output_image_size,
+            memcpy(outputs_data + kernel_index*outputs_rows_number*outputs_columns_number + image_index*output_image_size,
                    convolved_image.data(), static_cast<size_t>(outputs_rows_number*outputs_columns_number)*sizeof(type));
         }
     }
@@ -166,7 +173,7 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 const Tensor<type, 2>& potential_biases,
                                                 const Tensor<type, 4>& potential_synaptic_weights,
-                                                Tensor<type, 4>& convolutions) const // old version
+                                                Tensor<type, 4>& convolutions) const
 {
     const Index images_number = inputs.dimension(0);
     const Index inputs_channels_number = inputs.dimension(1);
@@ -213,36 +220,75 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 */
 
+void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propagation)
+{
+
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+
+    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
+
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
+
+    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+
+    // @todo does not compile. Why?
+
+    //Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
+
+    //means.device(thread_pool_device) = outputs.mean(means_dimensions);
+
+    /// @todo standard deviations
+
+    bool is_training = true;
+
+    if(is_training)
+    {
+//        moving_means.device(thread_pool_device) = moving_means * momentum + convolutional_layer_forward_propagation->means * (type(1.0) - momentum);
+
+//        moving_standard_deviations.device(thread_pool_device) = moving_standard_deviations * momentum + convolutional_layer_forward_propagation->standard_deviations * (type(1.0) - momentum);
+    }
+
+    // @todo implement methods in tensor_utilities
+
+//    outputs.device(thread_pool_device) = (outputs - convolutional_layer_forward_propagation->means) /
+                                         (convolutional_layer_forward_propagation->standard_deviations + epsilon);
+//    outputs = scales*outputs + offsets;
+}
+
+
 /// Calculates activations
 
-void ConvolutionalLayer::calculate_activations(type* convolutions, const Tensor<Index, 1>& convolutions_dimensions,
-                                               type* activations, const Tensor<Index, 1>& activations_dimensions) const
+void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_forward_propagation) const
 {
+    type* outputs_data = layer_forward_propagation->outputs_data;
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions;
+
     //@todo debug checks
 
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::Linear: linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::Logistic: logistic(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::Logistic: logistic(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::Threshold: threshold(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::Threshold: threshold(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::SoftPlus: soft_plus(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftSign: soft_sign(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::SoftSign: soft_sign(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(convolutions, convolutions_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
     default: return;
     }
@@ -251,35 +297,41 @@ void ConvolutionalLayer::calculate_activations(type* convolutions, const Tensor<
 
 /// Calculates activations derivatives
 
-void ConvolutionalLayer::calculate_activations_derivatives(type* convolutions, const Tensor<Index, 1>& convolutions_dimensions,
-                                                           type* activations, const Tensor<Index, 1>& activations_dimensions,
-                                                           type* activations_derivatives, const Tensor<Index, 1>& activations_derivatives_dimensions) const
+void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagation* layer_forward_propagation) const
 {
+    type* outputs_data = layer_forward_propagation->outputs_data;
+    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
+
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+
+    type* activations_derivatives_data = convolutional_layer_forward_propagation->activations_derivatives.data();
+
     // @todo debug checks
 
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Linear: linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::Logistic: logistic_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Logistic: logistic_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::Threshold: threshold_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Threshold: threshold_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::SoftSign: soft_sign_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(convolutions, convolutions_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
     default: return;
     }
@@ -289,71 +341,26 @@ void ConvolutionalLayer::calculate_activations_derivatives(type* convolutions, c
 void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
                                            LayerForwardPropagation* layer_forward_propagation,
-                                           const bool& switch_train)
+                                           const bool& is_training)
 {
-
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
-
-    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
-
-    const Index inputs_channels_number = get_inputs_channels_number();
-    const Index inputs_rows_number = get_inputs_rows_number();
-    const Index inputs_columns_number = get_inputs_columns_number();
-
-    //convolutional_layer_forward_propagation.
-
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data,
-                                            batch_samples_number,
-                                            inputs_channels_number,
-                                            inputs_rows_number,
-                                            inputs_columns_number);
-
-    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
-
-    //const Tensor<Index, 1> outputs_dimensions = convolutional_layer_forward_propagation->outputs_dimensions;
-
-    type* activations_derivatives_data = convolutional_layer_forward_propagation->get_activations_derivatives_data();
-
-    Eigen::array<ptrdiff_t, 4> outputs_dimensions = get_dimensions_4(convolutional_layer_forward_propagation->outputs_dimensions);
-
-    const TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions);
-
     // Convolutions
 
-    calculate_convolutions(inputs,
-                           outputs_data);
+    calculate_convolutions(inputs_data, layer_forward_propagation);
 
     // Batch normalization
 
-//    convolutional_layer_forward_propagation->means = outputs.mean(mean_dimensions);
-
-//    convolutional_layer_forward_propagation->standard_deviations = outputs.mean(mean_dimensions);
-
-    //outputs = outputs - means/standard_deviations;
-
-    // outputs =
-
-///alvaros @todo
+    normalize(layer_forward_propagation);
 
     // Activations
 
-    if(switch_train)
+    if(is_training)
     {
-        calculate_activations_derivatives(outputs_data,
-                                          outputs_dimensions,
-                                          outputs_data,
-                                          outputs_dimensions,
-                                          activations_derivatives_data,
-                                          outputs_dimensions);
+        calculate_activations_derivatives(layer_forward_propagation);
 
     }
     else
     {
-        calculate_activations(outputs_data,
-                              outputs_dimensions,
-                              outputs_data,
-                              outputs_dimensions);
+        calculate_activations(layer_forward_propagation);
     }
 }
 
@@ -423,23 +430,21 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     const Index image_size = inputs_channels_number*inputs_rows_number*inputs_columns_number;
 
-    const ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
-    const TensorMap<Tensor<type,4>> inputs(input_data,
-                                     batch_samples_number,
-                                     inputs_channels_number,
-                                     inputs_rows_number,
-                                     inputs_columns_number);
+    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
 
-    const TensorMap<Tensor<type, 4>> deltas(back_propagation->deltas_data,
-                                            batch_samples_number,
-                                            kernels_number,
-                                            outputs_rows_number,
-                                            outputs_columns_number);
+    const TensorMap<Tensor<type,4>> inputs(input_data, inputs_dimensions_array);
+
+    type* deltas_data = convolutional_layer_back_propagation->deltas_data;
+
+    const Eigen::array<ptrdiff_t, 4> deltas_dimensions_array = convolutional_layer_back_propagation->get_deltas_dimensions_array();
+
+    const TensorMap<Tensor<type, 4>> deltas(deltas_data, deltas_dimensions_array);
 
     convolutional_layer_back_propagation->deltas_times_activations_derivatives.device(*thread_pool_device)
             = deltas * convolutional_layer_forward_propagation->activations_derivatives;
@@ -508,20 +513,18 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
             if(image_index == 0)
             {
-                kernel_synaptic_weights_derivatives = image.convolve(delta_reshape, convolution_dimensions); // check convolution_dimensions
+                kernel_synaptic_weights_derivatives = image.convolve(delta_reshape, convolutions_dimensions);
             }
             else
             {
-                kernel_synaptic_weights_derivatives += image.convolve(delta_reshape, convolution_dimensions);
+                kernel_synaptic_weights_derivatives += image.convolve(delta_reshape, convolutions_dimensions);
             }
-
         }
 
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,
                kernel_synaptic_weights_derivatives.data(),
                static_cast<size_t>(kernel_synaptic_weights_number)*sizeof(type));
     }
-
 }
 
 
@@ -534,6 +537,7 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
+
     type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
 
     copy(biases_derivatives_data,
@@ -1149,12 +1153,6 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
 }
 
 
-void ConvolutionalLayer::calculate_means(const Tensor<type, 4>& inputs)
-{
-//    current_means = inputs.mean(mean_dimensions);
-}
-
-
 void ConvolutionalLayer::calculate_standard_deviations(const Tensor<type, 4>& inputs, const Tensor<type, 1>& means)
 {
 /*
@@ -1190,7 +1188,7 @@ void ConvolutionalLayer::calculate_standard_deviations(const Tensor<type, 4>& in
 }
 
 
-void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, const bool& switch_train)
+void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, const bool& is_training)
 {
     //@todo change the inputs.dimension
 
@@ -1199,7 +1197,7 @@ void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, cons
     const Index rows_number = inputs.dimension(2);
     const Index columns_number = inputs.dimension(3);
 /*
-    if(switch_train)
+    if(is_training)
     {
         moving_means = moving_means * momentum + current_means * (type(1.0) - momentum);
 

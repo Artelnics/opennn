@@ -733,7 +733,7 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 void RecurrentLayer::forward_propagate(type* inputs_data,
                                        const Tensor<Index, 1>& inputs_dimensions,
                                        LayerForwardPropagation* forward_propagation,
-                                       const bool& switch_train)
+                                       const bool& is_training)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -802,7 +802,7 @@ void RecurrentLayer::forward_propagate(type* inputs_data,
         activations_derivatives_dimensions = get_dimensions(recurrent_layer_forward_propagation->current_activations_derivatives);
 
 
-        if(switch_train) // Perform training
+        if(is_training) // Perform training
         {
             calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
                                               combinations_dimensions,

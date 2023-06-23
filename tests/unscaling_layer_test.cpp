@@ -282,7 +282,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     samples_number = 1;
     inputs_number = 1;
 
-    bool switch_train = false;
+    bool is_training = false;
 
     unscaling_layer.set(inputs_number);
     unscaling_layer.set_scalers(Scaler::NoScaling);
@@ -292,7 +292,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -312,7 +312,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -334,7 +334,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -359,7 +359,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -380,7 +380,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -406,7 +406,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -427,7 +427,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
@@ -448,7 +448,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     inputs_dimensions = get_dimensions(inputs);
 
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
-    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, switch_train);
+    unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),

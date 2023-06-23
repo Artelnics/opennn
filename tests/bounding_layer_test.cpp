@@ -58,7 +58,7 @@ void BoundingLayerTest::test_forward_propagate()
 
     Index samples_number = 1;
     Index inputs_number = 1;
-    bool switch_train = false;
+    bool is_training = false;
 
     bounding_layer.set(inputs_number);
 
@@ -71,7 +71,7 @@ void BoundingLayerTest::test_forward_propagate()
     inputs_dimensions = get_dimensions(inputs);
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
-    bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, switch_train);
+    bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(bounding_layer_forward_propagation.outputs_data,
                                          bounding_layer_forward_propagation.outputs_dimensions(0),
@@ -85,7 +85,7 @@ void BoundingLayerTest::test_forward_propagate()
     inputs(0) = type(2.0);
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
-    bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, switch_train);
+    bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, is_training);
 
     TensorMap<Tensor<type, 2>> outputs_2(bounding_layer_forward_propagation.outputs_data,
                                        bounding_layer_forward_propagation.outputs_dimensions(0),

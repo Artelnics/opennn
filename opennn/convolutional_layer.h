@@ -158,21 +158,18 @@ public:
 
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, type*) const; //change
+    void calculate_convolutions(type*, LayerForwardPropagation*) const;
 /*
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,
                                 const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const; //change
 */
-    // Activation
 
-    void calculate_activations(type*, const Tensor<Index, 1>&,
-                               type*, const Tensor<Index, 1>&) const;
+    void normalize(LayerForwardPropagation*);
 
-    void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
-                                           type*, const Tensor<Index, 1>&,
-                                           type*, const Tensor<Index, 1>&) const;
+    void calculate_activations(LayerForwardPropagation*) const;
+    void calculate_activations_derivatives(LayerForwardPropagation*) const;
 
    // Outputs
 
@@ -211,8 +208,6 @@ public:
 
     // Batch normalization
 
-   void calculate_means(const Tensor<type, 4>&);
-
    void calculate_standard_deviations(const Tensor<type, 4>&, const Tensor<type, 1>&);
 
    void normalize_and_shift(const Tensor<type, 4>&, const bool&);
@@ -229,7 +224,7 @@ protected:
    Tensor<type, 4> synaptic_weights;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's trabsfer function to generate the neuron's output.
+   /// and passed through the neuron's transfer function to generate the neuron's output.
 
    Tensor<type, 1> biases;
 
@@ -243,8 +238,8 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
-   const Eigen::array<ptrdiff_t, 3> convolution_dimensions = {0, 1, 2};
-   const Eigen::array<ptrdiff_t, 3> mean_dimensions = {0, 2, 3};
+   const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
+   const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 2, 3};
 
    // Batch normalization
 
@@ -281,6 +276,22 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
+
+    type* get_activations_derivatives_data()
+    {
+        return activations_derivatives.data();
+    }
+
+    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array()
+    {
+        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+    }
+
+
+    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array()
+    {
+        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+    }
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
@@ -329,12 +340,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << activations_derivatives << endl;
     }
 
-
-    type* get_activations_derivatives_data()
-    {
-        return activations_derivatives.data();
-    }
-
     Tensor<type, 1> means;
     Tensor<type, 1> standard_deviations;
 
@@ -359,6 +364,12 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
         : LayerBackPropagation()
     {
         set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    Eigen::array<ptrdiff_t, 4> get_deltas_dimensions_array()
+    {
+        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
     }
 
 

@@ -135,7 +135,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      LayerForwardPropagation* layer_forward_propagation,
-                                     const bool& switch_train)
+                                     const bool& is_training)
 {
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 

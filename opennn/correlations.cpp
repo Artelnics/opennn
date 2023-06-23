@@ -640,7 +640,7 @@ Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, cons
 {
     Tensor<type, 1> confidence_interval(2);
 
-    const type z_standard_error = 1.959964;
+    const type z_standard_error = type(1.959964);
 
     confidence_interval(0) = z_correlation - z_standard_error * 1/sqrt(n - 3);
 

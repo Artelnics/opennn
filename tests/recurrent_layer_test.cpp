@@ -340,7 +340,7 @@ void RecurrentLayerTest::test_forward_propagate()
     neurons_number = 4;
     samples_number = 2;
     inputs_number = 3;
-    bool switch_train = false;
+    bool is_training = false;
 
     Tensor<type, 2> outputs;
     Tensor<Index, 1> outputs_dimensions;
@@ -362,7 +362,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     recurrent_layer_forward_propagation.set(samples_number, &recurrent_layer);
 
-    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, switch_train);
+    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(recurrent_layer_forward_propagation.outputs_data,
                                          recurrent_layer_forward_propagation.outputs_dimensions(0),
@@ -402,7 +402,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     parameters = recurrent_layer.get_parameters();
 
-    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, switch_train);
+    recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(recurrent_layer_forward_propagation.outputs_data,
                                          recurrent_layer_forward_propagation.outputs_dimensions(0),
