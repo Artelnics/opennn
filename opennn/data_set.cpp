@@ -80,12 +80,12 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 
 
 DataSet::DataSet(const Index& new_images_number,
-                 const Index& new_channels_number,
                  const Index& new_height,
                  const Index& new_width,
+                 const Index& new_channels_number,
                  const Index& new_targets_number)
 {
-    set(new_images_number, new_channels_number, new_height, new_width, new_targets_number);
+    set(new_images_number, new_height, new_width, new_channels_number, new_targets_number);
 
 //    set_default();
 }
@@ -5632,7 +5632,7 @@ void DataSet::set(const Index& new_images_number,
     }
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({new_channels_number, new_height, new_width});
+    input_variables_dimensions.setValues({new_height, new_width, new_channels_number});
 
     samples_uses.resize(new_images_number);
     split_samples_random();

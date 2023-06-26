@@ -476,7 +476,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 
 
 void ProbabilisticLayerTest::test_calculate_outputs()
-{/*
+{
     cout << "test_calculate_outputs\n";
 
     Tensor<type, 2> synaptic_weights;
@@ -601,7 +601,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
     assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
-    */
+
 }
 
 
@@ -705,7 +705,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(static_cast<Index>(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
 
     // Test 2
-    /*
+
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
@@ -720,6 +720,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(static_cast<Index>(outputs(0,0)) == 1, LOG);
     assert_true(static_cast<Index>(outputs(1,0)) == 0, LOG);
     assert_true(static_cast<Index>(outputs(2,0)) == 0, LOG);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9424aff2d28c619a7feb8e85ff4d2dfc935493ce
 
     // Test 3
 
@@ -828,7 +832,6 @@ void ProbabilisticLayerTest::run_test_case()
 
     cout << "End of probabilistic layer test case.\n\n";
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.

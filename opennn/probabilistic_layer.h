@@ -144,6 +144,11 @@ public:
                                           type*, const Tensor<Index, 1>&,
                                           type*, const Tensor<Index, 1>&) const;
 
+    void calculate_outputs(const type* inputs,
+                           const Tensor<Index, 1>& inputs_dimensions,
+                           type* outputs,
+                           const Tensor<Index, 1>& outputs_dimensions);
+
    // Outputs
 
    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
@@ -276,6 +281,8 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     }
 
     Tensor<type, 3> activations_derivatives;
+
+    Tensor<type, 2> combinations;
 };
 
 

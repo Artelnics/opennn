@@ -745,6 +745,12 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
 }
 
 
+void ProbabilisticLayer::calculate_outputs(const type* inputs, const Tensor<Index, 1>& inputs_dimensions, type* outputs, const Tensor<Index, 1>& outputs_dimensions)
+{
+
+}
+
+
 void ProbabilisticLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index, 1>& inputs_dimensions,
                                            Tensor<type, 1>& potential_parameters,

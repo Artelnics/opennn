@@ -238,8 +238,15 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
+<<<<<<< HEAD
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 2, 3};
+=======
+//   const Eigen::array<ptrdiff_t, 3> convolution_dimensions = {0, 1, 2};
+
+   const Eigen::array<ptrdiff_t, 3> convolution_dimensions = {1, 2, 3};
+   const Eigen::array<ptrdiff_t, 3> mean_dimensions = {0, 2, 3};
+>>>>>>> 9424aff2d28c619a7feb8e85ff4d2dfc935493ce
 
    // Batch normalization
 
