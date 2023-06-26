@@ -30,48 +30,6 @@ int main(int argc, char *argv[])
    try
    {
         cout << "OpenNN. Conv2D Example." << endl;
-/*
-        const Index batch_samples_number = 1;
-
-        const Index inputs_channels_number = 3;
-        const Index inputs_rows_number = 8;
-        const Index inputs_columns_number = 8;
-
-        const Index kernels_number = 4;
-        const Index kernels_channels_number = inputs_channels_number;
-        const Index kernels_rows_number = 2;
-        const Index kernels_columns_number = 2;
-
-        Tensor<Index, 1> input_variables_dimensions(3);
-        input_variables_dimensions.setValues({inputs_rows_number, inputs_columns_number, inputs_channels_number});
-
-        Tensor<Index, 1> kernels_dimensions(4);
-        kernels_dimensions.setValues({kernels_number, kernels_rows_number, kernels_columns_number, kernels_channels_number});
-
-        Tensor<type, 4> inputs(batch_samples_number, inputs_rows_number, inputs_columns_number, inputs_channels_number);
-        Tensor<type, 4> kernels(kernels_number, kernels_rows_number, kernels_columns_number, kernels_channels_number);
-
-        cout << "inputs dimensions: " << inputs.dimensions() << endl;
-
-        cout << "kernels dimensions: " << kernels.dimensions() << endl;
-
-        const Eigen::array<ptrdiff_t, 2> convolution_dimensions = {2, 3};
-
-        Tensor<type, 4> convolved_image = inputs.convolve(kernels, convolution_dimensions);
-
-        cout << "convolved_image: " << convolved_image.dimensions() << endl;
-*/
-
-        Tensor<float, 4> input(1, 3, 3, 3);
-        Tensor<float, 4> kernel(3, 2, 2, 1);
-
-        input.setConstant(1.0f);
-        kernel.setConstant(2.0f);
-
-        Eigen::array<ptrdiff_t, 4> dims({3,1,2,0});  // Specify second and third dimension for convolution.
-        Tensor<float, 4> output = input.convolve(kernel, dims);
-
-        cout << "output_dims: " << output.dimensions() << endl;
 
         cout << "Bye!" << endl;
 

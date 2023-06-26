@@ -296,7 +296,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
 
-<<<<<<< Updated upstream
         outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
         outputs_dimensions.resize(4);
@@ -312,24 +311,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                        kernels_number,
                                        outputs_rows_number,
                                        outputs_columns_number);
-=======
-        activations_derivatives.resize(batch_samples_number, outputs_rows_number, outputs_columns_number, kernels_number);
-
-        activations_derivatives.setZero();
-
-        means.resize(kernels_number);
-        standard_deviations.resize(kernels_number);
-
-        outputs_dimensions.resize(4);
-        outputs_dimensions.setValues({batch_samples_number,
-                                      outputs_rows_number,
-                                      outputs_columns_number,
-                                      kernels_number});
-
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number * outputs_rows_number *
-                                                           outputs_columns_number * kernels_number * sizeof(type)));
-
->>>>>>> Stashed changes
     }
 
     void print() const
