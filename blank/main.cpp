@@ -29,8 +29,6 @@ int main(int argc, char *argv[])
 {
    try
    {
-        cout << "OpenNN. Conv2D Example." << endl;
-
         cout << "Bye!" << endl;
 
         return 0;

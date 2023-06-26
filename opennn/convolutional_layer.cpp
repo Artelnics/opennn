@@ -229,15 +229,15 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
+            = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+    TensorMap<Tensor<type, 4>> outputs(outputs_data,
+                                       outputs_dimensions_array);
 
-    // @todo does not compile. Why?
+    // @todo does not compile. Why? //alvaros
 
-    //Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
-
-    //means.device(thread_pool_device) = outputs.mean(means_dimensions);
+    convolutional_layer_forward_propagation->means.device(*thread_pool_device) = outputs.mean(means_dimensions);
 
     /// @todo standard deviations
 
@@ -245,7 +245,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
 
     if(is_training)
     {
-//        moving_means.device(thread_pool_device) = moving_means * momentum + convolutional_layer_forward_propagation->means * (type(1.0) - momentum);
+//        moving_means.device(*thread_pool_device) = moving_means * momentum + convolutional_layer_forward_propagation->means * (type(1.0) - momentum);
 
 //        moving_standard_deviations.device(thread_pool_device) = moving_standard_deviations * momentum + convolutional_layer_forward_propagation->standard_deviations * (type(1.0) - momentum);
     }
@@ -253,7 +253,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     // @todo implement methods in tensor_utilities
 
 //    outputs.device(thread_pool_device) = (outputs - convolutional_layer_forward_propagation->means) /
-                                         (convolutional_layer_forward_propagation->standard_deviations + epsilon);
+//                                         (convolutional_layer_forward_propagation->standard_deviations + epsilon);
 //    outputs = scales*outputs + offsets;
 }
 
@@ -367,9 +367,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     else
     {
         calculate_activations(layer_forward_propagation);
-
     }
-
 }
 
 

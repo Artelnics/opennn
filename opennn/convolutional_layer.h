@@ -159,12 +159,6 @@ public:
     // Combinations
 
     void calculate_convolutions(type*, LayerForwardPropagation*) const;
-/*
-    void calculate_convolutions(const Tensor<type, 4>&,
-                                const Tensor<type, 2>&,
-                                const Tensor<type, 4>&,
-                                Tensor<type, 4>&) const; //change
-*/
 
     void normalize(LayerForwardPropagation*);
 
@@ -284,14 +278,33 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
     Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array()
     {
-        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+        ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+
+        const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
+        const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
+        const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
+
+        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                           inputs_rows_number,
+                                           inputs_columns_number,
+                                           inputs_channels_number});
     }
 
 
     Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array()
     {
-        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+        ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+
+        const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
+        const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+        const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
+
+        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                           outputs_rows_number,
+                                           outputs_columns_number,
+                                           kernels_number});
     }
+
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
@@ -321,6 +334,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                        outputs_rows_number,
                                        outputs_columns_number);
     }
+
 
     void print() const
     {
@@ -369,7 +383,16 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     Eigen::array<ptrdiff_t, 4> get_deltas_dimensions_array()
     {
-        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+        ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+
+        const Index deltas_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
+        const Index deltas_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+        const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
+
+        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                           deltas_rows_number,
+                                           deltas_columns_number,
+                                           kernels_number});
     }
 
 
