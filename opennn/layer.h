@@ -209,7 +209,6 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
 #else
@@ -240,9 +239,6 @@ struct LayerForwardPropagation
 
     Tensor<Index, 1> outputs_dimensions;
 
-    type* inputs_outputs_derivatives_data = nullptr;
-
-    Tensor<Index, 1> inputs_outputs_derivatives_dimensions;
 };
 
 
@@ -278,9 +274,12 @@ struct LayerBackPropagation
 
     Layer* layer_pointer = nullptr;       
 
+    type* deltas_data = nullptr;
+
     Tensor<Index, 1> deltas_dimensions;
 
-    type* deltas_data = nullptr;
+    Tensor<type, 1> gradient;
+
 };
 
 

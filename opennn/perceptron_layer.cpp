@@ -926,6 +926,7 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
     {
         const TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_forward_propagation->activations_derivatives.data(),
                                                                  batch_samples_number, next_neurons_number);
+
         deltas.device(*thread_pool_device) =
                 (next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
 
@@ -992,19 +993,6 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
             deltas.device(*thread_pool_device) =
                     next_back_propagation->error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
         }
-    }
-
-    Tensor<type, 2> output_deltas(deltas);
-
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: perceptron layer class.\n"
-               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
-
-        throw invalid_argument(buffer.str());
     }
 }
 
@@ -1207,10 +1195,13 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, batch_samples_number, get_inputs_number());
+    const Eigen::array<ptrdiff_t, 2> inputs_dimensions_array = perceptron_layer_forward_propagation->get_inputs_dimensions_array();
+    const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
 
-    const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));//matrix with data deltas_data nrows= deltas_dimensions(0) ncolummns=deltas_dimensions(1)
-    
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions_array);
+
+    const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, outputs_dimensions_array);
+
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
             (deltas * perceptron_layer_forward_propagation->activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 

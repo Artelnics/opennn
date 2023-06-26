@@ -281,8 +281,6 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     }
 
     Tensor<type, 3> activations_derivatives;
-
-    Tensor<type, 2> combinations;
 };
 
 

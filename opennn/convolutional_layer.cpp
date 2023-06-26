@@ -115,7 +115,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
-    Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
+    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
@@ -159,7 +159,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                     kernels_columns_number,
                                                     kernels_channels_number);
 
-            convolved_image/*.device(thread_pool_device)*/ = image.convolve(kernel, convolutions_dimensions)/* + biases(kernel_index)*/;
+            convolved_image.device(*thread_pool_device) = image.convolve(kernel, convolutions_dimensions)/* + biases(kernel_index)*/;
 
             // @todo check this
 
@@ -263,6 +263,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
 void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_forward_propagation) const
 {
     type* outputs_data = layer_forward_propagation->outputs_data;
+
     const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions;
 
     //@todo debug checks
@@ -301,6 +302,7 @@ void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_fo
 void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagation* layer_forward_propagation) const
 {
     type* outputs_data = layer_forward_propagation->outputs_data;
+
     const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
@@ -308,13 +310,8 @@ void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagati
 
     type* activations_derivatives_data = convolutional_layer_forward_propagation->get_activations_derivatives_data();
 
-    const Index inputs_rows_number = get_inputs_rows_number();
-    const Index inputs_columns_number = get_inputs_columns_number();
-    const Index inputs_channels_number = get_inputs_channels_number();
-
     switch(activation_function)
     {
-
     case ActivationFunction::Linear: linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
 
     case ActivationFunction::Logistic: logistic_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
@@ -362,7 +359,6 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     if(is_training)
     {
         calculate_activations_derivatives(layer_forward_propagation);
-
     }
     else
     {
