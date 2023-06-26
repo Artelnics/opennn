@@ -720,10 +720,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(static_cast<Index>(outputs(0,0)) == 1, LOG);
     assert_true(static_cast<Index>(outputs(1,0)) == 0, LOG);
     assert_true(static_cast<Index>(outputs(2,0)) == 0, LOG);
-<<<<<<< HEAD
-=======
-
->>>>>>> 9424aff2d28c619a7feb8e85ff4d2dfc935493ce
 
     // Test 3
 
