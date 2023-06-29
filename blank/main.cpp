@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 {
    try
    {
+
         cout << "Bye!" << endl;
 
         return 0;

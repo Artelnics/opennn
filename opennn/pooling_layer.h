@@ -182,7 +182,9 @@ protected:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0,1,2,3};
+    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3};
+
+    const Eigen::array<ptrdiff_t, 4> patch_dimensions = {0, 1, 2, 3};
 
 #ifdef OPENNN_CUDA
 #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
@@ -210,12 +212,30 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
     {
-        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+        PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+
+        const Index inputs_rows_number = pooling_layer_pointer->get_inputs_rows_number();
+        const Index inputs_columns_number = pooling_layer_pointer->get_inputs_columns_number();
+        const Index inputs_channels_number = pooling_layer_pointer->get_channels_number();
+
+        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                           inputs_rows_number,
+                                           inputs_columns_number,
+                                           inputs_channels_number});
     }
 
     Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
     {
-        return Eigen::array<ptrdiff_t, 4>({0,0,0,0});
+        PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+
+        const Index oututs_columns_number =  pooling_layer_pointer->get_outputs_columns_number();
+        const Index oututs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
+        const Index oututs_channels_number = pooling_layer_pointer->get_channels_number();
+
+        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                           oututs_columns_number,
+                                           oututs_rows_number,
+                                           oututs_channels_number});
     }
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
@@ -232,17 +252,23 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const Index channels_number = pooling_layer_pointer->get_channels_number();
 
+        const Index patches_number = 0;
+
         outputs_dimensions.resize(4);
 
         outputs_dimensions.setValues({batch_samples_number,
-                                      channels_number,
                                       outputs_rows_number,
-                                      outputs_columns_number});
+                                      outputs_columns_number,
+                                      channels_number});
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number *
-                                                          channels_number *
-                                                          outputs_rows_number *
-                                                          outputs_columns_number*sizeof(type)));
+        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number
+                                                          *outputs_rows_number
+                                                          *outputs_columns_number
+                                                          *channels_number*sizeof(type)));
+
+
+
+        patches.resize(patches_number, 2, 2, 2, 2);
     }
 
 
@@ -256,7 +282,12 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         cout << "Outputs:" << endl;
 
         cout << TensorMap<Tensor<type,4>>(outputs_data, get_outputs_dimensions_array()) << endl;
-    }
+
+        cout << "Patches" << endl;
+        cout << patches << endl;
+     }
+
+    Tensor<type, 5> patches;
 };
 
 
@@ -270,7 +301,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     virtual ~PoolingLayerBackPropagation()
     {
     }
-
 
     explicit PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
