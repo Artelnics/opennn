@@ -160,9 +160,8 @@ public:
 
     void calculate_convolutions(type*, LayerForwardPropagation*) const;
 
-    void calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const;
-
     void normalize(LayerForwardPropagation*);
+    void shift(LayerForwardPropagation*);
 
     void calculate_activations(LayerForwardPropagation*) const;
     void calculate_activations_derivatives(LayerForwardPropagation*) const;
@@ -235,12 +234,15 @@ protected:
    ActivationFunction activation_function = ActivationFunction::Linear;
 
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {1, 2, 3};
-   const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 2, 3};
+   const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
    // Batch normalization
 
-   Tensor<type, 1> means;
-   Tensor<type, 1> standard_deviations;
+   Tensor<type, 1> means; //alvaros
+   Tensor<type, 1> standard_deviations; //alvaros
+
+   Tensor<type, 1> moving_means;
+   Tensor<type, 1> moving_standard_deviations;
 
    type momentum = type(0.9);
    const type epsilon = type(1.0e-5);
@@ -331,6 +333,9 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         means.resize(kernels_number);
         standard_deviations.resize(kernels_number);
 
+        moving_mean.resize(kernels_number);
+        moving_standard_deviations.resize(kernels_number);
+
         activations_derivatives.resize(batch_samples_number,
                                        outputs_rows_number,
                                        outputs_columns_number,
@@ -358,6 +363,9 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 1> means;
     Tensor<type, 1> standard_deviations;
+
+    Tensor<type, 1> moving_mean;
+    Tensor<type, 1> moving_standard_deviations;
 
     Tensor<type, 4> activations_derivatives;
 };
