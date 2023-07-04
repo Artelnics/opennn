@@ -391,6 +391,14 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 }
 
 
+void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation,
+                                                ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation,
+                                                ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
+{
+
+}
+
+
 void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation,
                                                 FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
                                                 ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
