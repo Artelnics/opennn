@@ -368,6 +368,18 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {
+    case Type::Convolutional:
+    {
+       ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation =
+               static_cast<ConvolutionalLayerForwardPropagation*>(next_convolutional_layer_forward_propagation);
+
+       ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation =
+               static_cast<ConvolutionalLayerBackPropagation*>(next_layer_back_propagation);
+
+       calculate_hidden_delta(next_convolutional_layer_forward_propagation,
+                              next_convolutional_layer_back_propagation,
+                              this_convolutional_layer_back_propagation);
+    }
     case Type::Flatten:
     {
 
@@ -393,8 +405,21 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 
 void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation,
                                                 ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation,
-                                                ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
+                                                ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation) const
 {
+    const TensorMap<Tensor<type, 4>> next_deltas(next_convolutional_layer_back_propagation->deltas_data,
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(0),
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(1),
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(2),
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(3));
+
+
+    const Index kernels_number = get_kernels_number();
+
+    next_deltas * next_convolutional_layer_forward_propagation->activations_derivatives;
+
+    // (next deltas * activations derivatives) ¿convolve? kernels
+
 
 }
 
