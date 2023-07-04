@@ -416,6 +416,11 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
 
     const Index kernels_number = get_kernels_number();
 
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+
+    }
+
     next_deltas * next_convolutional_layer_forward_propagation->activations_derivatives;
 
     // (next deltas * activations derivatives) ¿convolve? kernels
@@ -429,6 +434,8 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
                                                 ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
 {
     const Index batch_samples_number = convolutional_layer_back_propagation->batch_samples_number;
+
+    // Add: deltas * convolutional_layer_forward_propagation->activations_derivatives;
 
     const Index neurons_number = get_neurons_number();
 

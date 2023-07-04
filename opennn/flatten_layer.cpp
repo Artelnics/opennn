@@ -150,14 +150,49 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 
 void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
                                           LayerBackPropagation* next_layer_back_propagation,
-                                          LayerBackPropagation* flatten_layer_back_propagation) const
+                                          LayerBackPropagation* this_layer_back_propagation) const
 {
-    PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
-            static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
+    FlattenLayerBackPropagation* flatten_layer_back_propagation =
+            static_cast<FlattenLayerBackPropagation*>(this_layer_back_propagation);
 
-    PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
+    switch(next_layer_back_propagation->layer_pointer->get_type())
+    {
+    case Type::Perceptron:
+    {
+        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
+                static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
 
+        PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
+
+        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
+                               next_perceptron_layer_back_propagation,
+                               flatten_layer_back_propagation);
+    }
+        break;
+
+    case Type::Probabilistic:
+    {
+        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
+                static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
+
+        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
+
+        calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
+                               next_probabilistic_layer_back_propagation,
+                               flatten_layer_back_propagation);
+
+    }
+        break;
+    }
+}
+
+
+void FlattenLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation,
+                                          PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation,
+                                          FlattenLayerBackPropagation* flatten_layer_back_propagation) const
+{
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_perceptron_layer_back_propagation->layer_pointer)->get_synaptic_weights();
 
     const TensorMap<Tensor<type, 2>> next_deltas(next_perceptron_layer_back_propagation->deltas_data,
@@ -174,6 +209,101 @@ void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
 
     deltas.device(*thread_pool_device) = (next_deltas*next_perceptron_layer_forward_propagation->activations_derivatives)
             .contract(next_synaptic_weights, A_BT);
+}
+
+
+void FlattenLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* next_perceptron_layer_forward_propagation,
+                                          ProbabilisticLayerBackPropagation* next_perceptron_layer_back_propagation,
+                                          FlattenLayerBackPropagation* flatten_layer_back_propagation) const
+{
+    const Index batch_samples_number = flatten_layer_back_propagation->batch_samples_number;
+
+    const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_perceptron_layer_back_propagation->layer_pointer);
+
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
+
+    const Index next_neurons_number = probabilistic_layer_pointer->get_biases_number();
+
+    const TensorMap<Tensor<type, 2>> next_deltas(next_perceptron_layer_back_propagation->deltas_data,
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(0),
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(1));;
+
+    TensorMap<Tensor<type, 2>> deltas(flatten_layer_back_propagation->deltas_data,
+                                      flatten_layer_back_propagation->deltas_dimensions(0),
+                                      flatten_layer_back_propagation->deltas_dimensions(1));
+
+    if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
+    {
+        const TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                                                 batch_samples_number, next_neurons_number);
+
+        deltas.device(*thread_pool_device) =
+                (next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
+
+    }
+    else // Multiple
+    {
+        if(probabilistic_layer_pointer->get_activation_function() != ProbabilisticLayer::ActivationFunction::Softmax)
+        {
+            deltas.device(*thread_pool_device) =
+                    (next_deltas*next_perceptron_layer_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_perceptron_layer_forward_propagation->activations_derivatives.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
+        }
+        else
+        {
+            const Index samples_number = next_deltas.dimension(0); //aqui?
+            const Index outputs_number = next_deltas.dimension(1);
+            const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
+
+            if(outputs_number != next_layer_neurons_number)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,FlattenLayerBackPropagation*) const.\n"
+                       << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(next_perceptron_layer_forward_propagation->activations_derivatives.dimension(1) != next_layer_neurons_number)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,FlattenLayerBackPropagation*) const.\n"
+                       << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(next_perceptron_layer_forward_propagation->activations_derivatives.dimension(2) != next_layer_neurons_number)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,FlattenLayerBackPropagation*) const.\n"
+                       << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            const Index step = next_layer_neurons_number*next_layer_neurons_number;
+
+            for(Index i = 0; i < samples_number; i++)
+            {
+                next_perceptron_layer_back_propagation->delta_row = next_deltas.chip(i,0);
+
+                TensorMap< Tensor<type, 2> > activations_derivatives_matrix(next_perceptron_layer_forward_propagation->activations_derivatives.data() + i*step,
+                                                                            next_layer_neurons_number, next_layer_neurons_number);
+
+                next_perceptron_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
+                        next_perceptron_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+            }
+
+            deltas.device(*thread_pool_device) =
+                    next_perceptron_layer_back_propagation->error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
+        }
+    }
 }
 
 
