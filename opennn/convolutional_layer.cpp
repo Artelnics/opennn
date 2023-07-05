@@ -125,6 +125,8 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
 
+    type* biases_pointer = const_cast<type*>(biases.data());
+
     const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
     const TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
@@ -154,7 +156,8 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                      outputs_columns_number,
                                                      1);
 
-        convolution_output = inputs.convolve(kernel, convolutions_dimensions);
+        convolution_output = inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
+
     }
 }
 
@@ -340,10 +343,9 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     // Batch normalization
 
-    normalize(layer_forward_propagation);
+//    normalize(layer_forward_propagation);
 //    shift(layer_forward_propagation);
 
- /*
     // Activations
 
     if(is_training)
@@ -354,7 +356,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     {
         calculate_activations(layer_forward_propagation);
     }
-*/
+
 }
 
 
@@ -847,11 +849,11 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
     Tensor<type, 1> parameters(get_parameters_number());
 
     memcpy(parameters.data(),
-           biases.data(), static_cast<size_t>(biases.size())*sizeof(float));
+           biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
 
     memcpy(parameters.data() + biases.size(),
-           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(float));
-
+           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+/// @todo add  scales and offsets
     return parameters;
 }
 
@@ -916,7 +918,7 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
     synaptic_weights.setRandom();
 
-    means.resize(kernels_number); //alvaros
+    means.resize(kernels_number);
     standard_deviations.resize(kernels_number);
 
     means.resize(kernels_number);

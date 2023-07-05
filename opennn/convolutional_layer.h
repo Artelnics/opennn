@@ -242,8 +242,8 @@ protected:
 
    // Batch normalization
 
-   Tensor<type, 1> means; //alvaros
-   Tensor<type, 1> standard_deviations; //alvaros
+   Tensor<type, 1> means;
+   Tensor<type, 1> standard_deviations;
 
    Tensor<type, 1> moving_means;
    Tensor<type, 1> moving_standard_deviations;
@@ -426,10 +426,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
         const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
         const Index synaptic_weights_number = convolutional_layer_pointer->get_synaptic_weights_number();
-
-        cout << "synaptic_weights_number: " << synaptic_weights_number << endl;
-
-        //alvaros
 
         deltas_dimensions.resize(4);
 
