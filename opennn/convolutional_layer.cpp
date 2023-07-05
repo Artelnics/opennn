@@ -338,7 +338,6 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     calculate_convolutions(inputs_data, layer_forward_propagation);
 
-
     // Batch normalization
 
     normalize(layer_forward_propagation);
@@ -371,7 +370,7 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
     case Type::Convolutional:
     {
        ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation =
-               static_cast<ConvolutionalLayerForwardPropagation*>(next_convolutional_layer_forward_propagation);
+               static_cast<ConvolutionalLayerForwardPropagation*>(next_layer_forward_propagation);
 
        ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation =
                static_cast<ConvolutionalLayerBackPropagation*>(next_layer_back_propagation);
@@ -414,6 +413,8 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
                                                  next_convolutional_layer_back_propagation->deltas_dimensions(3));
 
 
+    // (next deltas * activations derivatives) ¿convolve? kernels
+
     const Index kernels_number = get_kernels_number();
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -422,10 +423,6 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     }
 
     next_deltas * next_convolutional_layer_forward_propagation->activations_derivatives;
-
-    // (next deltas * activations derivatives) ¿convolve? kernels
-
-
 }
 
 
@@ -435,13 +432,22 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
 {
     const Index batch_samples_number = convolutional_layer_back_propagation->batch_samples_number;
 
-    // Add: deltas * convolutional_layer_forward_propagation->activations_derivatives;
-
-    const Index neurons_number = get_neurons_number();
+    const Index next_flatten_layer_neurons_number  =
+            static_cast<FlattenLayerForwardPropagation*>(next_flatten_layer_forward_propagation)->layer_pointer->get_neurons_number();
 
     memcpy(convolutional_layer_back_propagation->deltas_data,
            next_flatten_layer_back_propagation->deltas_data,
-           batch_samples_number*neurons_number);
+           static_cast<Index>(batch_samples_number*next_flatten_layer_neurons_number*sizeof(type)));
+
+//    type* deltas_data = convolutional_layer_back_propagation->deltas_data;
+
+//    const Eigen::array<ptrdiff_t, 4> deltas_dimensions_array = convolutional_layer_back_propagation->get_deltas_dimensions_array();
+
+//    TensorMap<Tensor<type, 4>> deltas(deltas_data, deltas_dimensions_array);
+
+//    cout << "deltas dimensions: " << convolutional_layer_back_propagation->deltas_dimensions << endl;
+
+//    cout << "Convolutional deltas: " << endl << deltas << endl;
 }
 
 

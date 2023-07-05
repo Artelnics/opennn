@@ -182,9 +182,10 @@ void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
         calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
                                next_probabilistic_layer_back_propagation,
                                flatten_layer_back_propagation);
-
     }
         break;
+
+    default: return;
     }
 }
 
