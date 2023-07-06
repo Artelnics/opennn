@@ -28,6 +28,7 @@ namespace opennn
 {
 
 struct FlattenLayerForwardPropagation;
+struct FlattenLayerBackPropagation;
 
 /// This class represents a flatten layer.
 
@@ -91,6 +92,13 @@ public:
                                 LayerBackPropagation*,
                                 LayerBackPropagation*) const;
 
+    void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                                PerceptronLayerBackPropagation*,
+                                FlattenLayerBackPropagation*) const;
+
+    void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                                ProbabilisticLayerBackPropagation*,
+                                FlattenLayerBackPropagation*) const;
 
     // Serialization methods
 

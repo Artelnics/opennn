@@ -112,16 +112,24 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                 LayerForwardPropagation* layer_forward_propagation) const
 {
-
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
-    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
+    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array
+            = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
+
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
+            = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
+
+    type* outputs_data = layer_forward_propagation->outputs_data;
+
+    type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
+
+    type* biases_pointer = const_cast<type*>(biases.data());
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
-    type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
+    const TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
 
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
@@ -135,15 +143,6 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-/*
-    Tensor<type, 4> output_map(batch_samples_number,
-                               outputs_rows_number,
-                               outputs_columns_number,
-                               kernels_number);
-
-    type* output_map_data = output_map.data();
-
-
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
@@ -151,25 +150,38 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                 kernels_columns_number,
                                                 kernels_channels_number);
 
-        TensorMap<Tensor<type, 4>> convolution_output(output_map_data + kernel_index * single_output_size,
+        TensorMap<Tensor<type, 4>> convolution_output(outputs_data + kernel_index * single_output_size,
                                                      batch_samples_number,
                                                      outputs_rows_number,
                                                      outputs_columns_number,
                                                      1);
 
-        convolution_output = inputs.convolve(kernel, convolutions_dimensions);
+        convolution_output = inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
+
     }
-*/
 }
 
+
+// Batch normalization
 
 void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propagation)
 {
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
+    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
+
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
             = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
+
+    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+
+    Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
+
+    Tensor<type, 1>& moving_means = convolutional_layer_forward_propagation->moving_mean;
+    Tensor<type, 1>& moving_standard_deviations = convolutional_layer_forward_propagation->moving_standard_deviations;
+
+    convolutional_layer_forward_propagation->means.device(*thread_pool_device) = outputs.mean(means_dimensions);
 
     const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index outputs_rows_number = get_outputs_rows_number();
@@ -177,44 +189,66 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     const Index kernels_number = get_kernels_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-    Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
+    bool is_training = true;
+
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        TensorMap<Tensor<type, 4>> batch_normalized_output(outputs_data + kernel_index * single_output_size,
+                                                    batch_samples_number,
+                                                    outputs_rows_number,
+                                                    outputs_columns_number,
+                                                    1);
+
+        if(is_training)
+        {
+            TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
+
+            standard_deviation.device(*thread_pool_device) = (batch_normalized_output - means(kernel_index)).square().mean().sqrt();
+
+            batch_normalized_output.device(*thread_pool_device) = (batch_normalized_output - means(kernel_index))
+                    / (standard_deviations(kernel_index) + epsilon);
+
+            moving_means(kernel_index) = momentum * moving_means(kernel_index) + (type(1.0) - momentum) * means(kernel_index);
+            moving_standard_deviations(kernel_index) = momentum * moving_standard_deviations(kernel_index) + (type(1.0) - momentum) * standard_deviations(kernel_index);
+        }
+        else
+        {
+            batch_normalized_output.device(*thread_pool_device) = (batch_normalized_output - moving_means(kernel_index))
+                    / (moving_standard_deviations(kernel_index) + epsilon);
+        }
+    }
+}
+
+
+void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagation)
+{
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
+
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
+            = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
 
     TensorMap<Tensor<type, 4>> outputs(outputs_data,
                                        outputs_dimensions_array);
 
-    convolutional_layer_forward_propagation->means.device(*thread_pool_device) = outputs.mean(means_dimensions);
-
-    Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
-
-    Tensor<type, 0> standard_deviation;
+    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
+    const Index outputs_rows_number = get_outputs_rows_number();
+    const Index outputs_columns_number = get_outputs_columns_number();
+    const Index kernels_number = get_kernels_number();
+    const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 1>> single_kernel_output(outputs_data + kernel_index * single_output_size,
-                                                               single_output_size);
+        TensorMap<Tensor<type, 4>> single_kernel_output(outputs_data + kernel_index * single_output_size,
+                                                        batch_samples_number,
+                                                        outputs_rows_number,
+                                                        outputs_columns_number,
+                                                        1);
 
-        standard_deviation.device(*thread_pool_device) = (single_kernel_output - means(kernel_index)).square().mean().sqrt();
-
-        standard_deviations(kernel_index) = standard_deviation();
+        single_kernel_output = single_kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
-
-    bool is_training = true;
-    /*
-    if(is_training)
-    {
-        means.device(*thread_pool_device) = means * momentum + convolutional_layer_forward_propagation->means * (type(1.0) - momentum);
-
-        standard_deviations.device(thread_pool_device) = standard_deviations * momentum + convolutional_layer_forward_propagation->standard_deviations * (type(1.0) - momentum);
-    }
-
-    outputs.device(thread_pool_device) = (outputs - convolutional_layer_forward_propagation->means) /
-                                         (convolutional_layer_forward_propagation->standard_deviations + epsilon);
-
-    outputs = scales * outputs + offsets;
-    */
-
 }
 
 
@@ -297,7 +331,6 @@ void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagati
 }
 
 
-    // Batch normalization
 
 void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
@@ -308,11 +341,11 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
     calculate_convolutions(inputs_data, layer_forward_propagation);
 
-
     // Batch normalization
 
-    normalize(layer_forward_propagation);
- /*
+//    normalize(layer_forward_propagation);
+//    shift(layer_forward_propagation);
+
     // Activations
 
     if(is_training)
@@ -323,7 +356,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     {
         calculate_activations(layer_forward_propagation);
     }
-    */
+
 }
 
 
@@ -336,6 +369,18 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {
+    case Type::Convolutional:
+    {
+       ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation =
+               static_cast<ConvolutionalLayerForwardPropagation*>(next_layer_forward_propagation);
+
+       ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation =
+               static_cast<ConvolutionalLayerBackPropagation*>(next_layer_back_propagation);
+
+       calculate_hidden_delta(next_convolutional_layer_forward_propagation,
+                              next_convolutional_layer_back_propagation,
+                              this_convolutional_layer_back_propagation);
+    }
     case Type::Flatten:
     {
 
@@ -359,17 +404,52 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 }
 
 
+void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_convolutional_layer_forward_propagation,
+                                                ConvolutionalLayerBackPropagation* next_convolutional_layer_back_propagation,
+                                                ConvolutionalLayerBackPropagation* this_convolutional_layer_back_propagation) const
+{
+    const TensorMap<Tensor<type, 4>> next_deltas(next_convolutional_layer_back_propagation->deltas_data,
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(0),
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(1),
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(2),
+                                                 next_convolutional_layer_back_propagation->deltas_dimensions(3));
+
+
+    // (next deltas * activations derivatives) ¿convolve? kernels
+
+    const Index kernels_number = get_kernels_number();
+
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+
+    }
+
+    next_deltas * next_convolutional_layer_forward_propagation->activations_derivatives;
+}
+
+
 void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation,
                                                 FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
                                                 ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation) const
 {
     const Index batch_samples_number = convolutional_layer_back_propagation->batch_samples_number;
 
-    const Index neurons_number = get_neurons_number();
+    const Index next_flatten_layer_neurons_number  =
+            static_cast<FlattenLayerForwardPropagation*>(next_flatten_layer_forward_propagation)->layer_pointer->get_neurons_number();
 
     memcpy(convolutional_layer_back_propagation->deltas_data,
            next_flatten_layer_back_propagation->deltas_data,
-           batch_samples_number*neurons_number);
+           static_cast<Index>(batch_samples_number*next_flatten_layer_neurons_number*sizeof(type)));
+
+//    type* deltas_data = convolutional_layer_back_propagation->deltas_data;
+
+//    const Eigen::array<ptrdiff_t, 4> deltas_dimensions_array = convolutional_layer_back_propagation->get_deltas_dimensions_array();
+
+//    TensorMap<Tensor<type, 4>> deltas(deltas_data, deltas_dimensions_array);
+
+//    cout << "deltas dimensions: " << convolutional_layer_back_propagation->deltas_dimensions << endl;
+
+//    cout << "Convolutional deltas: " << endl << deltas << endl;
 }
 
 
@@ -758,7 +838,7 @@ Index ConvolutionalLayer::get_neurons_number() const
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
 
-    return kernels_number*kernels_rows_number*kernels_columns_number;
+    return kernels_number * kernels_rows_number * kernels_columns_number;
 }
 
 
@@ -769,11 +849,11 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
     Tensor<type, 1> parameters(get_parameters_number());
 
     memcpy(parameters.data(),
-           biases.data(), static_cast<size_t>(biases.size())*sizeof(float));
+           biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
 
     memcpy(parameters.data() + biases.size(),
-           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(float));
-
+           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+/// @todo add  scales and offsets
     return parameters;
 }
 
@@ -837,6 +917,9 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
                             kernels_number);
 
     synaptic_weights.setRandom();
+
+    means.resize(kernels_number);
+    standard_deviations.resize(kernels_number);
 
     means.resize(kernels_number);
     standard_deviations.resize(kernels_number);
@@ -1115,104 +1198,38 @@ Index ConvolutionalLayer::get_inputs_channels_number() const
 }
 
 
-void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
-{
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
+//void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
+//{
+//    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+//            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
-    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
-    const Index outputs_rows_number = get_outputs_rows_number();
-    const Index outputs_columns_number = get_outputs_columns_number();
-    const Index kernels_number = get_kernels_number();
-    const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
+//    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
+//    const Index outputs_rows_number = get_outputs_rows_number();
+//    const Index outputs_columns_number = get_outputs_columns_number();
+//    const Index kernels_number = get_kernels_number();
+//    const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-    Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
+//    Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
 
-    Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
+//    Tensor<type, 1>& variaces = convolutional_layer_forward_propagation->standard_deviations;
 
-    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
+//    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
-    Tensor<type, 0> standard_deviation;
+//    Tensor<type, 0> standard_deviation;
 
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {
-        const TensorMap<Tensor<type, 1>> single_kernel_output(outputs_data + kernel_index * single_output_size,
-                                                               single_output_size);
-
-        standard_deviation.device(*thread_pool_device) = (single_kernel_output - means(kernel_index)).square().mean().sqrt();
-
-        standard_deviations(kernel_index) = standard_deviation();
-    }
-}
-
-
-void ConvolutionalLayer::normalize_and_shift(const Tensor<type, 4>& inputs, const bool& is_training)
-{
-    //@todo change the inputs.dimension
-
-    const Index batch_samples_number = inputs.dimension(0);
-    const Index kernels_number = get_kernels_number();
-    const Index rows_number = inputs.dimension(2);
-    const Index columns_number = inputs.dimension(3);
-
-/*
-    if(is_training)
-    {
-        moving_means = moving_means * momentum + current_means * (type(1.0) - momentum);
-
-        moving_standard_deviations = moving_standard_deviations * momentum + current_standard_deviations * (type(1.0) - momentum);
-    }
-    else
-    {
-//        mean = moving_means;
-
-//        variance = moving_standard_deviations;
-    }
-    const Eigen::array<ptrdiff_t, 4> reshape_dimensions = {1, channels_number, 1, 1};
-
-    const Eigen::array<ptrdiff_t, 4> broadcast_dimensions = {batch_samples_number,
-                                                             1,
-                                                             rows_number,
-                                                             columns_number};
-*/
-
-    // Normalize
-
-    Tensor<type, 1> means(kernels_number);
-/*    Tensor<type, 2> outputs(2,2);
-
-    DimensionList<Index,1> dl;
-
-    outputs.sum(means, dl);
-
-    outputs.diff(
-*/
-
-//    for(Index i = 0;  i < batch_samples_number; i++)
+//    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
 //    {
-//        for(Index j = 0;  j < kernels_number; j++)
-//        {
-//            TensorMap<type, 2> x(inputs.data(),
-//                                 rows_number,
-//                                 columns_number);
+//        const TensorMap<Tensor<type, 1>> single_kernel_output(outputs_data + kernel_index * single_output_size,
+//                                                               single_output_size);
 
-//            x = x - means(j) / standard_deviation(j);
-//        }
+//        standard_deviation.device(*thread_pool_device) = (single_kernel_output - means(kernel_index)).square().mean().sqrt();
+
+//        standard_deviations(kernel_index) = standard_deviation();
 //    }
+//}
 
 
 
-    /*
-    outputs = (inputs - current_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
-                        (current_standard_deviation.reshape(reshape_dims).broadcast(broadcast_dims)
-                         + epsilon);
-
-    // Shift
-
-    outputs = scales.reshape(reshape_dims).broadcast(broadcast_dims) * outputs +
-              offsets.reshape(reshape_dims).broadcast(broadcast_dims);
-*/
-}
 
 
 void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)

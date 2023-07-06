@@ -117,6 +117,8 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      deltas.device(*thread_pool_device) = coefficient * back_propagation.errors;
 
+     cout << "Output delta: " << endl << deltas << endl;
+
      Tensor<type, 2> output_deltas(deltas);
 
      if(has_NAN(output_deltas))

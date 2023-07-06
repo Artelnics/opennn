@@ -856,6 +856,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 {
     cout << "test_calculate_gradient_convolutional_network\n";
+
 //    const Index images_number = 2;
 
 //    Tensor<Index, 1> inputs_dimensions(3);
@@ -1554,7 +1555,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1
 
-    if(false)
+    if(true)
     {
         bool is_training = true;
 
@@ -1768,11 +1769,11 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        cout << "Gradient: " << endl << back_propagation.gradient << endl;
+//        cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
+//        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
 
-        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+//        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
 
     }
 }
@@ -1782,19 +1783,19 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
-
+/*
     test_constructor();
     test_destructor();
-
+*/
     // Convolutional network methods
 
-//    test_calculate_gradient_convolutional_network();
+    test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
-
+/*
     test_back_propagate();
     test_back_propagate_lm();
-
+*/
     cout << "End of mean squared error test case.\n\n";
 }
 

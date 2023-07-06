@@ -184,7 +184,9 @@ protected:
 
     const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3};
 
-    const Eigen::array<ptrdiff_t, 4> patch_dimensions = {0, 1, 2, 3};
+    const Eigen::array<ptrdiff_t, 4> patch_dimensions ={1, pool_rows_number, pool_columns_number, 1};
+
+    const Eigen::array<ptrdiff_t, 2> max_pooling_reduce_dimensions ={1, 2};
 
 #ifdef OPENNN_CUDA
 #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
@@ -268,7 +270,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
 
 
-        patches.resize(patches_number, 2, 2, 2, 2);
+        patches.resize(patches_number, 2, 2, 2, 2); ///@todo extract_patches
     }
 
 
