@@ -925,7 +925,7 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
     if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
     {
         const TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_forward_propagation->activations_derivatives.data(),
-                                                                 batch_samples_number, next_neurons_number);
+                                                                      batch_samples_number, next_neurons_number);
 
         deltas.device(*thread_pool_device) =
                 (next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
@@ -976,6 +976,8 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
 
                 throw invalid_argument(buffer.str());
             }
+
+            /// @todo check if we can simplify all this.
 
             const Index step = next_layer_neurons_number*next_layer_neurons_number;
 
@@ -1187,8 +1189,6 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const Index batch_samples_number = back_propagation->batch_samples_number;
-
     const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 

@@ -186,11 +186,13 @@ public:
                                PoolingLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
 
+   void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
+                               ConvolutionalLayerBackPropagation*,
+                               ConvolutionalLayerBackPropagation*) const;
+
    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
                                FlattenLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
-
-   // @todo probabilistic hidden delta
 
    // Gradient methods
 

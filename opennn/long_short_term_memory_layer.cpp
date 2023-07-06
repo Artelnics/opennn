@@ -1532,10 +1532,16 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(PerceptronLayerForwardProp
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    const TensorMap<Tensor<type,2>> next_layer_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));
-    TensorMap<Tensor<type,2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
+    const TensorMap<Tensor<type,2>> next_layer_deltas(next_back_propagation->deltas_data,
+                                                      next_back_propagation->deltas_dimensions(0),
+                                                      next_back_propagation->deltas_dimensions(1));
 
-    deltas.device(*thread_pool_device) = (next_layer_deltas*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+    TensorMap<Tensor<type,2>> deltas(back_propagation->deltas_data,
+                                     back_propagation->deltas_dimensions(0),
+                                     back_propagation->deltas_dimensions(1));
+
+    deltas.device(*thread_pool_device)
+            = (next_layer_deltas*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 }
 
 

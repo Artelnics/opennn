@@ -182,6 +182,8 @@ public:
                                ProbabilisticLayerBackPropagation*,
                                PerceptronLayerBackPropagation*) const;
 
+
+
 /*
    void calculate_inputs_outputs_derivatives(LayerForwardPropagation* layer_forward_propagation) const
    {
