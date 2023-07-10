@@ -43,8 +43,6 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
     set_default();
 }
-
-
 /// Returns the number of neurons the layer applies to an image.
 
 Index PoolingLayer::get_neurons_number() const
@@ -735,6 +733,65 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Pooling layer
 
     file_stream.OpenElement("PoolingLayer");
+
+//_______________________________________________________
+
+    // Layer name
+
+    file_stream.OpenElement("LayerName");
+
+    buffer.str("");
+    buffer << layer_name;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Image size
+
+    file_stream.OpenElement("InputsVariablesDimensions");
+
+    buffer.str("");
+    buffer << "1 1 1";
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //Filters number
+
+    file_stream.OpenElement("FiltersNumber");
+
+    buffer.str("");
+    buffer << 9;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    // Filters size
+
+    file_stream.OpenElement("FiltersSize");
+
+    buffer.str("");
+    buffer << 9;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Activation function
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_pooling_method().c_str());
+
+    file_stream.CloseElement();
+
+
+    //_______________________________________________________
 
     // Pooling method
 

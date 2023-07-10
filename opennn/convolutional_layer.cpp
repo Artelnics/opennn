@@ -39,7 +39,6 @@ ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimens
                                        const Tensor<Index, 1>& new_kernels_dimensions) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
-
     set(new_inputs_dimensions, new_kernels_dimensions);
 }
 
@@ -649,7 +648,7 @@ string ConvolutionalLayer::write_activation_function() const
 
 Index ConvolutionalLayer::get_outputs_rows_number() const
 {
-    const Index inputs_rows_number = get_inputs_rows_number();
+    const Index inputs_rows_number = get_inputs_channels_number();
     const Index kernels_rows_number = get_kernels_rows_number();
 
     return inputs_rows_number - kernels_rows_number + 1;
@@ -905,8 +904,9 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
     const Index kernels_rows_number = new_kernels_dimensions[0];
     const Index kernels_columns_number = new_kernels_dimensions[1];
-    const Index kernels_channels_number = new_inputs_dimensions[2];
+    const Index kernels_channels_number = new_kernels_dimensions[2];
     const Index kernels_number = new_kernels_dimensions[3];
+
 
     biases.resize(kernels_number);
     biases.setRandom();
@@ -1288,11 +1288,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     for(Index i = 0; i < inputs_dimensions.size(); i++)
     {
         buffer << inputs_dimensions(i);
-
         if(i != inputs_dimensions.size() - 1) buffer << " ";
     }
-
-    cout << "Input variables dimensions string: " << buffer.str().c_str() << endl;
 
     file_stream.PushText(buffer.str().c_str());
 

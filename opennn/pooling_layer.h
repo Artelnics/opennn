@@ -111,6 +111,8 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
+    void set_name(const string& new_layer_name);
+
     void set_default();
 
     // Outputs

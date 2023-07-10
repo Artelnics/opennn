@@ -899,29 +899,31 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
     delete_layers();
 
     ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
-
     this->add_layer(scaling_layer);
 
     Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
 
-    for(Index i = 0; i < blocks_number; i++)
-    {
+//    for(Index i = 0; i < blocks_number; i++)
+//    {
         // Check convolutional
-//        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-//        convolutional_layer->set_name("convolutional_layer_" + to_string(i+1));
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        convolutional_layer->set_name("Convolutional layer" /* + to_string(1) */);
 
-//        this->add_layer(convolutional_layer);
+        this->add_layer(convolutional_layer);
 
-//        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
-        /*
-        // Pooling layer 1
-        PoolingLayer* pooling_layer = new PoolingLayer(outputs_dimensions);
-        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
-        this->add_layer(pooling_layer);
-        outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
-        */
-    }
+
+//        // Pooling layer 1
+
+//        PoolingLayer* pooling_layer = new PoolingLayer(outputs_dimensions);
+//        pooling_layer->set_name("pooling_layer_" + to_string(i+1));
+
+//        this->add_layer(pooling_layer);
+
+//        outputs_dimensions = pooling_layer->get_outputs_dimensions();
+
+//    }
 
     FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
     this->add_layer(flatten_layer);
