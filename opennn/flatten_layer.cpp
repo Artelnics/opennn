@@ -24,6 +24,7 @@ FlattenLayer::FlattenLayer() : Layer()
 FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
 {
     inputs_dimensions = new_inputs_dimensions;
+
     set(inputs_dimensions);
 
     layer_type = Type::Flatten;
@@ -95,7 +96,7 @@ Index FlattenLayer::get_inputs_channels_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return inputs_dimensions(0)*inputs_dimensions(1)*inputs_dimensions(2);
+    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
 }
 
 

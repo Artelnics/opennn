@@ -7797,7 +7797,9 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
 void DataSet::set_data_constant(const type& new_value)
 {
     data.setConstant(new_value);
+    data.dimensions();
 }
+
 
 type DataSet::round_to_precision(type x, const int& precision){
 

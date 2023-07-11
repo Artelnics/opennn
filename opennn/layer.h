@@ -58,7 +58,7 @@ public:
     /// This enumeration represents the possible types of layers.
 
     enum class Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
-              LongShortTermMemory,Recurrent, Unscaling, Bounding, Flatten, Resnet50, BatchNormalization};
+              LongShortTermMemory,Recurrent, Unscaling, Bounding, Flatten};
 
     // Constructor
 
@@ -77,6 +77,25 @@ public:
     string get_name() const
     {
         return layer_name;
+    }
+
+    string get_output_shape() const
+    {
+        Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
+
+        stringstream output_shape_string;
+        output_shape_string << "(";
+        for (Index i = 0; i < output_dimensions.size(); i++)
+        {
+            output_shape_string << output_dimensions[i];
+            if (i != output_dimensions.size() - 1)
+            {
+                output_shape_string << ", ";
+            }
+        }
+        output_shape_string << ")";
+
+        return output_shape_string.str();
     }
 
     virtual Tensor<Index,  1> get_inputs_dimensions() const {return Tensor<Index,1>();}

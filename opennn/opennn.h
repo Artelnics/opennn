@@ -33,6 +33,7 @@
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
+#include "vgg16.h"
 
 // Training strategy
 

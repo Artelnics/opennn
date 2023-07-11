@@ -32,11 +32,11 @@
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
 //#include "resnet50_layer.h"
+
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 #include "text_analytics.h"
-#include "batch_normalization_layer.h"
 
 namespace opennn
 {
@@ -240,6 +240,7 @@ public:
    Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_unscaled_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(Tensor<type, 4>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
@@ -274,6 +275,7 @@ public:
    // virtual void read_XML( );
 
    void print() const;
+   void summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 
@@ -418,15 +420,15 @@ struct NeuralNetworkForwardPropagation
             }
             break;
 
-            case Layer::Type::Flatten:
+            case Layer::Type::Pooling:
             {
-                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+                layers(i) = new PoolingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
-            case Layer::Type::BatchNormalization:
+            case Layer::Type::Flatten:
             {
-                layers(i) = new BatchNormalizationLayerForwardPropagation(batch_samples_number, layers_pointers(i));;
+                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
@@ -545,15 +547,15 @@ struct NeuralNetworkBackPropagation
             }
             break;
 
-            case Layer::Type::Flatten:
+            case Layer::Type::Pooling:
             {
-                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PoolingLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Type::Resnet50:
+            case Layer::Type::Flatten:
             {
-                //layers(i) = new Resnet50LayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 

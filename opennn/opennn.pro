@@ -86,6 +86,7 @@ HEADERS += \
     normalized_squared_error.h\
     minkowski_error.h \
     mean_squared_error.h \
+    vgg16.h \
     weighted_squared_error.h\
     cross_entropy_error.h \
     training_strategy.h \
@@ -110,7 +111,6 @@ HEADERS += \
     text_analytics.h \
 #    region_based_object_detector.h \
 #    json_to_xml.h \
-    batch_normalization_layer.h\
     region_proposal_layer.h \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
@@ -148,6 +148,7 @@ SOURCES += \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
     mean_squared_error.cpp \
+    vgg16.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \
@@ -169,7 +170,6 @@ SOURCES += \
     text_analytics.cpp \
 #    region_based_object_detector.cpp \
 #    json_to_xml.cpp \
-    batch_normalization_layer.cpp\
     region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \

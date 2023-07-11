@@ -1101,7 +1101,6 @@ private:
     Tensor<string, 1> labels_tokens;
 
     Index width_no_padding;
-    // Local Outlier Factor
 
     Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = type(2.0), bool = true) const;
 
@@ -1170,12 +1169,15 @@ struct DataSetBatch
 
     void set_inputs(Tensor<type, 2>& new_inputs)
     {
-//        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
-//        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
-
-
-//        inputs_data = move(new_inputs_data);
         inputs_data = new_inputs.data();
+
+        inputs_dimensions = get_dimensions(new_inputs);
+    }
+
+    void set_inputs(Tensor<type, 4>& new_inputs)
+    {
+        inputs_data = new_inputs.data();
+
         inputs_dimensions = get_dimensions(new_inputs);
     }
 
@@ -1187,9 +1189,9 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-    type* inputs_data = nullptr;
+    Eigen::Tensor<type, 4> data;
 
- //   unique_ptr<type[]> inputs_data;
+    type* inputs_data = nullptr;
 
     Tensor<Index, 1> inputs_dimensions;
 

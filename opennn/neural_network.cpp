@@ -1252,6 +1252,22 @@ Tensor<Index, 1> NeuralNetwork::get_architecture() const
 /// Returns the number of parameters in the neural network
 /// The number of parameters is the sum of all the neural network parameters (biases and synaptic weights).
 
+//Index NeuralNetwork::get_parameters_number() const
+//{
+//    cout << "----- get_parameters_number -----" << endl;
+
+//    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+//    Index parameters_number = 0;
+
+//    for(Index i = 0; i < trainable_layers_pointers.size(); i++)
+//    {
+//        parameters_number += trainable_layers_pointers[i]->get_parameters_number();
+//    }
+
+//    return parameters_number;
+//}
+
 Index NeuralNetwork::get_parameters_number() const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
@@ -1260,7 +1276,14 @@ Index NeuralNetwork::get_parameters_number() const
 
     for(Index i = 0; i < trainable_layers_pointers.size(); i++)
     {
-        parameters_number += trainable_layers_pointers[i]->get_parameters_number();
+        if(trainable_layers_pointers[i] == nullptr)
+        {
+            cout << "Layer " << i << " is nullptr." << endl;
+        }
+        else
+        {
+            parameters_number += trainable_layers_pointers[i]->get_parameters_number();
+        }
     }
 
     return parameters_number;
@@ -1527,8 +1550,8 @@ Index NeuralNetwork::get_trainable_layers_number() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
-                && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Type::Bounding)
+        && layers_pointers(i)->get_type() != Layer::Type::Unscaling
+        && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             count++;
         }
@@ -1546,8 +1569,8 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers(i)->get_type() == Layer::Type::Scaling
-                || layers_pointers(i)->get_type() == Layer::Type::Unscaling
-                || layers_pointers(i)->get_type() == Layer::Type::Bounding)
+        || layers_pointers(i)->get_type() == Layer::Type::Unscaling
+        || layers_pointers(i)->get_type() == Layer::Type::Bounding)
         {
             count++;
         }
@@ -1560,6 +1583,7 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
     return count;
 }
 
+
 Index NeuralNetwork::get_last_trainable_layer_index() const
 {
     const Index layers_number = get_layers_number();
@@ -1569,8 +1593,8 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     for(Index i = count; i >= 0 ; i--)
     {
         if(layers_pointers(i)->get_type() == Layer::Type::Scaling
-                || layers_pointers(i)->get_type() == Layer::Type::Unscaling
-                || layers_pointers(i)->get_type() == Layer::Type::Bounding)
+        || layers_pointers(i)->get_type() == Layer::Type::Unscaling
+        || layers_pointers(i)->get_type() == Layer::Type::Bounding)
         {
             count--;
         }
@@ -1831,6 +1855,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
                                               forward_propagation.layers(i),
                                               is_training);
     }
+
 }
 
 
@@ -2085,6 +2110,44 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
     return TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 }
+
+
+Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
+{
+    const Index inputs_rank = inputs.rank();
+
+    if(inputs_rank != 4)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Tensor<type, 2> calculate_outputs(Tensor<type, 4>&).\n"
+               << "Inputs rank must be 4.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    DataSetBatch data_set_batch;
+    data_set_batch.set_inputs(inputs);
+
+    const Index batch_samples_number = inputs.dimension(0);
+
+    NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
+
+    forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+
+    const Index layers_number = get_layers_number();
+
+    if(layers_number == 0) return Tensor<type, 2>();
+
+    type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
+    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
+
+    return TensorMap<Tensor<type,2>>(outputs_data,
+                                     outputs_dimensions(0),
+                                     outputs_dimensions(1));
+}
+
 
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
@@ -3629,6 +3692,60 @@ void NeuralNetwork::print() const
              << " " << layers_pointers[i]->get_type_string() << " neurons" << endl;
     }
 }
+
+//void NeuralNetwork::summary() const
+//{
+//    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+//    cout << "========= Model Summary =========" << endl;
+
+//    for(Index i = 0; i < trainable_layers_pointers.size(); i++)
+//    {
+//        Layer* currentLayer = trainable_layers_pointers[i];
+//        if(currentLayer == nullptr)
+//        {
+//            cout << "========= Layer " << i << " is nullptr. =========" << endl;
+//        }
+//        else
+//        {
+//            cout << "========= Layer " << i << " =========" << endl;
+//            cout << "Type: " << typeid(*currentLayer).name() << endl;
+//            cout << "Parameters number: " << currentLayer->get_parameters_number() << endl;
+//        }
+//    }
+
+//    cout << "Total Parameters number: " << get_parameters_number() << endl;
+//    cout << "===============================" << endl;
+//}
+
+void NeuralNetwork::summary() const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    cout << "_________________________________________________________________" << endl;
+    cout << "Layer (type)                Output Shape              Param #" << endl;
+    cout << "=================================================================" << endl;
+
+    for(Index i = 0; i < trainable_layers_pointers.size(); i++)
+    {
+        Layer* currentLayer = trainable_layers_pointers[i];
+        if(currentLayer == nullptr)
+        {
+            cout << "========= Layer " << i << " is nullptr. =========" << endl;
+        }
+        else
+        {
+            cout << currentLayer->get_name() << "\t"
+                 << currentLayer->get_output_shape() << "\t" << currentLayer->get_parameters_number() << endl;
+            cout << "\t" << endl;
+        }
+    }
+
+    cout << "=================================================================" << endl;
+    cout << "Total Parameters number: " << get_parameters_number() << endl;
+    cout << "=================================================================" << endl;
+}
+
 
 
 /// Saves to an XML file the members of a neural network object.

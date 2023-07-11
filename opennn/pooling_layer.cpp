@@ -36,6 +36,8 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
 { 
+    set(new_input_variables_dimensions, pool_dimensions);
+
     inputs_dimensions = new_input_variables_dimensions;
 
     pool_rows_number = pool_dimensions[0];
@@ -57,9 +59,9 @@ Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
 
-//    outputs_dimensions[0] = input_variables_dimensions[0];
-//    outputs_dimensions[1] = get_outputs_rows_number();
-//    outputs_dimensions[2] = get_outputs_columns_number();
+    outputs_dimensions[0] = get_outputs_rows_number();
+    outputs_dimensions[1] = get_outputs_columns_number();
+    outputs_dimensions[2] = inputs_dimensions[2];
 
     return outputs_dimensions;
 }
@@ -207,6 +209,21 @@ string PoolingLayer::write_pooling_method() const
 }
 
 
+void PoolingLayer::set(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& new_pool_dimensions)
+{
+    inputs_dimensions = new_input_variables_dimensions;
+
+    pool_rows_number = new_pool_dimensions[0];
+    pool_columns_number = new_pool_dimensions[1];
+
+    set_default();
+}
+
+void PoolingLayer::set_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
+}
+
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
@@ -300,12 +317,36 @@ void PoolingLayer::set_default()
 }
 
 
-void PoolingLayer::forward_propagate(type*,
-                                     const Tensor<Index, 1>&,
-                                     LayerForwardPropagation*,
-                                     const bool&)
+void PoolingLayer::forward_propagate(type* inputs_data,
+                                     const Tensor<Index, 1>& inputs_dimensions,
+                                     LayerForwardPropagation* layer_forward_propagation,
+                                     const bool& is_training)
 {
+    if(layer_forward_propagation == nullptr) cout << "NULL" << endl;
 
+    switch(pooling_method)
+    {
+        case PoolingMethod::MaxPooling:
+            forward_propagate_max_pooling(inputs_data,
+                                          inputs_dimensions,
+                                          layer_forward_propagation,
+                                          is_training);
+            break;
+
+        case PoolingMethod::AveragePooling:
+            forward_propagate_average_pooling(inputs_data,
+                                              inputs_dimensions,
+                                              layer_forward_propagation,
+                                              is_training);
+            break;
+
+        case PoolingMethod::NoPooling:
+            forward_propagate_no_pooling(inputs_data,
+                                         inputs_dimensions,
+                                         layer_forward_propagation,
+                                         is_training);
+            break;
+    }
 }
 
 
@@ -317,7 +358,6 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& is_training)
 {
-
     const type kernel_size = static_cast<type>(pool_rows_number * pool_columns_number);
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
@@ -338,6 +378,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
     kernel.setConstant(static_cast<type>(1.0/kernel_size));
 
     outputs = inputs.convolve(kernel, convolution_dimensions);
+
 }
 
 
@@ -349,6 +390,7 @@ void PoolingLayer::forward_propagate_no_pooling(type* inputs_data,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
 {
+
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
     const Index neurons_number = get_neurons_number();
@@ -362,106 +404,35 @@ void PoolingLayer::forward_propagate_no_pooling(type* inputs_data,
 
 
 /// Returns the result of applying max pooling to a batch of images.
-/// @param inputs The batch of images.
-/*
-void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
-                                                 const Tensor<Index, 1>& inputs_dimensions,
-                                                 LayerForwardPropagation* layer_forward_propagation,
-                                                 const bool& is_training)
-{
-    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
-            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
-
-    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
-
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
-
-    type* outputs_data = layer_forward_propagation->outputs_data;
-
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
-
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
-
-    /*
-
-    const Index batch_samples_number = inputs_dimensions(0);
-
-    const Index channels_number = get_channels_number();
-
-    const Index outputs_rows_number = get_outputs_rows_number();
-
-    const Index outputs_columns_number = get_outputs_columns_number();
-
-#pragma omp parallel for
-    for(Index image_index = 0; image_index < batch_samples_number; image_index++)
-    {
-        for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-        {
-            for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
-            {
-                for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
-                {
-                    outputs(image_index, channel_index, row_index, column_index)
-                            = inputs(image_index, channel_index, row_index*row_stride, column_index*column_stride);
-
-                    for(Index window_row = 0; window_row < pool_rows_number; window_row++)
-                    {
-                        const Index row = row_index*row_stride + window_row;
-
-                        for(Index window_column = 0; window_column < pool_columns_number; window_column++)
-                        {
-                            const Index column = column_index*column_stride + window_column;
-
-                            if(inputs(image_index, channel_index, row, column) > outputs(image_index, channel_index, row_index, column_index))
-                            {
-                                outputs(image_index, channel_index, row_index, column_index)
-                                        = inputs(image_index, channel_index, row, column);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-}
-*/
 
 void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                  const Tensor<Index, 1>& inputs_dimensions,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training)
 {
-    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
-            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
+//    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
+//            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
+//    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
+//    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+//    type* outputs_data = layer_forward_propagation->outputs_data;
 
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
+//    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+//    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
 
-    auto patches = inputs.extract_patches(patch_dimensions);
+//    auto patches = inputs.extract_patches(patch_dimensions);
+//    Eigen::array<ptrdiff_t, 4> reshaped_dims;
+//    reshaped_dims[0] = outputs_dimensions_array[0];
+//    reshaped_dims[1] = outputs_dimensions_array[1];
+//    reshaped_dims[2] = outputs_dimensions_array[2];
+//    reshaped_dims[3] = outputs_dimensions_array[3];
 
-    auto max_pooled = patches.maximum(max_pooling_reduce_dimensions);
+//    outputs = patches.maximum(max_pooling_reduce_dimensions).reshape(reshaped_dims);
 
-/// @todo try extract_image_patches, tensor map
-    Eigen::array<ptrdiff_t, 4> reshaped_dims;
-    reshaped_dims[0] = outputs_dimensions_array[0];
-    reshaped_dims[1] = outputs_dimensions_array[1];
-    reshaped_dims[2] = outputs_dimensions_array[2];
-    reshaped_dims[3] = outputs_dimensions_array[3];
-
-    auto reshaped_max_pooled = max_pooled.reshape(reshaped_dims);
-
-    outputs = reshaped_max_pooled;
 }
-
-
 
 
 void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,

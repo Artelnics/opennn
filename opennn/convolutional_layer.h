@@ -62,10 +62,6 @@ public:
 
     explicit ConvolutionalLayer();
 
-    explicit ConvolutionalLayer(const Index&,
-                                const Index&,
-                                const ActivationFunction& = ConvolutionalLayer::ActivationFunction::Linear);
-
     explicit ConvolutionalLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     // Destructor
@@ -88,6 +84,8 @@ public:
 
     Tensor<Index, 1> get_inputs_dimensions() const;
     Tensor<Index, 1> get_outputs_dimensions() const;
+
+    pair<Index, Index> get_padding() const;
 
     Index get_outputs_rows_number() const;
 
@@ -154,7 +152,7 @@ public:
 
     // Padding
 
-    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&);
+    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Combinations
 
@@ -239,9 +237,6 @@ protected:
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
    // Batch normalization
-
-   Tensor<type, 1> means;
-   Tensor<type, 1> standard_deviations;
 
    Tensor<type, 1> moving_means;
    Tensor<type, 1> moving_standard_deviations;
@@ -335,9 +330,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         means.resize(kernels_number);
         standard_deviations.resize(kernels_number);
 
-        moving_mean.resize(kernels_number);
-        moving_standard_deviations.resize(kernels_number);
-
         activations_derivatives.resize(batch_samples_number,
                                        outputs_rows_number,
                                        outputs_columns_number,
@@ -365,9 +357,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 1> means;
     Tensor<type, 1> standard_deviations;
-
-    Tensor<type, 1> moving_mean;
-    Tensor<type, 1> moving_standard_deviations;
 
     Tensor<type, 4> activations_derivatives;
 };

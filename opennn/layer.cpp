@@ -64,9 +64,6 @@ string Layer::get_type_string() const
     case Type::Flatten:
         return "Flatten";
 
-    case Type::Resnet50:
-        return "Resnet50";
-
     default:
         return "Unkown type";
     }

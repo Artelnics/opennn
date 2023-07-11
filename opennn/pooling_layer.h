@@ -95,8 +95,11 @@ public:
 
     // Set methods
 
+    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+
     void set_inputs_number(const Index&) {}
     void set_neurons_number(const Index&) {}
+    void set_name(const string&);
 
     void set_inputs_dimensions(const Tensor<Index, 1>&);
 
@@ -111,17 +114,9 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
-    void set_name(const string& new_layer_name);
-
     void set_default();
 
     // Outputs
-
-    Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
-
-    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
-
-    Tensor<type, 4> calculate_average_pooling_outputs(const Tensor<type, 4>&) const;
 
     // First order activations
 
@@ -191,7 +186,7 @@ protected:
     const Eigen::array<ptrdiff_t, 2> max_pooling_reduce_dimensions ={1, 2};
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+#include "../../opennn-cuda/op(3, 3, 3, 64)ennn-cuda/pooling_layer_cuda.h"
 #endif
 
 };

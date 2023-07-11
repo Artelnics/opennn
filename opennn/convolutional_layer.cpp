@@ -20,14 +20,6 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 }
 
 
-ConvolutionalLayer::ConvolutionalLayer(const Index& new_inputs_number,
-                                       const Index& new_outputs_number,
-                                       const ConvolutionalLayer::ActivationFunction& new_activation_function) : Layer()
-{
-    layer_type = Layer::Type::Convolutional;
-}
-
-
 /// Inputs' dimensions modifier constructor.
 /// After setting new dimensions for the inputs, it creates and initializes a ConvolutionalLayer object
 /// with a number of kernels of a given size.
@@ -75,14 +67,14 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 /// @param input Tensor containing the inputs.
 /// @param padded_output input tensor padded.
 
-void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output)
+void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output) const
 {
     switch(convolution_type)
     {
     case ConvolutionType::Valid: padded_output = inputs; return;
 
     case ConvolutionType::Same:
-    {
+    {        
         const Index input_rows_number = inputs.dimension(1);
         const Index input_cols_number = inputs.dimension(2);
 
@@ -94,12 +86,13 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
         const int pad_rows = int(0.5 *(input_rows_number*(row_stride - 1) - row_stride + kernel_rows_number));
         const int pad_cols = int(0.5 *(input_cols_number*(column_stride - 1) - column_stride + kernel_cols_number));
 
-        paddings[0] = make_pair(pad_rows, pad_rows);
-        paddings[1] = make_pair(pad_cols, pad_cols);
-        paddings[2] = make_pair(0, 0);
+        paddings[0] = make_pair(0, 0);
+        paddings[1] = make_pair(pad_rows, pad_rows);
+        paddings[2] = make_pair(pad_cols, pad_cols);
         paddings[3] = make_pair(0, 0);
 
         padded_output = inputs.pad(paddings);
+
         return;
     }
     }
@@ -142,6 +135,10 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
+    Tensor<type, 4> padded_inputs;
+
+    insert_padding(inputs, padded_inputs);
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
@@ -155,8 +152,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                      outputs_columns_number,
                                                      1);
 
-        convolution_output = inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
-
+        convolution_output = padded_inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
     }
 }
 
@@ -176,9 +172,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
 
     Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
-
-    Tensor<type, 1>& moving_means = convolutional_layer_forward_propagation->moving_mean;
-    Tensor<type, 1>& moving_standard_deviations = convolutional_layer_forward_propagation->moving_standard_deviations;
+    Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
 
     convolutional_layer_forward_propagation->means.device(*thread_pool_device) = outputs.mean(means_dimensions);
 
@@ -648,20 +642,13 @@ string ConvolutionalLayer::write_activation_function() const
 
 Index ConvolutionalLayer::get_outputs_rows_number() const
 {
-    const Index inputs_rows_number = get_inputs_channels_number();
+    const Index inputs_rows_number = get_inputs_rows_number();
     const Index kernels_rows_number = get_kernels_rows_number();
 
-    return inputs_rows_number - kernels_rows_number + 1;
+    const pair<Index, Index> padding = get_padding();
 
-    ///@todo padding
-
-    //    const Index kernels_rows_number = get_kernels_rows_number();
-
-    //    const Index padding_height = get_padding_height();
-
-    //    return ((input_variables_dimensions(2) - kernels_rows_number + 2 * padding_height)/row_stride) + 1;
+    return inputs_rows_number - kernels_rows_number + 2*padding.first + 1;
 }
-
 
 /// Returns the number of columns the result of applying the layer's kernels to an image will have.
 
@@ -671,15 +658,10 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
     const Index kernels_columns_number = get_kernels_columns_number();
 
-    return inputs_columns_number - kernels_columns_number + 1;
+    const pair<Index, Index> padding = get_padding();
 
-    ///@todo padding
+    return inputs_columns_number - kernels_columns_number + 2*padding.second + 1;
 
-    //    const Index kernels_columns_number = get_kernels_columns_number();
-
-    //    const Index padding_width = get_padding_width();
-
-    //    return ((input_variables_dimensions(3) - kernels_columns_number + 2 * padding_width)/column_stride) + 1;
 }
 
 
@@ -700,6 +682,8 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
     outputs_dimensions(0) = get_outputs_rows_number();
     outputs_dimensions(1) = get_outputs_columns_number();
     outputs_dimensions(2) = get_kernels_number();
+
+
 
     return outputs_dimensions;
 }
@@ -871,7 +855,8 @@ Index ConvolutionalLayer::get_parameters_number() const
 /// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images, number of channels, rows number, columns number).
 /// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (number of kernels, number of channels, rows number, columns number).
 
-void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, const Tensor<Index, 1>& new_kernels_dimensions)
+void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions,
+                             const Tensor<Index, 1>& new_kernels_dimensions)
 {
 #ifdef OPENNN_DEBUG
 
@@ -907,7 +892,6 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
     const Index kernels_channels_number = new_kernels_dimensions[2];
     const Index kernels_number = new_kernels_dimensions[3];
 
-
     biases.resize(kernels_number);
     biases.setRandom();
 
@@ -918,11 +902,8 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
 
     synaptic_weights.setRandom();
 
-    means.resize(kernels_number);
-    standard_deviations.resize(kernels_number);
-
-    means.resize(kernels_number);
-    standard_deviations.resize(kernels_number);
+    moving_means.resize(kernels_number);
+    moving_standard_deviations.resize(kernels_number);
 
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
@@ -1164,6 +1145,38 @@ Index ConvolutionalLayer::get_biases_number() const
 {
     return biases.size();
 }
+
+
+pair<Index, Index> ConvolutionalLayer::get_padding() const
+{
+    switch(convolution_type)
+    {
+    case ConvolutionType::Valid:
+        return make_pair(0, 0);
+
+    case ConvolutionType::Same:
+    {
+        const Index kernel_rows_number = get_kernels_rows_number();
+        const Index kernel_cols_number = get_kernels_columns_number();
+
+        const Index pad_rows = (kernel_rows_number - 1) / 2;
+        const Index pad_cols = (kernel_cols_number - 1) / 2;
+
+        return make_pair(pad_rows, pad_cols);
+    }
+    default:
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "pair<Index, Index> get_padding() const method.\n"
+               << "Unknown convolution type.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+    }
+}
+
 
 
 /// Returns the number of synaptic weights in the layer.
