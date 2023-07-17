@@ -392,13 +392,13 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     // Loss index
 
     calculate_errors(batch, forward_propagation, back_propagation);
-
+cout << "Errors" << endl;
     calculate_error(batch, forward_propagation, back_propagation);
-
+cout << "Error" << endl;
     calculate_layers_delta(batch, forward_propagation, back_propagation);
-
+cout << "Layers delta " << endl;
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-
+cout << "Error gradient" << endl;
     // Loss
 
     back_propagation.loss = back_propagation.error;
