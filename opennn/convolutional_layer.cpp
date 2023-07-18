@@ -485,6 +485,10 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     convolutional_layer_back_propagation->deltas_times_activations_derivatives.device(*thread_pool_device)
             = deltas * convolutional_layer_forward_propagation->activations_derivatives;
 
+
+    Eigen::array<Eigen::Index, 4> offsets;
+    Eigen::array<Eigen::Index, 4> extents;
+
     const TensorMap<Tensor<type, 3>> image(inputs.data() ,
                                            inputs_rows_number,
                                            inputs_columns_number,
@@ -492,23 +496,26 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     cout << "Delta times activations derivativeS: " << endl << convolutional_layer_back_propagation->deltas_times_activations_derivatives << endl;
 
-    cout << "Dimensions: " << convolutional_layer_back_propagation->deltas_times_activations_derivatives.dimensions() << endl;
+    cout << "Delta dimension: " << convolutional_layer_back_propagation->deltas_times_activations_derivatives.dimensions() << endl;
+    cout << "Batch samples number: " << batch_samples_number << endl;
+    cout << "kernels number: " << kernels_number << endl;
+    cout << "Output rows number: " << outputs_rows_number << endl;
+    cout << "Output columns number: " << outputs_columns_number << endl;
+
     cout << "Inputs dimensions: " << inputs.dimensions() << endl;
 
-    cout << "Convolution: " << endl
-         << inputs.convolve(convolutional_layer_back_propagation->deltas_times_activations_derivatives, convolutional_layer_back_propagation->deltas_times_activations_derivatives.dimensions()) << endl;
 
     system("pause");
+
 
     Tensor<type, 4> delta_slice;
 
     const Index delta_slice_dimensions = outputs_rows_number*outputs_columns_number;
 
-    Eigen::array<Eigen::Index, 4> offsets;
-    Eigen::array<Eigen::Index, 4> extents;
+
 
     // Biases derivatives
-/*
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
 //        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
@@ -517,9 +524,10 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 //         delta_slice;// @todo compilation error because change of dimensions !!!
 //        = deltas_times_activations_derivatives.slice(offsets, extents);
 
-        offsets = {kernel_index, 0, 0, delta_slice_dimensions*kernel_index};
-        extents = {1, kernels_channels_number, outputs_rows_number, delta_slice_dimensions};
-        delta_slice = deltas.slice(offsets, extents);
+        offsets = {kernel_index, 0, 0, kernel_index};
+        extents = {1, outputs_rows_number, outputs_columns_number, 1};
+
+        delta_slice = convolutional_layer_back_propagation->deltas_times_activations_derivatives.slice(offsets, extents);
 
         const Tensor<type, 0> current_sum = delta_slice.sum();
 
@@ -549,22 +557,30 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 //             delta_slice; // @todo compilation error because change of dimensions !!! = deltas_times_derivatives.slice(offsets, extents);
 //              = deltas_times_derivatives.slice(offsets, extents);
 
-            offsets = {image_index, 1, 1, delta_slice_dimensions*kernel_index};
-            extents = {1, kernels_channels_number, outputs_rows_number, delta_slice_dimensions};
+            offsets = {image_index, 0, 0, kernel_index};
+            extents = {1, outputs_rows_number, outputs_columns_number, 1};
 
-            delta_slice = deltas.slice(offsets, extents);
+            delta_slice = convolutional_layer_back_propagation->deltas_times_activations_derivatives.slice(offsets, extents);
 
-            cout << "Delta slice: " << endl << delta_slice << endl;
+            cout << "Delta slice: " << delta_slice << endl;
+            cout << "Delta slice dimensions: " << delta_slice.dimensions() << endl;
 
             const TensorMap<Tensor<type, 3>> image(inputs.data() + image_index*image_size,
                                                    inputs_rows_number,
                                                    inputs_columns_number,
                                                    inputs_channels_number);
 
+            cout << "Current image " << image_index << endl << image << endl;
+            cout << "current image dimensions: " << image.dimensions() << endl;
+
             const TensorMap<Tensor<type, 3>> delta_reshape(delta_slice.data(),
                                                            outputs_rows_number,
                                                            outputs_columns_number,
-                                                           get_outputs_dimensions()[0]); // check it!!! kernels_channels_number ??
+                                                           1);
+
+            cout << "Delta reshape: " << endl << delta_reshape << endl;
+
+            cout << "Convolution: " << endl << image.convolve(delta_reshape, convolutions_dimensions) << endl;
 
             if(image_index == 0)
             {
@@ -580,8 +596,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                kernel_synaptic_weights_derivatives.data(),
                static_cast<size_t>(kernel_synaptic_weights_number)*sizeof(type));
     }
-
-*/
 
     cout << "End of calculate convolutional error gradient" << endl;
 }

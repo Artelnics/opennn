@@ -1563,7 +1563,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         const Index input_rows_number = 3;
         const Index input_columns_number = 3;
 
-        const Index images_number = 2;
+        const Index images_number = 1;
 
         Tensor<Index, 1> inputs_dimensions(3);
         inputs_dimensions(0) = input_channels_number; // Channels number
@@ -1575,54 +1575,57 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         // Image 1
 
         data(0,0) = 1;
-        data(0,1) = 10;
-        data(0,2) = 2;
-        data(0,3) = 11;
-        data(0,4) = 3;
-        data(0,5) = 12;
-        data(0,6) = 4;
-        data(0,7) = 13;
-        data(0,8) = 5;
-        data(0,9) = 14;
-        data(0,10) = 6;
-        data(0,11) = 15;
-        data(0,12) = 7;
-        data(0,13) = 16;
-        data(0,14) = 8;
-        data(0,15) = 17;
-        data(0,16) = 9;
+        data(0,1) = 2;
+        data(0,2) = 3;
+        data(0,3) = 4;
+        data(0,4) = 5;
+        data(0,5) = 6;
+        data(0,6) = 7;
+        data(0,7) = 8;
+        data(0,8) = 9;
+        data(0,9) = 10;
+        data(0,10) = 11;
+        data(0,11) = 12;
+        data(0,12) = 13;
+        data(0,13) = 14;
+        data(0,14) = 15;
+        data(0,15) = 16;
+        data(0,16) = 17;
         data(0,17) = 18;
 
         data(0,18) = 1; // Target
 
         // Image 2
 
-        data(1,0) = 19;
-        data(1,1) = 28;
-        data(1,2) = 20;
-        data(1,3) = 29;
-        data(1,4) = 21;
-        data(1,5) = 30;
-        data(1,6) = 22;
-        data(1,7) = 31;
-        data(1,8) = 23;
-        data(1,9) = 32;
-        data(1,10) = 24;
-        data(1,11) = 33;
-        data(1,12) = 25;
-        data(1,13) = 34;
-        data(1,14) = 26;
-        data(1,15) = 35;
-        data(1,16) = 27;
-        data(1,17) = 36;
+//        data(1,0) = 19;
+//        data(1,1) = 20;
+//        data(1,2) = 21;
+//        data(1,3) = 22;
+//        data(1,4) = 23;
+//        data(1,5) = 24;
+//        data(1,6) = 25;
+//        data(1,7) = 26;
+//        data(1,8) = 27;
+//        data(1,9) = 28;
+//        data(1,10) = 29;
+//        data(1,11) = 30;
+//        data(1,12) = 31;
+//        data(1,13) = 32;
+//        data(1,14) = 33;
+//        data(1,15) = 34;
+//        data(1,16) = 35;
+//        data(1,17) = 36;
 
-        data(1,18) = 0; // Target
+//        data(1,18) = 0; // Target
 
         DataSet data_set(images_number,1,1);
-        data_set.set_input_variables_dimensions(inputs_dimensions);
 
         data_set.set_data(data); // 2d data
 //        data_set.set_data_random();
+
+        cout << "Data: " << endl << data_set.get_data() << endl;
+
+        data_set.set_input_variables_dimensions(inputs_dimensions);
 
         data_set.set_training();
 
@@ -1769,12 +1772,21 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        cout << "Gradient: " << endl << back_propagation.gradient << endl;
+        cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
         const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
 
         cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
 
+        cout << "Gradient   ;    Numerical gradient " << endl;
+
+        for(Index i = 0; i < back_propagation.gradient.size(); i++)
+        {
+            cout << back_propagation.gradient(i) << " ; " << gradient_numerical_differentiation(i) <<  " ; " <<
+                    std::abs((back_propagation.gradient(i) - gradient_numerical_differentiation(i))/gradient_numerical_differentiation(i)*100)
+                 << "%" << endl;
+
+        }
     }
 }
 
