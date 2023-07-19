@@ -15183,12 +15183,14 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
             for (Index row = rows_number - 1; row >= 0; row--)
 //            for (Index row = 0; row < rows_number; row++)
             {
-                for(Index column = 0; column < columns_number; column++)
+//                for(Index column = 0; column < columns_number; column++)
+                for(Index column = columns_number-1; column >= 0; column--)
                 {
                     for (Index channel = channels_number - 1; channel >= 0 ; channel--)
 //                    for (Index channel = 0; channel < channels_number ; channel++)
                     {
                         inputs(image, channel, row, column) = data(image, index);
+//                        cout << "inputs (" << image << "," << channel << ";" << row << ";" << column << ") : " << inputs(image, channel, row, column) << endl;
                         index++;
                     }
                 }

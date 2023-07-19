@@ -516,25 +516,26 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     // Biases derivatives
 
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {
-//        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
-//        extents = {2, delta_slice_dimensions};
+//    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+//    {
+////        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
+////        extents = {2, delta_slice_dimensions};
 
-//         delta_slice;// @todo compilation error because change of dimensions !!!
-//        = deltas_times_activations_derivatives.slice(offsets, extents);
+////         delta_slice;// @todo compilation error because change of dimensions !!!
+////        = deltas_times_activations_derivatives.slice(offsets, extents);
 
-        offsets = {kernel_index, 0, 0, kernel_index};
-        extents = {1, outputs_rows_number, outputs_columns_number, 1};
+//        offsets = {kernel_index, 0, 0, kernel_index};
+//        extents = {1, outputs_rows_number, outputs_columns_number, 1};
 
-        delta_slice = convolutional_layer_back_propagation->deltas_times_activations_derivatives.slice(offsets, extents);
+//        delta_slice = convolutional_layer_back_propagation->deltas_times_activations_derivatives.slice(offsets, extents);
 
-        const Tensor<type, 0> current_sum = delta_slice.sum();
+//        cout << "Delta slice: " << delta_slice << endl;
 
-        convolutional_layer_back_propagation->biases_derivatives(kernel_index) = current_sum();
-    }
+//        const Tensor<type, 0> current_sum = delta_slice.sum();
 
-    cout << "Biases derivatives: " << endl << convolutional_layer_back_propagation->biases_derivatives << endl;
+//        convolutional_layer_back_propagation->biases_derivatives(kernel_index) = current_sum();
+//    }
+
 
     // Synaptic weights derivatives
 
@@ -580,16 +581,28 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
             cout << "Delta reshape: " << endl << delta_reshape << endl;
 
-            cout << "Convolution: " << endl << image.convolve(delta_reshape, convolutions_dimensions) << endl;
+            cout << "Convolution: " << endl << image.convolve(delta_slice, convolutions_dimensions) << endl;
+
+
 
             if(image_index == 0)
             {
                 kernel_synaptic_weights_derivatives = image.convolve(delta_reshape, convolutions_dimensions);
+
+                cout << "kernel_synaptic_weights_derivatives(0): " << endl << kernel_synaptic_weights_derivatives << endl;
             }
             else
             {
                 kernel_synaptic_weights_derivatives += image.convolve(delta_reshape, convolutions_dimensions);
+
+                cout << "kernel_synaptic_weights_derivatives: " << endl << kernel_synaptic_weights_derivatives << endl;
             }
+
+            // Biases derivatives
+
+            const Tensor<type, 0> current_sum = delta_slice.sum();
+
+            convolutional_layer_back_propagation->biases_derivatives(kernel_index) = current_sum();
         }
 
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,
