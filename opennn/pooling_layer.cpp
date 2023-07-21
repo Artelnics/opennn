@@ -410,6 +410,7 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training)
 {
+<<<<<<< Updated upstream
 //    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
 //            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -431,6 +432,50 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
 //    reshaped_dims[3] = outputs_dimensions_array[3];
 
 //    outputs = patches.maximum(max_pooling_reduce_dimensions).reshape(reshaped_dims);
+=======
+
+    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
+            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
+
+    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
+
+    type* outputs_data = layer_forward_propagation->outputs_data;
+
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
+
+    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+
+//    const Index patch_rows = 2;
+//    const Index patch_columns = 2;
+//    const Index rows_stride = 2;
+//    const Index columns_stride = 2;
+//    const Index in_rows_stride = 1;
+//    const Index in_columns_stride = 1;
+//    const PaddingType padding_type = PADDING_SAME; // or PADDING_VALID
+//    const Index padding_value = 0;
+
+    const Index in_rows_stride = 1;
+    const Index in_columns_stride = 1;
+
+    Tensor<type, 5> patches = inputs.extract_image_patches(pool_rows_number,
+                                                           pool_columns_number,
+                                                           row_stride,
+                                                           column_stride,
+                                                           in_rows_stride,
+                                                           in_columns_stride,
+                                                           PADDING_SAME,
+                                                           padding_width);
+
+    Eigen::array<ptrdiff_t, 4> reshaped_dims;
+    reshaped_dims[0] = outputs_dimensions_array[0];
+    reshaped_dims[1] = outputs_dimensions_array[1];
+    reshaped_dims[2] = outputs_dimensions_array[2];
+    reshaped_dims[3] = outputs_dimensions_array[3];
+
+    outputs = patches.maximum(max_pooling_dimensions).reshape(reshaped_dims);
+>>>>>>> Stashed changes
 
 }
 

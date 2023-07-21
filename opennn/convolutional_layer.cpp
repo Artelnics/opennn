@@ -74,17 +74,11 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
     case ConvolutionType::Valid: padded_output = inputs; return;
 
     case ConvolutionType::Same:
-    {        
-        const Index input_rows_number = inputs.dimension(1);
-        const Index input_cols_number = inputs.dimension(2);
+    {
+        Eigen::array<pair<Index, Index>, 4> paddings;
 
-        const Index kernel_rows_number = get_kernels_rows_number();
-        const Index kernel_cols_number = get_kernels_columns_number();
-
-        Eigen::array<pair<int, int>, 4> paddings;
-
-        const int pad_rows = int(0.5 *(input_rows_number*(row_stride - 1) - row_stride + kernel_rows_number));
-        const int pad_cols = int(0.5 *(input_cols_number*(column_stride - 1) - column_stride + kernel_cols_number));
+        const Index pad_rows = get_padding().first;
+        const Index pad_cols = get_padding().second;
 
         paddings[0] = make_pair(0, 0);
         paddings[1] = make_pair(pad_rows, pad_rows);
@@ -139,6 +133,14 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     insert_padding(inputs, padded_inputs);
 
+    Eigen::array<ptrdiff_t, 4> strides;
+    strides[0] = 1;
+    strides[1] = row_stride;
+    strides[2] = column_stride;
+    strides[3] = 1;
+
+    Tensor<type, 4> strided_inputs = padded_inputs.stride(strides);
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
@@ -146,14 +148,16 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                 kernels_columns_number,
                                                 kernels_channels_number);
 
-        TensorMap<Tensor<type, 4>> convolution_output(outputs_data + kernel_index * single_output_size,
-                                                     batch_samples_number,
-                                                     outputs_rows_number,
-                                                     outputs_columns_number,
-                                                     1);
+        TensorMap<Tensor<type, 4>> convolution(outputs_data + kernel_index * single_output_size,
+                                               batch_samples_number,
+                                               outputs_rows_number,
+                                               outputs_columns_number,
+                                               1);
 
-        convolution_output = padded_inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
+        convolution.device(*thread_pool_device) = strided_inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
+
     }
+
 }
 
 
@@ -695,10 +699,12 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 {
     const Index inputs_rows_number = get_inputs_rows_number();
     const Index kernels_rows_number = get_kernels_rows_number();
+    const Index strides = get_row_stride();
 
     const pair<Index, Index> padding = get_padding();
 
-    return inputs_rows_number - kernels_rows_number + 2*padding.first + 1;
+    return floor((inputs_rows_number - kernels_rows_number + 2*padding.first)/strides) + 1;
+
 }
 
 /// Returns the number of columns the result of applying the layer's kernels to an image will have.
@@ -706,14 +712,15 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 Index ConvolutionalLayer::get_outputs_columns_number() const
 {
     const Index inputs_columns_number = get_inputs_columns_number();
-
     const Index kernels_columns_number = get_kernels_columns_number();
+    const Index strides = get_column_stride();
 
     const pair<Index, Index> padding = get_padding();
 
-    return inputs_columns_number - kernels_columns_number + 2*padding.second + 1;
+    return floor((inputs_columns_number - kernels_columns_number + 2*padding.second)/strides) + 1;
 
 }
+
 
 
 /// Returns the dimension of the input variables
@@ -883,11 +890,13 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
     Tensor<type, 1> parameters(get_parameters_number());
 
     memcpy(parameters.data(),
+           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+
+    memcpy(parameters.data() + synaptic_weights.size(),
            biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
 
-    memcpy(parameters.data() + biases.size(),
-           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
 /// @todo add  scales and offsets
+
     return parameters;
 }
 
@@ -1167,7 +1176,7 @@ void ConvolutionalLayer::set_inputs_dimenisons(const Tensor<Index,1>& new_inputs
 /// Sets the synaptic weights and biases to the given values.
 /// @param new_parameters A vector containing the synaptic weights and biases, in this order.
 
-void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& )
+void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
@@ -1181,14 +1190,15 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
     biases.resize(kernels_number);
 
-    memcpy(biases.data(),
-           new_parameters.data(),
-           static_cast<size_t>(kernels_number)*sizeof(type));
-
     memcpy(synaptic_weights.data(),
-           new_parameters.data() + biases.size(),
+           new_parameters.data() + index,
            static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+
+    memcpy(biases.data(),
+           new_parameters.data() + index + synaptic_weights.size(),
+           static_cast<size_t>(biases.size())*sizeof(type));
 }
+
 
 /// Returns the number of biases in the layer.
 
@@ -1207,13 +1217,21 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
 
     case ConvolutionType::Same:
     {
+
+        const Index input_rows_number = get_inputs_rows_number();
+        const Index input_columns_number = get_inputs_columns_number();
+
         const Index kernel_rows_number = get_kernels_rows_number();
-        const Index kernel_cols_number = get_kernels_columns_number();
+        const Index kernel_columns_number = get_kernels_columns_number();
 
-        const Index pad_rows = (kernel_rows_number - 1) / 2;
-        const Index pad_cols = (kernel_cols_number - 1) / 2;
+        const Index row_stride = get_row_stride();
+        const Index column_stride = get_column_stride();
 
-        return make_pair(pad_rows, pad_cols);
+        const Index pad_rows = max<Index>(0, (ceil((type)input_rows_number/row_stride) - 1) * row_stride + kernel_rows_number - input_rows_number);
+        const Index pad_columns = max<Index>(0, (ceil((type)input_columns_number/column_stride) - 1) * column_stride + kernel_columns_number - input_columns_number);
+
+        return make_pair(pad_rows / 2, pad_columns / 2);
+
     }
     default:
     {

@@ -12365,8 +12365,6 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 
         image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
 
-
-
     }
 
     return image;

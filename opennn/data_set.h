@@ -590,6 +590,7 @@ public:
     // Data set methods
 
     void set_data(const Tensor<type, 2>&);
+    void set_data(const Tensor<type, 1>&);
 
     // Members set methods
 

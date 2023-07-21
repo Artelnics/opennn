@@ -181,9 +181,14 @@ protected:
 
     const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3};
 
-    const Eigen::array<ptrdiff_t, 4> patch_dimensions ={1, pool_rows_number, pool_columns_number, 1};
+//    const Eigen::array<ptrdiff_t, 4> patch_dimensions ={1, pool_rows_number, pool_columns_number, 1};
 
-    const Eigen::array<ptrdiff_t, 2> max_pooling_reduce_dimensions ={1, 2};
+    const Eigen::array<ptrdiff_t, 4> patch_dimensions = {1, pool_rows_number, pool_columns_number, 1};
+
+
+    const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
+
+//    const Eigen::array<ptrdiff_t, 2> max_pooling_reduce_dimensions = {1, 2};
 
 #ifdef OPENNN_CUDA
 #include "../../opennn-cuda/op(3, 3, 3, 64)ennn-cuda/pooling_layer_cuda.h"

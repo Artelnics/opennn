@@ -1444,6 +1444,46 @@ Tensor<type, 1> NeuralNetwork::get_multivariate_distances_box_plot_maximums() co
 /// Sets all the parameters(biases and synaptic weights) from a single vector.
 /// @param new_parameters New set of parameter values.
 
+//void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
+//{
+//#ifdef OPENNN_DEBUG
+
+//    const Index size = new_parameters.size();
+
+//    const Index parameters_number = get_parameters_number();
+
+//    if(size < parameters_number)
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "void set_parameters(const Tensor<type, 1>&) method.\n"
+//               << "Size (" << size << ") must be greater or equal to number of parameters (" << parameters_number << ").\n";
+
+//        throw invalid_argument(buffer.str());
+//    }
+
+//#endif
+
+//    const Index trainable_layers_number = get_trainable_layers_number();
+
+//    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+//    const Tensor<Index, 1> trainable_layers_parameters_numbers = get_trainable_layers_parameters_numbers();
+
+//    Index index = 0;
+
+//    for(Index i = 0; i < trainable_layers_number; i++)
+//    {
+//        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten) continue;
+
+//        trainable_layers_pointers(i)->set_parameters(new_parameters, index);
+
+//        index += trainable_layers_parameters_numbers(i);
+//    }
+//}
+
+
 void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 {
 #ifdef OPENNN_DEBUG
@@ -1476,6 +1516,8 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten) continue;
+
+        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Pooling) continue;
 
         trainable_layers_pointers(i)->set_parameters(new_parameters, index);
 
@@ -3824,6 +3866,7 @@ void NeuralNetwork::load(const string& file_name)
 
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
+
     std::ifstream file;
 
     file.open(file_name.c_str(), ios::binary);
@@ -3839,7 +3882,7 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
         throw invalid_argument(buffer.str());
     }
 
-    streamsize size = sizeof(float);
+    streamsize size = sizeof(type);
 
     const Index parameters_number = get_parameters_number();
 
