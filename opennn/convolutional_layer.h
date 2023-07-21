@@ -233,6 +233,16 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
+
+   const Index pad_rows = get_padding().first;
+   const Index pad_cols = get_padding().second;
+
+   Eigen::array<pair<Index, Index>, 4> paddings = {make_pair(0, 0),
+                                                   make_pair(pad_rows, pad_rows),
+                                                   make_pair(pad_cols, pad_cols),
+                                                   make_pair(0, 0)};
+
+   const Eigen::array<ptrdiff_t, 4> strides = {1, row_stride, column_stride, 1};
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {1, 2, 3};
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 

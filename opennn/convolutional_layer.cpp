@@ -129,18 +129,6 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-    Tensor<type, 4> padded_inputs;
-
-    insert_padding(inputs, padded_inputs);
-
-    Eigen::array<ptrdiff_t, 4> strides;
-    strides[0] = 1;
-    strides[1] = row_stride;
-    strides[2] = column_stride;
-    strides[3] = 1;
-
-    Tensor<type, 4> strided_inputs = padded_inputs.stride(strides);
-
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
@@ -154,10 +142,11 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                outputs_columns_number,
                                                1);
 
-        convolution.device(*thread_pool_device) = strided_inputs.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
-
+        convolution.device(*thread_pool_device) = inputs.pad(paddings)
+                                                        .stride(strides)
+                                                        .convolve(kernel, convolutions_dimensions)
+                                                        + biases_pointer[kernel_index];
     }
-
 }
 
 
@@ -740,8 +729,6 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
     outputs_dimensions(0) = get_outputs_rows_number();
     outputs_dimensions(1) = get_outputs_columns_number();
     outputs_dimensions(2) = get_kernels_number();
-
-
 
     return outputs_dimensions;
 }

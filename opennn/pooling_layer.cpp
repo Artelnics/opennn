@@ -410,29 +410,7 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training)
 {
-<<<<<<< Updated upstream
-//    PoolingLayerForwardPropagation* pooling_layer_forward_propagation
-//            = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-//    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
-
-//    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
-
-//    type* outputs_data = layer_forward_propagation->outputs_data;
-
-//    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
-
-//    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
-
-//    auto patches = inputs.extract_patches(patch_dimensions);
-//    Eigen::array<ptrdiff_t, 4> reshaped_dims;
-//    reshaped_dims[0] = outputs_dimensions_array[0];
-//    reshaped_dims[1] = outputs_dimensions_array[1];
-//    reshaped_dims[2] = outputs_dimensions_array[2];
-//    reshaped_dims[3] = outputs_dimensions_array[3];
-
-//    outputs = patches.maximum(max_pooling_reduce_dimensions).reshape(reshaped_dims);
-=======
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
@@ -475,7 +453,7 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
     reshaped_dims[3] = outputs_dimensions_array[3];
 
     outputs = patches.maximum(max_pooling_dimensions).reshape(reshaped_dims);
->>>>>>> Stashed changes
+
 
 }
 
