@@ -1623,7 +1623,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         data_set.set_data(data); // 2d data
 //        data_set.set_data_random();
 
-//        cout << "Data: " << endl << data_set.get_data() << endl;
+        cout << "Data: " << endl << data_set.get_data() << endl;
+
+        system("pause");
 
         data_set.set_input_variables_dimensions(inputs_dimensions);
 
@@ -1764,6 +1766,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         neural_network.forward_propagate(batch, forward_propagation, is_training);
 //        forward_propagation.print();
+
 
 //        system("pause");
 

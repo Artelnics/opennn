@@ -482,10 +482,11 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     Eigen::array<Eigen::Index, 4> offsets;
     Eigen::array<Eigen::Index, 4> extents;
 
-    const TensorMap<Tensor<type, 3>> image(inputs.data() ,
+    const TensorMap<Tensor<type, 4>> image(inputs.data() ,
                                            inputs_rows_number,
                                            inputs_columns_number,
-                                           inputs_channels_number);
+                                           inputs_channels_number,
+                                           batch_samples_number);
 
     cout << "Delta times activations derivativeS: " << endl << convolutional_layer_back_propagation->deltas_times_activations_derivatives << endl;
 
@@ -497,6 +498,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     cout << "Inputs dimensions: " << inputs.dimensions() << endl;
 
+
+    cout << "Convolution**: " << endl << inputs.convolve(deltas,convolutions_dimensions) << endl;
 
     system("pause");
 
@@ -511,11 +514,11 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
 //    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
 //    {
-////        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
-////        extents = {2, delta_slice_dimensions};
+//        offsets = {kernel_index, delta_slice_dimensions*kernel_index};
+//        extents = {2, delta_slice_dimensions};
 
-////         delta_slice;// @todo compilation error because change of dimensions !!!
-////        = deltas_times_activations_derivatives.slice(offsets, extents);
+//         delta_slice;// @todo compilation error because change of dimensions !!!
+//        = deltas_times_activations_derivatives.slice(offsets, extents);
 
 //        offsets = {kernel_index, 0, 0, kernel_index};
 //        extents = {1, outputs_rows_number, outputs_columns_number, 1};
@@ -574,7 +577,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
             cout << "Delta reshape: " << endl << delta_reshape << endl;
 
-            cout << "Convolution: " << endl << image.convolve(delta_slice, convolutions_dimensions) << endl;
+            cout << "Convolution: " << endl << image.convolve(delta_reshape, convolutions_dimensions) << endl;
 
 
 
