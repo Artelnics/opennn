@@ -488,6 +488,8 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                            inputs_channels_number,
                                            batch_samples_number);
 
+//    cout << "Image: " << endl << image << endl;
+
     cout << "Delta times activations derivativeS: " << endl << convolutional_layer_back_propagation->deltas_times_activations_derivatives << endl;
 
     cout << "Delta dimension: " << convolutional_layer_back_propagation->deltas_times_activations_derivatives.dimensions() << endl;
