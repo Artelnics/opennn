@@ -1575,22 +1575,22 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         // Image 1
 
         data(0,0) = 17;
-        data(0,1) = 8;
-        data(0,2) = 16;
-        data(0,3) = 7;
-        data(0,4) = 15;
-        data(0,5) = 6;
-        data(0,6) = 14;
-        data(0,7) = 5;
-        data(0,8) = 13;
-        data(0,9) = 4;
-        data(0,10) = 12;
-        data(0,11) = 3;
-        data(0,12) = 11;
-        data(0,13) = 2;
-        data(0,14) = 10;
-        data(0,15) = 1;
-        data(0,16) = 9;
+        data(0,1) = 16;
+        data(0,2) = 11;
+        data(0,3) = 10;
+        data(0,4) = 5;
+        data(0,5) = 4;
+        data(0,6) = 15;
+        data(0,7) = 14;
+        data(0,8) = 9;
+        data(0,9) = 8;
+        data(0,10) = 3;
+        data(0,11) = 2;
+        data(0,12) = 13;
+        data(0,13) = 12;
+        data(0,14) = 7;
+        data(0,15) = 6;
+        data(0,16) = 1;
         data(0,17) = 0;
 
         data(0,18) = 1; // Target
@@ -1646,14 +1646,14 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         input_variables_indices(7) = 7;
         input_variables_indices(8) = 8;
         input_variables_indices(9) = 9;
-        input_variables_indices(10) = 17;
-        input_variables_indices(11) = 16;
-        input_variables_indices(12) = 15;
-        input_variables_indices(13) = 14;
-        input_variables_indices(14) = 13;
-        input_variables_indices(15) = 12;
-        input_variables_indices(16) = 11;
-        input_variables_indices(17) = 10;
+        input_variables_indices(10) = 10;
+        input_variables_indices(11) = 11;
+        input_variables_indices(12) = 12;
+        input_variables_indices(13) = 13;
+        input_variables_indices(14) = 14;
+        input_variables_indices(15) = 15;
+        input_variables_indices(16) = 16;
+        input_variables_indices(17) = 17;
 
 
         Tensor<Index, 1> target_variables_indices(1);

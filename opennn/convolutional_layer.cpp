@@ -508,20 +508,83 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                            inputs_channels_number,
                                            batch_samples_number);
 
+
+    // batch, rows, cols, channel
+
+    Eigen::array<Eigen::Index, 4> offsets_ = {0, 0, 0, 0};
+    Eigen::array<Eigen::Index, 4> extents_ = {1, 3, 3, 1};
+
 //    cout << "Image: " << endl << image << endl;
 
-    cout << "Delta times activations derivativeS: " << endl << convolutional_layer_back_propagation->deltas_times_activations_derivatives << endl;
+//    cout << "Delta times activations derivativeS: " << endl << convolutional_layer_back_propagation->deltas_times_activations_derivatives << endl;
 
-    cout << "Delta dimension: " << convolutional_layer_back_propagation->deltas_times_activations_derivatives.dimensions() << endl;
-    cout << "Batch samples number: " << batch_samples_number << endl;
-    cout << "kernels number: " << kernels_number << endl;
-    cout << "Output rows number: " << outputs_rows_number << endl;
-    cout << "Output columns number: " << outputs_columns_number << endl;
+//    cout << "Delta dimension: " << convolutional_layer_back_propagation->deltas_times_activations_derivatives.dimensions() << endl;
+//    cout << "Batch samples number: " << batch_samples_number << endl;
+//    cout << "kernels number: " << kernels_number << endl;
+//    cout << "Output rows number: " << outputs_rows_number << endl;
+//    cout << "Output columns number: " << outputs_columns_number << endl;
 
-    cout << "Inputs dimensions: " << inputs.dimensions() << endl;
+//    Tensor<type, 4> slice_ = inputs.slice(offsets_, extents_);
+//    const TensorMap<Tensor<type, 4>> image_(slice_.data(), 1, 3, 3, 1);
+
+    cout << "image size: " << image_size << endl;
 
 
-    cout << "Convolution**: " << endl << inputs.convolve(deltas,convolutions_dimensions) << endl;
+
+//    cout << "inputs(0,0,0,0): " << inputs(0,0,0,0) << endl;
+//    cout << "inputs(0,1,0,0): " << inputs(0,1,0,0) << endl;
+//    cout << "inputs(0,2,0,0): " << inputs(0,2,0,0) << endl;
+
+//    cout << "inputs(0,0,1,0): " << inputs(0,0,1,0) << endl;
+//    cout << "inputs(0,1,1,0): " << inputs(0,1,1,0) << endl;
+//    cout << "inputs(0,2,1,0): " << inputs(0,2,1,0) << endl;
+
+//    cout << "inputs(0,0,2,0): " << inputs(0,0,2,0) << endl;
+//    cout << "inputs(0,1,2,0): " << inputs(0,1,2,0) << endl;
+//    cout << "inputs(0,2,2,0): " << inputs(0,2,2,0) << endl;
+
+//    cout << "inputs(0,0,0,1): " << inputs(0,0,0,1) << endl;
+//    cout << "inputs(0,1,0,1): " << inputs(0,1,0,1) << endl;
+//    cout << "inputs(0,2,0,1): " << inputs(0,2,0,1) << endl;
+//    cout << "inputs(0,0,1,1): " << inputs(0,0,1,1) << endl;
+//    cout << "inputs(0,1,1,1): " << inputs(0,1,1,1) << endl;
+//    cout << "inputs(0,2,1,1): " << inputs(0,2,1,1) << endl;
+//    cout << "inputs(0,0,2,1): " << inputs(0,0,2,1) << endl;
+//    cout << "inputs(0,1,2,1): " << inputs(0,1,2,1) << endl;
+//    cout << "inputs(0,2,2,1): " << inputs(0,2,2,1) << endl;
+
+//    for(Index i = 0; i < inputs.size(); i++)
+//    {
+//        cout << "inputs(" << i << "): " << inputs(i) << endl;
+//    }
+
+    const TensorMap<Tensor<type, 3>> image_(inputs.data() /*image_index**/,
+                                           1,
+                                           3,
+                                           3);
+
+    const TensorMap<Tensor<type, 3>> deltas_(deltas.data() /*image_index**/,
+                                           1,
+                                           2,
+                                           2);
+
+
+
+    cout << "Image_: " << image_ << endl;
+    cout << "Image_ dim: " << image_.dimensions() << endl;
+
+    cout << "Deltas: " << endl << deltas << endl;
+    cout << "Deltas_: " << endl << deltas_ << endl;
+    cout << "Deltas_ dim: " << endl << deltas_.dimensions() << endl;
+
+
+
+
+    cout << "Inputs: " << endl << inputs << endl;
+
+    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
+
+    cout << "Convolution**: " << endl << image_.convolve(deltas_,convolutions_dimensions) << endl;
 
     system("pause");
 
