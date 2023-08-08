@@ -104,7 +104,11 @@ Index PoolingLayer::get_channels_number() const
 
 Index PoolingLayer::get_outputs_rows_number() const
 {
-    return (inputs_dimensions[0] - pool_rows_number)/row_stride + 1;
+    type padding = 0;
+
+    const Index inputs_rows_number = get_inputs_rows_number();
+
+    return (inputs_rows_number - pool_rows_number + 2*padding)/row_stride + 1;
 }
 
 
@@ -112,7 +116,11 @@ Index PoolingLayer::get_outputs_rows_number() const
 
 Index PoolingLayer::get_outputs_columns_number() const
 {
-    return (inputs_dimensions[1] - pool_columns_number)/column_stride + 1;
+    type padding = 0;
+
+    const Index inputs_columns_number = get_inputs_columns_number();
+
+    return (inputs_columns_number - pool_columns_number + 2*padding)/column_stride + 1;
 }
 
 
@@ -411,7 +419,6 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                  const bool& is_training)
 {
 
-
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -425,15 +432,6 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
 
     TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
 
-//    const Index patch_rows = 2;
-//    const Index patch_columns = 2;
-//    const Index rows_stride = 2;
-//    const Index columns_stride = 2;
-//    const Index in_rows_stride = 1;
-//    const Index in_columns_stride = 1;
-//    const PaddingType padding_type = PADDING_SAME; // or PADDING_VALID
-//    const Index padding_value = 0;
-
     const Index in_rows_stride = 1;
     const Index in_columns_stride = 1;
 
@@ -443,17 +441,19 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                            column_stride,
                                                            in_rows_stride,
                                                            in_columns_stride,
-                                                           PADDING_SAME,
+                                                           PADDING_VALID,
                                                            padding_width);
 
-    Eigen::array<ptrdiff_t, 4> reshaped_dims;
-    reshaped_dims[0] = outputs_dimensions_array[0];
-    reshaped_dims[1] = outputs_dimensions_array[1];
-    reshaped_dims[2] = outputs_dimensions_array[2];
-    reshaped_dims[3] = outputs_dimensions_array[3];
+//    Eigen::array<ptrdiff_t, 4> reshaped_dims;
+//    reshaped_dims[0] = outputs_dimensions_array[0];
+//    reshaped_dims[1] = outputs_dimensions_array[1];
+//    reshaped_dims[2] = outputs_dimensions_array[2];
+//    reshaped_dims[3] = outputs_dimensions_array[3];
 
-    outputs = patches.maximum(max_pooling_dimensions).reshape(reshaped_dims);
+    outputs = patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 
+    cout << "outputs: " << outputs << endl;
+    cout << "outputs.dimensions()" << outputs.dimensions() << endl;
 
 }
 

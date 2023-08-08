@@ -98,6 +98,7 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                 LayerForwardPropagation* layer_forward_propagation) const
 {
+
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -129,6 +130,24 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
+//    Tensor<type, 4> padded_output;
+
+//    insert_padding(inputs, padded_output);
+
+//    Eigen::DSizes<ptrdiff_t, 4> padded_dimensions = padded_output.dimensions();
+
+
+    /// @todo
+    Eigen::array<pair<Index, Index>, 4> paddings;
+
+    const Index pad_rows = get_padding().first;
+    const Index pad_cols = get_padding().second;
+
+    paddings[0] = make_pair(0, 0);
+    paddings[1] = make_pair(pad_rows, pad_rows);
+    paddings[2] = make_pair(pad_cols, pad_cols);
+    paddings[3] = make_pair(0, 0);
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
@@ -147,6 +166,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                         .convolve(kernel, convolutions_dimensions)
                                                         + biases_pointer[kernel_index];
     }
+
 }
 
 
@@ -1219,10 +1239,13 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index row_stride = get_row_stride();
         const Index column_stride = get_column_stride();
 
-        const Index pad_rows = max<Index>(0, (ceil((type)input_rows_number/row_stride) - 1) * row_stride + kernel_rows_number - input_rows_number);
-        const Index pad_columns = max<Index>(0, (ceil((type)input_columns_number/column_stride) - 1) * column_stride + kernel_columns_number - input_columns_number);
+//        const Index pad_rows = max<Index>(0, (row_stride*(input_rows_number-1)+kernel_rows_number-input_rows_number)/2);
+//        const Index pad_columns = max<Index>(0, (column_stride*(input_columns_number-1)+kernel_columns_number-input_columns_number)/2);
 
-        return make_pair(pad_rows / 2, pad_columns / 2);
+        const Index pad_rows = max<Index>(0, (ceil((type)input_rows_number/row_stride) - 1) * row_stride + kernel_rows_number - input_rows_number) / 2;
+        const Index pad_columns = max<Index>(0, (ceil((type)input_columns_number/column_stride) - 1) * column_stride + kernel_columns_number - input_columns_number) / 2;
+
+        return make_pair(pad_rows, pad_columns);
 
     }
     default:

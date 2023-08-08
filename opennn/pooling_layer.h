@@ -237,8 +237,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         const Index oututs_channels_number = pooling_layer_pointer->get_channels_number();
 
         return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           oututs_columns_number,
                                            oututs_rows_number,
+                                           oututs_columns_number,
                                            oututs_channels_number});
     }
 
