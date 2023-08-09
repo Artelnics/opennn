@@ -1256,13 +1256,13 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(perceptron_layer_back_propagation->biases_derivatives.data(),
-         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
-         gradient.data() + index);
-
     copy(perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
          perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
-         gradient.data() + index + biases_number);
+         gradient.data() + index);
+
+    copy(perceptron_layer_back_propagation->biases_derivatives.data(),
+         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
+         gradient.data() + index + synaptic_weights_number);
 }
 
 

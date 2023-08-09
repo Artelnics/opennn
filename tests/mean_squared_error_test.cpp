@@ -1621,7 +1621,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         DataSet data_set(images_number,1,1);
 
         data_set.set_data(data); // 2d data
-//        data_set.set_data_random();
+        data_set.set_data_random();
 
         cout << "Data: " << endl << data_set.get_data() << endl;
 
@@ -1682,8 +1682,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
         convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
         convolutional_layer_kernels_dimensions(1) = kernels_columns_number;
-        convolutional_layer_kernels_dimensions(2) = kernels_number;
-        convolutional_layer_kernels_dimensions(3) = kernels_channels_number;
+        convolutional_layer_kernels_dimensions(2) = kernels_channels_number;
+        convolutional_layer_kernels_dimensions(3) = kernels_number;
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
@@ -1713,7 +1713,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         convolutional_layer->set_biases_constant(0);
 
-//        convolutional_layer->set_parameters_random();
+        convolutional_layer->set_parameters_random();
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
         flatten_layer_inputs_dimensions(0) = input_rows_number-kernels_rows_number+1;
@@ -1755,6 +1755,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         perceptron_layer->set_synaptic_weights(synaptic_weights);
         perceptron_layer->set_biases_constant(0);
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+        perceptron_layer->set_parameters_random();
 
 //        perceptron_layer->set_parameters_random();
 
@@ -1766,8 +1767,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         neural_network.forward_propagate(batch, forward_propagation, is_training);
 //        forward_propagation.print();
-
-
 //        system("pause");
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
