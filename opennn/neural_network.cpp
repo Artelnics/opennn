@@ -2188,6 +2188,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
     return TensorMap<Tensor<type,2>>(outputs_data,
                                      outputs_dimensions(0),
                                      outputs_dimensions(1));
+
 }
 
 

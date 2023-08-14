@@ -451,10 +451,6 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
 //    reshaped_dims[3] = outputs_dimensions_array[3];
 
     outputs = patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
-
-    cout << "outputs: " << outputs << endl;
-    cout << "outputs.dimensions()" << outputs.dimensions() << endl;
-
 }
 
 

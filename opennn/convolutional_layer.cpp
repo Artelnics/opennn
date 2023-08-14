@@ -78,11 +78,11 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
         Eigen::array<pair<Index, Index>, 4> paddings;
 
         const Index pad_rows = get_padding().first;
-        const Index pad_cols = get_padding().second;
+        const Index pad_columns = get_padding().second;
 
         paddings[0] = make_pair(0, 0);
         paddings[1] = make_pair(pad_rows, pad_rows);
-        paddings[2] = make_pair(pad_cols, pad_cols);
+        paddings[2] = make_pair(pad_columns, pad_columns);
         paddings[3] = make_pair(0, 0);
 
         padded_output = inputs.pad(paddings);
@@ -114,7 +114,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     type* biases_pointer = const_cast<type*>(biases.data());
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
+    Eigen::TensorMap<Eigen::Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
     const TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
 
@@ -136,30 +136,29 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
 //    Eigen::DSizes<ptrdiff_t, 4> padded_dimensions = padded_output.dimensions();
 
-
     /// @todo
     Eigen::array<pair<Index, Index>, 4> paddings;
 
     const Index pad_rows = get_padding().first;
-    const Index pad_cols = get_padding().second;
+    const Index pad_columns = get_padding().second;
 
     paddings[0] = make_pair(0, 0);
     paddings[1] = make_pair(pad_rows, pad_rows);
-    paddings[2] = make_pair(pad_cols, pad_cols);
+    paddings[2] = make_pair(pad_columns, pad_columns);
     paddings[3] = make_pair(0, 0);
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
+        const TensorMap<Tensor<type, 3>>  kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
                                                 kernels_rows_number,
                                                 kernels_columns_number,
                                                 kernels_channels_number);
 
         TensorMap<Tensor<type, 4>> convolution(outputs_data + kernel_index * single_output_size,
-                                               batch_samples_number,
-                                               outputs_rows_number,
-                                               outputs_columns_number,
-                                               1);
+                                                       batch_samples_number,
+                                                       outputs_rows_number,
+                                                       outputs_columns_number,
+                                                       1);
 
         convolution.device(*thread_pool_device) = inputs.pad(paddings)
                                                         .stride(strides)
@@ -168,7 +167,6 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     }
 
 }
-
 
 // Batch normalization
 
@@ -353,7 +351,6 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 //    shift(layer_forward_propagation);
 
     // Activations
-
     if(is_training)
     {
         calculate_activations_derivatives(layer_forward_propagation);

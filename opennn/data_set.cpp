@@ -5599,9 +5599,9 @@ void DataSet::set(const Index& new_samples_number,
 
 
 void DataSet::set(const Index& new_images_number,
-                  const Index& new_channels_number,
                   const Index& new_height,
                   const Index& new_width,
+                  const Index& new_channels_number,
                   const Index& new_targets_number)
 {
 
@@ -15156,8 +15156,9 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                         const Tensor<Index, 1>& inputs,
                         const Tensor<Index, 1>& targets)
 {
-    const Tensor<type, 2>& data = data_set_pointer->get_data();
 
+    cout << "DataSetBatch::fill_--" << endl;
+    const Tensor<type, 2>& data = data_set_pointer->get_data();
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)
@@ -15166,29 +15167,35 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     }
     else if(input_variables_dimensions.size() == 3)
     {
-        const Index channels_number = input_variables_dimensions(0);
-        const Index rows_number = input_variables_dimensions(1);
-        const Index columns_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs(inputs_data, batch_size, channels_number, rows_number, columns_number);
+        const Index rows_number = input_variables_dimensions(0);
+        const Index columns_number = input_variables_dimensions(1);
+        const Index channels_number = input_variables_dimensions(2);
+
+        TensorMap<Tensor<type, 4>> inputs(inputs_data,
+                                          batch_size,
+                                          rows_number,
+                                          columns_number,
+                                          channels_number);
+
+        Eigen::array<Index, 4> new_shape = {batch_size,
+                                            rows_number,
+                                            columns_number,
+                                            channels_number};
 
         #pragma omp parallel for
-
         for(Index image = 0; image < batch_size; image++)
         {
             Index index = 0;
 
-            for (Index row = rows_number - 1; row >= 0; row--)
-//            for (Index row = 0; row < rows_number; row++)
+            for (Index row = 0; row < rows_number; row++)
             {
-//                for(Index column = 0; column < columns_number; column++)
-                for(Index column = columns_number-1; column >= 0; column--)
+                for(Index column = 0; column < columns_number; column++)
                 {
-                    for (Index channel = channels_number - 1; channel >= 0 ; channel--)
-//                    for (Index channel = 0; channel < channels_number ; channel++)
+                    for (Index channel = 0; channel < channels_number ; channel++)
                     {
-                        inputs(image, channel, row, column) = data(image, index);
-//                        cout << "inputs (" << image << "," << channel << ";" << row << ";" << column << ") : " << inputs(image, channel, row, column) << endl;
+                        inputs(image, row, column, channel) = data(image, index);
+
                         index++;
                     }
                 }
@@ -15196,8 +15203,8 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-    fill_submatrix(data, samples, targets, targets_data);
 
+    fill_submatrix(data, samples, targets, targets_data);
 }
 
 
