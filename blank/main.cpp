@@ -43,12 +43,13 @@ int main(int argc, char *argv[])
                                inputs_columns_number,
                                inputs_channels_number);
 //        inputs.setConstant(1.f);
-        inputs.setRandom();
+        inputs.setConstant(type(5));
 
-        vgg16.set_parameters_constant(0);
+        vgg16.set_parameters_constant(0.01);
+
+
         Tensor<type, 2> outputs = vgg16.calculate_outputs(inputs);
 
-        cout << "outputs: " << outputs << endl;
 
         cout << "Bye!" << endl;
 
@@ -61,6 +62,7 @@ int main(int argc, char *argv[])
        return 1;
    }
 }
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) Artificial Intelligence Techniques SL.

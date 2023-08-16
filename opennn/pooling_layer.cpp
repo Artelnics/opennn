@@ -418,7 +418,6 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training)
 {
-
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -434,8 +433,17 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
 
     const Index in_rows_stride = 1;
     const Index in_columns_stride = 1;
-
-    Tensor<type, 5> patches = inputs.extract_image_patches(pool_rows_number,
+/*
+    pooling_layer_forward_propagation->image_patches.device(*thread_pool_device) = inputs.extract_image_patches(pool_rows_number,
+                                                           pool_columns_number,
+                                                           row_stride,
+                                                           column_stride,
+                                                           in_rows_stride,
+                                                           in_columns_stride,
+                                                           PADDING_VALID,
+                                                           padding_width);
+*/
+    Tensor<type, 5> image_patches = inputs.extract_image_patches(pool_rows_number,
                                                            pool_columns_number,
                                                            row_stride,
                                                            column_stride,
@@ -444,13 +452,11 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                            PADDING_VALID,
                                                            padding_width);
 
-//    Eigen::array<ptrdiff_t, 4> reshaped_dims;
-//    reshaped_dims[0] = outputs_dimensions_array[0];
-//    reshaped_dims[1] = outputs_dimensions_array[1];
-//    reshaped_dims[2] = outputs_dimensions_array[2];
-//    reshaped_dims[3] = outputs_dimensions_array[3];
+    cout << "image_patches_dimensions: " << image_patches.dimensions() << endl;
 
-    outputs = patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
+
+    //    outputs.device(*thread_pool_device) = pooling_layer_forward_propagation->image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
+    outputs.device(*thread_pool_device) = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 }
 
 

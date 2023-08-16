@@ -1100,15 +1100,40 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
     }
     else if(rank == 4)
     {
-        const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
+        TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
+
         TensorMap<Tensor<type, 4>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2), y_dimensions(3));
+/*
+        const Index x_size = x_dimensions(0)*x_dimensions(1)*x_dimensions(2)*x_dimensions(3);
 
-        const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
+        #pragma omp parallel for
 
-        Tensor<type, 4> zeros(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
-        zeros.setConstant(type(0));
+        for(Index i = 0; i < x_size; i++)
+        {
+            x_data[i] < type(0) ? y_data[i] = type(0) : y_data[i] = x_data[i];
+        }
+*/
 
-        y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+
+/*
+        y.setZero();
+
+        y.device(*thread_pool_device) = y.maximum(x);
+*/
+
+        y.device(*thread_pool_device) = x;
+
+
+//        const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
+
+//        Tensor<type, 4> zeros(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
+//        zeros.setConstant(type(0));
+
+//        y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+
+//        y.setConstant(type(0));
+
+//        y.device(*thread_pool_device) = if_sentence.select(y, x);
     }
     else
     {

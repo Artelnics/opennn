@@ -1892,6 +1892,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     for(Index i = 1; i < layers_number; i++)
     {
+        cout << "Layer name: " << layers_pointers(i)->get_name() << endl;
         layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                               forward_propagation.layers(i-1)->outputs_dimensions,
                                               forward_propagation.layers(i),
@@ -2176,13 +2177,20 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 
     NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
 
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();
 
     type* outputs_data = neural_network_forward_propagation.layers(layers_number - 1)->outputs_data;
+
     const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(layers_number - 1)->outputs_dimensions;
 
     return TensorMap<Tensor<type,2>>(outputs_data,
