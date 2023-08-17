@@ -1886,19 +1886,20 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     const Index layers_number = layers_pointers.size();
 
-    bool is_training = false;
+    const bool is_training = false;
 
-    layers_pointers(0)->forward_propagate(batch.inputs_data, batch.inputs_dimensions, forward_propagation.layers(0), is_training);
+    layers_pointers(0)->forward_propagate(batch.inputs_data,
+                                          batch.inputs_dimensions,
+                                          forward_propagation.layers(0),
+                                          is_training);
 
     for(Index i = 1; i < layers_number; i++)
     {
-        cout << "Layer name: " << layers_pointers(i)->get_name() << endl;
         layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                               forward_propagation.layers(i-1)->outputs_dimensions,
                                               forward_propagation.layers(i),
                                               is_training);
     }
-
 }
 
 
@@ -2177,13 +2178,16 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 
     NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 
-    forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+    for(Index i = 0; i < 10; i++)
+    {
+        forward_propagate_deploy(data_set_batch, neural_network_forward_propagation);
+    }
 
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point end = chrono::steady_clock::now();
 
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
+    cout << "Time difference: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms." << endl;
 
     const Index layers_number = get_layers_number();
 
@@ -2196,7 +2200,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
     return TensorMap<Tensor<type,2>>(outputs_data,
                                      outputs_dimensions(0),
                                      outputs_dimensions(1));
-
 }
 
 

@@ -74,6 +74,8 @@ public:
 
     const Tensor<type, 4>& get_synaptic_weights() const;
 
+    bool get_batch_normalization() const;
+
     Index get_biases_number() const;
 
     Index get_synaptic_weights_number() const;
@@ -86,6 +88,10 @@ public:
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     pair<Index, Index> get_padding() const;
+
+    Eigen::array<pair<Index, Index>, 4> get_paddings() const;
+
+    Eigen::array<ptrdiff_t, 4> get_strides() const;
 
     Index get_outputs_rows_number() const;
 
@@ -114,7 +120,7 @@ public:
     Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const;
-    Index get_parameters_number() const;
+    Index get_parameters_number() const;    
 
     // Set methods
 
@@ -128,6 +134,8 @@ public:
     void set_biases(const Tensor<type, 1>&);
 
     void set_synaptic_weights(const Tensor<type, 4>&);
+
+    void set_batch_normalization(const bool&);
 
     void set_convolution_type(const ConvolutionType&);
     void set_convolution_type(const string&);
@@ -158,7 +166,7 @@ public:
 
     void calculate_convolutions(type*, LayerForwardPropagation*) const;
 
-    void normalize(LayerForwardPropagation*);
+    void normalize(LayerForwardPropagation*, const bool&);
     void shift(LayerForwardPropagation*);
 
     void calculate_activations(LayerForwardPropagation*) const;
@@ -201,14 +209,6 @@ public:
                         const Index&,
                         Tensor<type, 1>&) const; // change
 
-    // Batch normalization
-
-   void calculate_standard_deviations(const Tensor<type, 4>&, const Tensor<type, 1>&);
-
-   void normalize_and_shift(const Tensor<type, 4>&, const bool&);
-
-   void forward(const Tensor<type, 4>&, bool);
-
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
@@ -233,20 +233,12 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::Linear;
 
-
-   const Index pad_rows = get_padding().first;
-   const Index pad_cols = get_padding().second;
-
-   Eigen::array<pair<Index, Index>, 4> paddings = {make_pair(0, 0),
-                                                   make_pair(pad_rows, pad_rows),
-                                                   make_pair(pad_cols, pad_cols),
-                                                   make_pair(0, 0)};
-
-   const Eigen::array<ptrdiff_t, 4> strides = {1, row_stride, column_stride, 1};
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {1, 2, 3};
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
    // Batch normalization
+
+   bool batch_normalization = false;
 
    Tensor<type, 1> moving_means;
    Tensor<type, 1> moving_standard_deviations;
@@ -325,9 +317,19 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
         const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
+        const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
+        const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
+
+        const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
+
         const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
         const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+
+        preprocessed_inputs.resize(batch_samples_number,
+                                   inputs_rows_number,
+                                   inputs_columns_number,
+                                   inputs_channels_number);
 
         outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
@@ -343,7 +345,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         activations_derivatives.resize(batch_samples_number,
                                        outputs_rows_number,
                                        outputs_columns_number,
-                                       kernels_number);
+                                       kernels_number);               
     }
 
 
@@ -352,6 +354,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << "Convolutional" << endl;
 
         cout << "Outputs:" << endl;
+
         cout << TensorMap<Tensor<type,4>>(outputs_data,
                                           outputs_dimensions(0),
                                           outputs_dimensions(1),
@@ -365,10 +368,14 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << activations_derivatives << endl;
     }
 
+    Tensor<type, 4> preprocessed_inputs;
+
     Tensor<type, 1> means;
     Tensor<type, 1> standard_deviations;
 
     Tensor<type, 4> activations_derivatives;
+
+
 };
 
 

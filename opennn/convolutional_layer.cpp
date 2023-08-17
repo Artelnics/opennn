@@ -63,6 +63,12 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 }
 
 
+bool ConvolutionalLayer::get_batch_normalization() const
+{
+    return batch_normalization;
+}
+
+
 /// Inserts padding to the input tensor.
 /// @param input Tensor containing the inputs.
 /// @param padded_output input tensor padded.
@@ -130,59 +136,50 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-    /// @todo
+    if(convolution_type == ConvolutionType::Same)
+    {
+        const Eigen::array<pair<Index, Index>, 4> paddings = get_paddings();
 
-    Eigen::array<pair<Index, Index>, 4> paddings;
+        convolutional_layer_forward_propagation->preprocessed_inputs = inputs.pad(paddings);
+    }
+    else
+    {
+        convolutional_layer_forward_propagation->preprocessed_inputs = inputs;
+    }
 
-    const Index pad_rows = get_padding().first;
-    const Index pad_columns = get_padding().second;
+    if(row_stride != 1 || column_stride != 1)
+    {
+        const Eigen::array<ptrdiff_t, 4> strides = get_strides();
 
-    paddings[0] = make_pair(0, 0);
-    paddings[1] = make_pair(pad_rows, pad_rows);
-    paddings[2] = make_pair(pad_columns, pad_columns);
-    paddings[3] = make_pair(0, 0);
-
-    Tensor<type, 4>  output_try;
-    output_try = inputs.pad(paddings).stride(strides);
-//    inputs = inputs.pad(paddings);
-
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        convolutional_layer_forward_propagation->preprocessed_inputs.device(*thread_pool_device)
+                = convolutional_layer_forward_propagation->preprocessed_inputs.stride(strides);
+    }
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
+        const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index*single_kernel_size,
                                                 kernels_rows_number,
                                                 kernels_columns_number,
                                                 kernels_channels_number);
 
-        TensorMap<Tensor<type, 4>> convolution(outputs_data + kernel_index * single_output_size,
+        TensorMap<Tensor<type, 4>> convolution(outputs_data + kernel_index*single_output_size,
                                                batch_samples_number,
                                                outputs_rows_number,
                                                outputs_columns_number,
                                                1);
 
-
-            convolution.device(*thread_pool_device) = output_try.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
-
-
-//        convolution.device(*thread_pool_device) = inputs.pad(paddings)
-//                                                        .stride(strides)
-//                                                        .convolve(kernel, convolutions_dimensions)
-//                                                        + biases_pointer[kernel_index];
-
+        convolution.device(*thread_pool_device) = convolutional_layer_forward_propagation->preprocessed_inputs.convolve(kernel, convolutions_dimensions)
+                                                + biases_pointer[kernel_index];
     }
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
 //    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
 
-//    cout << "outputs: " << outputs << endl;
 
 }
 
 // Batch normalization
 
-void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propagation)
+void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propagation, const bool& is_training)
 {
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
@@ -197,7 +194,10 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
     Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
 
-    convolutional_layer_forward_propagation->means.device(*thread_pool_device) = outputs.mean(means_dimensions);
+    if(is_training)
+    {
+        means.device(*thread_pool_device) = outputs.mean(means_dimensions);
+    }
 
     const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index outputs_rows_number = get_outputs_rows_number();
@@ -205,33 +205,37 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     const Index kernels_number = get_kernels_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-    bool is_training = true;
-
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        TensorMap<Tensor<type, 4>> batch_normalized_output(outputs_data + kernel_index * single_output_size,
-                                                    batch_samples_number,
-                                                    outputs_rows_number,
-                                                    outputs_columns_number,
-                                                    1);
+        TensorMap<Tensor<type, 4>> kernel_output(outputs_data + kernel_index*single_output_size,
+                                                 batch_samples_number,
+                                                 outputs_rows_number,
+                                                 outputs_columns_number,
+                                                 1);
 
-        if(is_training)
+        if(!is_training)
         {
-            TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
-
-            standard_deviation.device(*thread_pool_device) = (batch_normalized_output - means(kernel_index)).square().mean().sqrt();
-
-            batch_normalized_output.device(*thread_pool_device) = (batch_normalized_output - means(kernel_index))
-                    / (standard_deviations(kernel_index) + epsilon);
-
-            moving_means(kernel_index) = momentum * moving_means(kernel_index) + (type(1.0) - momentum) * means(kernel_index);
-            moving_standard_deviations(kernel_index) = momentum * moving_standard_deviations(kernel_index) + (type(1.0) - momentum) * standard_deviations(kernel_index);
+            kernel_output.device(*thread_pool_device) = (kernel_output - moving_means(kernel_index))
+                    / (moving_standard_deviations(kernel_index) + epsilon);
         }
         else
         {
-            batch_normalized_output.device(*thread_pool_device) = (batch_normalized_output - moving_means(kernel_index))
-                    / (moving_standard_deviations(kernel_index) + epsilon);
+            TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
+            TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
+
+            mean.device(*thread_pool_device) = kernel_output.mean();
+            standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
+
+            kernel_output.device(*thread_pool_device) = (kernel_output - means(kernel_index))
+                    / (standard_deviations(kernel_index) + epsilon);
         }
+    }
+
+    if(is_training)
+    {
+        moving_means.device(*thread_pool_device) = momentum*moving_means + (type(1.0) - momentum)*means;
+
+        moving_standard_deviations.device(*thread_pool_device) = momentum*moving_standard_deviations + (type(1.0) - momentum)*standard_deviations;
     }
 }
 
@@ -257,18 +261,18 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        TensorMap<Tensor<type, 4>> single_kernel_output(outputs_data + kernel_index * single_output_size,
-                                                        batch_samples_number,
-                                                        outputs_rows_number,
-                                                        outputs_columns_number,
-                                                        1);
+        TensorMap<Tensor<type, 4>> kernel_output(outputs_data + kernel_index*single_output_size,
+                                                 batch_samples_number,
+                                                 outputs_rows_number,
+                                                 outputs_columns_number,
+                                                 1);
 
-        single_kernel_output = single_kernel_output * scales(kernel_index) + offsets(kernel_index);
+        kernel_output.device(*thread_pool_device) = kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
 }
 
 
-/// Calculates activations
+/// Calculate activations
 
 void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_forward_propagation) const
 {
@@ -353,16 +357,21 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {
+
     // Convolutions
 
     calculate_convolutions(inputs_data, layer_forward_propagation);
 
     // Batch normalization
 
-//    normalize(layer_forward_propagation);
-//    shift(layer_forward_propagation);
+    if(batch_normalization)
+    {
+        normalize(layer_forward_propagation, is_training);
+        shift(layer_forward_propagation);
+    }
 
     // Activations
+
     if(is_training)
     {
         calculate_activations_derivatives(layer_forward_propagation);
@@ -1056,6 +1065,12 @@ void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 4>& new_synapti
 }
 
 
+void ConvolutionalLayer::set_batch_normalization(const bool& new_batch_normalization)
+{
+    batch_normalization = new_batch_normalization;
+}
+
+
 /// Sets the padding option.
 /// @param new_convolution_type The desired convolution type.
 
@@ -1176,14 +1191,10 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index row_stride = get_row_stride();
         const Index column_stride = get_column_stride();
 
-//        const Index pad_rows = max<Index>(0, (row_stride*(input_rows_number-1)+kernel_rows_number-input_rows_number)/2);
-//        const Index pad_columns = max<Index>(0, (column_stride*(input_columns_number-1)+kernel_columns_number-input_columns_number)/2);
-
         const Index pad_rows = max<Index>(0, (ceil((type)input_rows_number/row_stride) - 1) * row_stride + kernel_rows_number - input_rows_number) / 2;
         const Index pad_columns = max<Index>(0, (ceil((type)input_columns_number/column_stride) - 1) * column_stride + kernel_columns_number - input_columns_number) / 2;
 
         return make_pair(pad_rows, pad_columns);
-
     }
     default:
     {
@@ -1198,6 +1209,29 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
     }
 }
 
+
+Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
+{
+    Eigen::array<pair<Index, Index>, 4> paddings;
+
+    const Index pad_rows = get_padding().first;
+    const Index pad_columns = get_padding().second;
+
+    paddings[0] = make_pair(0, 0);
+    paddings[1] = make_pair(pad_rows, pad_rows);
+    paddings[2] = make_pair(pad_columns, pad_columns);
+    paddings[3] = make_pair(0, 0);
+
+    return paddings;
+}
+
+
+Eigen::array<ptrdiff_t, 4> ConvolutionalLayer::get_strides() const
+{
+    const Eigen::array<ptrdiff_t, 4> strides = {1, row_stride, column_stride, 1};
+
+    return strides;
+}
 
 
 /// Returns the number of synaptic weights in the layer.
@@ -1231,65 +1265,6 @@ Index ConvolutionalLayer::get_inputs_channels_number() const
     return inputs_dimensions[2];
 }
 
-
-//void ConvolutionalLayer::calculate_standard_deviations(LayerForwardPropagation* layer_forward_propagation) const
-//{
-//    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
-//            = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
-
-//    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
-//    const Index outputs_rows_number = get_outputs_rows_number();
-//    const Index outputs_columns_number = get_outputs_columns_number();
-//    const Index kernels_number = get_kernels_number();
-//    const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
-
-//    Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
-
-//    Tensor<type, 1>& variaces = convolutional_layer_forward_propagation->standard_deviations;
-
-//    type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
-
-//    Tensor<type, 0> standard_deviation;
-
-//    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-//    {
-//        const TensorMap<Tensor<type, 1>> single_kernel_output(outputs_data + kernel_index * single_output_size,
-//                                                               single_output_size);
-
-//        standard_deviation.device(*thread_pool_device) = (single_kernel_output - means(kernel_index)).square().mean().sqrt();
-
-//        standard_deviations(kernel_index) = standard_deviation();
-//    }
-//}
-
-
-
-
-
-void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)
-{
-
-    const Index batch_samples_number = inputs.dimension(0);
-    const Index channels_number = get_kernels_number();
-
-/*
-    if(is_training)
-    {
-        calculate_means(inputs);
-
-        calculate_standard_deviations(inputs, current_means);
-
-        normalize_and_shift(inputs, is_training);
-
-        moving_means = moving_means * momentum + current_means * (1 - momentum);
-        moving_standard_deviations = moving_standard_deviations * momentum + current_standard_deviations * (1 - momentum);
-    }
-    else
-    {
-        normalize_and_shift(inputs, is_training);
-    }
-    */
-}
 
 /// Serializes the convolutional layer object into an XML document of the TinyXML.
 /// See the OpenNN manual for more information about the format of this document.

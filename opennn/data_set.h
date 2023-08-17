@@ -41,9 +41,9 @@
 #include "statistics.h"
 #include "scaling.h"
 #include "correlations.h"
-#include "opennn_strings.h"
 #include "tensor_utilities.h"
 #include "text_analytics.h"
+#include "codification.h"
 
 // Filesystem namespace
 
@@ -177,7 +177,6 @@ public:
         Tensor<VariableUse, 1> categories_uses;
 
         Scaler scaler= Scaler::MeanStandardDeviation;
-
 
         // Methods
 
@@ -484,6 +483,17 @@ public:
 
     Index get_gmt() const;
 
+
+    bool get_augmentation() const;
+    bool get_random_reflection_axis_x() const;
+    bool get_random_reflection_axis_y() const;
+    type get_random_rotation_minimum() const;
+    type get_random_rotation_maximum() const;
+    type get_random_rescaling_minimum() const;
+    type get_random_rescaling_maximum() const;
+    type get_random_horizontal_translation() const;
+    type get_random_vertical_translation() const;
+
     const bool& get_display() const;
 
     // Set methods
@@ -625,6 +635,17 @@ public:
     void set_gmt(Index&);
 
     void set_display(const bool&);
+
+    void set_augmentation(const bool&);
+    void set_random_reflection_axis_x(const bool&);
+    void set_random_reflection_axis_y(const bool&);
+    void set_random_rotation_minimum(const type&);
+    void set_random_rotation_maximum(const type&);
+    void set_random_rescaling_minimum(const type&);
+    void set_random_rescaling_maximum(const type&);
+    void set_random_horizontal_translation(const type&);
+    void set_random_vertical_translation(const type&);
+
 
     // Check methods
 
@@ -885,11 +906,6 @@ public:
 
     void read_bmp();
 
-//    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
-
-//    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
-
-    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &, const Index &, const Index &);
 
     BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
@@ -900,8 +916,6 @@ public:
     Tensor<type, 1> get_bounding_box(const Tensor<unsigned char, 1>&,
                                      const Index&, const Index&,
                                      const Index&, const Index&) const;
-
-//    Tensor<unsigned char, 1> slicing(Tensor<unsigned char, 1>&, int&, int&);
 
     // Trasform methods
 
@@ -1099,6 +1113,16 @@ private:
     Index image_height = 0;
     Index padding = 0;
 
+    bool augmentation = false;
+    bool random_reflection_axis_x = false;
+    bool random_reflection_axis_y = false;
+    type random_rotation_minimum = 0;
+    type random_rotation_maximum = 0;
+    type random_rescaling_minimum = 1;
+    type random_rescaling_maximum = 1;
+    type random_horizontal_translation = 0;
+    type random_vertical_translation = 0;
+
     Tensor<string, 1> labels_tokens;
 
     Index width_no_padding;
@@ -1184,7 +1208,10 @@ struct DataSetBatch
 
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
+    void perform_augmentation();
+
     void print() const;
+
 
     Index batch_size = 0;
 

@@ -366,6 +366,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& is_training)
 {
+/*
     const type kernel_size = static_cast<type>(pool_rows_number * pool_columns_number);
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
@@ -386,7 +387,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
     kernel.setConstant(static_cast<type>(1.0/kernel_size));
 
     outputs = inputs.convolve(kernel, convolution_dimensions);
-
+*/
 }
 
 
@@ -433,7 +434,7 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
 
     const Index in_rows_stride = 1;
     const Index in_columns_stride = 1;
-/*
+
     pooling_layer_forward_propagation->image_patches.device(*thread_pool_device) = inputs.extract_image_patches(pool_rows_number,
                                                            pool_columns_number,
                                                            row_stride,
@@ -442,21 +443,8 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
                                                            in_columns_stride,
                                                            PADDING_VALID,
                                                            padding_width);
-*/
-    Tensor<type, 5> image_patches = inputs.extract_image_patches(pool_rows_number,
-                                                           pool_columns_number,
-                                                           row_stride,
-                                                           column_stride,
-                                                           in_rows_stride,
-                                                           in_columns_stride,
-                                                           PADDING_VALID,
-                                                           padding_width);
 
-    cout << "image_patches_dimensions: " << image_patches.dimensions() << endl;
-
-
-    //    outputs.device(*thread_pool_device) = pooling_layer_forward_propagation->image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
-    outputs.device(*thread_pool_device) = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
+    outputs.device(*thread_pool_device) = pooling_layer_forward_propagation->image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
 }
 
 
@@ -464,7 +452,6 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
                                           LayerBackPropagation* next_layer_back_propagation,
                                           LayerBackPropagation* this_layeer_back_propagation) const
 {
-
     /// @todo put switch
     /*
     if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;

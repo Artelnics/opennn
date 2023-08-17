@@ -748,6 +748,11 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     {
         calculate_activations(layer_forward_propagation);
     }
+
+    if(is_training && dropout_rate > type(0))
+    {
+        // @todo
+    }
 }
 
 
@@ -786,6 +791,11 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                            layer_forward_propagation);
 
     calculate_activations_derivatives(layer_forward_propagation);
+
+    if(dropout_rate > type(0))
+    {
+        // @todo
+    }
 }
 
 

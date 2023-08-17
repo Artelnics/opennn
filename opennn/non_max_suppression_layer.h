@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "layer.h"
-#include "opennn_strings.h"
+//#include "opennn_images.h"
 
 namespace opennn
 {
@@ -76,8 +76,6 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     {
 
     }
-
-    Tensor<type, 2> outputs;
 };
 
 

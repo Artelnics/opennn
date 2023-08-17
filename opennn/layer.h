@@ -26,7 +26,8 @@
 #include "config.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
-#include "data_set.h"
+#include "scaling.h"
+//#include "data_set.h"
 
 #include <tuple>
 
@@ -204,6 +205,7 @@ protected:
     void linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void logistic(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void leaky_rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void scaled_exponential_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void softmax(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void soft_plus(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
@@ -217,6 +219,7 @@ protected:
     void linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void logistic_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void leaky_rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void scaled_exponential_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void softmax_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void soft_plus_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;

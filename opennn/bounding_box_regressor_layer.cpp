@@ -16,7 +16,7 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-    BoundingBoxRegressorLayer::BoundingBoxRegressorLayer() : Layer()
+BoundingBoxRegressorLayer::BoundingBoxRegressorLayer() : Layer()
 {
 }
 

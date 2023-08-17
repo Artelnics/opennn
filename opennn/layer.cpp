@@ -1057,7 +1057,7 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (x_dimensions== y_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (x_dimensions == y_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1100,7 +1100,7 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
     }
     else if(rank == 4)
     {
-        TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
+        const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
 
         TensorMap<Tensor<type, 4>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2), y_dimensions(3));
 /*
@@ -1113,16 +1113,9 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
             x_data[i] < type(0) ? y_data[i] = type(0) : y_data[i] = x_data[i];
         }
 */
-
-
-/*
         y.setZero();
 
-        y.device(*thread_pool_device) = y.maximum(x);
-*/
-
-        y.device(*thread_pool_device) = x;
-
+        y.device(*thread_pool_device) = y.cwiseMax(x);
 
 //        const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
 

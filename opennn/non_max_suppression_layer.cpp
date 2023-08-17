@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_layer.h"
-#include "opennn_images.h"
 
 namespace opennn
 {
@@ -94,7 +93,7 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
                 const Index y_top_left_box_2 = filtered_proposals(j)(1);
                 const Index x_bottom_right_box_2 = filtered_proposals(j)(2);
                 const Index y_bottom_right_box_2 = filtered_proposals(j)(3);
-
+/*
                 const type intersection_over_union_between_boxes = intersection_over_union(x_top_left_box_1, y_top_left_box_1,
                                                                                            x_bottom_right_box_1, y_bottom_right_box_1,
                                                                                            x_top_left_box_2, y_top_left_box_2,
@@ -108,6 +107,7 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
                 {
                     final_detections_boolean(i) = false;
                 }
+*/
             }
         }
     }
@@ -142,12 +142,12 @@ void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
 
 //    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);
 
-    const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
+//    const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
 
-    calculate_regions(inputs_data,
-                      inputs_dimensions,
-                      non_max_suppression_layer_forward_propagation->outputs.data(),
-                      outputs_dimensions);
+//    calculate_regions(inputs_data,
+//                      inputs_dimensions,
+//                      non_max_suppression_layer_forward_propagation->outputs_data,
+//                      outputs_dimensions);
 }
 
 }

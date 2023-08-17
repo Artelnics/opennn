@@ -183,14 +183,6 @@ public:
                                PerceptronLayerBackPropagation*) const;
 
 
-
-/*
-   void calculate_inputs_outputs_derivatives(LayerForwardPropagation* layer_forward_propagation) const
-   {
-
-   }
-*/
-
    // Delta LM
 
    void calculate_hidden_delta_lm(LayerForwardPropagation*,
@@ -253,6 +245,8 @@ protected:
    /// Activation function variable.
 
    ActivationFunction activation_function;
+
+   type dropout_rate = type(0);
 
    /// Display messages to screen. 
 

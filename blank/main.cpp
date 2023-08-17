@@ -47,9 +47,7 @@ int main(int argc, char *argv[])
 
         vgg16.set_parameters_constant(0.01);
 
-
-        Tensor<type, 2> outputs = vgg16.calculate_outputs(inputs);
-
+        const Tensor<type, 2> outputs = vgg16.calculate_outputs(inputs);
 
         cout << "Bye!" << endl;
 

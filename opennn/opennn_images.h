@@ -19,10 +19,6 @@
 #include <cmath>
 #include <ctime>
 
-// OpenNN includes
-
-#include "opennn.h"
-
 // Eigen includes
 
 #include "config.h"
@@ -51,6 +47,14 @@ namespace opennn
 
     Tensor<type, 1> resize_proposed_region(const Tensor<type, 1>, const Index&, const Index&,
                                            const Index&, const Index&, const Index&);
+
+    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &, const Index &, const Index &);
+
+    void reflect_image_x(const Tensor<type, 3>&, Tensor<type, 3>&);
+    void reflect_image_y(const Tensor<type, 3>&, Tensor<type, 3>&);
+    void rotate_image(const Tensor<type, 3>&, Tensor<type, 3>&, const type&);
+    void rescale_image(const Tensor<type, 3>&, Tensor<type, 3>&, const type&);
+    void translate_image(const Tensor<type, 3>&, Tensor<type, 3>&, const Index&);
 }
 
 #endif // OPENNN_IMAGES_H

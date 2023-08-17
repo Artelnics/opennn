@@ -179,16 +179,8 @@ protected:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3};
-
-//    const Eigen::array<ptrdiff_t, 4> patch_dimensions ={1, pool_rows_number, pool_columns_number, 1};
-
-    const Eigen::array<ptrdiff_t, 4> patch_dimensions = {1, pool_rows_number, pool_columns_number, 1};
-
-
+    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
-
-//    const Eigen::array<ptrdiff_t, 2> max_pooling_reduce_dimensions = {1, 2};
 
 #ifdef OPENNN_CUDA
 #include "../../opennn-cuda/op(3, 3, 3, 64)ennn-cuda/pooling_layer_cuda.h"
@@ -234,12 +226,12 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const Index oututs_columns_number =  pooling_layer_pointer->get_outputs_columns_number();
         const Index oututs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index oututs_channels_number = pooling_layer_pointer->get_channels_number();
+        const Index outputs_channels_number = pooling_layer_pointer->get_channels_number();
 
         return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
                                            oututs_rows_number,
                                            oututs_columns_number,
-                                           oututs_channels_number});
+                                           outputs_channels_number});
     }
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
@@ -250,13 +242,15 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
 
+        Index pool_rows_number = pooling_layer_pointer->get_pool_rows_number();
+
+        Index pool_columns_number = pooling_layer_pointer->get_pool_columns_number();
+
         const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
 
         const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
 
         const Index channels_number = pooling_layer_pointer->get_channels_number();
-
-        const Index patches_number = 0;
 
         outputs_dimensions.resize(4);
 
@@ -270,7 +264,11 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
                                                           *outputs_columns_number
                                                           *channels_number*sizeof(type)));
 
-        image_patches.resize(patches_number, 2, 2, 2, 2);
+        image_patches.resize(batch_samples_number,
+                             pool_rows_number,
+                             pool_columns_number,
+                             outputs_rows_number*outputs_columns_number,
+                             channels_number);
     }
 
 

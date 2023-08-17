@@ -5693,6 +5693,57 @@ void DataSet::set_display(const bool& new_display)
 }
 
 
+void DataSet::set_augmentation(const bool& new_augmentation)
+{
+    augmentation = new_augmentation;
+}
+
+
+void DataSet::set_random_reflection_axis_x(const bool& new_random_reflection_axis_x)
+{
+    random_reflection_axis_x = new_random_reflection_axis_x;
+}
+
+
+void DataSet::set_random_reflection_axis_y(const bool& new_random_reflection_axis_y)
+{
+    random_reflection_axis_y = new_random_reflection_axis_y;
+}
+
+
+void DataSet::set_random_rotation_minimum(const type& new_random_rotation_minimum)
+{
+    random_rotation_minimum = new_random_rotation_minimum;
+}
+
+
+void DataSet::set_random_rotation_maximum(const type& new_random_rotation_maximum)
+{
+    random_rotation_maximum = new_random_rotation_maximum;
+}
+
+
+void DataSet::set_random_rescaling_minimum(const type& new_random_rescaling_minimum)
+{
+    random_rescaling_minimum = new_random_rescaling_minimum;
+}
+
+
+void DataSet::set_random_rescaling_maximum(const type& new_random_rescaling_maximum)
+{
+    random_rescaling_maximum = new_random_rescaling_maximum;
+}
+
+void DataSet::set_random_horizontal_translation(const type& new_random_horizontal_translation)
+{
+    random_horizontal_translation = new_random_horizontal_translation;
+}
+
+void DataSet::set_random_vertical_translation(const type& new_random_vertical_translation)
+{
+    random_vertical_translation = new_random_vertical_translation;
+}
+
 /// Sets the default member values:
 /// <ul>
 /// <li> Display: True.
@@ -7058,6 +7109,58 @@ Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 
     return mean(data, selection_indices, target_variables_indices);
 }
+
+
+bool DataSet::get_augmentation() const
+{
+    return augmentation;
+}
+
+
+bool DataSet::get_random_reflection_axis_x() const
+{
+    return random_reflection_axis_x;
+}
+
+bool DataSet::get_random_reflection_axis_y() const
+{
+    return random_reflection_axis_y;
+}
+
+
+type DataSet::get_random_rotation_minimum() const
+{
+    return random_rotation_minimum;
+}
+
+
+type DataSet::get_random_rotation_maximum() const
+{
+    return random_rotation_maximum;
+}
+
+
+type DataSet::get_random_rescaling_minimum() const
+{
+    return random_rescaling_minimum;
+}
+
+type DataSet::get_random_rescaling_maximum() const
+{
+    return random_rescaling_maximum;
+}
+
+type DataSet::get_random_horizontal_translation() const
+{
+    return random_horizontal_translation;
+}
+
+
+type DataSet::get_random_vertical_translation() const
+{
+    return random_vertical_translation;
+}
+
 
 
 /// Returns the value of the gmt that has the data set, by default it is 0.
@@ -12238,61 +12341,11 @@ void DataSet::read_csv()
 }
 
 
-/*
-Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
+Tensor<unsigned char, 1> DataSet::read_bmp_image(const string& filename)
 {
-    Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
+    FILE* file = fopen(filename.data(), "rb");
 
-    const int channels = 3;
-
-    if (rows_number % 4 ==0)
-    {
-        memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
-    }
-    else
-    {
-        for (int i = 0; i<rows_number; i++)
-        {
-            if(i==0)
-            {
-                memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
-            }
-            else
-            {
-                memcpy(data_without_padding.data() + channels*cols_number*i, img.data() + channels*cols_number*i + padding*i, static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
-            }
-        }
-    }
-    return data_without_padding;
-}
-*/
-
-/*
-void DataSet::sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
-{
-    unsigned char* aux_row = nullptr;
-
-    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
-
-    const int rows_number = static_cast<int>(original.size()/cols_number);
-
-    for(int i = 0; i <rows_number; i++)
-    {
-        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
-
-        //        reverse(aux_row, aux_row + cols_number); //uncomment this if the lower right corner px should be in the upper left corner.
-
-        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
-    }
-
-}
-*/
-
-Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
-{
-    FILE* f = fopen(filename.data(), "rb");
-
-    if(!f)
+    if(!file)
     {
         ostringstream buffer;
 
@@ -12304,7 +12357,7 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
     }
 
     unsigned char info[54];
-    fread(info, sizeof(unsigned char), 54, f);
+    fread(info, sizeof(unsigned char), 54, file);
 
     const Index width_no_padding = *(int*)&info[18];
     image_height = *(int*)&info[22];
@@ -12328,10 +12381,10 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
     image.setZero();
 
     int data_offset = *(int*)(&info[0x0A]);
-    fseek(f, (long int)(data_offset - 54), SEEK_CUR);
+    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
 
-    fread(image.data(), sizeof(unsigned char), size, f);
-    fclose(f);
+    fread(image.data(), sizeof(unsigned char), size, file);
+    fclose(file);
 
     if(channels_number == 3)
     {
@@ -12346,7 +12399,6 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
-
 
         Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
         Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
@@ -12364,7 +12416,6 @@ Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
 
         image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
-
     }
 
     return image;
@@ -12810,198 +12861,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 }
 
 /*
-Tensor<unsigned char, 1> DataSet::resize_image(Tensor<unsigned char, 1> &data,
-                                               const Index &image_width,
-                                               const Index &image_height,
-                                               const Index &channels_number)
-{
-    const fs::path path = data_file_name;
-
-    if(data_file_name.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Data file name is empty.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-    has_columns_names = true;
-    has_rows_labels = true;
-    convolutional_model = true;
-
-    separator = Separator::None;
-
-    vector<fs::path> folder_paths;
-    vector<fs::path> image_paths;
-
-    int classes_number = 0;
-    int images_total_number = 0;
-
-    for (const auto & entry_path : fs::directory_iterator(path))
-    {
-        if(entry_path.path().string().find(".DS_Store") != string::npos)
-        {
-            cout << ".DS_Store found in : " << entry_path << endl;
-        }
-        else
-        {
-            fs::path actual_directory = entry_path.path().string();
-
-            folder_paths.emplace_back(actual_directory);
-            classes_number++;
-
-            for (const auto & entry_image : fs::directory_iterator(actual_directory))
-            {
-                if(entry_image.path().string().find(".DS_Store") != string::npos)
-                {
-                    cout << ".DS_Store found in : " << entry_image.path() << endl;
-                }
-                else
-                {
-                    image_paths.emplace_back(entry_image.path().string());
-                    images_total_number++;
-                }
-            }
-        }
-    }
-
-    images_number = images_total_number;
-
-    const int image_size = width * height * channels;
-
-    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
-    imageDataAux = imageData;
-
-    if(classes_number == 2)
-    {
-        Index binary_columns_number = 1;
-        data.resize(images_number, image_size + binary_columns_number);
-        imageDataAux.resize(images_number, image_size + binary_columns_number);
-    }
-    else
-    {
-        data.resize(images_number, image_size + classes_number);
-        imageDataAux.resize(images_number, image_size + classes_number);
-    }
-
-    memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
-
-    rows_labels.resize(images_number);
-
-    Index row_index = 0;
-
-    for(Index i = 0; i < classes_number; i++)
-    {
-        vector<string> images_paths;
-        Index images_in_folder = 0;
-
-        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
-        {
-            if(entry.path().string().find(".DS_Store") != string::npos)
-            {
-                cout << ".DS_Store found in : " << entry << endl;
-            }
-            else
-            {
-                images_paths.emplace_back(entry.path().string());
-                images_in_folder++;
-            }
-        }
-
-        for(Index j = 0;  j < images_in_folder; j++)
-        {
-
-            if(classes_number == 2 && i == 0)
-            {
-                data(row_index, image_size) = 1;
-            }
-            else if(classes_number == 2 && i == 1)
-            {
-                data(row_index, image_size) = 0;
-            }
-            else
-            {
-                data(row_index, image_size + i) = 1;
-            }
-
-            rows_labels(row_index) = images_paths[j];
-
-            row_index++;
-        }
-    }
-
-    columns.resize(image_size + 1);
-
-    // Input columns
-
-    Index column_index = 0;
-
-        for(Index i = 0; i < channels; i++)
-        {
-            for(Index j = 0; j < width; j++)
-            {
-                for(Index k = 0; k < height ; k++)
-                {
-                    columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                    columns(column_index).type = ColumnType::Numeric;
-                    columns(column_index).column_use = VariableUse::Input;
-                    columns(column_index).scaler = Scaler::MinimumMaximum;
-                    column_index++;
-                }
-            }
-        }
-
-    // Target columns
-
-    columns(image_size).name = "class";
-
-    if(classes_number == 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
-
-        throw invalid_argument(buffer.str());
-
-
-    }
-
-    Tensor<string, 1> categories(classes_number);
-
-    for(Index i = 0 ; i < classes_number; i++)
-    {
-        categories(i) = folder_paths[i].filename().string();
-    }
-
-    columns(image_size).column_use = VariableUse::Target;
-    columns(image_size).categories = categories;
-
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
-    if(classes_number == 2)
-    {
-        columns(image_size).type = ColumnType::Binary;
-    }
-    else
-    {
-        columns(image_size).type = ColumnType::Categorical;
-    }
-
-    samples_uses.resize(images_number);
-    split_samples_random();
-
-    image_width = width;
-    image_height = height;
-    channels_number = channels;
-
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
-}
 
 DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {
@@ -13725,22 +13584,7 @@ Tensor<type, 1> DataSet::get_bounding_box(const Tensor<unsigned char, 1>& image,
     return bounding_box_data;
 }
 
-// Function to slice a given vector from range X to Y
-Tensor<unsigned char, 1> DataSet::slicing(Tensor<unsigned char, 1>& arr, int& X, int& Y)
-{
-    // Starting and Ending iterators
-
-    auto start = X;
-    auto end = Y + 1;
-
-    Tensor<unsigned char, 1> result(Y - X + 1);
-
-    // Copy vector using copy function()
-    copy(start, end, result);
-
-    // Return the final sliced vector
-    return result;
-}*/
+*/
 
 
 void DataSet::read_txt()
@@ -15156,8 +15000,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                         const Tensor<Index, 1>& inputs,
                         const Tensor<Index, 1>& targets)
 {
-
-    cout << "DataSetBatch::fill_--" << endl;
     const Tensor<type, 2>& data = data_set_pointer->get_data();
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
@@ -15167,7 +15009,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     }
     else if(input_variables_dimensions.size() == 3)
     {
-
         const Index rows_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
@@ -15178,17 +15019,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                                           columns_number,
                                           channels_number);
 
-        Eigen::array<Index, 4> new_shape = {batch_size,
-                                            rows_number,
-                                            columns_number,
-                                            channels_number};
-
         #pragma omp parallel for
+
         for(Index image = 0; image < batch_size; image++)
         {
             Index index = 0;
 
-            for (Index row = 0; row < rows_number; row++)
+            for(Index row = 0; row < rows_number; row++)
             {
                 for(Index column = 0; column < columns_number; column++)
                 {
@@ -15201,10 +15038,71 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }
+
+        const bool augmentation = data_set_pointer->get_augmentation();
+
+        if(augmentation) perform_augmentation();
     }
 
 
     fill_submatrix(data, samples, targets, targets_data);
+}
+
+
+void DataSetBatch::perform_augmentation()
+{
+    const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+
+    const Index rows_number = input_variables_dimensions(0);
+    const Index columns_number = input_variables_dimensions(1);
+    const Index channels_number = input_variables_dimensions(2);
+
+    TensorMap<Tensor<type, 4>> inputs(inputs_data,
+                                      batch_size,
+                                      rows_number,
+                                      columns_number,
+                                      channels_number);
+
+    const bool random_reflection_axis_x = data_set_pointer->get_random_reflection_axis_x();
+    const bool random_reflection_axis_y = data_set_pointer->get_random_reflection_axis_y();
+    const type random_rotation_minimum = data_set_pointer->get_random_rotation_minimum();
+    const type random_rotation_maximum = data_set_pointer->get_random_rotation_maximum();
+    const type random_rescaling_minimum = data_set_pointer->get_random_rescaling_minimum();
+    const type random_rescaling_maximum = data_set_pointer->get_random_rescaling_maximum();
+    const type random_horizontal_translation = data_set_pointer->get_random_horizontal_translation();
+    const type random_vertical_translation = data_set_pointer->get_random_vertical_translation();
+
+    for(Index i = 0; i < batch_size; i++)
+    {
+        if(random_reflection_axis_x)
+        {
+            //reflect_image_x();
+        }
+
+        if(random_reflection_axis_y)
+        {
+            //reflect_image_y();
+        }
+
+        if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
+        {
+            //const type angle = random_rotation_minimum + rand() % random_rotation_maximum;
+
+            // TensorMap
+
+            //rotate_image(image, angle);
+        }
+
+        if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
+        {
+            //rescale_image();
+        }
+
+        if(random_horizontal_translation != 0 && random_vertical_translation != 0)
+        {
+            //traslate_image();
+        }
+    }
 }
 
 
