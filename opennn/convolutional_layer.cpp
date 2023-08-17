@@ -491,9 +491,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     const TensorMap<Tensor<type, 4>> deltas(deltas_data, deltas_dimensions_array);
 
-    cout << "Deltas: " << endl << deltas << endl;
-    system("pause");
-
     convolutional_layer_back_propagation->deltas_times_activations_derivatives.device(*thread_pool_device)
             = deltas * convolutional_layer_forward_propagation->activations_derivatives;
 
@@ -534,20 +531,18 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                                                            outputs_columns_number,
                                                            1);
 
+            const Tensor<type, 0> current_sum = delta_slice.sum();
+
             if(image_index == 0)
             {
                 kernel_synaptic_weights_derivatives = image.convolve(delta_reshape, convolutions_dimensions);
+                convolutional_layer_back_propagation->biases_derivatives(kernel_index) = current_sum();
             }
             else
             {
                 kernel_synaptic_weights_derivatives += image.convolve(delta_reshape, convolutions_dimensions);
+                convolutional_layer_back_propagation->biases_derivatives(kernel_index) += current_sum();
             }
-
-            // Biases derivatives
-
-            const Tensor<type, 0> current_sum = delta_slice.sum();
-
-            convolutional_layer_back_propagation->biases_derivatives(kernel_index) = current_sum();
         }
 
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,

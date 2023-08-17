@@ -1563,7 +1563,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         const Index input_rows_number = 3;
         const Index input_columns_number = 3;
 
-        const Index images_number = 1;
+        const Index images_number = 2;
 
         Tensor<Index, 1> inputs_dimensions(3);
         inputs_dimensions(0) = input_channels_number; // Channels number
@@ -1597,26 +1597,26 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         // Image 2
 
-//        data(1,0) = 19;
-//        data(1,1) = 20;
-//        data(1,2) = 21;
-//        data(1,3) = 22;
-//        data(1,4) = 23;
-//        data(1,5) = 24;
-//        data(1,6) = 25;
-//        data(1,7) = 26;
-//        data(1,8) = 27;
-//        data(1,9) = 28;
-//        data(1,10) = 29;
-//        data(1,11) = 30;
-//        data(1,12) = 31;
-//        data(1,13) = 32;
-//        data(1,14) = 33;
-//        data(1,15) = 34;
-//        data(1,16) = 35;
-//        data(1,17) = 36;
+        data(1,0) = 19;
+        data(1,1) = 20;
+        data(1,2) = 21;
+        data(1,3) = 22;
+        data(1,4) = 23;
+        data(1,5) = 24;
+        data(1,6) = 25;
+        data(1,7) = 26;
+        data(1,8) = 27;
+        data(1,9) = 28;
+        data(1,10) = 29;
+        data(1,11) = 30;
+        data(1,12) = 31;
+        data(1,13) = 32;
+        data(1,14) = 33;
+        data(1,15) = 34;
+        data(1,16) = 35;
+        data(1,17) = 36;
 
-//        data(1,18) = 0; // Target
+        data(1,18) = 0; // Target
 
         DataSet data_set(images_number,1,1);
 
@@ -1654,7 +1654,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         input_variables_indices(15) = 15;
         input_variables_indices(16) = 16;
         input_variables_indices(17) = 17;
-
 
         Tensor<Index, 1> target_variables_indices(1);
         target_variables_indices(0) = 18;
@@ -1709,9 +1708,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         kernels(1,0,1,1) = static_cast<type>(0.7);
         kernels(1,1,1,1) = static_cast<type>(0.7);
 
-        convolutional_layer->set_synaptic_weights(kernels);
+//        convolutional_layer->set_synaptic_weights(kernels);
 
-        convolutional_layer->set_biases_constant(0);
+//        convolutional_layer->set_biases_constant(0);
 
         convolutional_layer->set_parameters_random();
 
@@ -1781,7 +1780,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
 
-        cout << "Gradient   ;    Numerical gradient " << endl;
+        cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
 
         for(Index i = 0; i < back_propagation.gradient.size(); i++)
         {
