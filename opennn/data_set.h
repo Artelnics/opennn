@@ -1190,7 +1190,7 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-    Eigen::Tensor<type, 4> data;
+    Tensor<type, 4> data;
 
     type* inputs_data = nullptr;
 

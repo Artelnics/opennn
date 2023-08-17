@@ -3046,7 +3046,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
 
     const Index size = vector.dimension(0);
     Tensor<Index, 1> minimal_indices(number);
-    Eigen::Tensor<type, 0> maxim = vector.maximum();
+    Tensor<type, 0> maxim = vector.maximum();
 
 #ifdef OPENNN_DEBUG
 
@@ -3090,7 +3090,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 {
     const Index size = vector.dimension(0);
 
-    const Eigen::Tensor<type, 0> minimum = vector.minimum();
+    const Tensor<type, 0> minimum = vector.minimum();
 
     Tensor<type, 1> vector_copy = vector;
 

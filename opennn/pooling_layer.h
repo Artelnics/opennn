@@ -270,9 +270,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
                                                           *outputs_columns_number
                                                           *channels_number*sizeof(type)));
 
-
-
-        patches.resize(patches_number, 2, 2, 2, 2); ///@todo extract_patches
+        image_patches.resize(patches_number, 2, 2, 2, 2);
     }
 
 
@@ -287,11 +285,11 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         cout << TensorMap<Tensor<type,4>>(outputs_data, get_outputs_dimensions_array()) << endl;
 
-        cout << "Patches" << endl;
-        cout << patches << endl;
+        cout << "Image patches" << endl;
+        cout << image_patches << endl;
      }
 
-    Tensor<type, 5> patches;
+    Tensor<type, 5> image_patches;
 };
 
 

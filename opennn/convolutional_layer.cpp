@@ -114,9 +114,9 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     type* biases_pointer = const_cast<type*>(biases.data());
 
-    Eigen::TensorMap<Eigen::Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
+    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-    const TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
 
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
@@ -130,13 +130,8 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Index outputs_columns_number = get_outputs_columns_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-//    Tensor<type, 4> padded_output;
-
-//    insert_padding(inputs, padded_output);
-
-//    Eigen::DSizes<ptrdiff_t, 4> padded_dimensions = padded_output.dimensions();
-
     /// @todo
+
     Eigen::array<pair<Index, Index>, 4> paddings;
 
     const Index pad_rows = get_padding().first;
@@ -147,24 +142,41 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     paddings[2] = make_pair(pad_columns, pad_columns);
     paddings[3] = make_pair(0, 0);
 
+    Tensor<type, 4>  output_try;
+    output_try = inputs.pad(paddings).stride(strides);
+//    inputs = inputs.pad(paddings);
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>>  kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
+        const TensorMap<Tensor<type, 3>> kernel(synaptic_weights_pointer + kernel_index * single_kernel_size,
                                                 kernels_rows_number,
                                                 kernels_columns_number,
                                                 kernels_channels_number);
 
         TensorMap<Tensor<type, 4>> convolution(outputs_data + kernel_index * single_output_size,
-                                                       batch_samples_number,
-                                                       outputs_rows_number,
-                                                       outputs_columns_number,
-                                                       1);
+                                               batch_samples_number,
+                                               outputs_rows_number,
+                                               outputs_columns_number,
+                                               1);
 
-        convolution.device(*thread_pool_device) = inputs.pad(paddings)
-                                                        .stride(strides)
-                                                        .convolve(kernel, convolutions_dimensions)
-                                                        + biases_pointer[kernel_index];
+
+            convolution.device(*thread_pool_device) = output_try.convolve(kernel, convolutions_dimensions) + biases_pointer[kernel_index];
+
+
+//        convolution.device(*thread_pool_device) = inputs.pad(paddings)
+//                                                        .stride(strides)
+//                                                        .convolve(kernel, convolutions_dimensions)
+//                                                        + biases_pointer[kernel_index];
+
     }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
+
+    cout << "outputs: " << outputs << endl;
 
 }
 
@@ -359,7 +371,6 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
     {
         calculate_activations(layer_forward_propagation);
     }
-
 }
 
 
