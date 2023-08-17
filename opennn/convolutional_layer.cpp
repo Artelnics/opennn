@@ -174,9 +174,9 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
+//    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
 
-    cout << "outputs: " << outputs << endl;
+//    cout << "outputs: " << outputs << endl;
 
 }
 
@@ -513,6 +513,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     const Eigen::array<ptrdiff_t, 3> convolutions_dimensions = {0, 1, 2};
 
     Tensor<type, 4> delta_slice;
+    Tensor<type, 4> image_slice;
 
     type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
 
@@ -532,7 +533,12 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
             delta_slice = convolutional_layer_back_propagation->deltas_times_activations_derivatives.slice(offsets, extents);
 
-            const TensorMap<Tensor<type, 3>> image(inputs.data() + image_index*image_size,
+            offsets = {image_index, 0, 0, 0};
+            extents = {1, inputs_rows_number, inputs_columns_number, inputs_channels_number};
+
+            image_slice = inputs.slice(offsets, extents);
+
+            const TensorMap<Tensor<type, 3>> image(image_slice.data(),
                                                    inputs_rows_number,
                                                    inputs_columns_number,
                                                    inputs_channels_number);
