@@ -39,8 +39,10 @@ public:
 
    void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
-                          LayerForwardPropagation*);
+   void forward_propagate(type*,
+                          const Tensor<Index, 1>&,
+                          LayerForwardPropagation*,
+                          const bool&);
 
 
 protected:

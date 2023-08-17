@@ -81,10 +81,10 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 
     case ConvolutionType::Same:
     {
-        Eigen::array<pair<Index, Index>, 4> paddings;
-
         const Index pad_rows = get_padding().first;
         const Index pad_columns = get_padding().second;
+
+        Eigen::array<pair<Index, Index>, 4> paddings;
 
         paddings[0] = make_pair(0, 0);
         paddings[1] = make_pair(pad_rows, pad_rows);
@@ -104,15 +104,11 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                 LayerForwardPropagation* layer_forward_propagation) const
 {
-
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
     const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array
             = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
-
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
-            = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
 
     type* outputs_data = layer_forward_propagation->outputs_data;
 
@@ -122,7 +118,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+//    TensorMap<Tensor<type, 4>> outputs = convolutional_layer_forward_propagation->get_outputs();
 
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
@@ -186,10 +182,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
 
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
-            = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
-
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+    TensorMap<Tensor<type, 4>> outputs = convolutional_layer_forward_propagation->get_outputs();
 
     Tensor<type, 1>& means = convolutional_layer_forward_propagation->means;
     Tensor<type, 1>& standard_deviations = convolutional_layer_forward_propagation->standard_deviations;
@@ -246,12 +239,6 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
     type* outputs_data = convolutional_layer_forward_propagation->outputs_data;
-
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
-            = convolutional_layer_forward_propagation->get_outputs_dimensions_array();
-
-    TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                       outputs_dimensions_array);
 
     const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index outputs_rows_number = get_outputs_rows_number();
@@ -492,8 +479,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     const Index outputs_rows_number = get_outputs_rows_number();
     const Index outputs_columns_number = get_outputs_columns_number();
-
-    const Index image_size = inputs_channels_number*inputs_rows_number*inputs_columns_number;
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);

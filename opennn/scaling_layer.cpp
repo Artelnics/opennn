@@ -48,49 +48,6 @@ ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : La
 }
 
 
-ScalingLayer::ProjectType ScalingLayer::get_project_type() const
-{
-    return project_type;
-}
-
-
-string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& newProjectType) const
-{
-    if(newProjectType == ProjectType::Approximation)
-    {
-        return "Approximation";
-    }
-    else if(newProjectType == ProjectType::Classification)
-    {
-        return "Classification";
-    }
-    else if(newProjectType == ProjectType::Forecasting)
-    {
-        return "Forecasting";
-    }
-    else if(newProjectType == ProjectType::ImageClassification)
-    {
-        return "ImageClassification";
-    }
-    else if(newProjectType == ProjectType::TextClassification)
-    {
-        return "TextClassification";
-    }
-    else if(newProjectType == ProjectType::AutoAssociation)
-    {
-        return "AutoAssociation";
-    }
-    else
-    {
-        const string message =
-                "Scaling Layer Exception:\n"
-                "string get_project_type_string(const ScalingLayer::ProjectType&) const\n"
-                "Unknown project type.\n";
-
-        throw logic_error(message);
-    }
-}
-
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return inputs_dimensions;
@@ -406,49 +363,6 @@ void ScalingLayer::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
     set_default();
 
     from_XML(new_scaling_layer_document);
-}
-
-
-void ScalingLayer::set_project_type(const ScalingLayer::ProjectType& new_project_type)
-{
-    project_type = new_project_type;
-}
-
-void ScalingLayer::set_project_type_string(const string& newLearningTask)
-{
-    if(newLearningTask == "Approximation")
-    {
-        set_project_type(ProjectType::Approximation);
-    }
-    else if(newLearningTask == "Classification")
-    {
-        set_project_type(ProjectType::Classification);
-    }
-    else if(newLearningTask == "Forecasting")
-    {
-        set_project_type(ProjectType::Forecasting);
-    }
-    else if(newLearningTask == "ImageClassification")
-    {
-        set_project_type(ProjectType::ImageClassification);
-    }
-    else if(newLearningTask == "TextClassification")
-    {
-        set_project_type(ProjectType::TextClassification);
-    }
-    else if(newLearningTask == "AutoAssociation")
-    {
-        set_project_type(ProjectType::AutoAssociation);
-    }
-    else
-    {
-        const string message =
-                "Scaling Layer Exception:\n"
-                "void set_project_type_string(const string&)\n"
-                "Unknown project type.\n";
-
-        throw logic_error(message);
-    }
 }
 
 

@@ -279,7 +279,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         return activations_derivatives.data();
     }
 
-    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array()
+    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
     {
         ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
@@ -294,7 +294,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
     }
 
 
-    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array()
+    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
     {
         ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
@@ -306,6 +306,15 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                            outputs_rows_number,
                                            outputs_columns_number,
                                            kernels_number});
+    }
+
+
+    TensorMap<Tensor<type, 4>> get_outputs() const
+    {
+        const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
+                = get_outputs_dimensions_array();
+
+        return TensorMap<Tensor<type, 4>>(outputs_data, outputs_dimensions_array);
     }
 
 

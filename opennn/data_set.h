@@ -232,26 +232,18 @@ public:
 
         virtual ~BoundingBox() {}
 
-
-//        BoundingBox regression()
-//        {
-//            /// todo
-//            BoundingBox regressed_bounging_box;
-//            return regressed_bounging_box;
-//        }
-
-
-        Index get_bounding_box_size(const BoundingBox&) const;
+        Index get_size() const;
 
         BoundingBox resize(const Index&, const Index&, const Index&) const;
 
         void print() const;
 
+        Index channels_number;
+
         Tensor<type, 1> data;
 
         Index x_center;
         Index y_center;
-        Index channels_number;
         Index width;
         Index height;
 
@@ -259,9 +251,6 @@ public:
         Index y_top_left;
         Index x_bottom_right;
         Index y_bottom_right;
-
-        string label; // ????
-        Index score; // ????
     };
 
 
@@ -515,7 +504,6 @@ public:
     void set_project_type_string(const string&);
     void set_project_type(const ProjectType&);
 
-//    void set_threads();
     void set_threads_number(const int&);
 
     // Samples set methods
@@ -645,7 +633,6 @@ public:
     void set_random_rescaling_maximum(const type&);
     void set_random_horizontal_translation(const type&);
     void set_random_vertical_translation(const type&);
-
 
     // Check methods
 
@@ -807,7 +794,6 @@ public:
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
 
-
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
@@ -933,7 +919,6 @@ public:
     void impute_missing_values_mean();
     void impute_missing_values_median();
     void impute_missing_values_interpolate();
-
 
     void scrub_missing_values();
 
@@ -1127,9 +1112,9 @@ private:
 
     Index width_no_padding;
 
-    Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = type(2.0), bool = true) const;
+    Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type& = type(2.0), bool = true) const;
 
-    Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type & = type(0.05), bool = true) const;
+    Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type& = type(0.05), bool = true) const;
 
     type calculate_euclidean_distance(const Tensor<Index, 1>&, const Index&, const Index&) const;
 

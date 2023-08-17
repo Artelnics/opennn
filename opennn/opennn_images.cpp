@@ -215,13 +215,13 @@ namespace opennn
 
         type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left) * (intersection_y_bottom_right - intersection_y_top_left));
 
-        type gTruth_bounding_box_area = (x_bottom_right_box_1 - x_top_left_box_1) *
+        type ground_truth_bounding_box_area = (x_bottom_right_box_1 - x_top_left_box_1) *
                                         (y_bottom_right_box_1 - y_top_left_box_1);
 
         type proposed_bounding_box_area = (x_bottom_right_box_2 - x_top_left_box_2) *
                                             (y_bottom_right_box_2 - y_top_left_box_2);
 
-        type union_area = gTruth_bounding_box_area + proposed_bounding_box_area - intersection_area;
+        type union_area = ground_truth_bounding_box_area + proposed_bounding_box_area - intersection_area;
 
         type intersection_over_union = static_cast<type>(intersection_area / union_area);
 
@@ -336,17 +336,17 @@ namespace opennn
             for(Index j = 0; j < new_width; j++)
             {
                 const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
-                const int nearestMatch =  (((int)(i / scaleHeight) * (region_width * channels_number)) + ((int)(j / scaleWidth) * channels_number));
+                const int nearest_match =  (((int)(i / scaleHeight) * (region_width * channels_number)) + ((int)(j / scaleWidth) * channels_number));
 
                 if(channels_number == 3)
                 {
-                    new_resized_region_data[pixel] =  region_data[nearestMatch];
-                    new_resized_region_data[pixel + 1] =  region_data[nearestMatch + 1];
-                    new_resized_region_data[pixel + 2] =  region_data[nearestMatch + 2];
+                    new_resized_region_data[pixel] =  region_data[nearest_match];
+                    new_resized_region_data[pixel + 1] =  region_data[nearest_match + 1];
+                    new_resized_region_data[pixel + 2] =  region_data[nearest_match + 2];
                 }
                 else
                 {
-                    new_resized_region_data[pixel] =  region_data[nearestMatch];
+                    new_resized_region_data[pixel] =  region_data[nearest_match];
                 }
             }
         }

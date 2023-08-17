@@ -85,7 +85,9 @@ public:
         Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
 
         stringstream output_shape_string;
+
         output_shape_string << "(";
+
         for (Index i = 0; i < output_dimensions.size(); i++)
         {
             output_shape_string << output_dimensions[i];

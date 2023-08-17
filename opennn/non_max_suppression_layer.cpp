@@ -132,8 +132,9 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
 
 
 void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
-                          const Tensor<Index,1>& inputs_dimensions,
-                          LayerForwardPropagation* forward_propagation)
+                                               const Tensor<Index,1>& inputs_dimensions,
+                                               LayerForwardPropagation* forward_propagation,
+                                               const bool& is_training)
 {
     NonMaxSuppressionLayerForwardPropagation* non_max_suppression_layer_forward_propagation
             = static_cast<NonMaxSuppressionLayerForwardPropagation*>(forward_propagation);

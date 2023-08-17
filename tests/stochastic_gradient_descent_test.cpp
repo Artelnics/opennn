@@ -52,7 +52,7 @@ void StochasticGradientDescentTest::test_perform_training()
 {   
     cout << "test_perform_training\n";
 
-    type old_error = std::numeric_limits<float>::max();
+    type old_error = numeric_limits<float>::max();
 
     type error;
 
