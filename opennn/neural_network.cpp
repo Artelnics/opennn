@@ -1870,7 +1870,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                                                     is_training);
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
-    {
+    {       
         layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1)->outputs_data,
                                               forward_propagation.layers(i-1)->outputs_dimensions,
                                               forward_propagation.layers(i),

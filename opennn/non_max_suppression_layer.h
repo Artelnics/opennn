@@ -87,6 +87,13 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
 
 //        cout << outputs_dimensions << endl;
     }
+/*
+    type* outputs_data ?
+
+    Tensor<type, 1> bounding_boxes;
+    Tensor<type, 1> scores;
+    Tensor<string, 1> labels;
+*/
 };
 
 }

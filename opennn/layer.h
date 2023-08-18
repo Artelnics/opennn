@@ -125,9 +125,11 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) = 0;
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&,
+                                   LayerForwardPropagation*, const bool&) = 0;
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&,
+                                   Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
 
@@ -283,15 +285,13 @@ struct LayerBackPropagation
 
     virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
     {
-        {
-            ostringstream buffer;
+        ostringstream buffer;
 
-            buffer << "OpenNN Exception: Layer class.\n"
-                   << "virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() method.\n"
-                   << "This method is not implemented in the layer type (" << layer_pointer->get_type_string() << ").\n";
+        buffer << "OpenNN Exception: Layer class.\n"
+               << "virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() method.\n"
+               << "This method is not implemented in the layer type (" << layer_pointer->get_type_string() << ").\n";
 
-            throw invalid_argument(buffer.str());
-        }
+        throw invalid_argument(buffer.str());
     }
 
     Index batch_samples_number;
