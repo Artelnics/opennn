@@ -49,13 +49,13 @@ int main(int argc, char *argv[])
         // UNDER DEVELOPMENT
 
         srand(time(NULL));
-/*
+
         DataSet data_set;
 
-        data_set.set_data_file_name("Z:/Images/DatasetRedDots-bmp/ground_truth.xml");
+        data_set.set_data_file_name("../img/ground_truth.xml");
 
         data_set.read_ground_truth();
-
+/*
         data_set.set_training();
 
         const Index target_variables_number = data_set.get_target_variables_number();
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
         Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
         cout << "input_variables_dimensions: " << input_variables_dimensions << endl;
-        */
+
 /*
         NeuralNetwork neural_network;
 
