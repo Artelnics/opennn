@@ -265,7 +265,7 @@ void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_fo
 {
     type* outputs_data = layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions(0);
 
     switch(activation_function)
     {
@@ -302,7 +302,7 @@ void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagati
 {
     type* outputs_data = layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions(0);
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
@@ -340,7 +340,7 @@ void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagati
 
 
 void ConvolutionalLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                           const Tensor<Index,1>& inputs_dimensions,
+                                           const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {

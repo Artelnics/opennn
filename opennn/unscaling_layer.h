@@ -111,7 +111,7 @@ public:
 
    // Forward propagation methods
 
-   void forward_propagate(Tensor<type*, 1>, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
 
    // Serialization methods
 
@@ -176,8 +176,9 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 
         outputs_data(0) = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
-        outputs_dimensions.resize(2);
-        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+        outputs_dimensions.resize(1);
+        outputs_dimensions(0).resize(2);
+        outputs_dimensions(0).setValues({batch_samples_number, neurons_number});
     }
 
 

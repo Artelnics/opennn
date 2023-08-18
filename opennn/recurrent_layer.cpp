@@ -731,7 +731,7 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 
 
 void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                       const Tensor<Index, 1>& inputs_dimensions,
+                                       const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
@@ -748,7 +748,7 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     }
 #endif
 
-    if(inputs_dimensions.size() != 2)
+    if(inputs_dimensions(0).size() != 2)
     {
         ostringstream buffer;
 
@@ -759,7 +759,7 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    if(inputs_dimensions(1) != get_inputs_number())
+    if(inputs_dimensions(0)(1) != get_inputs_number())
     {
         ostringstream buffer;
 
@@ -772,14 +772,14 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions(0);
 
     const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
-    const Index samples_number = inputs_dimensions(0);
+    const Index samples_number = inputs_dimensions(0)(0);
     const Index neurons_number = get_neurons_number();
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0)(0), inputs_dimensions(0)(1));
 
     Tensor<Index, 1> combinations_dimensions;
     Tensor<Index, 1> activations_dimensions;
@@ -845,7 +845,7 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
         throw invalid_argument(buffer.str());
     }
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions(0);
 
     const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
@@ -1201,7 +1201,7 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
     // Derivatives of combinations with respect to recurrent weights
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions(0);
 
     const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 

@@ -615,31 +615,31 @@ void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forwa
 #endif
 
     type* outputs_data = layer_forward_propagation->outputs_data(0);
-    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions(0);
 
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::Linear: linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::Logistic: logistic(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::Logistic: logistic(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::Threshold: threshold(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::Threshold: threshold(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::SoftPlus: soft_plus(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftSign: soft_sign(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::SoftSign: soft_sign(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
     default: return;
     }
@@ -681,7 +681,7 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
 #endif
 
     type* outputs_data = layer_forward_propagation->outputs_data(0);
-    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions(0);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -691,27 +691,27 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
 
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::Linear: linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::Logistic: logistic_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::Logistic: logistic_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::Threshold: threshold_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::Threshold: threshold_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftSign: soft_sign_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(outputs_data, outputs_dimensios, outputs_data, outputs_dimensios, activations_derivatives_data, outputs_dimensios); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
     default: return;
     }
@@ -719,7 +719,7 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
 
 
 void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                        const Tensor<Index,1>& inputs_dimensions,
+                                        const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {

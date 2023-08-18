@@ -1624,14 +1624,14 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(ProbabilisticLayerForwardP
 // Forward propagate functions
 
 void LongShortTermMemoryLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                                 const Tensor<Index, 1>& inputs_dimensions,
+                                                 const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                                  LayerForwardPropagation* forward_propagation,
                                                  const bool& is_training)
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
 
-    const Index samples_number = inputs_dimensions(0);
+    const Index samples_number = inputs_dimensions(0)(0);
     const Index neurons_number = get_neurons_number();
 
     if(inputs_dimensions.size() != 2)
@@ -1645,9 +1645,9 @@ void LongShortTermMemoryLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0)(0), inputs_dimensions(0)(1));
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions(0);
 
     Tensor<Index, 1> current_inputs_dimensions = get_dimensions(Tensor<Index, 1>(samples_number));
     Tensor<Index, 1> current_outputs_dimensions = get_dimensions(Tensor<Index, 1>(neurons_number));
@@ -1941,7 +1941,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
 
     TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions(0);
 
     TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 

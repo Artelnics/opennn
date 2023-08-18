@@ -694,7 +694,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 
 
 void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                           const Tensor<Index,1>& inputs_dimensions,
+                                           const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
                                            LayerForwardPropagation* forward_propagation,
                                            const bool& is_training)
 {
@@ -716,10 +716,10 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     type* outputs_data = perceptron_layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions(0);
 
     calculate_combinations(inputs_data(0),
-                           inputs_dimensions,
+                           inputs_dimensions(0),
                            biases,
                            synaptic_weights,
                            outputs_data,
@@ -784,10 +784,10 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
 
     type* outputs_data = probabilistic_layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions(0);
 
     calculate_combinations(inputs_data,
-                           inputs_dimensions,
+                           inputs_dimensions(0),
                            potential_biases,
                            potential_synaptic_weights,
                            outputs_data,

@@ -324,7 +324,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     const LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
-    const Tensor<Index, 1> outputs_dimensions = output_layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = output_layer_forward_propagation->outputs_dimensions(0);
 
     const TensorMap<Tensor<type, 2>> outputs(output_layer_forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
@@ -367,7 +367,7 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
-    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions(0);
 
     const TensorMap<Tensor<type, 2>> outputs(neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
                                              outputs_dimensions(0), outputs_dimensions(1));
@@ -504,7 +504,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions(0);
 
     const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data,
                                             batch.inputs_dimensions(0),
@@ -550,7 +550,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
             const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
                     = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(first_trainable_layer_index + i - 1));
 
-            const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
+            const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions(0);
 
             const TensorMap<Tensor<type, 2>> outputs(perceptron_layer_forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
@@ -793,7 +793,7 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
     {
         const LayerForwardPropagation* layer_forward_propagation = forward_propagation.layers(first_trainable_layers_index+i-1);
 
-        const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions;
+        const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions(0);
 
         const TensorMap<Tensor<type, 2>> outputs(layer_forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 

@@ -752,7 +752,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 
 
 void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Index, 1>& inputs_dimensions,
+                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
 {
@@ -773,19 +773,19 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     ScalingLayerForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayerForwardPropagation*>(forward_propagation);
 
-    const Index input_rank = inputs_dimensions.size();
+    const Index input_rank = inputs_dimensions(0).size();
 
     if(input_rank == 2) /// @todo optimize with TensorMap and tensor options
     {
-        const Index points_number = inputs_dimensions(0);
+        const Index points_number = inputs_dimensions(0)(0);
         const Index neurons_number = scaling_layer_forward_propagation->layer_pointer->get_neurons_number();
 
-        const Tensor<Index, 0> input_size = inputs_dimensions.prod();
+        const Tensor<Index, 0> input_size = inputs_dimensions(0).prod();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+        const TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0)(0), inputs_dimensions(0)(1));
+        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0)(0), inputs_dimensions(0)(1));
 
-        if(inputs_dimensions(0) != points_number || inputs_dimensions(1) != neurons_number)
+        if(inputs_dimensions(0)(0) != points_number || inputs_dimensions(0)(1) != neurons_number)
         {
             ostringstream buffer;
 
@@ -863,16 +863,16 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     else if(input_rank == 4)
     {
         TensorMap<Tensor<type, 4>> input(inputs_data(0),
-                                         inputs_dimensions(0),
-                                         inputs_dimensions(1),
-                                         inputs_dimensions(2),
-                                         inputs_dimensions(3));
+                                         inputs_dimensions(0)(0),
+                                         inputs_dimensions(0)(1),
+                                         inputs_dimensions(0)(2),
+                                         inputs_dimensions(0)(3));
 
         TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data(0),
-                                          inputs_dimensions(0),
-                                          inputs_dimensions(1),
-                                          inputs_dimensions(2),
-                                          inputs_dimensions(3));
+                                          inputs_dimensions(0)(0),
+                                          inputs_dimensions(0)(1),
+                                          inputs_dimensions(0)(2),
+                                          inputs_dimensions(0)(3));
 
         for(Index i = 0; i < input.size(); i++)
         {

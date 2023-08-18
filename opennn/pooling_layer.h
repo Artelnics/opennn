@@ -121,7 +121,7 @@ public:
     // First order activations
 
     void forward_propagate(Tensor<type*, 1>,
-                           const Tensor<Index, 1>&,
+                           const Tensor<Tensor<Index, 1>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -252,9 +252,9 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const Index channels_number = pooling_layer_pointer->get_channels_number();
 
-        outputs_dimensions.resize(4);
-
-        outputs_dimensions.setValues({batch_samples_number,
+        outputs_dimensions.resize(1);
+        outputs_dimensions(0).resize(4);
+        outputs_dimensions(0).setValues({batch_samples_number,
                                       outputs_rows_number,
                                       outputs_columns_number,
                                       channels_number});
@@ -277,7 +277,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         cout << "Pooling layer forward propagation" << endl;
 
         cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions << endl;
+        cout << outputs_dimensions(0) << endl;
 
         cout << "Outputs:" << endl;
 

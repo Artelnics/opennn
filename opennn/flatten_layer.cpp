@@ -133,7 +133,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 }
 
 
-void FlattenLayer::forward_propagate(Tensor<type*, 1> inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+void FlattenLayer::forward_propagate(Tensor<type*, 1> inputs_data, const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {

@@ -326,7 +326,7 @@ void PoolingLayer::set_default()
 
 
 void PoolingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Index, 1>& inputs_dimensions,
+                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -336,21 +336,21 @@ void PoolingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     {
         case PoolingMethod::MaxPooling:
             forward_propagate_max_pooling(inputs_data(0),
-                                          inputs_dimensions,
+                                          inputs_dimensions(0),
                                           layer_forward_propagation,
                                           is_training);
             break;
 
         case PoolingMethod::AveragePooling:
             forward_propagate_average_pooling(inputs_data(0),
-                                              inputs_dimensions,
+                                              inputs_dimensions(0),
                                               layer_forward_propagation,
                                               is_training);
             break;
 
         case PoolingMethod::NoPooling:
             forward_propagate_no_pooling(inputs_data(0),
-                                         inputs_dimensions,
+                                         inputs_dimensions(0),
                                          layer_forward_propagation,
                                          is_training);
             break;
@@ -483,7 +483,7 @@ void PoolingLayer::calculate_hidden_delta_convolutional(LayerForwardPropagation*
 {
     // Current layer's values
 
-    const Index batch_samples_number = next_layer_forward_propagation->outputs_dimensions(0);
+    const Index batch_samples_number = next_layer_forward_propagation->outputs_dimensions(0)(0);
     const Index channels_number = get_channels_number();
     const Index output_rows_number = get_outputs_rows_number();
     const Index output_columns_number = get_outputs_columns_number();

@@ -398,7 +398,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 
 
 void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                      const Tensor<Index, 1>& inputs_dimensions,
+                                      const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
@@ -420,16 +420,16 @@ void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const Index rows_number = inputs_dimensions(0);
-        const Index columns_number = inputs_dimensions(1);
+        const Index rows_number = inputs_dimensions(0)(0);
+        const Index columns_number = inputs_dimensions(0)(1);
 
         TensorMap<Tensor<type,2>> inputs(inputs_data(0),
-                                         inputs_dimensions(0),
-                                         inputs_dimensions(1));
+                                         inputs_dimensions(0)(0),
+                                         inputs_dimensions(0)(1));
 
         TensorMap<Tensor<type,2>> outputs(bounding_layer_forward_propagation->outputs_data(0),
-                                          inputs_dimensions(0),
-                                          inputs_dimensions(1));
+                                          inputs_dimensions(0)(0),
+                                          inputs_dimensions(0)(1));
 
         for(Index i = 0; i < rows_number; i++)
         {
@@ -452,7 +452,7 @@ void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     }
     else
     {
-        Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
+        Tensor<Index, 0> inputs_size = inputs_dimensions(0).prod();
         copy(inputs_data(0), inputs_data(0) + inputs_size(0), bounding_layer_forward_propagation->outputs_data(0));
     }
 }

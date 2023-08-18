@@ -175,7 +175,7 @@ public:
    // Outputs
 
     void forward_propagate(Tensor<type*, 1>,
-                           const Tensor<Index, 1>&,
+                           const Tensor<Tensor<Index, 1>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -342,7 +342,8 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
         outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
-        outputs_dimensions.resize(4);
+        outputs_dimensions.resize(1);
+        outputs_dimensions(0).resize(4);
         outputs_dimensions.setValues({batch_samples_number,
                                       outputs_rows_number,
                                       outputs_columns_number,
@@ -371,7 +372,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                           outputs_dimensions(0)(3)) << endl;
 
         cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions << endl;
+        cout << outputs_dimensions(0) << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
