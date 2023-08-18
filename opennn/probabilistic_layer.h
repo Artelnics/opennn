@@ -151,7 +151,7 @@ public:
 
    // Outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(Tensor<type*, 1>, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void forward_propagate(type*,
                           const Tensor<Index, 1>&,
@@ -257,7 +257,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
         //delete outputs_data;
 
-        outputs_data = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+        outputs_data(0) = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
 
         // Rest of quantities
 
@@ -274,7 +274,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         cout << activations_derivatives.dimensions() << endl;
 
         cout << "Outputs:" << endl;
-        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions(0)(0), outputs_dimensions(0)(1)) << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;

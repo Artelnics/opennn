@@ -125,7 +125,8 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(Tensor<type*, 1>, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
    // Expression methods
@@ -203,7 +204,7 @@ struct ScalingLayerForwardPropagation : LayerForwardPropagation
 
         // Allocate memory for outputs_data
 
-        outputs_data = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
         outputs_dimensions.resize(2);
 
@@ -218,7 +219,7 @@ struct ScalingLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions(0)(0), outputs_dimensions(0)(1)) << endl;
     }
 };
 

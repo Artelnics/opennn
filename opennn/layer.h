@@ -125,7 +125,7 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&,
+    virtual void forward_propagate(Tensor<type*, 1>, const Tensor<Index, 1>&,
                                    LayerForwardPropagation*, const bool&) = 0;
 
     virtual void forward_propagate(type*, const Tensor<Index, 1>&,
@@ -240,6 +240,7 @@ protected:
 #else
 };
 #endif
+
 struct LayerForwardPropagation
 {
     /// Default constructor.
@@ -250,7 +251,10 @@ struct LayerForwardPropagation
 
     virtual ~LayerForwardPropagation()
     {
-        free(outputs_data);
+        for(Index i = 0; i < outputs_data.size(); i++)
+        {
+            free(outputs_data(i));
+        }
     }
 
     virtual void set(const Index&, Layer*) = 0;
@@ -261,9 +265,9 @@ struct LayerForwardPropagation
 
     Layer* layer_pointer = nullptr;
 
-    type* outputs_data = nullptr;
+    Tensor<type*, 1> outputs_data;
 
-    Tensor<Index, 1> outputs_dimensions;
+    Tensor<Tensor<Index, 1>, 1> outputs_dimensions;
 
 };
 

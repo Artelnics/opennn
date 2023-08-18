@@ -326,7 +326,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = output_layer_forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(output_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(output_layer_forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
@@ -369,7 +369,8 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
+                                             outputs_dimensions(0), outputs_dimensions(1));
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
@@ -509,7 +510,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                             batch.inputs_dimensions(0),
                                             batch.inputs_dimensions(1));
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data,
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
                                              outputs_dimensions(0),
                                              outputs_dimensions(1));
 
@@ -551,7 +552,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
             const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
 
-            const TensorMap<Tensor<type, 2>> outputs(perceptron_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+            const TensorMap<Tensor<type, 2>> outputs(perceptron_layer_forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
             trainable_layers_pointers(i)->calculate_squared_errors_Jacobian_lm(outputs,
                                                                    forward_propagation.layers(first_trainable_layer_index + i),
@@ -794,9 +795,9 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
 
         const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions;
 
-        const TensorMap<Tensor<type, 2>> outputs(layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+        const TensorMap<Tensor<type, 2>> outputs(layer_forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
-        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->outputs_data,
+        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->outputs_data(0),
                                                                forward_propagation.layers(first_trainable_layers_index+i),
                                                                back_propagation.neural_network.layers(i));
     }

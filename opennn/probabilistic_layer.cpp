@@ -693,7 +693,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 }
 
 
-void ProbabilisticLayer::forward_propagate(type* inputs_data,
+void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                            const Tensor<Index,1>& inputs_dimensions,
                                            LayerForwardPropagation* forward_propagation,
                                            const bool& is_training)
@@ -714,10 +714,11 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
     ProbabilisticLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
-    type* outputs_data = perceptron_layer_forward_propagation->outputs_data;
+    type* outputs_data = perceptron_layer_forward_propagation->outputs_data(0);
+
     const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
 
-    calculate_combinations(inputs_data,
+    calculate_combinations(inputs_data(0),
                            inputs_dimensions,
                            biases,
                            synaptic_weights,
@@ -781,7 +782,8 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
     const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
                                                                 inputs_number, neurons_number);
 
-    type* outputs_data = probabilistic_layer_forward_propagation->outputs_data;
+    type* outputs_data = probabilistic_layer_forward_propagation->outputs_data(0);
+
     const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
 
     calculate_combinations(inputs_data,

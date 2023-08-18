@@ -1094,7 +1094,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     Tensor<type, 2> perceptron_combinations = perceptron_layer_forward_propagation->combinations;
 
-    TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data,
+    TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data(0),
                                                       perceptron_layer_forward_propagation->outputs_dimensions(0), perceptron_layer_forward_propagation->outputs_dimensions(1));
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);

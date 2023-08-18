@@ -120,7 +120,7 @@ public:
 
     // First order activations
 
-    void forward_propagate(type*,
+    void forward_propagate(Tensor<type*, 1>,
                            const Tensor<Index, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
@@ -259,7 +259,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
                                       outputs_columns_number,
                                       channels_number});
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number
                                                           *outputs_rows_number
                                                           *outputs_columns_number
                                                           *channels_number*sizeof(type)));
@@ -281,7 +281,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data, get_outputs_dimensions_array()) << endl;
+        cout << TensorMap<Tensor<type,4>>(outputs_data(0), get_outputs_dimensions_array()) << endl;
 
         cout << "Image patches" << endl;
         cout << image_patches << endl;

@@ -97,7 +97,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
         const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*regions_number*region_rows*region_columns*channels_number*sizeof(type)));
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*regions_number*region_rows*region_columns*channels_number*sizeof(type)));
 
         outputs_dimensions.resize(4);
         outputs_dimensions.setValues({batch_samples_number,
@@ -113,7 +113,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data,
+        cout << TensorMap<Tensor<type,4>>(outputs_data(0),
                                           outputs_dimensions(0),
                                           outputs_dimensions(1),
                                           outputs_dimensions(2),

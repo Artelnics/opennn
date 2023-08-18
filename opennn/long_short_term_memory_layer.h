@@ -215,7 +215,7 @@ public:
 
    // Forward propagate
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(Tensor<type*, 1>, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
@@ -355,7 +355,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
         //delete outputs_data;
 
-        outputs_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
         // Rest of quantities
 

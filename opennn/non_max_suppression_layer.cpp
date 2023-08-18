@@ -147,7 +147,7 @@ void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
 
 //    calculate_regions(inputs_data,
 //                      inputs_dimensions,
-//                      non_max_suppression_layer_forward_propagation->outputs_data,
+//                      non_max_suppression_layer_forward_propagation->outputs_data(0),
 //                      outputs_dimensions);
 }
 

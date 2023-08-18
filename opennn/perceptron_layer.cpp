@@ -529,7 +529,7 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
     const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_neurons_number();
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
     const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
 
@@ -614,7 +614,7 @@ void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forwa
     }
 #endif
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
     const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
 
     switch(activation_function)
@@ -680,7 +680,7 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
     }
 #endif
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
     const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions;
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
@@ -718,7 +718,7 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
 }
 
 
-void PerceptronLayer::forward_propagate(type* inputs_data,
+void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                         const Tensor<Index,1>& inputs_dimensions,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
@@ -735,7 +735,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
 #endif
 
-    calculate_combinations(inputs_data,
+    calculate_combinations(inputs_data(0),
                            biases,
                            synaptic_weights,
                            layer_forward_propagation);

@@ -730,7 +730,7 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 }
 
 
-void RecurrentLayer::forward_propagate(type* inputs_data,
+void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                        const Tensor<Index, 1>& inputs_dimensions,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
@@ -774,12 +774,12 @@ void RecurrentLayer::forward_propagate(type* inputs_data,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
     const Index samples_number = inputs_dimensions(0);
     const Index neurons_number = get_neurons_number();
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
 
     Tensor<Index, 1> combinations_dimensions;
     Tensor<Index, 1> activations_dimensions;
@@ -847,7 +847,7 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -1203,7 +1203,7 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 

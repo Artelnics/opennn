@@ -209,7 +209,8 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data(0),
+                                             outputs_dimensions(0), outputs_dimensions(1));
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
     const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
@@ -543,7 +544,8 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 
     const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data(0),
+                                             outputs_dimensions(0), outputs_dimensions(1));
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(outputs, outputs.constant(type(1)));
 

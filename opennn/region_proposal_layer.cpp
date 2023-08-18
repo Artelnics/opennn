@@ -187,7 +187,7 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
 
     const Index image_channels_number = input_image(1)(2);
 
-    TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
     TensorMap<Tensor<type, 2>> regions(region_proposal_layer_forward_propagation->outputs_regions.data(), regions_dimensions(0), regions_dimensions(1));
 
     Tensor<Tensor<type, 1>, 1> proposed_region;

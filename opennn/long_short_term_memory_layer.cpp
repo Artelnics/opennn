@@ -1623,7 +1623,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(ProbabilisticLayerForwardP
 
 // Forward propagate functions
 
-void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
+void LongShortTermMemoryLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                                  const Tensor<Index, 1>& inputs_dimensions,
                                                  LayerForwardPropagation* forward_propagation,
                                                  const bool& is_training)
@@ -1645,14 +1645,14 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
     Tensor<Index, 1> current_inputs_dimensions = get_dimensions(Tensor<Index, 1>(samples_number));
     Tensor<Index, 1> current_outputs_dimensions = get_dimensions(Tensor<Index, 1>(neurons_number));
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
     type* current_inputs_data = long_short_term_memory_layer_forward_propagation->current_inputs.data();
     type* current_forget_combinations_data = long_short_term_memory_layer_forward_propagation->current_forget_combinations.data();
@@ -1943,7 +1943,7 @@ void LongShortTermMemoryLayer::forward_propagate(type* inputs_data, const Tensor
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions;
 
-    TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
 
     Tensor<type, 1> forget_combinations(neurons_number);
     Tensor<type, 1> input_combinations(neurons_number);

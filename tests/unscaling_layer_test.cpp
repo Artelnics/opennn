@@ -294,7 +294,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer_forward_propagation.set(samples_number, &unscaling_layer);
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
+    outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data(0),
                                          unscaling_layer_forward_propagation.outputs_dimensions(0),
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 

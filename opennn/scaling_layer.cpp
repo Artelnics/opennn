@@ -751,7 +751,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer::forward_propagate(type* inputs_data,
+void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                      const Tensor<Index, 1>& inputs_dimensions,
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
@@ -782,8 +782,8 @@ void ScalingLayer::forward_propagate(type* inputs_data,
 
         const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        const TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
 
         if(inputs_dimensions(0) != points_number || inputs_dimensions(1) != neurons_number)
         {
@@ -862,13 +862,13 @@ void ScalingLayer::forward_propagate(type* inputs_data,
     }
     else if(input_rank == 4)
     {
-        TensorMap<Tensor<type, 4>> input(inputs_data,
+        TensorMap<Tensor<type, 4>> input(inputs_data(0),
                                          inputs_dimensions(0),
                                          inputs_dimensions(1),
                                          inputs_dimensions(2),
                                          inputs_dimensions(3));
 
-        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data,
+        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data(0),
                                           inputs_dimensions(0),
                                           inputs_dimensions(1),
                                           inputs_dimensions(2),

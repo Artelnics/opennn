@@ -174,7 +174,7 @@ public:
 
    // Outputs
 
-    void forward_propagate(type*,
+    void forward_propagate(Tensor<type*, 1>,
                            const Tensor<Index, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
@@ -314,7 +314,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
                 = get_outputs_dimensions_array();
 
-        return TensorMap<Tensor<type, 4>>(outputs_data, outputs_dimensions_array);
+        return TensorMap<Tensor<type, 4>>(outputs_data(0), outputs_dimensions_array);
     }
 
 
@@ -340,7 +340,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                    inputs_columns_number,
                                    inputs_channels_number);
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
         outputs_dimensions.resize(4);
         outputs_dimensions.setValues({batch_samples_number,
@@ -364,11 +364,11 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data,
-                                          outputs_dimensions(0),
-                                          outputs_dimensions(1),
-                                          outputs_dimensions(2),
-                                          outputs_dimensions(3)) << endl;
+        cout << TensorMap<Tensor<type,4>>(outputs_data(0),
+                                          outputs_dimensions(0)(0),
+                                          outputs_dimensions(0)(1),
+                                          outputs_dimensions(0)(2),
+                                          outputs_dimensions(0)(3)) << endl;
 
         cout << "Outputs dimensions:" << endl;
         cout << outputs_dimensions << endl;

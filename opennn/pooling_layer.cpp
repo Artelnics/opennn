@@ -325,7 +325,7 @@ void PoolingLayer::set_default()
 }
 
 
-void PoolingLayer::forward_propagate(type* inputs_data,
+void PoolingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                      const Tensor<Index, 1>& inputs_dimensions,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
@@ -335,21 +335,21 @@ void PoolingLayer::forward_propagate(type* inputs_data,
     switch(pooling_method)
     {
         case PoolingMethod::MaxPooling:
-            forward_propagate_max_pooling(inputs_data,
+            forward_propagate_max_pooling(inputs_data(0),
                                           inputs_dimensions,
                                           layer_forward_propagation,
                                           is_training);
             break;
 
         case PoolingMethod::AveragePooling:
-            forward_propagate_average_pooling(inputs_data,
+            forward_propagate_average_pooling(inputs_data(0),
                                               inputs_dimensions,
                                               layer_forward_propagation,
                                               is_training);
             break;
 
         case PoolingMethod::NoPooling:
-            forward_propagate_no_pooling(inputs_data,
+            forward_propagate_no_pooling(inputs_data(0),
                                          inputs_dimensions,
                                          layer_forward_propagation,
                                          is_training);
@@ -404,7 +404,7 @@ void PoolingLayer::forward_propagate_no_pooling(type* inputs_data,
 
     const Index neurons_number = get_neurons_number();
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
     memcpy(outputs_data,
            inputs_data,
@@ -426,7 +426,7 @@ void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
 

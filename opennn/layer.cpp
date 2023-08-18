@@ -138,7 +138,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&)
+void Layer::forward_propagate(Tensor<type*, 1>, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&)
 {
     ostringstream buffer;
 

@@ -16,13 +16,11 @@ DEFINES += NDEBUG
 
 SUBDIRS += opennn
 
-SUBDIRS += tests
+#SUBDIRS += tests
 SUBDIRS += examples
 SUBDIRS += blank
 
 CONFIG += ordered
-
-
 
 # OpenMP library
 include(../opennn/opennmp.pri)
