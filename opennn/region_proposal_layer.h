@@ -34,11 +34,19 @@ class RegionProposalLayer : public Layer
 public:
     // Constructors
 
-    explicit RegionProposalLayer();
+    explicit RegionProposalLayer(const Tensor<Index, 1>&);
+
+    Index get_regions_number() const;
+    Index get_region_rows() const;
+    Index get_region_columns() const;
+    Index get_channels_number() const;
+
+    void set_regions_number(const Index&);
+    void set_region_rows(const Index&);
+    void set_region_columns(const Index&);
+    void set_channels_number(const Index&);
 
     // Region proposal layer outputs
-
-    const Tensor<type, 4> get_input_regions();
 
     void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
@@ -46,12 +54,15 @@ public:
 
 protected:
 
+    Tensor<Index, 1> inputs_dimensions;
+
+    Index regions_number = 2000;
+    Index region_rows = 22;
+    Index region_columns = 22;
+    Index channels_number = 3;
+
    bool display = true;
 
-   const Index regions_number = 2000;
-   const Index region_rows = 22;
-   const Index region_columns = 22;
-   const Index channels_number = 3;
 };
 
 
@@ -76,28 +87,45 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;      
 
-        const Index regions_number = 2000;
-        const Index region_rows = 6;
-        const Index region_columns = 6;
-        const Index channels_number = 3;
+        const RegionProposalLayer* region_proposal_layer_pointer = static_cast<RegionProposalLayer*>(layer_pointer);
 
-        outputs_regions.resize(regions_number,4);
+        const Index regions_number = region_proposal_layer_pointer->get_regions_number();
+
+        batch_samples_number = new_batch_samples_number*regions_number;
+
+        const Index region_rows = region_proposal_layer_pointer->get_region_rows();
+        const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
+        const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
+
+        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*regions_number*region_rows*region_columns*channels_number*sizeof(type)));
 
         outputs_dimensions.resize(4);
-        outputs_dimensions(0) = region_rows;
-        outputs_dimensions(1) = region_columns;
-        outputs_dimensions(2) = channels_number;
-        outputs_dimensions(3) = regions_number;
+        outputs_dimensions.setValues({batch_samples_number,
+                                      region_rows,
+                                      region_columns,
+                                      channels_number});
 
-//        outputs_data = (float*) malloc(outputs_dimensions.prod() * sizeof(float));
     }
 
     void print() const
     {
+        cout << "Region proposal layer forward propagation structure" << endl;
 
+        cout << "Outputs:" << endl;
+
+        cout << TensorMap<Tensor<type,4>>(outputs_data,
+                                          outputs_dimensions(0),
+                                          outputs_dimensions(1),
+                                          outputs_dimensions(2),
+                                          outputs_dimensions(3)) << endl;
+
+        cout << "Outputs dimensions:" << endl;
+
+        cout << outputs_dimensions << endl;
     }
 
-    Tensor<type, 2> outputs_regions;
+    Tensor<Index, 2> regions;
+
 };
 
 

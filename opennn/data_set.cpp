@@ -12941,6 +12941,7 @@ void DataSet::read_ground_truth()
             // Annotation
 
             const tinyxml2::XMLElement* annotation_element = start_annotations_element->NextSiblingElement("Annotation");
+
             start_annotations_element = annotation_element;
 
             if(!annotation_element)
@@ -12981,6 +12982,7 @@ void DataSet::read_ground_truth()
             }
 
             const string bounding_box_points = points_element->GetText();
+
             const Tensor<string, 1> splitted_points = get_tokens(bounding_box_points, ',');
 
             const int x_top_left = static_cast<int>(stoi(splitted_points[0]));
@@ -12998,9 +13000,7 @@ void DataSet::read_ground_truth()
             {
                 random_bounding_box(region_index) = propose_random_region(image_pixel_values);
 
-                type intersection_over_union = calculate_intersection_over_union(ground_truth_bounding_box, random_bounding_box(region_index));
-
-//                cout << "intersection_over_union: " << intersection_over_union << endl;
+                const type intersection_over_union = calculate_intersection_over_union(ground_truth_bounding_box, random_bounding_box(region_index));
 
                 if(intersection_over_union >= 0.3) // If IoU > 0.3 -> object class
                 {
@@ -13031,7 +13031,7 @@ void DataSet::read_ground_truth()
                     }
                 }
 
-                BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_width, region_height);
+                const BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_width, region_height);
 
                 for(Index j = 0; j < pixels_number; j++)
                 {
@@ -13044,8 +13044,6 @@ void DataSet::read_ground_truth()
             }
         }
     }
-
-//    cout << data << endl;
 
     // Input columns
 

@@ -3,7 +3,7 @@
 	<Images>
 		<ImagesNumber>2</ImagesNumber>
 		<Image>
-			<Filename>C:/Users/Roberto Lopez/Documents/opennn/opennn/examples/object_detector/img/DatasetRedDots/1.bmp</Filename>
+			<Filename>DatasetRedDots/1.bmp</Filename>
 			<AnnotationsNumber>1</AnnotationsNumber>
 			<Annotation>
 				<Label>rectangle</Label>
@@ -11,7 +11,7 @@
 			</Annotation>
 		</Image>
 		<Image>
-			<Filename>C:/Users/Roberto Lopez/Documents/opennn/opennn/examples/object_detector/img/DatasetRedDots/2.bmp</Filename>
+			<Filename>DatasetRedDots/2.bmp</Filename>
 			<AnnotationsNumber>1</AnnotationsNumber>
 			<Annotation>
 				<Label>rectangle</Label>

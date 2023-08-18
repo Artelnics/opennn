@@ -109,7 +109,7 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-#    region_based_object_detector.h \
+    region_based_object_detector.h \
 #    json_to_xml.h \
     region_proposal_layer.h \
     non_max_suppression_layer.h \
@@ -168,7 +168,7 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-#    region_based_object_detector.cpp \
+    region_based_object_detector.cpp \
 #    json_to_xml.cpp \
     region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \

@@ -49,30 +49,61 @@ int main(int argc, char *argv[])
         // UNDER DEVELOPMENT
 
         srand(time(NULL));
-
+/*
         DataSet data_set;
 
         data_set.set_data_file_name("../img/ground_truth.xml");
 
+        //data_set.set_intersection_over_union_threshold(0.3);
+        //data_set.set_regions_number(100);
+        //data_set.set_region_rows(12);
+        //data_set.set_region_columns(12);
+
         data_set.read_ground_truth();
+
+        Tensor<Index, 1> inputs_dimensions(3);
+        inputs_dimensions(0) = 28;
+        inputs_dimensions(1) = 28;
+        inputs_dimensions(2) = 3;
+
+        RegionProposalLayer region_proposal_layer(inputs_dimensions);
+        region_proposal_layer.set_regions_number(2);
+        region_proposal_layer.set_region_rows(1);
+        region_proposal_layer.set_region_columns(1);
+        region_proposal_layer.set_channels_number(1);
+
+        RegionProposalLayerForwardPropagation region_proposal_layer_forward_propagation(1, &region_proposal_layer);
+
+        Tensor<type, 4> region_proposal_layer_inputs(28, 28, 3, 1);
+        region_proposal_layer_inputs.setConstant(255);
+
+        region_proposal_layer.forward_propagate(region_proposal_layer_inputs.data(),
+                                                get_dimensions(region_proposal_layer_inputs),
+                                                &region_proposal_layer_forward_propagation,
+                                                false);
+*/
+        //region_proposal_layer_forward_propagation.print();
+
+        //FlattenLayer flatten_layer();
+
+        //ProbabilisticLayer probabilistic_layer()
+
+        NonMaxSuppressionLayer non_max_suppression_layer;
+
+        NonMaxSuppressionLayerForwardPropagation non_max_suppression_layer_forward_propagation(1, &non_max_suppression_layer);
+
+        Tensor<type, 4> non_max_suppression_layer_inputs(28, 28, 3, 1);
+        non_max_suppression_layer_inputs.setConstant(0);
+
+        non_max_suppression_layer.forward_propagate(non_max_suppression_layer_inputs.data(),
+                                                    get_dimensions(non_max_suppression_layer_inputs),
+                                                    &non_max_suppression_layer_forward_propagation,
+                                                    false);
+
+        non_max_suppression_layer_forward_propagation.print();
+
+
 /*
-        data_set.set_training();
-
-        const Index target_variables_number = data_set.get_target_variables_number();
-        const Index input_variables_number = data_set.get_input_variables_number();
-
-        cout << "input_variables_number: "  << input_variables_number<< endl;
-
-        Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
-
-        cout << "input_variables_dimensions: " << input_variables_dimensions << endl;
-
-/*
-        NeuralNetwork neural_network;
-
-        RegionProposalLayer region_proposal_layer;
-        neural_network.add_layer(&region_proposal_layer);
-
         const string filename = "Z:/Images/DatasetRedDots-bmp/9.bmp";
         const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image(filename);
 
@@ -122,11 +153,7 @@ int main(int argc, char *argv[])
 
         NonMaxSuppressionLayer non_max_supression_layer;
         neural_network.add_layer(&non_max_supression_layer);
-        */
 
-        Tensor<type, 4> inputs(6,6,3,1);
-        inputs.setRandom();
-/*
         Tensor<Index, 1> inputs_dimensions(4);
         inputs_dimensions(0) = 6;
         inputs_dimensions(1) = 6;

@@ -17,23 +17,55 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-RegionProposalLayer::RegionProposalLayer() : Layer()
+RegionProposalLayer::RegionProposalLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
 {
+    inputs_dimensions = new_inputs_dimensions;
 }
 
 
-const Tensor<type, 4> RegionProposalLayer::get_input_regions()
+
+Index RegionProposalLayer::get_regions_number() const
 {
-    Tensor<type, 4> input_regions;
+    return regions_number;
+}
 
-//    const Tensor<Tensor<type, 1>, 1> image_data = read_bmp_image_data(filename);
 
-//    for (Index i = 0; i < regions_number; i++)
-//    {
-//        const Tensor<type, 1> proposed_region = propose_random_region(image_data);
-//    }
+Index RegionProposalLayer::get_region_rows() const
+{
+    return region_rows;
+}
 
-    return input_regions;
+
+Index RegionProposalLayer::get_region_columns() const
+{
+    return region_columns;
+}
+
+
+Index RegionProposalLayer::get_channels_number() const
+{
+    return channels_number;
+}
+
+
+void RegionProposalLayer::set_regions_number(const Index& new_regions_number)
+{
+    regions_number = new_regions_number;
+}
+
+void RegionProposalLayer::set_region_rows(const Index& new_region_rows)
+{
+    region_rows = new_region_rows;
+}
+
+void RegionProposalLayer::set_region_columns(const Index& new_region_columns)
+{
+    region_columns = new_region_columns;
+}
+
+void RegionProposalLayer::set_channels_number(const Index& new_channels_number)
+{
+    channels_number = new_channels_number;
 }
 
 
@@ -108,21 +140,24 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
 
 
 void RegionProposalLayer::forward_propagate(type* inputs_data,
-                          const Tensor<Index,1>& inputs_dimensions,
+                          const Tensor<Index, 1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation,
                           const bool& is_training)
 {
+
     RegionProposalLayerForwardPropagation* region_proposal_layer_forward_propagation
             = static_cast<RegionProposalLayerForwardPropagation*>(forward_propagation);
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
+/*
+    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
     // Propose random region for each image
 
 //    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);
 
 //    const Tensor<Index, 1> outputs_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs);
-    const Tensor<Index, 1> regions_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs_regions);
+//    const Tensor<Index, 1> regions_dimensions = get_dimensions(region_proposal_layer_forward_propagation->outputs_data);
 
     // Propose random region for each image
 
@@ -151,13 +186,13 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
     }
 
     const Index image_channels_number = input_image(1)(2);
-/*
+
     TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
     TensorMap<Tensor<type, 2>> regions(region_proposal_layer_forward_propagation->outputs_regions.data(), regions_dimensions(0), regions_dimensions(1));
 
     Tensor<Tensor<type, 1>, 1> proposed_region;
 
-    for (Index region_index = 0; region_index < regions_number; region_index++)
+    for(Index region_index = 0; region_index < regions_number; region_index++)
     {
         Index image_pixel_index = 0;
 

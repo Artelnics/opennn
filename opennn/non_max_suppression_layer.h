@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef NonMaxSuppressionLayer_H
-#define NonMaxSuppressionLayer_H
+#ifndef NONMAXSUPRESSIONLAYER_H
+#define NONMAXSUPRESSIONLAYER_H
 
 // System includes
 
@@ -34,8 +34,6 @@ public:
    // Constructors
 
    explicit NonMaxSuppressionLayer();
-
-   // Perceptron layer outputs
 
    void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
@@ -71,15 +69,25 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
-
     }
 
     void print() const
     {
+        cout << "Non max suppression layer forward propagation structure" << endl;
 
+        cout << "Outputs:" << endl;
+
+//        cout << TensorMap<Tensor<type,4>>(outputs_data,
+//                                          outputs_dimensions(0),
+//                                          outputs_dimensions(1),
+//                                          outputs_dimensions(2),
+//                                          outputs_dimensions(3)) << endl;
+
+        cout << "Outputs dimensions:" << endl;
+
+//        cout << outputs_dimensions << endl;
     }
 };
-
 
 }
 #endif
