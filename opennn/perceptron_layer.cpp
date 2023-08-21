@@ -49,6 +49,11 @@ Index PerceptronLayer::get_inputs_number() const
     return synaptic_weights.dimension(0);
 }
 
+void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
+{
+    dropout_rate = new_dropout_rate;
+}
+
 
 Tensor<Index, 1> PerceptronLayer::get_inputs_dimensions() const
 {
@@ -99,6 +104,10 @@ Index PerceptronLayer::get_parameters_number() const
     return biases.size() + synaptic_weights.size();
 }
 
+type PerceptronLayer::get_dropout_rate() const
+{
+    return dropout_rate;
+}
 
 /// Returns the biases from all the perceptrons in the layer.
 /// The format is a vector of real values.
@@ -108,6 +117,7 @@ const Tensor<type, 2>& PerceptronLayer::get_biases() const
 {
     return biases;
 }
+
 
 
 /// Returns the synaptic weights from the perceptrons.
@@ -281,7 +291,6 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
     set_default();
 }
 
-
 /// Sets those members not related to the vector of perceptrons to their default value.
 /// <ul>
 /// <li> Display: True.
@@ -376,7 +385,6 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
 {
     activation_function = new_activation_function;
 }
-
 
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
@@ -749,9 +757,21 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
         calculate_activations(layer_forward_propagation);
     }
 
-    if(is_training && dropout_rate > type(0))
+    if(!is_training && dropout_rate > type(0))
     {
-        // @todo
+        const Index outputs_number = get_neurons_number();
+
+        Tensor<type, 1> dropout_mask(outputs_number);
+        for(Index i = 0; i < outputs_number; ++i)
+        {
+            type random_number = static_cast <type> (rand()) / static_cast <type> (RAND_MAX);
+            dropout_mask(i) = (random_number < dropout_rate) ? type(0) : type(1);
+        }
+
+        TensorMap<Tensor<type, 1>> outputs_data(layer_forward_propagation->outputs_data,
+                                                outputs_number);
+
+        outputs_data *= dropout_mask;
     }
 }
 
@@ -794,8 +814,21 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     if(dropout_rate > type(0))
     {
-        // @todo
+        const Index outputs_number = get_neurons_number();
+
+        Tensor<type, 1> dropout_mask(outputs_number);
+        for(Index i = 0; i < outputs_number; ++i)
+        {
+            type random_number = static_cast <type> (rand()) / static_cast <type> (RAND_MAX);
+            dropout_mask(i) = (random_number < dropout_rate) ? type(0) : type(1);
+        }
+
+        TensorMap<Tensor<type, 1>> outputs_data(layer_forward_propagation->outputs_data,
+                                                outputs_number);
+
+        outputs_data *= dropout_mask;
     }
+
 }
 
 

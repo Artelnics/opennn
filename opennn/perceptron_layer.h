@@ -92,6 +92,7 @@ public:
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
    Index get_parameters_number() const final;
+   type get_dropout_rate() const;
    Tensor<type, 1> get_parameters() const final;
 
    Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
@@ -130,6 +131,7 @@ public:
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
+   void set_dropout_rate(const type&);
 
    // Display messages
 
