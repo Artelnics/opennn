@@ -748,39 +748,6 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                            synaptic_weights,
                            layer_forward_propagation);
 
-//    if(is_training && dropout_rate > type(0)) // Dropout
-//    {
-//        type* outputs_data = layer_forward_propagation->outputs_data;
-
-//        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
-//        const Index outputs_number = get_neurons_number();
-
-//        const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-//        for(Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
-//        {
-//            const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
-
-//            if(random_number < dropout_rate)
-//            {
-//                for(Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
-//                {
-//                    TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number + batch_index, 1);
-//                    column.setZero();
-//                }
-//            }
-//            else
-//            {
-//                for(Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
-//                {
-//                    TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number + batch_index, 1);
-//                    column = column * scaling_factor;
-//                }
-//            }
-//        }
-//    }
-    cout << "gdsigjhdskhgsdghjsdkgds" << endl;
-
     if(is_training && dropout_rate > type(0)) // Dropout
     {
         type* outputs_data = layer_forward_propagation->outputs_data;
