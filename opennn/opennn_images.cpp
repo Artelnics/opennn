@@ -119,7 +119,9 @@ namespace opennn
         }
     }
 
-    void reflect_image_x(const Tensor<type, 3>& input, Tensor<type, 3>& output) {
+    void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
+                         TensorMap<Tensor<type, 3>>& output)
+    {
 
         assert(input.dimension(0) == output.dimension(0));
         assert(input.dimension(1) == output.dimension(1));
@@ -128,7 +130,8 @@ namespace opennn
         output = input.reverse(reflect_horizontal_dimesions);
     }
 
-    void reflect_image_y(const Tensor<type, 3>& input, Tensor<type, 3>& output)
+    void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
+                         TensorMap<Tensor<type, 3>>& output)
     {
 
         assert(input.dimension(0) == output.dimension(0));
@@ -138,8 +141,8 @@ namespace opennn
         output = input.reverse(reflect_vertical_dimesions);
     }
 
-    void rotate_image(const Tensor<type, 3>& input,
-                      Tensor<type, 3>& output,
+    void rotate_image(TensorMap<Tensor<type, 3>>& input,
+                      TensorMap<Tensor<type, 3>>& output,
                       const type& angle_degree)
     {
         assert(input.dimension(0) == output.dimension(0));
@@ -192,13 +195,13 @@ namespace opennn
                                                       channel);
                     }
                 }
-                else
-                {
-                    for (Index channel = 0; channel < channels; channel++)
-                    {
-                        output(x, y, channel) = 0;
-                    }
-                }
+//                else
+//                {
+//                    for (Index channel = 0; channel < channels; channel++)
+//                    {
+//                        output(x, y, channel) = 0;
+//                    }
+//                }
 
             }
         }
@@ -208,8 +211,8 @@ namespace opennn
 //                       Tensor<type, 3>& output,
 //                       const type& )
 
-    void translate_image(const Tensor<type, 3>& input,
-                         Tensor<type, 3>& output,
+    void translate_image(TensorMap<Tensor<type, 3>>& input,
+                         TensorMap<Tensor<type, 3>>& output,
                          const Index& shift)
     {
         assert(input.dimension(0) == output.dimension(0));
