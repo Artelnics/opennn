@@ -14970,39 +14970,59 @@ void DataSetBatch::perform_augmentation()
     const type random_rotation_maximum = data_set_pointer->get_random_rotation_maximum();
     const type random_rescaling_minimum = data_set_pointer->get_random_rescaling_minimum();
     const type random_rescaling_maximum = data_set_pointer->get_random_rescaling_maximum();
-    const type random_horizontal_translation = data_set_pointer->get_random_horizontal_translation();
-    const type random_vertical_translation = data_set_pointer->get_random_vertical_translation();
+    const type random_horizontal_translation_minimum = data_set_pointer->get_random_horizontal_translation();
+    const type random_horizontal_translation_maximum = data_set_pointer->get_random_vertical_translation();
 
-    for(Index i = 0; i < batch_size; i++)
+    for(Index batch = 0; batch < batch_size; batch++)
     {
+/*
+//        TensorMap<Tensor<type, 3>> image(inputs.data() + batch * rows_number * columns_number * channels_number,
+//                                         rows_number,
+//                                         columns_number,
+//                                         channels_number);
+///@todo
+        Tensor<type, 3> image = inputs.chip(batch, 0);
+
         if(random_reflection_axis_x)
         {
-            //reflect_image_x();
+            reflect_image_x(image, image);
         }
 
         if(random_reflection_axis_y)
         {
-            //reflect_image_y();
+            reflect_image_y(image, image);
         }
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
         {
-            //const type angle = random_rotation_minimum + rand() % random_rotation_maximum;
 
-            // TensorMap
+            const type angle = (random_rotation_minimum < random_rotation_maximum)
+                    ? random_rotation_minimum + rand()
+                    : random_rotation_maximum;
 
-            //rotate_image(image, angle);
+            rotate_image(image, image, angle);
         }
 
         if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
         {
-            //rescale_image();
+            const type rescaling = (random_rescaling_minimum < random_rescaling_maximum)
+                    ? random_rescaling_minimum + rand()
+                    : random_rescaling_maximum;
+
+            rescale_image(image, image, rescaling);
         }
 
-        if(random_horizontal_translation != 0 && random_vertical_translation != 0)
+        if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
         {
-            //traslate_image();
+            const type translation = (random_horizontal_translation_minimum < random_rescaling_maximum)
+                    ? random_horizontal_translation_minimum + rand()
+                    : random_rescaling_maximum;
+
+            translate_image(image, image, translation);
         }
+
+        inputs.chip(batch, 0) = image;
+        */
     }
 }
 

@@ -1,4 +1,6 @@
 #include "opennn_images.h"
+//#include "/*tensor_util*/ities.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -98,6 +100,7 @@ namespace opennn
         return image_data;
     }
 
+
     void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
     {
         unsigned char* aux_row = nullptr;
@@ -115,6 +118,129 @@ namespace opennn
             memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
         }
     }
+
+    void reflect_image_x(const Tensor<type, 3>& input, Tensor<type, 3>& output) {
+
+        assert(input.dimension(0) == output.dimension(0));
+        assert(input.dimension(1) == output.dimension(1));
+        assert(input.dimension(2) == output.dimension(2));
+
+        output = input.reverse(reflect_horizontal_dimesions);
+    }
+
+    void reflect_image_y(const Tensor<type, 3>& input, Tensor<type, 3>& output)
+    {
+
+        assert(input.dimension(0) == output.dimension(0));
+        assert(input.dimension(1) == output.dimension(1));
+        assert(input.dimension(2) == output.dimension(2));
+
+        output = input.reverse(reflect_vertical_dimesions);
+    }
+
+    void rotate_image(const Tensor<type, 3>& input,
+                      Tensor<type, 3>& output,
+                      const type& angle_degree)
+    {
+        assert(input.dimension(0) == output.dimension(0));
+        assert(input.dimension(1) == output.dimension(1));
+        assert(input.dimension(2) == output.dimension(2));
+
+        const Index width = input.dimension(0);
+        const Index height = input.dimension(1);
+        const Index channels = input.dimension(2);
+
+        const type rotation_center_x = width / 2.0;
+        const type rotation_center_y = height / 2.0;
+
+        const type angle_rad = -angle_degree * M_PI / 180.0;
+        const type cos_angle = cos(angle_rad);
+        const type sin_angle = sin(angle_rad);
+
+        Tensor<type,2> rotation_matrix(3, 3);
+
+        rotation_matrix.setZero();
+        rotation_matrix(0, 0) = cos_angle;
+        rotation_matrix(0, 1) = -sin_angle;
+        rotation_matrix(1, 0) = sin_angle;
+        rotation_matrix(1, 1) = cos_angle;
+        rotation_matrix(0, 2) = rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y;
+        rotation_matrix(1, 2) = rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y;
+        rotation_matrix(2, 2) = 1;
+
+        Tensor<type, 1> coordinates(3);
+        Tensor<type, 1> transformed_coordinates(3);
+        Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
+
+        for (Index x = 0; x < width; x++)
+        {
+            for (Index y = 0; y < height; y++)
+            {
+                coordinates(0) = x;
+                coordinates(1) = y;
+                coordinates(2) = 1;
+
+                transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
+
+                if (transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width &&
+                    transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
+                {
+                    for (Index channel = 0; channel < channels; channel++)
+                    {
+                        output(x, y, channel) = input(static_cast<int>(transformed_coordinates[0]),
+                                                      static_cast<int>(transformed_coordinates[1]),
+                                                      channel);
+                    }
+                }
+                else
+                {
+                    for (Index channel = 0; channel < channels; channel++)
+                    {
+                        output(x, y, channel) = 0;
+                    }
+                }
+
+            }
+        }
+    }
+
+//    void rescale_image(const Tensor<type, 3>& input,
+//                       Tensor<type, 3>& output,
+//                       const type& )
+
+    void translate_image(const Tensor<type, 3>& input,
+                         Tensor<type, 3>& output,
+                         const Index& shift)
+    {
+        assert(input.dimension(0) == output.dimension(0));
+        assert(input.dimension(1) == output.dimension(1));
+        assert(input.dimension(2) == output.dimension(2));
+
+        output.setZero();
+
+        Index height = input.dimension(0);
+        Index width = input.dimension(1);
+        Index channels = input.dimension(2);
+        Index input_size = height*width;
+
+        Index limit_column = width - shift;
+
+        for(Index i = 0; i < limit_column * channels; i++)
+        {
+            Index channel = i % channels;
+            Index column = i / channels;
+
+            TensorMap<const Tensor<type, 2>> input_column_map(input.data() + column*height + channel*input_size,
+                                                              height,
+                                                              1);
+
+            TensorMap<Tensor<type, 2>> output_column_map(output.data() + (column + shift)*height + channel*input_size,
+                                                         height,
+                                                         1);
+            output_column_map= input_column_map;
+        }
+    }
+
 
     Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
     {
@@ -547,9 +673,10 @@ namespace opennn
 
         input_variables_dimensions.resize(3);
         input_variables_dimensions.setValues({channels, width, height});
-        */
+
 
         return Tensor<unsigned char, 1>();
+        */
     }
 
 

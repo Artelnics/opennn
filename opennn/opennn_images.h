@@ -48,7 +48,15 @@ namespace opennn
     Tensor<type, 1> resize_proposed_region(const Tensor<type, 1>, const Index&, const Index&,
                                            const Index&, const Index&, const Index&);
 
-    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &, const Index &, const Index &);
+    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &,
+                                          const Index &,
+                                          const Index &,
+                                          const Index &,
+                                          const Index &,
+                                          const Index &);
+
+    const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
+    const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
 
     void reflect_image_x(const Tensor<type, 3>&, Tensor<type, 3>&);
     void reflect_image_y(const Tensor<type, 3>&, Tensor<type, 3>&);
