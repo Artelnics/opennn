@@ -49,6 +49,11 @@ Index PerceptronLayer::get_inputs_number() const
     return synaptic_weights.dimension(0);
 }
 
+void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
+{
+    dropout_rate = new_dropout_rate;
+}
+
 
 Tensor<Index, 1> PerceptronLayer::get_inputs_dimensions() const
 {
@@ -99,6 +104,10 @@ Index PerceptronLayer::get_parameters_number() const
     return biases.size() + synaptic_weights.size();
 }
 
+type PerceptronLayer::get_dropout_rate() const
+{
+    return dropout_rate;
+}
 
 /// Returns the biases from all the perceptrons in the layer.
 /// The format is a vector of real values.
@@ -108,6 +117,7 @@ const Tensor<type, 2>& PerceptronLayer::get_biases() const
 {
     return biases;
 }
+
 
 
 /// Returns the synaptic weights from the perceptrons.
@@ -281,7 +291,6 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
     set_default();
 }
 
-
 /// Sets those members not related to the vector of perceptrons to their default value.
 /// <ul>
 /// <li> Display: True.
@@ -376,7 +385,6 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
 {
     activation_function = new_activation_function;
 }
-
 
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
@@ -732,20 +740,42 @@ void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                            synaptic_weights,
                            layer_forward_propagation);
 
+    if(is_training && dropout_rate > type(0)) // Dropout
+    {
+        type* outputs_data = layer_forward_propagation->outputs_data;
+
+        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+        const Index outputs_number = get_neurons_number();
+
+        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+        for(Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
+        {
+            const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
+
+            TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number, batch_samples_number);
+
+            if(random_number < dropout_rate)
+            {
+                column.setZero();
+            }
+            else
+            {
+                column = column * scaling_factor;
+            }
+        }
+    }
+
     if(is_training) // Perform training
-    {   
+    {
         calculate_activations_derivatives(layer_forward_propagation);
     }
-    else // Perform deployment
+    else
     {
         calculate_activations(layer_forward_propagation);
     }
-
-    if(is_training && dropout_rate > type(0))
-    {
-        // @todo
-    }
 }
+
 
 
 void PerceptronLayer::forward_propagate(type* inputs_data,
@@ -782,12 +812,29 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                            potential_synaptic_weights,
                            layer_forward_propagation);
 
-    calculate_activations_derivatives(layer_forward_propagation);
-
     if(dropout_rate > type(0))
     {
-        // @todo
+        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+
+        const Index outputs_number = get_neurons_number();
+
+        type* outputs_data = layer_forward_propagation->outputs_data;
+
+        for(Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
+        {
+            for(Index index_output = 0; index_output < outputs_number; ++index_output)
+            {
+                const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
+
+                if(random_number < dropout_rate)
+                {
+                    *(outputs_data + batch_index*outputs_number + index_output) = type(0);
+                }
+            }
+        }
     }
+
+    calculate_activations_derivatives(layer_forward_propagation);
 }
 
 

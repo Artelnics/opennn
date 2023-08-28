@@ -798,7 +798,6 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
             perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
             this->add_layer(perceptron_layer_pointer);
-
             if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         }
 
@@ -812,6 +811,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::Classification || model_type == ProjectType::TextClassification)
     {
+
         for(Index i = 0; i < size-2; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);

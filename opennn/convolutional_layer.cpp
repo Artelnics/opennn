@@ -118,38 +118,42 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-//    TensorMap<Tensor<type, 4>> outputs = convolutional_layer_forward_propagation->get_outputs();
+    Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
 
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
     const Index kernels_channels_number = get_kernels_channels_number();
     const Index kernels_number = get_kernels_number();
 
-    const Index single_kernel_size = kernels_channels_number * kernels_rows_number * kernels_columns_number;
+    const Index single_kernel_size = kernels_channels_number*kernels_rows_number*kernels_columns_number;
 
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
     const Index outputs_rows_number = get_outputs_rows_number();
     const Index outputs_columns_number = get_outputs_columns_number();
-    const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
+    const Index single_output_size = batch_samples_number*outputs_rows_number*outputs_columns_number;
 
     if(convolution_type == ConvolutionType::Same)
     {
         const Eigen::array<pair<Index, Index>, 4> paddings = get_paddings();
 
-        convolutional_layer_forward_propagation->preprocessed_inputs = inputs.pad(paddings);
+        preprocessed_inputs = inputs.pad(paddings);
     }
     else
     {
-        convolutional_layer_forward_propagation->preprocessed_inputs = inputs;
+        preprocessed_inputs = inputs;
     }
 
     if(row_stride != 1 || column_stride != 1)
     {
         const Eigen::array<ptrdiff_t, 4> strides = get_strides();
 
-        convolutional_layer_forward_propagation->preprocessed_inputs.device(*thread_pool_device)
-                = convolutional_layer_forward_propagation->preprocessed_inputs.stride(strides);
+        preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(strides);
     }
+
+//    const Eigen::array<pair<Index, Index>, 4> paddings = get_paddings();
+//    const Eigen::array<ptrdiff_t, 4> strides = get_strides();
+
+//    preprocessed_inputs = inputs.pad(paddings).stride(strides);
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
@@ -164,14 +168,12 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
                                                outputs_columns_number,
                                                1);
 
-        convolution.device(*thread_pool_device) = convolutional_layer_forward_propagation->preprocessed_inputs.convolve(kernel, convolutions_dimensions)
-                                                + biases_pointer[kernel_index];
+        convolution.device(*thread_pool_device) = preprocessed_inputs.convolve(kernel, convolutions_dimensions)
+                                                                     + biases_pointer[kernel_index];
     }
-
-//    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
-
-
 }
+
+
 
 // Batch normalization
 
