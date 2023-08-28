@@ -37,8 +37,8 @@ public:
 
    void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-   void forward_propagate(type*,
-                          const Tensor<Index, 1>&,
+   void forward_propagate(Tensor<type*, 1>,
+                          const Tensor<Tensor<Index, 1>, 1>&,
                           LayerForwardPropagation*,
                           const bool&);
 
@@ -69,6 +69,16 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
+
+        outputs_data.resize(2);
+
+        // Bounding boxes
+
+        outputs_data(0) = nullptr;
+
+        // Scores
+
+        outputs_data(1) = nullptr;
     }
 
     void print() const
@@ -76,9 +86,8 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
         cout << "Non max suppression layer forward propagation structure" << endl;
 
         cout << "Outputs:" << endl;
-
 //        cout << TensorMap<Tensor<type,4>>(outputs_data,
-//                                          outputs_dimensions(0),
+//                                          outputs_dimensions[0],
 //                                          outputs_dimensions(1),
 //                                          outputs_dimensions(2),
 //                                          outputs_dimensions(3)) << endl;
@@ -87,13 +96,6 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
 
 //        cout << outputs_dimensions << endl;
     }
-/*
-    type* outputs_data ?
-
-    Tensor<type, 1> bounding_boxes;
-    Tensor<type, 1> scores;
-    Tensor<string, 1> labels;
-*/
 };
 
 }

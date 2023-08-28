@@ -20,8 +20,29 @@ namespace opennn
 RegionProposalLayer::RegionProposalLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
 {
     inputs_dimensions = new_inputs_dimensions;
+
+    layer_type = Type::RegionProposal;
+
+    layer_name = "region_proposal_layer";
 }
 
+
+Tensor<Index, 1> RegionProposalLayer::get_inputs_dimensions() const
+{
+    return inputs_dimensions;
+}
+
+
+Tensor<Index, 1> RegionProposalLayer::get_outputs_dimensions() const
+{
+    Tensor<Index, 1> outputs_dimensions(3);
+
+    outputs_dimensions[0] = region_rows;
+    outputs_dimensions(1) = region_columns;
+    outputs_dimensions(2) = channels_number;
+
+    return outputs_dimensions;
+}
 
 
 Index RegionProposalLayer::get_regions_number() const
@@ -53,15 +74,18 @@ void RegionProposalLayer::set_regions_number(const Index& new_regions_number)
     regions_number = new_regions_number;
 }
 
+
 void RegionProposalLayer::set_region_rows(const Index& new_region_rows)
 {
     region_rows = new_region_rows;
 }
 
+
 void RegionProposalLayer::set_region_columns(const Index& new_region_columns)
 {
     region_columns = new_region_columns;
 }
+
 
 void RegionProposalLayer::set_channels_number(const Index& new_channels_number)
 {
@@ -110,7 +134,7 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
 
     const Index image_channels_number = input_image(1)(2);
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions[0], outputs_dimensions(1));
     TensorMap<Tensor<type, 2>> regions(regions_data, regions_dimensions(0), regions_dimensions(1));
 
     for (Index region_index = 0; region_index < regions_number; region_index++)
@@ -139,16 +163,14 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
 }
 
 
-void RegionProposalLayer::forward_propagate(type* inputs_data,
-                          const Tensor<Index, 1>& inputs_dimensions,
+void RegionProposalLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                          const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                           LayerForwardPropagation* forward_propagation,
                           const bool& is_training)
 {
 
     RegionProposalLayerForwardPropagation* region_proposal_layer_forward_propagation
             = static_cast<RegionProposalLayerForwardPropagation*>(forward_propagation);
-
-
 /*
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
@@ -187,7 +209,7 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
 
     const Index image_channels_number = input_image(1)(2);
 
-    TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions(0), outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
     TensorMap<Tensor<type, 2>> regions(region_proposal_layer_forward_propagation->outputs_regions.data(), regions_dimensions(0), regions_dimensions(1));
 
     Tensor<Tensor<type, 1>, 1> proposed_region;
@@ -220,7 +242,6 @@ void RegionProposalLayer::forward_propagate(type* inputs_data,
     }
 */
 }
-
 
 }
 

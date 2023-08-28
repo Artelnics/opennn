@@ -232,7 +232,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     type* outputs_data = pooling_layer_forward.outputs_data;
 
     TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                       outputs_dimensions(0),
+                                       outputs_dimensions[0],
                                        outputs_dimensions(1),
                                        outputs_dimensions(2),
                                        outputs_dimensions(3));

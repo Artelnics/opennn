@@ -81,8 +81,6 @@ private:
 
     // Utilities
 
-    void resize_image(const Index&, const Index&);
-
     void segment_image();
 
 };

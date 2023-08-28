@@ -484,19 +484,19 @@ void GeneticAlgorithm::initialize_population_random()
 
     if(random_columns_number > 10000)
     {
-        percentage = 0.1;
+        percentage = type(0.1);
     }
     else if(random_columns_number > 5000)
     {
-        percentage = 0.2;
+        percentage = type(0.2);
     }
     else if (random_columns_number > 1000)
     {
-        percentage = 0.4;
+        percentage = type(0.4);
     }
     else if (random_columns_number > 500)
     {
-       percentage = 0.6;
+       percentage = type(0.6);
     }
 
     //Original inputs columns

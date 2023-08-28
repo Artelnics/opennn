@@ -340,11 +340,13 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                    inputs_columns_number,
                                    inputs_channels_number);
 
+        outputs_data.resize(1);
+
         outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
 
         outputs_dimensions.resize(1);
-        outputs_dimensions(0).resize(4);
-        outputs_dimensions.setValues({batch_samples_number,
+        outputs_dimensions[0].resize(4);
+        outputs_dimensions[0].setValues({batch_samples_number,
                                       outputs_rows_number,
                                       outputs_columns_number,
                                       kernels_number});
@@ -366,13 +368,13 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         cout << "Outputs:" << endl;
 
         cout << TensorMap<Tensor<type,4>>(outputs_data(0),
-                                          outputs_dimensions(0)(0),
-                                          outputs_dimensions(0)(1),
-                                          outputs_dimensions(0)(2),
-                                          outputs_dimensions(0)(3)) << endl;
+                                          outputs_dimensions[0](0),
+                                          outputs_dimensions[0](1),
+                                          outputs_dimensions[0](2),
+                                          outputs_dimensions[0](3)) << endl;
 
         cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions(0) << endl;
+        cout << outputs_dimensions[0] << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;

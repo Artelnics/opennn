@@ -49,17 +49,24 @@ int main(int argc, char *argv[])
         // UNDER DEVELOPMENT
 
         srand(time(NULL));
-/*
+
         DataSet data_set;
+
+        //        data_set.set_intersection_over_union_threshold(0.3);
+        //        data_set.set_regions_number(100);
+        //        data_set.set_region_rows(12);
+        //        data_set.set_region_columns(12);
 
         data_set.set_data_file_name("../img/ground_truth.xml");
 
-        //data_set.set_intersection_over_union_threshold(0.3);
-        //data_set.set_regions_number(100);
-        //data_set.set_region_rows(12);
-        //data_set.set_region_columns(12);
 
         data_set.read_ground_truth();
+/*
+        DataSetBatch batch_training(1, &data_set);
+
+        Tensor<Index, 2> training_batches = data_set.get_batches(training_samples_indices, batch_samples_number_training, shuffle);
+
+        batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
         Tensor<Index, 1> inputs_dimensions(3);
         inputs_dimensions(0) = 28;
@@ -72,38 +79,42 @@ int main(int argc, char *argv[])
         region_proposal_layer.set_region_columns(1);
         region_proposal_layer.set_channels_number(1);
 
-        RegionProposalLayerForwardPropagation region_proposal_layer_forward_propagation(1, &region_proposal_layer);
+        const Tensor<Index, 1> region_proposal_layer_outputs_dimensions = region_proposal_layer.get_outputs_dimensions();
 
-        Tensor<type, 4> region_proposal_layer_inputs(28, 28, 3, 1);
-        region_proposal_layer_inputs.setConstant(255);
+        cout << region_proposal_layer_outputs_dimensions << endl;
 
-        region_proposal_layer.forward_propagate(region_proposal_layer_inputs.data(),
-                                                get_dimensions(region_proposal_layer_inputs),
-                                                &region_proposal_layer_forward_propagation,
-                                                false);
-*/
-        //region_proposal_layer_forward_propagation.print();
+        FlattenLayer flatten_layer(region_proposal_layer_outputs_dimensions);
 
-        //FlattenLayer flatten_layer();
+        const Tensor<Index, 1> flatten_layer_outputs_dimensions = flatten_layer.get_outputs_dimensions();
 
-        //ProbabilisticLayer probabilistic_layer()
+        cout << flatten_layer_outputs_dimensions << endl;
+
+        ProbabilisticLayer probabilistic_layer(1, 1);
 
         NonMaxSuppressionLayer non_max_suppression_layer;
 
-        NonMaxSuppressionLayerForwardPropagation non_max_suppression_layer_forward_propagation(1, &non_max_suppression_layer);
+        NeuralNetwork neural_network;
 
-        Tensor<type, 4> non_max_suppression_layer_inputs(28, 28, 3, 1);
-        non_max_suppression_layer_inputs.setConstant(0);
+        neural_network.add_layer(&region_proposal_layer); // 0
+        neural_network.add_layer(&flatten_layer); // 1
+        neural_network.add_layer(&probabilistic_layer); // 2
+        neural_network.add_layer(&non_max_suppression_layer); // 3
 
-        non_max_suppression_layer.forward_propagate(non_max_suppression_layer_inputs.data(),
-                                                    get_dimensions(non_max_suppression_layer_inputs),
-                                                    &non_max_suppression_layer_forward_propagation,
-                                                    false);
+        Tensor<Index, 1> non_max_suppression_layer_inputs_indices(2);
+        non_max_suppression_layer_inputs_indices(0) = 0;
+        non_max_suppression_layer_inputs_indices(1) = 2;
 
-        non_max_suppression_layer_forward_propagation.print();
+        neural_network.set_layer_inputs_indices(3, non_max_suppression_layer_inputs_indices);
 
+        neural_network.print_layers_inputs_indices();
+
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(1, &neural_network);
+        neural_network_forward_propagation.print();
+
+        neural_network.forward_propagate( neural_network_forward_propagation, false);
 
 /*
+
         const string filename = "Z:/Images/DatasetRedDots-bmp/9.bmp";
         const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image(filename);
 
@@ -163,7 +174,7 @@ int main(int argc, char *argv[])
 //        Tensor<type, 2> outputs(1, 108);
 
 //        Tensor<Index, 1> outputs_dimensions(2);
-//        outputs_dimensions(0) = 1;
+//        outputs_dimensions[0] = 1;
 //        outputs_dimensions(1) = 108;
 
 //        flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);

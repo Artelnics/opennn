@@ -64,6 +64,12 @@ string Layer::get_type_string() const
     case Type::Flatten:
         return "Flatten";
 
+    case Type::RegionProposal:
+        return "RegionProposal";
+
+    case Type::NonMaxSuppression:
+        return "NonMaxSuppression";
+
     default:
         return "Unkown type";
     }
@@ -138,7 +144,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-void Layer::forward_propagate(Tensor<type*, 1>, const const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&)
+void Layer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&)
 {
     ostringstream buffer;
 

@@ -154,11 +154,12 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
 
         // Allocate memory for outputs_data
 
+        outputs_data.resize(1);
         outputs_data(0) = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
         outputs_dimensions.resize(1);
-        outputs_dimensions(0).resize(2);
-        outputs_dimensions(0).setValues({batch_samples_number, neurons_number});
+        outputs_dimensions[0].resize(2);
+        outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
     }
 
 
@@ -166,7 +167,7 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
     {
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions(0)(0), outputs_dimensions(0)(1)) << endl;
+        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
     }
 };
 

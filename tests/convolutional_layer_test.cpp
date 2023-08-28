@@ -968,7 +968,7 @@ void ConvolutionalLayerTest::test_forward_propagation()
     Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(neural_network.get_layers_number() - 1)->outputs_dimensions;
 
     TensorMap<Tensor<type, 2>> outputs(forward_outputs_data,
-                                       outputs_dimensions(0),
+                                       outputs_dimensions[0],
                                        outputs_dimensions(1));
 
     for(Index i = 0; i < batch_samples_number; i++)

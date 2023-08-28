@@ -365,7 +365,7 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(recurrent_layer_forward_propagation.outputs_data,
-                                         recurrent_layer_forward_propagation.outputs_dimensions(0),
+                                         recurrent_layer_forward_propagation.outputs_dimensions[0],
                                          recurrent_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
@@ -405,7 +405,7 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.forward_propagate(inputs.data(), inputs_dimensions, &recurrent_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(recurrent_layer_forward_propagation.outputs_data,
-                                         recurrent_layer_forward_propagation.outputs_dimensions(0),
+                                         recurrent_layer_forward_propagation.outputs_dimensions[0],
                                          recurrent_layer_forward_propagation.outputs_dimensions(1));
     */
 }

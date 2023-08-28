@@ -53,6 +53,8 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    addition_layer.h \
+    concatenation_layer.h \
     codification.h \
     numerical_differentiation.h \
     config.h \
@@ -87,6 +89,7 @@ HEADERS += \
     minkowski_error.h \
     mean_squared_error.h \
     vgg16.h \
+    resnet50.h \
     weighted_squared_error.h\
     cross_entropy_error.h \
     training_strategy.h \
@@ -117,6 +120,8 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    addition_layer.cpp \
+    concatenation_layer.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
     opennn_images.cpp \
@@ -149,6 +154,7 @@ SOURCES += \
     minkowski_error.cpp \
     mean_squared_error.cpp \
     vgg16.cpp \
+    resnet50.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \

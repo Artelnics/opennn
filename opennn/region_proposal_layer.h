@@ -36,6 +36,9 @@ public:
 
     explicit RegionProposalLayer(const Tensor<Index, 1>&);
 
+    Tensor<Index, 1> get_inputs_dimensions() const final;
+    Tensor<Index, 1> get_outputs_dimensions() const final;
+
     Index get_regions_number() const;
     Index get_region_rows() const;
     Index get_region_columns() const;
@@ -50,7 +53,7 @@ public:
 
     void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&);
+    void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&);
 
 protected:
 
@@ -62,6 +65,7 @@ protected:
     Index channels_number = 3;
 
    bool display = true;
+
 
 };
 
@@ -97,14 +101,29 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
         const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
 
+        outputs_data.resize(2);
+        outputs_dimensions.resize(2);
+
+        // Image patches
+
+        outputs_data.resize(1);
+
         outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*regions_number*region_rows*region_columns*channels_number*sizeof(type)));
 
-        outputs_dimensions.resize(1);
-        outputs_dimensions(0).resize(4);
-        outputs_dimensions(0).setValues({batch_samples_number,
-                                      region_rows,
-                                      region_columns,
-                                      channels_number});
+        outputs_dimensions[0].resize(4);
+
+        outputs_dimensions[0].setValues({batch_samples_number,
+                                         region_rows,
+                                         region_columns,
+                                         channels_number});
+
+        // Bounding boxes
+
+        outputs_data(1) = (type*)malloc(static_cast<size_t>(1));
+
+        outputs_dimensions[1].resize(1);
+
+        outputs_dimensions[1].setValues({1});
 
     }
 
@@ -112,17 +131,38 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     {
         cout << "Region proposal layer forward propagation structure" << endl;
 
-        cout << "Outputs:" << endl;
+        const RegionProposalLayer* region_proposal_layer_pointer = static_cast<RegionProposalLayer*>(layer_pointer);
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data(0),
-                                          outputs_dimensions(0)(0),
-                                          outputs_dimensions(0)(1),
-                                          outputs_dimensions(0)(2),
-                                          outputs_dimensions(0)(3)) << endl;
+        const Index region_rows = region_proposal_layer_pointer->get_region_rows();
+        const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
+        const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
 
-        cout << "Outputs dimensions:" << endl;
+        cout << "Image patches:" << endl;
 
-        cout << outputs_dimensions(0) << endl;
+//        cout << TensorMap<Tensor<type,4>>(outputs_data(0),
+//                                          outputs_dimensions[0](0),
+//                                          outputs_dimensions[0](1),
+//                                          outputs_dimensions[0](2),
+//                                          outputs_dimensions[0](3)) << endl;
+
+//        outputs_dimensions[0].setValues({batch_samples_number,
+//                                         region_rows,
+//                                         region_columns,
+//                                         channels_number});
+
+
+        cout << "Batch samples number: " << batch_samples_number << endl;
+        cout << "Region rows: " << region_rows << endl;
+        cout << "Region columns: " << region_columns << endl;
+        cout << "Channels number: " << channels_number << endl;
+
+
+//        cout << "Outputs dimensions:" << endl;
+
+//        cout << outputs_dimensions[0] << endl;
+
+        cout << "Bounding boxes:" << endl;
+
     }
 
     Tensor<Index, 2> regions;

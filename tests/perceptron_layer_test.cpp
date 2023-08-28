@@ -1372,7 +1372,7 @@ void PerceptronLayerTest::test_forward_propagate()
     assert_true(abs(perceptron_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
 
     outputs = TensorMap<Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                         perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                         perceptron_layer_forward_propagation.outputs_dimensions[0],
                                          perceptron_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(abs(outputs(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
@@ -1401,7 +1401,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &perceptron_layer_forward_propagation, is_training);
 
     outputs = TensorMap< Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                          perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                          perceptron_layer_forward_propagation.outputs_dimensions[0],
                                           perceptron_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(perceptron_layer_forward_propagation.combinations.rank() == 2, LOG);
@@ -1454,7 +1454,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &perceptron_layer_forward_propagation, is_training);
 
     outputs = TensorMap< Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                          perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                          perceptron_layer_forward_propagation.outputs_dimensions[0],
                                           perceptron_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
@@ -1501,7 +1501,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &perceptron_layer_forward_propagation, is_training);
 
     outputs = TensorMap< Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                          perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                          perceptron_layer_forward_propagation.outputs_dimensions[0],
                                           perceptron_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
@@ -1532,7 +1532,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &perceptron_layer_forward_propagation, is_training);
 
     outputs = TensorMap< Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                          perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                          perceptron_layer_forward_propagation.outputs_dimensions[0],
                                           perceptron_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
@@ -1565,7 +1565,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &perceptron_layer_forward_propagation, is_training);
 
     outputs = TensorMap< Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                          perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                          perceptron_layer_forward_propagation.outputs_dimensions[0],
                                           perceptron_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
@@ -1594,7 +1594,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.forward_propagate(inputs.data(), inputs_dimensions, &perceptron_layer_forward_propagation, is_training);
 
     outputs = TensorMap< Tensor<type, 2>>(perceptron_layer_forward_propagation.outputs_data,
-                                          perceptron_layer_forward_propagation.outputs_dimensions(0),
+                                          perceptron_layer_forward_propagation.outputs_dimensions[0],
                                           perceptron_layer_forward_propagation.outputs_dimensions(1));
     parameters.resize(2);
     parameters.setConstant(type(1));

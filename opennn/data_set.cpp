@@ -1706,8 +1706,8 @@ void DataSet::set_auto_associative_samples_uses()
 
     if(used_samples_number == 0) return;
 
-    const type training_samples_ratio = 0.8;
-    const type testing_samples_ratio = 0.2;
+    const type training_samples_ratio = type(0.8);
+    const type testing_samples_ratio = type(0.2);
 
     const type total_ratio = training_samples_ratio + testing_samples_ratio;
 
@@ -12765,7 +12765,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
 }
 
 
-
 DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {
     const Index channels_number = get_channels_number();
@@ -12805,18 +12804,14 @@ void DataSet::read_ground_truth()
     srand(time(NULL));
 
     const Index classes_number = get_label_classes_number_from_XML(data_file_name);
-    const Index annotations_number = get_bounding_boxes_number_from_XML(data_file_name); // This function also save channels, width and height
-
-    const Index regions_number = 1000; // Number of region proposals per image
-    const Index region_width = 6; // Final region width to warp
-    const Index region_height = 6; // Final region height to warp
+//    const Index annotations_number = get_bounding_boxes_number_from_XML(data_file_name); // This function also save channels, width and height
 
     const Index target_variables_number = classes_number == 1 ? 1 : classes_number + 1; // 1 class for background
 
-    const Index samples_number = images_number * regions_number;
-    const Index variables_number = channels_number * region_width * region_height + target_variables_number;
+    const Index samples_number = images_number*regions_number;
+    const Index variables_number = channels_number*region_rows*region_columns + target_variables_number;
 
-    const Index pixels_number = channels_number * region_width * region_height;
+    const Index pixels_number = channels_number*region_rows*region_columns;
 
     set(samples_number, variables_number);
 
@@ -12826,7 +12821,7 @@ void DataSet::read_ground_truth()
 
     Index row_index = 0;
 
-    //-----------------------------Load XML from string-----------------------------------//
+    // Load XML from string
 
     tinyxml2::XMLDocument document;
 
@@ -12841,7 +12836,7 @@ void DataSet::read_ground_truth()
         throw invalid_argument(buffer.str());
     }
 
-    //----------------------Read ground Truth XML--------------------------------------//
+    // Read ground Truth XML
 
     ostringstream buffer;
 
@@ -13031,7 +13026,7 @@ void DataSet::read_ground_truth()
                     }
                 }
 
-                const BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_width, region_height);
+                const BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_rows, region_columns);
 
                 for(Index j = 0; j < pixels_number; j++)
                 {
@@ -13051,9 +13046,9 @@ void DataSet::read_ground_truth()
 
     for(Index i = 0; i < channels_number; i++)
     {
-        for(Index j = 0; j < region_width; j++)
+        for(Index j = 0; j < region_rows; j++)
         {
-            for(Index k = 0; k < region_height ; k++)
+            for(Index k = 0; k < region_columns ; k++)
             {
                 columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
                 columns(column_index).type = ColumnType::Numeric;
@@ -13103,7 +13098,7 @@ void DataSet::read_ground_truth()
     split_samples_random();
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({region_height, region_width, channels_number});
+    input_variables_dimensions.setValues({region_rows, region_columns, channels_number});
 }
 
 

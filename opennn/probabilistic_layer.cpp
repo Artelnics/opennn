@@ -583,7 +583,7 @@ void ProbabilisticLayer::calculate_combinations(type* inputs_data, const Tensor<
 
     const Index biases_number = get_neurons_number();   
 
-    if(outputs_dimensions(0) != batch_samples_number || outputs_dimensions(1) != biases_number)
+    if(outputs_dimensions[0] != batch_samples_number || outputs_dimensions(1) != biases_number)
     {
         ostringstream buffer;
 
@@ -716,7 +716,7 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     type* outputs_data = perceptron_layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions(0);
+    const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions[0];
 
     calculate_combinations(inputs_data(0),
                            inputs_dimensions(0),
@@ -784,7 +784,7 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
 
     type* outputs_data = probabilistic_layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions(0);
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions[0];
 
     calculate_combinations(inputs_data,
                            inputs_dimensions(0),

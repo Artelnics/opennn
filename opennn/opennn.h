@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "layer.h"
+#include "addition_layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"
 #include "bounding_layer.h"

@@ -243,7 +243,7 @@ BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_d
     const Index inputs_number = inputs_dimensions(1);
 
     TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
-    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions[0], outputs_dimensions(1));
 
     Tensor<type, 1> distances(samples_number);
     Index distance_index = 0;

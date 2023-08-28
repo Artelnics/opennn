@@ -64,7 +64,7 @@ void FlattenLayerTest::test_forward_propagate()
     flatten_layer.forward_propagate(inputs.data(), inputs_dimensions, &flatten_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(flatten_layer_forward_propagation.outputs_data(0),
-                                         flatten_layer_forward_propagation.outputs_dimensions(0),
+                                         flatten_layer_forward_propagation.outputs_dimensions[0],
                                          flatten_layer_forward_propagation.outputs_dimensions(1));
 
     // Test

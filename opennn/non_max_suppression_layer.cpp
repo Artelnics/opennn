@@ -17,18 +17,21 @@ namespace opennn
 
 NonMaxSuppressionLayer::NonMaxSuppressionLayer() : Layer()
 {
+    layer_type = Type::NonMaxSuppression;
+
+    layer_name = "non_max_suppression_layer";
 }
 
 
 void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                              type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+                                               type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
     // inputs_data -> Score of each input image bounding box
     //             -> 4 parameters defining the bbox
     // outputs_data -> Bounding box that surpasses our criteria
 
-    const type overlap_threshold = 0.65;
-    const type confidence_score_threshold = 0.4;
+    const type overlap_threshold = type(0.65);
+    const type confidence_score_threshold = type(0.4);
 
     const Index regions_number = inputs_dimensions(0);
     TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
@@ -131,8 +134,8 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
 }
 
 
-void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
-                                               const Tensor<Index,1>& inputs_dimensions,
+void NonMaxSuppressionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                               const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
                                                LayerForwardPropagation* forward_propagation,
                                                const bool& is_training)
 {

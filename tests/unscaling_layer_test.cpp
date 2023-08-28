@@ -295,7 +295,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data(0),
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -315,7 +315,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -337,7 +337,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) - 1 < NUMERIC_LIMITS_MIN, LOG);
@@ -362,7 +362,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -383,7 +383,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -409,7 +409,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -430,7 +430,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -451,7 +451,7 @@ void UnscalingLayerTest::test_calculate_outputs()
     unscaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &unscaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(unscaling_layer_forward_propagation.outputs_data,
-                                         unscaling_layer_forward_propagation.outputs_dimensions(0),
+                                         unscaling_layer_forward_propagation.outputs_dimensions[0],
                                          unscaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == 1, LOG);

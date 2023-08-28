@@ -483,7 +483,7 @@ void PoolingLayer::calculate_hidden_delta_convolutional(LayerForwardPropagation*
 {
     // Current layer's values
 
-    const Index batch_samples_number = next_layer_forward_propagation->outputs_dimensions(0)(0);
+    const Index batch_samples_number = next_layer_forward_propagation->outputs_dimensions[0](0);
     const Index channels_number = get_channels_number();
     const Index output_rows_number = get_outputs_rows_number();
     const Index output_columns_number = get_outputs_columns_number();

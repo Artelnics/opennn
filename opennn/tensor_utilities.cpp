@@ -72,6 +72,7 @@ bool is_zero(const Tensor<type, 1>& tensor)
     return true;
 }
 
+
 bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 {
     const Index size = tensor.size();
@@ -83,6 +84,7 @@ bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 
     return true;
 }
+
 
 bool is_nan(const Tensor<type,1>& tensor)
 {
@@ -175,7 +177,6 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 }
 
 
-
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
 {
     const Index size = vector_1.size();
@@ -187,7 +188,6 @@ bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2,
 
     return true;
 }
-
 
 
 bool are_equal(const Tensor<bool, 1>& vector_1, const Tensor<bool, 1>& vector_2)

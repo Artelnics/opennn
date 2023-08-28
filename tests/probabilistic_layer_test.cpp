@@ -642,7 +642,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);    
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
-                                         probabilistic_layer_forward_propagation.outputs_dimensions(0),
+                                         probabilistic_layer_forward_propagation.outputs_dimensions[0],
                                          probabilistic_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
@@ -688,7 +688,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
-                                         probabilistic_layer_forward_propagation.outputs_dimensions(0),
+                                         probabilistic_layer_forward_propagation.outputs_dimensions[0],
                                          probabilistic_layer_forward_propagation.outputs_dimensions(1));
 
     Tensor<type, 1> perceptron_sol(4);
@@ -712,7 +712,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data, probabilistic_layer_forward_propagation.outputs_dimensions(0), probabilistic_layer_forward_propagation.outputs_dimensions(1));
+    outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data, probabilistic_layer_forward_propagation.outputs_dimensions[0], probabilistic_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -749,7 +749,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
-                                         probabilistic_layer_forward_propagation.outputs_dimensions(0),
+                                         probabilistic_layer_forward_propagation.outputs_dimensions[0],
                                          probabilistic_layer_forward_propagation.outputs_dimensions(1));
 
     Tensor<type, 1>perceptron_sol_3(4);
@@ -782,7 +782,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.forward_propagate(inputs.data(), inputs_dimensions, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
-                                         probabilistic_layer_forward_propagation.outputs_dimensions(0),
+                                         probabilistic_layer_forward_propagation.outputs_dimensions[0],
                                          probabilistic_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);

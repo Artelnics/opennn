@@ -62,8 +62,17 @@ public:
 
     /// Enumeration of the available activation functions for the perceptron neuron model.
 
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
-                            ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+    enum class ActivationFunction{Threshold,
+                                  SymmetricThreshold,
+                                  Logistic,
+                                  HyperbolicTangent,
+                                  Linear,
+                                  RectifiedLinear,
+                                  ExponentialLinear,
+                                  ScaledExponentialLinear,
+                                  SoftPlus,
+                                  SoftSign,
+                                  HardSigmoid};
 
    // Constructors
 
@@ -305,8 +314,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          // Outputs
 
          outputs_dimensions.resize(1);
-         outputs_dimensions(0).resize(2);
-         outputs_dimensions(0).setValues({batch_samples_number, neurons_number});
+         outputs_dimensions[0].resize(2);
+         outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
+
+         outputs_data.resize(1);
 
          outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
@@ -321,10 +332,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          cout << activations_derivatives.dimensions() << endl;
 
          cout << "Outputs dimensions:" << endl;
-         cout << outputs_dimensions(0) << endl;
+         cout << outputs_dimensions[0] << endl;
 
          cout << "Outputs:" << endl;
-         cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions(0)(0), outputs_dimensions(0)(1)) << endl;
+         cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
 
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives << endl;

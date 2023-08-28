@@ -370,7 +370,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type, 2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
@@ -395,7 +395,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
@@ -422,7 +422,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
@@ -456,7 +456,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
@@ -489,7 +489,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
@@ -515,7 +515,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == inputs_number, LOG);
@@ -546,7 +546,7 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.forward_propagate(inputs.data(), inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data,
-                                         scaling_layer_forward_propagation.outputs_dimensions(0),
+                                         scaling_layer_forward_propagation.outputs_dimensions[0],
                                          scaling_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.dimension(0) == samples_number, LOG);

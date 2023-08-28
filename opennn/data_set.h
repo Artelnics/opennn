@@ -1151,6 +1151,12 @@ private:
     type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
 
     Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
+
+
+    Index regions_number = 1000; // Number of region proposals per image
+    Index region_rows = 6; // Final region width to warp
+    Index region_columns = 6; // Final region height to warp
+
 };
 
 

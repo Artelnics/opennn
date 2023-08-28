@@ -74,7 +74,7 @@ void BoundingLayerTest::test_forward_propagate()
     bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, is_training);
 
     outputs = TensorMap<Tensor<type,2>>(bounding_layer_forward_propagation.outputs_data,
-                                         bounding_layer_forward_propagation.outputs_dimensions(0),
+                                         bounding_layer_forward_propagation.outputs_dimensions[0],
                                          bounding_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);
@@ -88,7 +88,7 @@ void BoundingLayerTest::test_forward_propagate()
     bounding_layer.forward_propagate(inputs.data(), inputs_dimensions, &bounding_layer_forward_propagation, is_training);
 
     TensorMap<Tensor<type, 2>> outputs_2(bounding_layer_forward_propagation.outputs_data,
-                                       bounding_layer_forward_propagation.outputs_dimensions(0),
+                                       bounding_layer_forward_propagation.outputs_dimensions[0],
                                        bounding_layer_forward_propagation.outputs_dimensions(1));
 
     assert_true(outputs.rank() == 2, LOG);

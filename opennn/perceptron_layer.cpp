@@ -64,7 +64,7 @@ Tensor<Index, 1> PerceptronLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(1);
 
-    outputs_dimensions(0) = get_neurons_number();
+    outputs_dimensions[0] = get_neurons_number();
 
     return outputs_dimensions;
 }
@@ -615,7 +615,7 @@ void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forwa
 #endif
 
     type* outputs_data = layer_forward_propagation->outputs_data(0);
-    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions(0);
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
 
     switch(activation_function)
     {
@@ -648,40 +648,8 @@ void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forwa
 
 void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation* layer_forward_propagation) const
 {
-#ifdef OPENNN_DEBUG    
-    if(combinations_dimensions(1) != get_neurons_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << LOG << endl
-               << "Combinations columns number must be equal to " << get_neurons_number() <<" (neurons number).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(activations_dimensions(0) != combinations_dimensions(0) || activations_dimensions(1) != combinations_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << LOG << endl
-               << "Activations dimensions must be equal to combinations dimensions.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(activations_derivatives_dimensions(0) != combinations_dimensions(0) || activations_derivatives_dimensions(1) != combinations_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << LOG << endl
-               << "Activations derivatives dimensions must be equal to combinations dimensions.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
-
     type* outputs_data = layer_forward_propagation->outputs_data(0);
-    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions(0);
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -691,13 +659,37 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
 
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
+    case ActivationFunction::Linear: linear_derivatives(outputs_data,
+                                                        outputs_dimensions,
+                                                        outputs_data,
+                                                        outputs_dimensions,
+                                                        activations_derivatives_data,
+                                                        outputs_dimensions);
+        return;
 
-    case ActivationFunction::Logistic: logistic_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
+    case ActivationFunction::Logistic: logistic_derivatives(outputs_data,
+                                                            outputs_dimensions,
+                                                            outputs_data,
+                                                            outputs_dimensions,
+                                                            activations_derivatives_data,
+                                                            outputs_dimensions);
+        return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(outputs_data,
+                                                                               outputs_dimensions,
+                                                                               outputs_data,
+                                                                               outputs_dimensions,
+                                                                               activations_derivatives_data,
+                                                                               outputs_dimensions);
+        return;
 
-    case ActivationFunction::Threshold: threshold_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
+    case ActivationFunction::Threshold: threshold_derivatives(outputs_data,
+                                                              outputs_dimensions,
+                                                              outputs_data,
+                                                              outputs_dimensions,
+                                                              activations_derivatives_data,
+                                                              outputs_dimensions);
+        return;
 
     case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
