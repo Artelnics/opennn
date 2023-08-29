@@ -260,7 +260,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
-    std::ofstream file(filename);
+    ofstream file(filename);
 
     if(!file.is_open())
     {
@@ -329,7 +329,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
-    std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
+    replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
 
 
@@ -588,7 +588,7 @@ Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
 
-//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+//    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
 };
@@ -599,7 +599,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 {
     Tensor<Index, 1> new_vector(index);
 
-//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+//    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
 };
@@ -1102,8 +1102,8 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    std::copy(x.data(), x.data() + x.size(), data.data());
-    std::copy(y.data(), y.data() + y.size(), data.data() + x.size());
+    copy(x.data(), x.data() + x.size(), data.data());
+    copy(y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;
 }
@@ -1416,7 +1416,7 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 
     for(Index i = 0; i < x.size(); i++)
     {
-        vector(i) = std::to_string(x(i));
+        vector(i) = to_string(x(i));
     }
 
     return vector;

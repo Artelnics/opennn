@@ -323,7 +323,7 @@ void TextAnalytics::aux_remove_non_printable_chars(Tensor<string, 1> &documents)
     for(Index i = 0; i < documents.size(); i++)
     {
 
-        new_documents[i].erase(std::remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
+        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
 
     }
 
@@ -1784,7 +1784,7 @@ Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents
         {
             Tensor<string, 1> tokens = get_tokens(documents(i)(j));
 
-            std::copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
+            copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
 
             current_tokens += tokens.size();
         }
@@ -1810,7 +1810,7 @@ string TextAnalytics::read_txt_file(const string& path) const
         throw invalid_argument(buffer.str());
     }
 
-    std::ifstream file(path.c_str());
+    ifstream file(path.c_str());
 
     if (!file.is_open())
     {
@@ -2350,7 +2350,7 @@ void TextAnalytics::load_documents(const string& path)
         throw invalid_argument(buffer.str());
     }
 
-    std::ifstream file(path.c_str());
+    ifstream file(path.c_str());
 
     if(!file.is_open())
     {
@@ -2400,7 +2400,7 @@ void TextAnalytics::load_documents(const string& path)
     Tensor<string, 1> document(lines_number);
     Tensor<string, 1> document_target(lines_number);
 
-    std::ifstream file2(path.c_str());
+    ifstream file2(path.c_str());
 
     Index tokens_number = 0;
 
@@ -2558,13 +2558,13 @@ void TextGenerationAlphabet::create_alphabet()
 
     sort(text_copy.begin(), text_copy.end());
 
-    auto ip = std::unique(text_copy.begin(), text_copy.end());
+    auto ip = unique(text_copy.begin(), text_copy.end());
 
-    text_copy.resize(std::distance(text_copy.begin(), ip));
+    text_copy.resize(distance(text_copy.begin(), ip));
 
     alphabet.resize(text_copy.length());
 
-    std::copy(text_copy.begin(), text_copy.end(), alphabet.data());
+    copy(text_copy.begin(), text_copy.end(), alphabet.data());
 }
 
 
@@ -2709,7 +2709,7 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
     Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    std::copy(input_data.data(), input_data.data() + input_data.size(), flatten_input_data.data());
+    copy(input_data.data(), input_data.data() + input_data.size(), flatten_input_data.data());
 
     return flatten_input_data;
 }
@@ -2723,7 +2723,7 @@ string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_outpu
 
     Tensor<type, 2> output_data(tensor_size, alphabet_length);
 
-    std::copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
+    copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
 
     return multiple_one_hot_decode(output_data);
 }

@@ -45,16 +45,19 @@
 #include "text_analytics.h"
 #include "codification.h"
 
+using namespace std;
+using namespace Eigen;
+
 // Filesystem namespace
 
 #ifdef __APPLE__
-#include <Availability.h> // for deployment target to support pre-catalina targets without std::fs
+#include <Availability.h> // for deployment target to support pre-catalina targets without fs
 #endif
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
 #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
 #define GHC_USE_STD_FS
 #include <filesystem>
-namespace fs = std::filesystem;
+namespace fs = filesystem;
 #endif
 #endif
 #ifndef GHC_USE_STD_FS
@@ -62,9 +65,8 @@ namespace fs = std::filesystem;
 namespace fs = ghc::filesystem;
 #endif
 
-using namespace std;
-using namespace Eigen;
 using namespace fs;
+
 
 namespace opennn
 {
@@ -176,7 +178,7 @@ public:
 
         Tensor<VariableUse, 1> categories_uses;
 
-        Scaler scaler= Scaler::MeanStandardDeviation;
+        Scaler scaler = Scaler::MeanStandardDeviation;
 
         // Methods
 
@@ -892,7 +894,6 @@ public:
 
     void read_bmp();
 
-
     BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
     Index get_bounding_boxes_number_from_XML(const string&);
@@ -1016,7 +1017,7 @@ private:
 
     /// Image classification model
 
-    bool convolutional_model = false;
+//    bool convolutional_model = false;
 
     /// Class containing file string codification
 
@@ -1151,7 +1152,6 @@ private:
     type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
 
     Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
-
 
     Index regions_number = 1000; // Number of region proposals per image
     Index region_rows = 6; // Final region width to warp

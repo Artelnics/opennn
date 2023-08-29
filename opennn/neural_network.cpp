@@ -2149,7 +2149,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 
     chrono::steady_clock::time_point end = chrono::steady_clock::now();
 
-    cout << "Time difference: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms." << endl;
+    cout << "Time difference: " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms." << endl;
 
     const Index layers_number = get_layers_number();
 
@@ -3813,7 +3813,7 @@ void NeuralNetwork::save(const string& file_name) const
 
 void NeuralNetwork::save_parameters(const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -3869,7 +3869,7 @@ void NeuralNetwork::load(const string& file_name)
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
 
-    std::ifstream file;
+    ifstream file;
 
     file.open(file_name.c_str(), ios::binary);
 
@@ -4124,8 +4124,8 @@ string NeuralNetwork::write_expression_c() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != std::string::npos) {
-                expression.erase(index, std::string::npos);
+            if (index != string::npos) {
+                expression.erase(index, string::npos);
             }
 
         }
@@ -4136,8 +4136,8 @@ string NeuralNetwork::write_expression_c() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != std::string::npos) {
-                expression.erase(index, std::string::npos);
+            if (index != string::npos) {
+                expression.erase(index, string::npos);
             }
         }
     }
@@ -4603,8 +4603,8 @@ string NeuralNetwork::write_expression_api() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != std::string::npos) {
-                expression.erase(index, std::string::npos);
+            if (index != string::npos) {
+                expression.erase(index, string::npos);
             }
         }
 
@@ -4614,8 +4614,8 @@ string NeuralNetwork::write_expression_api() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != std::string::npos) {
-                expression.erase(index, std::string::npos);
+            if (index != string::npos) {
+                expression.erase(index, string::npos);
             }
         }
     }
@@ -5019,8 +5019,8 @@ string NeuralNetwork::write_expression_javascript() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != std::string::npos) {
-                expression.erase(index, std::string::npos);
+            if (index != string::npos) {
+                expression.erase(index, string::npos);
             }
         }
 
@@ -5030,8 +5030,8 @@ string NeuralNetwork::write_expression_javascript() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != std::string::npos) {
-                expression.erase(index, std::string::npos);
+            if (index != string::npos) {
+                expression.erase(index, string::npos);
             }
         }
     }
@@ -5735,7 +5735,7 @@ string NeuralNetwork::write_expression_python() const
     }
     else
     {
-        std::string inputs_list;
+        string inputs_list;
         for (int i = 0; i < original_inputs.size();++i) {
             inputs_list += "'" + original_inputs(i) + "'";
             if (i < original_inputs.size() - 1) {
@@ -5993,7 +5993,7 @@ string NeuralNetwork::write_expression_python() const
 
 void NeuralNetwork::save_expression_c(const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -6017,7 +6017,7 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
 
 void NeuralNetwork::save_expression_api(const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -6041,7 +6041,7 @@ void NeuralNetwork::save_expression_api(const string& file_name) const
 
 void NeuralNetwork::save_expression_javascript(const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -6065,7 +6065,7 @@ void NeuralNetwork::save_expression_javascript(const string& file_name) const
 
 void NeuralNetwork::save_expression_python(const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -6094,7 +6094,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 
     Tensor<type, 2> outputs = calculate_outputs(inputs.data(), inputs_dimensions);
 
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -6139,7 +6139,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 
 void NeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,const Tensor<string, 1>& types_vector, const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(distances_vector.size() != types_vector.size())
     {

@@ -1433,8 +1433,8 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 {
     if(!shuffle) return split_samples(samples_indices, batch_samples_number);
 
-    std::random_device rng;
-    std::mt19937 urng(rng());
+    random_device rng;
+    mt19937 urng(rng());
 
     const Index samples_number = samples_indices.size();
 
@@ -1580,7 +1580,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                 buffer(random_index) = samples_indices(next_index);
 
                 next_index++;
-
             }
         }
 
@@ -1699,8 +1698,8 @@ void DataSet::set_training()
 
 void DataSet::set_auto_associative_samples_uses()
 {
-    std::random_device rng;
-    std::mt19937 urng(rng());
+    random_device rng;
+    mt19937 urng(rng());
 
     const Index used_samples_number = get_used_samples_number();
 
@@ -2048,8 +2047,8 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
                                    const type& selection_samples_ratio,
                                    const type& testing_samples_ratio)
 {
-    std::random_device rng;
-    std::mt19937 urng(rng());
+    random_device rng;
+    mt19937 urng(rng());
 
     const Index used_samples_number = get_used_samples_number();
 
@@ -4150,47 +4149,47 @@ void DataSet::set_binary_simple_columns()
                 if((abs(values(0)-type(0))<NUMERIC_LIMITS_MIN) && (abs(values(1)-type(1))<NUMERIC_LIMITS_MIN))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                        columns(column_index).categories(1) = to_string(static_cast<int>(values(0)));
                     else
-                        columns(column_index).categories(1) = std::to_string(values(0));
+                        columns(column_index).categories(1) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                        columns(column_index).categories(0) = to_string(static_cast<int>(values(1)));
                     else
-                        columns(column_index).categories(0) = std::to_string(values(1));
+                        columns(column_index).categories(0) = to_string(values(1));
 
                 }
                 else if(abs(values(0) - type(1))<NUMERIC_LIMITS_MIN && abs(values(1) - type(0))<NUMERIC_LIMITS_MIN)
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                        columns(column_index).categories(0) = to_string(static_cast<int>(values(0)));
                     else
-                        columns(column_index).categories(0) = std::to_string(values(0));
+                        columns(column_index).categories(0) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                        columns(column_index).categories(1) = to_string(static_cast<int>(values(1)));
                     else
-                        columns(column_index).categories(1) = std::to_string(values(1));
+                        columns(column_index).categories(1) = to_string(values(1));
                 }
                 else if(values(0) > values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                        columns(column_index).categories(0) = to_string(static_cast<int>(values(0)));
                     else
-                        columns(column_index).categories(0) = std::to_string(values(0));
+                        columns(column_index).categories(0) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                        columns(column_index).categories(1) = to_string(static_cast<int>(values(1)));
                     else
-                        columns(column_index).categories(1) = std::to_string(values(1));
+                        columns(column_index).categories(1) = to_string(values(1));
                 }
                 else if(values(0) < values(1))
                 {
                     if(abs(values(0) - int(values(0))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
+                        columns(column_index).categories(1) = to_string(static_cast<int>(values(0)));
                     else
-                        columns(column_index).categories(1) = std::to_string(values(0));
+                        columns(column_index).categories(1) = to_string(values(0));
                     if(abs(values(1) - int(values(1))) < NUMERIC_LIMITS_MIN)
-                        columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                        columns(column_index).categories(0) = to_string(static_cast<int>(values(1)));
                     else
-                        columns(column_index).categories(0) = std::to_string(values(1));
+                        columns(column_index).categories(0) = to_string(values(1));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -6166,24 +6165,28 @@ void DataSet::set_images_number(const Index & new_images_number)
 }
 
 
-type DataSet::calculate_intersection_over_union(const BoundingBox& ground_truth_bounding_box, const BoundingBox& proposed_bounding_box)
+type DataSet::calculate_intersection_over_union(const BoundingBox& bounding_box_1, const BoundingBox& bounding_box_2)
 {
-    const Index intersection_x_top_left = max(ground_truth_bounding_box.x_top_left, proposed_bounding_box.x_top_left);
-    const Index intersection_y_top_left = max(ground_truth_bounding_box.y_top_left, proposed_bounding_box.y_top_left);
-    const Index intersection_x_bottom_right = min(ground_truth_bounding_box.x_bottom_right, proposed_bounding_box.x_bottom_right);
-    const Index intersection_y_bottom_right = min(ground_truth_bounding_box.y_bottom_right, proposed_bounding_box.y_bottom_right);
+    const Index intersection_x_top_left = max(bounding_box_1.x_top_left, bounding_box_2.x_top_left);
+
+    const Index intersection_y_top_left = max(bounding_box_1.y_top_left, bounding_box_2.y_top_left);
+
+    const Index intersection_x_bottom_right = min(bounding_box_1.x_bottom_right, bounding_box_2.x_bottom_right);
+
+    const Index intersection_y_bottom_right = min(bounding_box_1.y_bottom_right, bounding_box_2.y_bottom_right);
 
     if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left)) return 0;
 
-    const type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left) * (intersection_y_bottom_right - intersection_y_top_left));
+    const type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left)
+                                                   * (intersection_y_bottom_right - intersection_y_top_left));
 
-    const type ground_truth_bounding_box_area = (ground_truth_bounding_box.x_bottom_right - ground_truth_bounding_box.x_top_left) *
-                                    (ground_truth_bounding_box.y_bottom_right - ground_truth_bounding_box.y_top_left);
+    const type bounding_box_1_area = (bounding_box_1.x_bottom_right - bounding_box_1.x_top_left) *
+                                     (bounding_box_1.y_bottom_right - bounding_box_1.y_top_left);
 
-    const type proposed_bounding_box_area = (proposed_bounding_box.x_bottom_right - proposed_bounding_box.x_top_left) *
-                                        (proposed_bounding_box.y_bottom_right - proposed_bounding_box.y_top_left);
+    const type bounding_box_2_area = (bounding_box_2.x_bottom_right - bounding_box_2.x_top_left) *
+                                     (bounding_box_2.y_bottom_right - bounding_box_2.y_top_left);
 
-    const type union_area = ground_truth_bounding_box_area + proposed_bounding_box_area - intersection_area;
+    const type union_area = bounding_box_1_area + bounding_box_2_area - intersection_area;
 
     const type intersection_over_union = static_cast<type>(intersection_area / union_area);
 
@@ -9701,7 +9704,7 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    std::ofstream file(data_file_name.c_str());
+    ofstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -9766,12 +9769,12 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ofstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ofstream file;
 
     #ifdef _WIN32
 
-    if (std::regex_search(binary_data_file_name, accent_regex))
+    if (regex_search(binary_data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(binary_data_file_name);
@@ -9833,7 +9836,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {
-    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -9882,7 +9885,7 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 
 void DataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
 {
-    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -9963,12 +9966,12 @@ void DataSet::transform_associative_dataset()
 
 void DataSet::load_data_binary()
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
-    if (std::regex_search(data_file_name, accent_regex))
+    if (regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -10021,7 +10024,7 @@ void DataSet::load_data_binary()
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-    std::ifstream file;
+    ifstream file;
 
     file.open(time_series_data_file_name.c_str(), ios::binary);
 
@@ -10065,7 +10068,7 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
 void DataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
 {
-    std::ifstream file;
+    ifstream file;
 
     file.open(auto_associative_data_file_name.c_str(), ios::binary);
 
@@ -10109,7 +10112,7 @@ void DataSet::load_auto_associative_data_binary(const string& auto_associative_d
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
 {
-    std::ifstream file(input_data_file_name.c_str());
+    ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10186,7 +10189,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const bool& has_columns_name,
                                         const bool& has_rows_label) const
 {
-    std::ifstream file(input_data_file_name.c_str());
+    ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -11339,8 +11342,8 @@ Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_n
     const Index samples_number = get_used_samples_number();
     Tensor<Tensor<type, 2>, 1> forest(trees_number);
 
-    std::random_device rng;
-    std::mt19937 urng(rng());
+    random_device rng;
+    mt19937 urng(rng());
 
     for(Index i = 0; i < trees_number; i++)
     {
@@ -12325,6 +12328,7 @@ Tensor<unsigned char, 1> DataSet::read_bmp_image(const string& filename)
     return image;
 }
 
+
 size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 {
     using fs::directory_iterator;
@@ -12333,6 +12337,7 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 
     return size_t();
 }
+
 
 void DataSet::read_bmp()
 {
@@ -12351,7 +12356,6 @@ void DataSet::read_bmp()
 
     has_columns_names = true;
     has_rows_labels = true;
-    convolutional_model = true;
 
     separator = Separator::None;
 
@@ -12590,7 +12594,6 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     }
     has_columns_names = true;
     has_rows_labels = true;
-    convolutional_model = true;
 
     separator = Separator::None;
 
@@ -12777,9 +12780,11 @@ DataSet::BoundingBox DataSet::propose_random_region(const Tensor<unsigned char, 
     Index x_top_left;
     Index y_top_left;
 
-    if(x_center == 0){x_top_left = 0;}else{x_top_left = rand() % x_center;}
+    if(x_center == 0){x_top_left = 0;}
+    else{x_top_left = rand() % x_center;}
 
-    if(y_center == 0){y_top_left = 0;} else{y_top_left = rand() % y_center;}
+    if(y_center == 0){y_top_left = 0;}
+    else{y_top_left = rand() % y_center;}
 
     Index x_bottom_right;
 
@@ -13526,7 +13531,7 @@ void DataSet::read_txt()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    std::ofstream file;
+    ofstream file;
     file.open(transformed_data_path);
 
     for(Index i  = 0; i < document_words_number; i++)
@@ -13584,7 +13589,7 @@ void DataSet::read_txt()
 
             for(Index k = 0; k < document_words_number; k++)
                 file << row(k) << ";";
-            std::for_each(targets(i)(j).begin(), targets(i)(j).end(), [](char & c){
+            for_each(targets(i)(j).begin(), targets(i)(j).end(), [](char & c){
                 c = ::tolower(c);});
             file << "target_" + targets(i)(j) << "\n";
         }
@@ -13635,15 +13640,15 @@ void DataSet::read_csv_1()
         throw invalid_argument(buffer.str());
     }
 
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
 #ifdef _WIN32
 
-    if (std::regex_search(data_file_name, accent_regex))
+    if (regex_search(data_file_name, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }else
     {
@@ -13880,15 +13885,15 @@ void DataSet::read_csv_1()
 
 void DataSet::read_csv_2_simple()
 {   
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
-    if (std::regex_search(data_file_name, accent_regex))
+    if (regex_search(data_file_name, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }else
     {
@@ -13987,15 +13992,15 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
-    if (std::regex_search(data_file_name, accent_regex))
+    if (regex_search(data_file_name, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }else
     {
@@ -14120,15 +14125,15 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
-    if (std::regex_search(data_file_name, accent_regex))
+    if (regex_search(data_file_name, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }
     else
@@ -14282,15 +14287,15 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
-    if (std::regex_search(data_file_name, accent_regex))
+    if (regex_search(data_file_name, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }
     else

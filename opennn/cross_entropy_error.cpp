@@ -91,7 +91,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 
     Tensor<type, 2> binary_cross_entropy = - ((type(1)-targets)*((type(1)-outputs).log()));
 
-    std::replace_if(binary_cross_entropy.data(), binary_cross_entropy.data()+binary_cross_entropy.size(), [](type x){return isnan(x);}, 0);
+    replace_if(binary_cross_entropy.data(), binary_cross_entropy.data()+binary_cross_entropy.size(), [](type x){return isnan(x);}, 0);
 
     Tensor<type, 0> cross_entropy_error;
 

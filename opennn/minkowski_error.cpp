@@ -139,7 +139,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
 
         deltas.device(*thread_pool_device) = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
 
-        std::replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
+        replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, 0);
     }
 
     Tensor<type, 2> output_deltas(deltas);

@@ -283,7 +283,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 void RecurrentLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     neurons_number = 4;
     samples_number = 2;
     inputs_number = 3;
@@ -308,7 +308,7 @@ void RecurrentLayerTest::test_forward_propagate()
     inputs.setConstant(type(1));
 
     recurrent_layer_forward_propagation.set(samples_number, &recurrent_layer);
-
+/*
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
 

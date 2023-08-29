@@ -68,9 +68,9 @@ int main()
 
         return 0;
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << endl;
+        cerr << e.what() << endl;
 
         return 1;
     }

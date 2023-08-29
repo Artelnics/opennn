@@ -1782,7 +1782,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         for(Index i = 0; i < back_propagation.gradient.size(); i++)
         {
             cout << back_propagation.gradient(i) << " ; " << gradient_numerical_differentiation(i) <<  " ; " <<
-                    std::abs((back_propagation.gradient(i) - gradient_numerical_differentiation(i))/gradient_numerical_differentiation(i)*100)
+                    abs((back_propagation.gradient(i) - gradient_numerical_differentiation(i))/gradient_numerical_differentiation(i)*100)
                  << "%" << endl;
 
         }
