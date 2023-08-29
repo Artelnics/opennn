@@ -322,23 +322,25 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 }
 
 
-Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix) const
+Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    // Transform Tensors into Dense matrix
+    // Transform Tensors into Dense matrix  
 
-    auto ml = Eigen::Map<Eigen::Matrix<type, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor >>
-            (left_matrix.data(),left_matrix.dimension(0), 1);
+    const Index n = x.dimension(0);
+    const Index m = x.dimension(0);
 
-    auto mr = Eigen::Map<Eigen::Matrix<type, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-            (right_matrix.data(),right_matrix.dimension(0), 1);
+    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic, RowMajor> >(x.data(), n, 1);
+
+    auto y_matrix = Map< Matrix<type, Dynamic, Dynamic, RowMajor> >(y.data(), m, 1);
 
     // Kronecker Product
 
-    auto product = kroneckerProduct(ml, mr).eval();
+    auto product = kroneckerProduct(x_matrix, y_matrix).eval();
+    //Matrix<type, Dynamic, Dynamic> product = kroneckerProduct(ml, mr).eval();
 
     // Matrix into a Tensor
 
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), n, m);
 
     return direct_matrix;
 }

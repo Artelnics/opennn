@@ -685,7 +685,7 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 /// That matrix is symmetric, with size the number of parameters.
 /// @param parameters vector with the parameters to get the regularization term.
 
-void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
+void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
 {
     switch(regularization_method)
     {

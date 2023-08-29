@@ -727,13 +727,13 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
 };
 
 
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
 {
     // Transform Tensors into Dense matrix
-/*
-    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>(x.data(), x.dimension(0), 1);
 
-    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>(y.data(),y.dimension(0), 1);
+    auto ml = Map<Matrix<type, Dynamic, Dynamic, RowMajor >>(x.data(), x.dimension(0), 1);
+
+    auto mr = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(y.data(),y.dimension(0), 1);
 
     // Kronecker Product
 
@@ -744,9 +744,18 @@ Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1
     TensorMap< Tensor<type, 2> > direct_matrix(product.data(), x.size(), y.size());
 
     return direct_matrix;
-*/
+}
 
-    return Tensor<type, 2>();
+
+void kronecker_product_void(TensorMap<Tensor<type, 1>>& x, TensorMap<Tensor<type, 2>>& y)
+{
+    const Index n = x.dimension(0);
+
+    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic> >(x.data(), n, 1);
+
+    auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n, n);
+
+    product = kroneckerProduct(x_matrix, x_matrix).eval();
 }
 
 
@@ -809,7 +818,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 }
 
 
-void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
+void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
 {
     const type norm = l2_norm(thread_pool_device, vector);
 

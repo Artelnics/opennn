@@ -2166,6 +2166,26 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
 
         TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data, samples_number, variables_number, variables_number);
 
+        for(Index i = 0; i < samples_number; i++)
+        {
+            TensorMap<Tensor<type, 1>> sample_activations(activations_data,
+                                                          i*variables_number);
+
+            TensorMap<Tensor<type, 2>> sample_activations_derivatives(activations_derivatives_data,
+                                                                      i*variables_number*variables_number,
+                                                                      samples_number); //@todo check this
+
+               kronecker_product_void(sample_activations, sample_activations_derivatives);
+
+//            #pragma omp parallel for
+
+//            for(Index j = 0; j < variables_number; j++)
+//            {
+//                sample_activations_derivatives(j,j) = type(1) - sample_activations_derivatives(j,j);
+//            }
+
+        }
+/*
         type delta = type(0);
 
         Index index = 0;
@@ -2185,6 +2205,7 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
                 }
             }
         }
+*/
     }
     else
     {

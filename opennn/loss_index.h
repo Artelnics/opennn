@@ -226,7 +226,7 @@ public:
    type calculate_regularization(const Tensor<type, 1>&) const;
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void calculate_regularization_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
+   void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
 
    // Serialization methods
 
