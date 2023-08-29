@@ -270,9 +270,9 @@
 // #define LWG_2935_BEHAVIOUR
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // LWG #2936 enables new element wise (more expensive) path comparison
-// * if this->root_name().native().compare(p.root_name().native()) != 0 return result
-// * if this->has_root_directory() and !p.has_root_directory() return -1
-// * if !this->has_root_directory() and p.has_root_directory() return -1
+// * if root_name().native().compare(p.root_name().native()) != 0 return result
+// * if has_root_directory() and !p.has_root_directory() return -1
+// * if !has_root_directory() and p.has_root_directory() return -1
 // * else result of element wise comparison of path iteration where first comparison is != 0 or 0
 //   if all comparisons are 0 (on Windows this implementation does case insensitive root_name()
 //   comparison)
@@ -2579,7 +2579,7 @@ GHC_INLINE path& path::operator/=(const path& p)
 GHC_INLINE void path::append_name(const value_type* name)
 {
     if (_path.empty()) {
-        this->operator/=(path(name));
+        operator/=(path(name));
     }
     else {
         if (_path.back() != path::preferred_separator) {
@@ -2601,13 +2601,13 @@ inline path& path::operator/=(const Source& source)
 template <class Source>
 inline path& path::append(const Source& source)
 {
-    return this->operator/=(path(source));
+    return operator/=(path(source));
 }
 
 template <>
 inline path& path::append<path>(const path& p)
 {
-    return this->operator/=(p);
+    return operator/=(p);
 }
 
 template <class InputIterator>

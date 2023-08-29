@@ -836,7 +836,7 @@ XMLNode::~XMLNode()
 const char* XMLNode::Value() const
 {
     // Edge case: XMLDocuments don't have a Value. Return null.
-    if(this->ToDocument())
+    if(ToDocument())
         return 0;
     return _value.GetStr();
 }
@@ -855,10 +855,10 @@ void XMLNode::SetValue(const char* str, bool staticMem )
 
 XMLNode* XMLNode::DeepClone(XMLDocument* target) const
 {
-    XMLNode* clone = this->ShallowClone(target);
+    XMLNode* clone = ShallowClone(target);
     if(!clone) return 0;
 
-    for(const XMLNode* child = this->FirstChild(); child; child = child->NextSibling())
+    for(const XMLNode* child = FirstChild(); child; child = child->NextSibling())
     {
         XMLNode* childClone = child->DeepClone(target);
         TIXMLASSERT(childClone);
@@ -1237,7 +1237,7 @@ void XMLNode::InsertChildPreamble(XMLNode* insertThis ) const
 
 const XMLElement* XMLNode::ToElementWithName(const char* name ) const
 {
-    const XMLElement* element = this->ToElement();
+    const XMLElement* element = ToElement();
     if(element == 0 )
     {
         return 0;
@@ -1256,7 +1256,7 @@ const XMLElement* XMLNode::ToElementWithName(const char* name ) const
 // --------- XMLText ---------- //
 char* XMLText::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 {
-    if(this->CData())
+    if(CData())
     {
         p = _value.ParseText(p, "]]>", StrPair::NEEDS_NEWLINE_NORMALIZATION, curLineNumPtr );
         if(!p )
@@ -1294,7 +1294,7 @@ XMLNode* XMLText::ShallowClone(XMLDocument* doc ) const
         doc = _document;
     }
     XMLText* text = doc->NewText(Value());	// fixme: this will always allocate memory. Intern?
-    text->SetCData(this->CData());
+    text->SetCData(CData());
     return text;
 }
 
@@ -2273,7 +2273,7 @@ void XMLDocument::DeepCopy(XMLDocument* target) const
     }
 
     target->Clear();
-    for(const XMLNode* node = this->FirstChild(); node; node = node->NextSibling())
+    for(const XMLNode* node = FirstChild(); node; node = node->NextSibling())
     {
         target->InsertEndChild(node->DeepClone(target));
     }

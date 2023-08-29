@@ -144,11 +144,6 @@ public:
                                           type*, const Tensor<Index, 1>&,
                                           type*, const Tensor<Index, 1>&) const;
 
-    void calculate_outputs(const type* inputs,
-                           const Tensor<Index, 1>& inputs_dimensions,
-                           type* outputs,
-                           const Tensor<Index, 1>& outputs_dimensions);
-
    // Outputs
 
    void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
@@ -272,9 +267,6 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     {
         cout << "Outputs:" << endl;
         //cout << outputs_dimensions << endl;
-
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives.dimensions() << endl;
 
         cout << "Outputs:" << endl;
         cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;

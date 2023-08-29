@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "opennn_strings.h"
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 #include "../eigen/Eigen/Dense"
 
@@ -28,7 +29,9 @@ void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
-void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
+
+void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);
@@ -92,7 +95,7 @@ type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
 void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
-type l2_distance(const TensorMap<Tensor<type, 0>>&, const TensorMap<Tensor<type, 0>>&);
+type l2_distance(const type&, const type&);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);

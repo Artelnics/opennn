@@ -119,8 +119,8 @@ void TestingAnalysis::set_default()
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -261,7 +261,8 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
 
 void TestingAnalysis::print_linear_regression_correlations() const
 {
-    const Tensor<Correlation, 1> linear_correlation = this->linear_correlation();
+/*
+    const Tensor<Correlation, 1> linear_correlation = linear_correlation();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
@@ -271,6 +272,7 @@ void TestingAnalysis::print_linear_regression_correlations() const
     {
         cout << targets_name[i] << " correlation: " << linear_correlation[i].r << endl;
     }
+*/
 }
 
 
@@ -3540,7 +3542,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
     for(Index i = 0; i < targets_number; i++)
     {
-        error_autocorrelations[i] = autocorrelations(this->thread_pool_device, error.chip(i,1), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(thread_pool_device, error.chip(i,1), maximum_lags_number);
     }
 
     return error_autocorrelations;
@@ -3619,7 +3621,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     for(Index i = 0; i < targets_number; i++)
     {
-        inputs_errors_cross_correlation[i] = cross_correlations(this->thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
     }
 
     return inputs_errors_cross_correlation;

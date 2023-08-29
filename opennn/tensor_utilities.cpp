@@ -43,22 +43,32 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-    const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-//    #pragma omp parallel for
-
-    for(Index j = 0; j < columns_number; j++)
+    for(Index i = 0; i < columns_number; i++)
     {
-        for(Index i = 0; i < rows_number; i++)
-        {
-           matrix(i,j) /= vector(i) == type(0) ? type(1) : vector(i);
-        }
+        TensorMap<Tensor<type,1>> column(matrix.data(), rows_number*i);
+
+        column.device(*thread_pool_device) = column/vector(i);
     }
 }
 
+
+void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type,1>> column(matrix.data(), rows_number*i);
+
+        column.device(*thread_pool_device) = column/vector(i);
+    }
+}
 
 bool is_zero(const Tensor<type, 1>& tensor)
 {
@@ -719,21 +729,24 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
 
 Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index size = x.size();
+    // Transform Tensors into Dense matrix
+/*
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>(x.data(), x.dimension(0), 1);
 
-    Tensor<type, 2> direct(size, size);
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>(y.data(),y.dimension(0), 1);
 
-    #pragma omp parallel for
+    // Kronecker Product
 
-    for(Index i = 0; i < size; i++)
-    {
-        for(Index j = 0; j < size; j++)
-        {
-            direct(i, j) = x(i) * y(j);
-        }
-    }
+    auto product = kroneckerProduct(ml, mr).eval();
 
-    return direct;
+    // Matrix into a Tensor
+
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), x.size(), y.size());
+
+    return direct_matrix;
+*/
+
+    return Tensor<type, 2>();
 }
 
 
@@ -842,14 +855,13 @@ type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
 }
 
 
-type l2_distance(const TensorMap<Tensor<type, 0>>&x, const TensorMap<Tensor<type, 0>>&y)
+type l2_distance(const type& x, const type& y)
 {
-    Tensor<type, 0> distance;
+    type distance = fabs(x - y);
 
-    distance = (x-y).square().sum().sqrt();
-
-    return distance(0);
+    return distance;
 }
+
 
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
 {

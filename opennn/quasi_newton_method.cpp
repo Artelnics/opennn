@@ -319,7 +319,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 
         throw invalid_argument(buffer.str());
     }
-
 }
 
 
@@ -327,15 +326,15 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matri
 {
     // Transform Tensors into Dense matrix
 
-    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+    auto ml = Eigen::Map<Eigen::Matrix<type, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0), 1);
 
-    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+    auto mr = Eigen::Map<Eigen::Matrix<type, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0), 1);
 
     // Kronecker Product
 
-    auto product = kroneckerProduct(ml,mr).eval();
+    auto product = kroneckerProduct(ml, mr).eval();
 
     // Matrix into a Tensor
 
@@ -349,7 +348,7 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matri
 /// Its return a direct matrix.
 /// @param left_matrix Matrix.
 /// @param right_matrix Matrix.
-
+/*
 Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left_matrix, Tensor<type, 2>& right_matrix) const
 {
     // Transform Tensors into Dense matrix
@@ -370,7 +369,7 @@ Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left_matri
 
     return direct_matrix;
 }
-
+*/
 
 /// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel
 /// (DFP) algorithm.

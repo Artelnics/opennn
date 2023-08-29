@@ -9723,7 +9723,7 @@ void DataSet::save_data() const
 
     char separator_char = ',';//get_separator_char();
 
-    if(this->has_rows_labels)
+    if(has_rows_labels)
     {
         file << "id" << separator_char;
     }
@@ -9741,7 +9741,7 @@ void DataSet::save_data() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(this->has_rows_labels)
+        if(has_rows_labels)
         {
             file << rows_labels(i) << separator_char;
         }
@@ -15139,7 +15139,7 @@ void DataSet::shuffle()
 
 bool DataSet::get_has_rows_labels() const
 {
-    return this->has_rows_labels;
+    return has_rows_labels;
 }
 
 }

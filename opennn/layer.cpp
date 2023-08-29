@@ -78,8 +78,8 @@ string Layer::get_type_string() const
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -359,7 +359,7 @@ void Layer::logistic_derivatives(type* combinations_data, const Tensor<Index, 1>
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -550,7 +550,7 @@ void Layer::hard_sigmoid_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -774,7 +774,7 @@ void Layer::hyperbolic_tangent_derivatives(type* combinations_data,
         throw invalid_argument(buffer.str());
     }
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -931,7 +931,7 @@ void Layer::threshold_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1036,7 +1036,7 @@ void Layer::symmetric_threshold_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1153,7 +1153,7 @@ void Layer::rectified_linear_derivatives(type* combinations_data, const Tensor<I
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1332,7 +1332,7 @@ void Layer::scaled_exponential_linear_derivatives(type* combinations_data, const
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1517,7 +1517,7 @@ void Layer::soft_plus_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1672,7 +1672,7 @@ void Layer::soft_sign_derivatives(type* combinations_data, const Tensor<Index, 1
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1882,7 +1882,7 @@ void Layer::exponential_linear_derivatives(type* combinations_data, const Tensor
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -2023,21 +2023,40 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
     if(rank == 1)
     {
         const TensorMap<Tensor<type, 1>> x(x_data, x_dimensions(0));
+
         TensorMap<Tensor<type, 1>> y(y_data, y_dimensions(0));
 
         Tensor<type, 0> sum;
-
+/*
         sum.device(*thread_pool_device) = x.exp().sum();
 
         y.device(*thread_pool_device) = x.exp() / sum(0);
+*/
+        y.device(*thread_pool_device) = x.exp();
+
+        sum.device(*thread_pool_device) = y.sum();
+
+        y.device(*thread_pool_device) = y/sum(0);
     }
     else if(rank == 2)
     {
-        const TensorMap<Tensor<type, 2>> x(x_data, x_dimensions(0), x_dimensions(1));
-        TensorMap<Tensor<type, 2>> y(y_data, y_dimensions(0), y_dimensions(1));
+        const Eigen::array<int, 1> dims({1}); // Eigen reduction cols Axis
 
-        const Index columns_number = x.dimension(1);
-        const Index rows_number = x.dimension(0);
+        const Index rows_number = x_dimensions(0);
+        const Index columns_number = x_dimensions(1);
+
+        const TensorMap<Tensor<type, 2>> x(x_data, rows_number, columns_number);
+
+        TensorMap<Tensor<type, 2>> y(y_data, rows_number, columns_number);      
+
+        y.device(*thread_pool_device) = x.exp();
+
+        Tensor<type, 1> rows_sum(rows_number);
+
+        rows_sum.device(*thread_pool_device) = y.sum(dims);
+
+        divide_columns(thread_pool_device, y, rows_sum);
+/*
         const Tensor<type, 0> x_maximum = x.maximum();
 
         y.device(*thread_pool_device) = - x_maximum(0) + x;
@@ -2046,19 +2065,20 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
         Tensor<type, 1> inverse_sums(rows_number);
         inverse_sums.setZero();
 
-        Eigen::array<int, 1> dims({1}); // Eigen reduction cols Axis
         inverse_sums = y.sum(dims).inverse();
 
-    #pragma omp parallel for
-        for (Index i = 0; i < columns_number; i++)
+        #pragma omp parallel for
+
+        for(Index j = 0; j < columns_number; j++)
         {
-            const TensorMap<Tensor<type, 1>> single_col(y.data()+rows_number*i, rows_number);
+            const TensorMap<Tensor<type, 1>> column(y.data()+rows_number*j, rows_number);
 
-            const Tensor<type, 1> tmp_result = single_col*inverse_sums;
+            const Tensor<type, 1> tmp_result = column*inverse_sums;
 
-            memcpy(y.data() + rows_number*i,
+            memcpy(y.data() + rows_number*j,
                    tmp_result.data(), static_cast<size_t>(rows_number)*sizeof(type));
         }
+*/
     }
     else
     {
@@ -2074,12 +2094,12 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
 
 void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>& combinations_dimensions,
-                                 type* activations_data, const Tensor<Index, 1>& activations_dimensions,
-                                 type* activations_derivatives_data, const Tensor<Index, 1>& activations_derivatives_dimensions) const
+                                type* activations_data, const Tensor<Index, 1>& activations_dimensions,
+                                type* activations_derivatives_data, const Tensor<Index, 1>& activations_derivatives_dimensions) const
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -2095,74 +2115,76 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
     }
 
     const Index rank = combinations_dimensions.size();
+/*
+    if(rank == 1)
+    {
+        const Index samples_number = combinations_dimensions(0);
+        const Index variables_number = combinations_dimensions(1);
 
-    const Index activations_derivatives_rank = activations_derivatives_dimensions.size();
+        const TensorMap<Tensor<type, 2>> combinations(combinations_data, samples_number, variables_number);
 
+        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
+
+        TensorMap<Tensor<type, 2>> activations_derivatives(activations_derivatives_data,
+                                                           activations_derivatives_dimensions(0),
+                                                           activations_derivatives_dimensions(1));
+
+        const Index dim = combinations.dimension(1);
+
+        const Index matrix_number = activations.dimension(0);
+
+        type delta = type(0);
+        Index index= 0;
+
+        for(Index row = 0; row < matrix_number; row++)
+        {
+            for(Index i = 0; i < dim; i++)
+            {
+                for(Index j = 0; j < dim; j++)
+                {
+                    (i == j) ? delta = type(1) : delta = type(0);
+
+                    // row, i, j
+
+                    activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
+                    index++;
+                }
+            }
+        }
+    }
+*/
     if(rank == 2)
     {
+        const Index samples_number = combinations_dimensions(0);
+        const Index variables_number = combinations_dimensions(1);
+
         softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
 
-        if(activations_derivatives_rank == 2)
+        const TensorMap<Tensor<type, 2>> combinations(combinations_data, samples_number, variables_number);
+
+        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
+
+        TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data, samples_number, variables_number, variables_number);
+
+        type delta = type(0);
+
+        Index index = 0;
+
+        for(Index row = 0; row < samples_number; row++)
         {
-            const TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
-            TensorMap<Tensor<type, 2>> activations(activations_data, activations_dimensions(0), activations_dimensions(1));
-
-            TensorMap<Tensor<type, 2>> activations_derivatives(activations_derivatives_data, activations_derivatives_dimensions(0), activations_derivatives_dimensions(1));
-
-            const Index dim = combinations.dimension(1);
-
-            const Index matrix_number = activations.dimension(0);
-
-            type delta = type(0);
-            Index index= 0;
-
-            for(Index row = 0; row < matrix_number; row++)
+            for(Index i = 0; i < variables_number; i++)
             {
-                for(Index i = 0; i < dim; i++)
+                for(Index j = 0; j < variables_number; j++)
                 {
-                    for(Index j = 0; j < dim; j++)
-                    {
-                        (i == j) ? delta = type(1) : delta = type(0);
+                    (i == j) ? delta = type(1) : delta = type(0);
 
-                        // row, i, j
+                    // row, i, j
 
-                        activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
-                        index++;
-                    }
+                    activations_derivatives(index) = activations(row, j) * (delta - activations(row, i));
+                    index++;
                 }
             }
         }
-        else if(activations_derivatives_rank == 3)
-        {
-            const TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
-            TensorMap<Tensor<type, 2>> activations(activations_data, activations_dimensions(0), activations_dimensions(1));
-
-            TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data, activations_derivatives_dimensions(0), activations_derivatives_dimensions(1), activations_derivatives_dimensions(2));
-
-            const Index dim = combinations.dimension(1);
-
-            const Index matrix_number = activations.dimension(0);
-
-            type delta = type(0);
-            Index index= 0;
-
-            for(Index row = 0; row < matrix_number; row++)
-            {
-                for(Index i = 0; i < dim; i++)
-                {
-                    for(Index j = 0; j < dim; j++)
-                    {
-                        (i == j) ? delta = type(1) : delta = type(0);
-
-                        // row, i, j
-
-                        activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
-                        index++;
-                    }
-                }
-            }
-        }
-
     }
     else
     {
@@ -2170,8 +2192,8 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
 
         buffer << "OpenNN Exception: Layer class.\n"
                << "void Layer::softmax_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dimensions,"
-               << "                                           type* activations_data, Tensor<Index, 1>& activations_dimensions,"
-               << "                                           type* activations_derivatives_data, Tensor<Index, 1>& activations_derivatives_dimensions) "
+               << "                                type* activations_data, Tensor<Index, 1>& activations_dimensions,"
+               << "                                type* activations_derivatives_data, Tensor<Index, 1>& activations_derivatives_dimensions) "
                << "Softmax function is not implemented for rank " << rank << ".\n";
 
         throw invalid_argument(buffer.str());

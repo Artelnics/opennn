@@ -496,7 +496,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     Tensor<type, 2> combinations;
 
     Tensor<Index, 1> inputs_dimensions;
-    Tensor<Index, 1> combinations_dims;
+    Tensor<Index, 1> combinations_dimensions;
 
     // Test
 
@@ -517,7 +517,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
+    combinations_dimensions = get_dimensions(combinations);
 /*
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 */
@@ -529,7 +529,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     inputs.setConstant(type(3));
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
+    combinations_dimensions = get_dimensions(combinations);
 /*
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
@@ -557,7 +557,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
+    combinations_dimensions = get_dimensions(combinations);
 /*
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
@@ -586,7 +586,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     perceptron_layer.set_biases(biases);
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
+    combinations_dimensions = get_dimensions(combinations);
 
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
@@ -619,7 +619,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     combinations.setZero();
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
+    combinations_dimensions = get_dimensions(combinations);
 
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
@@ -683,7 +683,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     combinations.resize(samples_number, neurons_number);
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
+    combinations_dimensions = get_dimensions(combinations);
 
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
@@ -709,8 +709,8 @@ void PerceptronLayerTest::test_calculate_activations()
     Tensor<type, 2> activations;
 
     Tensor<Index, 1> inputs_dimensions;
-    Tensor<Index, 1> combinations_dims;
-    Tensor<Index, 1> activations_dims;
+    Tensor<Index, 1> combinations_dimensions;
+    Tensor<Index, 1> activations_dimensions;
 
     // Test
 
@@ -733,14 +733,14 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(samples_number, neurons_number);
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 /*
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == 1, LOG);
@@ -764,8 +764,8 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(samples_number, neurons_number);
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
@@ -773,7 +773,7 @@ void PerceptronLayerTest::test_calculate_activations()
     perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data());
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == samples_number, LOG);
@@ -797,12 +797,12 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(samples_number, neurons_number);
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == samples_number, LOG);
@@ -827,12 +827,12 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.setConstant(type(0));
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
 /*
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == samples_number, LOG);
@@ -856,12 +856,12 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.setConstant(type(0));
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == samples_number, LOG);
@@ -880,12 +880,12 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.setZero();
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == 2, LOG);
@@ -908,8 +908,8 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(1,2);
 
     inputs_dimensions = get_dimensions(inputs);
-    combinations_dims = get_dimensions(combinations);
-    activations_dims = get_dimensions(activations);
+    combinations_dimensions = get_dimensions(combinations);
+    activations_dimensions = get_dimensions(activations);
 
     perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(),
                                             perceptron_layer.get_synaptic_weights(), combinations.data());
@@ -921,7 +921,7 @@ void PerceptronLayerTest::test_calculate_activations()
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(activations.rank() == 2, LOG);
     assert_true(activations.dimension(0) == 1, LOG);
@@ -930,25 +930,25 @@ void PerceptronLayerTest::test_calculate_activations()
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::PerceptronLayer::ActivationFunction::Logistic);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(abs(activations(0,0) - static_cast<type>(1.0/(1.0+exp(-2.5)))) < type(NUMERIC_LIMITS_MIN), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(abs(activations(0,0) - static_cast<type>(tanh(2.5))) < type(NUMERIC_LIMITS_MIN), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
-    perceptron_layer.calculate_activations(combinations.data(), combinations_dims, activations.data(), activations_dims);
+    perceptron_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
     assert_true(abs(activations(0,0) - static_cast<type>(2.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 */

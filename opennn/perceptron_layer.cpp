@@ -740,9 +740,9 @@ void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                            synaptic_weights,
                            layer_forward_propagation);
 
-    if(is_training && dropout_rate > type(0)) // Dropout
+    if(is_training && dropout_rate > type(0))
     {
-        type* outputs_data = layer_forward_propagation->outputs_data;
+        type* outputs_data = layer_forward_propagation->outputs_data(0);
 
         const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
         const Index outputs_number = get_neurons_number();
@@ -761,7 +761,7 @@ void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
             }
             else
             {
-                column = column * scaling_factor;
+                column = column*scaling_factor;
             }
         }
     }
@@ -814,22 +814,26 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
     if(dropout_rate > type(0))
     {
-        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+        type* outputs_data = layer_forward_propagation->outputs_data(0);
 
+        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
         const Index outputs_number = get_neurons_number();
 
-        type* outputs_data = layer_forward_propagation->outputs_data;
+        const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-        for(Index batch_index = 0; batch_index < batch_samples_number; ++batch_index)
+        for(Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
         {
-            for(Index index_output = 0; index_output < outputs_number; ++index_output)
-            {
-                const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
+            const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
 
-                if(random_number < dropout_rate)
-                {
-                    *(outputs_data + batch_index*outputs_number + index_output) = type(0);
-                }
+            TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number, batch_samples_number);
+
+            if(random_number < dropout_rate)
+            {
+                column.setZero();
+            }
+            else
+            {
+                column = column * scaling_factor;
             }
         }
     }

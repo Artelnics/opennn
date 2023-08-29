@@ -172,8 +172,8 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);

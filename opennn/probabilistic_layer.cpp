@@ -711,12 +711,12 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     }
 #endif
 
-    ProbabilisticLayerForwardPropagation* perceptron_layer_forward_propagation
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
-    type* outputs_data = perceptron_layer_forward_propagation->outputs_data(0);
+    type* outputs_data = probabilistic_layer_forward_propagation->outputs_data(0);
 
-    const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions[0];
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions[0];
 
     calculate_combinations(inputs_data(0),
                            inputs_dimensions(0),
@@ -731,7 +731,7 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                                           outputs_dimensions,
                                           outputs_data,
                                           outputs_dimensions,
-                                          perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                          probabilistic_layer_forward_propagation->activations_derivatives.data(),
                                           outputs_dimensions);
     }
     else // perform deploy
@@ -741,12 +741,6 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                               outputs_data,
                               outputs_dimensions);
     }
-}
-
-
-void ProbabilisticLayer::calculate_outputs(const type* inputs, const Tensor<Index, 1>& inputs_dimensions, type* outputs, const Tensor<Index, 1>& outputs_dimensions)
-{
-
 }
 
 

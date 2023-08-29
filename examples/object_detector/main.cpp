@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     try
     {
         cout << "OpenNN. Region Based Object Detector Example." << endl;
-
+/*
         // UNDER DEVELOPMENT
 
         srand(time(NULL));
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
 
         data_set.read_ground_truth();
-/*
+
         DataSetBatch batch_training(1, &data_set);
 
         Tensor<Index, 2> training_batches = data_set.get_batches(training_samples_indices, batch_samples_number_training, shuffle);
@@ -113,8 +113,6 @@ int main(int argc, char *argv[])
 
         neural_network.forward_propagate( neural_network_forward_propagation, false);
 
-/*
-
         const string filename = "Z:/Images/DatasetRedDots-bmp/9.bmp";
         const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image(filename);
 
@@ -151,7 +149,6 @@ int main(int argc, char *argv[])
 
         cout << "output: " << output << endl;
 
-        /*
         FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
 
@@ -170,7 +167,7 @@ int main(int argc, char *argv[])
         inputs_dimensions(1) = 6;
         inputs_dimensions(2) = 3;
         inputs_dimensions(3) = 1;
-*/
+
 //        Tensor<type, 2> outputs(1, 108);
 
 //        Tensor<Index, 1> outputs_dimensions(2);
@@ -189,7 +186,6 @@ int main(int argc, char *argv[])
 //        cout << "outputs_dimension: " << endl;
 //        cout << outputs.dimensions() << endl;
 
-/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -206,9 +202,8 @@ int main(int argc, char *argv[])
 
 //        training_strategy.get_mean_squared_error_pointer()->calculate_regularization();
 
-
         // Testing analysis
-/*
+
         Tensor<type, 4> inputs_4d;
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
