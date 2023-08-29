@@ -41,12 +41,9 @@ public:
 
     void test_set_activation_function();
 
-    // Probabilistic post-processing
-
     void test_calculate_combinations();
     void test_calculate_activations();
     void test_calculate_activations_derivatives();
-    void test_calculate_outputs();
 
     // Forward propagate
 

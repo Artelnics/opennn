@@ -1,5 +1,4 @@
 #include "opennn_images.h"
-//#include "/*tensor_util*/ities.h"
 #include "tensor_utilities.h"
 
 namespace opennn

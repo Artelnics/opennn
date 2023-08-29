@@ -1172,10 +1172,6 @@ void ConvolutionalLayerTest::run_test_case()
    test_calculate_activations();
    test_calculate_activations_derivatives();
 
-   // Outputs
-
-//   test_calculate_outputs();
-
    // Padding
 
    test_insert_padding();
@@ -1183,7 +1179,6 @@ void ConvolutionalLayerTest::run_test_case()
    // Forward propagate
 
     test_forward_propagation();
-//   test_forward_propagate();
 
    // Back_propagate
 

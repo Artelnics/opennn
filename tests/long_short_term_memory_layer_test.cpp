@@ -352,102 +352,10 @@ void LongShortTermMemoryLayerTest::test_set_parameters_random()
 }
 
 
-void LongShortTermMemoryLayerTest::test_calculate_outputs()
-{
-    cout << "test_calculate_outputs\n";
-
-    Tensor<type, 2> inputs;
-    Tensor<type, 2> outputs;
-
-    Tensor<type, 1> parameters;
-
-    Tensor<type, 3> weights;
-    Tensor<type, 3> recurrent_weights;
-    Tensor<type, 2> biases;
-
-    Index samples = 3;
-
-    // Test
-
-    const Index neurons_number = 2;
-    const Index inputs_number = 3;
-
-    long_short_term_memory_layer.set(3,2);
-    long_short_term_memory_layer.set_timesteps(2);
-
-    long_short_term_memory_layer.set_activation_function("HyperbolicTangent");
-    long_short_term_memory_layer.set_recurrent_activation_function("HardSigmoid");
-
-    inputs.resize(samples, 3);
-    inputs.setConstant(type(1));
-
-    weights.resize(3,2,4);
-    recurrent_weights.resize(2,2,4);
-    biases.resize(2,4);
-
-//    weights.initialize_sequential();
-//    recurrent_weights.initialize_sequential();
-//    biases.initialize_sequential();
-//    initialize_sequential(x);
-//    parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
-
-    long_short_term_memory_layer.set_parameters_random();
-
-    parameters = long_short_term_memory_layer.get_parameters();
-
-    long_short_term_memory_layer.set_forget_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    long_short_term_memory_layer.set_input_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    long_short_term_memory_layer.set_state_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    long_short_term_memory_layer.set_output_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-
-    long_short_term_memory_layer.set_forget_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-    long_short_term_memory_layer.set_input_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-    long_short_term_memory_layer.set_state_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-    long_short_term_memory_layer.set_output_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-
-    long_short_term_memory_layer.set_forget_biases(biases.chip(0, 1));
-    long_short_term_memory_layer.set_input_biases(biases.chip(1, 1));
-    long_short_term_memory_layer.set_state_biases(biases.chip(2, 1));
-    long_short_term_memory_layer.set_output_biases(biases.chip(3, 1));
-
-//    const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs);
-//    const Tensor<type, 2> outputs_parameters = long_short_term_memory_layer.calculate_outputs(inputs, parameters);
-//    const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights);
-
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(0) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(0), LOG);
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(1), LOG);
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(2), LOG);
-
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights)(0) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(0), LOG);
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights)(1) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(1), LOG);
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights)(2) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(2), LOG);
-
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(0) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(0), LOG);
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(1), LOG);
-//    assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(2), LOG);
-
-//    Test
-
-//    long_short_term_memory_layer.set(1, 2 );
-
-//    long_short_term_memory_layer.set_timesteps(3);
-
-//    inputs.resize(3,1);
-//    inputs.setConstant(type(1));
-
-//    long_short_term_memory_layer.set_biases_constant(0.0);
-//    long_short_term_memory_layer.set_weights_constant(1.0);
-//    long_short_term_memory_layer.set_recurrent_weights_constant(1.0);
-
-//    long_short_term_memory_layer.set_activation_function("HyperbolicTangent");
-//    long_short_term_memory_layer.set_recurrent_activation_function("HardSigmoid");
-}
-
-
 void LongShortTermMemoryLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     LongShortTermMemoryLayer long_short_term_layer;
 
     long_short_term_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
@@ -466,7 +374,7 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
-
+/*
     long_short_term_layer.forward_propagate(inputs_data, inputs_dimensions, &long_short_term_layer_forward_propagation, is_training);
 
     assert_true(long_short_term_layer_forward_propagation.combinations.rank() == 2, LOG);
@@ -510,10 +418,6 @@ void LongShortTermMemoryLayerTest::run_test_case()
     test_initialize_recurrent_weights();
 
     test_set_parameters_random();
-
-    // Calculate outputs
-
-    test_calculate_outputs();
 
     // Forward propagate
 

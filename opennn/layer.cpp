@@ -1109,30 +1109,12 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
         const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
 
         TensorMap<Tensor<type, 4>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2), y_dimensions(3));
-/*
-        const Index x_size = x_dimensions(0)*x_dimensions(1)*x_dimensions(2)*x_dimensions(3);
 
-        #pragma omp parallel for
-
-        for(Index i = 0; i < x_size; i++)
-        {
-            x_data[i] < type(0) ? y_data[i] = type(0) : y_data[i] = x_data[i];
-        }
-*/
         y.setZero();
 
         y.device(*thread_pool_device) = y.cwiseMax(x);
 
-//        const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
-
-//        Tensor<type, 4> zeros(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
-//        zeros.setConstant(type(0));
-
-//        y.device(*thread_pool_device) = if_sentence.select(zeros, x);
-
-//        y.setConstant(type(0));
-
-//        y.device(*thread_pool_device) = if_sentence.select(y, x);
+        /// @todo do this for all ranks.
     }
     else
     {
@@ -2027,11 +2009,7 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
         TensorMap<Tensor<type, 1>> y(y_data, y_dimensions(0));
 
         Tensor<type, 0> sum;
-/*
-        sum.device(*thread_pool_device) = x.exp().sum();
 
-        y.device(*thread_pool_device) = x.exp() / sum(0);
-*/
         y.device(*thread_pool_device) = x.exp();
 
         sum.device(*thread_pool_device) = y.sum();
@@ -2115,44 +2093,7 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
     }
 
     const Index rank = combinations_dimensions.size();
-/*
-    if(rank == 1)
-    {
-        const Index samples_number = combinations_dimensions(0);
-        const Index variables_number = combinations_dimensions(1);
 
-        const TensorMap<Tensor<type, 2>> combinations(combinations_data, samples_number, variables_number);
-
-        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
-
-        TensorMap<Tensor<type, 2>> activations_derivatives(activations_derivatives_data,
-                                                           activations_derivatives_dimensions(0),
-                                                           activations_derivatives_dimensions(1));
-
-        const Index dim = combinations.dimension(1);
-
-        const Index matrix_number = activations.dimension(0);
-
-        type delta = type(0);
-        Index index= 0;
-
-        for(Index row = 0; row < matrix_number; row++)
-        {
-            for(Index i = 0; i < dim; i++)
-            {
-                for(Index j = 0; j < dim; j++)
-                {
-                    (i == j) ? delta = type(1) : delta = type(0);
-
-                    // row, i, j
-
-                    activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
-                    index++;
-                }
-            }
-        }
-    }
-*/
     if(rank == 2)
     {
         const Index samples_number = combinations_dimensions(0);
@@ -2175,15 +2116,14 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
                                                                       i*variables_number*variables_number,
                                                                       samples_number); //@todo check this
 
-               kronecker_product_void(sample_activations, sample_activations_derivatives);
+            kronecker_product_void(sample_activations, sample_activations_derivatives);
 
-//            #pragma omp parallel for
+            #pragma omp parallel for
 
-//            for(Index j = 0; j < variables_number; j++)
-//            {
-//                sample_activations_derivatives(j,j) = type(1) - sample_activations_derivatives(j,j);
-//            }
-
+            for(Index j = 0; j < variables_number; j++)
+            {
+                sample_activations_derivatives(j,j) = type(1) - sample_activations_derivatives(j,j);
+            }
         }
 /*
         type delta = type(0);

@@ -481,136 +481,6 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 }
 
 
-void ProbabilisticLayerTest::test_calculate_outputs()
-{
-    cout << "test_calculate_outputs\n";
-/*
-    Tensor<type, 2> synaptic_weights;
-    Tensor<type, 2> biases;
-
-    Tensor<type, 2> inputs;
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-    Tensor<type, 1> parameters;
-
-    Tensor<type,2> outputs;
-    Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-    // Test
-    
-    probabilistic_layer.set(3, 4);
-
-    synaptic_weights.resize(3, 4);
-    biases.resize(1, 4);
-    inputs.resize(1, 3);
-    inputs_dimensions = get_dimensions(inputs);
-
-    inputs.setConstant(type(1));
-
-    biases.setConstant(type(1));
-    synaptic_weights.setValues({
-                                   {type(1),type(-1),type(0),type(1)},
-                                   {type(2),type(-2),type(0),type(2)},
-                                   {type(3),type(-3),type(0),type(3)}});
-
-    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-    probabilistic_layer.set_biases(biases);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-
-    outputs.resize(1,4);
-    outputs_dimensions = get_dimensions(outputs);
-
-    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
-
-    Tensor<type, 1> perceptron_sol(4);
-    perceptron_sol.setValues({ type(7),type(-5),type(1),type(7)});
-
-    Tensor<type,0>div = perceptron_sol.exp().sum();
-    Tensor<type, 1>sol_ = perceptron_sol.exp() / div(0);
-
-    assert_true(outputs.rank() == 2, LOG);
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index>(outputs(0,0)) == static_cast<Index >(sol_(0)), LOG);
-    assert_true(static_cast<Index>(outputs(1,0)) == static_cast<Index >(sol_(1)), LOG);
-    assert_true(static_cast<Index>(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
-    
-    // Test 1_2
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
-
-    outputs_dimensions = get_dimensions(outputs);
-
-    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
-
-    assert_true(outputs.rank() == 2, LOG);
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index>(outputs(0,0)) == 1, LOG);
-    assert_true(static_cast<Index>(outputs(1,0)) == 0, LOG);
-    assert_true(static_cast<Index>(outputs(2,0)) == 0, LOG);
-
-    // Test
-
-    biases.resize(1, 4);
-    biases.setValues({{type(9)},{type(-8)},{type(7)},{type(-6)}});
-
-    synaptic_weights.resize(2, 4);
-
-    synaptic_weights.resize(2, 4);
-
-    synaptic_weights.setValues({
-                                   {type(-11), type(12), type(-13), type(14)},
-                                   {type(21), type(-22), type(23), type(-24)}});
-
-    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-    probabilistic_layer.set_biases(biases);
-
-    inputs.resize(1, 2);
-    inputs_dimensions = get_dimensions(inputs);
-    inputs.setConstant(type(1));
-
-    outputs.resize(1,4);
-    outputs_dimensions = get_dimensions(outputs);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-
-    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
-    Tensor<type, 1>perceptron_sol_3(4);
-    perceptron_sol.setValues({type(7),type(-5),type(1),type(7)});
-
-    div = perceptron_sol.exp().sum();
-    sol_ = perceptron_sol.exp() / div(0);
-
-    assert_true(outputs.rank() == 2, LOG);
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index >(outputs(0,0)) == static_cast<Index >(sol_(0)), LOG);
-    assert_true(static_cast<Index >(outputs(1,0)) == static_cast<Index >(sol_(1)), LOG);
-    assert_true(static_cast<Index >(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
-
-    // Test  3
-
-    probabilistic_layer.set(3, 2);
-    probabilistic_layer.set_parameters_constant(type(0));
-
-    inputs.resize(1,3);
-    inputs.setConstant(type(0));
-    inputs_dimensions = get_dimensions(inputs);
-
-    outputs.resize(1,2);
-    outputs_dimensions = get_dimensions(outputs);
-
-    probabilistic_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
-
-    assert_true(outputs.rank() == 2, LOG);
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 2, LOG);
-    assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
-}
-
-
 void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
@@ -642,7 +512,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type,3> activations_derivatives;
     activations_derivatives = probabilistic_layer_forward_propagation.activations_derivatives;
-/*
+
     TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation.outputs_data(0), probabilistic_layer_forward_propagation.outputs_dimensions);
 
     assert_true(outputs.rank() == 2, LOG);
@@ -650,7 +520,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(outputs.dimension(1) == neurons_number , LOG);
     assert_true(abs(outputs(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(outputs(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-/*
+
     outputs = TensorMap<Tensor<type, 2>>(probabilistic_layer_forward_propagation.outputs_data,
                                          probabilistic_layer_forward_propagation.outputs_dimensions[0],
                                          probabilistic_layer_forward_propagation.outputs_dimensions(1));
@@ -660,8 +530,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     assert_true(abs(probabilistic_layer_forward_propagation.activations_derivatives(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(probabilistic_layer_forward_propagation.activations_derivatives(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-
-    cout << "test_calculate_outputs\n";
 
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> biases;

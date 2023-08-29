@@ -340,7 +340,7 @@ void ScalingLayerTest::test_check_range()
 void ScalingLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     DataSet data_set;
     Tensor<type, 2> data;
     Tensor<type, 2> inputs;
@@ -365,12 +365,11 @@ void ScalingLayerTest::test_forward_propagate()
     inputs.setZero();
     inputs_dimensions = get_dimensions(inputs);
 
-
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
-
+/*
     scaling_layer.forward_propagate(inputs_data,
                                     inputs_dimensions,
                                     &scaling_layer_forward_propagation,

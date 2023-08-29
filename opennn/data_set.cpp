@@ -11015,6 +11015,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
             bounding_box(j) = tree(first+j)(0);
 
         Tensor<type, 2> distance_matrix = calculate_distance_matrix(bounding_box);
+
         Tensor<list<Index>, 1> box_nearest_neighbors = calculate_k_nearest_neighbors(distance_matrix, k_neighbors);
 
         for(Index j = 0; j < last - first; j++)
@@ -11214,7 +11215,7 @@ void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index&
 
 Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& tree_simulation, list<Index>& tree_index) const
 {
-    /*
+
     const Index current_tree_index = tree_index.front();
     const type current_variable = tree(current_tree_index, 1);
     const type division_value = tree(current_tree_index, 0);
@@ -11227,7 +11228,6 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
     Index delta_next_depth_nodes = 0;
     Index one_side_count = 0;
     Index other_side_count = 0;
-
 
     for(auto & sample_index : current_node_samples)
     {
@@ -11265,8 +11265,8 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
 
 
     return delta_next_depth_nodes;
-*/
-    return Index();
+
+//    return Index();
 }
 
 

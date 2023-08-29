@@ -365,7 +365,6 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-
         // not running in  visual studio
         /*
         back_propagation_lm.set(samples_number, &mean_squared_error);
@@ -1342,10 +1341,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     }
 
-    */
-
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1 --> Working (4-Jan-23)
-/*
+
     {
         bool is_training = true;
 
@@ -1797,19 +1794,19 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
-/*
+
     test_constructor();
     test_destructor();
-*/
+
     // Convolutional network methods
 
     test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
-/*
+
     test_back_propagate();
     test_back_propagate_lm();
-*/
+
     cout << "End of mean squared error test case.\n\n";
 }
 

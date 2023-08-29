@@ -280,59 +280,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 }
 
 
-void RecurrentLayerTest::test_calculate_outputs()
-{/*
-    cout << "test_calculate_outputs\n";
-
-    Tensor<type, 2> inputs;
-    Tensor<type, 2> outputs;
-
-    Tensor<Index, 1> inputs_dimensions;
-    Tensor<Index, 1> outputs_dimensions;
-
-    Tensor<type, 1> parameters;
-
-    Index samples;
-
-    Tensor<type, 2> new_weights;
-    Tensor<type, 2> new_recurrent_weights;
-    Tensor<type, 1> new_biases;
-
-    // Test
-
-    samples = 3;
-
-    recurrent_layer.set(2,2);
-
-    inputs.resize(samples,2);
-    inputs.setConstant(type(1));
-    inputs_dimensions = get_dimensions(inputs);
-
-    outputs.resize(samples, 2);
-    outputs_dimensions = get_dimensions(outputs);
-
-    recurrent_layer.set_activation_function("SoftPlus");
-
-    recurrent_layer.set_timesteps(3);
-
-    new_weights.resize(2,2);
-    new_weights.setConstant(type(1));
-    new_recurrent_weights.resize(2,2);
-    new_recurrent_weights.setConstant(type(1));
-    new_biases.resize(2);
-    new_biases.setConstant(type(1));
-
-    recurrent_layer.set_biases(new_biases);
-    recurrent_layer.set_input_weights(new_weights);
-    recurrent_layer.set_recurrent_weights(new_recurrent_weights);
-
-    parameters = recurrent_layer.get_parameters();
-
-    recurrent_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
-    */
-}
-
-
 void RecurrentLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
@@ -428,10 +375,6 @@ void RecurrentLayerTest::run_test_case()
     // Activation Derivatives
 
     test_calculate_activations_derivatives();
-
-    // Outputs
-
-    test_calculate_outputs();
 
     // Forward propagate
 

@@ -626,11 +626,11 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     Tensor <bool, 1> individual_variables(genes_number);
 
-    std::random_device rd;
+    random_device rd;
 
-    std::mt19937 gen(rd());
+    mt19937 gen(rd());
 
-    std::uniform_real_distribution<> dis(0, 1);
+    uniform_real_distribution<> dis(0, 1);
 
     Index columns_active;
 
@@ -1043,21 +1043,19 @@ void GeneticAlgorithm::perform_crossover()
 
             if(is_false(descendent_genes))
             {
+                const Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
 
                 Tensor<bool, 1> individual_columns_false = get_individual_columns(descendent_genes);
 
-                Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
-
                 for(Index j = 0; j < columns_number; j++)
                 {
-                    if(original_input_columns(j) /*&& columns(j).type != DataSet::ColumnType::Categorical*/)
+                    if(original_input_columns(j))
                     {
                         individual_columns_false(j) = true;
                     }
                 }
 
                 descendent_genes = get_individual_variables(individual_columns_false);
-
             }
 
             if(is_false(descendent_genes))

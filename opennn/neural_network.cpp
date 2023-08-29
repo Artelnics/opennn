@@ -912,16 +912,14 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
 
-//    for(Index i = 0; i < blocks_number; i++)
-//    {
-        // Check convolutional
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        convolutional_layer->set_name("Convolutional layer" /* + to_string(1) */);
+    // Check convolutional
 
-        add_layer(convolutional_layer);
+    ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+    convolutional_layer->set_name("Convolutional layer" /* + to_string(1) */);
 
-        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+    add_layer(convolutional_layer);
 
+    outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
 //        // Pooling layer 1
 
@@ -932,7 +930,6 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
 //        outputs_dimensions = pooling_layer->get_outputs_dimensions();
 
-//    }
 
     FlattenLayer* flatten_layer = new FlattenLayer(outputs_dimensions);
     add_layer(flatten_layer);
@@ -961,6 +958,7 @@ void NeuralNetwork::set(const string& file_name)
 
     load(file_name);
 }
+
 
 void NeuralNetwork::set_project_type(const NeuralNetwork::ProjectType& new_project_type)
 {
@@ -4569,7 +4567,7 @@ string NeuralNetwork::write_expression_api() const
 
     buffer << "<style>" << endl;
     buffer << ".btn{" << endl;
-    buffer << "background-color: #7393B3 /* Gray */" << endl;
+    buffer << "background-color: #7393B3" << endl; // Gray
     buffer << "border: none;" << endl;
     buffer << "color: white;" << endl;
     buffer << "padding: 15px 32px;" << endl;

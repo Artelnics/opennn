@@ -50,8 +50,6 @@ public:
 
     // Outputs unscaling
 
-    void test_calculate_outputs();
-
     void test_calculate_minimum_maximum_outputs();
     void test_calculate_mean_standard_deviation_outputs();
     void test_calculate_logarithmic_outputs();

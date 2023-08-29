@@ -366,7 +366,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& is_training)
 {
-/*
+
     const type kernel_size = static_cast<type>(pool_rows_number * pool_columns_number);
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
@@ -376,7 +376,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
 
@@ -387,7 +387,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
     kernel.setConstant(static_cast<type>(1.0/kernel_size));
 
     outputs = inputs.convolve(kernel, convolution_dimensions);
-*/
+
 }
 
 

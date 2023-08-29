@@ -746,8 +746,7 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
         throw invalid_argument(buffer.str());
     }
-#endif
-/*
+
     if(inputs_dimensions(0).size() != 2)
     {
         ostringstream buffer;
@@ -769,7 +768,9 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
         throw invalid_argument(buffer.str());
     }
-*/
+
+#endif
+
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions[0];
@@ -801,8 +802,7 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         activations_dimensions = get_dimensions(hidden_states);
         activations_derivatives_dimensions = get_dimensions(recurrent_layer_forward_propagation->current_activations_derivatives);
 
-
-        if(is_training) // Perform training
+        if(is_training)
         {
             calculate_activations_derivatives(recurrent_layer_forward_propagation->current_combinations.data(),
                                               combinations_dimensions,
@@ -816,11 +816,12 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
             calculate_activations(recurrent_layer_forward_propagation->current_combinations, hidden_states);
        }
 
-
         for(Index j = 0; j < neurons_number; j++)
         {
             recurrent_layer_forward_propagation->combinations(i,j) = recurrent_layer_forward_propagation->current_combinations(j);
+
             outputs(i,j) = hidden_states(j);
+
             recurrent_layer_forward_propagation->activations_derivatives(i,j) = recurrent_layer_forward_propagation->current_activations_derivatives(j);
         }
     }
