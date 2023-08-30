@@ -684,9 +684,9 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
 
-    outputs_dimensions(0) = get_kernels_number();
-    outputs_dimensions(1) = get_outputs_rows_number();
-    outputs_dimensions(2) = get_outputs_columns_number();
+    outputs_dimensions(0) = get_outputs_rows_number();
+    outputs_dimensions(1) = get_outputs_columns_number();
+    outputs_dimensions(2) = get_kernels_number();
 
     return outputs_dimensions;
 }
@@ -1118,7 +1118,7 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
     column_stride = new_stride_column;
 }
 
-void ConvolutionalLayer::set_inputs_dimenisons(const Tensor<Index,1>& new_inputs_dimensions)
+void ConvolutionalLayer::set_inputs_dimensions(const Tensor<Index,1>& new_inputs_dimensions)
 {
     inputs_dimensions = new_inputs_dimensions;
 }
@@ -1335,17 +1335,12 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-//    for(Index i = 0; i < inputs_dimensions.size(); i++)
-//    {
-//        buffer << inputs_dimensions(i);
-//        if(i != inputs_dimensions.size() - 1) buffer << " x ";
-
-//        cout << "inputs_dimensions (opennn): " << inputs_dimensions(i) << endl;
-////        if(i != inputs_dimensions.size() - 1) buffer << " ";
-//    }
-
-    buffer << inputs_dimensions(0); buffer << " x "; buffer << inputs_dimensions(2); buffer << " x "; buffer << inputs_dimensions(1);
-    // @ toDo (AlvaroS)
+    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    {
+        buffer << inputs_dimensions(i);
+        if(i != inputs_dimensions.size() - 1) buffer << " x ";
+//        if(i != inputs_dimensions.size() - 1) buffer << " ";
+    }
 
     cout << "buffer (INPUT): (XML)" << buffer.str() << endl;
 
@@ -1363,8 +1358,6 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         buffer << get_outputs_dimensions()(i);
         if(i != inputs_dimensions.size() - 1) buffer << " x ";
-
-        cout << "get_outputs_dimensions()(i): " << get_outputs_dimensions()(i) << endl;
     }
 
     cout << "buffer (OUTPUT): (XML)" << buffer.str() << endl;

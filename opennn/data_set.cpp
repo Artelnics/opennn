@@ -12764,7 +12764,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     channels_number = channels;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
+    input_variables_dimensions.setValues({height, width, channels});
 }
 
 

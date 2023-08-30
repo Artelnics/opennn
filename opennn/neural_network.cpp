@@ -912,7 +912,6 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
 
-
 //    for(Index i = 0; i < blocks_number; i++)
 //    {
         // Check convolutional
