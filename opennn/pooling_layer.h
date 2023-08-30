@@ -95,8 +95,11 @@ public:
 
     // Set methods
 
+    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+
     void set_inputs_number(const Index&) {}
     void set_neurons_number(const Index&) {}
+    void set_name(const string&);
 
     void set_inputs_dimensions(const Tensor<Index, 1>&);
 
@@ -111,22 +114,14 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
-    void set_name(const string& new_layer_name);
-
     void set_default();
 
     // Outputs
 
-    Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
-
-    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
-
-    Tensor<type, 4> calculate_average_pooling_outputs(const Tensor<type, 4>&) const;
-
     // First order activations
 
-    void forward_propagate(type*,
-                           const Tensor<Index, 1>&,
+    void forward_propagate(Tensor<type*, 1>,
+                           const Tensor<Tensor<Index, 1>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -184,14 +179,11 @@ protected:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3};
-
-    const Eigen::array<ptrdiff_t, 4> patch_dimensions ={1, pool_rows_number, pool_columns_number, 1};
-
-    const Eigen::array<ptrdiff_t, 2> max_pooling_reduce_dimensions ={1, 2};
+    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
+    const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+#include "../../opennn-cuda/op(3, 3, 3, 64)ennn-cuda/pooling_layer_cuda.h"
 #endif
 
 };
@@ -234,12 +226,12 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const Index oututs_columns_number =  pooling_layer_pointer->get_outputs_columns_number();
         const Index oututs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index oututs_channels_number = pooling_layer_pointer->get_channels_number();
+        const Index outputs_channels_number = pooling_layer_pointer->get_channels_number();
 
         return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           oututs_columns_number,
                                            oututs_rows_number,
-                                           oututs_channels_number});
+                                           oututs_columns_number,
+                                           outputs_channels_number});
     }
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
@@ -250,29 +242,35 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
 
+        Index pool_rows_number = pooling_layer_pointer->get_pool_rows_number();
+
+        Index pool_columns_number = pooling_layer_pointer->get_pool_columns_number();
+
         const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
 
         const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
 
         const Index channels_number = pooling_layer_pointer->get_channels_number();
 
-        const Index patches_number = 0;
-
-        outputs_dimensions.resize(4);
-
-        outputs_dimensions.setValues({batch_samples_number,
+        outputs_dimensions.resize(1);
+        outputs_dimensions[0].resize(4);
+        outputs_dimensions[0].setValues({batch_samples_number,
                                       outputs_rows_number,
                                       outputs_columns_number,
                                       channels_number});
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number
+        outputs_data.resize(1);
+
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number
                                                           *outputs_rows_number
                                                           *outputs_columns_number
                                                           *channels_number*sizeof(type)));
 
-
-
-        patches.resize(patches_number, 2, 2, 2, 2); ///@todo extract_patches
+        image_patches.resize(batch_samples_number,
+                             pool_rows_number,
+                             pool_columns_number,
+                             outputs_rows_number*outputs_columns_number,
+                             channels_number);
     }
 
 
@@ -281,17 +279,17 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         cout << "Pooling layer forward propagation" << endl;
 
         cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions << endl;
+        cout << outputs_dimensions[0] << endl;
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data, get_outputs_dimensions_array()) << endl;
+        cout << TensorMap<Tensor<type,4>>(outputs_data(0), get_outputs_dimensions_array()) << endl;
 
-        cout << "Patches" << endl;
-        cout << patches << endl;
+        cout << "Image patches" << endl;
+        cout << image_patches << endl;
      }
 
-    Tensor<type, 5> patches;
+    Tensor<type, 5> image_patches;
 };
 
 

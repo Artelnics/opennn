@@ -149,8 +149,8 @@ void OptimizationAlgorithm::set()
 
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -243,7 +243,7 @@ BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_d
     const Index inputs_number = inputs_dimensions(1);
 
     TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
-    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> outputs(new_outputs_data, outputs_dimensions[0], outputs_dimensions(1));
 
     Tensor<type, 1> distances(samples_number);
     Index distance_index = 0;
@@ -560,7 +560,7 @@ void TrainingResults::save(const string& file_name) const
 {
     Tensor<string, 2> final_results = write_final_results();
 
-    std::ofstream file;
+    ofstream file;
     file.open(file_name);
 
     if(file)

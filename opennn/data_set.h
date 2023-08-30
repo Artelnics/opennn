@@ -41,20 +41,23 @@
 #include "statistics.h"
 #include "scaling.h"
 #include "correlations.h"
-#include "opennn_strings.h"
 #include "tensor_utilities.h"
 #include "text_analytics.h"
+#include "codification.h"
+
+using namespace std;
+using namespace Eigen;
 
 // Filesystem namespace
 
 #ifdef __APPLE__
-#include <Availability.h> // for deployment target to support pre-catalina targets without std::fs
+#include <Availability.h> // for deployment target to support pre-catalina targets without fs
 #endif
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
 #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
 #define GHC_USE_STD_FS
 #include <filesystem>
-namespace fs = std::filesystem;
+namespace fs = filesystem;
 #endif
 #endif
 #ifndef GHC_USE_STD_FS
@@ -62,9 +65,8 @@ namespace fs = std::filesystem;
 namespace fs = ghc::filesystem;
 #endif
 
-using namespace std;
-using namespace Eigen;
 using namespace fs;
+
 
 namespace opennn
 {
@@ -176,8 +178,7 @@ public:
 
         Tensor<VariableUse, 1> categories_uses;
 
-        Scaler scaler= Scaler::MeanStandardDeviation;
-
+        Scaler scaler = Scaler::MeanStandardDeviation;
 
         // Methods
 
@@ -233,26 +234,18 @@ public:
 
         virtual ~BoundingBox() {}
 
-
-//        BoundingBox regression()
-//        {
-//            /// todo
-//            BoundingBox regressed_bounging_box;
-//            return regressed_bounging_box;
-//        }
-
-
-        Index get_bounding_box_size(const BoundingBox&) const;
+        Index get_size() const;
 
         BoundingBox resize(const Index&, const Index&, const Index&) const;
 
         void print() const;
 
+        Index channels_number;
+
         Tensor<type, 1> data;
 
         Index x_center;
         Index y_center;
-        Index channels_number;
         Index width;
         Index height;
 
@@ -260,9 +253,6 @@ public:
         Index y_top_left;
         Index x_bottom_right;
         Index y_bottom_right;
-
-        string label; // ????
-        Index score; // ????
     };
 
 
@@ -484,6 +474,17 @@ public:
 
     Index get_gmt() const;
 
+
+    bool get_augmentation() const;
+    bool get_random_reflection_axis_x() const;
+    bool get_random_reflection_axis_y() const;
+    type get_random_rotation_minimum() const;
+    type get_random_rotation_maximum() const;
+    type get_random_rescaling_minimum() const;
+    type get_random_rescaling_maximum() const;
+    type get_random_horizontal_translation() const;
+    type get_random_vertical_translation() const;
+
     const bool& get_display() const;
 
     // Set methods
@@ -505,7 +506,6 @@ public:
     void set_project_type_string(const string&);
     void set_project_type(const ProjectType&);
 
-//    void set_threads();
     void set_threads_number(const int&);
 
     // Samples set methods
@@ -590,6 +590,7 @@ public:
     // Data set methods
 
     void set_data(const Tensor<type, 2>&);
+    void set_data(const Tensor<type, 1>&);
 
     // Members set methods
 
@@ -624,6 +625,16 @@ public:
     void set_gmt(Index&);
 
     void set_display(const bool&);
+
+    void set_augmentation(const bool&);
+    void set_random_reflection_axis_x(const bool&);
+    void set_random_reflection_axis_y(const bool&);
+    void set_random_rotation_minimum(const type&);
+    void set_random_rotation_maximum(const type&);
+    void set_random_rescaling_minimum(const type&);
+    void set_random_rescaling_maximum(const type&);
+    void set_random_horizontal_translation(const type&);
+    void set_random_vertical_translation(const type&);
 
     // Check methods
 
@@ -785,7 +796,6 @@ public:
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
 
-
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
@@ -884,12 +894,6 @@ public:
 
     void read_bmp();
 
-//    void sort_channel(Tensor<unsigned char,1>&, Tensor<unsigned char,1>&, const int& );
-
-//    Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>&, const int&,const int&, const int& );
-
-    Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &, const Index &, const Index &, const Index &, const Index &, const Index &);
-
     BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
     Index get_bounding_boxes_number_from_XML(const string&);
@@ -899,8 +903,6 @@ public:
     Tensor<type, 1> get_bounding_box(const Tensor<unsigned char, 1>&,
                                      const Index&, const Index&,
                                      const Index&, const Index&) const;
-
-//    Tensor<unsigned char, 1> slicing(Tensor<unsigned char, 1>&, int&, int&);
 
     // Trasform methods
 
@@ -918,7 +920,6 @@ public:
     void impute_missing_values_mean();
     void impute_missing_values_median();
     void impute_missing_values_interpolate();
-
 
     void scrub_missing_values();
 
@@ -1016,7 +1017,7 @@ private:
 
     /// Image classification model
 
-    bool convolutional_model = false;
+//    bool convolutional_model = false;
 
     /// Class containing file string codification
 
@@ -1098,14 +1099,23 @@ private:
     Index image_height = 0;
     Index padding = 0;
 
+    bool augmentation = false;
+    bool random_reflection_axis_x = false;
+    bool random_reflection_axis_y = false;
+    type random_rotation_minimum = 0;
+    type random_rotation_maximum = 0;
+    type random_rescaling_minimum = 1;
+    type random_rescaling_maximum = 1;
+    type random_horizontal_translation = 0;
+    type random_vertical_translation = 0;
+
     Tensor<string, 1> labels_tokens;
 
     Index width_no_padding;
-    // Local Outlier Factor
 
-    Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = type(2.0), bool = true) const;
+    Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type& = type(2.0), bool = true) const;
 
-    Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type & = type(0.05), bool = true) const;
+    Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type& = type(0.05), bool = true) const;
 
     type calculate_euclidean_distance(const Tensor<Index, 1>&, const Index&, const Index&) const;
 
@@ -1142,6 +1152,11 @@ private:
     type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
 
     Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
+
+    Index regions_number = 1000; // Number of region proposals per image
+    Index region_rows = 6; // Final region width to warp
+    Index region_columns = 6; // Final region height to warp
+
 };
 
 
@@ -1170,26 +1185,32 @@ struct DataSetBatch
 
     void set_inputs(Tensor<type, 2>& new_inputs)
     {
-//        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
-//        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
-
-
-//        inputs_data = move(new_inputs_data);
         inputs_data = new_inputs.data();
+
+        inputs_dimensions = get_dimensions(new_inputs);
+    }
+
+    void set_inputs(Tensor<type, 4>& new_inputs)
+    {
+        inputs_data = new_inputs.data();
+
         inputs_dimensions = get_dimensions(new_inputs);
     }
 
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
+    void perform_augmentation();
+
     void print() const;
+
 
     Index batch_size = 0;
 
     DataSet* data_set_pointer = nullptr;
 
-    type* inputs_data = nullptr;
+    Tensor<type, 4> data;
 
- //   unique_ptr<type[]> inputs_data;
+    type* inputs_data = nullptr;
 
     Tensor<Index, 1> inputs_dimensions;
 

@@ -698,20 +698,22 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-void UnscalingLayer::forward_propagate(type* inputs_data,
-                                       const Tensor<Index, 1>& inputs_dimensions,
+void UnscalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                       const Tensor<Tensor<Index, 1>, 1>& inputs_tensor_dimensions,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
 
+    Tensor<Index, 1> inputs_dimensions(inputs_tensor_dimensions(0));
+
     const Index input_rank = inputs_dimensions.size();
 
     if(input_rank == 2)
     {
-        TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type,2>> outputs(unscaling_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type,2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type,2>> outputs(unscaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
 
         const Index neurons_number = get_neurons_number();
 

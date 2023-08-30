@@ -49,7 +49,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        training_strategy.set_maximum_epochs_number(10);
+        training_strategy.set_maximum_epochs_number(100);
 
         training_strategy.perform_training();
 
@@ -68,9 +68,9 @@ int main()
 
         return 0;
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << endl;
+        cerr << e.what() << endl;
 
         return 1;
     }

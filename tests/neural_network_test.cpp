@@ -1094,8 +1094,8 @@ void NeuralNetworkTest::test_forward_propagate()
 
     Tensor<type, 2> perceptron_combinations = perceptron_layer_forward_propagation->combinations;
 
-    TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data,
-                                                      perceptron_layer_forward_propagation->outputs_dimensions(0), perceptron_layer_forward_propagation->outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data(0),
+                                                      perceptron_layer_forward_propagation->outputs_dimensions[0], perceptron_layer_forward_propagation->outputs_dimensions(1));
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3), LOG);
@@ -1176,14 +1176,14 @@ void NeuralNetworkTest::test_forward_propagate()
 
     Tensor<type, 2> perceptron_combinations_3_0 = perceptron_layer_forward_propagation_3->combinations;
 
-    TensorMap<Tensor<type, 2>> perceptron_activations_3_0(perceptron_layer_forward_propagation_3->outputs_data, perceptron_layer_forward_propagation_3->outputs_dimensions(0), perceptron_layer_forward_propagation_3->outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> perceptron_activations_3_0(perceptron_layer_forward_propagation_3->outputs_data, perceptron_layer_forward_propagation_3->outputs_dimensions[0], perceptron_layer_forward_propagation_3->outputs_dimensions(1));
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation_3
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation_3.layers[1]);
 
     Tensor<type, 2> probabilistic_combinations_3_1 = probabilistic_layer_forward_propagation_3->combinations;
 
-    TensorMap<Tensor<type, 2>> probabilistic_activations_3_1(probabilistic_layer_forward_propagation_3->outputs_data, probabilistic_layer_forward_propagation_3->outputs_dimensions(0), probabilistic_layer_forward_propagation_3->outputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> probabilistic_activations_3_1(probabilistic_layer_forward_propagation_3->outputs_data, probabilistic_layer_forward_propagation_3->outputs_dimensions[0], probabilistic_layer_forward_propagation_3->outputs_dimensions(1));
 
     assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
 

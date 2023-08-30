@@ -484,19 +484,19 @@ void GeneticAlgorithm::initialize_population_random()
 
     if(random_columns_number > 10000)
     {
-        percentage = 0.1;
+        percentage = type(0.1);
     }
     else if(random_columns_number > 5000)
     {
-        percentage = 0.2;
+        percentage = type(0.2);
     }
     else if (random_columns_number > 1000)
     {
-        percentage = 0.4;
+        percentage = type(0.4);
     }
     else if (random_columns_number > 500)
     {
-       percentage = 0.6;
+       percentage = type(0.6);
     }
 
     //Original inputs columns
@@ -527,9 +527,9 @@ void GeneticAlgorithm::initialize_population_random()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        std::random_device rd;
+        random_device rd;
 
-        std::mt19937 g(rd());
+        mt19937 g(rd());
 
         individual_columns.setConstant(false);
 
@@ -541,7 +541,7 @@ void GeneticAlgorithm::initialize_population_random()
             individual_columns(j) = true;
         }
 
-        std::shuffle(individual_columns.data(), individual_columns.data() + individual_columns.size(), g);
+        shuffle(individual_columns.data(), individual_columns.data() + individual_columns.size(), g);
 
         individual_variables = get_individual_variables(individual_columns);
         if(is_false(individual_variables))
@@ -626,11 +626,11 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     Tensor <bool, 1> individual_variables(genes_number);
 
-    std::random_device rd;
+    random_device rd;
 
-    std::mt19937 gen(rd());
+    mt19937 gen(rd());
 
-    std::uniform_real_distribution<> dis(0, 1);
+    uniform_real_distribution<> dis(0, 1);
 
     Index columns_active;
 
@@ -944,7 +944,7 @@ void GeneticAlgorithm::perform_selection()
 
 Tensor <Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-    Tensor<Index,1> selection_indexes(std::count(selection.data(), selection.data() + selection.size(), 1));
+    Tensor<Index,1> selection_indexes(count(selection.data(), selection.data() + selection.size(), 1));
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
@@ -1005,13 +1005,13 @@ void GeneticAlgorithm::perform_crossover()
 
     Tensor <bool, 1> parent_2_columns;
 
-    std::random_device rd;
+    random_device rd;
 
-    std::mt19937 g(rd());
+    mt19937 g(rd());
 
     Tensor <Index, 1> parent_1_indices = get_selected_individuals_indices();
 
-    std::shuffle(parent_1_indices.data(), parent_1_indices.data() + parent_1_indices.size(), g);
+    shuffle(parent_1_indices.data(), parent_1_indices.data() + parent_1_indices.size(), g);
 
     Tensor <Index, 1> parent_2_indices = get_selected_individuals_indices();
 
@@ -1043,21 +1043,19 @@ void GeneticAlgorithm::perform_crossover()
 
             if(is_false(descendent_genes))
             {
+                const Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
 
                 Tensor<bool, 1> individual_columns_false = get_individual_columns(descendent_genes);
 
-                Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
-
                 for(Index j = 0; j < columns_number; j++)
                 {
-                    if(original_input_columns(j) /*&& columns(j).type != DataSet::ColumnType::Categorical*/)
+                    if(original_input_columns(j))
                     {
                         individual_columns_false(j) = true;
                     }
                 }
 
                 descendent_genes = get_individual_variables(individual_columns_false);
-
             }
 
             if(is_false(descendent_genes))
@@ -1384,7 +1382,7 @@ void GeneticAlgorithm::check_categorical_columns()
             {
                 const Tensor<bool, 1> individual = population.chip(j, 0);
 
-                if (!(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == (individual.data() + i + categories_number)))
+                if (!(find(individual.data() + i, individual.data() + i + categories_number, 1) == (individual.data() + i + categories_number)))
                 {
                     const Index random_index = rand() % categories_number;
 
@@ -1727,9 +1725,9 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
 Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void?
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<type> dist (0.0, 1.0);
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<type> dist (0.0, 1.0);
 
     type randomNumber = dist(gen);
     type sum = 0.0;

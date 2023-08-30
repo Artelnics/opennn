@@ -66,7 +66,7 @@ public:
 
        void save(const string& file_name) const
        {
-           std::ofstream file;
+           ofstream file;
            file.open(file_name);
 
            file << "Goodness-of-fit analysis\n";

@@ -48,49 +48,6 @@ ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : La
 }
 
 
-ScalingLayer::ProjectType ScalingLayer::get_project_type() const
-{
-    return project_type;
-}
-
-
-string ScalingLayer::get_project_type_string(const ScalingLayer::ProjectType& newProjectType) const
-{
-    if(newProjectType == ProjectType::Approximation)
-    {
-        return "Approximation";
-    }
-    else if(newProjectType == ProjectType::Classification)
-    {
-        return "Classification";
-    }
-    else if(newProjectType == ProjectType::Forecasting)
-    {
-        return "Forecasting";
-    }
-    else if(newProjectType == ProjectType::ImageClassification)
-    {
-        return "ImageClassification";
-    }
-    else if(newProjectType == ProjectType::TextClassification)
-    {
-        return "TextClassification";
-    }
-    else if(newProjectType == ProjectType::AutoAssociation)
-    {
-        return "AutoAssociation";
-    }
-    else
-    {
-        const string message =
-                "Scaling Layer Exception:\n"
-                "string get_project_type_string(const ScalingLayer::ProjectType&) const\n"
-                "Unknown project type.\n";
-
-        throw logic_error(message);
-    }
-}
-
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return inputs_dimensions;
@@ -406,49 +363,6 @@ void ScalingLayer::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
     set_default();
 
     from_XML(new_scaling_layer_document);
-}
-
-
-void ScalingLayer::set_project_type(const ScalingLayer::ProjectType& new_project_type)
-{
-    project_type = new_project_type;
-}
-
-void ScalingLayer::set_project_type_string(const string& newLearningTask)
-{
-    if(newLearningTask == "Approximation")
-    {
-        set_project_type(ProjectType::Approximation);
-    }
-    else if(newLearningTask == "Classification")
-    {
-        set_project_type(ProjectType::Classification);
-    }
-    else if(newLearningTask == "Forecasting")
-    {
-        set_project_type(ProjectType::Forecasting);
-    }
-    else if(newLearningTask == "ImageClassification")
-    {
-        set_project_type(ProjectType::ImageClassification);
-    }
-    else if(newLearningTask == "TextClassification")
-    {
-        set_project_type(ProjectType::TextClassification);
-    }
-    else if(newLearningTask == "AutoAssociation")
-    {
-        set_project_type(ProjectType::AutoAssociation);
-    }
-    else
-    {
-        const string message =
-                "Scaling Layer Exception:\n"
-                "void set_project_type_string(const string&)\n"
-                "Unknown project type.\n";
-
-        throw logic_error(message);
-    }
 }
 
 
@@ -837,8 +751,8 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer::forward_propagate(type* inputs_data,
-                                     const Tensor<Index, 1>& inputs_dimensions,
+void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                     const Tensor<Tensor<Index, 1>, 1>& inputs_tensor_dimensions,
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
 {
@@ -856,6 +770,8 @@ void ScalingLayer::forward_propagate(type* inputs_data,
     }
 #endif
 
+    Tensor<Index, 1> inputs_dimensions(inputs_tensor_dimensions(0));
+
     ScalingLayerForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayerForwardPropagation*>(forward_propagation);
 
@@ -868,8 +784,8 @@ void ScalingLayer::forward_propagate(type* inputs_data,
 
         const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        const TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
 
         if(inputs_dimensions(0) != points_number || inputs_dimensions(1) != neurons_number)
         {
@@ -948,13 +864,13 @@ void ScalingLayer::forward_propagate(type* inputs_data,
     }
     else if(input_rank == 4)
     {
-        TensorMap<Tensor<type, 4>> input(inputs_data,
+        TensorMap<Tensor<type, 4>> input(inputs_data(0),
                                          inputs_dimensions(0),
                                          inputs_dimensions(1),
                                          inputs_dimensions(2),
                                          inputs_dimensions(3));
 
-        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data,
+        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data(0),
                                           inputs_dimensions(0),
                                           inputs_dimensions(1),
                                           inputs_dimensions(2),
@@ -994,9 +910,9 @@ void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
         const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
         const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+        TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions[0], outputs_dimensions(1));
 
-        if(outputs_dimensions(0) != points_number || outputs_dimensions(1) != neurons_number)
+        if(outputs_dimensions[0] != points_number || outputs_dimensions(1) != neurons_number)
         {
             ostringstream buffer;
 

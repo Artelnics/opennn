@@ -43,22 +43,32 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-    const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
-//    #pragma omp parallel for
-
-    for(Index j = 0; j < columns_number; j++)
+    for(Index i = 0; i < columns_number; i++)
     {
-        for(Index i = 0; i < rows_number; i++)
-        {
-           matrix(i,j) /= vector(i) == type(0) ? type(1) : vector(i);
-        }
+        TensorMap<Tensor<type,1>> column(matrix.data(), rows_number*i);
+
+        column.device(*thread_pool_device) = column/vector(i);
     }
 }
 
+
+void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type,1>> column(matrix.data(), rows_number*i);
+
+        column.device(*thread_pool_device) = column/vector(i);
+    }
+}
 
 bool is_zero(const Tensor<type, 1>& tensor)
 {
@@ -72,6 +82,7 @@ bool is_zero(const Tensor<type, 1>& tensor)
     return true;
 }
 
+
 bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 {
     const Index size = tensor.size();
@@ -83,6 +94,7 @@ bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 
     return true;
 }
+
 
 bool is_nan(const Tensor<type,1>& tensor)
 {
@@ -175,7 +187,6 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 }
 
 
-
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
 {
     const Index size = vector_1.size();
@@ -187,7 +198,6 @@ bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2,
 
     return true;
 }
-
 
 
 bool are_equal(const Tensor<bool, 1>& vector_1, const Tensor<bool, 1>& vector_2)
@@ -250,7 +260,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
-    std::ofstream file(filename);
+    ofstream file(filename);
 
     if(!file.is_open())
     {
@@ -319,7 +329,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
-    std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
+    replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
 
 
@@ -578,7 +588,7 @@ Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
 
-//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+//    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
 };
@@ -589,7 +599,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 {
     Tensor<Index, 1> new_vector(index);
 
-//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+//    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
 };
@@ -717,23 +727,35 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
 };
 
 
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
 {
-    const Index size = x.size();
+    // Transform Tensors into Dense matrix
 
-    Tensor<type, 2> direct(size, size);
+    auto ml = Map<Matrix<type, Dynamic, Dynamic, RowMajor >>(x.data(), x.dimension(0), 1);
 
-    #pragma omp parallel for
+    auto mr = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(y.data(),y.dimension(0), 1);
 
-    for(Index i = 0; i < size; i++)
-    {
-        for(Index j = 0; j < size; j++)
-        {
-            direct(i, j) = x(i) * y(j);
-        }
-    }
+    // Kronecker Product
 
-    return direct;
+    auto product = kroneckerProduct(ml, mr).eval();
+
+    // Matrix into a Tensor
+
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), x.size(), y.size());
+
+    return direct_matrix;
+}
+
+
+void kronecker_product_void(TensorMap<Tensor<type, 1>>& x, TensorMap<Tensor<type, 2>>& y)
+{
+    const Index n = x.dimension(0);
+
+    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic> >(x.data(), n, 1);
+
+    auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n, n);
+
+    product = kroneckerProduct(x_matrix, x_matrix).eval();
 }
 
 
@@ -796,7 +818,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 }
 
 
-void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
+void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
@@ -842,14 +864,13 @@ type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
 }
 
 
-type l2_distance(const TensorMap<Tensor<type, 0>>&x, const TensorMap<Tensor<type, 0>>&y)
+type l2_distance(const type& x, const type& y)
 {
-    Tensor<type, 0> distance;
+    type distance = fabs(x - y);
 
-    distance = (x-y).square().sum().sqrt();
-
-    return distance(0);
+    return distance;
 }
+
 
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
 {
@@ -1081,8 +1102,8 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    std::copy(x.data(), x.data() + x.size(), data.data());
-    std::copy(y.data(), y.data() + y.size(), data.data() + x.size());
+    copy(x.data(), x.data() + x.size(), data.data());
+    copy(y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;
 }
@@ -1395,10 +1416,10 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 
     for(Index i = 0; i < x.size(); i++)
     {
-        vector(i) = std::to_string(x(i));
+        vector(i) = to_string(x(i));
     }
-    return vector;
 
+    return vector;
 };
 
 

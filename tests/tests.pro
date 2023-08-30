@@ -56,7 +56,6 @@ SOURCES += \
     pooling_layer_test.cpp \
     response_optimization_test.cpp \
     flatten_layer_test.cpp \
-    batch_normalization_layer_test.cpp \
     main.cpp
 
 HEADERS += \
@@ -101,9 +100,7 @@ HEADERS += \
     convolutional_layer_test.h \
     pooling_layer_test.h \
     flatten_layer_test.h \
-    response_optimization_test.h \
-    batch_normalization_layer_test.cpp
-
+    response_optimization_test.h
 
 # OpenMP library
 

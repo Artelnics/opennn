@@ -365,7 +365,6 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-
         // not running in  visual studio
         /*
         back_propagation_lm.set(samples_number, &mean_squared_error);
@@ -1342,10 +1341,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     }
 
-    */
-
     // Inputs 3x3x2x2; Filters: 2x2x2; Perceptrons: 1 --> Working (4-Jan-23)
-/*
+
     {
         bool is_training = true;
 
@@ -1574,55 +1571,60 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         // Image 1
 
-        data(0,0) = 1;
-        data(0,1) = 10;
-        data(0,2) = 2;
-        data(0,3) = 11;
-        data(0,4) = 3;
-        data(0,5) = 12;
-        data(0,6) = 4;
-        data(0,7) = 13;
-        data(0,8) = 5;
-        data(0,9) = 14;
-        data(0,10) = 6;
-        data(0,11) = 15;
-        data(0,12) = 7;
-        data(0,13) = 16;
-        data(0,14) = 8;
-        data(0,15) = 17;
-        data(0,16) = 9;
-        data(0,17) = 18;
+        data(0,0) = 1;//17;
+        data(0,1) = 1;//16;
+        data(0,2) = 1;//11;
+        data(0,3) = 1;//10;
+        data(0,4) = 1;//5;
+        data(0,5) = 1;//4;
+        data(0,6) = 1;//15;
+        data(0,7) = 1;//14;
+        data(0,8) = 1;//9;
+        data(0,9) = 1;//8;
+        data(0,10) = 1;//3;
+        data(0,11) = 1;//2;
+        data(0,12) = 1;//13;
+        data(0,13) = 1;//12;
+        data(0,14) = 1;//7;
+        data(0,15) = 1;//6;
+        data(0,16) = 1;//1;
+        data(0,17) = 1;//0;
 
         data(0,18) = 1; // Target
 
         // Image 2
 
-        data(1,0) = 19;
-        data(1,1) = 28;
-        data(1,2) = 20;
-        data(1,3) = 29;
-        data(1,4) = 21;
-        data(1,5) = 30;
-        data(1,6) = 22;
-        data(1,7) = 31;
-        data(1,8) = 23;
-        data(1,9) = 32;
-        data(1,10) = 24;
-        data(1,11) = 33;
-        data(1,12) = 25;
-        data(1,13) = 34;
-        data(1,14) = 26;
-        data(1,15) = 35;
-        data(1,16) = 27;
-        data(1,17) = 36;
+        data(1,0) = 2;//36;
+        data(1,1) = 2;//35;
+        data(1,2) = 2;//30;
+        data(1,3) = 2;//29;
+        data(1,4) = 2;//24;
+        data(1,5) = 2;//23;
+        data(1,6) = 2;//34;
+        data(1,7) = 2;//33;
+        data(1,8) = 2;//28;
+        data(1,9) = 2;//27;
+        data(1,10) = 2;//22;
+        data(1,11) = 2;//21;
+        data(1,12) = 2;//32;
+        data(1,13) = 2;//31;
+        data(1,14) = 2;//26;
+        data(1,15) = 2;//25;
+        data(1,16) = 2;//20;
+        data(1,17) = 2;//19;
 
         data(1,18) = 0; // Target
 
         DataSet data_set(images_number,1,1);
-        data_set.set_input_variables_dimensions(inputs_dimensions);
 
         data_set.set_data(data); // 2d data
         data_set.set_data_random();
+
+        cout << "Data: " << endl << data_set.get_data() << endl;
+
+        system("pause");
+
+        data_set.set_input_variables_dimensions(inputs_dimensions);
 
         data_set.set_training();
 
@@ -1676,32 +1678,32 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
         convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
         convolutional_layer_kernels_dimensions(1) = kernels_columns_number;
-        convolutional_layer_kernels_dimensions(2) = kernels_number;
-        convolutional_layer_kernels_dimensions(3) = kernels_channels_number;
+        convolutional_layer_kernels_dimensions(2) = kernels_channels_number;
+        convolutional_layer_kernels_dimensions(3) = kernels_number;
 
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-//        Tensor<type, 4> kernels(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
+        Tensor<type, 4> kernels(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
 
-//        kernels(0,0,0,0) = static_cast<type>(0.5);
-//        kernels(0,1,0,0) = static_cast<type>(0.5);
-//        kernels(1,0,0,0) = static_cast<type>(0.5);
-//        kernels(1,1,0,0) = static_cast<type>(0.5);
+        kernels(0,0,0,0) = static_cast<type>(0.5);
+        kernels(0,1,0,0) = static_cast<type>(0.5);
+        kernels(1,0,0,0) = static_cast<type>(0.5);
+        kernels(1,1,0,0) = static_cast<type>(0.5);
 
-//        kernels(0,0,0,1) = static_cast<type>(0.5);
-//        kernels(0,1,0,1) = static_cast<type>(0.5);
-//        kernels(1,0,0,1) = static_cast<type>(0.5);
-//        kernels(1,1,0,1) = static_cast<type>(0.5);
+        kernels(0,0,0,1) = static_cast<type>(0.5);
+        kernels(0,1,0,1) = static_cast<type>(0.5);
+        kernels(1,0,0,1) = static_cast<type>(0.5);
+        kernels(1,1,0,1) = static_cast<type>(0.5);
 
-//        kernels(0,0,1,0) = static_cast<type>(0.7);
-//        kernels(0,1,1,0) = static_cast<type>(0.7);
-//        kernels(1,0,1,0) = static_cast<type>(0.7);
-//        kernels(1,1,1,0) = static_cast<type>(0.7);
+        kernels(0,0,1,0) = static_cast<type>(0.7);
+        kernels(0,1,1,0) = static_cast<type>(0.7);
+        kernels(1,0,1,0) = static_cast<type>(0.7);
+        kernels(1,1,1,0) = static_cast<type>(0.7);
 
-//        kernels(0,0,1,1) = static_cast<type>(0.7);
-//        kernels(0,1,1,1) = static_cast<type>(0.7);
-//        kernels(1,0,1,1) = static_cast<type>(0.7);
-//        kernels(1,1,1,1) = static_cast<type>(0.7);
+        kernels(0,0,1,1) = static_cast<type>(0.7);
+        kernels(0,1,1,1) = static_cast<type>(0.7);
+        kernels(1,0,1,1) = static_cast<type>(0.7);
+        kernels(1,1,1,1) = static_cast<type>(0.7);
 
 //        convolutional_layer->set_synaptic_weights(kernels);
 
@@ -1736,21 +1738,22 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //        perceptron_layer->set_parameters_random();
 
-//        synaptic_weights(0,0) = 1;
-//        synaptic_weights(1,0) = 1;
-//        synaptic_weights(2,0) = 1;
-//        synaptic_weights(3,0) = 1;
+        synaptic_weights(0,0) = 1;
+        synaptic_weights(1,0) = 1;
+        synaptic_weights(2,0) = 1;
+        synaptic_weights(3,0) = 1;
 
-//        synaptic_weights(0,1) = 2;
-//        synaptic_weights(1,1) = 2;
-//        synaptic_weights(2,1) = 2;
-//        synaptic_weights(3,1) = 2;
+        synaptic_weights(0,1) = 2;
+        synaptic_weights(1,1) = 2;
+        synaptic_weights(2,1) = 2;
+        synaptic_weights(3,1) = 2;
 
-//        perceptron_layer->set_synaptic_weights(synaptic_weights);
-//        perceptron_layer->set_biases_constant(0);
+        perceptron_layer->set_synaptic_weights(synaptic_weights);
+        perceptron_layer->set_biases_constant(0);
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-
         perceptron_layer->set_parameters_random();
+
+//        perceptron_layer->set_parameters_random();
 
         neural_network.add_layer(convolutional_layer);
         neural_network.add_layer(flatten_layer);
@@ -1760,7 +1763,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         neural_network.forward_propagate(batch, forward_propagation, is_training);
 //        forward_propagation.print();
-
 //        system("pause");
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
@@ -1769,12 +1771,21 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        cout << "Gradient: " << endl << back_propagation.gradient << endl;
+        cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-//        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
+        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
 
-//        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
 
+        cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
+
+        for(Index i = 0; i < back_propagation.gradient.size(); i++)
+        {
+            cout << back_propagation.gradient(i) << " ; " << gradient_numerical_differentiation(i) <<  " ; " <<
+                    abs((back_propagation.gradient(i) - gradient_numerical_differentiation(i))/gradient_numerical_differentiation(i)*100)
+                 << "%" << endl;
+
+        }
     }
 }
 
@@ -1783,19 +1794,19 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
-/*
+
     test_constructor();
     test_destructor();
-*/
+
     // Convolutional network methods
 
     test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
-/*
+
     test_back_propagate();
     test_back_propagate_lm();
-*/
+
     cout << "End of mean squared error test case.\n\n";
 }
 

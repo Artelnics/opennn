@@ -23,7 +23,6 @@ CONFIG(debug, debug|release) {
 
 DEFINES += __Cpp17__
 
-
 QMAKE_CXXFLAGS += -bigobj
 
 # OpenMP library
@@ -53,6 +52,8 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    addition_layer.h \
+    concatenation_layer.h \
     codification.h \
     numerical_differentiation.h \
     config.h \
@@ -86,6 +87,8 @@ HEADERS += \
     normalized_squared_error.h\
     minkowski_error.h \
     mean_squared_error.h \
+    vgg16.h \
+    resnet50.h \
     weighted_squared_error.h\
     cross_entropy_error.h \
     training_strategy.h \
@@ -108,15 +111,16 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-#    region_based_object_detector.h \
+    region_based_object_detector.h \
 #    json_to_xml.h \
-    batch_normalization_layer.h\
     region_proposal_layer.h \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
     opennn.h
 
 SOURCES += \
+    addition_layer.cpp \
+    concatenation_layer.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
     opennn_images.cpp \
@@ -148,6 +152,8 @@ SOURCES += \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
     mean_squared_error.cpp \
+    vgg16.cpp \
+    resnet50.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \
@@ -167,9 +173,8 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-#    region_based_object_detector.cpp \
+    region_based_object_detector.cpp \
 #    json_to_xml.cpp \
-    batch_normalization_layer.cpp\
     region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \

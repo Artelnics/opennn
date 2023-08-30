@@ -119,8 +119,8 @@ void TestingAnalysis::set_default()
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -261,7 +261,8 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
 
 void TestingAnalysis::print_linear_regression_correlations() const
 {
-    const Tensor<Correlation, 1> linear_correlation = this->linear_correlation();
+/*
+    const Tensor<Correlation, 1> linear_correlation = linear_correlation();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
@@ -271,6 +272,7 @@ void TestingAnalysis::print_linear_regression_correlations() const
     {
         cout << targets_name[i] << " correlation: " << linear_correlation[i].r << endl;
     }
+*/
 }
 
 
@@ -3035,7 +3037,7 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
 
     const Index columns_number = confusion.dimension(0);
 
-    std::ofstream confusion_file(confusion_file_name);
+    ofstream confusion_file(confusion_file_name);
 
     Tensor<string, 1> target_variable_names = data_set_pointer->get_target_variables_names();
 
@@ -3077,7 +3079,7 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 {
     const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_precision();
 
-    std::ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
+    ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
 
     multiple_classifiaction_tests_file << "accuracy,error" << endl;
     multiple_classifiaction_tests_file << multiple_classification_tests(0)* type(100) << "," << multiple_classification_tests(1)* type(100) << endl;
@@ -3306,7 +3308,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
                                                                                            outputs,
                                                                                            labels);
 
-    std::ofstream well_classified_samples_file(well_classified_samples_file_name);
+    ofstream well_classified_samples_file(well_classified_samples_file_name);
     well_classified_samples_file << "sample_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < well_classified_samples.dimension(0); i++)
     {
@@ -3328,7 +3330,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                                                          outputs,
                                                                                          labels);
 
-    std::ofstream misclassified_samples_file(misclassified_samples_file_name);
+    ofstream misclassified_samples_file(misclassified_samples_file_name);
     misclassified_samples_file << "sample_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < misclassified_samples.dimension(0); i++)
     {
@@ -3357,7 +3359,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
         well_classified_numerical_probabilities(i) = type(::atof(well_classified_samples(i, 3).c_str()));
     }
 
-    std::ofstream classification_statistics_file(statistics_file_name);
+    ofstream classification_statistics_file(statistics_file_name);
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << well_classified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << well_classified_numerical_probabilities.maximum() << ",";
@@ -3384,7 +3386,7 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
     {
         misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
     }
-    std::ofstream classification_statistics_file(statistics_file_name);
+    ofstream classification_statistics_file(statistics_file_name);
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";
@@ -3540,7 +3542,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
     for(Index i = 0; i < targets_number; i++)
     {
-        error_autocorrelations[i] = autocorrelations(this->thread_pool_device, error.chip(i,1), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(thread_pool_device, error.chip(i,1), maximum_lags_number);
     }
 
     return error_autocorrelations;
@@ -3619,7 +3621,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     for(Index i = 0; i < targets_number; i++)
     {
-        inputs_errors_cross_correlation[i] = cross_correlations(this->thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
     }
 
     return inputs_errors_cross_correlation;

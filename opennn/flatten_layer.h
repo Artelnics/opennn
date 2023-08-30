@@ -86,7 +86,7 @@ public:
 
     // Outputs
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+    void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
 
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
@@ -135,17 +135,20 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
+
         batch_samples_number = new_batch_samples_number;
 
         layer_pointer = new_layer_pointer;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        outputs_dimensions.resize(2);
+        outputs_data.resize(1);
+        outputs_dimensions.resize(1);
 
-        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
-        outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+        outputs_dimensions(0).resize(2);
+        outputs_dimensions(0).setValues({batch_samples_number, neurons_number});
     }
 
 

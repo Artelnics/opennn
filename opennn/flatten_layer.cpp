@@ -24,6 +24,7 @@ FlattenLayer::FlattenLayer() : Layer()
 FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
 {
     inputs_dimensions = new_inputs_dimensions;
+
     set(inputs_dimensions);
 
     layer_type = Type::Flatten;
@@ -61,7 +62,7 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(1);
 
-    outputs_dimensions(0) = inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
+    outputs_dimensions[0] = inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
 
     return outputs_dimensions;
 }
@@ -95,7 +96,7 @@ Index FlattenLayer::get_inputs_channels_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return inputs_dimensions(0)*inputs_dimensions(1)*inputs_dimensions(2);
+    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
 }
 
 
@@ -132,7 +133,8 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 }
 
 
-void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+void FlattenLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -140,10 +142,10 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 
     const Index neurons_number = get_neurons_number();
 
-    type* outputs_data = layer_forward_propagation->outputs_data;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
     memcpy(outputs_data,
-           inputs_data,
+           inputs_data(0),
            batch_samples_number*neurons_number*sizeof(type));
 }
 
@@ -428,11 +430,11 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //    set(inputsDimensionTensor);
 
-    Tensor<Index, 1> inputsDimensionTensor(3);
+    Tensor<Index, 1> inputs_dimension_tensor(3);
 
-    inputsDimensionTensor.setValues({input_height, input_width, input_channels_number});
+    inputs_dimension_tensor.setValues({input_height, input_width, input_channels_number});
 
-    set(inputsDimensionTensor);
+    set(inputs_dimension_tensor);
 }
 
 }

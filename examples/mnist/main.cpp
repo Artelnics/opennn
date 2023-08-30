@@ -56,6 +56,19 @@ int main()
 
         data_set.scale_input_variables();
 
+//        augmentation = false;
+//        random_reflection_axis_x = false;
+//        random_reflection_axis_y = false;
+//        random_rotation_minimum = 0;
+//        random_rotation_maximum = 0;
+//        random_rescaling_minimum = 1;
+//        random_rescaling_maximum = 1;
+//        random_horizontal_translation = 0;
+//        random_vertical_translation = 0;
+
+
+
+
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 

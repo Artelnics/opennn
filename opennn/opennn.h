@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "layer.h"
+#include "addition_layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"
 #include "bounding_layer.h"
@@ -33,6 +34,7 @@
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
+#include "vgg16.h"
 
 // Training strategy
 

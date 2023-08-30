@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_layer.h"
-#include "opennn_images.h"
 
 namespace opennn
 {
@@ -16,20 +15,23 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-    NonMaxSuppressionLayer::NonMaxSuppressionLayer() : Layer()
+NonMaxSuppressionLayer::NonMaxSuppressionLayer() : Layer()
 {
+    layer_type = Type::NonMaxSuppression;
+
+    layer_name = "non_max_suppression_layer";
 }
 
 
 void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                              type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+                                               type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
     // inputs_data -> Score of each input image bounding box
     //             -> 4 parameters defining the bbox
     // outputs_data -> Bounding box that surpasses our criteria
 
-    const type overlap_threshold = 0.65;
-    const type confidence_score_threshold = 0.4;
+    const type overlap_threshold = type(0.65);
+    const type confidence_score_threshold = type(0.4);
 
     const Index regions_number = inputs_dimensions(0);
     TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
@@ -94,7 +96,7 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
                 const Index y_top_left_box_2 = filtered_proposals(j)(1);
                 const Index x_bottom_right_box_2 = filtered_proposals(j)(2);
                 const Index y_bottom_right_box_2 = filtered_proposals(j)(3);
-
+/*
                 const type intersection_over_union_between_boxes = intersection_over_union(x_top_left_box_1, y_top_left_box_1,
                                                                                            x_bottom_right_box_1, y_bottom_right_box_1,
                                                                                            x_top_left_box_2, y_top_left_box_2,
@@ -108,6 +110,7 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
                 {
                     final_detections_boolean(i) = false;
                 }
+*/
             }
         }
     }
@@ -131,9 +134,10 @@ void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<I
 }
 
 
-void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
-                          const Tensor<Index,1>& inputs_dimensions,
-                          LayerForwardPropagation* forward_propagation)
+void NonMaxSuppressionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                               const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+                                               LayerForwardPropagation* forward_propagation,
+                                               const bool& is_training)
 {
     NonMaxSuppressionLayerForwardPropagation* non_max_suppression_layer_forward_propagation
             = static_cast<NonMaxSuppressionLayerForwardPropagation*>(forward_propagation);
@@ -142,12 +146,12 @@ void NonMaxSuppressionLayer::forward_propagate(type* inputs_data,
 
 //    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);
 
-    const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
+//    const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
 
-    calculate_regions(inputs_data,
-                      inputs_dimensions,
-                      non_max_suppression_layer_forward_propagation->outputs.data(),
-                      outputs_dimensions);
+//    calculate_regions(inputs_data,
+//                      inputs_dimensions,
+//                      non_max_suppression_layer_forward_propagation->outputs_data(0),
+//                      outputs_dimensions);
 }
 
 }

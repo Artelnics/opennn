@@ -24,6 +24,7 @@
 #include "config.h"
 #include "data_set.h"
 #include "layer.h"
+#include "addition_layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
@@ -31,17 +32,19 @@
 #include "probabilistic_layer.h"
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
-//#include "resnet50_layer.h"
+#include "region_proposal_layer.h"
+#include "non_max_suppression_layer.h"
+
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 #include "text_analytics.h"
-#include "batch_normalization_layer.h"
 
 namespace opennn
 {
-    struct NeuralNetworkForwardPropagation;
-    struct NeuralNetworkBackPropagation;
+
+struct NeuralNetworkForwardPropagation;
+struct NeuralNetworkBackPropagation;
 
 /// This class represents the concept of neural network in the OpenNN library.
 ///
@@ -52,13 +55,20 @@ class NeuralNetwork
 
 public:
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, TextGeneration, AutoAssociation};
+   enum class ProjectType{Approximation,
+                          Classification,
+                          Forecasting,
+                          ImageClassification,
+                          TextClassification,
+                          TextGeneration,
+                          AutoAssociation};
 
    // Constructors
 
    explicit NeuralNetwork();
 
    explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+
    explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const initializer_list<Index>&);
 
    explicit NeuralNetwork(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
@@ -107,7 +117,11 @@ public:
    Tensor<Layer*, 1> get_layers_pointers() const;
    Layer* get_layer_pointer(const Index&) const;
    Tensor<Layer*, 1> get_trainable_layers_pointers() const;
-   Tensor<Index, 1> get_trainable_layers_indices() const;
+   Tensor<Index, 1> get_trainable_layers_indices() const;   
+
+   Index get_layer_index(const string&) const;
+
+   Tensor<Tensor<Index, 1>, 1> get_layers_inputs_indices() const;
 
    ScalingLayer* get_scaling_layer_pointer() const;
    UnscalingLayer* get_unscaling_layer_pointer() const;
@@ -137,6 +151,12 @@ public:
    void set(const string&);
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
+
+   void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
+   void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
+
+   void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
+   void set_layer_inputs_indices(const string&, const string&);
 
    void set_project_type(const ProjectType&);
    void set_project_type_string(const string&);
@@ -240,6 +260,7 @@ public:
    Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_unscaled_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(Tensor<type, 4>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
@@ -274,6 +295,8 @@ public:
    // virtual void read_XML( );
 
    void print() const;
+   void print_layers_inputs_indices() const;
+   void summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 
@@ -309,7 +332,6 @@ public:
 
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
-//   void forward_propagate(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
 
 
 protected:
@@ -329,6 +351,8 @@ protected:
    /// Layers
 
    Tensor<Layer*, 1> layers_pointers;
+
+   Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 
    /// AANN distances box plot
 
@@ -418,15 +442,15 @@ struct NeuralNetworkForwardPropagation
             }
             break;
 
-            case Layer::Type::Flatten:
+            case Layer::Type::Pooling:
             {
-                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+                layers(i) = new PoolingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
-            case Layer::Type::BatchNormalization:
+            case Layer::Type::Flatten:
             {
-                layers(i) = new BatchNormalizationLayerForwardPropagation(batch_samples_number, layers_pointers(i));;
+                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
@@ -448,26 +472,37 @@ struct NeuralNetworkForwardPropagation
             }
             break;
 
+            case Layer::Type::RegionProposal:
+            {
+                layers(i) = new RegionProposalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::NonMaxSuppression:
+            {
+                layers(i) = new NonMaxSuppressionLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
             default: break;
             }
         }
-
     }
 
 
     void print() const
     {
+        cout << "Neural network forward propagation" << endl;
+
         const Index layers_number = layers.size();
 
         cout << "Layers number: " << layers_number << endl;
 
         for(Index i = 0; i < layers_number; i++)
         {
-            cout << "Layer " << i + 1 << " " << layers(i)->layer_pointer->get_name() << endl;
+            cout << "Layer " << i + 1 << ": " << layers(i)->layer_pointer->get_name() << endl;
 
             layers(i)->print();
-
-            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
         }
     }
 
@@ -476,7 +511,6 @@ struct NeuralNetworkForwardPropagation
     NeuralNetwork* neural_network_pointer = nullptr;
 
     Tensor<LayerForwardPropagation*, 1> layers;
-
 };
 
 
@@ -545,15 +579,15 @@ struct NeuralNetworkBackPropagation
             }
             break;
 
-            case Layer::Type::Flatten:
+            case Layer::Type::Pooling:
             {
-                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PoolingLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Type::Resnet50:
+            case Layer::Type::Flatten:
             {
-                //layers(i) = new Resnet50LayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 

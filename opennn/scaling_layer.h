@@ -52,8 +52,7 @@ public:
 
    // Get methods
 
-   ProjectType get_project_type() const;
-   string get_project_type_string(const ScalingLayer::ProjectType&) const;
+
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const final;
@@ -89,9 +88,6 @@ public:
    void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
-
-   void set_project_type(const ProjectType&);
-   void set_project_type_string(const string&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -129,7 +125,8 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
+
    void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
    // Expression methods
@@ -153,8 +150,6 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
-
-   ScalingLayer::ProjectType project_type;
 
    Tensor<Index, 1> inputs_dimensions;
 
@@ -209,22 +204,24 @@ struct ScalingLayerForwardPropagation : LayerForwardPropagation
 
         // Allocate memory for outputs_data
 
-        outputs_data = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+        outputs_data.resize(1);
 
-        outputs_dimensions.resize(2);
+        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
 
-        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+        outputs_dimensions.resize(1);
+        outputs_dimensions[0].resize(2);
+        outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
     }
 
 
     void print() const
     {
-        cout << "outputs dimension 0: " << outputs_dimensions(0) << endl;
-        cout << "outputs dimension 1: " << outputs_dimensions(1) << endl;
+        cout << "Outputs dimension 0: " << outputs_dimensions[0](0) << endl;
+        cout << "Outputs dimension 1: " << outputs_dimensions[0](1) << endl;
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
     }
 };
 

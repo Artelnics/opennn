@@ -144,14 +144,9 @@ public:
                                           type*, const Tensor<Index, 1>&,
                                           type*, const Tensor<Index, 1>&) const;
 
-    void calculate_outputs(const type* inputs,
-                           const Tensor<Index, 1>& inputs_dimensions,
-                           type* outputs,
-                           const Tensor<Index, 1>& outputs_dimensions);
-
    // Outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
 
    void forward_propagate(type*,
                           const Tensor<Index, 1>&,
@@ -252,12 +247,15 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
         // Outputs
 
-        outputs_dimensions.resize(2);
-        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+        outputs_dimensions.resize(1);
+        outputs_dimensions[0].resize(2);
+        outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
 
         //delete outputs_data;
 
-        outputs_data = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+        outputs_data.resize(1);
+
+        outputs_data(0) = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
 
         // Rest of quantities
 
@@ -268,13 +266,10 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     void print() const
     {
         cout << "Outputs:" << endl;
-        cout << outputs_dimensions << endl;
-
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives.dimensions() << endl;
+        //cout << outputs_dimensions << endl;
 
         cout << "Outputs:" << endl;
-        cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
+        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
