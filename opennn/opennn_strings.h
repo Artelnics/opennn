@@ -93,9 +93,8 @@ namespace opennn
 
     bool find_string_in_tensor(Tensor<string, 1>& t, string val);
     string get_word_from_token(string&);
-    Tensor<string, 1> push_back_string (Tensor<string, 1>&, const string&);
 
-    string round_to_precision_string(type,const int&);
+    string round_to_precision_string(type, const int&);
     Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2>, const int&);
 }
 

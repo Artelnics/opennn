@@ -521,8 +521,8 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
     target_data = data_set.get_target_data();
 
-    Eigen::array<int, 1> dims({0});
-    targets_mean = target_data.mean(dims);
+    Eigen::array<int, 1> dimensions({0});
+    targets_mean = target_data.mean(dimensions);
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, 2, outputs_number});
     neural_network.set_parameters_random();

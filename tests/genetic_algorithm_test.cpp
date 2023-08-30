@@ -318,7 +318,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
         crossover_population = genetic_algorithm.get_population();
 
-        for(Index i=0; i<4; i++)
+        for(Index i = 0; i<4; i++)
         {
            assert_true(crossover_population(i,0) == 1, LOG);
            assert_true(crossover_population(i,1) == 0, LOG);
@@ -384,7 +384,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
         mutated_individual=mutated_population.chip(i,0);
 
-        for(Index j=0; j<10; j++)
+        for(Index j = 0; j<10; j++)
         {
             if(individual(j) != mutated_individual(j)) mutated_genes++;
         }

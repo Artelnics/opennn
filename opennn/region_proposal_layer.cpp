@@ -137,7 +137,7 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
     TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions[0], outputs_dimensions(1));
     TensorMap<Tensor<type, 2>> regions(regions_data, regions_dimensions(0), regions_dimensions(1));
 
-    for (Index region_index = 0; region_index < regions_number; region_index++)
+    for(Index region_index = 0; region_index < regions_number; region_index++)
     {
         Index image_pixel_index = 0;
 
@@ -148,11 +148,11 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
         regions(region_index, 2) = proposed_region(1)(2); // x_bottom_right
         regions(region_index, 3) = proposed_region(1)(3); // y_bottom_right
 
-        for (Index channel_index = 0; channel_index < image_channels_number; channel_index++)
+        for(Index channel_index = 0; channel_index < image_channels_number; channel_index++)
         {
-            for (Index rows_index = 0; rows_index < region_rows; rows_index++)
+            for(Index rows_index = 0; rows_index < region_rows; rows_index++)
             {
-                for (Index columns_index = 0; columns_index < region_columns; columns_index++)
+                for(Index columns_index = 0; columns_index < region_columns; columns_index++)
                 {
                     outputs(region_index, image_pixel_index) = proposed_region(0)(image_pixel_index);
                     image_pixel_index++;
@@ -227,11 +227,11 @@ void RegionProposalLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
         // Do it with Eigen
 
-        for (Index channel_index = 0; channel_index < image_channels_number; channel_index++)
+        for(Index channel_index = 0; channel_index < image_channels_number; channel_index++)
         {
-            for (Index rows_index = 0; rows_index < region_rows; rows_index++)
+            for(Index rows_index = 0; rows_index < region_rows; rows_index++)
             {
-                for (Index columns_index = 0; columns_index < region_columns; columns_index++)
+                for(Index columns_index = 0; columns_index < region_columns; columns_index++)
                 {
                     outputs(region_index, image_pixel_index) = proposed_region(0)(image_pixel_index);
 

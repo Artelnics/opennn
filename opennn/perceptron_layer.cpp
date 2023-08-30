@@ -545,7 +545,7 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
 
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
-    for (Index i = 0; i < biases_number; i++)
+    for(Index i = 0; i < biases_number; i++)
     {
          TensorMap<Tensor<type,1>>column(outputs_data + i * batch_samples_number, batch_samples_number);
 
@@ -557,7 +557,7 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
 
 #ifdef OPENNN_MKL
 
-   if (typeid(type) == typeid(float))
+   if(typeid(type) == typeid(float))
     {
         cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
             CBLAS_TRANSPOSE::CblasNoTrans,
@@ -574,7 +574,7 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
             (float*)combinations_data,
             inputs.dimension(0));
     }
-    else if (typeid(type) == typeid(double))
+    else if(typeid(type) == typeid(double))
     {
         cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
             CBLAS_TRANSPOSE::CblasNoTrans,
@@ -914,7 +914,7 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 
 //#ifdef OPENNN_MKL
 
-//   if (typeid(type) == typeid(float))
+//   if(typeid(type) == typeid(float))
 //    {
 //        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasNoTrans,
@@ -931,7 +931,7 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 //            deltas.data(),
 //            next_deltas.dimension(0));
 //    }
-//    else if (typeid(type) == typeid(double))
+//    else if(typeid(type) == typeid(double))
 //    {
 //        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasNoTrans,
@@ -1259,7 +1259,7 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
 
 //#ifdef OPENNN_MKL
 
-//    if (typeid(type) == typeid(float))
+//    if(typeid(type) == typeid(float))
 //    {
 //        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasTrans,

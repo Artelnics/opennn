@@ -146,6 +146,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         layers_pointers(old_layers_number) = layer_pointer;
 
+
         // Layers inputs indices
 
         Tensor<Tensor<Index, 1>, 1> old_layers_inputs_indices = get_layers_inputs_indices();
@@ -401,8 +402,9 @@ string NeuralNetwork::get_project_type_string() const
     else if(project_type == ProjectType::AutoAssociation)
     {
         return "AutoAssociation";
-    }
+    }        
 }
+
 
 /// Returns a string vector with the names of the variables used as outputs.
 
@@ -3949,9 +3951,9 @@ string NeuralNetwork::write_expression() const
     inputs_names_vector = inputs_names;
     string aux_name = "";
 
-    for (int i = 0; i < inputs_names.dimension(0); i++)
+    for(int i = 0; i < inputs_names.dimension(0); i++)
     {
-        if (!inputs_names_vector[i].empty())
+        if(!inputs_names_vector[i].empty())
         {
             aux_name = inputs_names[i];
             inputs_names_vector(i) = replace_non_allowed_programming_expressions(aux_name);
@@ -3974,9 +3976,9 @@ string NeuralNetwork::write_expression() const
         if(i == layers_number-1)
         {
             outputs_names_vector = outputs_names;
-            for (int j = 0; j < outputs_names.dimension(0); j++)
+            for(int j = 0; j < outputs_names.dimension(0); j++)
             {
-                if (!outputs_names_vector[j].empty())
+                if(!outputs_names_vector[j].empty())
                 {
                     aux_name = outputs_names[j];
                     outputs_names_vector(j) = replace_non_allowed_programming_expressions(aux_name);
@@ -4093,10 +4095,10 @@ string NeuralNetwork::write_expression_c() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
@@ -4124,7 +4126,7 @@ string NeuralNetwork::write_expression_c() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != string::npos) {
+            if(index != string::npos) {
                 expression.erase(index, string::npos);
             }
 
@@ -4136,7 +4138,7 @@ string NeuralNetwork::write_expression_c() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != string::npos) {
+            if(index != string::npos) {
                 expression.erase(index, string::npos);
             }
         }
@@ -4146,27 +4148,27 @@ string NeuralNetwork::write_expression_c() const
 
     Tensor<string, 1> tokens;
 
-    while (getline(ss, token, '\n'))
+    while(getline(ss, token, '\n'))
     {
-        if (token.size() > 1 && token.back() == '{')
+        if(token.size() > 1 && token.back() == '{')
         {
             break;
         }
-        if (token.size() > 1 && token.back() != ';')
+        if(token.size() > 1 && token.back() != ';')
         {
             token += ';';
         }
-        tokens = push_back_string(tokens, token);
+        push_back_string(tokens, token);
     }
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
         string word = get_word_from_token(t);
 
         if(word.size() > 1 && !find_string_in_tensor(found_tokens, word))
         {
-            found_tokens = push_back_string(found_tokens, word);
+            push_back_string(found_tokens, word);
         }
     }
 
@@ -4180,7 +4182,7 @@ string NeuralNetwork::write_expression_c() const
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
 
@@ -4194,15 +4196,15 @@ string NeuralNetwork::write_expression_c() const
         size_t substring_length7 = t.find(target_string7);
         size_t substring_length8 = t.find(target_string8);
 
-        if (substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
-        if (substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
-        if (substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
-        if (substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
-        if (substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
-        if (substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
-        if (substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
-        if (substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
-        if (substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
+        if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
+        if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
+        if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
+        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
+        if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
+        if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
+        if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
+        if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
+        if(substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
     }
 
     if(logistic)
@@ -4227,7 +4229,7 @@ string NeuralNetwork::write_expression_c() const
     {
         buffer << "float Threshold(float x) {" << endl;
         buffer << "float z;" << endl;
-        buffer << "if (x < 0) {" << endl;
+        buffer << "if(x < 0) {" << endl;
         buffer << "z = 0;" << endl;
         buffer << "}else{" << endl;
         buffer << "z = 1;" << endl;
@@ -4241,7 +4243,7 @@ string NeuralNetwork::write_expression_c() const
     {
         buffer << "float SymmetricThreshold(float x) {" << endl;
         buffer << "float z" << endl;
-        buffer << "if (x < 0) {" << endl;
+        buffer << "if(x < 0) {" << endl;
         buffer << "z = -1;" << endl;
         buffer << "}else{" << endl;
         buffer << "z=1;" << endl;
@@ -4256,7 +4258,7 @@ string NeuralNetwork::write_expression_c() const
         buffer << "float ExponentialLinear(float x) {" << endl;
         buffer << "float z;" << endl;
         buffer << "float alpha = 1.67326;" << endl;
-        buffer << "if (x>0){" << endl;
+        buffer << "if(x>0){" << endl;
         buffer << "z = x;" << endl;
         buffer << "}else{" << endl;
         buffer << "z = alpha*(exp(x)-1);" << endl;
@@ -4272,7 +4274,7 @@ string NeuralNetwork::write_expression_c() const
         buffer << "float z;" << endl;
         buffer << "float alpha  = 1.67326;" << endl;
         buffer << "float lambda = 1.05070;" << endl;
-        buffer << "if (x > 0){" << endl;
+        buffer << "if(x > 0){" << endl;
         buffer << "z = lambda*x;" << endl;
         buffer << "}else{" << endl;
         buffer << "z = lambda*alpha*(exp(x)-1);" << endl;
@@ -4311,16 +4313,16 @@ string NeuralNetwork::write_expression_c() const
 
     if(LSTM_number>0)
     {
-        for (int i = 0; i < found_tokens.dimension(0); i++)
+        for(int i = 0; i < found_tokens.dimension(0); i++)
         {
             string token = found_tokens(i);
 
-            if (token.find("cell_state") == 0)
+            if(token.find("cell_state") == 0)
             {
                 cell_state_counter += 1;
             }
 
-            if (token.find("hidden_state") == 0)
+            if(token.find("hidden_state") == 0)
             {
                 hidden_state_counter += 1;
             }
@@ -4352,9 +4354,9 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "{" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
-        if (inputs[i].empty())
+        if(inputs[i].empty())
         {
             buffer << "\t" << "const float " << "input_" << to_string(i) << " = " << "inputs[" << to_string(i) << "];" << endl;
         }
@@ -4384,11 +4386,11 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "" << endl;
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
 
-        if (t.size()<=1)
+        if(t.size()<=1)
         {
             calculate_outputs_buffer << "" << endl;
         }
@@ -4400,7 +4402,7 @@ string NeuralNetwork::write_expression_c() const
 
     string calculate_outputs_string = calculate_outputs_buffer.str();
 
-    for (int i = 0; i < found_tokens.dimension(0); i++)
+    for(int i = 0; i < found_tokens.dimension(0); i++)
     {
         string found_token = tokens(i);
         string toReplace(found_token);
@@ -4424,16 +4426,16 @@ string NeuralNetwork::write_expression_c() const
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "c");
 
-    for (int i = 0; i < fixed_outputs.dimension(0); i++)
+    for(int i = 0; i < fixed_outputs.dimension(0); i++)
     {
         buffer << fixed_outputs(i) << endl;
     }
 
     buffer << "\t" << "vector<float> out(" << outputs.size() << ");" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
-        if (outputs[i].empty())
+        if(outputs[i].empty())
         {
             buffer << "\t" << "out[" << to_string(i) << "] = " << "output" << to_string(i) << ";"<< endl;
         }
@@ -4454,9 +4456,9 @@ string NeuralNetwork::write_expression_c() const
     buffer << "int main(){ \n" << endl;
     buffer << "\t" << "vector<float> inputs(" << to_string(inputs.size()) << "); \n" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
-        if (inputs[i].empty())
+        if(inputs[i].empty())
         {
             buffer << "\t" << "const float " << "input_" << to_string(i) <<" =" << " /*enter your value here*/; " << endl;
             buffer << "\t" << "inputs[" << to_string(i) << "] = " << "input_" << to_string(i) << ";" << endl;
@@ -4484,9 +4486,9 @@ string NeuralNetwork::write_expression_c() const
     buffer << "" << endl;
     buffer << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
-        if (outputs[i].empty())
+        if(outputs[i].empty())
         {
             buffer << "\t" << "printf( \"output" << to_string(i) << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
         }
@@ -4545,10 +4547,10 @@ string NeuralNetwork::write_expression_api() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << inputs_outputs_buffer(2)[0];
@@ -4603,7 +4605,7 @@ string NeuralNetwork::write_expression_api() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != string::npos) {
+            if(index != string::npos) {
                 expression.erase(index, string::npos);
             }
         }
@@ -4614,7 +4616,7 @@ string NeuralNetwork::write_expression_api() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != string::npos) {
+            if(index != string::npos) {
                 expression.erase(index, string::npos);
             }
         }
@@ -4623,38 +4625,39 @@ string NeuralNetwork::write_expression_api() const
     stringstream ss(expression);
     Tensor<string, 1> tokens;
 
-    while (getline(ss, token, '\n'))
+    while(getline(ss, token, '\n'))
     {
-        if (token.size() > 1 && token.back() == '{'){ break; }
-        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
-        tokens = push_back_string(tokens, token);
+        if(token.size() > 1 && token.back() == '{'){ break; }
+        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
+
+        push_back_string(tokens, token);
     }
 
     string word;
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
         word = get_word_from_token(t);
 
-        if (word.size() > 1)
+        if(word.size() > 1)
         {
-            found_tokens = push_back_string(found_tokens, word);
+            push_back_string(found_tokens, word);
         }
     }
 
-    if(LSTM_number>0)
+    if(LSTM_number > 0)
     {
-        for (int i = 0; i < found_tokens.dimension(0); i++)
+        for(int i = 0; i < found_tokens.dimension(0); i++)
         {
-            string t = found_tokens(i);
+            const string t = found_tokens(i);
 
-            if (token.find("cell_state") == 0)
+            if(token.find("cell_state") == 0)
             {
                 cell_state_counter += 1;
             }
 
-            if (token.find("hidden_state") == 0)
+            if(token.find("hidden_state") == 0)
             {
                 hidden_state_counter += 1;
             }
@@ -4679,8 +4682,8 @@ string NeuralNetwork::write_expression_api() const
     }
 
     buffer << "session_start();" << endl;
-    buffer << "if (isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl;
-    buffer << "if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') " << endl;
+    buffer << "if(isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl;
+    buffer << "if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') " << endl;
     buffer << "\t$url = \"https://\"; " << endl;
     buffer << "else" << endl;
     buffer << "\t$url = \"http://\"; " << endl;
@@ -4691,9 +4694,9 @@ string NeuralNetwork::write_expression_api() const
     buffer << "parse_str($url_components['query'], $params);" << endl;
     buffer << "\n" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
-        if (inputs[i].empty())
+        if(inputs[i].empty())
         {
             buffer << "$num"    + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl;
             buffer << "$input_" + to_string(i) << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
@@ -4707,9 +4710,9 @@ string NeuralNetwork::write_expression_api() const
 
     buffer << "if(" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
-        if (i != inputs.dimension(0)-1)
+        if(i != inputs.dimension(0)-1)
         {
             buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl;
         }
@@ -4771,7 +4774,7 @@ string NeuralNetwork::write_expression_api() const
 
     string new_word;
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
 
@@ -4785,17 +4788,17 @@ string NeuralNetwork::write_expression_api() const
         substring_length7 = t.find(target_string7);
         substring_length8 = t.find(target_string8);
 
-        if (substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
-        if (substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
-        if (substring_length2 < t.size() && substring_length2!=0){ Threshold    = true; }
-        if (substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
-        if (substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
-        if (substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
-        if (substring_length6 < t.size() && substring_length6!=0){ HSigmoid     = true; }
-        if (substring_length7 < t.size() && substring_length7!=0){ SoftPlus     = true; }
-        if (substring_length8 < t.size() && substring_length8!=0){ SoftSign     = true; }
+        if(substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
+        if(substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
+        if(substring_length2 < t.size() && substring_length2!=0){ Threshold    = true; }
+        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
+        if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
+        if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
+        if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid     = true; }
+        if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus     = true; }
+        if(substring_length8 < t.size() && substring_length8!=0){ SoftSign     = true; }
 
-        for (int i = 0; i < found_tokens.dimension(0); i++)
+        for(int i = 0; i < found_tokens.dimension(0); i++)
         {
             string key_word = found_tokens(i);
 
@@ -4804,7 +4807,7 @@ string NeuralNetwork::write_expression_api() const
             replace_all_appearances(t, key_word, new_word);
         }
 
-        for (int i = 0; i < inputs.dimension(0); i++)
+        for(int i = 0; i < inputs.dimension(0); i++)
         {
             new_word.clear();
             new_word = "$" + inputs[i];
@@ -4826,15 +4829,15 @@ string NeuralNetwork::write_expression_api() const
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");
 
-    for (int i = 0; i < fixed_outputs.dimension(0); i++)
+    for(int i = 0; i < fixed_outputs.dimension(0); i++)
     {
         buffer << fixed_outputs(i) << endl;
     }
 
-    buffer << "if ($status === 200){" << endl;
+    buffer << "if($status === 200){" << endl;
     buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << ", '" << outputs(i) << "' => " << "$" << outputs[i] << endl;
     }
@@ -4846,7 +4849,7 @@ string NeuralNetwork::write_expression_api() const
     buffer << "$response = ['status' => $status,  'status_message' => $status_msg" << "];" << endl;
     buffer << "}" << endl;
 
-    if (LSTM_number>0)
+    if(LSTM_number>0)
     {
         buffer << "$nn->time_step_counter += 1;" << endl;
     }
@@ -4887,7 +4890,7 @@ string NeuralNetwork::write_expression_api() const
     {
         buffer << "<?php" << endl;
         buffer << "function Threshold(int $x) {" << endl;
-        buffer << "if ($x < 0) {" << endl;
+        buffer << "if($x < 0) {" << endl;
         buffer << "$z = 0;" << endl;
         buffer << "}else{" << endl;
         buffer << "$z=1;" << endl;
@@ -4902,7 +4905,7 @@ string NeuralNetwork::write_expression_api() const
     {
         buffer << "<?php" << endl;
         buffer << "function SymmetricThreshold(int $x) {" << endl;
-        buffer << "if ($x < 0) {" << endl;
+        buffer << "if($x < 0) {" << endl;
         buffer << "$z = -1;" << endl;
         buffer << "}else{" << endl;
         buffer << "$z=1;" << endl;
@@ -4918,7 +4921,7 @@ string NeuralNetwork::write_expression_api() const
         buffer << "<?php" << endl;
         buffer << "function ExponentialLinear(int $x) {" << endl;
         buffer << "$alpha = 1.6732632423543772848170429916717;" << endl;
-        buffer << "if ($x>0){" << endl;
+        buffer << "if($x>0){" << endl;
         buffer << "$z=$x;" << endl;
         buffer << "}else{" << endl;
         buffer << "$z=$alpha*(exp($x)-1);" << endl;
@@ -4935,7 +4938,7 @@ string NeuralNetwork::write_expression_api() const
         buffer << "function ScaledExponentialLinear(int $x) {" << endl;
         buffer << "$alpha  = 1.67326;" << endl;
         buffer << "$lambda = 1.05070;" << endl;
-        buffer << "if ($x>0){" << endl;
+        buffer << "if($x>0){" << endl;
         buffer << "$z=$lambda*$x;" << endl;
         buffer << "}else{" << endl;
         buffer << "$z=$lambda*$alpha*(exp($x)-1);" << endl;
@@ -5019,7 +5022,7 @@ string NeuralNetwork::write_expression_javascript() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != string::npos) {
+            if(index != string::npos) {
                 expression.erase(index, string::npos);
             }
         }
@@ -5030,7 +5033,7 @@ string NeuralNetwork::write_expression_javascript() const
 
             size_t index = expression.find(word_to_delete);
 
-            if (index != string::npos) {
+            if(index != string::npos) {
                 expression.erase(index, string::npos);
             }
         }
@@ -5080,10 +5083,10 @@ string NeuralNetwork::write_expression_javascript() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer_to_fix);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
         inputs(i) = inputs_outputs_buffer(0)(i);
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     ostringstream buffer;
@@ -5126,11 +5129,11 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "\n" << endl;
     buffer << "INPUTS" << endl;
 
-    if (has_scaling_layer())
+    if(has_scaling_layer())
     {
-        Tensor<Descriptives, 1>  inputs_descriptives = get_scaling_layer_pointer()->get_descriptives();
+        const Tensor<Descriptives, 1>  inputs_descriptives = get_scaling_layer_pointer()->get_descriptives();
 
-        for (int i = 0; i < inputs.dimension(0); i++)
+        for(int i = 0; i < inputs.dimension(0); i++)
         {
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
             buffer << "<tr style=\"height:3.5em\">" << endl;
@@ -5145,7 +5148,7 @@ string NeuralNetwork::write_expression_javascript() const
     }
     else
     {
-        for (int i = 0; i < inputs.dimension(0); i++)
+        for(int i = 0; i < inputs.dimension(0); i++)
         {
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl;
             buffer << "<tr style=\"height:3.5em\">" << endl;
@@ -5164,7 +5167,7 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "\n" << endl;
 
     buffer << "<!-- HIDDEN INPUTS -->" << endl;
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << "<input type=\"hidden\" id=\"" << outputs[i] << "\" value=\"\">" << endl;
     }
@@ -5185,7 +5188,7 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "<td>" << endl;
     buffer << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << "<option value=\"" << outputs[i] << "\">" << outputs_names[i] << "</option>" << endl;
     }
@@ -5217,8 +5220,8 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl;
     buffer << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++) {
-        buffer << "\tif (selectedCategory === \"" << outputs[i] << "\") {" << endl;
+    for(int i = 0; i < outputs.dimension(0); i++) {
+        buffer << "\tif(selectedCategory === \"" << outputs[i] << "\") {" << endl;
         buffer << "\t\tselectedValueElement.value = document.getElementById(\"" << outputs[i] << "\").value;" << endl;
         buffer << "\t}" << endl;
     }
@@ -5230,7 +5233,7 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "{" << endl;
     buffer << "\t" << "var inputs = [];" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
         buffer << "\t" << "var " << inputs[i] << " =" << " document.getElementById(\"" << inputs[i] << "\").value; " << endl;
         buffer << "\t" << "inputs.push(" << inputs[i] << ");" << endl;
@@ -5238,7 +5241,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl;
         buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
@@ -5248,17 +5251,17 @@ string NeuralNetwork::write_expression_javascript() const
     buffer << "\t" << "update_LSTM();" << endl;
     buffer << "}" << "\n" << endl;
 
-    while (getline(ss, token, '\n'))
+    while(getline(ss, token, '\n'))
     {
-        if (token.size() > 1 && token.back() == '{'){ break; }
-        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
-        tokens = push_back_string(tokens, token);
+        if(token.size() > 1 && token.back() == '{'){ break; }
+        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
+        push_back_string(tokens, token);
     }
 
     buffer << "function calculate_outputs(inputs)" << endl;
     buffer << "{" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
         buffer << "\t" << "var " << inputs[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
     }
@@ -5267,28 +5270,28 @@ string NeuralNetwork::write_expression_javascript() const
 
     //found_tokens = get_variable_names_from_writted_expression(tokens, found_tokens );
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string word = get_word_from_token(tokens(i));
 
-        if (word.size() > 1)
+        if(word.size() > 1)
         {
-            found_tokens = push_back_string(found_tokens, word);
+            push_back_string(found_tokens, word);
         }
     }
 
     if(LSTM_number > 0)
     {
-        for (int i = 0; i < found_tokens.dimension(0); i++)
+        for(int i = 0; i < found_tokens.dimension(0); i++)
         {
             token = found_tokens(i);
 
-            if (token.find("cell_state") == 0)
+            if(token.find("cell_state") == 0)
             {
                 cell_state_counter += 1;
             }
 
-            if (token.find("hidden_state") == 0)
+            if(token.find("hidden_state") == 0)
             {
                 hidden_state_counter += 1;
             }
@@ -5322,36 +5325,36 @@ string NeuralNetwork::write_expression_javascript() const
 
     string sufix = "Math.";
 
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "exp");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "tanh");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "max");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "min");
+    push_back_string(found_mathematical_expressions, "exp");
+    push_back_string(found_mathematical_expressions, "tanh");
+    push_back_string(found_mathematical_expressions, "max");
+    push_back_string(found_mathematical_expressions, "min");
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
 
-        size_t substring_length_0 = t.find(target_string_0);
-        size_t substring_length_1 = t.find(target_string_1);
-        size_t substring_length_2 = t.find(target_string_2);
-        size_t substring_length_3 = t.find(target_string_3);
-        size_t substring_length_4 = t.find(target_string_4);
-        size_t substring_length_5 = t.find(target_string_5);
-        size_t substring_length_6 = t.find(target_string_6);
-        size_t substring_length_7 = t.find(target_string_7);
-        size_t substring_length_8 = t.find(target_string_8);
+        const size_t substring_length_0 = t.find(target_string_0);
+        const size_t substring_length_1 = t.find(target_string_1);
+        const size_t substring_length_2 = t.find(target_string_2);
+        const size_t substring_length_3 = t.find(target_string_3);
+        const size_t substring_length_4 = t.find(target_string_4);
+        const size_t substring_length_5 = t.find(target_string_5);
+        const size_t substring_length_6 = t.find(target_string_6);
+        const size_t substring_length_7 = t.find(target_string_7);
+        const size_t substring_length_8 = t.find(target_string_8);
 
-        if (substring_length_1 < t.size() && substring_length_1!=0){ ReLU = true; }
-        if (substring_length_0 < t.size() && substring_length_0!=0){ logistic = true; }
-        if (substring_length_6 < t.size() && substring_length_6!=0){ HSigmoid = true; }
-        if (substring_length_7 < t.size() && substring_length_7!=0){ SoftPlus = true; }
-        if (substring_length_8 < t.size() && substring_length_8!=0){ SoftSign = true; }
-        if (substring_length_2 < t.size() && substring_length_2!=0){ Threshold = true; }
-        if (substring_length_4 < t.size() && substring_length_4!=0){ ExpLinear = true; }
-        if (substring_length_5 < t.size() && substring_length_5!=0){ SExpLinear = true; }
-        if (substring_length_3 < t.size() && substring_length_3!=0){ SymThreshold = true; }
+        if(substring_length_1 < t.size() && substring_length_1!=0){ ReLU = true; }
+        if(substring_length_0 < t.size() && substring_length_0!=0){ logistic = true; }
+        if(substring_length_6 < t.size() && substring_length_6!=0){ HSigmoid = true; }
+        if(substring_length_7 < t.size() && substring_length_7!=0){ SoftPlus = true; }
+        if(substring_length_8 < t.size() && substring_length_8!=0){ SoftSign = true; }
+        if(substring_length_2 < t.size() && substring_length_2!=0){ Threshold = true; }
+        if(substring_length_4 < t.size() && substring_length_4!=0){ ExpLinear = true; }
+        if(substring_length_5 < t.size() && substring_length_5!=0){ SExpLinear = true; }
+        if(substring_length_3 < t.size() && substring_length_3!=0){ SymThreshold = true; }
 
-        for (int i = 0; i < found_mathematical_expressions.dimension(0); i++)
+        for(int i = 0; i < found_mathematical_expressions.dimension(0); i++)
         {
             string key_word = found_mathematical_expressions(i);
             string new_word = "";
@@ -5360,7 +5363,7 @@ string NeuralNetwork::write_expression_javascript() const
             replace_all_appearances(t, key_word, new_word);
         }
 
-        if (t.size() <= 1)
+        if(t.size() <= 1)
         {
             buffer << "" << endl;
         }
@@ -5377,14 +5380,14 @@ string NeuralNetwork::write_expression_javascript() const
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "javascript");
 
-    for (int i = 0; i < fixed_outputs.dimension(0); i++)
+    for(int i = 0; i < fixed_outputs.dimension(0); i++)
     {
         buffer << fixed_outputs(i) << endl;
     }
 
     buffer << "\t" << "var out = [];" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << "\t" << "out.push(" << outputs[i] << ");" << endl;
     }
@@ -5432,7 +5435,7 @@ string NeuralNetwork::write_expression_javascript() const
     if(Threshold)
     {
         buffer << "function Threshold(x) {" << endl;
-        buffer << "\tif (x < 0) {" << endl;
+        buffer << "\tif(x < 0) {" << endl;
         buffer << "\t\tvar z = 0;" << endl;
         buffer << "\t}else{" << endl;
         buffer << "\t\tvar z = 1;" << endl;
@@ -5445,7 +5448,7 @@ string NeuralNetwork::write_expression_javascript() const
     if(SymThreshold)
     {
         buffer << "function SymmetricThreshold(x) {" << endl;
-        buffer << "\tif (x < 0) {" << endl;
+        buffer << "\tif(x < 0) {" << endl;
         buffer << "\t\tvar z = -1;" << endl;
         buffer << "\t}else{" << endl;
         buffer << "\t\tvar z=1;" << endl;
@@ -5459,7 +5462,7 @@ string NeuralNetwork::write_expression_javascript() const
     {
         buffer << "function ExponentialLinear(x) {" << endl;
         buffer << "\tvar alpha = 1.67326;" << endl;
-        buffer << "\tif (x>0){" << endl;
+        buffer << "\tif(x>0){" << endl;
         buffer << "\t\tvar z = x;" << endl;
         buffer << "\t}else{" << endl;
         buffer << "\t\tvar z = alpha*(Math.exp(x)-1);" << endl;
@@ -5474,7 +5477,7 @@ string NeuralNetwork::write_expression_javascript() const
         buffer << "function ScaledExponentialLinear(x) {" << endl;
         buffer << "\tvar alpha  = 1.67326;" << endl;
         buffer << "\tvar lambda = 1.05070;" << endl;
-        buffer << "\tif (x>0){" << endl;
+        buffer << "\tif(x>0){" << endl;
         buffer << "\t\tvar z = lambda*x;" << endl;
         buffer << "\t}else{" << endl;
         buffer << "\t\tvar z = lambda*alpha*(Math.exp(x)-1);" << endl;
@@ -5586,13 +5589,13 @@ string NeuralNetwork::write_expression_python() const
 
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for (Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);++i)
     {
         inputs(i) = inputs_outputs_buffer(0)(i);
         buffer << "\t" << i << ") " << inputs(i) << endl;
     }
 
-    for (Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
+    for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);++i)
         outputs(i) = inputs_outputs_buffer(1)(i);
 
     buffer << "\n" << endl;
@@ -5617,65 +5620,66 @@ string NeuralNetwork::write_expression_python() const
 
     stringstream ss(expression);
 
-    while (getline(ss, token, '\n'))
+    while(getline(ss, token, '\n'))
     {
-        if (token.size() > 1 && token.back() == '{'){ break; }
-        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
-        tokens = push_back_string(tokens, token);
+        if(token.size() > 1 && token.back() == '{'){ break; }
+        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
+
+        push_back_string(tokens, token);
     }
 
-    string target_string0("Logistic");
-    string target_string1("ReLU");
-    string target_string2("Threshold");
-    string target_string3("SymmetricThreshold");
-    string target_string4("ExponentialLinear");
-    string target_string5("ScaledExponentialLinear");
-    string target_string6("HardSigmoid");
-    string target_string7("SoftPlus");
-    string target_string8("SoftSign");
+    const string target_string0("Logistic");
+    const string target_string1("ReLU");
+    const string target_string2("Threshold");
+    const string target_string3("SymmetricThreshold");
+    const string target_string4("ExponentialLinear");
+    const string target_string5("ScaledExponentialLinear");
+    const string target_string6("HardSigmoid");
+    const string target_string7("SoftPlus");
+    const string target_string8("SoftSign");
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string word = "";
         string t = tokens(i);
 
-        size_t substring_length0 = t.find(target_string0);
-        size_t substring_length1 = t.find(target_string1);
-        size_t substring_length2 = t.find(target_string2);
-        size_t substring_length3 = t.find(target_string3);
-        size_t substring_length4 = t.find(target_string4);
-        size_t substring_length5 = t.find(target_string5);
-        size_t substring_length6 = t.find(target_string6);
-        size_t substring_length7 = t.find(target_string7);
-        size_t substring_length8 = t.find(target_string8);
+        const size_t substring_length0 = t.find(target_string0);
+        const size_t substring_length1 = t.find(target_string1);
+        const size_t substring_length2 = t.find(target_string2);
+        const size_t substring_length3 = t.find(target_string3);
+        const size_t substring_length4 = t.find(target_string4);
+        const size_t substring_length5 = t.find(target_string5);
+        const size_t substring_length6 = t.find(target_string6);
+        const size_t substring_length7 = t.find(target_string7);
+        const size_t substring_length8 = t.find(target_string8);
 
-        if (substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
-        if (substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
-        if (substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
-        if (substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
-        if (substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
-        if (substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
-        if (substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
-        if (substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
-        if (substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
+        if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
+        if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
+        if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
+        if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
+        if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
+        if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear = true; }
+        if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
+        if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
+        if(substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
 
         word = get_word_from_token(t);
 
-        if (word.size() > 1)
+        if(word.size() > 1)
         {
-            found_tokens = push_back_string(found_tokens, word);
+            push_back_string(found_tokens, word);
         }
     }
 
-    for (int i = 0; i< found_tokens.dimension(0); i++)
+    for(int i = 0; i< found_tokens.dimension(0); i++)
     {
-        string token = found_tokens(i);
+        const string token = found_tokens(i);
 
-        if (token.find("cell_state") == 0)
+        if(token.find("cell_state") == 0)
         {
             cell_state_counter += 1;
         }
-        if (token.find("hidden_state") == 0)
+        if(token.find("hidden_state") == 0)
         {
             hidden_state_counter += 1;
         }
@@ -5715,7 +5719,7 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\n" << endl;
     }
 
-    if (LSTM_number > 0)
+    if(LSTM_number > 0)
     {
         buffer << "\t" << "def __init__(self, ts = 1):" << endl;
         buffer << "\t\t" << "self.inputs_number = " << to_string(inputs.size()) << endl;
@@ -5736,9 +5740,9 @@ string NeuralNetwork::write_expression_python() const
     else
     {
         string inputs_list;
-        for (int i = 0; i < original_inputs.size();++i) {
+        for(int i = 0; i < original_inputs.size();++i) {
             inputs_list += "'" + original_inputs(i) + "'";
-            if (i < original_inputs.size() - 1) {
+            if(i < original_inputs.size() - 1) {
                 inputs_list += ", ";
             }
         }
@@ -5770,7 +5774,7 @@ string NeuralNetwork::write_expression_python() const
     if(Threshold)
     {
         buffer << "\tdef Threshold (x):" << endl;
-        buffer << "\t\t"   << "if (x < 0):" << endl;
+        buffer << "\t\t"   << "if(x < 0):" << endl;
         buffer << "\t\t\t" << "z = 0" << endl;
         buffer << "\t\t"   << "else:" << endl;
         buffer << "\t\t\t" << "z = 1" << endl;
@@ -5781,7 +5785,7 @@ string NeuralNetwork::write_expression_python() const
     if(SymThreshold)
     {
         buffer << "\tdef SymmetricThreshold (x):" << endl;
-        buffer << "\t\t"   << "if (x < 0):" << endl;
+        buffer << "\t\t"   << "if(x < 0):" << endl;
         buffer << "\t\t\t" << "z = -1" << endl;
         buffer << "\t\t"   << "else:" << endl;
         buffer << "\t\t\t" << "z = 1" << endl;
@@ -5793,7 +5797,7 @@ string NeuralNetwork::write_expression_python() const
     {
         buffer << "\tdef ExponentialLinear (x):" << endl;
         buffer << "\t\t"   << "float alpha = 1.67326" << endl;
-        buffer << "\t\t"   << "if (x>0):" << endl;
+        buffer << "\t\t"   << "if(x>0):" << endl;
         buffer << "\t\t\t" << "z = x" << endl;
         buffer << "\t\t"   << "else:" << endl;
         buffer << "\t\t\t" << "z = alpha*(np.exp(x)-1)" << endl;
@@ -5806,7 +5810,7 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\tdef ScaledExponentialLinear (x):" << endl;
         buffer << "\t\t"   << "float alpha = 1.67326" << endl;
         buffer << "\t\t"   << "float lambda = 1.05070" << endl;
-        buffer << "\t\t"   << "if (x>0):" << endl;
+        buffer << "\t\t"   << "if(x>0):" << endl;
         buffer << "\t\t\t" << "z = lambda*x" << endl;
         buffer << "\t\t"   << "else:" << endl;
         buffer << "\t\t\t" << "z = lambda*alpha*(np.exp(x)-1)" << endl;
@@ -5840,12 +5844,12 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
 
-    for (int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
         buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
     }
 
-    if (LSTM_number>0)
+    if(LSTM_number>0)
     {
         buffer << "\n\t\t" << "if( self.time_step_counter % self.time_steps == 0 ):" << endl;
         buffer << "\t\t\t" << "self.t = 1" << endl;
@@ -5864,32 +5868,32 @@ string NeuralNetwork::write_expression_python() const
     buffer << "" << endl;
 
     found_tokens.resize(0);
-    found_tokens = push_back_string(found_tokens, "log");
-    found_tokens = push_back_string(found_tokens, "exp");
-    found_tokens = push_back_string(found_tokens, "tanh");
+    push_back_string(found_tokens, "log");
+    push_back_string(found_tokens, "exp");
+    push_back_string(found_tokens, "tanh");
 
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "Logistic");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "ReLU");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "Threshold");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "SymmetricThreshold");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "ExponentialLinear");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "ScaledExponentialLinear");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "HardSigmoid");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "SoftPlus");
-    found_mathematical_expressions = push_back_string(found_mathematical_expressions, "SoftSign");
+    push_back_string(found_mathematical_expressions, "Logistic");
+    push_back_string(found_mathematical_expressions, "ReLU");
+    push_back_string(found_mathematical_expressions, "Threshold");
+    push_back_string(found_mathematical_expressions, "SymmetricThreshold");
+    push_back_string(found_mathematical_expressions, "ExponentialLinear");
+    push_back_string(found_mathematical_expressions, "ScaledExponentialLinear");
+    push_back_string(found_mathematical_expressions, "HardSigmoid");
+    push_back_string(found_mathematical_expressions, "SoftPlus");
+    push_back_string(found_mathematical_expressions, "SoftSign");
 
     string sufix;
     string new_word;
     string key_word ;
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string t = tokens(i);
 
         sufix = "np.";
         new_word = ""; key_word = "";
 
-        for (int i = 0; i < found_tokens.dimension(0); i++)
+        for(int i = 0; i < found_tokens.dimension(0); i++)
         {
             key_word = found_tokens(i);
             new_word = sufix + key_word;
@@ -5899,7 +5903,7 @@ string NeuralNetwork::write_expression_python() const
         sufix = "NeuralNetwork.";
         new_word = ""; key_word = "";
 
-        for (int i = 0; i < found_mathematical_expressions.dimension(0); i++)
+        for(int i = 0; i < found_mathematical_expressions.dimension(0); i++)
         {
             key_word = found_mathematical_expressions(i);
             new_word = sufix + key_word;
@@ -5921,7 +5925,7 @@ string NeuralNetwork::write_expression_python() const
 
     if(project_type != ProjectType::AutoAssociation)
     {
-        for (int i = 0; i < fixed_outputs.dimension(0); i++)
+        for(int i = 0; i < fixed_outputs.dimension(0); i++)
         {
             buffer << "\t\t" << fixed_outputs(i) << endl;
         }
@@ -5929,7 +5933,7 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "\n" << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << "\t\t" << "out[" << to_string(i) << "] = " << outputs[i] << endl;
     }

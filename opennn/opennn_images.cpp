@@ -174,9 +174,9 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
     Tensor<type, 1> transformed_coordinates(3);
     Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
 
-    for (Index x = 0; x < width; x++)
+    for(Index x = 0; x < width; x++)
     {
-        for (Index y = 0; y < height; y++)
+        for(Index y = 0; y < height; y++)
         {
             coordinates(0) = x;
             coordinates(1) = y;
@@ -184,10 +184,10 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
 
             transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
 
-            if (transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width &&
+            if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width &&
                 transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
             {
-                for (Index channel = 0; channel < channels; channel++)
+                for(Index channel = 0; channel < channels; channel++)
                 {
                     output(x, y, channel) = input(static_cast<int>(transformed_coordinates[0]),
                                                   static_cast<int>(transformed_coordinates[1]),
@@ -196,7 +196,7 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
             }
 //                else
 //                {
-//                    for (Index channel = 0; channel < channels; channel++)
+//                    for(Index channel = 0; channel < channels; channel++)
 //                    {
 //                        output(x, y, channel) = 0;
 //                    }
@@ -250,13 +250,13 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
 
     const int channels = 3;
 
-    if (rows_number % 4 == 0)
+    if(rows_number % 4 == 0)
     {
         memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
     }
     else
     {
-        for (int i = 0; i < rows_number; i++)
+        for(int i = 0; i < rows_number; i++)
         {
             if(i == 0)
             {
@@ -504,7 +504,6 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     }
     has_columns_names = true;
     has_rows_labels = true;
-    convolutional_model = true;
 
     separator = Separator::None;
 
@@ -514,7 +513,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
     int classes_number = 0;
     int images_total_number = 0;
 
-    for (const auto & entry_path : fs::directory_iterator(path))
+    for(const auto & entry_path : fs::directory_iterator(path))
     {
         if(entry_path.path().string().find(".DS_Store") != string::npos)
         {
@@ -527,7 +526,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
             folder_paths.emplace_back(actual_directory);
             classes_number++;
 
-            for (const auto & entry_image : fs::directory_iterator(actual_directory))
+            for(const auto & entry_image : fs::directory_iterator(actual_directory))
             {
                 if(entry_image.path().string().find(".DS_Store") != string::npos)
                 {
@@ -572,7 +571,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         vector<string> images_paths;
         Index images_in_folder = 0;
 
-        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
             if(entry.path().string().find(".DS_Store") != string::npos)
             {

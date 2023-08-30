@@ -825,7 +825,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       getchar();
 //       convolutional_layer->set(batch.inputs_4d, kernel, bias);
 
-//       //set dims //this should be inside nn contructor.
+//       //set dimensions //this should be inside nn contructor.
 //       flatten_layer->set(convolutional_layer->get_outputs_dimensions());
 
 

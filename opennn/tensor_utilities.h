@@ -30,6 +30,8 @@ namespace opennn
 void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 
+void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&);
+
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
@@ -141,9 +143,12 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type
 
 Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
 
-Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&);
-Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&);
-Tensor<type, 1> push_back(const Tensor<type, 1>&, const type&);
+void push_back(Tensor<type*, 1>&, type*);
+void push_back(Tensor<Index, 1>&, const Index&);
+void push_back_string(Tensor<string, 1>&, const string&);
+void push_back(Tensor<type, 1>&, const type&);
+
+Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
@@ -161,7 +166,7 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 }
 
 
-void print_tensor(const float* vector, const int dims[]);
+void print_tensor(const float* vector, const int dimensions[]);
 
 }
 

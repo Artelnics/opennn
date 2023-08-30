@@ -2018,7 +2018,7 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
     }
     else if(rank == 2)
     {
-        const Eigen::array<int, 1> dims({1}); // Eigen reduction cols Axis
+        const Eigen::array<int, 1> dimensions({1}); // Eigen reduction cols Axis
 
         const Index rows_number = x_dimensions(0);
         const Index columns_number = x_dimensions(1);
@@ -2031,7 +2031,7 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
         Tensor<type, 1> rows_sum(rows_number);
 
-        rows_sum.device(*thread_pool_device) = y.sum(dims);
+        rows_sum.device(*thread_pool_device) = y.sum(dimensions);
 
         divide_columns(thread_pool_device, y, rows_sum);
 /*
@@ -2043,7 +2043,7 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
         Tensor<type, 1> inverse_sums(rows_number);
         inverse_sums.setZero();
 
-        inverse_sums = y.sum(dims).inverse();
+        inverse_sums = y.sum(dimensions).inverse();
 
         #pragma omp parallel for
 

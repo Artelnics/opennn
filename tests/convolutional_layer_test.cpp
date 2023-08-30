@@ -35,9 +35,9 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     input.setRandom();
     kernel.setRandom();
 
-    Eigen::array<ptrdiff_t, 2> dims = {0, 1};
+    Eigen::array<ptrdiff_t, 2> dimensions = {0, 1};
 
-    output = input.convolve(kernel, dims);
+    output = input.convolve(kernel, dimensions);
 
     assert_true(output.dimension(0) == 2, LOG);
     assert_true(output.dimension(1) == 2, LOG);
@@ -138,12 +138,12 @@ void ConvolutionalLayerTest::test_eigen_convolution_3d()
     Tensor<type, 3> kernel(2, 2, 2);
     Tensor<type, 3> output(2, 2, 1);
 
-    for(int i=0;i<3*3*2;i++) *(input.data() + i) = i;
-    for(int i=0;i<2*2*2;i++) *(kernel.data() + i) = i+1;
+    for(int i = 0;i<3*3*2;i++) *(input.data() + i) = i;
+    for(int i = 0;i<2*2*2;i++) *(kernel.data() + i) = i+1;
 
-    Eigen::array<ptrdiff_t, 3> dims = {0,1,2};
+    Eigen::array<ptrdiff_t, 3> dimensions = {0,1,2};
 
-    output = input.convolve(kernel, dims);
+    output = input.convolve(kernel, dimensions);
 
     assert_true(fabs(output(0,0,0) - 320)<type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(fabs(output(1,0,0) - 356)<type(NUMERIC_LIMITS_MIN), LOG);
@@ -356,7 +356,7 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
     const Index rows_input = 4;
     const Index cols_input = 4;
 
-    //pooling dims
+    //pooling dimensions
     const Index rows_polling = 2;
     const Index cols_polling = 2;
 
@@ -364,7 +364,7 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
     const Index rows_stride=1;
     const Index cols_stride=1;
 
-    //output dims
+    //output dimensions
     const Index output_rows_number = (rows_input - rows_polling)/rows_stride + 1;
     const Index output_cols_number = (cols_input - cols_polling)/cols_stride +1;
 
@@ -378,7 +378,7 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
     Index col = 0;
     Index row = 0;
 
-    for(int i=0; i<input_images; i++)
+    for(int i = 0; i<input_images; i++)
     {
         for(int c=0; c<channels; c++)
         {
@@ -418,7 +418,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
     const Index rows_input = 4;
     const Index cols_input = 4;
 
-    //pooling dims
+    //pooling dimensions
     const Index rows_polling = 2;
     const Index cols_polling = 2;
 
@@ -426,7 +426,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
     const Index rows_stride=1;
     const Index cols_stride=1;
 
-    //output dims
+    //output dimensions
     const Index output_rows_number = (rows_input - rows_polling)/rows_stride + 1;
     const Index output_cols_number = (cols_input - cols_polling)/cols_stride +1;
 
@@ -440,7 +440,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
     Index col = 0;
     Index row = 0;
 
-    for(int i=0; i<input_images; i++)
+    for(int i = 0; i<input_images; i++)
     {
         for(int c=0; c<channels; c++)
         {
@@ -1051,7 +1051,7 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
     Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_columns_number,
                                                 neurons_perceptron);
 
-    for(int i=0; i<kernels_number * output_rows_number * output_columns_number*neurons_perceptron; i++)
+    for(int i = 0; i<kernels_number * output_rows_number * output_columns_number*neurons_perceptron; i++)
     {
         Index neuron_value = i / (kernels_number * output_rows_number * output_columns_number);
 
@@ -1118,7 +1118,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+    const Eigen::array<ptrdiff_t, 3> dimensions = {0, 1, 2};
 
     #pragma omp parallel for
     for(int i =0; i<images_number ;i++)
@@ -1133,7 +1133,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
             const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
 
-            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims);
+            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dimensions);
 
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
                    tmp_result.data(), output_size_rows_cols*sizeof(type));

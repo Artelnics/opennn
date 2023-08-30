@@ -1799,7 +1799,7 @@ Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents
 
 string TextAnalytics::read_txt_file(const string& path) const
 {
-    if (path.empty())
+    if(path.empty())
     {
         ostringstream buffer;
 
@@ -1812,7 +1812,7 @@ string TextAnalytics::read_txt_file(const string& path) const
 
     ifstream file(path.c_str());
 
-    if (!file.is_open())
+    if(!file.is_open())
     {
         ostringstream buffer;
 
@@ -1825,17 +1825,17 @@ string TextAnalytics::read_txt_file(const string& path) const
 
     string result="", line;
 
-    while (file.good())
+    while(file.good())
     {
         getline(file, line);
         trim(line);
         erase(line, '"');
 
-        if (line.empty()) continue;
+        if(line.empty()) continue;
 
         result += line;
 
-        if (file.peek() == EOF) break;
+        if(file.peek() == EOF) break;
     }
 
     return result;
@@ -2578,7 +2578,7 @@ void TextGenerationAlphabet::encode_alphabet()
     data_tensor.setZero();
 
 #pragma omp parallel for
-    for (Index i = 0; i < text.length(); i++)
+    for(Index i = 0; i < text.length(); i++)
     {
         const int word_index = get_alphabet_index(text[i]);
         data_tensor(i, word_index) = 1;
@@ -2605,7 +2605,7 @@ Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
 
     auto it = find(alphabet_begin, alphabet_end, str);
 
-    if (it != alphabet_end)
+    if(it != alphabet_end)
     {
         Index index = it - alphabet_begin;
         return index;

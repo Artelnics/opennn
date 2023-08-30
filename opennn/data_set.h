@@ -53,7 +53,7 @@ using namespace Eigen;
 #ifdef __APPLE__
 #include <Availability.h> // for deployment target to support pre-catalina targets without fs
 #endif
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
+#if((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
 #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
 #define GHC_USE_STD_FS
 #include <filesystem>
@@ -942,9 +942,6 @@ public:
 
     // Eigen methods
 
-    void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
-    void intialize_sequential(Tensor<type, 1>&, const type&, const type&, const type&) const;
-
     Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
     bool get_has_rows_labels() const;
@@ -1014,10 +1011,6 @@ private:
     /// Header which contains the rows label.
 
     bool has_rows_labels = false;
-
-    /// Image classification model
-
-//    bool convolutional_model = false;
 
     /// Class containing file string codification
 

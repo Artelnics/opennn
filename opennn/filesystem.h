@@ -29,7 +29,7 @@
 // To dynamically select filesystem where available on most platforms,
 // you could use:
 //
-// #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
+// #if((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
 // #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
 // #define GHC_USE_STD_FS
 // #include <filesystem>
@@ -81,13 +81,13 @@
 #error "Operating system currently not supported!"
 #endif
 #define GHC_OS_DETECTED
-#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#if(defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #if _MSVC_LANG == 201703L
 #define GHC_FILESYSTEM_RUNNING_CPP17
 #else
 #define GHC_FILESYSTEM_RUNNING_CPP20
 #endif
-#elif (defined(__cplusplus) && __cplusplus >= 201703L)
+#elif(defined(__cplusplus) && __cplusplus >= 201703L)
 #if __cplusplus == 201703L
 #define GHC_FILESYSTEM_RUNNING_CPP17
 #else
@@ -1442,19 +1442,19 @@ GHC_INLINE bool is_low_surrogate(uint32_t c)
 
 GHC_INLINE void appendUTF8(string& str, uint32_t unicode)
 {
-    if (unicode <= 0x7f) {
+    if(unicode <= 0x7f) {
         str.push_back(static_cast<char>(unicode));
     }
-    else if (unicode >= 0x80 && unicode <= 0x7ff) {
+    else if(unicode >= 0x80 && unicode <= 0x7ff) {
         str.push_back(static_cast<char>((unicode >> 6) + 192));
         str.push_back(static_cast<char>((unicode & 0x3f) + 128));
     }
-    else if ((unicode >= 0x800 && unicode <= 0xd7ff) || (unicode >= 0xe000 && unicode <= 0xffff)) {
+    else if((unicode >= 0x800 && unicode <= 0xd7ff) || (unicode >= 0xe000 && unicode <= 0xffff)) {
         str.push_back(static_cast<char>((unicode >> 12) + 224));
         str.push_back(static_cast<char>(((unicode & 0xfff) >> 6) + 128));
         str.push_back(static_cast<char>((unicode & 0x3f) + 128));
     }
-    else if (unicode >= 0x10000 && unicode <= 0x10ffff) {
+    else if(unicode >= 0x10000 && unicode <= 0x10ffff) {
         str.push_back(static_cast<char>((unicode >> 18) + 240));
         str.push_back(static_cast<char>(((unicode & 0x3ffff) >> 12) + 128));
         str.push_back(static_cast<char>(((unicode & 0xfff) >> 6) + 128));
@@ -1489,12 +1489,12 @@ GHC_INLINE bool validUtf8(const string& utf8String)
     string::const_iterator iter = utf8String.begin();
     unsigned utf8_state = S_STRT;
     uint32_t codepoint = 0;
-    while (iter < utf8String.end()) {
-        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_RJCT) {
+    while(iter < utf8String.end()) {
+        if((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_RJCT) {
             return false;
         }
     }
-    if (utf8_state) {
+    if(utf8_state) {
         return false;
     }
     return true;
@@ -1520,9 +1520,9 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
     auto iter = utf8String.cbegin();
     unsigned utf8_state = S_STRT;
     uint32_t codepoint = 0;
-    while (iter < utf8String.cend()) {
-        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_STRT) {
-            if (codepoint <= 0xffff) {
+    while(iter < utf8String.cend()) {
+        if((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_STRT) {
+            if(codepoint <= 0xffff) {
                 result += static_cast<typename StringType::value_type>(codepoint);
             }
             else {
@@ -1532,7 +1532,7 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
             }
             codepoint = 0;
         }
-        else if (utf8_state == S_RJCT) {
+        else if(utf8_state == S_RJCT) {
 #ifdef GHC_RAISE_UNICODE_ERRORS
             throw filesystem_error("Illegal byte sequence for unicode character.", utf8String, make_error_code(errc::illegal_byte_sequence));
 #else
@@ -1542,7 +1542,7 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
 #endif
         }
     }
-    if (utf8_state) {
+    if(utf8_state) {
 #ifdef GHC_RAISE_UNICODE_ERRORS
         throw filesystem_error("Illegal byte sequence for unicode character.", utf8String, make_error_code(errc::illegal_byte_sequence));
 #else
@@ -1560,12 +1560,12 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
     auto iter = utf8String.cbegin();
     unsigned utf8_state = S_STRT;
     uint32_t codepoint = 0;
-    while (iter < utf8String.cend()) {
-        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_STRT) {
+    while(iter < utf8String.cend()) {
+        if((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_STRT) {
             result += static_cast<typename StringType::value_type>(codepoint);
             codepoint = 0;
         }
-        else if (utf8_state == S_RJCT) {
+        else if(utf8_state == S_RJCT) {
 #ifdef GHC_RAISE_UNICODE_ERRORS
             throw filesystem_error("Illegal byte sequence for unicode character.", utf8String, make_error_code(errc::illegal_byte_sequence));
 #else
@@ -1575,7 +1575,7 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
 #endif
         }
     }
-    if (utf8_state) {
+    if(utf8_state) {
 #ifdef GHC_RAISE_UNICODE_ERRORS
         throw filesystem_error("Illegal byte sequence for unicode character.", utf8String, make_error_code(errc::illegal_byte_sequence));
 #else
@@ -1605,11 +1605,11 @@ template <typename strT, typename enable_if<path::_is_basic_string<strT>::value 
 inline string toUtf8(const strT& unicodeString)
 {
     string result;
-    for (auto iter = unicodeString.begin(); iter != unicodeString.end();++iter) {
+    for(auto iter = unicodeString.begin(); iter != unicodeString.end();++iter) {
         char32_t c = *iter;
-        if (is_surrogate(c)) {
+        if(is_surrogate(c)) {
            ++iter;
-            if (iter != unicodeString.end() && is_high_surrogate(c) && is_low_surrogate(*iter)) {
+            if(iter != unicodeString.end() && is_high_surrogate(c) && is_low_surrogate(*iter)) {
                 appendUTF8(result, (char32_t(c) << 10) + *iter - 0x35fdc00);
             }
             else {
@@ -1617,7 +1617,7 @@ inline string toUtf8(const strT& unicodeString)
                 throw filesystem_error("Illegal code point for unicode character.", result, make_error_code(errc::illegal_byte_sequence));
 #else
                 appendUTF8(result, 0xfffd);
-                if (iter == unicodeString.end()) {
+                if(iter == unicodeString.end()) {
                     break;
                 }
 #endif
@@ -1634,7 +1634,7 @@ template <typename strT, typename enable_if<path::_is_basic_string<strT>::value 
 inline string toUtf8(const strT& unicodeString)
 {
     string result;
-    for (auto c : unicodeString) {
+    for(auto c : unicodeString) {
         appendUTF8(result, static_cast<uint32_t>(c));
     }
     return result;
@@ -1724,7 +1724,7 @@ GHC_INLINE bool endsWith(const strT& what, const strT& with)
 GHC_INLINE void path::check_long_path()
 {
 #if defined(GHC_OS_WINDOWS) && defined(GHC_WIN_AUTO_PREFIX_LONG_PATH)
-    if (is_absolute() && _path.length() >= MAX_PATH - 12 && !detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\\\?\\")))) {
+    if(is_absolute() && _path.length() >= MAX_PATH - 12 && !detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\\\?\\")))) {
         postprocess_path_with_format(native_format);
     }
 #endif
@@ -1733,7 +1733,7 @@ GHC_INLINE void path::check_long_path()
 GHC_INLINE void path::postprocess_path_with_format(path::format fmt)
 {
 #ifdef GHC_RAISE_UNICODE_ERRORS
-    if (!detail::validUtf8(_path)) {
+    if(!detail::validUtf8(_path)) {
         path t;
         t._path = _path;
         throw filesystem_error("Illegal byte sequence for unicode character.", t, make_error_code(errc::illegal_byte_sequence));
@@ -1744,13 +1744,13 @@ GHC_INLINE void path::postprocess_path_with_format(path::format fmt)
         case path::native_format:
         case path::auto_format:
         case path::generic_format:
-            for (auto& c : _path) {
-                if (c == generic_separator) {
+            for(auto& c : _path) {
+                if(c == generic_separator) {
                     c = preferred_separator;
                 }
             }
 #ifdef GHC_WIN_AUTO_PREFIX_LONG_PATH
-            if (is_absolute() && _path.length() >= MAX_PATH - 12 && !detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\\\?\\")))) {
+            if(is_absolute() && _path.length() >= MAX_PATH - 12 && !detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\\\?\\")))) {
                 _path = GHC_PLATFORM_LITERAL("\\\\?\\") + _path;
             }
 #endif
@@ -1764,7 +1764,7 @@ GHC_INLINE void path::postprocess_path_with_format(path::format fmt)
             break;
 #endif
     }
-    if (_path.length() > _prefixLength + 2 && _path[_prefixLength] == preferred_separator && _path[_prefixLength + 1] == preferred_separator && _path[_prefixLength + 2] != preferred_separator) {
+    if(_path.length() > _prefixLength + 2 && _path[_prefixLength] == preferred_separator && _path[_prefixLength + 1] == preferred_separator && _path[_prefixLength + 2] != preferred_separator) {
         impl_string_type::iterator new_end = unique(_path.begin() + static_cast<string_type::difference_type>(_prefixLength) + 2, _path.end(), [](path::value_type lhs, path::value_type rhs) { return lhs == rhs && lhs == preferred_separator; });
         _path.erase(new_end, _path.end());
     }
@@ -1813,8 +1813,8 @@ GHC_INLINE bool equals_simple_insensitive(const path::value_type* str1, const pa
 {
 #ifdef GHC_OS_WINDOWS
 #ifdef __GNUC__
-    while (::tolower((unsigned char)*str1) == ::tolower((unsigned char)*str2++)) {
-        if (*str1++ == 0)
+    while(::tolower((unsigned char)*str1) == ::tolower((unsigned char)*str2++)) {
+        if(*str1++ == 0)
             return true;
     }
     return false;
@@ -1832,16 +1832,16 @@ GHC_INLINE bool equals_simple_insensitive(const path::value_type* str1, const pa
 
 GHC_INLINE int compare_simple_insensitive(const path::value_type* str1, size_t len1, const path::value_type* str2, size_t len2)
 {
-    while (len1 > 0 && len2 > 0 && ::tolower(static_cast<unsigned char>(*str1)) == ::tolower(static_cast<unsigned char>(*str2))) {
+    while(len1 > 0 && len2 > 0 && ::tolower(static_cast<unsigned char>(*str1)) == ::tolower(static_cast<unsigned char>(*str2))) {
         --len1;
         --len2;
        ++str1;
        ++str2;
     }
-    if (len1 && len2) {
+    if(len1 && len2) {
         return *str1 < *str2 ? -1 : 1;
     }
-    if (len1 == 0 && len2 == 0) {
+    if(len1 == 0 && len2 == 0) {
         return 0;
     }
     return len1 == 0 ? -1 : 1;
@@ -1854,7 +1854,7 @@ GHC_INLINE const char* strerror_adapter(char* gnu, char*)
 
 GHC_INLINE const char* strerror_adapter(int posix, char* buffer)
 {
-    if (posix) {
+    if(posix) {
         return "Error in strerror_r!";
     }
     return buffer;
@@ -1884,7 +1884,7 @@ GHC_INLINE void create_symlink(const path& target_name, const path& new_symlink,
 {
     error_code tec;
     auto fs = status(target_name, tec);
-    if ((fs.type() == file_type::directory && !to_directory) || (fs.type() == file_type::regular && to_directory)) {
+    if((fs.type() == file_type::directory && !to_directory) || (fs.type() == file_type::regular && to_directory)) {
         ec = detail::make_error_code(detail::portable_error::not_supported);
         return;
     }
@@ -1896,10 +1896,10 @@ GHC_INLINE void create_symlink(const path& target_name, const path& new_symlink,
 #if defined(__GNUC__) && __GNUC__ >= 8
 #pragma GCC diagnostic pop
 #endif
-    if (api_call) {
-        if (api_call(GHC_NATIVEWP(new_symlink), GHC_NATIVEWP(target_name), to_directory ? 1 : 0) == 0) {
+    if(api_call) {
+        if(api_call(GHC_NATIVEWP(new_symlink), GHC_NATIVEWP(target_name), to_directory ? 1 : 0) == 0) {
             auto result = ::GetLastError();
-            if (result == ERROR_PRIVILEGE_NOT_HELD && api_call(GHC_NATIVEWP(new_symlink), GHC_NATIVEWP(target_name), to_directory ? 3 : 2) != 0) {
+            if(result == ERROR_PRIVILEGE_NOT_HELD && api_call(GHC_NATIVEWP(new_symlink), GHC_NATIVEWP(target_name), to_directory ? 3 : 2) != 0) {
                 return;
             }
             ec = detail::make_system_error(result);
@@ -1920,8 +1920,8 @@ GHC_INLINE void create_hardlink(const path& target_name, const path& new_hardlin
 #if defined(__GNUC__) && __GNUC__ >= 8
 #pragma GCC diagnostic pop
 #endif
-    if (api_call) {
-        if (api_call(GHC_NATIVEWP(new_hardlink), GHC_NATIVEWP(target_name), NULL) == 0) {
+    if(api_call) {
+        if(api_call(GHC_NATIVEWP(new_hardlink), GHC_NATIVEWP(target_name), NULL) == 0) {
             ec = detail::make_system_error();
         }
     }
@@ -1933,10 +1933,10 @@ GHC_INLINE void create_hardlink(const path& target_name, const path& new_hardlin
 GHC_INLINE path getFullPathName(const wchar_t* p, error_code& ec)
 {
     ULONG size = ::GetFullPathNameW(p, 0, 0, 0);
-    if (size) {
+    if(size) {
         vector<wchar_t> buf(size, 0);
         ULONG s2 = GetFullPathNameW(p, size, buf.data(), nullptr);
-        if (s2 && s2 < size) {
+        if(s2 && s2 < size) {
             return path(wstring(buf.data(), s2));
         }
     }
@@ -1947,7 +1947,7 @@ GHC_INLINE path getFullPathName(const wchar_t* p, error_code& ec)
 #else
 GHC_INLINE void create_symlink(const path& target_name, const path& new_symlink, bool, error_code& ec)
 {
-    if (::symlink(target_name.c_str(), new_symlink.c_str()) != 0) {
+    if(::symlink(target_name.c_str(), new_symlink.c_str()) != 0) {
         ec = detail::make_system_error();
     }
 }
@@ -1955,7 +1955,7 @@ GHC_INLINE void create_symlink(const path& target_name, const path& new_symlink,
 #ifndef GHC_OS_WEB
 GHC_INLINE void create_hardlink(const path& target_name, const path& new_hardlink, error_code& ec)
 {
-    if (::link(target_name.c_str(), new_hardlink.c_str()) != 0) {
+    if(::link(target_name.c_str(), new_hardlink.c_str()) != 0) {
         ec = detail::make_system_error();
     }
 }
@@ -1967,38 +1967,38 @@ GHC_INLINE file_status file_status_from_st_mode(T mode)
 {
 #ifdef GHC_OS_WINDOWS
     file_type ft = file_type::unknown;
-    if ((mode & _S_IFDIR) == _S_IFDIR) {
+    if((mode & _S_IFDIR) == _S_IFDIR) {
         ft = file_type::directory;
     }
-    else if ((mode & _S_IFREG) == _S_IFREG) {
+    else if((mode & _S_IFREG) == _S_IFREG) {
         ft = file_type::regular;
     }
-    else if ((mode & _S_IFCHR) == _S_IFCHR) {
+    else if((mode & _S_IFCHR) == _S_IFCHR) {
         ft = file_type::character;
     }
     perms prms = static_cast<perms>(mode & 0xfff);
     return file_status(ft, prms);
 #else
     file_type ft = file_type::unknown;
-    if (S_ISDIR(mode)) {
+    if(S_ISDIR(mode)) {
         ft = file_type::directory;
     }
-    else if (S_ISREG(mode)) {
+    else if(S_ISREG(mode)) {
         ft = file_type::regular;
     }
-    else if (S_ISCHR(mode)) {
+    else if(S_ISCHR(mode)) {
         ft = file_type::character;
     }
-    else if (S_ISBLK(mode)) {
+    else if(S_ISBLK(mode)) {
         ft = file_type::block;
     }
-    else if (S_ISFIFO(mode)) {
+    else if(S_ISFIFO(mode)) {
         ft = file_type::fifo;
     }
-    else if (S_ISLNK(mode)) {
+    else if(S_ISLNK(mode)) {
         ft = file_type::symlink;
     }
-    else if (S_ISSOCK(mode)) {
+    else if(S_ISSOCK(mode)) {
         ft = file_type::socket;
     }
     perms prms = static_cast<perms>(mode & 0xfff);
@@ -2043,7 +2043,7 @@ public:
     {
         element_type tmp = _handle;
         _handle = h;
-        if (tmp != INVALID_HANDLE_VALUE) {
+        if(tmp != INVALID_HANDLE_VALUE) {
             CloseHandle(tmp);
         }
     }
@@ -2098,14 +2098,14 @@ struct free_deleter
 GHC_INLINE unique_ptr<REPARSE_DATA_BUFFER, free_deleter<REPARSE_DATA_BUFFER>> getReparseData(const path& p, error_code& ec)
 {
     unique_handle file(CreateFileW(GHC_NATIVEWP(p), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0));
-    if (!file) {
+    if(!file) {
         ec = detail::make_system_error();
         return nullptr;
     }
 
     unique_ptr<REPARSE_DATA_BUFFER, free_deleter<REPARSE_DATA_BUFFER>> reparseData(reinterpret_cast<REPARSE_DATA_BUFFER*>(calloc(1, MAXIMUM_REPARSE_DATA_BUFFER_SIZE)));
     ULONG bufferUsed;
-    if (DeviceIoControl(file.get(), FSCTL_GET_REPARSE_POINT, 0, 0, reparseData.get(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &bufferUsed, 0)) {
+    if(DeviceIoControl(file.get(), FSCTL_GET_REPARSE_POINT, 0, 0, reparseData.get(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &bufferUsed, 0)) {
         return reparseData;
     }
     else {
@@ -2120,20 +2120,20 @@ GHC_INLINE path resolveSymlink(const path& p, error_code& ec)
 #ifdef GHC_OS_WINDOWS
     path result;
     auto reparseData = detail::getReparseData(p, ec);
-    if (!ec) {
-        if (reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag)) {
+    if(!ec) {
+        if(reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag)) {
             switch (reparseData->ReparseTag) {
                 case IO_REPARSE_TAG_SYMLINK: {
                     auto printName = wstring(&reparseData->SymbolicLinkReparseBuffer.PathBuffer[reparseData->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR)], reparseData->SymbolicLinkReparseBuffer.PrintNameLength / sizeof(WCHAR));
                     auto substituteName =
                         wstring(&reparseData->SymbolicLinkReparseBuffer.PathBuffer[reparseData->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR)], reparseData->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR));
-                    if (detail::endsWith(substituteName, printName) && detail::startsWith(substituteName, wstring(L"\\??\\"))) {
+                    if(detail::endsWith(substituteName, printName) && detail::startsWith(substituteName, wstring(L"\\??\\"))) {
                         result = printName;
                     }
                     else {
                         result = substituteName;
                     }
-                    if (reparseData->SymbolicLinkReparseBuffer.Flags & 0x1 /*SYMLINK_FLAG_RELATIVE*/) {
+                    if(reparseData->SymbolicLinkReparseBuffer.Flags & 0x1 /*SYMLINK_FLAG_RELATIVE*/) {
                         result = p.parent_path() / result;
                     }
                     break;
@@ -2150,14 +2150,14 @@ GHC_INLINE path resolveSymlink(const path& p, error_code& ec)
     return result;
 #else
     size_t bufferSize = 256;
-    while (true) {
+    while(true) {
         vector<char> buffer(bufferSize, static_cast<char>(0));
         auto rc = ::readlink(p.c_str(), buffer.data(), buffer.size());
-        if (rc < 0) {
+        if(rc < 0) {
             ec = detail::make_system_error();
             return path();
         }
-        else if (rc < static_cast<int>(bufferSize)) {
+        else if(rc < static_cast<int>(bufferSize)) {
             return path(string(buffer.data(), static_cast<string::size_type>(rc)));
         }
         bufferSize *= 2;
@@ -2211,21 +2211,21 @@ template <typename INFO>
 GHC_INLINE file_status status_from_INFO(const path& p, const INFO* info, error_code& ec, uintmax_t* sz = nullptr, time_t* lwt = nullptr)
 {
     file_type ft = file_type::unknown;
-    if (sizeof(INFO) == sizeof(WIN32_FIND_DATAW)) {
-        if (detail::reparse_tag_from_INFO(info) == IO_REPARSE_TAG_SYMLINK) {
+    if(sizeof(INFO) == sizeof(WIN32_FIND_DATAW)) {
+        if(detail::reparse_tag_from_INFO(info) == IO_REPARSE_TAG_SYMLINK) {
             ft = file_type::symlink;
         }
     }
     else {
-        if ((info->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+        if((info->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
             auto reparseData = detail::getReparseData(p, ec);
-            if (!ec && reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag) && reparseData->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
+            if(!ec && reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag) && reparseData->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
                 ft = file_type::symlink;
             }
         }
     }
-    if (ft == file_type::unknown) {
-        if ((info->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+    if(ft == file_type::unknown) {
+        if((info->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
             ft = file_type::directory;
         }
         else {
@@ -2233,16 +2233,16 @@ GHC_INLINE file_status status_from_INFO(const path& p, const INFO* info, error_c
         }
     }
     perms prms = perms::owner_read | perms::group_read | perms::others_read;
-    if (!(info->dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
+    if(!(info->dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
         prms = prms | perms::owner_write | perms::group_write | perms::others_write;
     }
-    if (has_executable_extension(p)) {
+    if(has_executable_extension(p)) {
         prms = prms | perms::owner_exec | perms::group_exec | perms::others_exec;
     }
-    if (sz) {
+    if(sz) {
         *sz = static_cast<uintmax_t>(info->nFileSizeHigh) << (sizeof(info->nFileSizeHigh) * 8) | info->nFileSizeLow;
     }
-    if (lwt) {
+    if(lwt) {
         *lwt = detail::timeFromFILETIME(info->ftLastWriteTime);
     }
     return file_status(ft, prms);
@@ -2264,17 +2264,17 @@ GHC_INLINE file_status symlink_status_ex(const path& p, error_code& ec, uintmax_
 #ifdef GHC_OS_WINDOWS
     file_status fs;
     WIN32_FILE_ATTRIBUTE_DATA attr;
-    if (!GetFileAttributesExW(GHC_NATIVEWP(p), GetFileExInfoStandard, &attr)) {
+    if(!GetFileAttributesExW(GHC_NATIVEWP(p), GetFileExInfoStandard, &attr)) {
         ec = detail::make_system_error();
     }
     else {
         ec.clear();
         fs = detail::status_from_INFO(p, &attr, ec, sz, lwt);
-        if (nhl) {
+        if(nhl) {
             *nhl = 0;
         }
     }
-    if (detail::is_not_found_error(ec)) {
+    if(detail::is_not_found_error(ec)) {
         return file_status(file_type::not_found);
     }
     return ec ? file_status(file_type::none) : fs;
@@ -2284,13 +2284,13 @@ GHC_INLINE file_status symlink_status_ex(const path& p, error_code& ec, uintmax_
     (void)lwt;
     struct ::stat fs;
     auto result = ::lstat(p.c_str(), &fs);
-    if (result == 0) {
+    if(result == 0) {
         ec.clear();
         file_status f_s = detail::file_status_from_st_mode(fs.st_mode);
         return f_s;
     }
     ec = detail::make_system_error();
-    if (detail::is_not_found_error(ec)) {
+    if(detail::is_not_found_error(ec)) {
         return file_status(file_type::not_found, perms::unknown);
     }
     return file_status(file_type::none);
@@ -2301,21 +2301,21 @@ GHC_INLINE file_status status_ex(const path& p, error_code& ec, file_status* sls
 {
     ec.clear();
 #ifdef GHC_OS_WINDOWS
-    if (recurse_count > 16) {
+    if(recurse_count > 16) {
         ec = detail::make_system_error(0x2A9 /*ERROR_STOPPED_ON_SYMLINK*/);
         return file_status(file_type::unknown);
     }
     WIN32_FILE_ATTRIBUTE_DATA attr;
-    if (!::GetFileAttributesExW(GHC_NATIVEWP(p), GetFileExInfoStandard, &attr)) {
+    if(!::GetFileAttributesExW(GHC_NATIVEWP(p), GetFileExInfoStandard, &attr)) {
         ec = detail::make_system_error();
     }
-    else if (attr.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+    else if(attr.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
         auto reparseData = detail::getReparseData(p, ec);
-        if (!ec && reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag) && reparseData->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
+        if(!ec && reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag) && reparseData->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
             path target = resolveSymlink(p, ec);
             file_status result;
-            if (!ec && !target.empty()) {
-                if (sls) {
+            if(!ec && !target.empty()) {
+                if(sls) {
                     *sls = status_from_INFO(p, &attr, ec);
                 }
                 return detail::status_ex(target, ec, nullptr, sz, nhl, lwt, recurse_count + 1);
@@ -2323,13 +2323,13 @@ GHC_INLINE file_status status_ex(const path& p, error_code& ec, file_status* sls
             return file_status(file_type::unknown);
         }
     }
-    if (ec) {
-        if (detail::is_not_found_error(ec)) {
+    if(ec) {
+        if(detail::is_not_found_error(ec)) {
             return file_status(file_type::not_found);
         }
         return file_status(file_type::none);
     }
-    if (nhl) {
+    if(nhl) {
         *nhl = 0;
     }
     return detail::status_from_INFO(p, &attr, ec, sz, lwt);
@@ -2337,39 +2337,39 @@ GHC_INLINE file_status status_ex(const path& p, error_code& ec, file_status* sls
     (void)recurse_count;
     struct ::stat st;
     auto result = ::lstat(p.c_str(), &st);
-    if (result == 0) {
+    if(result == 0) {
         ec.clear();
         file_status fs = detail::file_status_from_st_mode(st.st_mode);
-        if (sls) {
+        if(sls) {
             *sls = fs;
         }
-        if (fs.type() == file_type::symlink) {
+        if(fs.type() == file_type::symlink) {
             result = ::stat(p.c_str(), &st);
-            if (result == 0) {
+            if(result == 0) {
                 fs = detail::file_status_from_st_mode(st.st_mode);
             }
             else {
                 ec = detail::make_system_error();
-                if (detail::is_not_found_error(ec)) {
+                if(detail::is_not_found_error(ec)) {
                     return file_status(file_type::not_found, perms::unknown);
                 }
                 return file_status(file_type::none);
             }
         }
-        if (sz) {
+        if(sz) {
             *sz = static_cast<uintmax_t>(st.st_size);
         }
-        if (nhl) {
+        if(nhl) {
             *nhl = st.st_nlink;
         }
-        if (lwt) {
+        if(lwt) {
             *lwt = st.st_mtime;
         }
         return fs;
     }
     else {
         ec = detail::make_system_error();
-        if (detail::is_not_found_error(ec)) {
+        if(detail::is_not_found_error(ec)) {
             return file_status(file_type::not_found, perms::unknown);
         }
         return file_status(file_type::none);
@@ -2391,7 +2391,7 @@ GHC_INLINE u8arguments::u8arguments(int& argc, char**& argv)
     p = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
     _args.reserve(static_cast<size_t>(argc));
     _argp.reserve(static_cast<size_t>(argc));
-    for (size_t i = 0; i < static_cast<size_t>(argc);++i) {
+    for(size_t i = 0; i < static_cast<size_t>(argc);++i) {
         _args.push_back(detail::toUtf8(wstring(p[i])));
         _argp.push_back((char*)_args[i].data());
     }
@@ -2403,7 +2403,7 @@ GHC_INLINE u8arguments::u8arguments(int& argc, char**& argv)
 #if defined(__ANDROID__) && __ANDROID_API__ < 26
     _isvalid = true;
 #else
-    if (detail::equals_simple_insensitive(::nl_langinfo(CODESET), "UTF-8")) {
+    if(detail::equals_simple_insensitive(::nl_langinfo(CODESET), "UTF-8")) {
         _isvalid = true;
     }
 #endif
@@ -2445,7 +2445,7 @@ inline path::path(const Source& source, const locale& loc, format fmt)
     : path(source, fmt)
 {
     string locName = loc.name();
-    if (!(locName.length() >= 5 && (locName.substr(locName.length() - 5) == "UTF-8" || locName.substr(locName.length() - 5) == "utf-8"))) {
+    if(!(locName.length() >= 5 && (locName.substr(locName.length() - 5) == "UTF-8" || locName.substr(locName.length() - 5) == "utf-8"))) {
         throw filesystem_error("This implementation only supports UTF-8 locales!", path(_path), detail::make_error_code(detail::portable_error::not_supported));
     }
 }
@@ -2455,7 +2455,7 @@ inline path::path(InputIterator first, InputIterator last, const locale& loc, fo
     : path(basic_string<typename iterator_traits<InputIterator>::value_type>(first, last), fmt)
 {
     string locName = loc.name();
-    if (!(locName.length() >= 5 && (locName.substr(locName.length() - 5) == "UTF-8" || locName.substr(locName.length() - 5) == "utf-8"))) {
+    if(!(locName.length() >= 5 && (locName.substr(locName.length() - 5) == "UTF-8" || locName.substr(locName.length() - 5) == "utf-8"))) {
         throw filesystem_error("This implementation only supports UTF-8 locales!", path(_path), detail::make_error_code(detail::portable_error::not_supported));
     }
 }
@@ -2543,30 +2543,30 @@ inline path& path::assign(InputIterator first, InputIterator last)
 
 GHC_INLINE path& path::operator/=(const path& p)
 {
-    if (p.empty()) {
-        // was: if ((!has_root_directory() && is_absolute()) || has_filename())
-        if (!_path.empty() && _path[_path.length() - 1] != preferred_separator && _path[_path.length() - 1] != ':') {
+    if(p.empty()) {
+        // was: if((!has_root_directory() && is_absolute()) || has_filename())
+        if(!_path.empty() && _path[_path.length() - 1] != preferred_separator && _path[_path.length() - 1] != ':') {
             _path += preferred_separator;
         }
         return *this;
     }
-    if ((p.is_absolute() && (_path != root_name()._path || p._path != "/")) || (p.has_root_name() && p.root_name() != root_name())) {
+    if((p.is_absolute() && (_path != root_name()._path || p._path != "/")) || (p.has_root_name() && p.root_name() != root_name())) {
         assign(p);
         return *this;
     }
-    if (p.has_root_directory()) {
+    if(p.has_root_directory()) {
         assign(root_name());
     }
-    else if ((!has_root_directory() && is_absolute()) || has_filename()) {
+    else if((!has_root_directory() && is_absolute()) || has_filename()) {
         _path += preferred_separator;
     }
     auto iter = p.begin();
     bool first = true;
-    if (p.has_root_name()) {
+    if(p.has_root_name()) {
        ++iter;
     }
-    while (iter != p.end()) {
-        if (!first && !(!_path.empty() && _path[_path.length() - 1] == preferred_separator)) {
+    while(iter != p.end()) {
+        if(!first && !(!_path.empty() && _path[_path.length() - 1] == preferred_separator)) {
             _path += preferred_separator;
         }
         first = false;
@@ -2578,11 +2578,11 @@ GHC_INLINE path& path::operator/=(const path& p)
 
 GHC_INLINE void path::append_name(const value_type* name)
 {
-    if (_path.empty()) {
+    if(_path.empty()) {
         operator/=(path(name));
     }
     else {
-        if (_path.back() != path::preferred_separator) {
+        if(_path.back() != path::preferred_separator) {
             _path.push_back(path::preferred_separator);
         }
         _path += name;
@@ -2652,11 +2652,11 @@ GHC_INLINE path& path::operator+=(const value_type* x)
 GHC_INLINE path& path::operator+=(value_type x)
 {
 #ifdef GHC_OS_WINDOWS
-    if (x == generic_separator) {
+    if(x == generic_separator) {
         x = preferred_separator;
     }
 #endif
-    if (_path.empty() || _path.back() != preferred_separator) {
+    if(_path.empty() || _path.back() != preferred_separator) {
         _path += x;
     }
     check_long_path();
@@ -2720,7 +2720,7 @@ GHC_INLINE path& path::make_preferred()
 
 GHC_INLINE path& path::remove_filename()
 {
-    if (has_filename()) {
+    if(has_filename()) {
         _path.erase(_path.size() - filename()._path.size());
     }
     return *this;
@@ -2734,10 +2734,10 @@ GHC_INLINE path& path::replace_filename(const path& replacement)
 
 GHC_INLINE path& path::replace_extension(const path& replacement)
 {
-    if (has_extension()) {
+    if(has_extension()) {
         _path.erase(_path.size() - extension()._path.size());
     }
-    if (!replacement.empty() && replacement._path[0] != '.') {
+    if(!replacement.empty() && replacement._path[0] != '.') {
         _path += '.';
     }
     return concat(replacement);
@@ -2845,8 +2845,8 @@ inline basic_string<EcharT, traits, Allocator> path::generic_string(const Alloca
 #else
     auto result = detail::fromUtf8<basic_string<EcharT, traits, Allocator>>(_path, a);
 #endif
-    for (auto& c : result) {
-        if (c == preferred_separator) {
+    for(auto& c : result) {
+        if(c == preferred_separator) {
             c = generic_separator;
         }
     }
@@ -2926,33 +2926,33 @@ GHC_INLINE int path::compare(const path& p) const noexcept
 #else
     auto rnc = _path.compare(0, rnl1, p._path, 0, (min(rnl1, rnl2)));
 #endif
-    if (rnc) {
+    if(rnc) {
         return rnc;
     }
     bool hrd1 = has_root_directory(), hrd2 = p.has_root_directory();
-    if (hrd1 != hrd2) {
+    if(hrd1 != hrd2) {
         return hrd1 ? 1 : -1;
     }
-    if (hrd1) {
+    if(hrd1) {
        ++rnl1;
        ++rnl2;
     }
     auto iter1 = _path.begin() + static_cast<int>(rnl1);
     auto iter2 = p._path.begin() + static_cast<int>(rnl2);
-    while (iter1 != _path.end() && iter2 != p._path.end() && *iter1 == *iter2) {
+    while(iter1 != _path.end() && iter2 != p._path.end() && *iter1 == *iter2) {
        ++iter1;
        ++iter2;
     }
-    if (iter1 == _path.end()) {
+    if(iter1 == _path.end()) {
         return iter2 == p._path.end() ? 0 : -1;
     }
-    if (iter2 == p._path.end()) {
+    if(iter2 == p._path.end()) {
         return 1;
     }
-    if (*iter1 == preferred_separator) {
+    if(*iter1 == preferred_separator) {
         return -1;
     }
-    if (*iter2 == preferred_separator) {
+    if(*iter2 == preferred_separator) {
         return 1;
     }
     return *iter1 < *iter2 ? -1 : 1;
@@ -2961,7 +2961,7 @@ GHC_INLINE int path::compare(const path& p) const noexcept
     auto rnl1 = root_name_length();
     auto rnl2 = p.root_name_length();
     auto rnc = detail::compare_simple_insensitive(_path.c_str(), rnl1, p._path.c_str(), rnl2);
-    if (rnc) {
+    if(rnc) {
         return rnc;
     }
     return _path.compare(rnl1, string::npos, p._path, rnl2, string::npos);
@@ -2995,8 +2995,8 @@ GHC_INLINE void path::handle_prefixes()
 {
 #if defined(GHC_WIN_AUTO_PREFIX_LONG_PATH)
     _prefixLength = 0;
-    if (_path.length() >= 6 && _path[2] == '?' && toupper(static_cast<unsigned char>(_path[4])) >= 'A' && toupper(static_cast<unsigned char>(_path[4])) <= 'Z' && _path[5] == ':') {
-        if (detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\\\?\\"))) || detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\??\\")))) {
+    if(_path.length() >= 6 && _path[2] == '?' && toupper(static_cast<unsigned char>(_path[4])) >= 'A' && toupper(static_cast<unsigned char>(_path[4])) <= 'Z' && _path[5] == ':') {
+        if(detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\\\?\\"))) || detail::startsWith(_path, impl_string_type(GHC_PLATFORM_LITERAL("\\??\\")))) {
             _prefixLength = 4;
         }
     }
@@ -3007,13 +3007,13 @@ GHC_INLINE void path::handle_prefixes()
 GHC_INLINE path::string_type::size_type path::root_name_length() const noexcept
 {
 #ifdef GHC_OS_WINDOWS
-    if (_path.length() >= _prefixLength + 2 && toupper(static_cast<unsigned char>(_path[_prefixLength])) >= 'A' && toupper(static_cast<unsigned char>(_path[_prefixLength])) <= 'Z' && _path[_prefixLength + 1] == ':') {
+    if(_path.length() >= _prefixLength + 2 && toupper(static_cast<unsigned char>(_path[_prefixLength])) >= 'A' && toupper(static_cast<unsigned char>(_path[_prefixLength])) <= 'Z' && _path[_prefixLength + 1] == ':') {
         return 2;
     }
 #endif
-    if (_path.length() > _prefixLength + 2 && _path[_prefixLength] == preferred_separator && _path[_prefixLength + 1] == preferred_separator && _path[_prefixLength + 2] != preferred_separator && isprint(_path[_prefixLength + 2])) {
+    if(_path.length() > _prefixLength + 2 && _path[_prefixLength] == preferred_separator && _path[_prefixLength + 1] == preferred_separator && _path[_prefixLength + 2] != preferred_separator && isprint(_path[_prefixLength + 2])) {
         impl_string_type::size_type pos = _path.find(preferred_separator, _prefixLength + 3);
-        if (pos == impl_string_type::npos) {
+        if(pos == impl_string_type::npos) {
             return _path.length();
         }
         else {
@@ -3030,7 +3030,7 @@ GHC_INLINE path path::root_name() const
 
 GHC_INLINE path path::root_directory() const
 {
-    if (has_root_directory()) {
+    if(has_root_directory()) {
         static const path _root_dir(string(1, preferred_separator), native_format);
         return _root_dir;
     }
@@ -3051,14 +3051,14 @@ GHC_INLINE path path::relative_path() const
 GHC_INLINE path path::parent_path() const
 {
     auto rootPathLen = _prefixLength + root_name_length() + (has_root_directory() ? 1 : 0);
-    if (rootPathLen < _path.length()) {
-        if (empty()) {
+    if(rootPathLen < _path.length()) {
+        if(empty()) {
             return path();
         }
         else {
             auto piter = end();
             auto iter = piter.decrement(_path.end());
-            if (iter > _path.begin() + static_cast<long>(rootPathLen) && *iter != preferred_separator) {
+            if(iter > _path.begin() + static_cast<long>(rootPathLen) && *iter != preferred_separator) {
                 --iter;
             }
             return path(_path.begin(), iter, native_format);
@@ -3077,9 +3077,9 @@ GHC_INLINE path path::filename() const
 GHC_INLINE path path::stem() const
 {
     impl_string_type fn = filename().native();
-    if (fn != "." && fn != "..") {
+    if(fn != "." && fn != "..") {
         impl_string_type::size_type pos = fn.rfind('.');
-        if (pos != impl_string_type::npos && pos > 0) {
+        if(pos != impl_string_type::npos && pos > 0) {
             return path{fn.substr(0, pos), native_format};
         }
     }
@@ -3088,11 +3088,11 @@ GHC_INLINE path path::stem() const
 
 GHC_INLINE path path::extension() const
 {
-    if (has_relative_path()) {
+    if(has_relative_path()) {
         auto iter = end();
         const auto& fn = *--iter;
         impl_string_type::size_type pos = fn._path.rfind('.');
-        if (pos != string::npos && pos > 0) {
+        if(pos != string::npos && pos > 0) {
             return path(fn._path.substr(pos), native_format);
         }
     }
@@ -3103,15 +3103,15 @@ GHC_INLINE path path::extension() const
 namespace detail {
 GHC_INLINE bool has_executable_extension(const path& p)
 {
-    if (p.has_relative_path()) {
+    if(p.has_relative_path()) {
         auto iter = p.end();
         const auto& fn = *--iter;
         auto pos = fn._path.find_last_of('.');
-        if (pos == string::npos || pos == 0 || fn._path.length() - pos != 3) {
+        if(pos == string::npos || pos == 0 || fn._path.length() - pos != 3) {
             return false;
         }
         const path::value_type* ext = fn._path.c_str() + pos + 1;
-        if (detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("exe")) || detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("cmd")) || detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("bat")) ||
+        if(detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("exe")) || detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("cmd")) || detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("bat")) ||
             detail::equals_simple_insensitive(ext, GHC_PLATFORM_LITERAL("com"))) {
             return true;
         }
@@ -3190,30 +3190,30 @@ GHC_INLINE path path::lexically_normal() const
 {
     path dest;
     bool lastDotDot = false;
-    for (string_type s : *this) {
-        if (s == ".") {
+    for(string_type s : *this) {
+        if(s == ".") {
             dest /= "";
             continue;
         }
-        else if (s == ".." && !dest.empty()) {
+        else if(s == ".." && !dest.empty()) {
             auto root = root_path();
-            if (dest == root) {
+            if(dest == root) {
                 continue;
             }
-            else if (*(--dest.end()) != "..") {
-                if (dest._path.back() == preferred_separator) {
+            else if(*(--dest.end()) != "..") {
+                if(dest._path.back() == preferred_separator) {
                     dest._path.pop_back();
                 }
                 dest.remove_filename();
                 continue;
             }
         }
-        if (!(s.empty() && lastDotDot)) {
+        if(!(s.empty() && lastDotDot)) {
             dest /= s;
         }
         lastDotDot = s == "..";
     }
-    if (dest.empty()) {
+    if(dest.empty()) {
         dest = ".";
     }
     return dest;
@@ -3221,34 +3221,34 @@ GHC_INLINE path path::lexically_normal() const
 
 GHC_INLINE path path::lexically_relative(const path& base) const
 {
-    if (root_name() != base.root_name() || is_absolute() != base.is_absolute() || (!has_root_directory() && base.has_root_directory())) {
+    if(root_name() != base.root_name() || is_absolute() != base.is_absolute() || (!has_root_directory() && base.has_root_directory())) {
         return path();
     }
     const_iterator a = begin(), b = base.begin();
-    while (a != end() && b != base.end() && *a == *b) {
+    while(a != end() && b != base.end() && *a == *b) {
        ++a;
        ++b;
     }
-    if (a == end() && b == base.end()) {
+    if(a == end() && b == base.end()) {
         return path(".");
     }
     int count = 0;
-    for (const auto& element : input_iterator_range<const_iterator>(b, base.end())) {
-        if (element != "." && element != "" && element != "..") {
+    for(const auto& element : input_iterator_range<const_iterator>(b, base.end())) {
+        if(element != "." && element != "" && element != "..") {
            ++count;
         }
-        else if (element == "..") {
+        else if(element == "..") {
             --count;
         }
     }
-    if (count < 0) {
+    if(count < 0) {
         return path();
     }
     path result;
-    for (int i = 0; i < count;++i) {
+    for(int i = 0; i < count;++i) {
         result /= "..";
     }
-    for (const auto& element : input_iterator_range<const_iterator>(a, end())) {
+    for(const auto& element : input_iterator_range<const_iterator>(a, end())) {
         result /= element;
     }
     return result;
@@ -3271,7 +3271,7 @@ GHC_INLINE path::iterator::iterator(const path& p, const impl_string_type::const
     , _root(p.has_root_directory() ? _first + static_cast<string_type::difference_type>(p._prefixLength + p.root_name_length()) : _last)
     , _iter(pos)
 {
-    if (pos != _last) {
+    if(pos != _last) {
         updateCurrent();
     }
 }
@@ -3280,28 +3280,28 @@ GHC_INLINE path::impl_string_type::const_iterator path::iterator::increment(cons
 {
     path::impl_string_type::const_iterator i = pos;
     bool fromStart = i == _first || i == _prefix;
-    if (i != _last) {
-        if (fromStart && i == _first && _prefix > _first) {
+    if(i != _last) {
+        if(fromStart && i == _first && _prefix > _first) {
             i = _prefix;
         }
-        else if (*i++ == preferred_separator) {
+        else if(*i++ == preferred_separator) {
             // we can only sit on a slash if it is a network name or a root
-            if (i != _last && *i == preferred_separator) {
-                if (fromStart && !(i + 1 != _last && *(i + 1) == preferred_separator)) {
+            if(i != _last && *i == preferred_separator) {
+                if(fromStart && !(i + 1 != _last && *(i + 1) == preferred_separator)) {
                     // leadind double slashes detected, treat this and the
                     // following until a slash as one unit
                     i = find(++i, _last, preferred_separator);
                 }
                 else {
                     // skip redundant slashes
-                    while (i != _last && *i == preferred_separator) {
+                    while(i != _last && *i == preferred_separator) {
                        ++i;
                     }
                 }
             }
         }
         else {
-            if (fromStart && i != _last && *i == ':') {
+            if(fromStart && i != _last && *i == ':') {
                ++i;
             }
             else {
@@ -3315,22 +3315,22 @@ GHC_INLINE path::impl_string_type::const_iterator path::iterator::increment(cons
 GHC_INLINE path::impl_string_type::const_iterator path::iterator::decrement(const path::impl_string_type::const_iterator& pos) const
 {
     path::impl_string_type::const_iterator i = pos;
-    if (i != _first) {
+    if(i != _first) {
         --i;
         // if this is now the root slash or the trailing slash, we are done,
         // else check for network name
-        if (i != _root && (pos != _last || *i != preferred_separator)) {
+        if(i != _root && (pos != _last || *i != preferred_separator)) {
 #ifdef GHC_OS_WINDOWS
             static const impl_string_type seps = GHC_PLATFORM_LITERAL("\\:");
             i = find_first_of(reverse_iterator<path::impl_string_type::const_iterator>(i), reverse_iterator<path::impl_string_type::const_iterator>(_first), seps.begin(), seps.end()).base();
-            if (i > _first && *i == ':') {
+            if(i > _first && *i == ':') {
                 i++;
             }
 #else
             i = find(reverse_iterator<path::impl_string_type::const_iterator>(i), reverse_iterator<path::impl_string_type::const_iterator>(_first), preferred_separator).base();
 #endif
             // Now we have to check if this is a network name
-            if (i - _first == 2 && *_first == preferred_separator && *(_first + 1) == preferred_separator) {
+            if(i - _first == 2 && *_first == preferred_separator && *(_first + 1) == preferred_separator) {
                 i -= 2;
             }
         }
@@ -3340,7 +3340,7 @@ GHC_INLINE path::impl_string_type::const_iterator path::iterator::decrement(cons
 
 GHC_INLINE void path::iterator::updateCurrent()
 {
-    if ((_iter == _last) || (_iter != _first && _iter != _last && (*_iter == preferred_separator && _iter != _root) && (_iter + 1 == _last))) {
+    if((_iter == _last) || (_iter != _first && _iter != _last && (*_iter == preferred_separator && _iter != _root) && (_iter + 1 == _last))) {
         _current.clear();
     }
     else {
@@ -3351,7 +3351,7 @@ GHC_INLINE void path::iterator::updateCurrent()
 GHC_INLINE path::iterator& path::iterator::operator++()
 {
     _iter = increment(_iter);
-    while (_iter != _last &&                 // we didn't reach the end
+    while(_iter != _last &&                 // we didn't reach the end
            _iter != _root &&                 // this is not a root position
            *_iter == preferred_separator &&  // we are on a separator
            (_iter + 1) != _last              // the slash is not the last char
@@ -3478,8 +3478,8 @@ inline basic_ostream<charT, traits>& operator<<(basic_ostream<charT, traits>& os
 {
     os << "\"";
     auto ps = p.string<charT, traits>();
-    for (auto c : ps) {
-        if (c == '"' || c == '\\') {
+    for(auto c : ps) {
+        if(c == '"' || c == '\\') {
             os << '\\';
         }
         os << c;
@@ -3494,19 +3494,19 @@ inline basic_istream<charT, traits>& operator>>(basic_istream<charT, traits>& is
     basic_string<charT, traits> tmp;
     charT c;
     is >> c;
-    if (c == '"') {
+    if(c == '"') {
         auto sf = is.flags();
         is >> noskipws;
-        while (is) {
+        while(is) {
             auto c2 = is.get();
-            if (is) {
-                if (c2 == '\\') {
+            if(is) {
+                if(c2 == '\\') {
                     c2 = is.get();
-                    if (is) {
+                    if(is) {
                         tmp += static_cast<charT>(c2);
                     }
                 }
-                else if (c2 == '"') {
+                else if(c2 == '"') {
                     break;
                 }
                 else {
@@ -3514,7 +3514,7 @@ inline basic_istream<charT, traits>& operator>>(basic_istream<charT, traits>& is
                 }
             }
         }
-        if ((sf & ios_base::skipws) == ios_base::skipws) {
+        if((sf & ios_base::skipws) == ios_base::skipws) {
             is >> skipws;
         }
         p = path(tmp);
@@ -3543,7 +3543,7 @@ GHC_INLINE filesystem_error::filesystem_error(const string& what_arg, const path
     , _ec(ec)
     , _p1(p1)
 {
-    if (!_p1.empty()) {
+    if(!_p1.empty()) {
         _what_arg += ": '" + _p1.string() + "'";
     }
 }
@@ -3555,10 +3555,10 @@ GHC_INLINE filesystem_error::filesystem_error(const string& what_arg, const path
     , _p1(p1)
     , _p2(p2)
 {
-    if (!_p1.empty()) {
+    if(!_p1.empty()) {
         _what_arg += ": '" + _p1.string() + "'";
     }
-    if (!_p2.empty()) {
+    if(!_p2.empty()) {
         _what_arg += ", '" + _p2.string() + "'";
     }
 }
@@ -3585,7 +3585,7 @@ GHC_INLINE path absolute(const path& p)
 {
     error_code ec;
     path result = absolute(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -3596,16 +3596,16 @@ GHC_INLINE path absolute(const path& p, error_code& ec)
 {
     ec.clear();
 #ifdef GHC_OS_WINDOWS
-    if (p.empty()) {
+    if(p.empty()) {
         return absolute(current_path(ec), ec) / "";
     }
     ULONG size = ::GetFullPathNameW(GHC_NATIVEWP(p), 0, 0, 0);
-    if (size) {
+    if(size) {
         vector<wchar_t> buf(size, 0);
         ULONG s2 = GetFullPathNameW(GHC_NATIVEWP(p), size, buf.data(), nullptr);
-        if (s2 && s2 < size) {
+        if(s2 && s2 < size) {
             path result = path(wstring(buf.data(), s2));
-            if (p.filename() == ".") {
+            if(p.filename() == ".") {
                 result /= ".";
             }
             return result;
@@ -3615,12 +3615,12 @@ GHC_INLINE path absolute(const path& p, error_code& ec)
     return path();
 #else
     path base = current_path(ec);
-    if (!ec) {
-        if (p.empty()) {
+    if(!ec) {
+        if(p.empty()) {
             return base / p;
         }
-        if (p.has_root_name()) {
-            if (p.has_root_directory()) {
+        if(p.has_root_name()) {
+            if(p.has_root_directory()) {
                 return p;
             }
             else {
@@ -3628,7 +3628,7 @@ GHC_INLINE path absolute(const path& p, error_code& ec)
             }
         }
         else {
-            if (p.has_root_directory()) {
+            if(p.has_root_directory()) {
                 return base.root_name() / p;
             }
             else {
@@ -3646,7 +3646,7 @@ GHC_INLINE path canonical(const path& p)
 {
     error_code ec;
     auto result = canonical(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -3655,7 +3655,7 @@ GHC_INLINE path canonical(const path& p)
 
 GHC_INLINE path canonical(const path& p, error_code& ec)
 {
-    if (p.empty()) {
+    if(p.empty()) {
         ec = detail::make_error_code(detail::portable_error::not_found);
         return path();
     }
@@ -3663,10 +3663,10 @@ GHC_INLINE path canonical(const path& p, error_code& ec)
     path result;
 
     auto fs = status(work, ec);
-    if (ec) {
+    if(ec) {
         return path();
     }
-    if (fs.type() == file_type::not_found) {
+    if(fs.type() == file_type::not_found) {
         ec = detail::make_error_code(detail::portable_error::not_found);
         return path();
     }
@@ -3675,29 +3675,29 @@ GHC_INLINE path canonical(const path& p, error_code& ec)
         auto rootPathLen = work._prefixLength + work.root_name_length() + (work.has_root_directory() ? 1 : 0);
         redo = false;
         result.clear();
-        for (auto pe : work) {
-            if (pe.empty() || pe == ".") {
+        for(auto pe : work) {
+            if(pe.empty() || pe == ".") {
                 continue;
             }
-            else if (pe == "..") {
+            else if(pe == "..") {
                 result = result.parent_path();
                 continue;
             }
-            else if ((result / pe).string().length() <= rootPathLen) {
+            else if((result / pe).string().length() <= rootPathLen) {
                 result /= pe;
                 continue;
             }
             auto sls = symlink_status(result / pe, ec);
-            if (ec) {
+            if(ec) {
                 return path();
             }
-            if (is_symlink(sls)) {
+            if(is_symlink(sls)) {
                 redo = true;
                 auto target = read_symlink(result / pe, ec);
-                if (ec) {
+                if(ec) {
                     return path();
                 }
-                if (target.is_absolute()) {
+                if(target.is_absolute()) {
                     result = target;
                     continue;
                 }
@@ -3711,7 +3711,7 @@ GHC_INLINE path canonical(const path& p, error_code& ec)
             }
         }
         work = result;
-    } while (redo);
+    } while(redo);
     ec.clear();
     return result;
 }
@@ -3726,7 +3726,7 @@ GHC_INLINE void copy(const path& from, const path& to, copy_options options)
 {
     error_code ec;
     copy(from, to, options, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), from, to, ec);
     }
 }
@@ -3742,30 +3742,30 @@ GHC_INLINE void copy(const path& from, const path& to, copy_options options, err
     error_code tec;
     file_status fs_from, fs_to;
     ec.clear();
-    if ((options & (copy_options::skip_symlinks | copy_options::copy_symlinks | copy_options::create_symlinks)) != copy_options::none) {
+    if((options & (copy_options::skip_symlinks | copy_options::copy_symlinks | copy_options::create_symlinks)) != copy_options::none) {
         fs_from = symlink_status(from, ec);
     }
     else {
         fs_from = status(from, ec);
     }
-    if (!exists(fs_from)) {
-        if (!ec) {
+    if(!exists(fs_from)) {
+        if(!ec) {
             ec = detail::make_error_code(detail::portable_error::not_found);
         }
         return;
     }
-    if ((options & (copy_options::skip_symlinks | copy_options::create_symlinks)) != copy_options::none) {
+    if((options & (copy_options::skip_symlinks | copy_options::create_symlinks)) != copy_options::none) {
         fs_to = symlink_status(to, tec);
     }
     else {
         fs_to = status(to, tec);
     }
-    if (is_other(fs_from) || is_other(fs_to) || (is_directory(fs_from) && is_regular_file(fs_to)) || (exists(fs_to) && equivalent(from, to, ec))) {
+    if(is_other(fs_from) || is_other(fs_to) || (is_directory(fs_from) && is_regular_file(fs_to)) || (exists(fs_to) && equivalent(from, to, ec))) {
         ec = detail::make_error_code(detail::portable_error::invalid_argument);
     }
-    else if (is_symlink(fs_from)) {
-        if ((options & copy_options::skip_symlinks) == copy_options::none) {
-            if (!exists(fs_to) && (options & copy_options::copy_symlinks) != copy_options::none) {
+    else if(is_symlink(fs_from)) {
+        if((options & copy_options::skip_symlinks) == copy_options::none) {
+            if(!exists(fs_to) && (options & copy_options::copy_symlinks) != copy_options::none) {
                 copy_symlink(from, to, ec);
             }
             else {
@@ -3773,17 +3773,17 @@ GHC_INLINE void copy(const path& from, const path& to, copy_options options, err
             }
         }
     }
-    else if (is_regular_file(fs_from)) {
-        if ((options & copy_options::directories_only) == copy_options::none) {
-            if ((options & copy_options::create_symlinks) != copy_options::none) {
+    else if(is_regular_file(fs_from)) {
+        if((options & copy_options::directories_only) == copy_options::none) {
+            if((options & copy_options::create_symlinks) != copy_options::none) {
                 create_symlink(from.is_absolute() ? from : canonical(from, ec), to, ec);
             }
 #ifndef GHC_OS_WEB
-            else if ((options & copy_options::create_hard_links) != copy_options::none) {
+            else if((options & copy_options::create_hard_links) != copy_options::none) {
                 create_hard_link(from, to, ec);
             }
 #endif
-            else if (is_directory(fs_to)) {
+            else if(is_directory(fs_to)) {
                 copy_file(from, to / from.filename(), options, ec);
             }
             else {
@@ -3792,22 +3792,22 @@ GHC_INLINE void copy(const path& from, const path& to, copy_options options, err
         }
     }
 #ifdef LWG_2682_BEHAVIOUR
-    else if (is_directory(fs_from) && (options & copy_options::create_symlinks) != copy_options::none) {
+    else if(is_directory(fs_from) && (options & copy_options::create_symlinks) != copy_options::none) {
         ec = detail::make_error_code(detail::portable_error::is_a_directory);
     }
 #endif
-    else if (is_directory(fs_from) && (options == copy_options::none || (options & copy_options::recursive) != copy_options::none)) {
-        if (!exists(fs_to)) {
+    else if(is_directory(fs_from) && (options == copy_options::none || (options & copy_options::recursive) != copy_options::none)) {
+        if(!exists(fs_to)) {
             create_directory(to, from, ec);
-            if (ec) {
+            if(ec) {
                 return;
             }
         }
-        for (auto iter = directory_iterator(from, ec); iter != directory_iterator(); iter.increment(ec)) {
-            if (!ec) {
+        for(auto iter = directory_iterator(from, ec); iter != directory_iterator(); iter.increment(ec)) {
+            if(!ec) {
                 copy(iter->path(), to / iter->path().filename(), options | static_cast<copy_options>(0x8000), ec);
             }
-            if (ec) {
+            if(ec) {
                 return;
             }
         }
@@ -3825,7 +3825,7 @@ GHC_INLINE bool copy_file(const path& from, const path& to, copy_options option)
 {
     error_code ec;
     auto result = copy_file(from, to, option, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), from, to, ec);
     }
     return result;
@@ -3844,34 +3844,34 @@ GHC_INLINE bool copy_file(const path& from, const path& to, copy_options options
     auto st = status(to, tect);
     bool overwrite = false;
     ec.clear();
-    if (!is_regular_file(sf)) {
+    if(!is_regular_file(sf)) {
         ec = tecf;
         return false;
     }
-    if (exists(st) && (!is_regular_file(st) || equivalent(from, to, ec) || (options & (copy_options::skip_existing | copy_options::overwrite_existing | copy_options::update_existing)) == copy_options::none)) {
+    if(exists(st) && (!is_regular_file(st) || equivalent(from, to, ec) || (options & (copy_options::skip_existing | copy_options::overwrite_existing | copy_options::update_existing)) == copy_options::none)) {
         ec = tect ? tect : detail::make_error_code(detail::portable_error::exists);
         return false;
     }
-    if (exists(st)) {
-        if ((options & copy_options::update_existing) == copy_options::update_existing) {
+    if(exists(st)) {
+        if((options & copy_options::update_existing) == copy_options::update_existing) {
             auto from_time = last_write_time(from, ec);
-            if (ec) {
+            if(ec) {
                 ec = detail::make_system_error();
                 return false;
             }
             auto to_time = last_write_time(to, ec);
-            if (ec) {
+            if(ec) {
                 ec = detail::make_system_error();
                 return false;
             }
-            if (from_time <= to_time) {
+            if(from_time <= to_time) {
                 return false;
             }
         }
         overwrite = true;
     }
 #ifdef GHC_OS_WINDOWS
-    if (!::CopyFileW(GHC_NATIVEWP(from), GHC_NATIVEWP(to), !overwrite)) {
+    if(!::CopyFileW(GHC_NATIVEWP(from), GHC_NATIVEWP(to), !overwrite)) {
         ec = detail::make_system_error();
         return false;
     }
@@ -3879,34 +3879,34 @@ GHC_INLINE bool copy_file(const path& from, const path& to, copy_options options
 #else
     vector<char> buffer(16384, '\0');
     int in = -1, out = -1;
-    if ((in = ::open(from.c_str(), O_RDONLY)) < 0) {
+    if((in = ::open(from.c_str(), O_RDONLY)) < 0) {
         ec = detail::make_system_error();
         return false;
     }
     int mode = O_CREAT | O_WRONLY | O_TRUNC;
-    if (!overwrite) {
+    if(!overwrite) {
         mode |= O_EXCL;
     }
-    if ((out = ::open(to.c_str(), mode, static_cast<int>(sf.permissions() & perms::all))) < 0) {
+    if((out = ::open(to.c_str(), mode, static_cast<int>(sf.permissions() & perms::all))) < 0) {
         ec = detail::make_system_error();
         ::close(in);
         return false;
     }
     ssize_t br, bw;
-    while ((br = ::read(in, buffer.data(), buffer.size())) > 0) {
+    while((br = ::read(in, buffer.data(), buffer.size())) > 0) {
         ssize_t offset = 0;
         do {
-            if ((bw = ::write(out, buffer.data() + offset, static_cast<size_t>(br))) > 0) {
+            if((bw = ::write(out, buffer.data() + offset, static_cast<size_t>(br))) > 0) {
                 br -= bw;
                 offset += bw;
             }
-            else if (bw < 0) {
+            else if(bw < 0) {
                 ec = detail::make_system_error();
                 ::close(in);
                 ::close(out);
                 return false;
             }
-        } while (br);
+        } while(br);
     }
     ::close(in);
     ::close(out);
@@ -3919,7 +3919,7 @@ GHC_INLINE void copy_symlink(const path& existing_symlink, const path& new_symli
 {
     error_code ec;
     copy_symlink(existing_symlink, new_symlink, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), existing_symlink, new_symlink, ec);
     }
 }
@@ -3929,8 +3929,8 @@ GHC_INLINE void copy_symlink(const path& existing_symlink, const path& new_symli
 {
     ec.clear();
     auto to = read_symlink(existing_symlink, ec);
-    if (!ec) {
-        if (exists(to, ec) && is_directory(to, ec)) {
+    if(!ec) {
+        if(exists(to, ec) && is_directory(to, ec)) {
             create_directory_symlink(to, new_symlink, ec);
         }
         else {
@@ -3944,7 +3944,7 @@ GHC_INLINE bool create_directories(const path& p)
 {
     error_code ec;
     auto result = create_directories(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -3959,19 +3959,19 @@ GHC_INLINE bool create_directories(const path& p, error_code& ec) noexcept
     auto rootPathLen = p._prefixLength + p.root_name_length() + (p.has_root_directory() ? 1 : 0);
     current = p.native().substr(0, rootPathLen);
     path folders(p._path.substr(rootPathLen));
-    for (path::string_type part : folders) {
+    for(path::string_type part : folders) {
         current /= part;
         error_code tec;
         auto fs = status(current, tec);
-        if (tec && fs.type() != file_type::not_found) {
+        if(tec && fs.type() != file_type::not_found) {
             ec = tec;
             return false;
         }
-        if (!exists(fs)) {
+        if(!exists(fs)) {
             create_directory(current, ec);
-            if (ec) {
+            if(ec) {
                 error_code tmp_ec;
-                if (is_directory(current, tmp_ec)) {
+                if(is_directory(current, tmp_ec)) {
                     ec.clear();
                 }
                 else {
@@ -3981,7 +3981,7 @@ GHC_INLINE bool create_directories(const path& p, error_code& ec) noexcept
             didCreate = true;
         }
 #ifndef LWG_2935_BEHAVIOUR
-        else if (!is_directory(fs)) {
+        else if(!is_directory(fs)) {
             ec = detail::make_error_code(detail::portable_error::exists);
             return false;
         }
@@ -3995,7 +3995,7 @@ GHC_INLINE bool create_directory(const path& p)
 {
     error_code ec;
     auto result = create_directory(p, path(), ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4012,7 +4012,7 @@ GHC_INLINE bool create_directory(const path& p, const path& attributes)
 {
     error_code ec;
     auto result = create_directory(p, attributes, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4025,36 +4025,36 @@ GHC_INLINE bool create_directory(const path& p, const path& attributes, error_co
     ec.clear();
     auto fs = status(p, tec);
 #ifdef LWG_2935_BEHAVIOUR
-    if (status_known(fs) && exists(fs)) {
+    if(status_known(fs) && exists(fs)) {
         return false;
     }
 #else
-    if (status_known(fs) && exists(fs) && is_directory(fs)) {
+    if(status_known(fs) && exists(fs) && is_directory(fs)) {
         return false;
     }
 #endif
 #ifdef GHC_OS_WINDOWS
-    if (!attributes.empty()) {
-        if (!::CreateDirectoryExW(GHC_NATIVEWP(attributes), GHC_NATIVEWP(p), NULL)) {
+    if(!attributes.empty()) {
+        if(!::CreateDirectoryExW(GHC_NATIVEWP(attributes), GHC_NATIVEWP(p), NULL)) {
             ec = detail::make_system_error();
             return false;
         }
     }
-    else if (!::CreateDirectoryW(GHC_NATIVEWP(p), NULL)) {
+    else if(!::CreateDirectoryW(GHC_NATIVEWP(p), NULL)) {
         ec = detail::make_system_error();
         return false;
     }
 #else
     ::mode_t attribs = static_cast<mode_t>(perms::all);
-    if (!attributes.empty()) {
+    if(!attributes.empty()) {
         struct ::stat fileStat;
-        if (::stat(attributes.c_str(), &fileStat) != 0) {
+        if(::stat(attributes.c_str(), &fileStat) != 0) {
             ec = detail::make_system_error();
             return false;
         }
         attribs = fileStat.st_mode;
     }
-    if (::mkdir(p.c_str(), attribs) != 0) {
+    if(::mkdir(p.c_str(), attribs) != 0) {
         ec = detail::make_system_error();
         return false;
     }
@@ -4067,7 +4067,7 @@ GHC_INLINE void create_directory_symlink(const path& to, const path& new_symlink
 {
     error_code ec;
     create_directory_symlink(to, new_symlink, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), to, new_symlink, ec);
     }
 }
@@ -4084,7 +4084,7 @@ GHC_INLINE void create_hard_link(const path& to, const path& new_hard_link)
 {
     error_code ec;
     create_hard_link(to, new_hard_link, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), to, new_hard_link, ec);
     }
 }
@@ -4101,7 +4101,7 @@ GHC_INLINE void create_symlink(const path& to, const path& new_symlink)
 {
     error_code ec;
     create_symlink(to, new_symlink, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), to, new_symlink, ec);
     }
 }
@@ -4117,7 +4117,7 @@ GHC_INLINE path current_path()
 {
     error_code ec;
     auto result = current_path(ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), ec);
     }
     return result;
@@ -4130,7 +4130,7 @@ GHC_INLINE path current_path(error_code& ec)
 #ifdef GHC_OS_WINDOWS
     DWORD pathlen = ::GetCurrentDirectoryW(0, 0);
     unique_ptr<wchar_t[]> buffer(new wchar_t[size_t(pathlen) + 1]);
-    if (::GetCurrentDirectoryW(pathlen, buffer.get()) == 0) {
+    if(::GetCurrentDirectoryW(pathlen, buffer.get()) == 0) {
         ec = detail::make_system_error();
         return path();
     }
@@ -4138,7 +4138,7 @@ GHC_INLINE path current_path(error_code& ec)
 #else
     size_t pathlen = static_cast<size_t>(max(int(::pathconf(".", _PC_PATH_MAX)), int(PATH_MAX)));
     unique_ptr<char[]> buffer(new char[pathlen + 1]);
-    if (::getcwd(buffer.get(), pathlen) == nullptr) {
+    if(::getcwd(buffer.get(), pathlen) == nullptr) {
         ec = detail::make_system_error();
         return path();
     }
@@ -4151,7 +4151,7 @@ GHC_INLINE void current_path(const path& p)
 {
     error_code ec;
     current_path(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
 }
@@ -4161,11 +4161,11 @@ GHC_INLINE void current_path(const path& p, error_code& ec) noexcept
 {
     ec.clear();
 #ifdef GHC_OS_WINDOWS
-    if (!::SetCurrentDirectoryW(GHC_NATIVEWP(p))) {
+    if(!::SetCurrentDirectoryW(GHC_NATIVEWP(p))) {
         ec = detail::make_system_error();
     }
 #else
-    if (::chdir(p.string().c_str()) == -1) {
+    if(::chdir(p.string().c_str()) == -1) {
         ec = detail::make_system_error();
     }
 #endif
@@ -4186,7 +4186,7 @@ GHC_INLINE bool exists(const path& p)
 GHC_INLINE bool exists(const path& p, error_code& ec) noexcept
 {
     file_status s = status(p, ec);
-    if (status_known(s)) {
+    if(status_known(s)) {
         ec.clear();
     }
     return exists(s);
@@ -4197,7 +4197,7 @@ GHC_INLINE bool equivalent(const path& p1, const path& p2)
 {
     error_code ec;
     bool result = equivalent(p1, p2, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p1, p2, ec);
     }
     return result;
@@ -4211,22 +4211,22 @@ GHC_INLINE bool equivalent(const path& p1, const path& p2, error_code& ec) noexc
     detail::unique_handle file1(::CreateFileW(GHC_NATIVEWP(p1), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
     auto e1 = ::GetLastError();
     detail::unique_handle file2(::CreateFileW(GHC_NATIVEWP(p2), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
-    if (!file1 || !file2) {
+    if(!file1 || !file2) {
 #ifdef LWG_2937_BEHAVIOUR
         ec = detail::make_system_error(e1 ? e1 : ::GetLastError());
 #else
-        if (file1 == file2) {
+        if(file1 == file2) {
             ec = detail::make_system_error(e1 ? e1 : ::GetLastError());
         }
 #endif
         return false;
     }
     BY_HANDLE_FILE_INFORMATION inf1, inf2;
-    if (!::GetFileInformationByHandle(file1.get(), &inf1)) {
+    if(!::GetFileInformationByHandle(file1.get(), &inf1)) {
         ec = detail::make_system_error();
         return false;
     }
-    if (!::GetFileInformationByHandle(file2.get(), &inf2)) {
+    if(!::GetFileInformationByHandle(file2.get(), &inf2)) {
         ec = detail::make_system_error();
         return false;
     }
@@ -4237,11 +4237,11 @@ GHC_INLINE bool equivalent(const path& p1, const path& p2, error_code& ec) noexc
     auto rc1 = ::stat(p1.c_str(), &s1);
     auto e1 = errno;
     auto rc2 = ::stat(p2.c_str(), &s2);
-    if (rc1 || rc2) {
+    if(rc1 || rc2) {
 #ifdef LWG_2937_BEHAVIOUR
         ec = detail::make_system_error(e1 ? e1 : errno);
 #else
-        if (rc1 && rc2) {
+        if(rc1 && rc2) {
             ec = detail::make_system_error(e1 ? e1 : errno);
         }
 #endif
@@ -4256,7 +4256,7 @@ GHC_INLINE uintmax_t file_size(const path& p)
 {
     error_code ec;
     auto result = file_size(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4268,14 +4268,14 @@ GHC_INLINE uintmax_t file_size(const path& p, error_code& ec) noexcept
     ec.clear();
 #ifdef GHC_OS_WINDOWS
     WIN32_FILE_ATTRIBUTE_DATA attr;
-    if (!GetFileAttributesExW(GHC_NATIVEWP(p), GetFileExInfoStandard, &attr)) {
+    if(!GetFileAttributesExW(GHC_NATIVEWP(p), GetFileExInfoStandard, &attr)) {
         ec = detail::make_system_error();
         return static_cast<uintmax_t>(-1);
     }
     return static_cast<uintmax_t>(attr.nFileSizeHigh) << (sizeof(attr.nFileSizeHigh) * 8) | attr.nFileSizeLow;
 #else
     struct ::stat fileStat;
-    if (::stat(p.c_str(), &fileStat) == -1) {
+    if(::stat(p.c_str(), &fileStat) == -1) {
         ec = detail::make_system_error();
         return static_cast<uintmax_t>(-1);
     }
@@ -4289,7 +4289,7 @@ GHC_INLINE uintmax_t hard_link_count(const path& p)
 {
     error_code ec;
     auto result = hard_link_count(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4303,11 +4303,11 @@ GHC_INLINE uintmax_t hard_link_count(const path& p, error_code& ec) noexcept
     uintmax_t result = static_cast<uintmax_t>(-1);
     detail::unique_handle file(::CreateFileW(GHC_NATIVEWP(p), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
     BY_HANDLE_FILE_INFORMATION inf;
-    if (!file) {
+    if(!file) {
         ec = detail::make_system_error();
     }
     else {
-        if (!::GetFileInformationByHandle(file.get(), &inf)) {
+        if(!::GetFileInformationByHandle(file.get(), &inf)) {
             ec = detail::make_system_error();
         }
         else {
@@ -4318,7 +4318,7 @@ GHC_INLINE uintmax_t hard_link_count(const path& p, error_code& ec) noexcept
 #else
     uintmax_t result = 0;
     file_status fs = detail::status_ex(p, ec, nullptr, nullptr, &result, nullptr);
-    if (fs.type() == file_type::not_found) {
+    if(fs.type() == file_type::not_found) {
         ec = detail::make_error_code(detail::portable_error::not_found);
     }
     return ec ? static_cast<uintmax_t>(-1) : result;
@@ -4380,7 +4380,7 @@ GHC_INLINE bool is_directory(const path& p, error_code& ec) noexcept
 #ifdef GHC_WITH_EXCEPTIONS
 GHC_INLINE bool is_empty(const path& p)
 {
-    if (is_directory(p)) {
+    if(is_directory(p)) {
         return directory_iterator(p) == directory_iterator();
     }
     else {
@@ -4392,19 +4392,19 @@ GHC_INLINE bool is_empty(const path& p)
 GHC_INLINE bool is_empty(const path& p, error_code& ec) noexcept
 {
     auto fs = status(p, ec);
-    if (ec) {
+    if(ec) {
         return false;
     }
-    if (is_directory(fs)) {
+    if(is_directory(fs)) {
         directory_iterator iter(p, ec);
-        if (ec) {
+        if(ec) {
             return false;
         }
         return iter == directory_iterator();
     }
     else {
         auto sz = file_size(p, ec);
-        if (ec) {
+        if(ec) {
             return false;
         }
         return sz == 0;
@@ -4501,7 +4501,7 @@ GHC_INLINE file_time_type last_write_time(const path& p)
 {
     error_code ec;
     auto result = last_write_time(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4521,7 +4521,7 @@ GHC_INLINE void last_write_time(const path& p, file_time_type new_time)
 {
     error_code ec;
     last_write_time(p, new_time, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
 }
@@ -4537,20 +4537,20 @@ GHC_INLINE void last_write_time(const path& p, file_time_type new_time, error_co
     auto tt = chrono::duration_cast<chrono::microseconds>(d).count() * 10 + 116444736000000000;
     ft.dwLowDateTime = static_cast<DWORD>(tt);
     ft.dwHighDateTime = static_cast<DWORD>(tt >> 32);
-    if (!::SetFileTime(file.get(), 0, 0, &ft)) {
+    if(!::SetFileTime(file.get(), 0, 0, &ft)) {
         ec = detail::make_system_error();
     }
 #elif defined(GHC_OS_MACOS)
 #ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
 #if __MAC_OS_X_VERSION_MIN_REQUIRED < 101300
     struct ::stat fs;
-    if (::stat(p.c_str(), &fs) == 0) {
+    if(::stat(p.c_str(), &fs) == 0) {
         struct ::timeval tv[2];
         tv[0].tv_sec = fs.st_atimespec.tv_sec;
         tv[0].tv_usec = static_cast<int>(fs.st_atimespec.tv_nsec / 1000);
         tv[1].tv_sec = chrono::duration_cast<chrono::seconds>(d).count();
         tv[1].tv_usec = static_cast<int>(chrono::duration_cast<chrono::microseconds>(d).count() % 1000000);
-        if (::utimes(p.c_str(), tv) == 0) {
+        if(::utimes(p.c_str(), tv) == 0) {
             return;
         }
     }
@@ -4562,7 +4562,7 @@ GHC_INLINE void last_write_time(const path& p, file_time_type new_time, error_co
     times[0].tv_nsec = UTIME_OMIT;
     times[1].tv_sec = chrono::duration_cast<chrono::seconds>(d).count();
     times[1].tv_nsec = 0;  // chrono::duration_cast<chrono::nanoseconds>(d).count() % 1000000000;
-    if (::utimensat(AT_FDCWD, p.c_str(), times, AT_SYMLINK_NOFOLLOW) != 0) {
+    if(::utimensat(AT_FDCWD, p.c_str(), times, AT_SYMLINK_NOFOLLOW) != 0) {
         ec = detail::make_system_error();
     }
     return;
@@ -4578,9 +4578,9 @@ GHC_INLINE void last_write_time(const path& p, file_time_type new_time, error_co
     times[1].tv_sec = static_cast<decltype(times[1].tv_sec)>(chrono::duration_cast<chrono::seconds>(d).count());
     times[1].tv_nsec = static_cast<decltype(times[1].tv_nsec)>(chrono::duration_cast<chrono::nanoseconds>(d).count() % 1000000000);
 #if defined(__ANDROID_API__) && __ANDROID_API__ < 12
-    if (syscall(__NR_utimensat, AT_FDCWD, p.c_str(), times, AT_SYMLINK_NOFOLLOW) != 0) {
+    if(syscall(__NR_utimensat, AT_FDCWD, p.c_str(), times, AT_SYMLINK_NOFOLLOW) != 0) {
 #else
-    if (::utimensat(AT_FDCWD, p.c_str(), times, AT_SYMLINK_NOFOLLOW) != 0) {
+    if(::utimensat(AT_FDCWD, p.c_str(), times, AT_SYMLINK_NOFOLLOW) != 0) {
 #endif
         ec = detail::make_system_error();
     }
@@ -4593,7 +4593,7 @@ GHC_INLINE void permissions(const path& p, perms prms, perm_options opts)
 {
     error_code ec;
     permissions(p, prms, opts, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
 }
@@ -4606,13 +4606,13 @@ GHC_INLINE void permissions(const path& p, perms prms, error_code& ec) noexcept
 
 GHC_INLINE void permissions(const path& p, perms prms, perm_options opts, error_code& ec) noexcept
 {
-    if (static_cast<int>(opts & (perm_options::replace | perm_options::add | perm_options::remove)) == 0) {
+    if(static_cast<int>(opts & (perm_options::replace | perm_options::add | perm_options::remove)) == 0) {
         ec = detail::make_error_code(detail::portable_error::invalid_argument);
         return;
     }
     auto fs = symlink_status(p, ec);
-    if ((opts & perm_options::replace) != perm_options::replace) {
-        if ((opts & perm_options::add) == perm_options::add) {
+    if((opts & perm_options::replace) != perm_options::replace) {
+        if((opts & perm_options::add) == perm_options::add) {
             prms = fs.permissions() | prms;
         }
         else {
@@ -4622,28 +4622,28 @@ GHC_INLINE void permissions(const path& p, perms prms, perm_options opts, error_
 #ifdef GHC_OS_WINDOWS
 #ifdef __GNUC__
     auto oldAttr = GetFileAttributesW(GHC_NATIVEWP(p));
-    if (oldAttr != INVALID_FILE_ATTRIBUTES) {
+    if(oldAttr != INVALID_FILE_ATTRIBUTES) {
         DWORD newAttr = ((prms & perms::owner_write) == perms::owner_write) ? oldAttr & ~(static_cast<DWORD>(FILE_ATTRIBUTE_READONLY)) : oldAttr | FILE_ATTRIBUTE_READONLY;
-        if (oldAttr == newAttr || SetFileAttributesW(GHC_NATIVEWP(p), newAttr)) {
+        if(oldAttr == newAttr || SetFileAttributesW(GHC_NATIVEWP(p), newAttr)) {
             return;
         }
     }
     ec = detail::make_system_error();
 #else
     int mode = 0;
-    if ((prms & perms::owner_read) == perms::owner_read) {
+    if((prms & perms::owner_read) == perms::owner_read) {
         mode |= _S_IREAD;
     }
-    if ((prms & perms::owner_write) == perms::owner_write) {
+    if((prms & perms::owner_write) == perms::owner_write) {
         mode |= _S_IWRITE;
     }
-    if (::_wchmod(p.wstring().c_str(), mode) != 0) {
+    if(::_wchmod(p.wstring().c_str(), mode) != 0) {
         ec = detail::make_system_error();
     }
 #endif
 #else
-    if ((opts & perm_options::nofollow) != perm_options::nofollow) {
-        if (::chmod(p.c_str(), static_cast<mode_t>(prms)) != 0) {
+    if((opts & perm_options::nofollow) != perm_options::nofollow) {
+        if(::chmod(p.c_str(), static_cast<mode_t>(prms)) != 0) {
             ec = detail::make_system_error();
         }
     }
@@ -4654,7 +4654,7 @@ GHC_INLINE void permissions(const path& p, perms prms, perm_options opts, error_
 GHC_INLINE path proximate(const path& p, error_code& ec)
 {
     auto cp = current_path(ec);
-    if (!ec) {
+    if(!ec) {
         return proximate(p, cp, ec);
     }
     return path();
@@ -4678,7 +4678,7 @@ GHC_INLINE path read_symlink(const path& p)
 {
     error_code ec;
     auto result = read_symlink(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4688,7 +4688,7 @@ GHC_INLINE path read_symlink(const path& p)
 GHC_INLINE path read_symlink(const path& p, error_code& ec)
 {
     file_status fs = symlink_status(p, ec);
-    if (fs.type() != file_type::symlink) {
+    if(fs.type() != file_type::symlink) {
         ec = detail::make_error_code(detail::portable_error::invalid_argument);
         return path();
     }
@@ -4718,7 +4718,7 @@ GHC_INLINE bool remove(const path& p)
 {
     error_code ec;
     auto result = remove(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4736,36 +4736,36 @@ GHC_INLINE bool remove(const path& p, error_code& ec) noexcept
     auto cstr = np.c_str();
 #endif
     DWORD attr = GetFileAttributesW(cstr);
-    if (attr == INVALID_FILE_ATTRIBUTES) {
+    if(attr == INVALID_FILE_ATTRIBUTES) {
         auto error = ::GetLastError();
-        if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) {
+        if(error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) {
             return false;
         }
         ec = detail::make_system_error(error);
     }
-    else if (attr & FILE_ATTRIBUTE_READONLY) {
+    else if(attr & FILE_ATTRIBUTE_READONLY) {
         auto new_attr = attr & ~static_cast<DWORD>(FILE_ATTRIBUTE_READONLY);
-        if (!SetFileAttributesW(cstr, new_attr)) {
+        if(!SetFileAttributesW(cstr, new_attr)) {
             auto error = ::GetLastError();
             ec = detail::make_system_error(error);
         }
     }
-    if (!ec) {
-        if (attr & FILE_ATTRIBUTE_DIRECTORY) {
-            if (!RemoveDirectoryW(cstr)) {
+    if(!ec) {
+        if(attr & FILE_ATTRIBUTE_DIRECTORY) {
+            if(!RemoveDirectoryW(cstr)) {
                 ec = detail::make_system_error();
             }
         }
         else {
-            if (!DeleteFileW(cstr)) {
+            if(!DeleteFileW(cstr)) {
                 ec = detail::make_system_error();
             }
         }
     }
 #else
-    if (::remove(p.c_str()) == -1) {
+    if(::remove(p.c_str()) == -1) {
         auto error = errno;
-        if (error == ENOENT) {
+        if(error == ENOENT) {
             return false;
         }
         ec = detail::make_system_error();
@@ -4779,7 +4779,7 @@ GHC_INLINE uintmax_t remove_all(const path& p)
 {
     error_code ec;
     auto result = remove_all(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4790,43 +4790,43 @@ GHC_INLINE uintmax_t remove_all(const path& p, error_code& ec) noexcept
 {
     ec.clear();
     uintmax_t count = 0;
-    if (p == "/") {
+    if(p == "/") {
         ec = detail::make_error_code(detail::portable_error::not_supported);
         return static_cast<uintmax_t>(-1);
     }
     error_code tec;
     auto fs = symlink_status(p, tec);
-    if (exists(fs) && is_directory(fs)) {
-        for (auto iter = directory_iterator(p, ec); iter != directory_iterator(); iter.increment(ec)) {
-            if (ec && !detail::is_not_found_error(ec)) {
+    if(exists(fs) && is_directory(fs)) {
+        for(auto iter = directory_iterator(p, ec); iter != directory_iterator(); iter.increment(ec)) {
+            if(ec && !detail::is_not_found_error(ec)) {
                 break;
             }
             bool is_symlink_result = iter->is_symlink(ec);
-            if (ec)
+            if(ec)
                 return static_cast<uintmax_t>(-1);
-            if (!is_symlink_result && iter->is_directory(ec)) {
+            if(!is_symlink_result && iter->is_directory(ec)) {
                 count += remove_all(iter->path(), ec);
-                if (ec) {
+                if(ec) {
                     return static_cast<uintmax_t>(-1);
                 }
             }
             else {
-                if (!ec) {
+                if(!ec) {
                     remove(iter->path(), ec);
                 }
-                if (ec) {
+                if(ec) {
                     return static_cast<uintmax_t>(-1);
                 }
                ++count;
             }
         }
     }
-    if (!ec) {
-        if (remove(p, ec)) {
+    if(!ec) {
+        if(remove(p, ec)) {
            ++count;
         }
     }
-    if (ec) {
+    if(ec) {
         return static_cast<uintmax_t>(-1);
     }
     return count;
@@ -4837,7 +4837,7 @@ GHC_INLINE void rename(const path& from, const path& to)
 {
     error_code ec;
     rename(from, to, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), from, to, ec);
     }
 }
@@ -4847,14 +4847,14 @@ GHC_INLINE void rename(const path& from, const path& to, error_code& ec) noexcep
 {
     ec.clear();
 #ifdef GHC_OS_WINDOWS
-    if (from != to) {
-        if (!MoveFileExW(GHC_NATIVEWP(from), GHC_NATIVEWP(to), (DWORD)MOVEFILE_REPLACE_EXISTING)) {
+    if(from != to) {
+        if(!MoveFileExW(GHC_NATIVEWP(from), GHC_NATIVEWP(to), (DWORD)MOVEFILE_REPLACE_EXISTING)) {
             ec = detail::make_system_error();
         }
     }
 #else
-    if (from != to) {
-        if (::rename(from.c_str(), to.c_str()) != 0) {
+    if(from != to) {
+        if(::rename(from.c_str(), to.c_str()) != 0) {
             ec = detail::make_system_error();
         }
     }
@@ -4866,7 +4866,7 @@ GHC_INLINE void resize_file(const path& p, uintmax_t size)
 {
     error_code ec;
     resize_file(p, size, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
 }
@@ -4878,7 +4878,7 @@ GHC_INLINE void resize_file(const path& p, uintmax_t size, error_code& ec) noexc
 #ifdef GHC_OS_WINDOWS
     LARGE_INTEGER lisize;
     lisize.QuadPart = static_cast<LONGLONG>(size);
-    if (lisize.QuadPart < 0) {
+    if(lisize.QuadPart < 0) {
 #ifdef ERROR_FILE_TOO_LARGE
         ec = detail::make_system_error(ERROR_FILE_TOO_LARGE);
 #else
@@ -4887,14 +4887,14 @@ GHC_INLINE void resize_file(const path& p, uintmax_t size, error_code& ec) noexc
         return;
     }
     detail::unique_handle file(CreateFileW(GHC_NATIVEWP(p), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL));
-    if (!file) {
+    if(!file) {
         ec = detail::make_system_error();
     }
-    else if (SetFilePointerEx(file.get(), lisize, NULL, FILE_BEGIN) == 0 || SetEndOfFile(file.get()) == 0) {
+    else if(SetFilePointerEx(file.get(), lisize, NULL, FILE_BEGIN) == 0 || SetEndOfFile(file.get()) == 0) {
         ec = detail::make_system_error();
     }
 #else
-    if (::truncate(p.c_str(), static_cast<off_t>(size)) != 0) {
+    if(::truncate(p.c_str(), static_cast<off_t>(size)) != 0) {
         ec = detail::make_system_error();
     }
 #endif
@@ -4905,7 +4905,7 @@ GHC_INLINE space_info space(const path& p)
 {
     error_code ec;
     auto result = space(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4919,14 +4919,14 @@ GHC_INLINE space_info space(const path& p, error_code& ec) noexcept
     ULARGE_INTEGER freeBytesAvailableToCaller = {{ 0, 0 }};
     ULARGE_INTEGER totalNumberOfBytes = {{ 0, 0 }};
     ULARGE_INTEGER totalNumberOfFreeBytes = {{ 0, 0 }};
-    if (!GetDiskFreeSpaceExW(GHC_NATIVEWP(p), &freeBytesAvailableToCaller, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
+    if(!GetDiskFreeSpaceExW(GHC_NATIVEWP(p), &freeBytesAvailableToCaller, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
         ec = detail::make_system_error();
         return {static_cast<uintmax_t>(-1), static_cast<uintmax_t>(-1), static_cast<uintmax_t>(-1)};
     }
     return {static_cast<uintmax_t>(totalNumberOfBytes.QuadPart), static_cast<uintmax_t>(totalNumberOfFreeBytes.QuadPart), static_cast<uintmax_t>(freeBytesAvailableToCaller.QuadPart)};
 #else
     struct ::statvfs sfs;
-    if (::statvfs(p.c_str(), &sfs) != 0) {
+    if(::statvfs(p.c_str(), &sfs) != 0) {
         ec = detail::make_system_error();
         return {static_cast<uintmax_t>(-1), static_cast<uintmax_t>(-1), static_cast<uintmax_t>(-1)};
     }
@@ -4939,7 +4939,7 @@ GHC_INLINE file_status status(const path& p)
 {
     error_code ec;
     auto result = status(p, ec);
-    if (result.type() == file_type::none) {
+    if(result.type() == file_type::none) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -4961,7 +4961,7 @@ GHC_INLINE file_status symlink_status(const path& p)
 {
     error_code ec;
     auto result = symlink_status(p, ec);
-    if (result.type() == file_type::none) {
+    if(result.type() == file_type::none) {
         throw filesystem_error(detail::systemErrorText(ec.value()), ec);
     }
     return result;
@@ -4978,7 +4978,7 @@ GHC_INLINE path temp_directory_path()
 {
     error_code ec;
     path result = temp_directory_path(ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), ec);
     }
     return result;
@@ -4991,7 +4991,7 @@ GHC_INLINE path temp_directory_path(error_code& ec) noexcept
 #ifdef GHC_OS_WINDOWS
     wchar_t buffer[512];
     auto rc = GetTempPathW(511, buffer);
-    if (!rc || rc > 511) {
+    if(!rc || rc > 511) {
         ec = detail::make_system_error();
         return path();
     }
@@ -4999,9 +4999,9 @@ GHC_INLINE path temp_directory_path(error_code& ec) noexcept
 #else
     static const char* temp_vars[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR", nullptr};
     const char* temp_path = nullptr;
-    for (auto temp_name = temp_vars; *temp_name != nullptr;++temp_name) {
+    for(auto temp_name = temp_vars; *temp_name != nullptr;++temp_name) {
         temp_path = getenv(*temp_name);
-        if (temp_path) {
+        if(temp_path) {
             return path(temp_path);
         }
     }
@@ -5014,7 +5014,7 @@ GHC_INLINE path weakly_canonical(const path& p)
 {
     error_code ec;
     auto result = weakly_canonical(p, ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), p, ec);
     }
     return result;
@@ -5026,20 +5026,20 @@ GHC_INLINE path weakly_canonical(const path& p, error_code& ec) noexcept
     path result;
     ec.clear();
     bool scan = true;
-    for (auto pe : p) {
-        if (scan) {
+    for(auto pe : p) {
+        if(scan) {
             error_code tec;
-            if (exists(result / pe, tec)) {
+            if(exists(result / pe, tec)) {
                 result /= pe;
             }
             else {
-                if (ec) {
+                if(ec) {
                     return path();
                 }
                 scan = false;
-                if (!result.empty()) {
+                if(!result.empty()) {
                     result = canonical(result, ec) / pe;
-                    if (ec) {
+                    if(ec) {
                         break;
                     }
                 }
@@ -5052,8 +5052,8 @@ GHC_INLINE path weakly_canonical(const path& p, error_code& ec) noexcept
             result /= pe;
         }
     }
-    if (scan) {
-        if (!result.empty()) {
+    if(scan) {
+        if(!result.empty()) {
             result = canonical(result, ec);
         }
     }
@@ -5195,7 +5195,7 @@ GHC_INLINE void directory_entry::refresh()
 {
     error_code ec;
     refresh(ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), _path, ec);
     }
 }
@@ -5230,7 +5230,7 @@ GHC_INLINE file_type directory_entry::status_file_type() const
 
 GHC_INLINE file_type directory_entry::status_file_type(error_code& ec) const noexcept
 {
-    if (_status.type() != file_type::none) {
+    if(_status.type() != file_type::none) {
         ec.clear();
         return _status.type();
     }
@@ -5344,7 +5344,7 @@ GHC_INLINE bool directory_entry::is_symlink() const
 
 GHC_INLINE bool directory_entry::is_symlink(error_code& ec) const noexcept
 {
-    if (_symlink_status.type() != file_type::none) {
+    if(_symlink_status.type() != file_type::none) {
         ec.clear();
         return _symlink_status.type() == file_type::symlink;
     }
@@ -5354,7 +5354,7 @@ GHC_INLINE bool directory_entry::is_symlink(error_code& ec) const noexcept
 #ifdef GHC_WITH_EXCEPTIONS
 GHC_INLINE uintmax_t directory_entry::file_size() const
 {
-    if (_file_size != static_cast<uintmax_t>(-1)) {
+    if(_file_size != static_cast<uintmax_t>(-1)) {
         return _file_size;
     }
     return filesystem::file_size(path());
@@ -5363,7 +5363,7 @@ GHC_INLINE uintmax_t directory_entry::file_size() const
 
 GHC_INLINE uintmax_t directory_entry::file_size(error_code& ec) const noexcept
 {
-    if (_file_size != static_cast<uintmax_t>(-1)) {
+    if(_file_size != static_cast<uintmax_t>(-1)) {
         ec.clear();
         return _file_size;
     }
@@ -5375,7 +5375,7 @@ GHC_INLINE uintmax_t directory_entry::file_size(error_code& ec) const noexcept
 GHC_INLINE uintmax_t directory_entry::hard_link_count() const
 {
 #ifndef GHC_OS_WINDOWS
-    if (_hard_link_count != static_cast<uintmax_t>(-1)) {
+    if(_hard_link_count != static_cast<uintmax_t>(-1)) {
         return _hard_link_count;
     }
 #endif
@@ -5386,7 +5386,7 @@ GHC_INLINE uintmax_t directory_entry::hard_link_count() const
 GHC_INLINE uintmax_t directory_entry::hard_link_count(error_code& ec) const noexcept
 {
 #ifndef GHC_OS_WINDOWS
-    if (_hard_link_count != static_cast<uintmax_t>(-1)) {
+    if(_hard_link_count != static_cast<uintmax_t>(-1)) {
         ec.clear();
         return _hard_link_count;
     }
@@ -5398,7 +5398,7 @@ GHC_INLINE uintmax_t directory_entry::hard_link_count(error_code& ec) const noex
 #ifdef GHC_WITH_EXCEPTIONS
 GHC_INLINE file_time_type directory_entry::last_write_time() const
 {
-    if (_last_write_time != 0) {
+    if(_last_write_time != 0) {
         return chrono::system_clock::from_time_t(_last_write_time);
     }
     return filesystem::last_write_time(path());
@@ -5407,7 +5407,7 @@ GHC_INLINE file_time_type directory_entry::last_write_time() const
 
 GHC_INLINE file_time_type directory_entry::last_write_time(error_code& ec) const noexcept
 {
-    if (_last_write_time != 0) {
+    if(_last_write_time != 0) {
         ec.clear();
         return chrono::system_clock::from_time_t(_last_write_time);
     }
@@ -5417,7 +5417,7 @@ GHC_INLINE file_time_type directory_entry::last_write_time(error_code& ec) const
 #ifdef GHC_WITH_EXCEPTIONS
 GHC_INLINE file_status directory_entry::status() const
 {
-    if (_status.type() != file_type::none && _status.permissions() != perms::unknown) {
+    if(_status.type() != file_type::none && _status.permissions() != perms::unknown) {
         return _status;
     }
     return filesystem::status(path());
@@ -5426,7 +5426,7 @@ GHC_INLINE file_status directory_entry::status() const
 
 GHC_INLINE file_status directory_entry::status(error_code& ec) const noexcept
 {
-    if (_status.type() != file_type::none && _status.permissions() != perms::unknown) {
+    if(_status.type() != file_type::none && _status.permissions() != perms::unknown) {
         ec.clear();
         return _status;
     }
@@ -5436,7 +5436,7 @@ GHC_INLINE file_status directory_entry::status(error_code& ec) const noexcept
 #ifdef GHC_WITH_EXCEPTIONS
 GHC_INLINE file_status directory_entry::symlink_status() const
 {
-    if (_symlink_status.type() != file_type::none && _symlink_status.permissions() != perms::unknown) {
+    if(_symlink_status.type() != file_type::none && _symlink_status.permissions() != perms::unknown) {
         return _symlink_status;
     }
     return filesystem::symlink_status(path());
@@ -5445,7 +5445,7 @@ GHC_INLINE file_status directory_entry::symlink_status() const
 
 GHC_INLINE file_status directory_entry::symlink_status(error_code& ec) const noexcept
 {
-    if (_symlink_status.type() != file_type::none && _symlink_status.permissions() != perms::unknown) {
+    if(_symlink_status.type() != file_type::none && _symlink_status.permissions() != perms::unknown) {
         ec.clear();
         return _symlink_status;
     }
@@ -5501,10 +5501,10 @@ public:
         , _options(options)
         , _dirHandle(INVALID_HANDLE_VALUE)
     {
-        if (!_base.empty()) {
+        if(!_base.empty()) {
             ZeroMemory(&_findData, sizeof(WIN32_FIND_DATAW));
-            if ((_dirHandle = FindFirstFileW(GHC_NATIVEWP((_base / "*")), &_findData)) != INVALID_HANDLE_VALUE) {
-                if (wstring(_findData.cFileName) == L"." || wstring(_findData.cFileName) == L"..") {
+            if((_dirHandle = FindFirstFileW(GHC_NATIVEWP((_base / "*")), &_findData)) != INVALID_HANDLE_VALUE) {
+                if(wstring(_findData.cFileName) == L"." || wstring(_findData.cFileName) == L"..") {
                     increment(_ec);
                 }
                 else {
@@ -5515,7 +5515,7 @@ public:
             else {
                 auto error = ::GetLastError();
                 _base = filesystem::path();
-                if (error != ERROR_ACCESS_DENIED || (options & directory_options::skip_permission_denied) == directory_options::none) {
+                if(error != ERROR_ACCESS_DENIED || (options & directory_options::skip_permission_denied) == directory_options::none) {
                     _ec = detail::make_system_error();
                 }
             }
@@ -5524,16 +5524,16 @@ public:
     impl(const impl& other) = delete;
     ~impl()
     {
-        if (_dirHandle != INVALID_HANDLE_VALUE) {
+        if(_dirHandle != INVALID_HANDLE_VALUE) {
             FindClose(_dirHandle);
             _dirHandle = INVALID_HANDLE_VALUE;
         }
     }
     void increment(error_code& ec)
     {
-        if (_dirHandle != INVALID_HANDLE_VALUE) {
+        if(_dirHandle != INVALID_HANDLE_VALUE) {
             do {
-                if (FindNextFileW(_dirHandle, &_findData)) {
+                if(FindNextFileW(_dirHandle, &_findData)) {
                     _dir_entry._path = _base;
 #ifdef GHC_USE_WCHAR_T
                     _dir_entry._path.append_name(_findData.cFileName);
@@ -5554,7 +5554,7 @@ public:
                 }
                 else {
                     auto err = ::GetLastError();
-                    if (err != ERROR_NO_MORE_FILES) {
+                    if(err != ERROR_NO_MORE_FILES) {
                         _ec = ec = detail::make_system_error(err);
                     }
                     FindClose(_dirHandle);
@@ -5562,7 +5562,7 @@ public:
                     _dir_entry._path.clear();
                     break;
                 }
-            } while (wstring(_findData.cFileName) == L"." || wstring(_findData.cFileName) == L"..");
+            } while(wstring(_findData.cFileName) == L"." || wstring(_findData.cFileName) == L"..");
         }
         else {
             ec = _ec;
@@ -5570,15 +5570,15 @@ public:
     }
     void copyToDirEntry(error_code& ec)
     {
-        if (_findData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+        if(_findData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
             _dir_entry._status = detail::status_ex(_dir_entry._path, ec, &_dir_entry._symlink_status, &_dir_entry._file_size, nullptr, &_dir_entry._last_write_time);
         }
         else {
             _dir_entry._status = detail::status_from_INFO(_dir_entry._path, &_findData, ec, &_dir_entry._file_size, &_dir_entry._last_write_time);
             _dir_entry._symlink_status = _dir_entry._status;
         }
-        if (ec) {
-            if (_dir_entry._status.type() != file_type::none && _dir_entry._symlink_status.type() != file_type::none) {
+        if(ec) {
+            if(_dir_entry._status.type() != file_type::none && _dir_entry._symlink_status.type() != file_type::none) {
                 ec.clear();
             }
             else {
@@ -5605,12 +5605,12 @@ public:
         , _dir(nullptr)
         , _entry(nullptr)
     {
-        if (!path.empty()) {
+        if(!path.empty()) {
             _dir = ::opendir(path.native().c_str());
-            if (!_dir) {
+            if(!_dir) {
                 auto error = errno;
                 _base = filesystem::path();
-                if ((error != EACCES && error != EPERM) || (options & directory_options::skip_permission_denied) == directory_options::none) {
+                if((error != EACCES && error != EPERM) || (options & directory_options::skip_permission_denied) == directory_options::none) {
                     _ec = detail::make_system_error();
                 }
             }
@@ -5622,23 +5622,23 @@ public:
     impl(const impl& other) = delete;
     ~impl()
     {
-        if (_dir) {
+        if(_dir) {
             ::closedir(_dir);
         }
     }
     void increment(error_code& ec)
     {
-        if (_dir) {
+        if(_dir) {
             bool skip;
             do {
                 skip = false;
                 errno = 0;
                 _entry = ::readdir(_dir);
-                if (_entry) {
+                if(_entry) {
                     _dir_entry._path = _base;
                     _dir_entry._path.append_name(_entry->d_name);
                     copyToDirEntry();
-                    if (ec && (ec.value() == EACCES || ec.value() == EPERM) && (_options & directory_options::skip_permission_denied) == directory_options::skip_permission_denied) {
+                    if(ec && (ec.value() == EACCES || ec.value() == EPERM) && (_options & directory_options::skip_permission_denied) == directory_options::skip_permission_denied) {
                         ec.clear();
                         skip = true;
                     }
@@ -5647,12 +5647,12 @@ public:
                     ::closedir(_dir);
                     _dir = nullptr;
                     _dir_entry._path.clear();
-                    if (errno) {
+                    if(errno) {
                         ec = detail::make_system_error();
                     }
                     break;
                 }
-            } while (skip || strcmp(_entry->d_name, ".") == 0 || strcmp(_entry->d_name, "..") == 0);
+            } while(skip || strcmp(_entry->d_name, ".") == 0 || strcmp(_entry->d_name, "..") == 0);
         }
     }
 
@@ -5692,7 +5692,7 @@ public:
                 _dir_entry._symlink_status.type(file_type::unknown);
                 break;
         }
-        if (_entry->d_type != DT_LNK) {
+        if(_entry->d_type != DT_LNK) {
             _dir_entry._status = _dir_entry._symlink_status;
         }
         else {
@@ -5723,7 +5723,7 @@ GHC_INLINE directory_iterator::directory_iterator() noexcept
 GHC_INLINE directory_iterator::directory_iterator(const path& p)
     : _impl(new impl(p, directory_options::none))
 {
-    if (_impl->_ec) {
+    if(_impl->_ec) {
         throw filesystem_error(detail::systemErrorText(_impl->_ec.value()), p, _impl->_ec);
     }
     _impl->_ec.clear();
@@ -5732,7 +5732,7 @@ GHC_INLINE directory_iterator::directory_iterator(const path& p)
 GHC_INLINE directory_iterator::directory_iterator(const path& p, directory_options options)
     : _impl(new impl(p, options))
 {
-    if (_impl->_ec) {
+    if(_impl->_ec) {
         throw filesystem_error(detail::systemErrorText(_impl->_ec.value()), p, _impl->_ec);
     }
 }
@@ -5741,7 +5741,7 @@ GHC_INLINE directory_iterator::directory_iterator(const path& p, directory_optio
 GHC_INLINE directory_iterator::directory_iterator(const path& p, error_code& ec) noexcept
     : _impl(new impl(p, directory_options::none))
 {
-    if (_impl->_ec) {
+    if(_impl->_ec) {
         ec = _impl->_ec;
     }
 }
@@ -5749,7 +5749,7 @@ GHC_INLINE directory_iterator::directory_iterator(const path& p, error_code& ec)
 GHC_INLINE directory_iterator::directory_iterator(const path& p, directory_options options, error_code& ec) noexcept
     : _impl(new impl(p, options))
 {
-    if (_impl->_ec) {
+    if(_impl->_ec) {
         ec = _impl->_ec;
     }
 }
@@ -5793,7 +5793,7 @@ GHC_INLINE directory_iterator& directory_iterator::operator++()
 {
     error_code ec;
     _impl->increment(ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), _impl->_dir_entry._path, ec);
     }
     return *this;
@@ -5919,7 +5919,7 @@ GHC_INLINE recursive_directory_iterator& recursive_directory_iterator::operator+
 {
     error_code ec;
     increment(ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), _impl->_dir_iter_stack.empty() ? path() : _impl->_dir_iter_stack.top()->path(), ec);
     }
     return *this;
@@ -5930,23 +5930,23 @@ GHC_INLINE recursive_directory_iterator& recursive_directory_iterator::increment
 {
     bool isSymLink = (*this)->is_symlink(ec);
     bool isDir = !ec && (*this)->is_directory(ec);
-    if (isSymLink && detail::is_not_found_error(ec)) {
+    if(isSymLink && detail::is_not_found_error(ec)) {
         ec.clear();
     }
-    if (!ec) {
-        if (recursion_pending() && isDir && (!isSymLink || (options() & directory_options::follow_directory_symlink) != directory_options::none)) {
+    if(!ec) {
+        if(recursion_pending() && isDir && (!isSymLink || (options() & directory_options::follow_directory_symlink) != directory_options::none)) {
             _impl->_dir_iter_stack.push(directory_iterator((*this)->path(), _impl->_options, ec));
         }
         else {
             _impl->_dir_iter_stack.top().increment(ec);
         }
-        if (!ec) {
-            while (depth() && _impl->_dir_iter_stack.top() == directory_iterator()) {
+        if(!ec) {
+            while(depth() && _impl->_dir_iter_stack.top() == directory_iterator()) {
                 _impl->_dir_iter_stack.pop();
                 _impl->_dir_iter_stack.top().increment(ec);
             }
         }
-        else if (!_impl->_dir_iter_stack.empty()) {
+        else if(!_impl->_dir_iter_stack.empty()) {
             _impl->_dir_iter_stack.pop();
         }
         _impl->_recursion_pending = true;
@@ -5959,7 +5959,7 @@ GHC_INLINE void recursive_directory_iterator::pop()
 {
     error_code ec;
     pop(ec);
-    if (ec) {
+    if(ec) {
         throw filesystem_error(detail::systemErrorText(ec.value()), _impl->_dir_iter_stack.empty() ? path() : _impl->_dir_iter_stack.top()->path(), ec);
     }
 }
@@ -5967,14 +5967,14 @@ GHC_INLINE void recursive_directory_iterator::pop()
 
 GHC_INLINE void recursive_directory_iterator::pop(error_code& ec)
 {
-    if (depth() == 0) {
+    if(depth() == 0) {
         *this = recursive_directory_iterator();
     }
     else {
         do {
             _impl->_dir_iter_stack.pop();
             _impl->_dir_iter_stack.top().increment(ec);
-        } while (depth() && _impl->_dir_iter_stack.top() == directory_iterator());
+        } while(depth() && _impl->_dir_iter_stack.top() == directory_iterator());
     }
 }
 

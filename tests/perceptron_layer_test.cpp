@@ -965,8 +965,8 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     Tensor<type, 2> activations(1,1);
     Tensor<type, 2> activations_derivatives(1,1);
 
-    Tensor<Index, 1> dims(2);
-    dims = get_dimensions(activations_derivatives);
+    Tensor<Index, 1> dimensions(2);
+    dimensions = get_dimensions(activations_derivatives);
 
     // Test
 
@@ -980,7 +980,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     activations_derivatives.setZero();
 /*
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     assert_true(activations_derivatives.rank() == 2, LOG);
     assert_true(activations_derivatives.dimension(0) == 1, LOG);
@@ -989,52 +989,52 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     assert_true(abs(activations_derivatives(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - type(1)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.196)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(0.761)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.41997)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(activations_derivatives(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(1.313)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
     assert_true(abs(activations(0,0) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
 
@@ -1051,11 +1051,11 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     activations_derivatives.resize(1,4);
     activations_derivatives.setZero();
 
-    dims = get_dimensions(activations_derivatives);
+    dimensions = get_dimensions(activations_derivatives);
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     Tensor<type, 2> numerical_activation_derivative(1,4);
 
@@ -1066,7 +1066,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1075,7 +1075,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1084,7 +1084,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1093,7 +1093,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1102,7 +1102,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1111,7 +1111,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1120,7 +1120,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1129,7 +1129,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     // Test
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1139,7 +1139,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     // Test
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -1149,7 +1149,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     // Test
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
-    perceptron_layer.calculate_activations_derivatives(combinations.data(), dims, activations.data(), dims, activations_derivatives.data(), dims);
+    perceptron_layer.calculate_activations_derivatives(combinations.data(), dimensions, activations.data(), dimensions, activations_derivatives.data(), dimensions);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);

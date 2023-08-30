@@ -2538,15 +2538,18 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     type median = type(0);
 
-    Tensor<type, 1> sorted_column(0);
+    Tensor<type, 1> sorted_column;
 
-    Tensor<type, 1> column = matrix.chip(column_index,1);
+    const Tensor<type, 1> column = matrix.chip(column_index,1);
 
     for(Index i = 0; i < column.size(); i++)
     {
         if(!isnan(column(i)))
         {
-            sorted_column = push_back(sorted_column,column(i));
+            ///@todo does not compile. Why?
+            /*
+            push_back(sorted_column, column(i));
+            */
         }
     }
 
@@ -2594,7 +2597,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
         {
             if(!isnan(column(i)))
             {
-                sorted_column = push_back(sorted_column,column(i));
+                /*
+                push_back(sorted_column,column(i));
+                */
             }
         }
 
@@ -2707,7 +2712,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
     {
         column_index = columns_indices(j);
 
-        Tensor<type, 1> sorted_column(0);
+        Tensor<type, 1> sorted_column;
 
         for(Index k = 0; k < row_indices_size; k++)
         {
@@ -2715,7 +2720,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
             if(!isnan(matrix(row_index, column_index)))
             {
-                sorted_column = push_back(sorted_column, matrix(row_index,column_index));
+                /*
+                push_back(sorted_column, matrix(row_index, column_index));
+                */
             }
         }
 

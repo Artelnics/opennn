@@ -9,7 +9,7 @@
 #include "data_set.h"
 #include "opennn_images.h"
 
-using namespace  opennn;
+using namespace opennn;
 using namespace std;
 using namespace fs;
 
@@ -3015,7 +3015,7 @@ Index DataSet::get_variables_less_target() const
 {
     Index columns_number = 0;
 
-    for (Index i = 0; i < columns.size(); i++)
+    for(Index i = 0; i < columns.size(); i++)
     {
 
         if(columns(i).type == ColumnType::Categorical)
@@ -3064,7 +3064,7 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
 
     cumulativeFrequencies[0] = binFrequencies[0];
 
-    for (int i = 1; i < 1000; i++) {
+    for(int i = 1; i < 1000; i++) {
         cumulativeFrequencies[i] = cumulativeFrequencies[i-1] + binFrequencies[i];
     }
 
@@ -3078,20 +3078,20 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
 
     // Find quartile bin numbers
     int Q1Bin = 0, Q2Bin = 0, Q3Bin = 0;
-    for (int i = 0; i < 1000; i++) {
-        if (cumulativeFrequencies[i] >= Q1Position) {
+    for(int i = 0; i < 1000; i++) {
+        if(cumulativeFrequencies[i] >= Q1Position) {
             Q1Bin = i;
             break;
         }
     }
-    for (int i = 0; i < 1000; i++) {
-        if (cumulativeFrequencies[i] >= Q2Position) {
+    for(int i = 0; i < 1000; i++) {
+        if(cumulativeFrequencies[i] >= Q2Position) {
             Q2Bin = i;
             break;
         }
     }
-    for (int i = 0; i < 1000; i++) {
-        if (cumulativeFrequencies[i] >= Q3Position) {
+    for(int i = 0; i < 1000; i++) {
+        if(cumulativeFrequencies[i] >= Q3Position) {
             Q3Bin = i;
             break;
         }
@@ -3301,9 +3301,9 @@ Index DataSet::get_variables_number() const
 {
     Index variables_number = 0;
 
-    for (Index i = 0; i < columns.size(); i++)
+    for(Index i = 0; i < columns.size(); i++)
     {
-        if (columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             variables_number += columns(i).categories.size();
         }
@@ -5407,15 +5407,18 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
 
     // Set columns
 
-    for (Index i = 0; i < inputs_variables_dimensions.dimension(0);++i) {
-        for (Index j = 0; j < inputs_variables_dimensions(i);++j) {
+    for(Index i = 0; i < inputs_variables_dimensions.dimension(0);++i)
+    {
+        for(Index j = 0; j < inputs_variables_dimensions(i);++j)
+        {
             columns(i+j).name = "column_" + to_string(i+j+1);
             columns(i+j).column_use = VariableUse::Input;
             columns(i+j).type = ColumnType::Numeric;
         }
     }
 
-    for (Index i = 0; i < channels_number;++i) {
+    for(Index i = 0; i < channels_number;++i)
+    {
         columns(inputs_variables_dimensions.dimension(0) + i).name = "column_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
         columns(inputs_variables_dimensions.dimension(0) + i).column_use = VariableUse::Target;
         columns(inputs_variables_dimensions.dimension(0) + i).type = ColumnType::Numeric;
@@ -6241,14 +6244,16 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    Tensor<string, 1> constant_columns(0);
+    Tensor<string, 1> constant_columns;
 
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == ColumnType::Constant)
         {
             columns(i).set_use(VariableUse::Unused);
-            constant_columns = push_back(constant_columns, columns(i).name);
+            /*
+            push_back(constant_columns, columns(i).name);
+            */
         }
     }
 
@@ -6295,8 +6300,9 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
             && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
                 set_sample_use(j, SampleUse::Unused);
-
-                repeated_samples = push_back(repeated_samples, j);
+                /*
+                push_back(repeated_samples, j);
+                */
             }
         }
     }
@@ -6331,7 +6337,9 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
             {
                 columns(input_column_index).set_use(VariableUse::Unused);
 
-                unused_columns = push_back(unused_columns, columns(input_column_index).name);
+                /*
+                push_back(unused_columns, columns(input_column_index).name);
+                */
             }
         }
     }
@@ -6346,26 +6354,30 @@ Tensor<string, 1> DataSet::unuse_multicollinear_columns(Tensor<Index, 1>& origin
 
     Tensor<string, 1> unused_columns;
 
-    for (Index i = 0; i < original_variable_indices.size(); i++)
+    for(Index i = 0; i < original_variable_indices.size(); i++)
     {
-        Index original_column_index = original_variable_indices(i);
+        const Index original_column_index = original_variable_indices(i);
+
         bool found = false;
 
-        for (Index j = 0; j < final_variable_indices.size(); j++)
+        for(Index j = 0; j < final_variable_indices.size(); j++)
         {
-            if (original_column_index == final_variable_indices(j))
+            if(original_column_index == final_variable_indices(j))
             {
                 found = true;
                 break;
             }
         }
 
-        Index column_index = get_column_index(original_column_index);
+        const Index column_index = get_column_index(original_column_index);
 
-        if (!found && columns(column_index).column_use != VariableUse::Unused)
+        if(!found && columns(column_index).column_use != VariableUse::Unused)
         {
             columns(column_index).set_use(VariableUse::Unused);
-            unused_columns = push_back(unused_columns, columns(column_index).name);
+
+            /*
+            push_back(unused_columns, columns(column_index).name);
+            */
         }
     }
 
@@ -7861,9 +7873,9 @@ Tensor<type,2> DataSet::round_to_precision_matrix(Tensor<type,2> matrix,const in
 
     type factor = pow(10,precision);
 
-    for (int i = 0; i < matrix.dimension(0); i++)
+    for(int i = 0; i < matrix.dimension(0); i++)
     {
-        for (int j = 0; j < matrix.dimension(1); j++)
+        for(int j = 0; j < matrix.dimension(1); j++)
         {
             matrix_rounded(i,j) = (round(factor*matrix(i,j)))/factor;
         }
@@ -7878,7 +7890,7 @@ Tensor<type, 1> DataSet::round_to_precision_tensor(Tensor<type, 1> tensor, const
 
     type factor = pow (10,precision);
 
-    for (Index i = 0; i < tensor.size(); i++)
+    for(Index i = 0; i < tensor.size(); i++)
     {
         tensor_rounded(i) = (round(factor*tensor(i)))/factor;
     }
@@ -9185,7 +9197,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             char separator = ',';
 
-            if (new_rows_labels.find(",") == string::npos
+            if(new_rows_labels.find(",") == string::npos
                     && new_rows_labels.find(";") != string::npos) {
                 separator = ';';
             }
@@ -9774,7 +9786,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     #ifdef _WIN32
 
-    if (regex_search(binary_data_file_name, accent_regex))
+    if(regex_search(binary_data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(binary_data_file_name);
@@ -9971,7 +9983,7 @@ void DataSet::load_data_binary()
 
     #ifdef _WIN32
 
-    if (regex_search(data_file_name, accent_regex))
+    if(regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -11994,17 +12006,17 @@ void DataSet::impute_missing_values_mean()
     else
     {
 
-        for (Index j = 0; j < get_variables_number(); j++)
+        for(Index j = 0; j < get_variables_number(); j++)
         {
             current_variable = j;
 
-            for (Index i = 0; i < samples_number; i++)
+            for(Index i = 0; i < samples_number; i++)
             {
                 current_sample = used_samples_indices(i);
 
-                if (isnan(data(current_sample, current_variable)))
+                if(isnan(data(current_sample, current_variable)))
                 {
-                    if (i < lags_number || i > samples_number - steps_ahead)
+                    if(i < lags_number || i > samples_number - steps_ahead)
                     {
                         data(current_sample, current_variable) = means(j);
                     }
@@ -12013,20 +12025,20 @@ void DataSet::impute_missing_values_mean()
                         Index k = i;
                         double preview_value = NAN, next_value = NAN;
 
-                        while (isnan(preview_value) && k > 0)
+                        while(isnan(preview_value) && k > 0)
                         {
                             k--;
                             preview_value = data(used_samples_indices(k), current_variable);
                         }
 
                         k = i;
-                        while (isnan(next_value) && k < samples_number)
+                        while(isnan(next_value) && k < samples_number)
                         {
                             k++;
                             next_value = data(used_samples_indices(k), current_variable);
                         }
 
-                        if (isnan(preview_value) && isnan(next_value))
+                        if(isnan(preview_value) && isnan(next_value))
                         {
                             ostringstream buffer;
 
@@ -12037,11 +12049,11 @@ void DataSet::impute_missing_values_mean()
                             throw invalid_argument(buffer.str());
                         }
 
-                        if (isnan(preview_value))
+                        if(isnan(preview_value))
                         {
                             data(current_sample, current_variable) = next_value;
                         }
-                        else if (isnan(next_value))
+                        else if(isnan(next_value))
                         {
                             data(current_sample, current_variable) = preview_value;
                         }
@@ -12362,15 +12374,15 @@ void DataSet::read_bmp()
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
-    for (const auto & entry : fs::directory_iterator(path))
+    for(const auto & entry : fs::directory_iterator(path))
     {
         folder_paths.emplace_back(entry.path().string());
     }
 
 
-    for (Index i = 0 ; i < folder_paths.size() ; i++)
+    for(Index i = 0 ; i < folder_paths.size() ; i++)
     {
-        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
             image_paths.emplace_back(entry.path().string());
         }
@@ -12462,7 +12474,7 @@ void DataSet::read_bmp()
 
         vector<string> images_paths;
 
-        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
             images_paths.emplace_back(entry.path().string());
         }
@@ -12603,7 +12615,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     int classes_number = 0;
     int images_total_number = 0;
 
-    for (const auto & entry_path : fs::directory_iterator(path))
+    for(const auto & entry_path : fs::directory_iterator(path))
     {
         if(entry_path.path().string().find(".DS_Store") != string::npos)
         {
@@ -12616,7 +12628,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
             folder_paths.emplace_back(actual_directory);
             classes_number++;
 
-            for (const auto & entry_image : fs::directory_iterator(actual_directory))
+            for(const auto & entry_image : fs::directory_iterator(actual_directory))
             {
                 if(entry_image.path().string().find(".DS_Store") != string::npos)
                 {
@@ -12661,7 +12673,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
         vector<string> images_paths;
         Index images_in_folder = 0;
 
-        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
             if(entry.path().string().find(".DS_Store") != string::npos)
             {
@@ -13645,7 +13657,7 @@ void DataSet::read_csv_1()
 
 #ifdef _WIN32
 
-    if (regex_search(data_file_name, accent_regex))
+    if(regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -13890,7 +13902,7 @@ void DataSet::read_csv_2_simple()
 
     #ifdef _WIN32
 
-    if (regex_search(data_file_name, accent_regex))
+    if(regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -13997,7 +14009,7 @@ void DataSet::read_csv_3_simple()
 
     #ifdef _WIN32
 
-    if (regex_search(data_file_name, accent_regex))
+    if(regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -14130,7 +14142,7 @@ void DataSet::read_csv_2_complete()
 
     #ifdef _WIN32
 
-    if (regex_search(data_file_name, accent_regex))
+    if(regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -14292,7 +14304,7 @@ void DataSet::read_csv_3_complete()
 
     #ifdef _WIN32
 
-    if (regex_search(data_file_name, accent_regex))
+    if(regex_search(data_file_name, accent_regex))
     {
         wstring_convert<codecvt_utf8<wchar_t>> conv;
         wstring file_name_wide = conv.from_bytes(data_file_name);
@@ -14828,39 +14840,6 @@ void DataSet::fix_repeated_names()
     }
 }
 
-void DataSet::initialize_sequential(Tensor<Index, 1>& new_tensor,
-                                    const Index& start, const Index& step, const Index& end) const
-{
-    const Index new_size = (end-start)/step+1;
-
-    new_tensor.resize(new_size);
-    new_tensor(0) = start;
-
-    for(Index i = 1; i < new_size-1; i++)
-    {
-        new_tensor(i) = new_tensor(i-1)+step;
-    }
-
-    new_tensor(new_size-1) = end;
-}
-
-
-void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
-                                   const type& start, const type& step, const type& end) const
-{
-    const Index new_size = Index((end-start)/type(step) + type(1));
-
-    new_tensor.resize(new_size);
-    new_tensor(0) = start;
-
-    for(Index i = 1; i < new_size-1; i++)
-    {
-        new_tensor(i) = new_tensor(i-1)+step;
-    }
-
-    new_tensor(new_size-1) = end;
-}
-
 
 Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index& new_batch_size) const
 {
@@ -14930,7 +14909,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
             {
                 for(Index column = 0; column < columns_number; column++)
                 {
-                    for (Index channel = 0; channel < channels_number ; channel++)
+                    for(Index channel = 0; channel < channels_number ; channel++)
                     {
                         inputs(image, row, column, channel) = data(image, index);
 
@@ -14944,7 +14923,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
         if(augmentation) perform_augmentation();
     }
-
 
     fill_submatrix(data, samples, targets, targets_data);
 }
@@ -15048,8 +15026,6 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         inputs_dimensions.resize(2);
         inputs_dimensions.setValues({batch_size, input_variables_number});
 
-//        inputs_data = (type*)malloc(static_cast<size_t>(batch_size*input_variables_number*sizeof(type)));
-
         inputs_data_size = batch_size*input_variables_number*sizeof(type);
     }
     else if(input_variables_dimensions.size() == 3)
@@ -15061,17 +15037,13 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         inputs_dimensions.resize(4);
         inputs_dimensions.setValues({batch_size, channels_number, rows_number, columns_number});
 
-        //delete inputs_data;
-//        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));
         inputs_data_size = rows_number*columns_number*channels_number*batch_size*sizeof(type);
     }
 
     targets_dimensions.resize(2);
     targets_dimensions.setValues({batch_size, target_variables_number});
 
-    //delete targets_data;
     inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
-//    inputs_data = make_unique<type[]>(inputs_data_size);
 
     targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
 }

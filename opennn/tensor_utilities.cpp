@@ -26,6 +26,23 @@ void initialize_sequential(Tensor<Index, 1>& vector)
 }
 
 
+void initialize_sequential(Tensor<Index, 1>& new_tensor,
+                           const Index& start, const Index& step, const Index& end)
+{
+    const Index new_size = (end-start)/step+1;
+
+    new_tensor.resize(new_size);
+    new_tensor(0) = start;
+
+    for(Index i = 1; i < new_size-1; i++)
+    {
+        new_tensor(i) = new_tensor(i-1)+step;
+    }
+
+    new_tensor(new_size-1) = end;
+}
+
+
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index columns_number = matrix.dimension(1);
@@ -240,7 +257,7 @@ bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    if (x.size() != y.size() || x.dimension(0) != y.dimension(0) || x.dimension(1) != y.dimension(1))
+    if(x.size() != y.size() || x.dimension(0) != y.dimension(0) || x.dimension(1) != y.dimension(1))
     {
         ostringstream buffer;
 
@@ -253,7 +270,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
-    for (int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
+    for(int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
 
     return result;
 }
@@ -1362,7 +1379,25 @@ bool contains(const Tensor<string,1>& vector, const string& value)
 };
 
 
-Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_element)
+
+void push_back(Tensor<type*, 1>& vector, type* new_element)
+{
+    const Index old_size = vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<type*, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = vector(i);
+
+    new_vector(new_size-1) = new_element;
+
+    vector = new_vector;
+}
+
+
+
+void push_back(Tensor<Index, 1>& old_vector, const Index& new_element)
 {
     const Index old_size = old_vector.size();
 
@@ -1374,11 +1409,11 @@ Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_
 
     new_vector(new_size-1) = new_element;
 
-    return new_vector;
+    old_vector = new_vector;
 }
 
 
-Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& new_string)
+void push_back_string(Tensor<string, 1>& old_vector, const string& new_string)
 {
     const Index old_size = old_vector.size();
 
@@ -1390,23 +1425,23 @@ Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& n
 
     new_vector(new_size-1) = new_string;
 
-    return new_vector;
+    old_vector = new_vector;
 }
 
 
-Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_value)
+void push_back(Tensor<type, 1>& vector, const type& new_value)
 {
-    const Index old_size = old_vector.size();
+    const Index old_size = vector.size();
 
     const Index new_size = old_size+1;
 
     Tensor<type, 1> new_vector(new_size);
 
-    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+    for(Index i = 0; i < old_size; i++) new_vector(i) = vector(i);
 
     new_vector(new_size-1) = new_value;
 
-    return new_vector;
+    vector = new_vector;
 }
 
 
@@ -1423,30 +1458,34 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 };
 
 
-void print_tensor(const float* vector, const int dims[])
+void print_tensor(const float* vector, const int dimensions[])
 {
     cout<<"Tensor"<<endl;
 
-    const int rows_number = dims[0];
-    const int cols_number = dims[1];
-    const int channels = dims[2];
-    const int batch = dims[3];
+    const int rows_number = dimensions[0];
+    const int cols_number = dimensions[1];
+    const int channels = dimensions[2];
+    const int batch = dimensions[3];
 
-    for (int l=0; l<batch; l++)
+    for(int l = 0; l<batch; l++)
     {
-        for (int k=0; k<channels; k++)
+        for(int k = 0; k<channels; k++)
         {
-            for (int i=0; i<rows_number; i++)
+            for(int i = 0; i<rows_number; i++)
             {
-                for (int j=0; j<cols_number; j++)
+                for(int j = 0; j<cols_number; j++)
                 {
-                    if (i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+                    if(i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+
                         cout<< "<--Batch-->"<<endl;
-                    if (i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+
+                    if(i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+
                         cout<< "*--Channel--*"<<endl;
 
                    cout<<*(vector + i + j*rows_number + k*rows_number*cols_number+ l*channels*rows_number*cols_number)<< " ";
                 }
+
                cout<<" "<<endl;
             }
         }

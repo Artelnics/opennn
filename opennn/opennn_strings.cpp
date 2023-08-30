@@ -187,7 +187,7 @@ Index count_tokens(const string& s, const string& sep)
 
     string::size_type pos = 0;
 
-    while ( s.find(sep, pos) != string::npos )
+    while( s.find(sep, pos) != string::npos )
     {
         pos = s.find(sep, pos);
        ++ tokens_number;
@@ -222,7 +222,7 @@ Tensor<string, 1> get_tokens(const string& s, const string& sep)
     size_t last_pos = 0;
     Index i = 0;
 
-    while ((pos = str.find(sep,pos)) != string::npos)
+    while((pos = str.find(sep,pos)) != string::npos)
     {
         if(pos == 0) // Skip first position
         {
@@ -961,16 +961,16 @@ void replace_all_appearances(string& s, string const& toReplace, string const& r
     // Reserves rough estimate of final size of string.
     buf.reserve(s.size());
 
-    while (true) {
+    while(true) {
 
         prevPos =    pos;
         pos = s.find(toReplace, pos);
 
-        if (pos == string::npos)
+        if(pos == string::npos)
             break;
 
         buf.append(s, prevPos, pos - prevPos);
-        if (buf.back() == '_')
+        if(buf.back() == '_')
         {
             buf += toReplace;
             pos += toReplace.size();
@@ -997,7 +997,7 @@ string replace_non_allowed_programming_expressions(string& s)
 {
         string out = "";
 
-        if (s[0] == '$')
+        if(s[0] == '$')
             out=s;
 
         replace_all_appearances(s, "if","i_f");
@@ -1024,33 +1024,33 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "max","ma_x");
         replace_all_appearances(s, "min","mi_n");
 
-        for (char& c: s)
+        for(char& c: s)
         {
-            if (c=='1'){ out+="_one_";   continue;}
-            if (c=='2'){ out+="_two_";   continue;}
-            if (c=='3'){ out+="_three_"; continue;}
-            if (c=='4'){ out+="_four_";  continue;}
-            if (c=='5'){ out+="_five_";  continue;}
-            if (c=='6'){ out+="_six_";   continue;}
-            if (c=='7'){ out+="_seven_"; continue;}
-            if (c=='8'){ out+="_eight_"; continue;}
-            if (c=='9'){ out+="_nine_";  continue;}
-            if (c=='0'){ out+="_zero_";  continue;}
+            if(c=='1'){ out+="_one_";   continue;}
+            if(c=='2'){ out+="_two_";   continue;}
+            if(c=='3'){ out+="_three_"; continue;}
+            if(c=='4'){ out+="_four_";  continue;}
+            if(c=='5'){ out+="_five_";  continue;}
+            if(c=='6'){ out+="_six_";   continue;}
+            if(c=='7'){ out+="_seven_"; continue;}
+            if(c=='8'){ out+="_eight_"; continue;}
+            if(c=='9'){ out+="_nine_";  continue;}
+            if(c=='0'){ out+="_zero_";  continue;}
 
-            if (c=='/'){ out+="_div_";   continue;}
-            if (c=='*'){ out+="_mul_";   continue;}
-            if (c=='+'){ out+="_sum_";   continue;}
-            if (c=='-'){ out+="_res_";   continue;}
-            if (c=='='){ out+="_equ_";   continue;}
-            if (c=='!'){ out+="_not_";   continue;}
+            if(c=='/'){ out+="_div_";   continue;}
+            if(c=='*'){ out+="_mul_";   continue;}
+            if(c=='+'){ out+="_sum_";   continue;}
+            if(c=='-'){ out+="_res_";   continue;}
+            if(c=='='){ out+="_equ_";   continue;}
+            if(c=='!'){ out+="_not_";   continue;}
 
-            if (c=='&'){ out+="_amprsn_"; continue;}
-            if (c=='?'){ out+="_ntrgtn_"; continue;}
-            if (c=='<'){ out+="_lower_" ; continue;}
-            if (c=='>'){ out+="_higher_"; continue;}
+            if(c=='&'){ out+="_amprsn_"; continue;}
+            if(c=='?'){ out+="_ntrgtn_"; continue;}
+            if(c=='<'){ out+="_lower_" ; continue;}
+            if(c=='>'){ out+="_higher_"; continue;}
 
-            if (isalnum(c)!=0){ out += c; continue;}
-            if (isalnum(c)==0){ out+='_'; continue;}
+            if(isalnum(c)!=0){ out += c; continue;}
+            if(isalnum(c)==0){ out+='_'; continue;}
         }
 
 
@@ -1063,17 +1063,17 @@ vector<string> get_words_in_a_string(string str)
     vector<string> output;
     string word = "";
 
-    for (auto x : str)
+    for(auto x : str)
     {
-        if (isalnum(x))
+        if(isalnum(x))
         {
             word = word + x;
-        }else if (x=='_')
+        }else if(x=='_')
         {
             word = word + x;
         }
         else
-        //if (x == ' ')
+        //if(x == ' ')
         {
             output.push_back(word);
             word = "";
@@ -1099,9 +1099,9 @@ int WordOccurrence(char *sentence, char *word)
     int count = 0;
     int i, j;
 
-    for(i=0; i<slen; i++)
+    for(i = 0; i<slen; i++)
     {
-        for(j=0; j<wordlen; j++)
+        for(j = 0; j<wordlen; j++)
         {
             if(sentence[i+j]!=word[j])
             break;
@@ -1155,15 +1155,15 @@ void trim(string& str)
 
 void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label)
 {
-    if (!str.empty())
+    if(!str.empty())
     {
-        if (str[0] == target_char)
+        if(str[0] == target_char)
         {
             string new_string = missing_label + target_char;
             str.replace(0, 1, new_string);
         }
 
-        if (str[str.length() - 1] == target_char)
+        if(str[str.length() - 1] == target_char)
         {
             string new_string = target_char + missing_label;
             str.replace(str.length() - 1, 1, new_string);
@@ -1178,7 +1178,7 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
     string new_pattern = target_char + missing_label + target_char;
 
     size_t pos = 0;
-    while ((pos = str.find(target_pattern, pos)) != string::npos)
+    while((pos = str.find(target_pattern, pos)) != string::npos)
     {
         str.replace(pos, target_pattern.length(), new_pattern);
         pos += new_pattern.length();
@@ -1193,12 +1193,12 @@ void replac_substring_within_quotes(string &str, const string &target, const str
     string result = "";
     string prefix = str;
 
-    while (regex_search(prefix, match, r))
+    while(regex_search(prefix, match, r))
     {
         string match_str = match.str();
         string replaced_str = match_str;
         size_t pos = 0;
-        while ((pos = replaced_str.find(target, pos)) != string::npos)
+        while((pos = replaced_str.find(target, pos)) != string::npos)
         {
             replaced_str.replace(pos, target.length(), replacement);
             pos += replacement.length();
@@ -1410,11 +1410,11 @@ void remove_not_alnum(string &str)
 
 bool find_string_in_tensor(Tensor<string, 1>& t, string val)
 {
-    for (Index i = 0; i < t.dimension(0);++i)
+    for(Index i = 0; i < t.dimension(0);++i)
     {
         string elem = t(i);
 
-        if (elem == val)
+        if(elem == val)
         {
             return true;
         }
@@ -1425,9 +1425,10 @@ bool find_string_in_tensor(Tensor<string, 1>& t, string val)
 string get_word_from_token(string& token)
 {
     string word = "";
-    for (char& c : token)
+
+    for(char& c : token)
     {
-        if ( c!=' ' && c!='=' )
+        if( c!=' ' && c!='=' )
         {
             word += c;
         }
@@ -1436,21 +1437,8 @@ string get_word_from_token(string& token)
             break;
         }
     }
+
     return word;
-}
-
-Tensor<string, 1> push_back_string (Tensor<string, 1>& tens, const string& str)
-{
-    Tensor<string, 1> aux_tensor(tens.dimension(0)+1);
-
-    for (int i = 0; i < tens.dimension(0); i++)
-    {
-        aux_tensor(i) = tens(i);
-    }
-
-    aux_tensor(tens.dimension(0)) = str;
-
-    return aux_tensor;
 }
 
 
@@ -1470,45 +1458,45 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
 
     int option = 0;
 
-    if (programming_languaje == "javascript") { option = 1; }
-    else if (programming_languaje == "php")   { option = 2; }
-    else if (programming_languaje == "python"){ option = 3; }
-    else if (programming_languaje == "c")     { option = 4; }
+    if(programming_languaje == "javascript") { option = 1; }
+    else if(programming_languaje == "php")   { option = 2; }
+    else if(programming_languaje == "python"){ option = 3; }
+    else if(programming_languaje == "c")     { option = 4; }
 
     int dimension = outputs.dimension(0);
 
-    while (getline(ss, token, '\n'))
+    while(getline(ss, token, '\n'))
     {
-        if (token.size() > 1 && token.back() == '{'){ break; }
-        if (token.size() > 1 && token.back() != ';'){ token += ';'; }
-        tokens = push_back_string(tokens, token);
+        if(token.size() > 1 && token.back() == '{'){ break; }
+        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
+        push_back_string(tokens, token);
     }
 
-    for (int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.dimension(0); i++)
     {
         string s = tokens(i);
         string word = "";
 
-        for (char& c : s)
+        for(char& c : s)
         {
-            if ( c!=' ' && c!='=' ){ word += c; }
+            if( c!=' ' && c!='=' ){ word += c; }
             else { break; }
         }
 
-        if (word.size() > 1)
+        if(word.size() > 1)
         {
-            found_tokens = push_back_string(found_tokens, word);
+            push_back_string(found_tokens, word);
         }
     }
 
     new_variable = found_tokens[found_tokens.size()-1];
     old_variable = outputs[dimension-1];
 
-    if (new_variable != old_variable)
+    if(new_variable != old_variable)
     {
         int j = found_tokens.size();
 
-        for (int i = dimension; i --> 0;)
+        for(int i = dimension; i --> 0;)
         {
             j -= 1;
 
@@ -1524,7 +1512,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
                     out_string += " = ";
                     out_string += new_variable;
                     out_string += ";";
-                    out = push_back_string(out, out_string);
+                    push_back_string(out, out_string);
                 break;
 
                 //Php
@@ -1535,7 +1523,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
                     out_string += "$";
                     out_string += new_variable;
                     out_string += ";";
-                    out = push_back_string(out, out_string);
+                    push_back_string(out, out_string);
                 break;
 
                 //Python
@@ -1543,7 +1531,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
                     out_string = old_variable;
                     out_string += " = ";
                     out_string += new_variable;
-                    out = push_back_string(out, out_string);
+                    push_back_string(out, out_string);
                 break;
 
                 //C
@@ -1553,7 +1541,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
                     out_string += " = ";
                     out_string += new_variable;
                     out_string += ";";
-                    out = push_back_string(out, out_string);
+                    push_back_string(out, out_string);
                 break;
 
                 default:
@@ -1561,6 +1549,7 @@ Tensor<string, 1> fix_write_expression_outputs(const string &str, const Tensor<s
             }
         }
     }
+
     return out;
 }
 
@@ -1579,9 +1568,9 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
     string output_name_aux;
     string input_name_aux;
 
-    for (int i = 0; i < inputs_names.dimension(0); i++)
+    for(int i = 0; i < inputs_names.dimension(0); i++)
     {
-        if (inputs_names[i].empty())
+        if(inputs_names[i].empty())
         {
             inputs(i) = "input_" + to_string(i);
             buffer << "\t" << to_string(i) + ") " << inputs_names(i) << endl;
@@ -1594,9 +1583,9 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
         }
     }
 
-    for (int i = 0; i < outputs_names.dimension(0); i++)
+    for(int i = 0; i < outputs_names.dimension(0); i++)
     {
-        if (outputs_names[i].empty())
+        if(outputs_names[i].empty())
         {
             outputs(i) = "output_" + to_string(i);
         }
@@ -1607,7 +1596,7 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
         }
     }
 
-    buffer_out = push_back_string(buffer_out, buffer.str());
+    push_back_string(buffer_out, buffer.str());
 
     output(0) = inputs;
     output(1) = outputs;

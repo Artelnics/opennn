@@ -98,10 +98,10 @@ public:
 
         output_shape_string << "(";
 
-        for (Index i = 0; i < output_dimensions.size(); i++)
+        for(Index i = 0; i < output_dimensions.size(); i++)
         {
             output_shape_string << output_dimensions[i];
-            if (i != output_dimensions.size() - 1)
+            if(i != output_dimensions.size() - 1)
             {
                 output_shape_string << ", ";
             }

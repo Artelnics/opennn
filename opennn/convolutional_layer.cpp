@@ -248,7 +248,7 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
     const Index kernels_number = get_kernels_number();
     const Index single_output_size = batch_samples_number * outputs_rows_number * outputs_columns_number;
 
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         TensorMap<Tensor<type, 4>> kernel_output(outputs_data + kernel_index*single_output_size,
                                                  batch_samples_number,
