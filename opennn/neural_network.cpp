@@ -907,7 +907,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 //    {
         // Check convolutional
         ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        convolutional_layer->set_name("Convolutional layer" /* + to_string(1) */);
+        convolutional_layer->set_name("convolutional_layer_1" /* + to_string(1) */); // This change the initial name of the table.
 
         this->add_layer(convolutional_layer);
 

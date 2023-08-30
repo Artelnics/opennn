@@ -697,9 +697,9 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(3);
 
-    outputs_dimensions(0) = get_outputs_rows_number();
-    outputs_dimensions(1) = get_outputs_columns_number();
-    outputs_dimensions(2) = get_kernels_number();
+    outputs_dimensions(0) = get_kernels_number();
+    outputs_dimensions(1) = get_outputs_rows_number();
+    outputs_dimensions(2) = get_outputs_columns_number();
 
     return outputs_dimensions;
 }
@@ -1229,12 +1229,8 @@ Index ConvolutionalLayer::get_inputs_channels_number() const
 //}
 
 
-
-
-
 void ConvolutionalLayer::forward(const Tensor<type, 4>& inputs, bool is_training)
 {
-
     const Index batch_samples_number = inputs.dimension(0);
     const Index channels_number = get_kernels_number();
 
@@ -1285,11 +1281,39 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
+//    for(Index i = 0; i < inputs_dimensions.size(); i++)
+//    {
+//        buffer << inputs_dimensions(i);
+//        if(i != inputs_dimensions.size() - 1) buffer << " x ";
+
+//        cout << "inputs_dimensions (opennn): " << inputs_dimensions(i) << endl;
+////        if(i != inputs_dimensions.size() - 1) buffer << " ";
+//    }
+
+    buffer << inputs_dimensions(0); buffer << " x "; buffer << inputs_dimensions(2); buffer << " x "; buffer << inputs_dimensions(1);
+    // @ toDo (AlvaroS)
+
+    cout << "buffer (INPUT): (XML)" << buffer.str() << endl;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs
+
+    file_stream.OpenElement("OutputsVariablesDimensions");
+
+    buffer.str("");
+
     for(Index i = 0; i < inputs_dimensions.size(); i++)
     {
-        buffer << inputs_dimensions(i);
-        if(i != inputs_dimensions.size() - 1) buffer << " ";
+        buffer << get_outputs_dimensions()(i);
+        if(i != inputs_dimensions.size() - 1) buffer << " x ";
+
+        cout << "get_outputs_dimensions()(i): " << get_outputs_dimensions()(i) << endl;
     }
+
+    cout << "buffer (OUTPUT): (XML)" << buffer.str() << endl;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1324,6 +1348,32 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(write_activation_function().c_str());
 
     file_stream.CloseElement();
+
+    // Stride
+
+    file_stream.OpenElement("Stride");
+
+    buffer.str("");
+    buffer << get_row_stride();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Convolution Type
+
+    file_stream.OpenElement("ConvolutionType");
+
+    file_stream.PushText(write_convolution_type().c_str());
+
+
+    file_stream.CloseElement();
+
+    cout << "filter_size(openn): " << get_kernels_number() << endl;
+    cout << "filter_number (openn): " << get_kernels_columns_number() << endl;
+    cout << "activation_functin (openn): " << write_activation_function() << endl;
+    cout << "stride (opennn): " << get_row_stride() << endl;
+    cout << "convolution_type (opennn): " << write_convolution_type() << endl;
 
     // Parameters
 
@@ -1362,9 +1412,9 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Convolutional layer name element
 
-    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("LayerName");
+    const tinyxml2::XMLElement* convolution_name_element = convolutional_layer_element->FirstChildElement("LayerName");
 
-    if(!convolution_type_element)
+    if(!convolution_name_element)
     {
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1373,13 +1423,15 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    const string convolution_type_string = convolution_type_element->GetText();
+    const string convolution_name_string = convolution_name_element->GetText();
 
-    set_convolution_type(convolution_type_string);
+    set_convolution_type(convolution_name_string);
+
+//    set_convolution_type("Valid");
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputVariablesDimensions");
+    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputsVariablesDimensions");
 
     if(!input_variables_dimensions_element)
     {
@@ -1394,9 +1446,25 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     //    set_input_variables_dimenisons(static_cast<Index>(stoi(input_variables_dimensions_string));
 
+
+    //Outputs variables dimensions element
+
+    const tinyxml2::XMLElement* outputs_variables_dimensions_element = convolutional_layer_element->FirstChildElement("OutputsVariablesDimensions");
+
+    if(!outputs_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional outputs variables dimensions element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string outputs_variables_dimensions_string = outputs_variables_dimensions_element->GetText();
+
     // Filters Number element
 
-    const tinyxml2::XMLElement* filters_number_element = input_variables_dimensions_element->FirstChildElement("FiltersNumber");
+    const tinyxml2::XMLElement* filters_number_element = convolutional_layer_element->FirstChildElement("FiltersNumber");
 
     if(!filters_number_element)
     {
@@ -1407,11 +1475,11 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    const string filters_number_element_string = filters_number_element->GetText();
+    const string filters_number_string = filters_number_element->GetText();
 
     //    set_input_variables_dimenisons(static_cast<Index>(stoi(input_variables_dimensions_string));
 
-    // Column stride
+    // Filters Size
 
     const tinyxml2::XMLElement* filters_size_element = convolutional_layer_element->FirstChildElement("FiltersSize");
 
@@ -1424,11 +1492,11 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    const string filters_size_element_string = filters_size_element->GetText();
+    const string filters_size_string = filters_size_element->GetText();
 
     //    set_column_stride(static_cast<Index>(stoi(filters_size_element_string)));
 
-    // Row stride
+    // Activation Function
 
     const tinyxml2::XMLElement* activation_function_element = convolutional_layer_element->FirstChildElement("ActivationFunction");
 
@@ -1444,6 +1512,48 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     const string activation_function_string = activation_function_element->GetText();
 
     set_activation_function(activation_function_string);
+
+    // Stride
+
+    const tinyxml2::XMLElement* stride_element = convolutional_layer_element->FirstChildElement("Stride");
+
+    if(!stride_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional stride element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string stride_string = stride_element->GetText();
+
+    set_column_stride(std::stoi(stride_string));
+    set_row_stride(std::stoi(stride_string));
+
+    // Convolution type
+
+    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("ConvolutionType");
+
+    if(!convolution_type_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional type element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string convolution_type_string = convolution_type_element->GetText();
+
+    cout << " outputs_variables_dimensions_string:" << outputs_variables_dimensions_string << endl;
+    cout << "input_variables_dimensions_string: " << input_variables_dimensions_string << endl;
+    cout << "Activation Function == 0: " << activation_function_string << endl;
+    cout << "Filters Number == 1: " << filters_number_string << endl;
+    cout << "Filters Size == 2: " << filters_number_string << endl;
+    cout << "Convolution Type == 3: " << convolution_type_string << endl;
+    cout << "Stride == 4: " << stride_string << endl;
+
 
     // Parameters
 
