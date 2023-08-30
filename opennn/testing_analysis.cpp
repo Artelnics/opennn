@@ -3037,7 +3037,7 @@ void TestingAnalysis::save_confusion(const string& confusion_file_name) const
 
     const Index columns_number = confusion.dimension(0);
 
-    ofstream confusion_file(confusion_file_name);
+    std::ofstream confusion_file(confusion_file_name);
 
     Tensor<string, 1> target_variable_names = data_set_pointer->get_target_variables_names();
 
@@ -3079,7 +3079,7 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 {
     const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_precision();
 
-    ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
+    std::ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
 
     multiple_classifiaction_tests_file << "accuracy,error" << endl;
     multiple_classifiaction_tests_file << multiple_classification_tests(0)* type(100) << "," << multiple_classification_tests(1)* type(100) << endl;
@@ -3308,7 +3308,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
                                                                                            outputs,
                                                                                            labels);
 
-    ofstream well_classified_samples_file(well_classified_samples_file_name);
+    std::ofstream well_classified_samples_file(well_classified_samples_file_name);
     well_classified_samples_file << "sample_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < well_classified_samples.dimension(0); i++)
     {
@@ -3330,7 +3330,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                                                          outputs,
                                                                                          labels);
 
-    ofstream misclassified_samples_file(misclassified_samples_file_name);
+    std::ofstream misclassified_samples_file(misclassified_samples_file_name);
     misclassified_samples_file << "sample_name,actual_class,predicted_class,probability" << endl;
     for(Index i = 0; i < misclassified_samples.dimension(0); i++)
     {
@@ -3359,7 +3359,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
         well_classified_numerical_probabilities(i) = type(::atof(well_classified_samples(i, 3).c_str()));
     }
 
-    ofstream classification_statistics_file(statistics_file_name);
+    std::ofstream classification_statistics_file(statistics_file_name);
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << well_classified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << well_classified_numerical_probabilities.maximum() << ",";
@@ -3386,7 +3386,7 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
     {
         misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
     }
-    ofstream classification_statistics_file(statistics_file_name);
+    std::ofstream classification_statistics_file(statistics_file_name);
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";

@@ -9704,7 +9704,7 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    ofstream file(data_file_name.c_str());
+    std::ofstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -9770,7 +9770,7 @@ void DataSet::save_data() const
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ofstream file;
+    std::ofstream file;
 
     #ifdef _WIN32
 
@@ -9836,7 +9836,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -9885,7 +9885,7 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 
 void DataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -9967,7 +9967,7 @@ void DataSet::transform_associative_dataset()
 void DataSet::load_data_binary()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -10024,7 +10024,7 @@ void DataSet::load_data_binary()
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(time_series_data_file_name.c_str(), ios::binary);
 
@@ -10068,7 +10068,7 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
 void DataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(auto_associative_data_file_name.c_str(), ios::binary);
 
@@ -10112,7 +10112,7 @@ void DataSet::load_auto_associative_data_binary(const string& auto_associative_d
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10189,7 +10189,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const bool& has_columns_name,
                                         const bool& has_rows_label) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -13531,7 +13531,7 @@ void DataSet::read_txt()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    ofstream file;
+    std::ofstream file;
     file.open(transformed_data_path);
 
     for(Index i  = 0; i < document_words_number; i++)
@@ -13641,7 +13641,7 @@ void DataSet::read_csv_1()
     }
 
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
 #ifdef _WIN32
 
@@ -13886,7 +13886,7 @@ void DataSet::read_csv_1()
 void DataSet::read_csv_2_simple()
 {   
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -13993,7 +13993,7 @@ void DataSet::read_csv_2_simple()
 void DataSet::read_csv_3_simple()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -14126,7 +14126,7 @@ void DataSet::read_csv_3_simple()
 void DataSet::read_csv_2_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -14288,7 +14288,7 @@ void DataSet::read_csv_2_complete()
 void DataSet::read_csv_3_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 

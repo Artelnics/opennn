@@ -121,6 +121,7 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
                          TensorMap<Tensor<type, 3>>& output)
 {
+    const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
 
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
@@ -132,6 +133,7 @@ void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
 void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
                      TensorMap<Tensor<type, 3>>& output)
 {
+    const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
 
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
@@ -147,6 +149,8 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
     assert(input.dimension(2) == output.dimension(2));
+
+    type M_PI = 3.14159;
 
     const Index width = input.dimension(0);
     const Index height = input.dimension(1);

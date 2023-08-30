@@ -32,7 +32,7 @@
 #include "probabilistic_layer.h"
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
-#include "region_proposal_layer.h"
+//#include "region_proposal_layer.h"
 #include "non_max_suppression_layer.h"
 
 #include "pooling_layer.h"
@@ -474,7 +474,7 @@ struct NeuralNetworkForwardPropagation
 
             case Layer::Type::RegionProposal:
             {
-                layers(i) = new RegionProposalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+//                layers(i) = new RegionProposalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
