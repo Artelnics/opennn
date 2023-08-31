@@ -58,8 +58,6 @@ namespace opennn
     const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
     const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
 
-    const type M_PI = type(3.14159);
-
     void reflect_image_x(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&);
     void reflect_image_y(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&);
     void rotate_image(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const type&);

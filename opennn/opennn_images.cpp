@@ -150,8 +150,6 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
     assert(input.dimension(1) == output.dimension(1));
     assert(input.dimension(2) == output.dimension(2));
 
-    type M_PI = 3.14159;
-
     const Index width = input.dimension(0);
     const Index height = input.dimension(1);
     const Index channels = input.dimension(2);
@@ -198,13 +196,13 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
                                                   channel);
                 }
             }
-//                else
-//                {
-//                    for(Index channel = 0; channel < channels; channel++)
-//                    {
-//                        output(x, y, channel) = 0;
-//                    }
-//                }
+            else
+            {
+                for(Index channel = 0; channel < channels; channel++)
+                {
+                    output(x, y, channel) = 0;
+                }
+            }
 
         }
     }

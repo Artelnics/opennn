@@ -733,6 +733,7 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                            outputs_data,
                            outputs_dimensions);
 
+
     if(is_training) // Perform training
     {
         calculate_activations_derivatives(outputs_data,
@@ -749,6 +750,8 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                               outputs_data,
                               outputs_dimensions);
     }
+
+
 }
 
 

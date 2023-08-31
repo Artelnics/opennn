@@ -65,11 +65,11 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    for(Index i = 0; i < columns_number; i++)
+    for(Index j = 0; j < columns_number; j++)
     {
-        TensorMap<Tensor<type,1>> column(matrix.data(), rows_number*i);
+        TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
 
-        column.device(*thread_pool_device) = column/vector(i);
+        column.device(*thread_pool_device) = column/vector(j);
     }
 }
 
@@ -81,11 +81,11 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type,
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> column(matrix.data(), rows_number*i);
-
-        column.device(*thread_pool_device) = column/vector(i);
+        TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
+        column.device(*thread_pool_device) = column / vector;
     }
 }
+
 
 bool is_zero(const Tensor<type, 1>& tensor)
 {
@@ -767,10 +767,9 @@ Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
 void kronecker_product_void(TensorMap<Tensor<type, 1>>& x, TensorMap<Tensor<type, 2>>& y)
 {
     const Index n = x.dimension(0);
-
     auto x_matrix = Map< Matrix<type, Dynamic, Dynamic> >(x.data(), n, 1);
 
-    auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n, n);
+    auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n*n, 1);
 
     product = kroneckerProduct(x_matrix, x_matrix).eval();
 }
