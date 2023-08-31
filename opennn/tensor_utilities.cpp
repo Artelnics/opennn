@@ -883,7 +883,7 @@ type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
 
 type l2_distance(const type& x, const type& y)
 {
-    type distance = fabs(x - y);
+    const type distance = fabs(x - y);
 
     return distance;
 }
@@ -893,7 +893,7 @@ Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, co
 {
     Tensor<type, 1> distance(size);
 
-    Tensor<type, 2> difference = x - y;
+    const Tensor<type, 2> difference = x - y;
 
     for(Index i = 0; i < difference.dimension(1); i++)
     {
@@ -909,9 +909,11 @@ void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
     const Index rows_number = matrix.dimension(0);
 
     #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
         matrix(i,i) += value;
 }
+
 
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
@@ -1255,29 +1257,6 @@ string tensor_string_to_text(const Tensor<string,1>&x, string& separator)
     return line;
 
 }
-/*
-Matrix<string> Matrix<T>::to_string_matrix(const size_t& precision) const
-{
-   Matrix<string> string_matrix(rows_number, columns_number);
-
-   ostringstream buffer;
-
-   for(size_t i = 0; i < rows_number; i++)
-   {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-         buffer.str("");
-         buffer << setprecision(precision) <<(*this)(i,j);
-
-         string_matrix(i,j) = buffer.str();
-      }
-   }
-
-   if(!header.empty()) string_matrix.set_header(header);
-
-   return string_matrix;
-}
-*/
 
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
@@ -1356,7 +1335,7 @@ bool contains(const Tensor<type,1>& vector, const type& value)
     const type* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
-};
+}
 
 
 bool contains(const Tensor<Index,1>& vector, const Index& value)
@@ -1366,7 +1345,7 @@ bool contains(const Tensor<Index,1>& vector, const Index& value)
     const Index* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
-};
+}
 
 
 bool contains(const Tensor<string,1>& vector, const string& value)
@@ -1379,25 +1358,7 @@ bool contains(const Tensor<string,1>& vector, const string& value)
 };
 
 
-
-void push_back(Tensor<type*, 1>& vector, type* new_element)
-{
-    const Index old_size = vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<type*, 1> new_vector(new_size);
-
-    for(Index i = 0; i < old_size; i++) new_vector(i) = vector(i);
-
-    new_vector(new_size-1) = new_element;
-
-    vector = new_vector;
-}
-
-
-
-void push_back(Tensor<Index, 1>& old_vector, const Index& new_element)
+void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
 {
     const Index old_size = old_vector.size();
 
@@ -1429,7 +1390,7 @@ void push_back_string(Tensor<string, 1>& old_vector, const string& new_string)
 }
 
 
-void push_back(Tensor<type, 1>& vector, const type& new_value)
+void push_back_type(Tensor<type, 1>& vector, const type& new_value)
 {
     const Index old_size = vector.size();
 

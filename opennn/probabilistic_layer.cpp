@@ -684,9 +684,17 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 
     switch(activation_function)
     {
-    case ActivationFunction::Logistic: logistic_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Logistic:
+        logistic_derivatives(combinations, combinations_dimensions,
+                             activations, activations_dimensions,
+                             activations_derivatives, activations_derivatives_dimensions);
+        return;
 
-    case ActivationFunction::Softmax: softmax_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Softmax:
+        softmax_derivatives(combinations, combinations_dimensions,
+                            activations, activations_dimensions,
+                            activations_derivatives, activations_derivatives_dimensions);
+        return;
 
     default: return;
     }

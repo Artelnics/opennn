@@ -146,7 +146,7 @@ public:
 
     void set_column_stride(const Index&);
 
-    void set_inputs_dimenisons(const Tensor<Index,1>&);
+    void set_inputs_dimensions(const Tensor<Index,1>&);
 
     // Initialization
 

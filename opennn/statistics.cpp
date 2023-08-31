@@ -2546,10 +2546,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
     {
         if(!isnan(column(i)))
         {
-            ///@todo does not compile. Why?
-            /*
-            push_back(sorted_column, column(i));
-            */
+            push_back_type(sorted_column, column(i));
         }
     }
 
@@ -2571,7 +2568,6 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 /// Returns a vector with the median values of given columns.
 /// The size of the vector is equal to the size of the column indices vector.
 /// @param columns_indices Indices of columns.
-
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
 {
@@ -2596,10 +2592,8 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
         for(Index i = 0; i < column.size(); i++)
         {
             if(!isnan(column(i)))
-            {
-                /*
-                push_back(sorted_column,column(i));
-                */
+            {                
+                push_back_type(sorted_column,column(i));
             }
         }
 
@@ -2719,10 +2713,8 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
             const Index row_index = row_indices(k);
 
             if(!isnan(matrix(row_index, column_index)))
-            {
-                /*
-                push_back(sorted_column, matrix(row_index, column_index));
-                */
+            {                
+                push_back_type(sorted_column, matrix(row_index, column_index));
             }
         }
 

@@ -6251,9 +6251,8 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
         if(columns(i).type == ColumnType::Constant)
         {
             columns(i).set_use(VariableUse::Unused);
-            /*
-            push_back(constant_columns, columns(i).name);
-            */
+
+            push_back_string(constant_columns, columns(i).name);
         }
     }
 
@@ -6300,9 +6299,8 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
             && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
                 set_sample_use(j, SampleUse::Unused);
-                /*
-                push_back(repeated_samples, j);
-                */
+
+                push_back_index(repeated_samples, j);
             }
         }
     }
@@ -6337,9 +6335,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
             {
                 columns(input_column_index).set_use(VariableUse::Unused);
 
-                /*
-                push_back(unused_columns, columns(input_column_index).name);
-                */
+                push_back_string(unused_columns, columns(input_column_index).name);
             }
         }
     }
@@ -6375,9 +6371,7 @@ Tensor<string, 1> DataSet::unuse_multicollinear_columns(Tensor<Index, 1>& origin
         {
             columns(column_index).set_use(VariableUse::Unused);
 
-            /*
-            push_back(unused_columns, columns(column_index).name);
-            */
+            push_back_string(unused_columns, columns(column_index).name);
         }
     }
 
@@ -9716,7 +9710,7 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    ofstream file(data_file_name.c_str());
+    std::ofstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -9782,7 +9776,7 @@ void DataSet::save_data() const
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ofstream file;
+    std::ofstream file;
 
     #ifdef _WIN32
 
@@ -9848,7 +9842,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -9897,7 +9891,7 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 
 void DataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -9979,7 +9973,7 @@ void DataSet::transform_associative_dataset()
 void DataSet::load_data_binary()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -10036,7 +10030,7 @@ void DataSet::load_data_binary()
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(time_series_data_file_name.c_str(), ios::binary);
 
@@ -10080,7 +10074,7 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
 void DataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(auto_associative_data_file_name.c_str(), ios::binary);
 
@@ -10124,7 +10118,7 @@ void DataSet::load_auto_associative_data_binary(const string& auto_associative_d
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10201,7 +10195,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const bool& has_columns_name,
                                         const bool& has_rows_label) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -12776,7 +12770,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     channels_number = channels;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
+    input_variables_dimensions.setValues({height, width, channels});
 }
 
 
@@ -13543,7 +13537,7 @@ void DataSet::read_txt()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    ofstream file;
+    std::ofstream file;
     file.open(transformed_data_path);
 
     for(Index i  = 0; i < document_words_number; i++)
@@ -13653,7 +13647,7 @@ void DataSet::read_csv_1()
     }
 
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
 #ifdef _WIN32
 
@@ -13898,7 +13892,7 @@ void DataSet::read_csv_1()
 void DataSet::read_csv_2_simple()
 {   
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -14005,7 +13999,7 @@ void DataSet::read_csv_2_simple()
 void DataSet::read_csv_3_simple()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -14138,7 +14132,7 @@ void DataSet::read_csv_3_simple()
 void DataSet::read_csv_2_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -14300,7 +14294,7 @@ void DataSet::read_csv_2_complete()
 void DataSet::read_csv_3_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    std::ifstream file;
 
     #ifdef _WIN32
 
@@ -14972,7 +14966,6 @@ void DataSetBatch::perform_augmentation()
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
         {
-
             const type angle = (random_rotation_minimum < random_rotation_maximum)
                     ? random_rotation_minimum + rand()
                     : random_rotation_maximum;

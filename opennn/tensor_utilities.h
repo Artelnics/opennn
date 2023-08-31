@@ -39,8 +39,10 @@ void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor
 
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);
+
 bool is_nan(const Tensor<type,1>&);
 bool is_nan(const type&);
+
 bool is_constant(const Tensor<type, 1>&);
 
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
@@ -58,14 +60,14 @@ bool is_binary(const Tensor<type, 2>&);
 
 void save_csv(const Tensor<type,2>&, const string&);
 
-// Rank and indices methods
-
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
+
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
 Index count_elements_less_than(const Tensor<Index,1>&, const Index&);
+
 bool is_less_than(const Tensor<type, 1>&, const type&);
 Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
 
@@ -143,10 +145,9 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type
 
 Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
 
-void push_back(Tensor<type*, 1>&, type*);
-void push_back(Tensor<Index, 1>&, const Index&);
+void push_back_index(Tensor<Index, 1>&, const Index&);
 void push_back_string(Tensor<string, 1>&, const string&);
-void push_back(Tensor<type, 1>&, const type&);
+void push_back_type(Tensor<type, 1>&, const type&);
 
 Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
 

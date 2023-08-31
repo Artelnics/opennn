@@ -113,7 +113,7 @@ HEADERS += \
     text_analytics.h \
     region_based_object_detector.h \
 #    json_to_xml.h \
-    region_proposal_layer.h \
+#    region_proposal_layer.h \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
     opennn.h
@@ -175,7 +175,7 @@ SOURCES += \
     text_analytics.cpp \
     region_based_object_detector.cpp \
 #    json_to_xml.cpp \
-    region_proposal_layer.cpp \
+#    region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \
     unit_testing.cpp
