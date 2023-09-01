@@ -2028,7 +2028,6 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
         rows_sum.device(*thread_pool_device) = y.sum(dimensions);
 
         divide_columns(thread_pool_device, y, rows_sum);
-
     }
     else
     {
@@ -2049,6 +2048,8 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
 {
 
     // Check equal sizes and ranks
+
+    cout << "----- softmax_derivatives -----" << endl;
 
     const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
@@ -2073,8 +2074,6 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
         const Index variables_number = combinations_dimensions(1);
 
         softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
-
-        const TensorMap<Tensor<type, 2>> combinations(combinations_data, samples_number, variables_number);
 
         TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
 

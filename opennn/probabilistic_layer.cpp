@@ -581,7 +581,7 @@ void ProbabilisticLayer::calculate_combinations(type* inputs_data, const Tensor<
 {
     const Index batch_samples_number = inputs_dimensions(0);
 
-    const Index biases_number = get_neurons_number();   
+    const Index biases_number = get_neurons_number();
 
     if(outputs_dimensions[0] != batch_samples_number || outputs_dimensions(1) != biases_number)
     {
@@ -605,6 +605,7 @@ void ProbabilisticLayer::calculate_combinations(type* inputs_data, const Tensor<
     }
 
     combinations.device(*thread_pool_device) = biases_matrix + inputs.contract(synaptic_weights, A_B);
+
 }
 
 
@@ -732,7 +733,6 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                            synaptic_weights,
                            outputs_data,
                            outputs_dimensions);
-
 
     if(is_training) // Perform training
     {
