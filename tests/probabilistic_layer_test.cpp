@@ -600,8 +600,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     // Test 2
 
-    cout << "Test 2 --> Competitive??" << endl;
-
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
     probabilistic_layer_forward_propagation.set(samples_number,

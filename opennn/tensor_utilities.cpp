@@ -887,7 +887,6 @@ type l2_distance(const type& x, const type& y)
     return distance;
 }
 
-
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
 {
     Tensor<type, 1> distance(size);
