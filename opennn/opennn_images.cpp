@@ -145,7 +145,7 @@ void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
 void rotate_image(TensorMap<Tensor<type, 3>>& input,
                   TensorMap<Tensor<type, 3>>& output,
                   const type& angle_degree)
-{
+{/*
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
     assert(input.dimension(2) == output.dimension(2));
@@ -206,7 +206,7 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
 
         }
     }
-}
+*/}
 
 //    void rescale_image(const Tensor<type, 3>& input,
 //                       Tensor<type, 3>& output,

@@ -76,13 +76,13 @@ double double double 	double scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.
 	double scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
 	double scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 
-	double perceptron_layer_1_output_0 = tanh( 2.44948 + (scaled_sepal_lenght*-1.42579) + (scaled_sepal_width*2.56502) + (scaled_petal_lenght*-2.67917) + (scaled_petal_width*-3.8776) );
-	double perceptron_layer_1_output_1 = tanh( -2.28658 + (scaled_sepal_lenght*-1.597) + (scaled_sepal_width*0.0771116) + (scaled_petal_lenght*3.89079) + (scaled_petal_width*1.66861) );
-	double perceptron_layer_1_output_2 = tanh( -1.27553 + (scaled_sepal_lenght*-2.07794) + (scaled_sepal_width*4.07168) + (scaled_petal_lenght*-4.45896) + (scaled_petal_width*-4.61889) );
+	double perceptron_layer_1_output_0 = tanh( 0.100419 + (scaled_sepal_lenght*0.0294449) + (scaled_sepal_width*-0.153129) + (scaled_petal_lenght*0.148748) + (scaled_petal_width*0.387044) );
+	double perceptron_layer_1_output_1 = tanh( 0.0908042 + (scaled_sepal_lenght*0.283474) + (scaled_sepal_width*-0.300182) + (scaled_petal_lenght*0.133461) + (scaled_petal_width*0.37122) );
+	double perceptron_layer_1_output_2 = tanh( -0.0502741 + (scaled_sepal_lenght*0.145957) + (scaled_sepal_width*-0.0762085) + (scaled_petal_lenght*0.0320756) + (scaled_petal_width*0.175429) );
 
-	double probabilistic_layer_combinations_0 = -0.913727 +1.90729*perceptron_layer_1_output_0 -5.04514*perceptron_layer_1_output_1 +3.83425*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_1 = 4.3078 +1.65102*perceptron_layer_1_output_0 -1.00319*perceptron_layer_1_output_1 -1.49737*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_2 = -2.97608 -3.59247*perceptron_layer_1_output_0 +5.90514*perceptron_layer_1_output_1 -2.33415*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_0 = -0.0464519 +0.0948961*perceptron_layer_1_output_0 +0.0304029*perceptron_layer_1_output_1 -0.119937*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_1 = 0.240458 +0.175408*perceptron_layer_1_output_0 -0.197369*perceptron_layer_1_output_1 +0.181568*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_2 = -0.197357 +0.124013*perceptron_layer_1_output_0 +0.329514*perceptron_layer_1_output_1 +0.15323*perceptron_layer_1_output_2 ;
 
 	double sum = exp(probabilistic_layer_combinations_0) + exp(probabilistic_layer_combinations_1) + exp(probabilistic_layer_combinations_2);
 

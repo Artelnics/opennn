@@ -881,13 +881,13 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
 
-    copy(probabilistic_layer_back_propagation->biases_derivatives.data(),
-         probabilistic_layer_back_propagation->biases_derivatives.data() + biases_number,
-         gradient.data() + index);
-
     copy(probabilistic_layer_back_propagation->synaptic_weights_derivatives.data(),
          probabilistic_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
-         gradient.data() + index + biases_number);
+         gradient.data() + index);
+
+    copy(probabilistic_layer_back_propagation->biases_derivatives.data(),
+         probabilistic_layer_back_propagation->biases_derivatives.data() + biases_number,
+         gradient.data() + index + synaptic_weights_number);
 }
 
 

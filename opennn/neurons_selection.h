@@ -237,7 +237,7 @@ struct NeuronsSelectionResults
 
    /// Value of loss for the neural network with minimum selection error.
 
-   int FLT_MAX=10; //alvaros
+//   int FLT_MAX=10; //alvaros
 
    type optimum_training_error = static_cast<type>(FLT_MAX);
 

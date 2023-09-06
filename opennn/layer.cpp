@@ -2049,7 +2049,7 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
 
     // Check equal sizes and ranks
 
-    cout << "----- softmax_derivatives -----" << endl;
+//    cout << "----- softmax_derivatives -----" << endl;
 
     const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
