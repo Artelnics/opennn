@@ -127,7 +127,7 @@ public:
    UnscalingLayer* get_unscaling_layer_pointer() const;
    BoundingLayer* get_bounding_layer_pointer() const;
    FlattenLayer* get_flatten_layer_pointer() const;
-   ConvolutionalLayer* get_convolutional_layer_pointer() const;
+   //ConvolutionalLayer* get_convolutional_layer_pointer() const;
    PoolingLayer* get_pooling_layer_pointer() const;
    ProbabilisticLayer* get_probabilistic_layer_pointer() const;
    LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const;
@@ -438,7 +438,7 @@ struct NeuralNetworkForwardPropagation
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            //    layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
@@ -575,7 +575,7 @@ struct NeuralNetworkBackPropagation
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+            //    layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 

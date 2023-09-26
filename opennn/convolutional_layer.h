@@ -33,9 +33,9 @@ namespace opennn
 struct ConvolutionalLayerForwardPropagation;
 struct ConvolutionalLayerBackPropagation;
 
-#ifdef OPENNN_CUDA
-    struct ConvolutionalLayerForwardPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//    struct ConvolutionalLayerForwardPropagationCuda;
+//#endif
 
 class ConvolutionalLayer : public Layer
 {
@@ -249,143 +249,152 @@ protected:
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
-#else
-};
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
+//#else
+//};
+//#endif
 
+
+
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+//#endif
+
+
+};
 
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+   // Default constructor
 
-    explicit ConvolutionalLayerForwardPropagation()
-        : LayerForwardPropagation()
-    {
-    }
+   explicit ConvolutionalLayerForwardPropagation()
+       : LayerForwardPropagation()
+   {
+   }
 
-    // Constructor
+   // Constructor
 
-    explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    type* get_activations_derivatives_data()
-    {
-        return activations_derivatives.data();
-    }
-
-    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
-    {
-        ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
-
-        const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
-        const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
-        const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           inputs_rows_number,
-                                           inputs_columns_number,
-                                           inputs_channels_number});
-    }
+   explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+       : LayerForwardPropagation()
+   {
+       set(new_batch_samples_number, new_layer_pointer);
+   }
 
 
-    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
-    {
-        ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
-
-        const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
-        const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
-        const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           outputs_rows_number,
-                                           outputs_columns_number,
-                                           kernels_number});
-    }
+   type* get_activations_derivatives_data()
+   {
+       return activations_derivatives.data();
+   }
 
 
-    TensorMap<Tensor<type, 4>> get_outputs() const
-    {
-        const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
-                = get_outputs_dimensions_array();
+   Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
+   {
+       ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
-        return TensorMap<Tensor<type, 4>>(outputs_data(0), outputs_dimensions_array);
-    }
+       const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
+       const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
+       const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
+
+       return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                          inputs_rows_number,
+                                          inputs_columns_number,
+                                          inputs_channels_number});
+   }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        batch_samples_number = new_batch_samples_number;
+   Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
+   {
+       ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
-        layer_pointer = new_layer_pointer;
+       const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
+       const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+       const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
 
-        const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+       return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                          outputs_rows_number,
+                                          outputs_columns_number,
+                                          kernels_number});
+   }
 
-        const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
-        const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
 
-        const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
+   TensorMap<Tensor<type, 4>> get_outputs() const
+   {
+       const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
+           = get_outputs_dimensions_array();
 
-        const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
-        const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
-        const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+       return TensorMap<Tensor<type, 4>>(outputs_data(0), outputs_dimensions_array);
+   }
 
-        preprocessed_inputs.resize(batch_samples_number,
-                                   inputs_rows_number,
-                                   inputs_columns_number,
-                                   inputs_channels_number);
 
-        outputs_data.resize(1);
+   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+   {
+       batch_samples_number = new_batch_samples_number;
 
-        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
+       layer_pointer = new_layer_pointer;
 
-        outputs_dimensions.resize(1);
-        outputs_dimensions[0].resize(4);
-        outputs_dimensions[0].setValues({batch_samples_number,
+       const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+
+       const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
+       const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
+
+       const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
+
+       const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
+       const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
+       const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+
+       preprocessed_inputs.resize(batch_samples_number,
+                                  inputs_rows_number,
+                                  inputs_columns_number,
+                                  inputs_channels_number);
+
+       outputs_data.resize(1);
+
+       outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
+
+       outputs_dimensions.resize(1);
+       outputs_dimensions[0].resize(4);
+       outputs_dimensions[0].setValues({batch_samples_number,
+                                        outputs_rows_number,
+                                        outputs_columns_number,
+                                        kernels_number});
+
+       means.resize(kernels_number);
+       standard_deviations.resize(kernels_number);
+
+       activations_derivatives.resize(batch_samples_number,
                                       outputs_rows_number,
                                       outputs_columns_number,
-                                      kernels_number});
-
-        means.resize(kernels_number);
-        standard_deviations.resize(kernels_number);
-
-        activations_derivatives.resize(batch_samples_number,
-                                       outputs_rows_number,
-                                       outputs_columns_number,
-                                       kernels_number);               
-    }
+                                      kernels_number);
+   }
 
 
-    void print() const
-    {
-        cout << "Convolutional" << endl;
+   void print() const
+   {
+       cout << "Convolutional" << endl;
 
-        cout << "Outputs:" << endl;
+       cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data(0),
+       cout << TensorMap<Tensor<type,4>>(outputs_data(0),
                                           outputs_dimensions[0](0),
                                           outputs_dimensions[0](1),
                                           outputs_dimensions[0](2),
                                           outputs_dimensions[0](3)) << endl;
 
-        cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions[0] << endl;
+       cout << "Outputs dimensions:" << endl;
+       cout << outputs_dimensions[0] << endl;
 
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
-    }
+       cout << "Activations derivatives:" << endl;
+       cout << activations_derivatives << endl;
+   }
 
-    Tensor<type, 4> preprocessed_inputs;
+   Tensor<type, 4> preprocessed_inputs;
 
-    Tensor<type, 1> means;
-    Tensor<type, 1> standard_deviations;
+   Tensor<type, 1> means;
+   Tensor<type, 1> standard_deviations;
 
-    Tensor<type, 4> activations_derivatives;
+   Tensor<type, 4> activations_derivatives;
 
 
 };
@@ -394,108 +403,102 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
+   explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
+   {
+   }
 
 
-    virtual ~ConvolutionalLayerBackPropagation()
-    {
-    }
+   virtual ~ConvolutionalLayerBackPropagation()
+   {
+   }
 
 
-    explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+   explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+       : LayerBackPropagation()
+   {
+       set(new_batch_samples_number, new_layer_pointer);
+   }
 
 
-    Eigen::array<ptrdiff_t, 4> get_deltas_dimensions_array()
-    {
-        ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+   Eigen::array<ptrdiff_t, 4> get_deltas_dimensions_array()
+   {
+       ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
-        const Index deltas_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
-        const Index deltas_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
-        const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
+       const Index deltas_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
+       const Index deltas_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+       const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
 
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           deltas_rows_number,
-                                           deltas_columns_number,
-                                           kernels_number});
-    }
+       return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
+                                          deltas_rows_number,
+                                          deltas_columns_number,
+                                          kernels_number});
+   }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        batch_samples_number = new_batch_samples_number;
+   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+   {
+       batch_samples_number = new_batch_samples_number;
 
-        layer_pointer = new_layer_pointer;
+       layer_pointer = new_layer_pointer;
 
-        const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+       const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
 
-        const Index kernesl_rows_number = convolutional_layer_pointer->get_kernels_rows_number();
-        const Index kernels_columns_number = convolutional_layer_pointer->get_kernels_columns_number();
-        const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
-        const Index kernels_channels_number = convolutional_layer_pointer->get_kernels_channels_number();
+       const Index kernesl_rows_number = convolutional_layer_pointer->get_kernels_rows_number();
+       const Index kernels_columns_number = convolutional_layer_pointer->get_kernels_columns_number();
+       const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
+       const Index kernels_channels_number = convolutional_layer_pointer->get_kernels_channels_number();
 
-        const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
-        const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
-        const Index synaptic_weights_number = convolutional_layer_pointer->get_synaptic_weights_number();
+       const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
+       const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+       const Index synaptic_weights_number = convolutional_layer_pointer->get_synaptic_weights_number();
 
-        deltas_dimensions.resize(4);
+       deltas_dimensions.resize(4);
 
-        deltas_dimensions.setValues({batch_samples_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number,
-                                     kernels_number});
+       deltas_dimensions.setValues({batch_samples_number,
+                                    outputs_rows_number,
+                                    outputs_columns_number,
+                                    kernels_number});
 
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number
-                                                        *outputs_rows_number
-                                                        *outputs_columns_number
-                                                        *kernels_number*sizeof(type)));
+       deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number
+                                                         *outputs_rows_number
+                                                         *outputs_columns_number
+                                                         *kernels_number*sizeof(type)));
 
-        deltas_times_activations_derivatives.resize(batch_samples_number,
-                                                    outputs_rows_number,
-                                                    outputs_columns_number,
-                                                    kernels_number);
+       deltas_times_activations_derivatives.resize(batch_samples_number,
+                                                   outputs_rows_number,
+                                                   outputs_columns_number,
+                                                   kernels_number);
 
-        biases_derivatives.resize(kernels_number);
+       biases_derivatives.resize(kernels_number);
 
-        synaptic_weights_derivatives.resize(kernesl_rows_number,
-                                            kernels_columns_number,
-                                            kernels_channels_number,
-                                            kernels_number);
-    }
+       synaptic_weights_derivatives.resize(kernesl_rows_number,
+                                           kernels_columns_number,
+                                           kernels_channels_number,
+                                           kernels_number);
+   }
 
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        //cout << deltas << endl;ca
+   void print() const
+   {
+       cout << "Deltas:" << endl;
+       //cout << deltas << endl;ca
 
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
+       cout << "Biases derivatives:" << endl;
+       cout << biases_derivatives << endl;
 
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
+       cout << "Synaptic weights derivatives:" << endl;
+       cout << synaptic_weights_derivatives << endl;
 
-    }
+   }
 
-    Tensor<type, 4> deltas_times_activations_derivatives;
+   Tensor<type, 4> deltas_times_activations_derivatives;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 4> synaptic_weights_derivatives;
+   Tensor<type, 1> biases_derivatives;
+   Tensor<type, 4> synaptic_weights_derivatives;
 };
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
-#endif
 
 }
-
 #endif
-
-
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //

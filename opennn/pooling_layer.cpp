@@ -476,7 +476,7 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
     */
 }
 
-
+/**
 void PoolingLayer::calculate_hidden_delta_convolutional(LayerForwardPropagation* next_layer_forward_propagation,
                                                         LayerBackPropagation* next_layer_back_propagation,
                                                         LayerBackPropagation* this_layer_back_propagation) const
@@ -542,8 +542,8 @@ void PoolingLayer::calculate_hidden_delta_convolutional(LayerForwardPropagation*
 
             hidden_delta(image_index, channel_index, row_index, column_index) = sum;
         }
-*/
 }
+*/
 
 
 void PoolingLayer::calculate_hidden_delta_pooling(LayerForwardPropagation* next_layer_forward_propagation,

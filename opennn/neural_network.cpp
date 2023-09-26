@@ -622,26 +622,26 @@ FlattenLayer* NeuralNetwork::get_flatten_layer_pointer() const
 }
 
 
-ConvolutionalLayer* NeuralNetwork::get_convolutional_layer_pointer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers_pointers[i]->get_type() == Layer::Type::Convolutional)
-        {
-            return dynamic_cast<ConvolutionalLayer*>(layers_pointers[i]);
-        }
-    }
-
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "ConvolutionalLayer* get_convolutional_layer_pointer() const method.\n"
-           << "No convolutional layer in neural network.\n";
-
-    throw invalid_argument(buffer.str());
-}
+//ConvolutionalLayer* NeuralNetwork::get_convolutional_layer_pointer() const
+//{
+//    const Index layers_number = get_layers_number();
+//
+//    for(Index i = 0; i < layers_number; i++)
+//    {
+//        if(layers_pointers[i]->get_type() == Layer::Type::Convolutional)
+//        {
+//            return dynamic_cast<ConvolutionalLayer*>(layers_pointers[i]);
+//        }
+//    }
+//
+//    ostringstream buffer;
+//
+//    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//           << "ConvolutionalLayer* get_convolutional_layer_pointer() const method.\n"
+//           << "No convolutional layer in neural network.\n";
+//
+//    throw invalid_argument(buffer.str());
+//}
 
 
 PoolingLayer* NeuralNetwork::get_pooling_layer_pointer() const
@@ -917,13 +917,11 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 //    for(Index i = 0; i < blocks_number; i++)
 //    {
         // Check convolutional
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        convolutional_layer->set_name("convolutional_layer_1" /* + to_string(1) */); // This change the initial name of the table.
+        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        //convolutional_layer->set_name("convolutional_layer_1" /* + to_string(1) */); // This change the initial name of the table.
 
-
-    add_layer(convolutional_layer);
-
-    outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+    //add_layer(convolutional_layer);
+    //outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
 //        // Pooling layer 1
 
@@ -1774,22 +1772,22 @@ Index NeuralNetwork::get_flatten_layers_number() const
 }
 
 
-Index NeuralNetwork::get_convolutional_layers_number() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index count = 0;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers_pointers(i)->get_type() == Layer::Type::Convolutional)
-        {
-            count++;
-        }
-    }
-
-    return count;
-}
+//Index NeuralNetwork::get_convolutional_layers_number() const
+//{
+//    const Index layers_number = get_layers_number();
+//
+//    Index count = 0;
+//
+//    for(Index i = 0; i < layers_number; i++)
+//    {
+//        if(layers_pointers(i)->get_type() == Layer::Type::Convolutional)
+//        {
+//            count++;
+//        }
+//    }
+//
+//    return count;
+//}
 
 
 Index NeuralNetwork::get_pooling_layers_number() const
@@ -3183,27 +3181,27 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
             add_layer(scaling_layer);
         }
-        else if(layers_types(i) == "Convolutional")
-        {
-            ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
+        //else if(layers_types(i) == "Convolutional")
+        //{
+        //    ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
 
-            const tinyxml2::XMLElement* convolutional_element = start_element->NextSiblingElement("ConvolutionalLayer");
-            start_element = convolutional_element;
+        //    const tinyxml2::XMLElement* convolutional_element = start_element->NextSiblingElement("ConvolutionalLayer");
+        //    start_element = convolutional_element;
 
-            if(convolutional_element)
-            {
-                tinyxml2::XMLDocument convolutional_document;
-                tinyxml2::XMLNode* element_clone;
+        //    if(convolutional_element)
+        //    {
+        //        tinyxml2::XMLDocument convolutional_document;
+        //        tinyxml2::XMLNode* element_clone;
 
-                element_clone = convolutional_element->DeepClone(&convolutional_document);
+        //        element_clone = convolutional_element->DeepClone(&convolutional_document);
 
-                convolutional_document.InsertFirstChild(element_clone);
+        //        convolutional_document.InsertFirstChild(element_clone);
 
-                convolutional_layer->from_XML(convolutional_document);
-            }
+        //        convolutional_layer->from_XML(convolutional_document);
+        //    }
 
-            add_layer(convolutional_layer);
-        }
+        //    add_layer(convolutional_layer);
+        //}
         else if(layers_types(i) == "Perceptron")
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer();

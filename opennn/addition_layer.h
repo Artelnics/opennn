@@ -22,7 +22,7 @@
 // OpenNN includes
 
 #include "config.h"
-//#include "convolutional_layer.h"
+#include "convolutional_layer.h"
 #include "layer.h"
 #include "flatten_layer.h"
 
@@ -109,9 +109,9 @@ protected:
 
     Tensor<Index, 1> inputs_dimensions;
 
-#ifdef OPENNN_CUDA
-#include "../../opennn-cuda/op(3, 3, 3, 64)ennn-cuda/pooling_layer_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+//#endif
 
 };
 
@@ -229,6 +229,7 @@ struct AdditionLayerBackPropagation : LayerBackPropagation
 
         layer_pointer = new_layer_pointer;
 
+
         const AdditionLayer* pooling_layer_pointer = static_cast<AdditionLayer*>(layer_pointer);
 
         const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
@@ -254,9 +255,9 @@ struct AdditionLayerBackPropagation : LayerBackPropagation
     }
 };
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+//#endif
 
 
 }

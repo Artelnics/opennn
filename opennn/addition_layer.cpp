@@ -345,7 +345,6 @@ void AdditionLayer::from_XML(const tinyxml2::XMLDocument& document)
     const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
 
 //    set_input_variables_dimenisons(input_variables_dimensions_string);
-
 }
 }
 

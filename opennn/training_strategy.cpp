@@ -714,16 +714,16 @@ TrainingResults TrainingStrategy::perform_training()
         fix_forecasting();
     }
 
-//    if(neural_network_pointer->has_convolutional_layer())
-//    {
-//        ostringstream buffer;
+    if(neural_network_pointer->has_convolutional_layer())
+    {
+        ostringstream buffer;
 
-//        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-//               << "TrainingResults perform_training() const method.\n"
-//               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "TrainingResults perform_training() const method.\n"
+               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
-//        throw invalid_argument(buffer.str());
-//    }
+        throw invalid_argument(buffer.str());
+    }
 
     switch(optimization_method)
     {
