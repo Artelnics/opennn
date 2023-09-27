@@ -221,6 +221,7 @@ public:
 
     Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>&, const double&, const Tensor<Index, 1>&) const;
 
+
 private: 
 
     void set_english_stop_words();
@@ -273,6 +274,10 @@ public:
 
     Index get_alphabet_index(const char&) const;
 
+    Tensor<string, 1> get_vocabulary() const;
+
+    Index get_vocabulary_length() const;
+
     // Set methods
 
     void set();
@@ -282,6 +287,8 @@ public:
     void set_data_tensor(const Tensor<type, 2>&);
 
     void set_alphabet(const Tensor<string, 1>&);
+
+    void set_vocabulary (const Tensor<string, 1>&);
 
     // Other methods
 

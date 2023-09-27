@@ -11,6 +11,7 @@
 // OpenNN includes
 
 #include "text_analytics.h"
+#include <iostream>
 
 namespace opennn
 {
@@ -2726,7 +2727,6 @@ string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_outpu
 
     return multiple_one_hot_decode(output_data);
 }
-
 
 }
 

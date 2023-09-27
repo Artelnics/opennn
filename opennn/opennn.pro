@@ -54,6 +54,7 @@ INCLUDEPATH += ../eigen
 
 HEADERS += \
     codification.h \
+    multihead_attention_layer.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
@@ -114,9 +115,11 @@ HEADERS += \
     region_proposal_layer.h \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
+    multihead_attention_layer.h \
     opennn.h
 
 SOURCES += \
+    multihead_attention_layer.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
     opennn_images.cpp \
@@ -173,6 +176,7 @@ SOURCES += \
     region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \
+    multihead_attention_layer.cpp \
     unit_testing.cpp
 
 
