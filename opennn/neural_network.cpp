@@ -5633,7 +5633,7 @@ string NeuralNetwork::write_expression_python() const
     const string target_string2("Threshold");
     const string target_string3("SymmetricThreshold");
     const string target_string4("ExponentialLinear");
-    const string target_string5("ScaledExponentialLinear");
+    const string target_string5("SELU");
     const string target_string6("HardSigmoid");
     const string target_string7("SoftPlus");
     const string target_string8("SoftSign");
@@ -5807,7 +5807,7 @@ string NeuralNetwork::write_expression_python() const
 
     if(SExpLinear)
     {
-        buffer << "\tdef ScaledExponentialLinear (x):" << endl;
+        buffer << "\tdef SELU (x):" << endl;
         buffer << "\t\t"   << "float alpha = 1.67326" << endl;
         buffer << "\t\t"   << "float lambda = 1.05070" << endl;
         buffer << "\t\t"   << "if(x>0):" << endl;
@@ -5877,7 +5877,7 @@ string NeuralNetwork::write_expression_python() const
     push_back_string(found_mathematical_expressions, "Threshold");
     push_back_string(found_mathematical_expressions, "SymmetricThreshold");
     push_back_string(found_mathematical_expressions, "ExponentialLinear");
-    push_back_string(found_mathematical_expressions, "ScaledExponentialLinear");
+    push_back_string(found_mathematical_expressions, "SELU");
     push_back_string(found_mathematical_expressions, "HardSigmoid");
     push_back_string(found_mathematical_expressions, "SoftPlus");
     push_back_string(found_mathematical_expressions, "SoftSign");
