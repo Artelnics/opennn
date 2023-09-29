@@ -480,10 +480,10 @@ public:
     bool get_random_reflection_axis_y() const;
     type get_random_rotation_minimum() const;
     type get_random_rotation_maximum() const;
-    type get_random_rescaling_minimum() const;
-    type get_random_rescaling_maximum() const;
-    type get_random_horizontal_translation() const;
-    type get_random_vertical_translation() const;
+    type get_random_horizontal_translation_minimum() const;
+    type get_random_horizontal_translation_maximum() const;
+    type get_random_vertical_translation_minimum() const;
+    type get_random_vertical_translation_maximum() const;
 
     const bool& get_display() const;
 
@@ -631,10 +631,10 @@ public:
     void set_random_reflection_axis_y(const bool&);
     void set_random_rotation_minimum(const type&);
     void set_random_rotation_maximum(const type&);
-    void set_random_rescaling_minimum(const type&);
-    void set_random_rescaling_maximum(const type&);
-    void set_random_horizontal_translation(const type&);
-    void set_random_vertical_translation(const type&);
+    void set_random_horizontal_translation_minimum(const type&);
+    void set_random_horizontal_translation_maximum(const type&);
+    void set_random_vertical_translation_minimum(const type&);
+    void set_random_vertical_translation_maximum(const type&);
 
     // Check methods
 
@@ -1097,10 +1097,10 @@ private:
     bool random_reflection_axis_y = false;
     type random_rotation_minimum = 0;
     type random_rotation_maximum = 0;
-    type random_rescaling_minimum = 1;
-    type random_rescaling_maximum = 1;
-    type random_horizontal_translation = 0;
-    type random_vertical_translation = 0;
+    type random_horizontal_translation_minimum = 0;
+    type random_horizontal_translation_maximum = 0;
+    type random_vertical_translation_minimum = 0;
+    type random_vertical_translation_maximum = 0;
 
     Tensor<string, 1> labels_tokens;
 

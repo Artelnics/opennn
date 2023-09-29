@@ -5706,27 +5706,20 @@ void DataSet::set_random_rotation_maximum(const type& new_random_rotation_maximu
     random_rotation_maximum = new_random_rotation_maximum;
 }
 
-
-void DataSet::set_random_rescaling_minimum(const type& new_random_rescaling_minimum)
+void DataSet::set_random_horizontal_translation_maximum(const type& new_random_horizontal_translation_maximum)
 {
-    random_rescaling_minimum = new_random_rescaling_minimum;
+    random_horizontal_translation_maximum = new_random_horizontal_translation_maximum;
 }
 
 
-void DataSet::set_random_rescaling_maximum(const type& new_random_rescaling_maximum)
+void DataSet::set_random_vertical_translation_minimum(const type& new_random_vertical_translation_minimum)
 {
-    random_rescaling_maximum = new_random_rescaling_maximum;
+    random_vertical_translation_minimum = new_random_vertical_translation_minimum;
 }
 
-void DataSet::set_random_horizontal_translation(const type& new_random_horizontal_translation)
+void DataSet::set_random_vertical_translation_maximum(const type& new_random_vertical_translation_maximum)
 {
-    random_horizontal_translation = new_random_horizontal_translation;
-}
-
-
-void DataSet::set_random_vertical_translation(const type& new_random_vertical_translation)
-{
-    random_vertical_translation = new_random_vertical_translation;
+    random_vertical_translation_maximum = new_random_vertical_translation_maximum;
 }
 
 
@@ -7099,44 +7092,39 @@ bool DataSet::get_random_reflection_axis_x() const
     return random_reflection_axis_x;
 }
 
-
 bool DataSet::get_random_reflection_axis_y() const
 {
     return random_reflection_axis_y;
 }
-
 
 type DataSet::get_random_rotation_minimum() const
 {
     return random_rotation_minimum;
 }
 
-
 type DataSet::get_random_rotation_maximum() const
 {
     return random_rotation_maximum;
 }
 
-
-type DataSet::get_random_rescaling_minimum() const
+type DataSet::get_random_horizontal_translation_minimum() const
 {
-    return random_rescaling_minimum;
+    return random_horizontal_translation_minimum;
 }
 
-type DataSet::get_random_rescaling_maximum() const
+type DataSet::get_random_horizontal_translation_maximum() const
 {
-    return random_rescaling_maximum;
+    return random_horizontal_translation_maximum;
 }
 
-type DataSet::get_random_horizontal_translation() const
+type DataSet::get_random_vertical_translation_maximum() const
 {
-    return random_horizontal_translation;
+    return random_vertical_translation_maximum;
 }
 
-
-type DataSet::get_random_vertical_translation() const
+type DataSet::get_random_vertical_translation_minimum() const
 {
-    return random_vertical_translation;
+    return random_vertical_translation_minimum;
 }
 
 
@@ -8073,6 +8061,56 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
+
+        // Data augmentation
+        file_stream.OpenElement("randomReflectionAxisX");
+        buffer.str("");
+        buffer << get_random_reflection_axis_x();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomReflectionAxisY");
+        buffer.str("");
+        buffer << get_random_reflection_axis_y();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomRotationMinimum");
+        buffer.str("");
+        buffer << get_random_rotation_minimum();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomRotationMaximum");
+        buffer.str("");
+        buffer << get_random_rotation_maximum();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomHorizontalTranslationMinimum");
+        buffer.str("");
+        buffer << get_random_horizontal_translation_minimum();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomHorizontalTranslationMaximum");
+        buffer.str("");
+        buffer << get_random_horizontal_translation_maximum();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomVerticalTranslationMinimum");
+        buffer.str("");
+        buffer << get_random_vertical_translation_minimum();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
+        file_stream.OpenElement("randomVerticalTranslationMaximum");
+        buffer.str("");
+        buffer << get_random_vertical_translation_maximum();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.CloseElement();
+
     }
 
     // Lags number
@@ -8693,6 +8731,113 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const Index padding = static_cast<Index>(atoi(image_padding_element->GetText()));
 
             set_image_padding(padding);
+        }
+    }
+
+
+    // Data augmentation
+
+    const tinyxml2::XMLElement* random_reflection_axis_element_x = data_file_element->FirstChildElement("randomReflectionAxisX");
+
+    if(random_reflection_axis_element_x)
+    {
+        if(random_reflection_axis_element_x->GetText())
+        {
+            const bool randomReflectionAxisX = static_cast<Index>(atoi(random_reflection_axis_element_x->GetText()));
+
+            set_random_reflection_axis_x(randomReflectionAxisX);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_reflection_axis_element_y = data_file_element->FirstChildElement("randomReflectionAxisY");
+
+    if(random_reflection_axis_element_x)
+    {
+        if(random_reflection_axis_element_x->GetText())
+        {
+            const bool randomReflectionAxisY = static_cast<Index>(atoi(random_reflection_axis_element_y->GetText()));
+
+            set_random_reflection_axis_y(randomReflectionAxisY);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_rotation_minimum = data_file_element->FirstChildElement("randomRotationMinimum");
+
+    if(random_rotation_minimum)
+    {
+        if(random_rotation_minimum->GetText())
+        {
+            const type randomRotationMinimum = static_cast<Index>(atoi(random_rotation_minimum->GetText()));
+
+            set_random_rotation_minimum(randomRotationMinimum);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_rotation_maximum = data_file_element->FirstChildElement("randomRotationMaximum");
+
+    if(random_rotation_maximum)
+    {
+        if(random_rotation_maximum->GetText())
+        {
+            const type randomRotationMaximum = static_cast<Index>(atoi(random_rotation_maximum->GetText()));
+
+            set_random_rotation_minimum(randomRotationMaximum);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_horizontal_translation_minimum = data_file_element->FirstChildElement("randomHorizontalTranslationMinimum");
+
+    if(random_horizontal_translation_minimum)
+    {
+        if(random_horizontal_translation_minimum->GetText())
+        {
+            const type randomHorizontalTranslationMinimum = static_cast<Index>(atoi(random_horizontal_translation_minimum->GetText()));
+
+            set_random_horizontal_translation_minimum(randomHorizontalTranslationMinimum);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_vertical_translation_minimum = data_file_element->FirstChildElement("randomVerticalTranslationMinimum");
+
+    if(random_vertical_translation_minimum)
+    {
+        if(random_vertical_translation_minimum->GetText())
+        {
+            const type randomVerticalTranslationMinimum = static_cast<Index>(atoi(random_vertical_translation_minimum->GetText()));
+
+            set_random_vertical_translation_minimum(randomVerticalTranslationMinimum);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_horizontal_translation_maximum = data_file_element->FirstChildElement("randomHorizontalTranslationMaximum");
+
+    if(random_horizontal_translation_maximum)
+    {
+        if(random_horizontal_translation_maximum->GetText())
+        {
+            const type randomHorizontalTranslationMaximum = static_cast<Index>(atoi(random_horizontal_translation_maximum->GetText()));
+
+            set_random_horizontal_translation_maximum(randomHorizontalTranslationMaximum);
+
+        }
+    }
+
+    const tinyxml2::XMLElement* random_vertical_translation_maximum = data_file_element->FirstChildElement("randomVerticalTranslationMaximum");
+
+    if(random_vertical_translation_maximum)
+    {
+        if(random_vertical_translation_minimum->GetText())
+        {
+            const type randomVerticalTranslationMaximum = static_cast<Index>(atoi(random_vertical_translation_maximum->GetText()));
+
+            set_random_vertical_translation_maximum(randomVerticalTranslationMaximum);
+
         }
     }
 
@@ -14941,10 +15086,12 @@ void DataSetBatch::perform_augmentation()
     const bool random_reflection_axis_y = data_set_pointer->get_random_reflection_axis_y();
     const type random_rotation_minimum = data_set_pointer->get_random_rotation_minimum();
     const type random_rotation_maximum = data_set_pointer->get_random_rotation_maximum();
-    const type random_rescaling_minimum = data_set_pointer->get_random_rescaling_minimum();
-    const type random_rescaling_maximum = data_set_pointer->get_random_rescaling_maximum();
-    const type random_horizontal_translation_minimum = data_set_pointer->get_random_horizontal_translation();
-    const type random_horizontal_translation_maximum = data_set_pointer->get_random_vertical_translation();
+    const type random_rescaling_minimum = type(0);
+    const type random_rescaling_maximum = type(0);
+    const type random_horizontal_translation_minimum = data_set_pointer->get_random_horizontal_translation_minimum();
+    const type random_horizontal_translation_maximum = data_set_pointer->get_random_horizontal_translation_maximum();
+    const type random_vertical_translation_minimum = data_set_pointer->get_random_vertical_translation_minimum();
+    const type random_vertical_translation_maximum = data_set_pointer->get_random_vertical_translation_maximum();
 
     for(Index batch = 0; batch < batch_size; batch++)
     {
