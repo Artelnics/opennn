@@ -30,25 +30,6 @@ int main(int argc, char *argv[])
    {
         cout << "Blank\n";
 
-        VGG16 vgg16;
-
-        const Index batch_samples_number = 1;
-
-        const Index inputs_rows_number = 224;
-        const Index inputs_columns_number = 224;
-        const Index inputs_channels_number = 3;
-
-        Tensor<type, 4> inputs(batch_samples_number,
-                               inputs_rows_number,
-                               inputs_columns_number,
-                               inputs_channels_number);
-//        inputs.setConstant(1.f);
-        inputs.setConstant(type(5));
-
-        vgg16.set_parameters_constant(0.01);
-
-        const Tensor<type, 2> outputs = vgg16.calculate_outputs(inputs);
-
         cout << "Bye!" << endl;
 
         return 0;
