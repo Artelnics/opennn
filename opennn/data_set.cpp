@@ -5711,6 +5711,11 @@ void DataSet::set_random_horizontal_translation_maximum(const type& new_random_h
     random_horizontal_translation_maximum = new_random_horizontal_translation_maximum;
 }
 
+void DataSet::set_random_horizontal_translation_minimum(const type& new_random_horizontal_translation_minimum)
+{
+    random_horizontal_translation_minimum = new_random_horizontal_translation_minimum;
+}
+
 
 void DataSet::set_random_vertical_translation_minimum(const type& new_random_vertical_translation_minimum)
 {
