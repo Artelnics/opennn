@@ -147,6 +147,21 @@ bool is_false(const Tensor<bool, 1>& tensor)
     return true;
 }
 
+Index true_count(const Tensor<bool, 1>& tensor)
+{
+    Index trueCount = 0;
+
+    for (int i = 0; i < tensor.size(); ++i)
+    {
+        if(tensor(i))
+        {
+            trueCount++;
+        }
+    }
+
+    return trueCount;
+}
+
 
 bool is_binary(const Tensor<type, 2>& matrix)
 {

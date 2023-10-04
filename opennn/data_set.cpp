@@ -2315,6 +2315,31 @@ DataSet::VariableUse DataSet::get_variable_use(const Index& index) const
 }
 
 
+string DataSet::get_column_type_string(ColumnType& column_type) const
+{
+    switch(column_type)
+    {
+    case ColumnType::Numeric:
+        return "Numeric";
+
+    case ColumnType::Constant:
+        return "Constant";
+
+    case ColumnType::Binary:
+        return "Binary";
+
+    case ColumnType::Categorical:
+        return "Categorical";
+
+    case ColumnType::DateTime:
+        return "DateTime";
+
+    default:
+        return char();
+    }
+}
+
+
 /// Returns a vector containing the use of the column, without taking into account the categories.
 
 DataSet::VariableUse DataSet::get_column_use(const Index&  index) const
@@ -3348,6 +3373,7 @@ Index DataSet::get_input_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
+
         if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
@@ -5750,6 +5776,8 @@ void DataSet::set_default()
     lags_number = 0;
 
     steps_ahead = 0;
+
+    /// @todo We are setting some parameters: columns uses, variables uses, ... but we have not yet configured the columns tensor.
 
     set_default_columns_uses();
 
@@ -13918,11 +13946,17 @@ void DataSet::read_csv_1()
 
     bool has_nans_columns = false;
 
+    Tensor<bool, 1> nans_columns_copy(columns_number);
+    nans_columns_copy.setConstant(false);
+
+    nans_columns.resize(columns_number);
+
     do
     {
-        has_nans_columns = false;
+        nans_columns = nans_columns_copy;
+        nans_columns_copy.setConstant(false);
 
-        if(lines_number > 10)
+        if(lines_number > 20)
             break;
 
         for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
@@ -13931,19 +13965,25 @@ void DataSet::read_csv_1()
 
             // Check if all are missing values
 
-            if( data_file_preview(1)(i) == missing_values_label
-                    && data_file_preview(2)(i) == missing_values_label
-                    && data_file_preview(lines_number-2)(i) == missing_values_label
-                    && data_file_preview(lines_number-1)(i) == missing_values_label)
+            Index non_columns_header_index_correction = 0;
+
+            if(!has_columns_names) non_columns_header_index_correction = -1;
+
+            if(data_file_preview(1 + non_columns_header_index_correction)(i) == missing_values_label
+                    && data_file_preview(2 + non_columns_header_index_correction)(i) == missing_values_label
+                    && data_file_preview(lines_number - 2 + non_columns_header_index_correction)(i) == missing_values_label
+                    && data_file_preview(lines_number - 1 + non_columns_header_index_correction)(i) == missing_values_label)
             {
                 has_nans_columns = true;
+                nans_columns_copy(i) = true;
             }
             else
             {
                 has_nans_columns = false;
+                nans_columns_copy(i) = false;
             }
 
-            if(has_nans_columns)
+            if(nans_columns_copy(i))
             {
                 lines_number++;
                 data_file_preview.resize(lines_number);
@@ -13973,6 +14013,7 @@ void DataSet::read_csv_1()
                     if(line.empty()) continue;
                     check_separators(line);
                     data_file_preview(lines_count) = get_tokens(line, separator_char);
+
                     lines_count++;
                     if(lines_count == lines_number) break;
                 }
@@ -13980,7 +14021,8 @@ void DataSet::read_csv_1()
                 file.close();
             }
         }
-    }while(has_nans_columns);
+
+    }while(true_count(nans_columns_copy) != 0);
 
     // Columns types
 
@@ -13997,7 +14039,12 @@ void DataSet::read_csv_1()
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
 
-        if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+        if(nans_columns(column_index))
+        {
+            columns(column_index).type = ColumnType::Constant;
+            column_index++;
+        }
+        else if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
                 || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
                 || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
                 || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
@@ -14217,6 +14264,8 @@ void DataSet::read_csv_3_simple()
     Index sample_index = 0;
     Index column_index = 0;
 
+    Index nans_columns_count = 0;
+
     while(file.good())
     {
         getline(file, line);
@@ -14246,11 +14295,43 @@ void DataSet::read_csv_3_simple()
             }
             else if(is_float)
             {
+                if((nans_columns(column_index)) && (is_numeric_string(tokens(j))) && (nans_columns_count <= 2))
+                {
+                    columns(column_index).type = ColumnType::Numeric;
+                    nans_columns_count++;
+                }
+//                else if((nans_columns(column_index)) && (is_date_time_string(tokens(j))) && (nans_columns_count == 0))
+//                {
+//                    columns(column_index).type = ColumnType::DateTime;
+//                    nans_columns_count++;
+//                }
+//                else if(nans_columns(column_index) && (nans_columns_count == 0))
+//                {
+//                    columns(column_index).type = ColumnType::Categorical;
+//                    nans_columns_count++;
+//                }
+
                 data(sample_index, column_index) = type(strtof(tokens(j).data(), nullptr));
                 column_index++;
             }
             else
             {
+                if((nans_columns(column_index)) && (is_numeric_string(tokens(j))) && (nans_columns_count <= 2))
+                {
+                    columns(column_index).type = ColumnType::Numeric;
+                    nans_columns_count++;
+                }
+//                else if((nans_columns(column_index)) && (is_date_time_string(tokens(j))) && (nans_columns_count == 0))
+//                {
+//                    columns(column_index).type = ColumnType::DateTime;
+//                    nans_columns_count++;
+//                }
+//                else if(nans_columns(column_index) && (nans_columns_count == 0))
+//                {
+//                    columns(column_index).type = ColumnType::Categorical;
+//                    nans_columns_count++;
+//                }
+
                 data(sample_index, column_index) = type(stof(tokens(j)));
                 column_index++;
             }
@@ -14656,7 +14737,6 @@ void DataSet::read_csv_3_complete()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
 }
 
 
