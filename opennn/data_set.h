@@ -336,6 +336,7 @@ public:
     Tensor<string, 1> get_used_columns_names() const;
 
     ColumnType get_column_type(const Index& index) const {return columns[index].type;}
+    string get_column_type_string(ColumnType&) const;
 
     VariableUse get_column_use(const Index& ) const;
     Tensor<VariableUse, 1> get_columns_uses() const;
@@ -1003,6 +1004,8 @@ private:
     /// Missing values label.
 
     string missing_values_label = "NA";
+
+    Tensor<bool, 1> nans_columns;
 
     /// Header which contains variables name.
 

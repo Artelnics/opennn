@@ -55,6 +55,7 @@ bool are_equal(const Tensor<bool, 2>&, const Tensor<bool, 2>&);
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 bool is_false(const Tensor<bool, 1>&);
+Index true_count(const Tensor<bool, 1>&);
 
 bool is_binary(const Tensor<type, 2>&);
 
