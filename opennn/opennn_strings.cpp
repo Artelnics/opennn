@@ -567,30 +567,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     regex_search(date, matchs, regular_expression);
 
-
-//    const regex formats[] = {
-//        regex(format_1), regex(format_2), regex(format_3), regex(format_4), regex(format_5),
-//        regex(format_6), regex(format_7), regex(format_8), regex(format_9), regex(format_10),
-//        regex(format_11), regex(format_12), regex(format_13), regex(format_14), regex(format_15),
-//        regex(format_16), regex(format_17)
-//    };
-
-//    int matchedFormat = 0;
-
-//    for (int i = 0; i < sizeof(formats) / sizeof(regex); ++i)
-//    {
-//        if (regex_match(date, formats[i])) {
-//            matchedFormat = i + 1;
-//            break;
-//        }
-//    }
-
-//    cout << "matchedFormat: " << matchedFormat << endl;
-
-
     int consecutiveZeros = 0;
-
-
 
     for(int i=1; i < 100; i++)
     {
@@ -949,14 +926,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
     else if(matchs[70] != "") // %d/%m/%y %H:%M
     {
-
-            cout << "entreashiewuhfwe gufehiulasdiuhlgihuler" << endl;
-            time_structure.tm_year = stoi(matchs[72].str()) + 100;
-            time_structure.tm_mon = stoi(matchs[71].str())-1;
-            time_structure.tm_mday = stoi(matchs[70].str());
-            time_structure.tm_hour = stoi(matchs[73].str());
-            time_structure.tm_min = stoi(matchs[74].str());
-            time_structure.tm_sec = 0;
+        time_structure.tm_year = stoi(matchs[72].str()) + 100;
+        time_structure.tm_mon = stoi(matchs[71].str())-1;
+        time_structure.tm_mday = stoi(matchs[70].str());
+        time_structure.tm_hour = stoi(matchs[73].str());
+        time_structure.tm_min = stoi(matchs[74].str());
+        time_structure.tm_sec = 0;
     }
     else if(is_numeric_string(date)){
     }
