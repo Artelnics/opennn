@@ -2335,7 +2335,7 @@ string DataSet::get_column_type_string(ColumnType& column_type) const
         return "DateTime";
 
     default:
-        return char();
+        return "Unknown";
     }
 }
 
