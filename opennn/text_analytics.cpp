@@ -258,7 +258,7 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
     replace_substring(documents, "/"," ");
     replace_substring(documents, "("," ");
     replace_substring(documents, ")"," ");
-    replace_substring(documents, "\\", " ");
+    replace_substring(documents, "\\"," ");
     replace_substring(documents, "="," ");
     replace_substring(documents, "?"," ");
     replace_substring(documents, "}"," ");
@@ -273,15 +273,15 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
     replace_substring(documents, ":"," ");
     replace_substring(documents, "-"," ");
     replace_substring(documents, ">"," ");
-    replace_substring(documents, "<","  ");
+    replace_substring(documents, "<"," ");
     replace_substring(documents, "|"," ");
     replace_substring(documents, "–"," ");
     replace_substring(documents, "Ø"," ");
-    replace_substring(documents, "º", " ");
-    replace_substring(documents, "°", " ");
-    replace_substring(documents, "'", " ");
-    replace_substring(documents, "ç", " ");
-    replace_substring(documents, "✓", " ");
+    replace_substring(documents, "º"," ");
+    replace_substring(documents, "°"," ");
+    replace_substring(documents, "'"," ");
+    replace_substring(documents, "ç"," ");
+    replace_substring(documents, "✓"," ");
     replace_substring(documents, "|"," ");
     replace_substring(documents, "@"," ");
     replace_substring(documents, "#"," ");
@@ -297,6 +297,66 @@ void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
     replace_substring(documents, "§"," ");
     replace_substring(documents,"_", " ");
     replace_substring(documents,".", " ");
+
+    delete_extra_spaces(documents);
+}
+
+
+/// Splits punctuation symbols in documents.
+
+void TextAnalytics::split_punctuation(Tensor<string, 1>& documents) const
+{
+    replace_substring(documents, "�"," � ");
+    replace_substring(documents, "\""," \" ");
+    replace_substring(documents, "."," . ");
+    replace_substring(documents, "!"," ! ");
+    replace_substring(documents, "#"," # ");
+    replace_substring(documents, "$"," $ ");
+    replace_substring(documents, "~"," ~ ");
+    replace_substring(documents, "%"," % ");
+    replace_substring(documents, "&"," & ");
+    replace_substring(documents, "/"," / ");
+    replace_substring(documents, "("," ( ");
+    replace_substring(documents, ")"," ) ");
+    replace_substring(documents, "\\"," \\ ");
+    replace_substring(documents, "="," = ");
+    replace_substring(documents, "?"," ? ");
+    replace_substring(documents, "}"," } ");
+    replace_substring(documents, "^"," ^ ");
+    replace_substring(documents, "`"," ` ");
+    replace_substring(documents, "["," [ ");
+    replace_substring(documents, "]"," ] ");
+    replace_substring(documents, "*"," * ");
+    replace_substring(documents, "+"," + ");
+    replace_substring(documents, ","," , ");
+    replace_substring(documents, ";"," ; ");
+    replace_substring(documents, ":"," : ");
+    replace_substring(documents, "-"," - ");
+    replace_substring(documents, ">"," > ");
+    replace_substring(documents, "<"," < ");
+    replace_substring(documents, "|"," | ");
+    replace_substring(documents, "–"," – ");
+    replace_substring(documents, "Ø"," Ø ");
+    replace_substring(documents, "º"," º ");
+    replace_substring(documents, "°"," ° ");
+    replace_substring(documents, "'"," ' ");
+    replace_substring(documents, "ç"," ç ");
+    replace_substring(documents, "✓"," ✓ ");
+    replace_substring(documents, "|"," | ");
+    replace_substring(documents, "@"," @ ");
+    replace_substring(documents, "#"," # ");
+    replace_substring(documents, "^"," ^ ");
+    replace_substring(documents, "*"," * ");
+    replace_substring(documents, "€"," € ");
+    replace_substring(documents, "¬"," ¬ ");
+    replace_substring(documents, "•"," • ");
+    replace_substring(documents, "·"," · ");
+    replace_substring(documents, "”"," ” ");
+    replace_substring(documents, "“"," “ ");
+    replace_substring(documents, "´"," ´ ");
+    replace_substring(documents, "§"," § ");
+    replace_substring(documents,"_", " _ ");
+    replace_substring(documents,".", " . ");
 
     delete_extra_spaces(documents);
 }
@@ -341,6 +401,7 @@ Tensor<Tensor<string,1>,1> TextAnalytics::tokenize(const Tensor<string,1>& docum
 
     Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
 
+#pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
         new_tokenized_documents(i) = get_tokens(documents(i));
@@ -2064,6 +2125,29 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess(const Tensor<string,1>& doc
     tokenized_documents = apply_stemmer(tokenized_documents);
 
     delete_numbers(tokenized_documents);
+
+    delete_blanks(tokenized_documents);
+
+    return tokenized_documents;
+}
+
+Tensor<Tensor<string,1>,1> TextAnalytics::preprocess_language_model(const Tensor<string,1>& documents) const
+{
+    Tensor<string,1> documents_copy(documents);
+
+    to_lower(documents_copy);
+
+    split_punctuation(documents_copy);
+
+    delete_non_printable_chars(documents_copy);
+
+    delete_extra_spaces(documents_copy);
+
+    aux_remove_non_printable_chars(documents_copy);
+
+    Tensor<Tensor<string,1>,1> tokenized_documents = tokenize(documents_copy);
+
+    delete_emails(tokenized_documents);
 
     delete_blanks(tokenized_documents);
 

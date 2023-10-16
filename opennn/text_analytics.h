@@ -154,6 +154,8 @@ public:
 
     void delete_punctuation(Tensor<string, 1>&) const;
 
+    void split_punctuation(Tensor<string, 1>&) const;
+
     void delete_stop_words(Tensor<Tensor<string, 1>, 1>&) const;
 
     void delete_short_words(Tensor<Tensor<string, 1>, 1>&, const Index& = 2) const;
@@ -215,6 +217,8 @@ public:
 
     Tensor<Tensor<string, 1>, 1> preprocess(const Tensor<string, 1>&) const;
 
+    Tensor<Tensor<string, 1>, 1> preprocess_language_model(const Tensor<string, 1>&) const;
+
     Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>&, const Tensor<string, 1>&) const;
 
     Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&, const Index&) const;
@@ -274,10 +278,6 @@ public:
 
     Index get_alphabet_index(const char&) const;
 
-    Tensor<string, 1> get_vocabulary() const;
-
-    Index get_vocabulary_length() const;
-
     // Set methods
 
     void set();
@@ -287,8 +287,6 @@ public:
     void set_data_tensor(const Tensor<type, 2>&);
 
     void set_alphabet(const Tensor<string, 1>&);
-
-    void set_vocabulary (const Tensor<string, 1>&);
 
     // Other methods
 

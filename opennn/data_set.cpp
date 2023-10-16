@@ -4641,6 +4641,18 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
 }
 
 
+Tensor<string, 1> DataSet::get_context_vocabulary() const
+{
+    return context_vocabulary;
+}
+
+
+Tensor<string, 1> DataSet::get_completion_vocabulary() const
+{
+    return completion_vocabulary;
+}
+
+
 /// Returns a matrix with the training samples in the data set.
 /// The number of rows is the number of training
 /// The number of columns is the number of variables.
@@ -12154,6 +12166,16 @@ void DataSet::read_csv()
 }
 
 
+void DataSet::read_csv_language_model()
+{
+    read_csv_1();
+
+    read_csv_2_simple();
+
+    read_csv_3_language_model();
+}
+
+
 /*
 Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
 {
@@ -13326,7 +13348,7 @@ void DataSet::read_txt()
 
     Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
 
-    Tensor<string, 1> full_document = text_analytics.join(document);
+    const Tensor<string, 1> full_document = text_analytics.join(document);
 
     cout << "Processing documents..." << endl;
 
@@ -13382,7 +13404,7 @@ void DataSet::read_txt()
         {
             row.setZero();
 
-            string line = sheet(j);
+            const string line = sheet(j);
 
             Tensor<string,1> tokens = get_tokens(line);
 
@@ -13424,6 +13446,234 @@ void DataSet::read_txt()
 
     for(Index i = 0; i < get_input_columns_number(); i++)
         set_column_type(i,ColumnType::Numeric);
+};
+
+
+void DataSet::read_txt_language_model()
+{
+    cout << "Reading .txt file..." << endl;
+
+    TextAnalytics text_analytics;
+
+    text_analytics.set_separator(get_text_separator_string());
+    text_analytics.set_short_words_length(short_words_length);
+    text_analytics.set_long_words_length(long_words_length);
+    text_analytics.set_stop_words(stop_words);
+
+    cout << "Loading documents..." << endl;
+
+    text_analytics.load_documents(data_file_name);
+
+    const Tensor<Tensor<string, 1>, 1> document = text_analytics.get_documents();
+    const Tensor<Tensor<string, 1>, 1> targets = text_analytics.get_targets();
+
+    Index entry_number = document(0).size();
+    for(Index i = 1; i < document.size(); i++)
+        entry_number += document(i).size();
+
+    Index completion_entry_number = targets(0).size();
+    for(Index i = 1; i < targets.size(); i++)
+        completion_entry_number += targets(i).size();
+
+    if(entry_number != completion_entry_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_txt_language_model() method.\n"
+               << "Context number of entries (" << entry_number << ") not equal to completion number of entries (" << completion_entry_number << ").\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<string, 1> context(entry_number);
+
+    Index entry_index = 0;
+
+    for(Index i = 0; i < document.size(); i++)
+    {
+        for (Index j = 0; j < document(i).size(); j++)
+        {
+            context(entry_index) = document(i)(j);
+            entry_index++;
+        }
+    }
+
+    Tensor<string, 1> completion(entry_number);
+
+    entry_index = 0;
+
+    for(Index i = 0; i < targets.size(); i++)
+    {
+        for(Index j = 0; j < targets(i).size(); j++)
+        {
+            completion(entry_index) = targets(i)(j);
+            entry_index++;
+        }
+    }
+
+    cout << "Processing documents..." << endl;
+
+    Tensor<Tensor<string, 1>, 1> context_tokens = text_analytics.preprocess_language_model(context);
+    Tensor<Tensor<string, 1>, 1> completion_tokens = text_analytics.preprocess_language_model(completion);
+
+    cout << "Calculating vocabularies..." << endl;
+
+    context_vocabulary = text_analytics.calculate_word_bag(context_tokens).words;
+
+    completion_vocabulary = text_analytics.calculate_word_bag(completion_tokens).words;
+
+    Index max_number_tokens = context_tokens(0).size();
+
+    for(Index i = 0; i < entry_number; i++){
+        if(context_tokens(i).size() > max_number_tokens) max_number_tokens = context_tokens(i).size();
+    }
+
+    for(Index i = 0; i < entry_number; i++){
+        if(completion_tokens(i).size() > max_number_tokens) max_number_tokens = completion_tokens(i).size();
+    }
+
+    Index LIMIT = 50;
+
+    max_sentence_length = max_number_tokens > LIMIT ? LIMIT : max_number_tokens - 1;
+
+    // Output
+
+    cout << "Writting data file..." << endl;
+
+    string transformed_data_path = data_file_name;
+    replace(transformed_data_path,".txt","_data.txt");
+    replace(transformed_data_path,".csv","_data.csv");
+
+    std::ofstream file;
+    file.open(transformed_data_path);
+
+    for(Index i  = 0; i < max_sentence_length + 2; i++)
+        file << "context_token_position_" << i << ";";
+
+    for(Index i  = 0; i < max_sentence_length + 2; i++)
+        file << "input_token_position_" << i << ";";
+
+    for(Index i  = 0; i < max_sentence_length + 1; i++)
+        file << "target_token_position_" << i << ";";
+    file << "target_token_position_" << max_sentence_length + 1 << "\n";
+
+    // Data file preview
+
+    Index preview_size = 4;
+
+    text_data_file_preview.resize(preview_size, 2);
+
+    for(Index i = 0; i < preview_size - 1; i++)
+    {
+        text_data_file_preview(i,0) = context(i);
+        text_data_file_preview(i,1) = completion(i);
+    }
+
+    text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
+    text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
+
+    Tensor<type, 1> row(max_sentence_length + 3); /// there is start (=1) and end (=2) indicators
+
+    Index context_vocabulary_size = context_vocabulary.size();
+    Index completion_vocabulary_size = completion_vocabulary.size();
+
+    Tensor<string,1> line_tokens;
+    bool line_ended;
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < entry_number; i++)
+    {
+        row.setZero();
+        row(0) = 1;
+
+        line_ended = false;
+
+        line_tokens = context_tokens(i);
+
+        for(Index j = 1; j < max_sentence_length + 2; j++)
+        {
+            if( j <= line_tokens.size() && contains(context_vocabulary, line_tokens(j - 1)) )
+            {
+                auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, line_tokens(j - 1));
+
+                const Index word_index = it - context_vocabulary.data();
+
+                row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
+            }
+            else
+            {
+                if( j == line_tokens.size() + 1 || (j == max_sentence_length + 1 && !line_ended) )
+                {
+                    row(j) = 2;
+                    line_ended = true;
+                }
+                else
+                {
+                    row(j) = 0;
+                }
+            }
+        }
+
+        for(Index j = 0; j < max_sentence_length + 2; j++)
+            file << row(j) << ";";
+
+        row.setZero();
+        row(0) = 1;
+
+        line_ended = false;
+
+        line_tokens = completion_tokens(i);
+
+        for(Index j = 1; j < max_sentence_length + 3; j++)
+        {
+            if( j <= line_tokens.size() && contains(completion_vocabulary, line_tokens(j - 1)) )
+            {
+                auto it = find(completion_vocabulary.data(), completion_vocabulary.data() + completion_vocabulary_size, line_tokens(j - 1));
+
+                const Index word_index = it - completion_vocabulary.data();
+
+                row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
+            }
+            else
+            {
+                if( j == line_tokens.size() + 1 || (j == max_sentence_length + 2 && !line_ended) )
+                {
+                    row(j) = 2;
+                    line_ended = true;
+                }
+                else
+                {
+                    row(j) = 0;
+                }
+            }
+        }
+
+        for(Index j = 0; j < max_sentence_length + 2; j++)
+            file << row(j) << ";";
+
+        for(Index j = 1; j < max_sentence_length + 2; j++) // Target is input shifted 1 position to the left
+            file << row(j) << ";";
+        file << row(max_sentence_length + 2) << "\n";
+    }
+
+    file.close();
+
+    data_file_name = transformed_data_path;
+    separator = Separator::Semicolon;
+    has_columns_names = true;
+
+    read_csv_language_model();
+
+    for(Index i = 0; i < get_columns_number(); i++)
+    {
+        set_column_type(i, ColumnType::Numeric);
+        if(i < 2*(max_sentence_length + 2))
+            set_column_use(i, VariableUse::Input);
+        else
+            set_column_use(i, VariableUse::Target);
+    }
 };
 
 
@@ -13939,6 +14189,132 @@ void DataSet::read_csv_3_simple()
 
     set_binary_simple_columns();
 
+}
+
+
+void DataSet::read_csv_3_language_model()
+{
+    std::regex accent_regex("[\\xC0-\\xFF]");
+    std::ifstream file;
+
+#ifdef _WIN32
+
+    if (std::regex_search(data_file_name, accent_regex))
+    {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
+        file.open(file_name_wide);
+    }else
+    {
+        file.open(data_file_name.c_str());
+    }
+
+#else
+    file.open(data_file_name.c_str());
+#endif
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv_3_simple() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const bool is_float = is_same<type, float>::value;
+
+    const char separator_char = get_separator_char();
+
+    string line;
+
+    // Read header
+
+    if(has_columns_names)
+    {
+        while(file.good())
+        {
+            getline(file, line);
+
+            line = decode(line);
+
+            if(line.empty()) continue;
+
+            break;
+        }
+    }
+
+    // Read data
+
+    const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
+
+    Tensor<string, 1> tokens(raw_columns_number);
+
+    const Index samples_number = data.dimension(0);
+
+    if(has_rows_labels) rows_labels.resize(samples_number);
+
+    if(display) cout << "Reading data..." << endl;
+
+    Index sample_index = 0;
+    Index column_index = 0;
+
+    while(file.good())
+    {
+        getline(file, line);
+
+        line = decode(line);
+
+        trim(line);
+
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        fill_tokens(line, separator_char, tokens);
+
+        for(Index j = 0; j < raw_columns_number; j++)
+        {
+            trim(tokens(j));
+
+            if(has_rows_labels && j == 0)
+            {
+                rows_labels(sample_index) = tokens(j);
+            }
+            else if(tokens(j) == missing_values_label || tokens(j).empty())
+            {
+                data(sample_index, column_index) = static_cast<type>(NAN);
+                column_index++;
+            }
+            else if(is_float)
+            {
+                data(sample_index, column_index) = type(strtof(tokens(j).data(), nullptr));
+                column_index++;
+            }
+            else
+            {
+                data(sample_index, column_index) = type(stof(tokens(j)));
+                column_index++;
+            }
+        }
+
+        column_index = 0;
+        sample_index++;
+    }
+
+    const Index data_file_preview_index = has_columns_names ? 3 : 2;
+
+    data_file_preview(data_file_preview_index) = tokens;
+
+    file.close();
+
+    if(display) cout << "Data read succesfully..." << endl;
+
+    // Check Constant
+
+    check_constant_columns();
 }
 
 

@@ -519,6 +519,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     }
 
     combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+//    combinations += inputs.contract(synaptic_weights, A_B);
 }
 
 

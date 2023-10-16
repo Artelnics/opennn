@@ -12,7 +12,7 @@ namespace opennn
 {
 
 /// Default constructor.
-/// It creates a empty layer object, with no perceptrons.
+/// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
 
@@ -25,18 +25,16 @@ MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
 
 
 /// Layer architecture constructor.
-/// It creates a layer object with given numbers of inputs and perceptrons.
+/// It creates a layer object with given input size, embedding depth and number of attention heads.
 /// It initializes the parameters at random.
 /// This constructor also initializes the rest of the class members to their default values.
-/// @param new_inputs_number Number of inputs in the layer.
-/// @param new_neurons_number Number of perceptrons in the layer.
 
-MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_inputs_number,
+MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const Index& embedding_depth,
                                                  const Index& number_of_heads,
                                                  const MultiheadAttentionLayer::ActivationFunction& new_activation_function) : Layer()
 {
-    set(new_inputs_number, embedding_depth, number_of_heads, new_activation_function);
+    set(new_input_size, embedding_depth, number_of_heads, new_activation_function);
 
     layer_type = Type::MultiheadAttention;
 
@@ -44,7 +42,7 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_inputs_number,
 }
 
 
-/// Returns the number of inputs to the layer.
+/// Returns the size of the input to the layer.
 
 Index MultiheadAttentionLayer::get_input_size() const
 {
@@ -60,13 +58,15 @@ Index MultiheadAttentionLayer::get_depth() const
 }
 
 
+/// Returns the number of attention heads of the layer.
+
 Index MultiheadAttentionLayer::get_number_of_heads() const
 {
     return number_of_heads;
 }
 
 
-/// Returns the layer's Perceptron sub-layers.
+/// Each returns one of layer's Perceptron sub-layers.
 
 PerceptronLayer MultiheadAttentionLayer::get_input_perceptron() const
 {
@@ -85,17 +85,15 @@ PerceptronLayer MultiheadAttentionLayer::get_output_perceptron() const
 
 
 /// Returns the number of parameters of the layer.
-/// @todo
-/*
+
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
-    Index input_size = get_input_size();
-    return 2* (input_size * depth * number_of_heads) + input_size * depth ;
+    Index input_perceptron_parameters = input_perceptron_layer.get_parameters_number();
+    Index context_perceptron_parameters = context_perceptron_layer.get_parameters_number();
+    Index output_perceptron_parameters = output_perceptron_layer.get_parameters_number();
+    return input_perceptron_parameters + context_perceptron_parameters + output_perceptron_parameters;
 }
 
-
-}
-*/
 
 /// Returns the activation function of the layer.
 /// The activation function of a layer is the activation function of all perceptrons in it.
@@ -179,10 +177,8 @@ void MultiheadAttentionLayer::set()
 }
 
 
-/// Sets new numbers of inputs and perceptrons in the layer.
+/// Sets new input size, embedding depth, number of attention heads and activation function of the layer.
 /// It also sets the rest of the members to their default values.
-/// @param new_inputs_number Number of inputs.
-/// @param new_neurons_number Number of perceptron neurons.
 
 void MultiheadAttentionLayer::set(const Index& new_input_size, const Index& new_depth, const Index& new_number_of_heads,
                           const MultiheadAttentionLayer::ActivationFunction& new_activation_function)
@@ -193,11 +189,7 @@ void MultiheadAttentionLayer::set(const Index& new_input_size, const Index& new_
 
     number_of_heads = new_number_of_heads;
 
-    input_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    context_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    output_perceptron_layer.set(input_size*depth*number_of_heads, input_size*depth);
-
-    //set_parameters_random();
+    set_perceptrons();
 
     activation_function = new_activation_function;
 
@@ -223,47 +215,46 @@ void MultiheadAttentionLayer::set_name(const string& new_layer_name)
 }
 
 
-/// Sets a new number of inputs in the layer.
-/// @param new_inputs_number Number of layer inputs.
+/// Sets a new input size in the layer.
 
 void MultiheadAttentionLayer::set_input_size(const Index& new_input_size)
 {
     input_size = new_input_size;
 
-    input_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    context_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    output_perceptron_layer.set(input_size*depth*number_of_heads, input_size*depth);
-
+    set_perceptrons();
 }
 
 
 /// Sets a new embedding depth in the layer.
-/// @param new_neurons_number New number of neurons in the layer.
 
 void MultiheadAttentionLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 
-    input_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    context_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    output_perceptron_layer.set(input_size*depth*number_of_heads, input_size*depth);
+    set_perceptrons();
 }
 
 
-/// Sets a new number of attention heads.
-/// @param new_biases New set of biases in the layer.
+/// Sets a new number of attention heads in the layer.
 
 void MultiheadAttentionLayer::set_number_of_heads(const Index& new_number_of_heads)
 {
     number_of_heads = new_number_of_heads;
 
+    set_perceptrons();
+}
+
+
+/// Sets the perceptron sub-layers according to the layer's parameters.
+
+void MultiheadAttentionLayer::set_perceptrons()
+{
     input_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
     context_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
     output_perceptron_layer.set(input_size*depth*number_of_heads, input_size*depth);
 }
 
-/// This class sets a new activation(or transfer) function in a single layer.
-/// @param new_activation_function Activation function for the layer.
+/// This class sets a new activation(or transfer) function in the layer.
 
 void MultiheadAttentionLayer::set_activation_function(const MultiheadAttentionLayer::ActivationFunction& new_activation_function)
 {
@@ -345,11 +336,14 @@ void MultiheadAttentionLayer::set_display(const bool& new_display)
 }
 
 
+/// Computes the attention scores by comparing (via dot product) input and context.
+/// Attention scores must be computed separately for each batch element and each attention head.
+
 void MultiheadAttentionLayer::compute_attention_scores(type* input_data,
                                                        const Tensor<Index, 1>& input_dimensions,
                                                        type* context_data,
                                                        const Tensor<Index, 1>& context_dimensions,
-                                                       type* attention_scores_data) /// Softmax before saving
+                                                       type* attention_scores_data)
 {
     if(input_dimensions(0) != context_dimensions(0))
     {
@@ -393,28 +387,35 @@ void MultiheadAttentionLayer::compute_attention_scores(type* input_data,
 
     TensorMap<Tensor<type, 4>> attention_scores(attention_scores_data, batch_size, input_size, input_size, number_of_heads);
 
-
     Tensor<type, 3> input_i(input_size, depth, number_of_heads);
     Tensor<type, 3> context_i(input_size, depth, number_of_heads);
 
     Tensor<type, 2> input_ij(input_size, depth);
     Tensor<type, 2> context_ij(input_size, depth);
 
-    for(Index i = 0; i < batch_size; i++)
-    {
-        input_i = scaled_input.chip(i, 0);
-        context_i = context.chip(i, 0);
+//    Tensor<type, 4> raw_attention_scores(batch_size, input_size, input_size, number_of_heads);
+//    Tensor<Index, 1> attention_scores_dimensions = {input_size, input_size};
 
-        for(Index j = 0; j < number_of_heads ; j++)
+#pragma omp parallel for collapse(2)
+        for(Index i = 0; i < batch_size; i++)
         {
-            input_ij = input_i.chip(j, 2);
-            context_ij = context_i.chip(j, 2);
+            input_i = scaled_input.chip(i, 0);
+            context_i = context.chip(i, 0);
 
-            attention_scores.chip(i, 0).chip(j, 2) = input_ij.contract(context_ij, A_BT);
-        }
-    };
+                for(Index j = 0; j < number_of_heads ; j++)
+                {
+                    input_ij = input_i.chip(j, 2);
+                    context_ij = context_i.chip(j, 2);
 
+                    attention_scores.chip(i, 0).chip(j, 2) = input_ij.contract(context_ij, A_BT);
+//                    raw_attention_scores.chip(i, 0).chip(j, 2) = input_ij.contract(context_ij, A_BT);
+//                    softmax(raw_attention_scores.data(), attention_scores_dimensions,
+//                            attention_scores.chip(i, 0).chip(j, 2).data(), attention_scores_dimensions);
+
+                }
+        };
     /// @todo softmax attention scores (rows of each A_ij)
+    /// softmax();
     /// maybe add dropout?
 }
 
@@ -472,18 +473,19 @@ void MultiheadAttentionLayer::compute_attention_output(type* value_data,
     Tensor<type, 2> value_ij(input_size, depth);
     Tensor<type, 2> attention_scores_ij(input_size, input_size);
 
-    for(Index i = 0; i < batch_size; i++)
-    {
-        value_i = value.chip(i, 0);
-        attention_scores_i = attention_scores.chip(i, 0);
-
-        for(Index j = 0; j < number_of_heads ; j++)
+#pragma omp parallel for collapse(2)
+        for(Index i = 0; i < batch_size; i++)
         {
-            value_ij = value_i.chip(j, 2);
-            attention_scores_ij = attention_scores_i.chip(j, 2);
-            attention_output.chip(i, 0).chip(j, 2) = value_ij.contract(attention_scores_ij, AT_B);
-        }
-    };
+            value_i = value.chip(i, 0);
+            attention_scores_i = attention_scores.chip(i, 0);
+
+                for(Index j = 0; j < number_of_heads ; j++)
+                {
+                    value_ij = value_i.chip(j, 2);
+                    attention_scores_ij = attention_scores_i.chip(j, 2);
+                    attention_output.chip(i, 0).chip(j, 2) = value_ij.contract(attention_scores_ij, AT_B);
+                }
+        };
 }
 
 
@@ -492,24 +494,24 @@ void MultiheadAttentionLayer::forward_propagate(type* inputs_data,
                                         LayerForwardPropagation* forward_propagation,
                                         bool& switch_train)
 {
-#ifdef OPENNN_DEBUG
-    if(inputs_dimensions(1) != get_input_size())
+
+    if(inputs_dimensions(1) != input_size*depth*2)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
                << "void MultiheadAttentionLayer::forward_propagate(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << get_input_size() << ", (" << inputs_dimensions(1) << ").\n";
+               << "Inputs columns number must be equal to " << input_size*depth*2 << ", (" << inputs_dimensions(1) << ").\n";
         throw invalid_argument(buffer.str());
     }
 
-#endif
+    const Index batch_size = inputs_dimensions(0);
 
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
 
     Tensor<Index, 1> flattened_input_dimension(2);
 
-    flattened_input_dimension.setValues({inputs_dimensions(0), inputs_dimensions(1)*inputs_dimensions(2)});
+    flattened_input_dimension.setValues({batch_size, input_size*depth});
 
     PerceptronLayerForwardPropagation input_perceptron_forward_propagation =
         multihead_attention_layer_forward_propagation->input_perceptron_forward_propagation;
@@ -522,7 +524,7 @@ void MultiheadAttentionLayer::forward_propagate(type* inputs_data,
     PerceptronLayerForwardPropagation context_perceptron_forward_propagation =
         multihead_attention_layer_forward_propagation->context_perceptron_forward_propagation;
 
-    context_perceptron_layer.forward_propagate(inputs_data + inputs_dimensions(0)*inputs_dimensions(1)*inputs_dimensions(2),
+    context_perceptron_layer.forward_propagate(inputs_data + batch_size*input_size*depth,
                                                      flattened_input_dimension,
                                                      &context_perceptron_forward_propagation,
                                                      switch_train);
@@ -534,7 +536,7 @@ void MultiheadAttentionLayer::forward_propagate(type* inputs_data,
                              context_perceptron_forward_propagation.outputs_data,
                              context_perceptron_forward_propagation.outputs_dimensions,
                              attention_scores_data);
-\
+
     const Tensor<Index, 1> attention_scores_dimensions = get_dimensions(multihead_attention_layer_forward_propagation->attention_scores);
 
     type* attention_output_data = multihead_attention_layer_forward_propagation->get_attention_output_data();
@@ -550,16 +552,16 @@ void MultiheadAttentionLayer::forward_propagate(type* inputs_data,
 
     Tensor<Index, 1> flattened_attention_output_dimension(2);
 
-    flattened_attention_output_dimension.setValues({inputs_dimensions(0), inputs_dimensions(1)*inputs_dimensions(2)*number_of_heads});
+    flattened_attention_output_dimension.setValues({batch_size, input_size*depth*number_of_heads});
 
     output_perceptron_layer.forward_propagate(attention_output_data,
-                                                     flattened_attention_output_dimension,
-                                                     &output_perceptron_forward_propagation,
-                                                     switch_train);
+                                              flattened_attention_output_dimension,
+                                              &output_perceptron_forward_propagation,
+                                              switch_train);
 
     memcpy(multihead_attention_layer_forward_propagation->outputs_data,
            output_perceptron_forward_propagation.outputs_data,
-           static_cast<size_t>(inputs_dimensions(0)*inputs_dimensions(1)*inputs_dimensions(2)*sizeof(type)));
+           static_cast<size_t>(batch_size*input_size*depth*sizeof(type)));
 }
 
 /*

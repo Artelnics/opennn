@@ -478,6 +478,9 @@ public:
 
     static Scaler get_scaling_unscaling_method(const string&);
 
+    Tensor<string, 1> get_context_vocabulary() const;
+    Tensor<string, 1> get_completion_vocabulary() const;
+
     Index get_gmt() const;
 
     const bool& get_display() const;
@@ -866,6 +869,8 @@ public:
 
     void read_csv();
 
+    void read_csv_language_model();
+
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
     void read_bmp();
@@ -873,6 +878,8 @@ public:
     void read_ground_truth();
 
     void read_txt();
+
+    void read_txt_language_model();
 
     // Image methods
 
@@ -949,6 +956,8 @@ public:
 
     void read_csv_2_simple();
     void read_csv_3_simple();
+
+    void read_csv_3_language_model();
 
     void read_csv_2_complete();
     void read_csv_3_complete();
@@ -1061,6 +1070,14 @@ private:
     Tensor<string, 1> stop_words = text_analytics.get_stop_words();
 
     Tensor<string, 2> text_data_file_preview;
+
+    // LANGUAGE MODEL
+
+    Tensor<string, 1> context_vocabulary;
+
+    Tensor<string, 1> completion_vocabulary;
+
+    Index max_sentence_length;
 
     // MISSING VALUES
 

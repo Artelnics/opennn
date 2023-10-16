@@ -83,7 +83,7 @@ public:
     PerceptronLayer get_context_perceptron() const;
     PerceptronLayer get_output_perceptron() const;
 
-//    Index get_parameters_number() const final;
+    Index get_parameters_number() const final;
 
     const MultiheadAttentionLayer::ActivationFunction& get_activation_function() const;
 
@@ -107,6 +107,8 @@ public:
     void set_input_size(const Index&);
     void set_depth(const Index&);
     void set_number_of_heads(const Index&);
+
+    void set_perceptrons();
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
