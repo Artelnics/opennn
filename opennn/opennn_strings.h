@@ -57,8 +57,10 @@ namespace opennn
     bool contains_substring(const string&, const string&);
 
     void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith);
-    string replace_non_allowed_programming_expressions(string& s);
+    void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith);
+
     vector<string> get_words_in_a_string(string str);
+    string replace_non_allowed_programming_expressions(string& s);
 
     Tensor<string, 1> fix_write_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
     Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);

@@ -4046,7 +4046,7 @@ string NeuralNetwork::write_expression_c() const
 {
     string aux = "";
     ostringstream buffer;
-    ostringstream calculate_outputs_buffer;
+    ostringstream outputs_buffer;
 
     Tensor<string, 1> inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
@@ -4165,7 +4165,6 @@ string NeuralNetwork::write_expression_c() const
     {
         string t = tokens(i);
         string word = get_word_from_token(t);
-
 
         if(word.size() > 1 && !find_string_in_tensor(found_tokens, word))
         {
@@ -4393,36 +4392,61 @@ string NeuralNetwork::write_expression_c() const
 
         if(t.size()<=1)
         {
-            calculate_outputs_buffer << "" << endl;
+            outputs_buffer << "" << endl;
         }
         else
         {
-            calculate_outputs_buffer << "\t" << t << endl;
+            outputs_buffer << "\t" << t << endl;
         }
     }
 
-    string calculate_outputs_string = calculate_outputs_buffer.str();
+
+    //===========================================================================//
+    //                                                                           //
+    //                     CHANGE THIS TO A NEW FUNCTION                         //
+    //                                                                           //
+    //===========================================================================//
+
+    string outputs_espresion = outputs_buffer.str();
+    std::string::size_type previous_pos = 0;
 
     for(int i = 0; i < found_tokens.dimension(0); i++)
     {
         string found_token = found_tokens(i);
         string toReplace(found_token);
         string newword = "double " + found_token;
-        size_t pos = calculate_outputs_string.find(toReplace);
-        calculate_outputs_string.replace(pos, toReplace.length(), newword);
+
+        std::string::size_type pos = 0;
+
+        while((pos = outputs_espresion.find(toReplace, pos)) != std::string::npos)
+        {
+            if (pos > previous_pos)
+            {
+                outputs_espresion.replace(pos, toReplace.length(), newword);
+                pos += newword.length();
+                previous_pos = pos;
+                break;
+            }
+            else
+            {
+                pos += newword.length();
+            }
+        }
     }
+
+    //===========================================================================//
 
     if(LSTM_number>0)
     {
-        replace_all_appearances(calculate_outputs_string, "(t)", "");
-        replace_all_appearances(calculate_outputs_string, "(t-1)", "");
-        replace_all_appearances(calculate_outputs_string, "double cell_state", "cell_state");
-        replace_all_appearances(calculate_outputs_string, "double hidden_state", "hidden_state");
-        replace_all_appearances(calculate_outputs_string, "cell_state"  , "lstm.cell_state"  );
-        replace_all_appearances(calculate_outputs_string, "hidden_state", "lstm.hidden_state");
+        replace_all_appearances(outputs_espresion, "(t)", "");
+        replace_all_appearances(outputs_espresion, "(t-1)", "");
+        replace_all_appearances(outputs_espresion, "double cell_state", "cell_state");
+        replace_all_appearances(outputs_espresion, "double hidden_state", "hidden_state");
+        replace_all_appearances(outputs_espresion, "cell_state"  , "lstm.cell_state"  );
+        replace_all_appearances(outputs_espresion, "hidden_state", "lstm.hidden_state");
     }
 
-    buffer << calculate_outputs_string;
+    buffer << outputs_espresion;
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "c");
 
@@ -4804,14 +4828,14 @@ string NeuralNetwork::write_expression_api() const
 
             new_word.clear();
             new_word = "$" + key_word;
-            replace_all_appearances(t, key_word, new_word);
+            replace_all_word_appearances(t, key_word, new_word);
         }
 
         for(int i = 0; i < inputs.dimension(0); i++)
         {
             new_word.clear();
             new_word = "$" + inputs[i];
-            replace_all_appearances(t, inputs[i], new_word);
+            replace_all_word_appearances(t, inputs[i], new_word);
         }
 
         if(LSTM_number>0)
@@ -5062,7 +5086,6 @@ string NeuralNetwork::write_expression_javascript() const
     buffer_to_fix << "" << endl;
     buffer_to_fix << "Your model has been exported to this JavaScript file." << endl;
     buffer_to_fix << "You can manage it with the main method, where you \t" << endl;
-    buffer_to_fix << "can change the values of your inputs. For example:" << endl;
     buffer_to_fix << "can change the values of your inputs. For example:" << endl;
     buffer_to_fix << "" << endl;
     buffer_to_fix << "if we want to add these 3 values (0.3, 2.5 and 1.8)" << endl;
