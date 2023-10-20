@@ -55,6 +55,7 @@ HEADERS += \
     addition_layer.h \
     concatenation_layer.h \
     codification.h \
+    kmeans.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
@@ -121,6 +122,7 @@ HEADERS += \
 SOURCES += \
     addition_layer.cpp \
     concatenation_layer.cpp \
+    kmeans.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
     opennn_images.cpp \
