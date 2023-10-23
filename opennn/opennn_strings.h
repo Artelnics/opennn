@@ -98,6 +98,9 @@ namespace opennn
 
     string round_to_precision_string(type, const int&);
     Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2>, const int&);
+
+    Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor);
+    Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<string, 1> tensor2);
 }
 
 #endif // OPENNNSTRINGS_H

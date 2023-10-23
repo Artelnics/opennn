@@ -4651,10 +4651,13 @@ string NeuralNetwork::write_expression_api() const
 
     while(getline(ss, token, '\n'))
     {
-        if(token.size() > 1 && token.back() == '{'){ break; }
-        if(token.size() > 1 && token.back() != ';'){ token += ';'; }
+        if (token.size() > 1 && token.back() == '{') break;
+        if (token.size() > 1 && token.back() != ';') token += ';';
+
+        if (token.size() < 2) continue;
 
         push_back_string(tokens, token);
+
     }
 
     string word;
@@ -4786,6 +4789,11 @@ string NeuralNetwork::write_expression_api() const
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
 
+    //string rigth_side_of_a_token;
+    //string left_side_of_a_token;
+    //Eigen::Tensor<string, 1> phrase(2);
+    //string aux;
+
     size_t substring_length0;
     size_t substring_length1;
     size_t substring_length2;
@@ -4797,6 +4805,20 @@ string NeuralNetwork::write_expression_api() const
     size_t substring_length8;
 
     string new_word;
+
+    Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(inputs, found_tokens);
+    found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
+
+    //ofstream myfile;
+    //myfile.open ("/home/artelnics/Escritorio/example.txt");
+    //myfile << "####################"<< endl;
+    //for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++) myfile << found_tokens_and_input_names(i) << endl;
+    //myfile << "####################"<< endl;
+    //for(int i = 0; i < inputs.dimension(0); i++) myfile << inputs(i) << endl;
+    //myfile << "####################"<< endl;
+    //for(int i = 0; i < found_tokens.dimension(0); i++) myfile << found_tokens(i) << endl;
+    //myfile << "####################"<< endl;
+    //myfile.close();
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
@@ -4822,20 +4844,33 @@ string NeuralNetwork::write_expression_api() const
         if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus     = true; }
         if(substring_length8 < t.size() && substring_length8!=0){ SoftSign     = true; }
 
-        for(int i = 0; i < found_tokens.dimension(0); i++)
-        {
-            string key_word = found_tokens(i);
+        //stringstream ss(t);
+        //while (getline(ss, aux, '=')) { phrase(side) = aux; side = side + 1; }
+        //left_side_of_a_token  = phrase(0);
+        //rigth_side_of_a_token = phrase(1);
 
-            new_word.clear();
-            new_word = "$" + key_word;
-            replace_all_word_appearances(t, key_word, new_word);
-        }
+        //for(int i = 0; i < found_tokens.dimension(0); i++)
+        //{
+        //    string key_word = found_tokens(i);
+        //    new_word.clear();
+        //    new_word = "$" + key_word;
+        //    replace_all_word_appearances(left_side_of_a_token,  key_word, new_word, 0);
+        //}
 
-        for(int i = 0; i < inputs.dimension(0); i++)
+        //for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++)
+        //{
+        //    new_word.clear();
+        //    new_word = "$" + found_tokens_and_input_names[i];
+        //    replace_all_word_appearances(rigth_side_of_a_token, found_tokens_and_input_names[i], new_word, 1);
+        //}
+
+        //t = left_side_of_a_token + " =  " + rigth_side_of_a_token;
+
+        for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++)
         {
             new_word.clear();
-            new_word = "$" + inputs[i];
-            replace_all_word_appearances(t, inputs[i], new_word);
+            new_word = "$" + found_tokens_and_input_names[i];
+            replace_all_word_appearances(t, found_tokens_and_input_names[i], new_word);
         }
 
         if(LSTM_number>0)
@@ -4849,6 +4884,8 @@ string NeuralNetwork::write_expression_api() const
         }
 
         buffer << t << endl;
+
+        //side = 0;
     }
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "php");
