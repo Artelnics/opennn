@@ -30,9 +30,9 @@ using namespace OpenNN;
 namespace OpenNN
 {
 
-type KMeans::euclidean_distance(const Tensor<type, 1>& fisrt_time_series, const Tensor<type, 1>& second_time_series)
+type KMeans::euclidean_distance(const Tensor<type, 1>& a, const Tensor<type, 1>& b)
 {
-    const Tensor<type, 0> result_tensor = (fisrt_time_series - second_time_series).square().sum();
+    const Tensor<type, 0> result_tensor = (a - b).square().sum();
 
     return sqrt(result_tensor(0));
 }
@@ -117,11 +117,10 @@ void KMeans::fit(const Tensor<type, 2>& data)
 Tensor<Index, 1> KMeans::predict(const Tensor<type, 2>& data)
 {
     const Index rows_number = data.dimension(0);
+    Tensor<type, 1> row(data.dimension(1));
+    Tensor<type, 1> center;
 
-    Tensor<type,1> row(rows_number);
-    Tensor<type,1> center;
-
-    rows_cluster_labels.resize(rows_number);
+    Tensor<Index, 1> predictions(rows_number);
 
     for (Index row_index = 0; row_index < rows_number; row_index++)
     {
@@ -134,7 +133,6 @@ Tensor<Index, 1> KMeans::predict(const Tensor<type, 2>& data)
         for(Index cluster_index = 1; cluster_index < clusters_number; cluster_index++)
         {
             center = cluster_centers.chip(cluster_index, 0);
-
             const type distance = euclidean_distance(row, center);
 
             if (distance < minimum_distance)
@@ -144,10 +142,66 @@ Tensor<Index, 1> KMeans::predict(const Tensor<type, 2>& data)
             }
         }
 
-        rows_cluster_labels(row_index) = minimal_distance_cluster_index;
+        predictions(row_index) = minimal_distance_cluster_index;
     }
 
-    return rows_cluster_labels;
+    return predictions;
+}
+
+
+Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clusters)
+{
+    Tensor<type, 1> sum_squared_error_values(max_clusters);
+    Tensor<type,1> data_point;
+    Tensor<type,1> cluster_center;
+
+    const Index rows_number = data.dimension(0);
+
+    Index original_clusters_number = clusters_number;
+
+    for (Index cluster_index = 1; cluster_index <= max_clusters; cluster_index++)
+    {
+        clusters_number = cluster_index;
+        fit(data);
+
+        type sum_squared_error = 0;
+
+        for (Index row_index = 0; row_index < rows_number; row_index++)
+        {
+            data_point = data.chip(row_index, 0);
+            cluster_center = cluster_centers.chip(rows_cluster_labels(row_index), 0);
+
+            sum_squared_error += pow(euclidean_distance(data_point, cluster_center), 2);
+        }
+
+        sum_squared_error_values(cluster_index-1) = sum_squared_error;
+    }
+
+    clusters_number = original_clusters_number;
+    return sum_squared_error_values;
+}
+
+
+Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_values)
+{
+
+    if (clusters_number < 2) return 0;
+
+    type max_slope = 0;
+    Index optimal_clusters_index = 0;
+
+    for (Index clusters_index = 1; clusters_index < clusters_number - 1; clusters_index++)
+    {
+        type slope = sum_squared_error_values(clusters_index) - sum_squared_error_values(clusters_index + 1);
+
+        if (slope > max_slope)
+        {
+            max_slope = slope;
+            optimal_clusters_index = clusters_index;
+        }
+    }
+
+    return optimal_clusters_index + 1;
 }
 
 
