@@ -114,7 +114,7 @@ void KMeans::fit(const Tensor<type, 2>& data)
 }
 
 
-Tensor<Index, 1> KMeans::predict(const Tensor<type, 2>& data)
+Tensor<Index, 1> KMeans::calculate_outputs(const Tensor<type, 2>& data)
 {
     const Index rows_number = data.dimension(0);
     Tensor<type, 1> row(data.dimension(1));
@@ -151,20 +151,21 @@ Tensor<Index, 1> KMeans::predict(const Tensor<type, 2>& data)
 
 Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clusters)
 {
-    Tensor<type, 1> sum_squared_error_values(max_clusters);
     Tensor<type,1> data_point;
     Tensor<type,1> cluster_center;
+    Tensor<type, 1> sum_squared_error_values(max_clusters);
 
     const Index rows_number = data.dimension(0);
 
     Index original_clusters_number = clusters_number;
+    type sum_squared_error;
 
     for (Index cluster_index = 1; cluster_index <= max_clusters; cluster_index++)
     {
         clusters_number = cluster_index;
         fit(data);
 
-        type sum_squared_error = 0;
+        sum_squared_error = 0;
 
         for (Index row_index = 0; row_index < rows_number; row_index++)
         {
@@ -178,30 +179,45 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
     }
 
     clusters_number = original_clusters_number;
+
     return sum_squared_error_values;
 }
 
 
 Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_values)
 {
+    Tensor<type, 1> initial_endpoint(2);
+    initial_endpoint(0) = 1;
+    initial_endpoint(1) = sum_squared_error_values(0);
 
-    if (clusters_number < 2) return 0;
+    Tensor<type, 1> final_endpoint(2);
+    final_endpoint(0) = clusters_number;
+    final_endpoint(1) = sum_squared_error_values(clusters_number-1);
 
-    type max_slope = 0;
-    Index optimal_clusters_index = 0;
+    type max_distance = 0;
+    Index optimal_clusters_number = 1;
 
-    for (Index clusters_index = 1; clusters_index < clusters_number - 1; clusters_index++)
+    Tensor<type, 1> current_point(2);
+    type perpendicular_distance;
+
+    for (Index cluster_index = 1; cluster_index <= clusters_number; cluster_index++)
     {
-        type slope = sum_squared_error_values(clusters_index) - sum_squared_error_values(clusters_index + 1);
+        current_point(0) = cluster_index;
+        current_point(1) = sum_squared_error_values(cluster_index-1);
 
-        if (slope > max_slope)
+        perpendicular_distance = abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
+                                     (final_endpoint(0) - initial_endpoint(0)) * current_point(1) +
+                                     final_endpoint(0) * initial_endpoint(1) - final_endpoint(1) * initial_endpoint(0)) /
+                                     sqrt(pow(final_endpoint(1) - initial_endpoint(1), 2) + pow(final_endpoint(0) - initial_endpoint(0), 2));
+
+        if (perpendicular_distance > max_distance)
         {
-            max_slope = slope;
-            optimal_clusters_index = clusters_index;
+            max_distance = perpendicular_distance;
+            optimal_clusters_number = cluster_index;
         }
     }
 
-    return optimal_clusters_index + 1;
+    return optimal_clusters_number;
 }
 
 

@@ -60,7 +60,7 @@ public:
 
     KMeans(Index clusters = 3, string distance_calculation_metod = "euclidean", Index iter = 100);
 
-    Tensor<Index, 1> predict(const Tensor<type, 2>&);
+    Tensor<Index, 1> calculate_outputs(const Tensor<type, 2>&);
     Tensor<type, 1> elbow_method(const Tensor<type, 2>&, Index max_clusters=10);
     Index find_optimal_clusters(const Tensor<type, 1>&);
 
