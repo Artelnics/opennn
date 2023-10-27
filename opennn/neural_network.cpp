@@ -4117,31 +4117,33 @@ string NeuralNetwork::write_expression_c() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        // Delete intermediate calculations
+    // Delete intermediate calculations
 
-        // sample_autoassociation_distance
+    // sample_autoassociation_distance
 
+    {
+        string word_to_delete = "sample_autoassociation_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if(index != string::npos)
         {
-            string word_to_delete = "sample_autoassociation_distance =";
-
-            size_t index = expression.find(word_to_delete);
-
-            if(index != string::npos) {
-                expression.erase(index, string::npos);
-            }
-
+            expression.erase(index, string::npos);
         }
 
-        // sample_autoassociation_variables_distance
+    }
+
+    // sample_autoassociation_variables_distance
+    {
+        string word_to_delete = "sample_autoassociation_variables_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if(index != string::npos)
         {
-            string word_to_delete = "sample_autoassociation_variables_distance =";
-
-            size_t index = expression.find(word_to_delete);
-
-            if(index != string::npos) {
-                expression.erase(index, string::npos);
-            }
+            expression.erase(index, string::npos);
         }
+    }
     }
 
     stringstream ss(expression);
@@ -4400,41 +4402,9 @@ string NeuralNetwork::write_expression_c() const
         }
     }
 
-
-    //===========================================================================//
-    //                                                                           //
-    //                     CHANGE THIS TO A NEW FUNCTION                         //
-    //                                                                           //
-    //===========================================================================//
-
+    const string keyword = "double";
     string outputs_espresion = outputs_buffer.str();
-    std::string::size_type previous_pos = 0;
-
-    for(int i = 0; i < found_tokens.dimension(0); i++)
-    {
-        string found_token = found_tokens(i);
-        string toReplace(found_token);
-        string newword = "double " + found_token;
-
-        std::string::size_type pos = 0;
-
-        while((pos = outputs_espresion.find(toReplace, pos)) != std::string::npos)
-        {
-            if (pos > previous_pos)
-            {
-                outputs_espresion.replace(pos, toReplace.length(), newword);
-                pos += newword.length();
-                previous_pos = pos;
-                break;
-            }
-            else
-            {
-                pos += newword.length();
-            }
-        }
-    }
-
-    //===========================================================================//
+    replace_substring_in_string (found_tokens, outputs_espresion, keyword);
 
     if(LSTM_number>0)
     {
@@ -4526,6 +4496,8 @@ string NeuralNetwork::write_expression_c() const
     buffer << "} \n" << endl;
 
     string out = buffer.str();
+    //replace_all_appearances(out, "double double double", "double");
+    //replace_all_appearances(out, "double double", "double");
     return out;
 }
 
@@ -4621,29 +4593,32 @@ string NeuralNetwork::write_expression_api() const
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        // Delete intermediate calculations
+    // Delete intermediate calculations
 
-        // sample_autoassociation_distance
+    // sample_autoassociation_distance
+
+    {
+        string word_to_delete = "sample_autoassociation_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if(index != string::npos)
         {
-            string word_to_delete = "sample_autoassociation_distance =";
-
-            size_t index = expression.find(word_to_delete);
-
-            if(index != string::npos) {
-                expression.erase(index, string::npos);
-            }
+            expression.erase(index, string::npos);
         }
+    }
 
-        // sample_autoassociation_variables_distance
+    // sample_autoassociation_variables_distance
+    {
+        string word_to_delete = "sample_autoassociation_variables_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if(index != string::npos)
         {
-            string word_to_delete = "sample_autoassociation_variables_distance =";
-
-            size_t index = expression.find(word_to_delete);
-
-            if(index != string::npos) {
-                expression.erase(index, string::npos);
-            }
+            expression.erase(index, string::npos);
         }
+    }
     }
 
     stringstream ss(expression);
@@ -4789,11 +4764,6 @@ string NeuralNetwork::write_expression_api() const
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
 
-    //string rigth_side_of_a_token;
-    //string left_side_of_a_token;
-    //Eigen::Tensor<string, 1> phrase(2);
-    //string aux;
-
     size_t substring_length0;
     size_t substring_length1;
     size_t substring_length2;
@@ -4808,17 +4778,6 @@ string NeuralNetwork::write_expression_api() const
 
     Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(inputs, found_tokens);
     found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
-
-    //ofstream myfile;
-    //myfile.open ("/home/artelnics/Escritorio/example.txt");
-    //myfile << "####################"<< endl;
-    //for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++) myfile << found_tokens_and_input_names(i) << endl;
-    //myfile << "####################"<< endl;
-    //for(int i = 0; i < inputs.dimension(0); i++) myfile << inputs(i) << endl;
-    //myfile << "####################"<< endl;
-    //for(int i = 0; i < found_tokens.dimension(0); i++) myfile << found_tokens(i) << endl;
-    //myfile << "####################"<< endl;
-    //myfile.close();
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
@@ -4843,28 +4802,6 @@ string NeuralNetwork::write_expression_api() const
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid     = true; }
         if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus     = true; }
         if(substring_length8 < t.size() && substring_length8!=0){ SoftSign     = true; }
-
-        //stringstream ss(t);
-        //while (getline(ss, aux, '=')) { phrase(side) = aux; side = side + 1; }
-        //left_side_of_a_token  = phrase(0);
-        //rigth_side_of_a_token = phrase(1);
-
-        //for(int i = 0; i < found_tokens.dimension(0); i++)
-        //{
-        //    string key_word = found_tokens(i);
-        //    new_word.clear();
-        //    new_word = "$" + key_word;
-        //    replace_all_word_appearances(left_side_of_a_token,  key_word, new_word, 0);
-        //}
-
-        //for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++)
-        //{
-        //    new_word.clear();
-        //    new_word = "$" + found_tokens_and_input_names[i];
-        //    replace_all_word_appearances(rigth_side_of_a_token, found_tokens_and_input_names[i], new_word, 1);
-        //}
-
-        //t = left_side_of_a_token + " =  " + rigth_side_of_a_token;
 
         for(int i = 0; i < found_tokens_and_input_names.dimension(0); i++)
         {
@@ -5072,33 +5009,35 @@ string NeuralNetwork::write_expression_javascript() const
     string token;
     string expression = write_expression();
 
-    const int maximum_output_variable_numbers = 2;
+    const int maximum_output_variable_numbers = 5;
 
     if(project_type == ProjectType::AutoAssociation)
     {
-        // Delete intermediate calculations
+    // Delete intermediate calculations
 
-        // sample_autoassociation_distance
+    // sample_autoassociation_distance
+    {
+        string word_to_delete = "sample_autoassociation_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if(index != string::npos)
         {
-            string word_to_delete = "sample_autoassociation_distance =";
-
-            size_t index = expression.find(word_to_delete);
-
-            if(index != string::npos) {
-                expression.erase(index, string::npos);
-            }
+            expression.erase(index, string::npos);
         }
+    }
 
-        // sample_autoassociation_variables_distance
+    // sample_autoassociation_variables_distance
+    {
+        string word_to_delete = "sample_autoassociation_variables_distance =";
+
+        size_t index = expression.find(word_to_delete);
+
+        if(index != string::npos)
         {
-            string word_to_delete = "sample_autoassociation_variables_distance =";
-
-            size_t index = expression.find(word_to_delete);
-
-            if(index != string::npos) {
-                expression.erase(index, string::npos);
-            }
+            expression.erase(index, string::npos);
         }
+    }
     }
 
     stringstream ss(expression);
@@ -5432,8 +5371,6 @@ string NeuralNetwork::write_expression_javascript() const
 
     buffer << "" << endl;
 
-    //found_tokens = get_variable_names_from_writted_expression(tokens, found_tokens );
-
     for(int i = 0; i < tokens.dimension(0); i++)
     {
         string word = get_word_from_token(tokens(i));
@@ -5555,8 +5492,6 @@ string NeuralNetwork::write_expression_javascript() const
     {
         buffer << "\t" << "out.push(" << outputs[i] << ");" << endl;
     }
-
-
 
     buffer << "\n\t" << "return out;" << endl;
     buffer << "}" << "\n" << endl;
@@ -5749,7 +5684,7 @@ string NeuralNetwork::write_expression_python() const
     buffer << "" << endl;
     buffer << "\tmodel = NeuralNetwork()\t" << endl;
     buffer << "\tsample = [input_1, input_2, input_3, input_4, ...]\t" << endl;
-    buffer << "\toutputs = model.calculate_output(sample)" << endl;
+    buffer << "\toutputs = model.calculate_outputs(sample)" << endl;
     buffer << "\n" << endl;
     buffer << "Inputs Names: \t" << endl;
 
@@ -5906,9 +5841,13 @@ string NeuralNetwork::write_expression_python() const
     else
     {
         string inputs_list;
-        for(int i = 0; i < original_inputs.size();++i) {
+
+        for(int i = 0; i < original_inputs.size();++i)
+        {
             inputs_list += "'" + original_inputs(i) + "'";
-            if(i < original_inputs.size() - 1) {
+
+            if(i < original_inputs.size() - 1)
+            {
                 inputs_list += ", ";
             }
         }
@@ -6119,36 +6058,42 @@ string NeuralNetwork::write_expression_python() const
     }
 
     buffer << "\n" << endl;
-
     buffer << "\t" << "def calculate_batch_output(self, input_batch):" << endl;
-
     buffer << "\t\toutput_batch = [None]*input_batch.shape[0]\n" << endl;
-
     buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
 
     if(has_recurrent_layer())
     {
         buffer << "\t\t\tif(i%self.time_steps == 0):\n" << endl;
-
         buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
     if(has_long_short_term_memory_layer())
     {
         buffer << "\t\t\tif(i%self.time_steps == 0):\n" << endl;
-
         buffer << "\t\t\t\tself.hidden_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
-
         buffer << "\t\t\t\tself.cell_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
     buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
-
     buffer << "\t\t\toutput = self.calculate_outputs(inputs)\n" << endl;
-
     buffer << "\t\t\toutput_batch[i] = output\n"<< endl;
+    buffer << "\t\treturn output_batch\n"<<endl;
 
-    buffer << "\t\treturn output_batch"<<endl;
+    buffer << "def main():" << endl;
+    buffer << "\n\tinputs = []" << "\n" << endl;
+
+    for(Index i = 0; i < inputs.size(); ++i)
+    {
+        buffer << "\t" << inputs(i) << " = " << "#- ENTER YOUR VALUE HERE -#" << endl;
+        buffer << "\t" << "inputs.append(" << inputs(i) << ")" << "\n" << endl;
+    }
+
+    buffer << "\t" << "nn = NeuralNetwork()" << endl;
+    buffer << "\t" << "outputs = nn.calculate_outputs(inputs)" << endl;
+    buffer << "\t" << "print(outputs)" << endl;
+
+    buffer << "\n" << "main()" << endl;
 
     string out = buffer.str();
 

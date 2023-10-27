@@ -1347,14 +1347,17 @@ void replac_substring_within_quotes(string &str, const string &target, const str
         string match_str = match.str();
         string replaced_str = match_str;
         size_t pos = 0;
+
         while((pos = replaced_str.find(target, pos)) != string::npos)
         {
             replaced_str.replace(pos, target.length(), replacement);
             pos += replacement.length();
         }
+
         result += match.prefix().str() + replaced_str;
         prefix = match.suffix().str();
     }
+
     result += prefix;
     str = result;
 }
@@ -1510,6 +1513,7 @@ void remove_non_printable_chars( string& wstr)
                     [&ct]( wchar_t ch ) { return !ct.is( ctype::print, ch ) ; } ),
                 wstr.end() ) ;
 }
+
 
 /// Replaces a substring by another one in each element of this vector.
 /// @param find_what String to be replaced.
@@ -1809,6 +1813,41 @@ Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<s
     for (int i = 0; i < tensor1.dimension(0); ++i) push_back_string(tensor, tensor1(i));
 
     return tensor;
+}
+
+
+/// changes the first apparition of all tokens found in the espression by adding the keyword before each of them.
+/// @param input_string String whre changes will be done.
+/// @param token_to_replace String to be put modyfied.
+/// @param new_token String to be put instead.
+
+void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espression, const std::string& keyword)
+{
+    std::string::size_type previous_pos = 0;
+
+    for(int i = 0; i < tokens.dimension(0); i++)
+    {
+        string found_token = tokens(i);
+        string toReplace(found_token);
+        string newword = keyword + " " + found_token;
+
+        std::string::size_type pos = 0;
+
+        while((pos = espression.find(toReplace, pos)) != std::string::npos)
+        {
+            if (pos > previous_pos)
+            {
+                espression.replace(pos, toReplace.length(), newword);
+                pos += newword.length();
+                previous_pos = pos;
+                break;
+            }
+            else
+            {
+                pos += newword.length();
+            }
+        }
+    }
 }
 
 }

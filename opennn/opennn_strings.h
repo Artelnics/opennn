@@ -89,6 +89,7 @@ namespace opennn
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replac_substring_within_quotes(string&, const string&, const string&);
+    void replace_substring_in_string (Tensor<string, 1>& found_tokens, std::string& outputs_espresion, const std::string& keyword);
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
