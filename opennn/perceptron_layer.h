@@ -50,7 +50,7 @@ struct ProbabilisticLayerBackPropagationLM;
 
 /// This class represents a layer of perceptrons.
 
-/// PerceptronLayer is a single-layer network with a hard-limit trabsfer function.
+/// PerceptronLayer is a single-layer network with a hard-limit transfer function.
 /// This network is often trained with the perceptron learning rule.
 ///
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .

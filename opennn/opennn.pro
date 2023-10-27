@@ -54,6 +54,7 @@ INCLUDEPATH += ../eigen
 
 HEADERS += \
     codification.h \
+    embedding_layer.h \
     multihead_attention_layer.h \
     numerical_differentiation.h \
     config.h \
@@ -119,6 +120,7 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    embedding_layer.cpp \
     multihead_attention_layer.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
