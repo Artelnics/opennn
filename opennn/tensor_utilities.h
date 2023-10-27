@@ -132,6 +132,7 @@ void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const 
 void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 void check_rows_number(const Tensor<type, 2>&, const Index&, const string& );
 
+bool contains(const Tensor<size_t,1>&, const size_t&);
 bool contains(const Tensor<type,1>&, const type&);
 bool contains(const Tensor<string,1>&, const string&);
 bool contains(const Tensor<Index,1>&, const Index&);

@@ -1341,6 +1341,17 @@ bool is_less_than(const Tensor<type, 1>& column, const type& value)
     return is_less(0);
 }
 
+
+bool contains(const Tensor<size_t,1>& vector, const size_t& value)
+{
+    Tensor<size_t, 1> copy(vector);
+
+    const size_t* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return it != (copy.data()+copy.size());
+}
+
+
 bool contains(const Tensor<type,1>& vector, const type& value)
 {
     Tensor<type, 1> copy(vector);
