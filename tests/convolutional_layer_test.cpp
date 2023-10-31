@@ -7,7 +7,14 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer_test.h"
-
+template<size_t DIM>
+static bool is_equal(const Tensor<type, DIM>& expected_output, const Tensor<type, DIM>& output)
+{
+    Eigen::array<Index, DIM> dims;
+    std::iota(begin(dims), end(dims), 0U);
+    Tensor<bool, 0> ouput_equals_expected_output = ((output - expected_output).abs() < type(NUMERIC_LIMITS_MIN)).reduce(dims, Eigen::internal::AndReducer());
+    return ouput_equals_expected_output();
+}
 ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 {
 }
@@ -178,7 +185,12 @@ void ConvolutionalLayerTest::test_constructor()
 
     assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
                 convolutional_layer.get_inputs_rows_number() == 23 &&
-                convolutional_layer.get_inputs_columns_number() == 64, LOG);
+                convolutional_layer.get_inputs_columns_number() == 64 &&
+                convolutional_layer.get_inputs_images_number() == 1, LOG);
+    assert_true(convolutional_layer.get_kernels_channels_number() == 1 &&
+                convolutional_layer.get_kernels_rows_number() == 3 &&
+                convolutional_layer.get_kernels_columns_number() == 2 &&
+                convolutional_layer.get_kernels_number() == 1, LOG);
 }
 
 
@@ -191,52 +203,34 @@ void ConvolutionalLayerTest::test_destructor()
 void ConvolutionalLayerTest::test_set_parameters()
 {
     cout << "test_set_parameters\n";
-/*
+    ConvolutionalLayer convolutional_layer;
+
     Tensor<type, 4> new_synaptic_weights(2, 2, 2, 2);
     Tensor<type, 1> new_biases(2);
     Tensor<type, 1> parameters(18);
 
     convolutional_layer.set_biases(new_biases);
     convolutional_layer.set_synaptic_weights(new_synaptic_weights);
-
-    new_synaptic_weights(0,0,0,0) = type(1);
-    new_synaptic_weights(0,0,0,1) = type(2);
-    new_synaptic_weights(0,0,1,0) = type(3);
-    new_synaptic_weights(0,0,1,1) = type(4);
-    new_synaptic_weights(0,1,0,0) = type(5);
-    new_synaptic_weights(0,1,0,1) = type(6);
-    new_synaptic_weights(0,1,1,0) = type(7);
-    new_synaptic_weights(0,1,1,1) = type(8);
-    new_synaptic_weights(1,0,0,0) = type(9);
-    new_synaptic_weights(1,0,0,1) = type(10);
-    new_synaptic_weights(1,0,1,0) = type(11);
-    new_synaptic_weights(1,0,1,1) = type(12);
-    new_synaptic_weights(1,1,0,0) = type(13);
-    new_synaptic_weights(1,1,0,1) = type(14);
-    new_synaptic_weights(1,1,1,0) = type(15);
-    new_synaptic_weights(1,1,1,1) = type(16);
-
-    new_biases(0) = type(100);
-    new_biases(1) = type(200);
-
-    parameters(0) = type(100);
-    parameters(1) = type(200);
-    parameters(2) = type(1);
-    parameters(3) = type(2);
-    parameters(4) = type(3);
-    parameters(5) = type(4);
-    parameters(6) = type(5);
-    parameters(7) = type(6);
-    parameters(8) = type(7);
-    parameters(9) = type(8);
-    parameters(10) = type(9);
-    parameters(11) = type(10);
-    parameters(12) = type(11);
-    parameters(13) = type(12);
-    parameters(14) = type(13);
-    parameters(15) = type(14);
-    parameters(16) = type(15);
-    parameters(17) = type(16);
+    parameters(0) = new_biases(0) = type(100);
+    parameters(1) = new_biases(1) = type(200);
+    //First kernel
+    parameters(2) = new_synaptic_weights(0,0,0,0) = type(1);
+    parameters(3) = new_synaptic_weights(1,0,0,0) = type(2);
+    parameters(4) = new_synaptic_weights(0,1,0,0) = type(3);
+    parameters(5) = new_synaptic_weights(1,1,0,0) = type(4);
+    parameters(6) = new_synaptic_weights(0,0,1,0) = type(5);
+    parameters(7) = new_synaptic_weights(1,0,1,0) = type(6);
+    parameters(8) = new_synaptic_weights(0,1,1,0) = type(7);
+    parameters(9) = new_synaptic_weights(1,1,1,0) = type(8);
+    //Second kernel
+    parameters(10) = new_synaptic_weights(0,0,0,1) = type(9);
+    parameters(11) = new_synaptic_weights(1,0,0,1) = type(10);
+    parameters(12) = new_synaptic_weights(0,1,0,1) = type(11);
+    parameters(13) = new_synaptic_weights(1,1,0,1) = type(12);
+    parameters(14) = new_synaptic_weights(0,0,1,1) = type(13);
+    parameters(15) = new_synaptic_weights(1,0,1,1) = type(14);
+    parameters(16) = new_synaptic_weights(0,1,1,1) = type(15);
+    parameters(17) = new_synaptic_weights(1,1,1,1) = type(16);
 
     convolutional_layer.set_parameters(parameters, 0);
 
@@ -268,8 +262,57 @@ void ConvolutionalLayerTest::test_set_parameters()
 //                convolutional_layer.get_parameters_number() == 18 &&
 //                convolutional_layer.get_synaptic_weights() == new_synaptic_weights &&
 //                convolutional_layer.get_biases() == new_biases, LOG);
-*/}
+}
 
+void ConvolutionalLayerTest::test_calculate_convolutions()
+{
+    cout << "test_calculate_convolutions\n";
+
+    Tensor<Index, 1> input_dimension(4);
+    const Index number_of_input_rows = 5U;
+    const Index number_of_input_columns = 5U;
+    const Index number_of_input_channels = 3U;
+    const Index number_of_input_images = 1U;
+    input_dimension.setValues({number_of_input_rows, number_of_input_columns, number_of_input_channels, number_of_input_images});
+
+    Tensor<Index, 1> kernel_dimension(4);
+    const Index number_of_kernel_rows = 3U;
+    const Index number_of_kernel_columns = 3U;
+    const Index number_of_kernels = 3U;
+    kernel_dimension.setValues({number_of_kernel_rows, number_of_kernel_columns, number_of_input_channels, number_of_kernels});
+
+    ConvolutionalLayer convolution_layer(input_dimension, kernel_dimension);
+
+    Tensor<type, 1> biases(3);
+    biases.setValues({type(0), type(1), type(2)});
+    convolution_layer.set_biases(biases);
+
+    Tensor<type, 3> kernel(kernel_dimension);
+    kernel.setConstant(type(1)/type(9));
+    convolution_layer.set_synaptic_weights(kernel);
+
+    Tensor<type, 4> input(input_dimension);
+    input.setConstant(type(1));
+
+    Tensor<type, 4> output(
+        number_of_input_rows - number_of_kernel_rows + 1, 
+        number_of_input_columns - number_of_kernel_columns + 1, 
+        number_of_kernels,
+        number_of_input_images);
+    convolutional_layer.calculate_convolutions(input, output.data());
+
+    Tensor<type, 4> expected_output(3, 3, 3, 1);
+    expected_output.setConstant(type(3));
+    expected_output.chip(1, 2).setConstant(type(4));
+    expected_output.chip(2, 2).setConstant(type(5));
+
+    assert_true(expected_output.dimension(0) == output.dimension(0) &&
+    expected_output.dimension(1) == output.dimension(1) &&
+    expected_output.dimension(2) == output.dimension(2) &&
+    expected_output.dimension(3) == output.dimension(3), LOG);
+
+    assert_true(is_equal<4>(expected_output, output), LOG);
+}
 
 void ConvolutionalLayerTest::test_calculate_combinations()
 {
@@ -293,7 +336,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
                                  input_kernels,
                                  input_images);
 
-    Tensor<type, 1> biases(channels);
+    Tensor<type, 1> biases(input_kernels);
 
     inputs.setConstant(type(1.));
     kernels.setConstant(type(1./12.));
@@ -312,12 +355,15 @@ void ConvolutionalLayerTest::test_calculate_combinations()
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
-/*
-    convolutional_layer.calculate_convolutions(inputs, combinations);
 
-    assert_true(abs(combinations(0, 0, 0, 0) - type(2.25)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 1, 0) - type(3.25)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 2, 0) - type(4.25)) < type(NUMERIC_LIMITS_MIN), LOG);
+    convolutional_layer.calculate_convolutions(inputs, combinations.data());
+    
+    Tensor<type, 4> expected_output(3, 3, 3, 1);
+    expected_output.chip(0, 2).setConstant(type(2.25));
+    expected_output.chip(1, 2).setConstant(type(3.25));
+    expected_output.chip(2, 2).setConstant(type(4.25));
+
+    assert_true(is_equal<4>(expected_output, combinations), LOG);
 
     inputs.resize(5, 5, 2, 2);
     kernels.resize(2, 2, 2, 2);
@@ -334,13 +380,15 @@ void ConvolutionalLayerTest::test_calculate_combinations()
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
-    convolutional_layer.calculate_convolutions(inputs, combinations);
+    convolutional_layer.calculate_convolutions(inputs, combinations.data());
 
-    assert_true(abs(combinations(0, 0, 0, 0) - type(1.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 1, 0) - type(3.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 0, 1) - type(2.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 0, 1, 1) - type(5.)) < type(NUMERIC_LIMITS_MIN), LOG);
-                */
+    expected_output.resize(3, 3, 2, 2);
+    expected_output.chip(0, 3).chip(0, 2).setConstant(type(1));
+    expected_output.chip(0, 3).chip(1, 2).setConstant(type(3));
+    expected_output.chip(1, 3).chip(0, 2).setConstant(type(2));
+    expected_output.chip(1, 3).chip(1, 2).setConstant(type(5));
+
+    assert_true(is_equal<4>(expected_output, combinations), LOG);         
 }
 
 ///@todo include this in pooling
@@ -478,7 +526,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
 void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
-/*
+
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations_4d;
     Tensor<type, 4> result;
@@ -513,117 +561,65 @@ void ConvolutionalLayerTest::test_calculate_activations()
     inputs(1,1,1,0) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
-    activations_4d.resize(2,2,2,2);
+    activations_4d.resize(new_inputs_dimensions);
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::Threshold);
-    convolutional_layer.calculate_activations(inputs, activations_4d);
+    convolutional_layer.calculate_activations(inputs.data(), new_inputs_dimensions, activations_4d.data(), new_inputs_dimensions);
 
-    assert_true(activations_4d(0,0,0,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,0,0,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,0,1,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,0,1,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,1,0,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,1,0,1) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,1,1,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,1,1,1) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,0,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,0,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,1,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,1,1) - type(0) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,1,0,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,1,0,1) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,1,1,0) - type(1) < type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,1,1,1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    Tensor<type, 4> expected_output(new_inputs_dimensions);
+    expected_output = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? type(0) : type(1);
+    });
+
+    assert_true(is_equal<4>(expected_output, activations_4d), LOG);
 
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
 
-    convolutional_layer.calculate_activations(inputs, activations_4d);
+    convolutional_layer.calculate_activations(inputs.data(), new_inputs_dimensions, activations_4d.data(), new_inputs_dimensions);
+
+    expected_output = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? type(-1) : type(1);
+    });
 
     //    assert_true(activations == result, LOG);
-
-    assert_true(activations_4d(0,0,0,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,0,0,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,0,1,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,0,1,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(0,1,0,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,0,1) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,1,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,1,1) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,0,0,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,0,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,1,0) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,0,1,1) - type(-1)<type(NUMERIC_LIMITS_MIN) &&
-                activations_4d(1,1,0,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,0,1) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,1,0) - type(1) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,1,1) - type(1) <type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(is_equal<4>(expected_output, activations_4d), LOG);
 
     // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
-    convolutional_layer.calculate_activations(inputs, activations_4d);
+    convolutional_layer.calculate_activations(inputs.data(), new_inputs_dimensions, activations_4d.data(), new_inputs_dimensions);
 
-    assert_true(abs(activations_4d(0,0,0,0) - type(-0.804416f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,0,0,1) - type(-0.804768f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,0,1,0) - type(-0.807916f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,0,1,1) - type(-0.808263f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,1,0,0) - type(0.836979f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,1,0,1) - type(0.837278f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,1,1,0) - type(0.839949f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(0,1,1,1) - type(0.840243f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,0,0,0) - type(-0.971086f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,0,0,1) - type(-0.971143f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,0,1,0) - type(-0.971650f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,0,1,1) - type(-0.971706f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,1,0,0) - type(0.976265f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,1,0,1) - type(0.976312f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,1,1,0) - type(0.976729f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_4d(1,1,1,1) - type(0.976775f)) < type(NUMERIC_LIMITS_MIN), LOG);
+    expected_output = inputs.tanh();
+
+    assert_true(is_equal<4>(expected_output, activations_4d), LOG);
 
     // Test
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-    convolutional_layer.calculate_activations(inputs, activations_4d);
+    convolutional_layer.calculate_activations(inputs.data(), new_inputs_dimensions, activations_4d.data(), new_inputs_dimensions);
 
-    assert_true(activations_4d(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN),LOG);
+    expected_output = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? type(0) : val;
+    });
 
-    assert_true(activations_4d(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,0,0,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,0,1,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,0,1,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,0,0) - type(1.211f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,0,1) - type(1.212f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,1,0) - type(1.221f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(0,1,1,1) - type(1.222f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,0,0,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,0,1,0) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,0,1,1) - type(0) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,0,0) - type(2.211f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,0,1) - type(2.212f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,1,0) - type(2.221f) <type(NUMERIC_LIMITS_MIN)&&
-                activations_4d(1,1,1,1) - type(2.222f) <type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    assert_true(is_equal<4>(expected_output, activations_4d), LOG);
 }
 
 
 void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
-/*
-    Tensor<type, 4> inputs;
-    Tensor<type, 4> activations_derivatives;
-    Tensor<type, 4> activations;
-    Tensor<type, 4> result;
-
-    activations.resize(2, 2, 2, 2);
-    activations_derivatives.resize(2, 2, 2, 2);
+    Tensor<Index, 1> dimension(4);
+    dimension.setValues({2, 2, 2, 2});
+    Tensor<type, 4> inputs(dimension);
+    Tensor<type, 4> activations_derivatives(dimension);
+    Tensor<type, 4> activations(dimension);
+    Tensor<type, 4> result(dimension);
 
     ConvolutionalLayer convolutional_layer;
 
     // Test
 
-    inputs.resize(2, 2, 2, 2);
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,0,0,1) = type(-1.112);
     inputs(0,0,1,0) = type(-1.121);
@@ -643,28 +639,15 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::Threshold);
 
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+    activations = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? type(0) : type(1);
+    });
+
+    convolutional_layer.calculate_activations_derivatives(inputs.data(), dimension, activations.data(), dimension, activations_derivatives.data(), dimension);
 
     result = activations.constant(type(0));
 
-    assert_true((activations_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 0) - result(0, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 0) - result(1, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 0) - result(1, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 0) - result(0, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 0) - result(0, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 0) - result(1, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 0) - result(1, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 0, 1) - result(0, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 1) - result(0, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 1) - result(1, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 1) - result(1, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 1) - result(0, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 1) - result(0, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(is_equal<4>(result, activations_derivatives), LOG);
 
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,0,0,1) = type(-1.112);
@@ -685,155 +668,104 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
 
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+    activations = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? type(-1) : type(1);
+    });
+
+    convolutional_layer.calculate_activations_derivatives(inputs.data(), dimension, activations.data(), dimension, activations_derivatives.data(), dimension);
 
     result = activations.constant(type(0));
 
-    assert_true((activations_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 0) - result(0, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 0) - result(1, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 0) - result(1, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 0) - result(0, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 0) - result(0, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 0) - result(1, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 0) - result(1, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 0, 1) - result(0, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 1) - result(0, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 1) - result(1, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 1) - result(1, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 1) - result(0, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 1) - result(0, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(is_equal<4>(result, activations_derivatives), LOG);
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+    activations = inputs.tanh();
 
-    result(0,0,0,0) = type(0.352916f);
-    result(0,0,0,1) = type(0.352348f);
-    result(0,0,1,0) = type(0.347271f);
-    result(0,0,1,1) = type(0.346710f);
-    result(0,1,0,0) = type(0.299466f);
-    result(0,1,0,1) = type(0.298965f);
-    result(0,1,1,0) = type(0.294486f);
-    result(0,1,1,1) = type(0.293991f);
-    result(1,0,0,0) = type(0.056993f);
-    result(1,0,0,1) = type(0.056882f);
-    result(1,0,1,0) = type(0.055896f);
-    result(1,0,1,1) = type(0.055788f);
-    result(1,1,0,0) = type(0.046907f);
-    result(1,1,0,1) = type(0.046816f);
-    result(1,1,1,0) = type(0.046000f);
-    result(1,1,1,1) = type(0.045910f);
+    convolutional_layer.calculate_activations_derivatives(inputs.data(), dimension, activations.data(), dimension, activations_derivatives.data(), dimension);
 
-    assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,0,1,0) - result(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,0,1,1) - result(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,0,0) - result(0,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,0,1) - result(0,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,1,0) - result(0,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,1,1) - result(0,1,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,0,0) - result(1,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,0,1) - result(1,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,1,0) - result(1,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,1,1) - result(1,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,0,0) - result(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    result = type(4) / ((type(-1) * inputs).exp() + inputs.exp()).square();
+
+    //result(0,0,0,0) = type(0.352916f);
+    //result(0,0,0,1) = type(0.352348f);
+    //result(0,0,1,0) = type(0.347271f);
+    //result(0,0,1,1) = type(0.346710f);
+    //result(0,1,0,0) = type(0.299466f);
+    //result(0,1,0,1) = type(0.298965f);
+    //result(0,1,1,0) = type(0.294486f);
+    //result(0,1,1,1) = type(0.293991f);
+    //result(1,0,0,0) = type(0.056993f);
+    //result(1,0,0,1) = type(0.056882f);
+    //result(1,0,1,0) = type(0.055896f);
+    //result(1,0,1,1) = type(0.055788f);
+    //result(1,1,0,0) = type(0.046907f);
+    //result(1,1,0,1) = type(0.046816f);
+    //result(1,1,1,0) = type(0.046000f);
+    //result(1,1,1,1) = type(0.045910f);
+
+    assert_true(is_equal<4>(result, activations_derivatives), LOG);
+
+    inputs(0,0,0,0) = type(-1.111f);
+    inputs(0,0,0,1) = type(-1.112);
+    inputs(0,0,1,0) = type(-1.121);
+    inputs(0,0,1,1) = type(-1.122f);
+    inputs(0,1,0,0) = type(1.211f);
+    inputs(0,1,0,1) = type(1.212f);
+    inputs(0,1,1,0) = type(1.221f);
+    inputs(0,1,1,1) = type(1.222f);
+    inputs(1,0,0,0) = type(-2.111f);
+    inputs(1,0,0,1) = type(-2.112f);
+    inputs(1,0,1,0) = type(-2.121f);
+    inputs(1,0,1,1) = type(-2.122f);
+    inputs(1,1,0,0) = type(2.211f);
+    inputs(1,1,0,1) = type(2.212f);
+    inputs(1,1,1,0) = type(2.221f);
+    inputs(1,1,1,1) = type(2.222f);
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
+    activations = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? 0 : val;
+    });
 
-    result(0,0,0,0) = type(0);
-    result(0,0,0,1) = type(0);
-    result(0,0,1,0) = type(0);
-    result(0,0,1,1) = type(0);
-    result(0,1,0,0) = type(1);
-    result(0,1,0,1) = type(1);
-    result(0,1,1,0) = type(1);
-    result(0,1,1,1) = type(1);
-    result(1,0,0,0) = type(0);
-    result(1,0,0,1) = type(0);
-    result(1,0,1,0) = type(0);
-    result(1,0,1,1) = type(0);
-    result(1,1,0,0) = type(1);
-    result(1,1,0,1) = type(1);
-    result(1,1,1,0) = type(1);
-    result(1,1,1,1) = type(1);
+    convolutional_layer.calculate_activations_derivatives(inputs.data(), dimension, activations.data(), dimension, activations_derivatives.data(), dimension);
 
-    assert_true((activations_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 0) - result(0, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 0) - result(1, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 0) - result(1, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 0) - result(0, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 0) - result(0, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 0) - result(1, 0, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 0) - result(1, 1, 1, 0)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 0, 1) - result(0, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 0, 1) - result(0, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 0, 1) - result(1, 0, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 0, 1) - result(1, 1, 0, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 0, 1, 1) - result(0, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(0, 1, 1, 1) - result(0, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    result = inputs.unaryExpr([](const type& val){
+        return val < type(0) ? 0 : type(1);
+    });
 
+    assert_true(is_equal<4>(result, activations_derivatives), LOG);
 
     convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SoftPlus);
-    convolutional_layer.calculate_activations_derivatives(inputs,
-                                                          activations,
-                                                          activations_derivatives);
 
-    result(0,0,0,0) = type(0.247685f);
-    result(0,0,0,1) = type(0.247498f);
-    result(0,0,1,0) = type(0.245826f);
-    result(0,0,1,1) = type(0.245640f);
-    result(0,1,0,0) = type(0.770476f);
-    result(0,1,0,1) = type(0.770653f);
-    result(0,1,1,0) = type(0.772239f);
-    result(0,1,1,1) = type(0.772415f);
-    result(1,0,0,0) = type(0.108032f);
-    result(1,0,0,1) = type(0.107936f);
-    result(1,0,1,0) = type(0.107072f);
-    result(1,0,1,1) = type(0.106977f);
-    result(1,1,0,0) = type(0.901233f);
-    result(1,1,0,1) = type(0.901322f);
-    result(1,1,1,0) = type(0.902120f);
-    result(1,1,1,1) = type(0.902208f);
+    activations = (type(1) + inputs).log();
+    convolutional_layer.calculate_activations_derivatives(inputs.data(), dimension, activations.data(), dimension, activations_derivatives.data(), dimension);
 
-    assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,0,1,0) - result(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,0,1,1) - result(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,0,0) - result(0,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,0,1) - result(0,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,1,0) - result(0,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(0,1,1,1) - result(0,1,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,0,0) - result(1,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,0,1) - result(1,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,1,0) - result(1,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,0,1,1) - result(1,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,0,0) - result(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
-                */
+    result = inputs.exp() / (type(1) + inputs.exp());
+    //result(0,0,0,0) = type(0.247685f);
+    //result(0,0,0,1) = type(0.247498f);
+    //result(0,0,1,0) = type(0.245826f);
+    //result(0,0,1,1) = type(0.245640f);
+    //result(0,1,0,0) = type(0.770476f);
+    //result(0,1,0,1) = type(0.770653f);
+    //result(0,1,1,0) = type(0.772239f);
+    //result(0,1,1,1) = type(0.772415f);
+    //result(1,0,0,0) = type(0.108032f);
+    //result(1,0,0,1) = type(0.107936f);
+    //result(1,0,1,0) = type(0.107072f);
+    //result(1,0,1,1) = type(0.106977f);
+    //result(1,1,0,0) = type(0.901233f);
+    //result(1,1,0,1) = type(0.901322f);
+    //result(1,1,1,0) = type(0.902120f);
+    //result(1,1,1,1) = type(0.902208f);
+
+    assert_true(is_equal<4>(result, activations_derivatives), LOG);
 }
 
-/*
-void ConvolutionalLayerTest::test_forward_propagate()
+
+void ConvolutionalLayerTest::test_forward_propagate_training()
 {
-    cout << "test_forward_propagate\n";
+    cout << "test_forward_propagate_training\n";
 
     const Index input_images = 2;
     const Index input_kernels = 3;
@@ -845,12 +777,20 @@ void ConvolutionalLayerTest::test_forward_propagate()
     const Index rows_kernel = 3;
     const Index cols_kernel = 3;
 
-    Tensor<type,4> inputs(rows_input, cols_input, channels, input_images);
-    Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
+    Tensor<Index, 1> input_dimension(4);
+    input_dimension.setValues({rows_input, cols_input, channels, input_images});
+    Tensor<type,4> inputs(input_dimension);
+
+    Tensor<Index, 1> kernel_dimension(4);
+    kernel_dimension.setValues({rows_kernel, cols_kernel, channels, input_kernels});
+    Tensor<type,4> kernel(kernel_dimension);
+
     Tensor<type,1> bias(input_kernels);
-    inputs.setConstant(1.);
     bias.setValues({0,1,2});
 
+    bool switch_train = true;
+
+    inputs.setConstant(1.);
     inputs.chip(0,3).chip(0,2).setConstant(2.);
     inputs.chip(0,3).chip(1,2).setConstant(3.);
     inputs.chip(0,3).chip(2,2).setConstant(4.);
@@ -858,19 +798,26 @@ void ConvolutionalLayerTest::test_forward_propagate()
     kernel.chip(0,3).setConstant(type(1./3.));
     kernel.chip(1,3).setConstant(type(1./9.));
     kernel.chip(2,3).setConstant(type(1./27.));
-
+    
+    ConvolutionalLayer convolutional_layer(input_dimension, kernel_dimension);
     convolutional_layer.set(inputs, kernel, bias);
 
+    ConvolutionalLayerForwardPropagation forward_propagation;
     forward_propagation.set(input_images, &convolutional_layer);
 
     convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
-    convolutional_layer.forward_propagate(inputs, &forward_propagation);
+    convolutional_layer.forward_propagate(inputs.data(), input_dimension, &forward_propagation, switch_train);
 
-    assert_true(forward_propagation.activations.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
-                forward_propagation.activations.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
-                forward_propagation.activations.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
-                forward_propagation.activations.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    assert_true(forward_propagation.outputs.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
+                forward_propagation.outputs.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
+                forward_propagation.outputs.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
+                forward_propagation.outputs.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    
+    assert_true(forward_propagation.combinations.dimension(0) == (rows_input - rows_kernel + 1) &&
+                forward_propagation.combinations.dimension(1) == (cols_input - cols_kernel + 1) &&
+                forward_propagation.combinations.dimension(2) == (input_kernels) &&
+                forward_propagation.combinations.dimension(3) == (input_images), LOG);
 
     assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
                 forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
@@ -878,18 +825,99 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
 
 
-    assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - type(tanh(27.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 1, 0) - type(tanh(10.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 2, 0) - type(tanh(5.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 0, 1) - type(tanh(9.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 1, 1) - type(tanh(4.))) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 2, 1) - type(tanh(3.))) < type(NUMERIC_LIMITS_MIN), LOG);
+    Tensor<type, 4> expected_combination_output((rows_input - rows_kernel + 1), (cols_input - cols_kernel + 1), (input_kernels), input_images);
+    expected_combination_output.chip(0, 3).chip(0, 2).setConstant(type(27));
+    expected_combination_output.chip(0, 3).chip(1, 2).setConstant(type(10));
+    expected_combination_output.chip(0, 3).chip(2, 2).setConstant(type(5));
+    expected_combination_output.chip(1, 3).chip(0, 2).setConstant(type(9));
+    expected_combination_output.chip(1, 3).chip(1, 2).setConstant(type(4));
+    expected_combination_output.chip(1, 3).chip(2, 2).setConstant(type(3));
 
-    assert_true(forward_propagation.combinations(0, 0, 0, 0) - type(27) < type(0.00001) &&
-                forward_propagation.activations(0, 0, 0, 0) - type(1.) < type(0.00001) &&
-                type(forward_propagation.activations_derivatives(0, 0, 0, 0)) - type(0.)< type(0.00001), LOG);
+    assert_true(is_equal<4>(expected_combination_output, forward_propagation.combinations), LOG);
+
+    Tensor<type, 4> expected_activation_output = expected_combination_output.tanh();
+
+    assert_true(is_equal<4>(expected_combination_output, forward_propagation.outputs), LOG);
+
+    Tensor<type, 4> expected_activation_derivatives = type(4) / ((type(-1) * expected_combination_output).exp() + expected_combination_output.exp()).square();
+
+    assert_true(is_equal<4>(expected_activation_derivatives, forward_propagation.activations_derivatives), LOG);
 }
-*/
+
+
+void ConvolutionalLayerTest::test_forward_propagate_not_training()
+{
+    cout << "test_forward_propagate_not_training\n";
+
+    const Index input_images = 2;
+    const Index input_kernels = 3;
+
+    const Index channels = 3;
+
+    const Index rows_input = 4;
+    const Index cols_input = 4;
+    const Index rows_kernel = 3;
+    const Index cols_kernel = 3;
+
+    Tensor<Index, 1> input_dimension(4);
+    input_dimension.setValues({rows_input, cols_input, channels, input_images});
+    Tensor<type,4> inputs(input_dimension);
+
+    Tensor<Index, 1> kernel_dimension(4);
+    kernel_dimension.setValues({rows_kernel, cols_kernel, channels, input_kernels});
+    Tensor<type,4> kernel(kernel_dimension);
+
+    Tensor<type,1> bias(input_kernels);
+    bias.setValues({0,1,2});
+
+    bool switch_train = false;
+
+    inputs.setConstant(1.);
+    inputs.chip(0,3).chip(0,2).setConstant(2.);
+    inputs.chip(0,3).chip(1,2).setConstant(3.);
+    inputs.chip(0,3).chip(2,2).setConstant(4.);
+
+    kernel.chip(0,3).setConstant(type(1./3.));
+    kernel.chip(1,3).setConstant(type(1./9.));
+    kernel.chip(2,3).setConstant(type(1./27.));
+    
+    ConvolutionalLayer convolutional_layer(input_dimension, kernel_dimension);
+    convolutional_layer.set(inputs, kernel, bias);
+
+    ConvolutionalLayerForwardPropagation forward_propagation;
+    forward_propagation.set(input_images, &convolutional_layer);
+
+    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
+
+    convolutional_layer.forward_propagate(inputs.data(), input_dimension, &forward_propagation, switch_train);
+
+    assert_true(forward_propagation.outputs.dimension(0) == convolutional_layer.get_outputs_dimensions()(0)&&
+                forward_propagation.outputs.dimension(1) == convolutional_layer.get_outputs_dimensions()(1)&&
+                forward_propagation.outputs.dimension(2) == convolutional_layer.get_outputs_dimensions()(2)&&
+                forward_propagation.outputs.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), LOG);
+    
+    assert_true(forward_propagation.combinations.dimension(0) == (rows_input - rows_kernel + 1) &&
+                forward_propagation.combinations.dimension(1) == (cols_input - cols_kernel + 1) &&
+                forward_propagation.combinations.dimension(2) == (input_kernels) &&
+                forward_propagation.combinations.dimension(3) == (input_images), LOG);
+
+
+    Tensor<type, 4> expected_combination_output((rows_input - rows_kernel + 1), (cols_input - cols_kernel + 1), (input_kernels), input_images);
+    expected_combination_output.chip(0, 3).chip(0, 2).setConstant(type(27));
+    expected_combination_output.chip(0, 3).chip(1, 2).setConstant(type(10));
+    expected_combination_output.chip(0, 3).chip(2, 2).setConstant(type(5));
+    expected_combination_output.chip(1, 3).chip(0, 2).setConstant(type(9));
+    expected_combination_output.chip(1, 3).chip(1, 2).setConstant(type(4));
+    expected_combination_output.chip(1, 3).chip(2, 2).setConstant(type(3));
+
+    assert_true(is_equal<4>(expected_combination_output, forward_propagation.combinations), LOG);
+
+    Tensor<type, 4> expected_activation_output = expected_combination_output.tanh();
+
+    assert_true(is_equal<4>(expected_combination_output, forward_propagation.outputs), LOG);
+
+}
+
 
 void ConvolutionalLayerTest::test_insert_padding()
 {
@@ -985,7 +1013,63 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
 }
 
+void ConvolutionalLayerTest::test_calculate_hidden_delta()
+{
+    cout << "test_calculate_hidden_delta\n";
+    
+    Tensor<Index, 1> input_dimension(4);
+    input_dimension.setValues({4, 4, 1, 1});
+    
+    Tensor<Index, 1> kernel_dimension(4);
+    kernel_dimension.setValues({2, 2, 1, 1});
+    Tensor<type, 4> kernel(kernel_dimension);
+    kernel.setConstant(type(1));
+    
+    ConvolutionalLayer convolutional_layer(input_dimension, kernel_dimension);
 
+    Tensor<Index, 1> next_input_dimension(4);
+    next_input_dimension.setValues({3, 3, 1, 1});
+    
+    ConvolutionalLayer next_convolutional_layer(next_input_dimension, kernel_dimension);
+    next_convolutional_layer.set_synaptic_weights(kernel);
+
+    ConvolutionalLayerForwardPropagation next_layer_forward_propagation(1, &next_convolutional_layer);
+    next_layer_forward_propagation.activations_derivatives.resize(2, 2, 1, 1);
+    next_layer_forward_propagation.activations_derivatives.setConstant(type(0.00542));
+
+    ConvolutionalLayerBackPropagation next_layer_back_propagation(1, &next_convolutional_layer);
+    next_layer_back_propagation.convolutional_delta.resize(2, 2, 1, 1);
+    
+    next_layer_back_propagation.convolutional_delta(0, 0, 0, 0) = type(0.25);
+    next_layer_back_propagation.convolutional_delta(0, 1, 0, 0) = type(-0.1);
+    next_layer_back_propagation.convolutional_delta(1, 0, 0, 0) = type(0.6);
+    next_layer_back_propagation.convolutional_delta(1, 1, 0, 0) = type(1.1);
+
+    ConvolutionalLayerBackPropagation back_propagation(1, &convolutional_layer);
+
+    assert_true(back_propagation.deltas_dimensions.size() == convolutional_layer.get_outputs_dimensions().size(), LOG);
+
+    assert_true(convolutional_layer.get_outputs_dimensions()(0) == back_propagation.deltas_dimensions(0) &&
+                convolutional_layer.get_outputs_dimensions()(1) == back_propagation.deltas_dimensions(1) &&
+                convolutional_layer.get_outputs_dimensions()(2) == back_propagation.deltas_dimensions(2) &&
+                convolutional_layer.get_outputs_dimensions()(3) == back_propagation.deltas_dimensions(3), LOG);
+
+    convolutional_layer.calculate_hidden_delta(&next_layer_forward_propagation, &next_layer_back_propagation, &back_propagation);
+
+    Tensor<type, 4> expected_delta(3, 3, 1, 1);
+    expected_delta(0, 0, 0, 0) = type(0.001355);
+    expected_delta(0, 1, 0, 0) = type(0.000813);
+    expected_delta(0, 2, 0, 0) = type(-0.000542);
+    expected_delta(1, 0, 0, 0) = type(0.004611018);
+    expected_delta(1, 1, 0, 0) = type(0.010038385);
+    expected_delta(1, 2, 0, 0) = type(0.005427367);
+    expected_delta(2, 0, 0, 0) = type(0.003256018);
+    expected_delta(2, 1, 0, 0) = type(0.009225385);
+    expected_delta(2, 2, 0, 0) = type(0.005969367);
+    Eigen::array<Index, 4> output_dim({back_propagation.deltas_dimensions(0), back_propagation.deltas_dimensions(1), back_propagation.deltas_dimensions(2), back_propagation.deltas_dimensions(3)});
+    TensorMap<Tensor<type, 4>> output_delta(back_propagation.deltas_data, output_dim);
+    assert_true(is_equal<4>(expected_delta, output_delta), LOG);
+}
 
 void ConvolutionalLayerTest::test_memcpy_approach()
 {
