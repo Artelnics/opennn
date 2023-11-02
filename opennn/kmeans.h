@@ -66,6 +66,7 @@ public:
 
     Tensor<Index, 1> get_cluster_labels();
     Tensor<type, 2> get_cluster_centers();
+    Index get_clusters_number();
 
     void fit(const Tensor<type, 2>&);
     void set_centers_random(const Tensor<type, 2>&);
@@ -78,8 +79,6 @@ private:
 
     Tensor<type, 2> cluster_centers;
     Tensor<Index, 1> rows_cluster_labels;
-
-    type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
 };
 

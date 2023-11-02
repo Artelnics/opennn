@@ -30,13 +30,6 @@ using namespace OpenNN;
 namespace OpenNN
 {
 
-type KMeans::euclidean_distance(const Tensor<type, 1>& a, const Tensor<type, 1>& b)
-{
-    const Tensor<type, 0> result_tensor = (a - b).square().sum();
-
-    return sqrt(result_tensor(0));
-}
-
 
 KMeans::KMeans(Index clusters, string distance_calculation_metod, Index iterations_number)
     : clusters_number(clusters), maximum_iterations(iterations_number), metric(distance_calculation_metod)
@@ -66,7 +59,7 @@ void KMeans::fit(const Tensor<type, 2>& data)
 
             center = cluster_centers.chip(0, 0);
 
-            type minimum_distance = euclidean_distance(row, center);
+            type minimum_distance = l2_distance(row, center);
 
             Index minimal_distance_cluster_index = 0;
 
@@ -74,7 +67,7 @@ void KMeans::fit(const Tensor<type, 2>& data)
             {
                 center = cluster_centers.chip(cluster_index, 0);
 
-                const type distance = euclidean_distance(row, center);
+                const type distance = l2_distance(row, center);
 
                 if (distance < minimum_distance)
                 {
@@ -127,13 +120,13 @@ Tensor<Index, 1> KMeans::calculate_outputs(const Tensor<type, 2>& data)
         row = data.chip(row_index, 0);
         center = cluster_centers.chip(0, 0);
 
-        type minimum_distance = euclidean_distance(row, center);
+        type minimum_distance = l2_distance(row, center);
         Index minimal_distance_cluster_index = 0;
 
         for(Index cluster_index = 1; cluster_index < clusters_number; cluster_index++)
         {
             center = cluster_centers.chip(cluster_index, 0);
-            const type distance = euclidean_distance(row, center);
+            const type distance = l2_distance(row, center);
 
             if (distance < minimum_distance)
             {
@@ -172,7 +165,7 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
             data_point = data.chip(row_index, 0);
             cluster_center = cluster_centers.chip(rows_cluster_labels(row_index), 0);
 
-            sum_squared_error += pow(euclidean_distance(data_point, cluster_center), 2);
+            sum_squared_error += pow(l2_distance(data_point, cluster_center), 2);
         }
 
         sum_squared_error_values(cluster_index-1) = sum_squared_error;
@@ -186,6 +179,9 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
 
 Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_values)
 {
+
+    Index cluster_number = sum_squared_error_values.dimension(0);
+
     Tensor<type, 1> initial_endpoint(2);
     initial_endpoint(0) = 1;
     initial_endpoint(1) = sum_squared_error_values(0);
@@ -200,7 +196,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
     Tensor<type, 1> current_point(2);
     type perpendicular_distance;
 
-    for (Index cluster_index = 1; cluster_index <= clusters_number; cluster_index++)
+    for (Index cluster_index = 1; cluster_index <= cluster_number; cluster_index++)
     {
         current_point(0) = cluster_index;
         current_point(1) = sum_squared_error_values(cluster_index-1);
@@ -221,16 +217,21 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
 }
 
 
-Tensor<type, 2>  KMeans::get_cluster_centers()
-    {
-        return cluster_centers;
-    }
+Tensor<type, 2> KMeans::get_cluster_centers()
+{
+    return cluster_centers;
+}
 
 
-Tensor<Index, 1>  KMeans::get_cluster_labels()
-    {
-        return rows_cluster_labels;
-    }
+Tensor<Index, 1> KMeans::get_cluster_labels()
+{
+    return rows_cluster_labels;
+}
+
+Index KMeans::get_clusters_number()
+{
+    return clusters_number;
+}
 
 
 void KMeans::set_centers_random(const Tensor<type, 2>& data)

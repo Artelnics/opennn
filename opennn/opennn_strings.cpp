@@ -567,18 +567,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     regex_search(date, matchs, regular_expression);
 
-    int consecutiveZeros = 0;
-
-    for(int i=1; i < 100; i++)
-    {
-        if(matchs[i] != "")
-        {
-            cout << "match: " << i <<  endl;
-        }
-    }
-
-    cout << "consecutiveZeros: " << consecutiveZeros << endl;
-
     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
     {
         if(stoi(matchs[1].str()) < 1970)
@@ -975,10 +963,51 @@ bool contains_substring(const string& str, const string& sub_str)
 ///@param toReplace
 ///@param replaceWith
 
-void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith)
-{
-    std::regex wordRegex("\\b" + toReplace + "\\b");
-    s = std::regex_replace(s, wordRegex, replaceWith);
+void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith) {
+
+    string buf;
+    size_t pos = 0;
+    size_t prevPos;
+    const string underscore = "_";
+
+    // Reserva una estimación aproximada del tamaño final de la cadena.
+    buf.reserve(s.size());
+
+    while (true) {
+
+        prevPos = pos;
+        pos = s.find(toReplace, pos);
+
+        if (pos == string::npos)
+            break;
+
+        // Verifica que no haya letras antes ni después de toReplace
+        if ((prevPos == 0 || !isalpha(s[prevPos - 1])) &&
+            (pos + toReplace.size() == s.size() || !isalpha(s[pos + toReplace.size()])))
+        {
+            // Verifica que no haya guiones bajos antes ni después de toReplace
+            if ((prevPos == 0 || s[prevPos - 1] != '_') &&
+                (pos + toReplace.size() == s.size() || s[pos + toReplace.size()] != '_'))
+            {
+                buf.append(s, prevPos, pos - prevPos);
+                buf += replaceWith;
+                pos += toReplace.size();
+            }
+            else
+            {
+                buf.append(s, prevPos, pos - prevPos + toReplace.size());
+                pos += toReplace.size();
+            }
+        }
+        else
+        {
+            buf.append(s, prevPos, pos - prevPos + toReplace.size());
+            pos += toReplace.size();
+        }
+    }
+
+    buf.append(s, prevPos, s.size() - prevPos);
+    s.swap(buf);
 }
 
 
@@ -1037,6 +1066,230 @@ string replace_non_allowed_programming_expressions(string& s)
         if(s[0] == '$')
             out=s;
 
+        /**
+        switch(l) {
+
+        // C++ reserved words
+        case 1:
+            replace_all_appearances(s, "int", "in_t");
+            replace_all_appearances(s, "sizeof", "sizeo_f");
+            replace_all_appearances(s, "auto", "aut_o");
+            replace_all_appearances(s, "extern", "exter_n");
+            replace_all_appearances(s, "return", "retur_n");
+            replace_all_appearances(s, "typedef", "typede_f");
+            replace_all_appearances(s, "for", "fo_r");
+            replace_all_appearances(s, "_Packed", "_P_acked");
+            replace_all_appearances(s, "signed", "signe_d");
+            replace_all_appearances(s, "enum", "enu_m");
+            replace_all_appearances(s, "case", "cas_e");
+            replace_all_appearances(s, "char", "cha_r");
+            replace_all_appearances(s, "union", "unio_n");
+            replace_all_appearances(s, "float", "floa_t");
+            replace_all_appearances(s, "short", "shor_t");
+            replace_all_appearances(s, "const", "cons_t");
+            replace_all_appearances(s, "void", "voi_d");
+            replace_all_appearances(s, "continue", "continu_e");
+            replace_all_appearances(s, "goto", "got_o");
+            replace_all_appearances(s, "volatile", "volatil_e");
+            replace_all_appearances(s, "default", "defaul_t");
+            replace_all_appearances(s, "if", "i_f");
+            replace_all_appearances(s, "else", "els_e");
+            replace_all_appearances(s, "long", "lon_g");
+            replace_all_appearances(s, "static", "stati_c");
+            replace_all_appearances(s, "while", "whil_e");
+            replace_all_appearances(s, "do", "d_o");
+            replace_all_appearances(s, "break", "brea_k");
+            replace_all_appearances(s, "switch", "switc_h");
+            replace_all_appearances(s, "struct", "struc_t");
+            replace_all_appearances(s, "double", "doubl_e");
+            replace_all_appearances(s, "unsigned", "unsigne_d");
+            replace_all_appearances(s, "register", "registe_r");
+            break;
+
+        // JAVASCRIPT reserved words
+        case 2:
+            replace_all_appearances(s, "abstract", "abstrac_t");
+            replace_all_appearances(s, "arguments", "argument_s");
+            replace_all_appearances(s, "await", "awai_t");
+            replace_all_appearances(s, "boolea", "boole_an");
+            replace_all_appearances(s, "break", "brea_k");
+            replace_all_appearances(s, "byte", "byt_e");
+            replace_all_appearances(s, "case", "cas_e");
+            replace_all_appearances(s, "catc", "cat_ch");
+            replace_all_appearances(s, "char", "cha_r");
+            replace_all_appearances(s, "class", "clas_s");
+            replace_all_appearances(s, "const", "cons_t");
+            replace_all_appearances(s, "continu", "contin_ue");
+            replace_all_appearances(s, "debugger", "debugge_r");
+            replace_all_appearances(s, "default", "defaul_t");
+            replace_all_appearances(s, "delete", "delet_e");
+            replace_all_appearances(s, "d", "d_o");
+            replace_all_appearances(s, "double", "doubl_e");
+            replace_all_appearances(s, "else", "els_e");
+            replace_all_appearances(s, "enum", "enu_m");
+            replace_all_appearances(s, "eva", "ev_al");
+            replace_all_appearances(s, "export", "expor_t");
+            replace_all_appearances(s, "extends", "extend_s");
+            replace_all_appearances(s, "false", "fals_e");
+            replace_all_appearances(s, "fina", "fin_al");
+            replace_all_appearances(s, "finally", "finall_y");
+            replace_all_appearances(s, "float", "floa_t");
+            replace_all_appearances(s, "for", "fo_r");
+            replace_all_appearances(s, "functio", "functi_on");
+            replace_all_appearances(s, "goto", "got_o");
+            replace_all_appearances(s, "if", "i_f");
+            replace_all_appearances(s, "implements", "implement_s");
+            replace_all_appearances(s, "impor", "impo_rt");
+            replace_all_appearances(s, "in", "i_n");
+            replace_all_appearances(s, "instanceof", "instanceo_f");
+            replace_all_appearances(s, "int", "in_t");
+            replace_all_appearances(s, "interfac", "interfa_ce");
+            replace_all_appearances(s, "let", "le_t");
+            replace_all_appearances(s, "long", "lon_g");
+            replace_all_appearances(s, "native", "nativ_e");
+            replace_all_appearances(s, "ne", "n_ew");
+            replace_all_appearances(s, "null", "nul_l");
+            replace_all_appearances(s, "package", "packag_e");
+            replace_all_appearances(s, "private", "privat_e");
+            replace_all_appearances(s, "protecte", "protect_ed");
+            replace_all_appearances(s, "public", "publi_c");
+            replace_all_appearances(s, "return", "retur_n");
+            replace_all_appearances(s, "short", "shor_t");
+            replace_all_appearances(s, "stati", "stat_ic");
+            replace_all_appearances(s, "super", "supe_r");
+            replace_all_appearances(s, "switch", "switc_h");
+            replace_all_appearances(s, "synchronized", "synchronize_d");
+            replace_all_appearances(s, "thi", "th_is");
+            replace_all_appearances(s, "throw", "thro_w");
+            replace_all_appearances(s, "throws", "throw_s");
+            replace_all_appearances(s, "transient", "transien_t");
+            replace_all_appearances(s, "tru", "tr_ue");
+            replace_all_appearances(s, "try", "tr_y");
+            replace_all_appearances(s, "typeof", "typeo_f");
+            replace_all_appearances(s, "var", "va_r");
+            replace_all_appearances(s, "voi", "vo_id");
+            replace_all_appearances(s, "volatile", "volatil_e");
+            replace_all_appearances(s, "while", "whil_e");
+            replace_all_appearances(s, "with", "wit_h");
+            replace_all_appearances(s, "yiel", "yie_ld");
+            break;
+
+        // PHP reserved words
+        case 3:
+            replace_all_appearances(s, "abstract", "abstrac_t");
+            replace_all_appearances(s, "and", "an_d");
+            replace_all_appearances(s, "array", "arra_y");
+            replace_all_appearances(s, "as", "a_s");
+            replace_all_appearances(s, "break", "brea_k");
+            replace_all_appearances(s, "callable", "callabl_e");
+            replace_all_appearances(s, "case", "cas_e");
+            replace_all_appearances(s, "catch", "catc_h");
+            replace_all_appearances(s, "class", "clas_s");
+            replace_all_appearances(s, "clone", "clon_e");
+            replace_all_appearances(s, "const", "cons_t");
+            replace_all_appearances(s, "continue", "continu_e");
+            replace_all_appearances(s, "declare", "declar_e");
+            replace_all_appearances(s, "default", "defaul_t");
+            replace_all_appearances(s, "die", "di_e");
+            replace_all_appearances(s, "do", "d_o");
+            replace_all_appearances(s, "echo", "ech_o");
+            replace_all_appearances(s, "else", "els_e");
+            replace_all_appearances(s, "elseif", "elsei_f");
+            replace_all_appearances(s, "empty", "empt_y");
+            replace_all_appearances(s, "enddeclare", "enddeclar_e");
+            replace_all_appearances(s, "endfor", "endfo_r");
+            replace_all_appearances(s, "endforeach", "endforeac_h");
+            replace_all_appearances(s, "endif", "endi_f");
+            replace_all_appearances(s, "endswitch", "endswitc_h");
+            replace_all_appearances(s, "endwhile", "endwhil_e");
+            replace_all_appearances(s, "eval", "eva_l");
+            replace_all_appearances(s, "exit", "exi_t");
+            replace_all_appearances(s, "extends", "extend_s");
+            replace_all_appearances(s, "final", "fina_l");
+            replace_all_appearances(s, "finally", "finall_y");
+            replace_all_appearances(s, "fn", "f_n");
+            replace_all_appearances(s, "for", "fo_r");
+            replace_all_appearances(s, "foreach", "foreac_h");
+            replace_all_appearances(s, "function", "functio_n");
+            replace_all_appearances(s, "global", "globa_l");
+            replace_all_appearances(s, "goto", "got_o");
+            replace_all_appearances(s, "if", "i_f");
+            replace_all_appearances(s, "implements", "implement_s");
+            replace_all_appearances(s, "include", "includ_e");
+            replace_all_appearances(s, "instanceof", "instanceo_f");
+            replace_all_appearances(s, "insteadof", "insteado_f");
+            replace_all_appearances(s, "interface", "interfac_e");
+            replace_all_appearances(s, "isset", "isse_t");
+            replace_all_appearances(s, "list", "lis_t");
+            replace_all_appearances(s, "match", "matc_h");
+            replace_all_appearances(s, "namespace", "namespac_e");
+            replace_all_appearances(s, "new", "ne_w");
+            replace_all_appearances(s, "or", "o_r");
+            replace_all_appearances(s, "print", "prin_t");
+            replace_all_appearances(s, "private", "privat_e");
+            replace_all_appearances(s, "protected", "protecte_d");
+            replace_all_appearances(s, "public", "publi_c");
+            replace_all_appearances(s, "readonly", "readonl_y");
+            replace_all_appearances(s, "require", "requir_e");
+            replace_all_appearances(s, "return", "retur_n");
+            replace_all_appearances(s, "static", "stati_c");
+            replace_all_appearances(s, "switch", "switc_h");
+            replace_all_appearances(s, "throw", "thro_w");
+            replace_all_appearances(s, "trait", "trai_t");
+            replace_all_appearances(s, "try", "tr_y");
+            replace_all_appearances(s, "unset", "unse_t");
+            replace_all_appearances(s, "use", "us_e");
+            replace_all_appearances(s, "var", "va_r");
+            replace_all_appearances(s, "while", "whil_e");
+            replace_all_appearances(s, "xor", "xo_r");
+            replace_all_appearances(s, "yield", "yiel_d");
+            replace_all_appearances(s, "include_once", "include_on_ce_");
+            replace_all_appearances(s, "require_once", "require_on_ce_");
+            replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
+            break;
+
+        // PYTHON reserved words
+        case 4:
+            replace_all_appearances(s, "False", "F_alse");
+            replace_all_appearances(s, "def", "de_f");
+            replace_all_appearances(s, "if", "i_f");
+            replace_all_appearances(s, "raise", "ra_ise");
+            replace_all_appearances(s, "None", "Non_e");
+            replace_all_appearances(s, "del", "de_l");
+            replace_all_appearances(s, "import", "imp_ort");
+            replace_all_appearances(s, "return", "retu_rn");
+            replace_all_appearances(s, "True", "Tr_ue");
+            replace_all_appearances(s, "elif", "el_if");
+            replace_all_appearances(s, "in", "i_n");
+            replace_all_appearances(s, "try", "t_ry");
+            replace_all_appearances(s, "and", "an_d");
+            replace_all_appearances(s, "else", "el_se");
+            replace_all_appearances(s, "is", "i_s");
+            replace_all_appearances(s, "while", "wh_ile");
+            replace_all_appearances(s, "as", "a_s");
+            replace_all_appearances(s, "except", "ex_cept");
+            replace_all_appearances(s, "lambda", "lam_bda");
+            replace_all_appearances(s, "with", "wit_h");
+            replace_all_appearances(s, "assert", "as_sert");
+            replace_all_appearances(s, "finally", "fi_nally");
+            replace_all_appearances(s, "nonlocal", "no_nlocal");
+            replace_all_appearances(s, "yield", "yie_ld");
+            replace_all_appearances(s, "break", "bre_ak");
+            replace_all_appearances(s, "for", "fo_r");
+            replace_all_appearances(s, "not", "no_t");
+            replace_all_appearances(s, "class", "c_lass");
+            replace_all_appearances(s, "form", "for_m");
+            replace_all_appearances(s, "or", "o_r");
+            replace_all_appearances(s, "continue", "continu_e");
+            replace_all_appearances(s, "global", "glob_al");
+            replace_all_appearances(s, "pass", "pa_00ss");
+            break;
+
+        default:
+            return 0;
+        }
+        */
+
         replace_all_appearances(s, "fn", "f_n");
         replace_all_appearances(s, "if", "i_f");
         replace_all_appearances(s, "do", "d_o");
@@ -1058,7 +1311,6 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "var", "va_r");
         replace_all_appearances(s, "try", "tr_y");
         replace_all_appearances(s, "xor", "xo_r");
-        replace_all_appearances(s, "yes", "ye_s");
         replace_all_appearances(s, "def", "de_f");
         replace_all_appearances(s, "for", "fo_r");
         replace_all_appearances(s, "not", "no_t_");
@@ -1170,7 +1422,7 @@ string replace_non_allowed_programming_expressions(string& s)
         replace_all_appearances(s, "instanceof", "instanceo_f");
         replace_all_appearances(s, "include_once", "include_on_ce_");
         replace_all_appearances(s, "require_once", "require_on_ce_");
-        replace_all_appearances(s, "__halt_compiler", "ha_lt_comp_iler");
+        replace_all_appearances(s, "__halt_compiler", "__h_a_l_t_c_o_m_p_i_l_e_r_");
 
         for(char& c: s)
         {
@@ -1191,10 +1443,8 @@ string replace_non_allowed_programming_expressions(string& s)
             if(c=='-'){ out+="_res_";   continue;}
             if(c=='='){ out+="_equ_";   continue;}
             if(c=='!'){ out+="_not_";   continue;}
-            if(c=='\\'){ out+="_slash_";continue;}
 
             if(c=='&'){ out+="_amprsn_"; continue;}
-            if(c=='?'){ out+="_ntrgtn_"; continue;}
             if(c=='?'){ out+="_ntrgtn_"; continue;}
             if(c=='<'){ out+="_lower_" ; continue;}
             if(c=='>'){ out+="_higher_"; continue;}
@@ -1202,6 +1452,7 @@ string replace_non_allowed_programming_expressions(string& s)
             if(isalnum(c)!=0){ out += c; continue;}
             if(isalnum(c)==0){ out+='_'; continue;}
         }
+
 
         return out;
 }
@@ -1347,17 +1598,14 @@ void replac_substring_within_quotes(string &str, const string &target, const str
         string match_str = match.str();
         string replaced_str = match_str;
         size_t pos = 0;
-
         while((pos = replaced_str.find(target, pos)) != string::npos)
         {
             replaced_str.replace(pos, target.length(), replacement);
             pos += replacement.length();
         }
-
         result += match.prefix().str() + replaced_str;
         prefix = match.suffix().str();
     }
-
     result += prefix;
     str = result;
 }
@@ -1513,7 +1761,6 @@ void remove_non_printable_chars( string& wstr)
                     [&ct]( wchar_t ch ) { return !ct.is( ctype::print, ch ) ; } ),
                 wstr.end() ) ;
 }
-
 
 /// Replaces a substring by another one in each element of this vector.
 /// @param find_what String to be replaced.
@@ -1786,68 +2033,6 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
         }
     }
     return matrix_rounded;
-}
-
-Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor)
-{
-    auto compareStringLength = [](const std::string &a, const std::string &b)
-    {
-        return a.length() > b.length();
-    };
-
-    std::vector<std::string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
-    std::sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
-
-    for (int i = 0; i < tensor.size(); i++)
-    {
-        tensor(i) = tensorAsVector[i];
-    }
-
-    return tensor;
-}
-
-Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<string, 1> tensor2)
-{
-    Tensor<string, 1> tensor = tensor2;
-
-    for (int i = 0; i < tensor1.dimension(0); ++i) push_back_string(tensor, tensor1(i));
-
-    return tensor;
-}
-
-
-/// changes the first apparition of all tokens found in the espression by adding the keyword before each of them.
-/// @param input_string String whre changes will be done.
-/// @param token_to_replace String to be put modyfied.
-/// @param new_token String to be put instead.
-
-void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espression, const std::string& keyword)
-{
-    std::string::size_type previous_pos = 0;
-
-    for(int i = 0; i < tokens.dimension(0); i++)
-    {
-        string found_token = tokens(i);
-        string toReplace(found_token);
-        string newword = keyword + " " + found_token;
-
-        std::string::size_type pos = 0;
-
-        while((pos = espression.find(toReplace, pos)) != std::string::npos)
-        {
-            if (pos > previous_pos)
-            {
-                espression.replace(pos, toReplace.length(), newword);
-                pos += newword.length();
-                previous_pos = pos;
-                break;
-            }
-            else
-            {
-                pos += newword.length();
-            }
-        }
-    }
 }
 
 }

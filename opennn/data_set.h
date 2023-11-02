@@ -199,6 +199,7 @@ public:
 
         void add_category(const string&);
 
+        void set_categories(const Tensor<string, 1>&);
         void set_categories_uses(const Tensor<string, 1>&);
         void set_categories_uses(const VariableUse&);
 
@@ -336,7 +337,7 @@ public:
     Tensor<string, 1> get_used_columns_names() const;
 
     ColumnType get_column_type(const Index& index) const {return columns[index].type;}
-    string get_column_type_string(ColumnType&) const;
+    string get_column_type_string(const ColumnType&) const;
 
     VariableUse get_column_use(const Index& ) const;
     Tensor<VariableUse, 1> get_columns_uses() const;
@@ -373,6 +374,7 @@ public:
 
     const Tensor<Index, 1>& get_input_variables_dimensions() const;
     Index get_input_variables_rank() const;
+
 
     // Scalers get methods
 
@@ -425,6 +427,10 @@ public:
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const string&) const;
+    map<string, DataSet> group_by(const DataSet&, const string&) const;
+    string get_sample_category(const Index&, const Index&) const;
+    Tensor<type, 1> get_sample(const Index&) const;
+    void add_sample(const Tensor<type, 1>&);
 
     Tensor<type, 1> get_variable_data(const Index&) const;
     Tensor<type, 1> get_variable_data(const string&) const;
@@ -545,6 +551,7 @@ public:
     void set_columns_uses(const Tensor<string, 1>&);
     void set_columns_uses(const Tensor<VariableUse, 1>&);
     void set_columns_unused();
+    void set_columns_types(const Tensor<string, 1>&);
     void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
     void set_input_target_columns(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_columns_unused();
@@ -580,6 +587,7 @@ public:
     // Variables set methods
 
     void set_variables_names(const Tensor<string, 1>&);
+    void set_variables_names_from_columns(const Tensor<string, 1>& new_variables_names, const Tensor<DataSet::Column, 1>& new_columns);
     void set_variable_name(const Index&, const string&);
 
     void set_input();
@@ -666,6 +674,7 @@ public:
     Tensor<string, 1> unuse_constant_columns();
 
     Tensor<Index, 1> unuse_repeated_samples();
+    Tensor<string, 1> get_columns_types();
 
     Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
     Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
