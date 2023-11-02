@@ -237,25 +237,9 @@ void ConvolutionalLayerTest::test_set_parameters()
     const Tensor<type, 4> synaptic_weight = convolutional_layer.get_synaptic_weights();
     const Tensor<type, 1> biases = convolutional_layer.get_biases();
 
-    assert_true(abs(biases(0) - new_biases(0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(biases(1) - new_biases(1)) < type(NUMERIC_LIMITS_MIN),LOG);
+    assert_true(is_equal<1>(biases, new_biases),LOG);
 
-    assert_true(abs(synaptic_weight(0,0,0,0) - new_synaptic_weights(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,0,1) - new_synaptic_weights(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,1,0) - new_synaptic_weights(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,1,1) - new_synaptic_weights(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,0,0) - new_synaptic_weights(0,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,0,1) - new_synaptic_weights(0,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,1,0) - new_synaptic_weights(0,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,1,1) - new_synaptic_weights(0,1,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,0,0) - new_synaptic_weights(1,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,0,1) - new_synaptic_weights(1,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,1,0) - new_synaptic_weights(1,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,1,1) - new_synaptic_weights(1,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,0,0) - new_synaptic_weights(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,0,1) - new_synaptic_weights(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,1,0) - new_synaptic_weights(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,1,1) - new_synaptic_weights(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(is_equal<4>(synaptic_weight, new_synaptic_weights), LOG);
 
 
 //    assert_true(!convolutional_layer.is_empty() &&
@@ -1288,7 +1272,7 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta1()
     expected_result(2, 1, 1, 0) = type(0.25);
     expected_result(2, 2, 0, 0) = type(0.5);
     expected_result(2, 2, 1, 0) = type(0.125);
-    
+
     expected_result(0, 0, 0, 1) = type(2);
     expected_result(0, 0, 1, 1) = type(0.5);
     expected_result(0, 1, 0, 1) = type(4);
@@ -1411,7 +1395,7 @@ void ConvolutionalLayerTest::run_test_case()
    test_calculate_hidden_delta();
    test_calculate_error_gradient();
    test_calculate_hidden_delta1();
-
+    
    //Utils
    test_memcpy_approach();
 
