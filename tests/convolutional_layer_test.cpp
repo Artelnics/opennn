@@ -1395,6 +1395,7 @@ void ConvolutionalLayerTest::run_test_case()
    test_calculate_hidden_delta();
    test_calculate_error_gradient();
    test_calculate_hidden_delta1();
+   test_calculate_error_gradient1();
     
    //Utils
    test_memcpy_approach();
