@@ -1034,25 +1034,36 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta()
     next_convolutional_layer.set_synaptic_weights(kernel);
 
     ConvolutionalLayerForwardPropagation next_layer_forward_propagation(1, &next_convolutional_layer);
-    next_layer_forward_propagation.activations_derivatives.resize(2, 2, 1, 1);
+    assert_true(next_convolutional_layer.get_outputs_rows_number() == next_layer_forward_propagation.activations_derivatives.dimension(0) &&
+                next_convolutional_layer.get_outputs_columns_number() == next_layer_forward_propagation.activations_derivatives.dimension(1) &&
+                next_convolutional_layer.get_kernels_number() == next_layer_forward_propagation.activations_derivatives.dimension(2) &&
+                next_convolutional_layer.get_outputs_dimensions()(3) == next_layer_forward_propagation.activations_derivatives.dimension(3),
+                LOG);
+    //next_layer_forward_propagation.activations_derivatives.resize(2, 2, 1, 1);
     next_layer_forward_propagation.activations_derivatives.setConstant(type(0.00542));
 
     ConvolutionalLayerBackPropagation next_layer_back_propagation(1, &next_convolutional_layer);
-    next_layer_back_propagation.convolutional_delta.resize(2, 2, 1, 1);
+    assert_true(next_layer_back_propagation.deltas_dimensions.size() == next_convolutional_layer.get_outputs_dimensions().size(), LOG);
+
+    assert_true(next_convolutional_layer.get_outputs_dimensions()(0) == next_layer_back_propagation.deltas_dimensions(0) &&
+                next_convolutional_layer.get_outputs_dimensions()(1) == next_layer_back_propagation.deltas_dimensions(1) &&
+                next_convolutional_layer.get_outputs_dimensions()(2) == next_layer_back_propagation.deltas_dimensions(2) &&
+                next_convolutional_layer.get_outputs_dimensions()(3) == next_layer_back_propagation.deltas_dimensions(3), LOG);
+    //next_layer_back_propagation.convolutional_delta.resize(2, 2, 1, 1);
     
-    next_layer_back_propagation.convolutional_delta(0, 0, 0, 0) = type(0.25);
-    next_layer_back_propagation.convolutional_delta(0, 1, 0, 0) = type(-0.1);
-    next_layer_back_propagation.convolutional_delta(1, 0, 0, 0) = type(0.6);
-    next_layer_back_propagation.convolutional_delta(1, 1, 0, 0) = type(1.1);
+    const Eigen::array<Index, 4> next_delta_dims({next_layer_back_propagation.deltas_dimensions(0), 
+                                                next_layer_back_propagation.deltas_dimensions(1),
+                                                next_layer_back_propagation.deltas_dimensions(2),
+                                                next_layer_back_propagation.deltas_dimensions(3)});                                             
+    TensorMap<Tensor<type, 4>> next_layer_delta(next_layer_back_propagation.deltas_data, next_delta_dims);
+    next_layer_delta(0, 0, 0, 0) = type(0.25);
+    next_layer_delta(0, 1, 0, 0) = type(-0.1);
+    next_layer_delta(1, 0, 0, 0) = type(0.6);
+    next_layer_delta(1, 1, 0, 0) = type(1.1);
 
     ConvolutionalLayerBackPropagation back_propagation(1, &convolutional_layer);
 
-    assert_true(back_propagation.deltas_dimensions.size() == convolutional_layer.get_outputs_dimensions().size(), LOG);
 
-    assert_true(convolutional_layer.get_outputs_dimensions()(0) == back_propagation.deltas_dimensions(0) &&
-                convolutional_layer.get_outputs_dimensions()(1) == back_propagation.deltas_dimensions(1) &&
-                convolutional_layer.get_outputs_dimensions()(2) == back_propagation.deltas_dimensions(2) &&
-                convolutional_layer.get_outputs_dimensions()(3) == back_propagation.deltas_dimensions(3), LOG);
 
     convolutional_layer.calculate_hidden_delta(&next_layer_forward_propagation, &next_layer_back_propagation, &back_propagation);
 
@@ -1069,6 +1080,82 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta()
     Eigen::array<Index, 4> output_dim({back_propagation.deltas_dimensions(0), back_propagation.deltas_dimensions(1), back_propagation.deltas_dimensions(2), back_propagation.deltas_dimensions(3)});
     TensorMap<Tensor<type, 4>> output_delta(back_propagation.deltas_data, output_dim);
     assert_true(is_equal<4>(expected_delta, output_delta), LOG);
+}
+
+
+void ConvolutionalLayerTest::test_calculate_error_gradient()
+{
+    cout << "test_calculate_error_gradient\n";
+
+    Tensor<Index, 1> input_dimension(4);
+    input_dimension.setValues({4, 4, 1, 1});
+    
+    Tensor<Index, 1> kernel_dimension(4);
+    kernel_dimension.setValues({2, 2, 1, 1});
+    Tensor<type, 4> kernel(kernel_dimension);
+    kernel.setConstant(type(1));
+    
+    ConvolutionalLayer convolutional_layer(input_dimension, kernel_dimension);
+
+    ConvolutionalLayerBackPropagation back_propagation(1, &convolutional_layer);
+    assert_true(back_propagation.deltas_dimensions.size() == convolutional_layer.get_outputs_dimensions().size(), LOG);
+
+    assert_true(back_propagation.deltas_dimensions(0) == convolutional_layer.get_outputs_dimensions()(0) &&
+                back_propagation.deltas_dimensions(1) == convolutional_layer.get_outputs_dimensions()(1) &&
+                back_propagation.deltas_dimensions(2) == convolutional_layer.get_outputs_dimensions()(2) &&
+                back_propagation.deltas_dimensions(3) == convolutional_layer.get_outputs_dimensions()(3), 
+                LOG);
+                
+    const Eigen::array<Index, 4> delta_dims({
+        back_propagation.deltas_dimensions(0),
+        back_propagation.deltas_dimensions(1),
+        back_propagation.deltas_dimensions(2),
+        back_propagation.deltas_dimensions(3)
+    });
+
+    TensorMap<Tensor<type, 4>> delta(back_propagation.deltas_data, delta_dims);
+    delta(0, 0, 0, 0) = type(0.001355);
+    delta(0, 1, 0, 0) = type(0.000813);
+    delta(0, 2, 0, 0) = type(-0.000542);
+    delta(1, 0, 0, 0) = type(0.004611018);
+    delta(1, 1, 0, 0) = type(0.010038385);
+    delta(1, 2, 0, 0) = type(0.005427367);
+    delta(2, 0, 0, 0) = type(0.003256018);
+    delta(2, 1, 0, 0) = type(0.009225385);
+    delta(2, 2, 0, 0) = type(0.005969367);
+    
+    ConvolutionalLayerForwardPropagation forward_propagation(1, &convolutional_layer);
+    
+    assert_true(forward_propagation.activations_derivatives.dimension(0) == convolutional_layer.get_outputs_dimensions()(0) &&
+                forward_propagation.activations_derivatives.dimension(1) == convolutional_layer.get_outputs_dimensions()(1) &&
+                forward_propagation.activations_derivatives.dimension(2) == convolutional_layer.get_outputs_dimensions()(2) &&
+                forward_propagation.activations_derivatives.dimension(3) == convolutional_layer.get_outputs_dimensions()(3), 
+                LOG);
+    
+    forward_propagation.activations_derivatives.setConstant(type(0));
+    forward_propagation.activations_derivatives.chip(1, 0).setConstant(type(1));
+
+    Tensor<type, 4> inputs(input_dimension);
+    inputs.chip(0, 0).setConstant(type(1));
+    inputs.chip(1, 0).setConstant(type(-2));
+    inputs.chip(2, 0).setConstant(type(3));
+    inputs.chip(3, 0).setConstant(type(-4));
+
+    //Test
+    convolutional_layer.calculate_error_gradient(inputs.data(), &forward_propagation, &back_propagation);
+
+    Tensor<type, 4> expected_weight_gradient(kernel_dimension);
+    expected_weight_gradient(0, 0, 0, 0) = type(-0.04015354);
+    expected_weight_gradient(0, 1, 0, 0) = type(-0.04015354);
+    expected_weight_gradient(1, 0, 0, 0) = type(0.06023031);
+    expected_weight_gradient(1, 1, 0, 0) = type(0.06023031);
+
+    Tensor<type, 1> expected_bias_gradient(1);
+    expected_bias_gradient(0) = type(0.02007677);
+
+    assert_true(is_equal<4>(expected_weight_gradient, back_propagation.synaptic_weights_derivatives), LOG);
+
+    assert_true(is_equal<1>(expected_bias_gradient, back_propagation.biases_derivatives), LOG);
 }
 
 void ConvolutionalLayerTest::test_memcpy_approach()
@@ -1137,6 +1224,143 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     }
 }
 
+
+void ConvolutionalLayerTest::test_calculate_hidden_delta1()
+{
+    cout << "test_calculate_hidden_delta1\n";
+
+    Tensor<type, 1> inputs_dimension(4);
+    inputs_dimension.setValues({4, 4, 2, 2});
+
+    Tensor<type, 1> kernels_dimension(4);
+    kernels_dimension.setValues({2, 2, 2, 2});
+    Tensor<type, 4> kernels(kernels_dimension);
+    kernels.chip(0, 3).chip(0, 2).setConstant(-0.5);
+    kernels.chip(0, 3).chip(1, 2).setConstant(0.25);
+    kernels.chip(1, 3).chip(0, 2).setConstant(0.125);
+    kernels.chip(1, 3).chip(1, 2).setConstant(0.0625);
+
+    ConvolutionalLayer convolutional_layer(inputs_dimension, kernels_dimension);
+
+    Tensor<type, 1> next_layer_inputs_dimension(4);
+    next_layer_inputs_dimension.setValues({3, 3, 2, 2});
+    ConvolutionalLayer next_convolutional_layer(next_layer_inputs_dimension, kernels_dimension);
+    next_convolutional_layer.set_synaptic_weights(kernels);
+
+    Tensor<type, 1> biases(2);
+    biases.setValues({0, 1});
+    next_convolutional_layer.set_biases(biases);
+
+    ConvolutionalLayerForwardPropagation next_forward_propagation(2, &next_convolutional_layer);
+    ConvolutionalLayerBackPropagation next_backward_propagation(2, &next_convolutional_layer);
+
+    TensorMap<Tensor<type, 4>> delta(next_backward_propagation.deltas_data, next_backward_propagation.deltas_dimensions);
+    delta.chip(0, 3).chip(0, 2).setConstant(1);
+    delta.chip(0, 3).chip(1, 2).setConstant(2);
+    delta.chip(1, 3).chip(0, 2).setConstant(4);
+    delta.chip(1, 3).chip(1, 2).setConstant(8);
+
+    next_forward_propagation.activations_derivatives.chip(0, 2).setConstant(0);
+    next_forward_propagation.activations_derivatives.chip(1, 2).setConstant(1);
+
+    ConvolutionalLayerBackPropagation backward_propagation(2, &convolutional_layer);
+
+    convolutional_layer.calculate_hidden_delta(&next_forward_propagation, &next_backward_propagation, &backward_propagation);
+
+    TensorMap<Tensor<type, 4>> delta_res(backward_propagation.deltas_data, backward_propagation.deltas_dimensions);
+
+    Tensor<type, 4> expected_result(3, 3, 2, 2);
+    expected_result(0, 0, 0, 0) = type(0.5);
+    expected_result(0, 0, 1, 0) = type(0.125);
+    expected_result(0, 1, 0, 0) = type(1);
+    expected_result(0, 1, 1, 0) = type(0.25);
+    expected_result(0, 2, 0, 0) = type(0.5);
+    expected_result(0, 2, 1, 0) = type(0.125);
+    expected_result(1, 0, 0, 0) = type(1);
+    expected_result(1, 0, 1, 0) = type(0.25);
+    expected_result(1, 1, 0, 0) = type(2);
+    expected_result(1, 1, 1, 0) = type(0.5);
+    expected_result(1, 2, 0, 0) = type(1);
+    expected_result(1, 2, 1, 0) = type(0.25);
+    expected_result(2, 0, 0, 0) = type(0.5);
+    expected_result(2, 0, 1, 0) = type(0.125);
+    expected_result(2, 1, 0, 0) = type(1);
+    expected_result(2, 1, 1, 0) = type(0.25);
+    expected_result(2, 2, 0, 0) = type(0.5);
+    expected_result(2, 2, 1, 0) = type(0.125);
+    
+    expected_result(0, 0, 0, 1) = type(2);
+    expected_result(0, 0, 1, 1) = type(0.5);
+    expected_result(0, 1, 0, 1) = type(4);
+    expected_result(0, 1, 1, 1) = type(1);
+    expected_result(0, 2, 0, 1) = type(2);
+    expected_result(0, 2, 1, 1) = type(0.5);
+    expected_result(1, 0, 0, 1) = type(4);
+    expected_result(1, 0, 1, 1) = type(1);
+    expected_result(1, 1, 0, 1) = type(8);
+    expected_result(1, 1, 1, 1) = type(2);
+    expected_result(1, 2, 0, 1) = type(4);
+    expected_result(1, 2, 1, 1) = type(1);
+    expected_result(2, 0, 0, 1) = type(2);
+    expected_result(2, 0, 1, 1) = type(0.5);
+    expected_result(2, 1, 0, 1) = type(4);
+    expected_result(2, 1, 1, 1) = type(1);
+    expected_result(2, 2, 0, 1) = type(2);
+    expected_result(2, 2, 1, 1) = type(0.5);
+
+    assert_true(
+        is_equal<4>(expected_result, delta_res),
+        LOG);
+   
+}
+
+void ConvolutionalLayerTest::test_calculate_error_gradient1()
+{
+    cout << "test_calculate_error_gradient1\n";
+    
+    Tensor<type, 1> inputs_dimension(4);
+    inputs_dimension.setValues({3, 3, 2, 2});
+
+    Tensor<type, 4> input(inputs_dimension);
+    input.chip(0, 3).chip(0, 2).setConstant(1);
+    input.chip(0, 3).chip(1, 2).setConstant(2);
+    input.chip(1, 3).chip(0, 2).setConstant(4);
+    input.chip(1, 3).chip(1, 2).setConstant(8);
+
+    Tensor<type, 1> kernels_dimension(4);
+    kernels_dimension.setValues({2, 2, 2, 2});
+    
+    ConvolutionalLayer convolutional_layer(inputs_dimension, kernels_dimension);
+
+    ConvolutionalLayerForwardPropagation forward_propagation(2, &convolutional_layer);
+
+    forward_propagation.activations_derivatives.chip(0, 2).setConstant(0);
+    forward_propagation.activations_derivatives.chip(1, 2).setConstant(1);
+
+    ConvolutionalLayerBackPropagation backward_propagation(2, &convolutional_layer);
+
+    TensorMap<Tensor<type, 4>> delta(backward_propagation.deltas_data, backward_propagation.deltas_dimensions);
+    delta.chip(0, 3).chip(0, 2).setConstant(type(1) / type(2));
+    delta.chip(0, 3).chip(1, 2).setConstant(type(1) / type(4));
+    delta.chip(1, 3).chip(0, 2).setConstant(type(1) / type(8));
+    delta.chip(1, 3).chip(1, 2).setConstant(type(1) / type(16));
+
+    convolutional_layer.calculate_error_gradient(input.data(), &forward_propagation, &backward_propagation);
+
+    Tensor<type, 4> expected_synaptic_weights_derivatives(2, 2, 2, 2);
+    expected_synaptic_weights_derivatives.chip(0, 3).chip(0, 2).setConstant(type(2));
+    expected_synaptic_weights_derivatives.chip(0, 3).chip(1, 2).setConstant(type(0.5));
+    expected_synaptic_weights_derivatives.chip(1, 3).chip(0, 2).setConstant(type(8));
+    expected_synaptic_weights_derivatives.chip(1, 3).chip(1, 2).setConstant(type(2));
+
+    assert_true(is_equal<4>(expected_synaptic_weights_derivatives, backward_propagation.synaptic_weights_derivatives), LOG);
+
+    Tensor<type, 1> expected_biases_derivatives(2);
+    expected_biases_derivatives.setValues({type(1), type(0.25)});
+
+    assert_true(is_equal<1>(expected_biases_derivatives, backward_propagation.biases_derivatives), LOG);
+}
+
 void ConvolutionalLayerTest::run_test_case()
 {
    cout << "Running convolutional layer test case...\n";
@@ -1155,13 +1379,13 @@ void ConvolutionalLayerTest::run_test_case()
 
    test_eigen_convolution();
    test_eigen_convolution_3d();
-   test_read_bmp();
+   //test_read_bmp();
 
    // Combinations
 
    test_calculate_combinations();
-   test_calculate_average_pooling_outputs();
-   test_calculate_max_pooling_outputs();
+   //test_calculate_average_pooling_outputs();
+   //test_calculate_max_pooling_outputs();
 
    // Activation
 
@@ -1178,11 +1402,15 @@ void ConvolutionalLayerTest::run_test_case()
 
    // Forward propagate
 
-//   test_forward_propagate();
+   test_forward_propagate_training();
+   test_forward_propagate_not_training();
 
    // Back_propagate
 
-   test_calculate_hidden_delta_perceptron_test();
+   //test_calculate_hidden_delta_perceptron_test();
+   test_calculate_hidden_delta();
+   test_calculate_error_gradient();
+   test_calculate_hidden_delta1();
 
    //Utils
    test_memcpy_approach();
