@@ -5257,6 +5257,16 @@ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& co
 //    }
 // }
 
+
+void DataSet::quicksort_by_column(Index target_column)
+{
+    Tensor<type, 2>* data_matrix_ptr = this->get_data_pointer();
+    Index number_of_rows = data_matrix_ptr->dimension(0);
+
+    quick_sort(*data_matrix_ptr, 0, number_of_rows - 1, target_column);
+}
+
+
 Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 {
     if(sample_index >= data.dimension(0))
