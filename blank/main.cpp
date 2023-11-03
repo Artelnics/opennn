@@ -32,12 +32,12 @@ int main()
    try
    {
         cout << "Blank\n";
-
+/**/
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data setc
 
-        DataSet data_set("/Users/alvaros/Desktop/cars_time 3.csv", ',', true);
+        DataSet data_set("/home/alvaromartin/Downloads/cars_time 3.csv", ',', true);
 
         Tensor<string, 1> variables_names = data_set.get_variables_names();        
         Tensor<string, 1>  columns_names = data_set.get_columns_names();
@@ -48,57 +48,63 @@ int main()
         Tensor<DataSet::Column, 1> old_columns = data_set.get_columns();
 
         map<string, DataSet> groupedData = data_set.group_by(data_set, "model_name");
-        DataSet DataSetA = groupedData["B"];
+        // DataSet DataSetA = groupedData["B"];
 
-        cout << "DataSetA: " << DataSetA.get_data() << endl;
+        // cout << "DataSetA: " << DataSetA.get_data() << endl;
 
-        DataSetA.set_columns_number(columns_number);
-        DataSetA.set_columns_names(columns_names);
-        DataSetA.set_columns_uses(columns_uses);
-        DataSetA.set_columns_types(column_types);
-        DataSetA.set_variables_names_from_columns(variables_names, old_columns);
+        // DataSetA.set_columns_number(columns_number);
+        // DataSetA.set_columns_names(columns_names);
+        // DataSetA.set_columns_uses(columns_uses);
+        // DataSetA.set_columns_types(column_types);
+        // DataSetA.set_variables_names_from_columns(variables_names, old_columns);
 
-        DataSetA.set_lags_number(1);
-        DataSetA.set_steps_ahead_number(1);
-        DataSetA.transform_time_series();
+        // DataSetA.set_lags_number(1);
+        // DataSetA.set_steps_ahead_number(1);
+        // DataSetA.transform_time_series();
 
 
-//        for(auto& pair : groupedData)
-//        {
-//            DataSet& subset = pair.second;
-//            subset.set_columns_number(columns_number);
-//            subset.set_columns_names(columns_names);
-//            subset.set_columns_uses(columns_uses);
-//            subset.set_columns_types(column_types);
-//            subset.set_variables_names_from_columns(variables_names, old_columns);
-//            subset.set_lags_number(1);
-//            subset.set_steps_ahead_number(1);
-//            subset.transform_time_series();
+       for(auto& pair : groupedData)
+       {
+           DataSet& subset = pair.second;
 
-//            cout << "subset: "
-//                 << subset.get_data() << endl;
-//        }
+            cout << "Raw data subset: " << subset.get_data() << endl;
 
-//        Tensor<type, 2> merged_data;
-//        bool is_first_iteration = true;
+           subset.set_columns_number(columns_number);
+           subset.set_columns_names(columns_names);
+           subset.set_columns_uses(columns_uses);
+           subset.set_columns_types(column_types);
+           subset.set_variables_names_from_columns(variables_names, old_columns);
+           subset.set_lags_number(1);
+           subset.set_steps_ahead_number(1);
+           subset.transform_time_series();
 
-//        for(const auto& pair : groupedData)
-//        {
-//            const DataSet& value = pair.second;
+           cout << "Category: " << pair.first << endl;
+           cout << "Data subset: " << subset.get_data() << endl;
+           cout << "Data subset dimensions: " << subset.get_data().dimensions() << endl;
+           cout << "Time index column subset: " << subset.get_timestamp_index() << endl;
+           cout << "Time index column subset dimensions: " << subset.get_timestamp_index().dimensions() << endl;
+       }
 
-//            if(is_first_iteration)
-//            {
-//                merged_data = value.get_data();
-//                is_first_iteration = false;
-//            }
-//            else
-//            {
-//                Tensor<type, 2> new_merged_data = merged_data.concatenate(value.get_data(), 0);
-//                merged_data = new_merged_data;
-//            }
-//        }
+       Tensor<type, 2> merged_data;
+       bool is_first_iteration = true;
 
-//        cout << "merged_data: " << merged_data << endl;
+       for(const auto& pair : groupedData)
+       {
+           const DataSet& value = pair.second;
+
+           if(is_first_iteration)
+           {
+               merged_data = value.get_data();
+               is_first_iteration = false;
+           }
+           else
+           {
+               Tensor<type, 2> new_merged_data = merged_data.concatenate(value.get_data(), 0);
+               merged_data = new_merged_data;
+           }
+       }
+
+       cout << "merged_data: " << merged_data << endl;
 
         cout << "Bye!" << endl;
 

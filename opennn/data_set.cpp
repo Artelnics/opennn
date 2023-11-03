@@ -11,7 +11,7 @@
 
 using namespace opennn;
 using namespace std;
-using namespace fs;
+// using namespace fs;
 
 
 namespace opennn
@@ -1017,18 +1017,33 @@ void DataSet::transform_time_series_data()
 
     time_series_data = data;
 
+    for(Index i = 0; i < time_series_data.size(); i++)
+    {
+        cout << time_series_data(i) << " ";
+    }
+
     data.resize(new_samples_number, new_variables_number);
+
+    timestamp_index.resize(new_samples_number);
 
     Index index = 0;
 
     for(Index j = 0; j < old_variables_number; j++)
     {
+        Tensor<type, 1> timestamp_raw(old_samples_number);
 
-//        if(columns(get_column_index(j)).type == ColumnType::DateTime)
-//        {
-//            index++;
-//            continue;
-//        }
+       if(columns(get_column_index(j)).type == ColumnType::DateTime)
+       {
+            for (Index i = 0; i < lags_number + steps_ahead; i++) 
+            {
+                memcpy(timestamp_index.data() + i * new_samples_number + index,
+                time_series_data.data() + i + j * old_samples_number, 
+                (old_samples_number - lags_number - steps_ahead + 1) * sizeof(type));
+           }
+
+           index++;           
+           continue;
+       }
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
@@ -4475,6 +4490,11 @@ bool DataSet::is_empty() const
 const Tensor<type, 2>& DataSet::get_data() const
 {
     return data;
+}
+
+const Tensor<type, 1>& DataSet::get_timestamp_index() const
+{
+    return timestamp_index;
 }
 
 
@@ -12722,18 +12742,18 @@ Tensor<unsigned char, 1> DataSet::read_bmp_image(const string& filename)
 }
 
 
-size_t DataSet::number_of_elements_in_directory(const fs::path& path)
-{
-    using fs::directory_iterator;
+// size_t DataSet::number_of_elements_in_directory(const fs::path& path)
+// {
+//     using fs::directory_iterator;
 
-    return distance(directory_iterator(path), directory_iterator{});
+//     return distance(directory_iterator(path), directory_iterator{});
 
-    return size_t();
-}
+//     return size_t();
+// }
 
 
 void DataSet::read_bmp()
-{
+{/*
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -12965,15 +12985,13 @@ void DataSet::read_bmp()
     image_height = height;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, paddingWidth, height});
+    input_variables_dimensions.setValues({channels, paddingWidth, height});*/
 }
 
 
 void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
-{
+{/*
     const fs::path path = data_file_name;
-
-
 
     if(data_file_name.empty())
     {
@@ -13157,7 +13175,7 @@ void DataSet::fill_image_data(const int& width, const int& height, const int& ch
     channels_number = channels;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({height, width, channels});
+    input_variables_dimensions.setValues({height, width, channels});*/
 }
 
 
