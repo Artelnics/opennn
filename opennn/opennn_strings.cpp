@@ -2006,7 +2006,7 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
 }
 
 string round_to_precision_string(type x, const int& precision)
-{    
+{
     type factor = pow(10,precision);
     type rounded_value = (round(factor*x))/factor;
     stringstream ss;
@@ -2034,6 +2034,71 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
     }
     return matrix_rounded;
 }
+
+
+Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor)
+{
+    auto compareStringLength = [](const std::string &a, const std::string &b)
+    {
+        return a.length() > b.length();
+    };
+
+    std::vector<std::string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
+    std::sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
+
+    for (int i = 0; i < tensor.size(); i++)
+    {
+        tensor(i) = tensorAsVector[i];
+    }
+
+    return tensor;
+}
+
+Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<string, 1> tensor2)
+{
+    Tensor<string, 1> tensor = tensor2;
+
+    for (int i = 0; i < tensor1.dimension(0); ++i) push_back_string(tensor, tensor1(i));
+
+    return tensor;
+}
+
+
+/// changes the first apparition of all tokens found in the espression by adding the keyword before each of them.
+/// @param input_string String whre changes will be done.
+/// @param token_to_replace String to be put modyfied.
+/// @param new_token String to be put instead.
+
+void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espression, const std::string& keyword)
+{
+    std::string::size_type previous_pos = 0;
+
+    for(int i = 0; i < tokens.dimension(0); i++)
+    {
+        string found_token = tokens(i);
+        string toReplace(found_token);
+        string newword = keyword + " " + found_token;
+
+        std::string::size_type pos = 0;
+
+        while((pos = espression.find(toReplace, pos)) != std::string::npos)
+        {
+            if (pos > previous_pos)
+            {
+                espression.replace(pos, toReplace.length(), newword);
+                pos += newword.length();
+                previous_pos = pos;
+                break;
+            }
+            else
+            {
+                pos += newword.length();
+            }
+        }
+    }
+}
+
+
 
 }
 

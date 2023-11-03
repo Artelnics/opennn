@@ -431,6 +431,7 @@ public:
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
     void add_sample(const Tensor<type, 1>&);
+    void quicksort_by_column(Index);
 
     Tensor<type, 1> get_variable_data(const Index&) const;
     Tensor<type, 1> get_variable_data(const string&) const;

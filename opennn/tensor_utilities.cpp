@@ -1477,6 +1477,65 @@ void print_tensor(const float* vector, const int dimensions[])
     }
 }
 
+void swap_rows(Tensor<type, 2>& data_matrix, Index row1, Index row2)
+{
+    Tensor<type, 1> temp = data_matrix.chip(row1, 0);
+    data_matrix.chip(row1, 0) = data_matrix.chip(row2, 0);
+    data_matrix.chip(row2, 0) = temp;
+}
+
+
+void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index target_column)
+{
+    if (start_index >= end_index)
+        return;
+
+    Index partition_index = partition(data, start_index, end_index, target_column);
+
+    quick_sort(data, start_index, partition_index - 1, target_column);
+    quick_sort(data, partition_index + 1, end_index, target_column);
+}
+
+Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index, Index target_column)
+{
+    Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
+    type pivot_value = pivot_row(target_column);
+    Index smaller_elements_count = 0;
+
+    for (Index current_index = start_index + 1; current_index <= end_index; current_index++)
+    {
+        if (data_matrix(current_index, target_column) <= pivot_value)
+        {
+            smaller_elements_count++;
+        }
+    }
+
+    Index pivot_position = start_index + smaller_elements_count;
+    swap_rows(data_matrix, pivot_position, start_index);
+
+    Index left_index = start_index, right_index = end_index;
+
+    while (left_index < pivot_position && right_index > pivot_position)
+    {
+        while (data_matrix(left_index, target_column) <= pivot_value)
+        {
+            left_index++;
+        }
+
+        while (data_matrix(right_index, target_column) > pivot_value)
+        {
+            right_index--;
+        }
+
+        if (left_index < pivot_position && right_index > pivot_position)
+        {
+            swap_rows(data_matrix, left_index++, right_index--);
+        }
+    }
+
+    return pivot_position;
+}
+
 }
 
 
