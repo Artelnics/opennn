@@ -522,14 +522,6 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     TensorMap<Tensor<type,4>> inputs(input_data, inputs_rows_number, inputs_columns_number, channels_number, 
         batch_samples_number);
 
-    TensorMap<Tensor<type, 4>> synaptic_weights_gradient(
-        convolutional_layer_back_propagation->synaptic_weights_derivatives.data(),
-        kernels_rows_number,
-        kernels_columns_number,
-        channels_number,
-        kernels_number);
-
-    synaptic_weights_gradient.setZero();
 
     const TensorMap<Tensor<type, 4>> deltas(
         back_propagation->deltas_data, 
@@ -546,6 +538,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     convolutional_layer_back_propagation->biases_derivatives = deltas_times_derivatives.sum(reduction_dimensions);
 
     // Weights gradient
+    convolutional_layer_back_propagation->synaptic_weights_derivatives.setZero();
     const Eigen::array<Index, 2> convolution_dims = {0, 1};
 
     #pragma omp parallel for
@@ -555,7 +548,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
         {
             for(Index image_index = 0; image_index < batch_samples_number; image_index++)
             {
-                synaptic_weights_gradient.chip(kernel_index, 3).chip(channel_index, 2) += inputs.chip(image_index, 3).chip(
+                convolutional_layer_back_propagation->synaptic_weights_derivatives.chip(kernel_index, 3).chip(channel_index, 2) += inputs.chip(image_index, 3).chip(
                     channel_index, 2).convolve(
                         deltas_times_derivatives.chip(image_index, 3).chip(kernel_index, 2), convolution_dims);
             }
@@ -1557,7 +1550,11 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
 
     biases_derivatives.resize(kernels_number);
 
-    synaptic_weights_derivatives.resize(kernels_number+synaptic_weights_number);
+    const Index kernel_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_rows_number();
+    const Index kernel_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_columns_number();
+    const Index kernel_channels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_channels_number();
+
+    synaptic_weights_derivatives.resize(kernel_rows_number, kernel_columns_number, kernel_channels_number, kernels_number);
 }
 
 void ConvolutionalLayerBackPropagation::print() const

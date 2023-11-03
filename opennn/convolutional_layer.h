@@ -293,7 +293,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     Tensor<type, 4> convolutional_delta; // --> delete?
 
     Tensor<type, 1> biases_derivatives;
-    Tensor<type, 1> synaptic_weights_derivatives;
+    Tensor<type, 4> synaptic_weights_derivatives;
 };
 
 #ifdef OPENNN_CUDA

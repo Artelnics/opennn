@@ -1144,13 +1144,17 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
     Tensor<type, 1> expected_bias_gradient(1);
     expected_bias_gradient(0) = type(0.02007677);
 
-    assert_true(is_equal<4>(expected_weight_gradient, back_propagation.synaptic_weights_derivatives), LOG);
+    TensorMap<Tensor<type, 4>> synaptic_weights_derivatives(
+        back_propagation.synaptic_weights_derivatives.data(), t1d2array<4>(kernel_dimension));
+
+    assert_true(is_equal<4>(expected_weight_gradient, synaptic_weights_derivatives), LOG);
 
     assert_true(is_equal<1>(expected_bias_gradient, back_propagation.biases_derivatives), LOG);
 }
 
 void ConvolutionalLayerTest::test_memcpy_approach()
 {
+    cout << "test_memcpy_approach\n";
 
     const int images_number = 1;
     const int kernel_number = 1;
@@ -1185,7 +1189,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     input.chip(2,2).setConstant(3.);
 
     kernel.setConstant(type(1./12.));
-    kernel.chip(1,3).setConstant(type(1./6.));
+    kernel.chip(0,3).setConstant(type(1./6.));
 
     time_t beginning_time;
     time_t current_time;
