@@ -7,12 +7,17 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer_test.h"
+
+static constexpr type NUMERIC_LIMITS_MIN_4DIGIT = static_cast<type>(1e-4);
+
 template<size_t DIM>
 static bool is_equal(const Tensor<type, DIM>& expected_output, const Tensor<type, DIM>& output)
 {
     Eigen::array<Index, DIM> dims;
     std::iota(begin(dims), end(dims), 0U);
-    Tensor<bool, 0> ouput_equals_expected_output = ((output - expected_output).abs() < type(NUMERIC_LIMITS_MIN)).reduce(dims, Eigen::internal::AndReducer());
+    Tensor<type, DIM> abs_diff = (output - expected_output).abs();
+    Tensor<bool, DIM> cmp_res = abs_diff < NUMERIC_LIMITS_MIN_4DIGIT;
+    Tensor<bool, 0> ouput_equals_expected_output = cmp_res.reduce(dims, Eigen::internal::AndReducer());
     return ouput_equals_expected_output();
 }
 
@@ -377,7 +382,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     convolutional_layer.set_synaptic_weights(kernels);
     convolutional_layer.calculate_convolutions(inputs, combinations.data());
 
-    expected_output.resize(3, 3, 2, 2);
+    expected_output.resize(4, 4, 2, 2);
     expected_output.chip(0, 3).chip(0, 2).setConstant(type(1));
     expected_output.chip(0, 3).chip(1, 2).setConstant(type(3));
     expected_output.chip(1, 3).chip(0, 2).setConstant(type(2));
@@ -832,7 +837,7 @@ void ConvolutionalLayerTest::test_forward_propagate_training()
 
     Tensor<type, 4> expected_activation_output = expected_combination_output.tanh();
 
-    assert_true(is_equal<4>(expected_combination_output, forward_propagation.outputs), LOG);
+    assert_true(is_equal<4>(expected_activation_output, forward_propagation.outputs), LOG);
 
     Tensor<type, 4> expected_activation_derivatives = type(4) / ((type(-1) * expected_combination_output).exp() + expected_combination_output.exp()).square();
 
@@ -909,7 +914,7 @@ void ConvolutionalLayerTest::test_forward_propagate_not_training()
 
     Tensor<type, 4> expected_activation_output = expected_combination_output.tanh();
 
-    assert_true(is_equal<4>(expected_combination_output, forward_propagation.outputs), LOG);
+    assert_true(is_equal<4>(expected_activation_output, forward_propagation.outputs), LOG);
 
 }
 
@@ -1068,8 +1073,9 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta()
     expected_delta(2, 0, 0, 0) = type(0.003256018);
     expected_delta(2, 1, 0, 0) = type(0.009225385);
     expected_delta(2, 2, 0, 0) = type(0.005969367);
-    Eigen::array<Index, 4> output_dim({back_propagation.deltas_dimensions(0), back_propagation.deltas_dimensions(1), back_propagation.deltas_dimensions(2), back_propagation.deltas_dimensions(3)});
-    TensorMap<Tensor<type, 4>> output_delta(back_propagation.deltas_data, output_dim);
+   
+    TensorMap<Tensor<type, 4>> output_delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
+
     assert_true(is_equal<4>(expected_delta, output_delta), LOG);
 }
 

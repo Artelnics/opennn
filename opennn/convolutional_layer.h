@@ -191,6 +191,10 @@ public:
                                PerceptronLayerBackPropagation*,
                                ConvolutionalLayerBackPropagation*) const;
 
+    void calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_layer_forward_propagation,
+                                                ConvolutionalLayerBackPropagation* next_layer_back_propagation,
+                                                ConvolutionalLayerBackPropagation* layer_back_propagation) const;
+
    // @todo probabilistic hidden delta
 
    // Gradient methods
@@ -247,64 +251,21 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
 
-    explicit ConvolutionalLayerForwardPropagation()
-        : LayerForwardPropagation()
-    {
-    }
+    explicit ConvolutionalLayerForwardPropagation();
 
     // Constructor
 
-    explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+    explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
+    ~ConvolutionalLayerForwardPropagation();
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
-        const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
-        const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
-        const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
+    void print() const;
 
-        batch_samples_number = new_batch_samples_number;
+    type* get_combinations_data();
 
-        combinations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-        outputs.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-        activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-
-        combinations.setZero();
-        outputs.setZero();
-        activations_derivatives.setZero();
-
-        outputs_data = outputs.data();
-
-        outputs_dimensions = get_dimensions(outputs);
-    }
-
-    void print() const
-    {
-        cout << "Combinations:" << endl;
-        cout << combinations << endl;
-
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
-
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
-    }
-
-    type* get_combinations_data()
-    {
-        return combinations.data();
-    }
-
-    type* get_activations_derivatives_data()
-    {
-        return activations_derivatives.data();
-    }
+    type* get_activations_derivatives_data();
 
     Tensor<type, 4> combinations;
     Tensor<type, 4> outputs;
@@ -315,60 +276,18 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
+    explicit ConvolutionalLayerBackPropagation();
 
-    virtual ~ConvolutionalLayerBackPropagation()
-    {
-    }
+    virtual ~ConvolutionalLayerBackPropagation();
 
 
-    explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+    explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
-        const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
-        const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
-        const Index synaptic_weights_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_synaptic_weights_number();
-
-//        delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number); --> old
-        deltas_dimensions.resize(2);
-        deltas_dimensions.setValues({batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number});
-
-        //delete deltas_data;
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
-
-        convolutional_delta.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-
-        biases_derivatives.resize(kernels_number);
-
-        synaptic_weights_derivatives.resize(kernels_number+synaptic_weights_number);
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
 
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        //cout << deltas << endl;
-
-//        cout << "Biases derivatives:" << endl;
-//        cout << biases_derivatives << endl;
-
-//        cout << "Synaptic weights derivatives:" << endl;
-//        cout << synaptic_weights_derivatives << endl;
-
-    }
+    void print() const;
 
     Tensor<type, 2> delta; // --> delete?
     Tensor<type, 4> convolutional_delta; // --> delete?
