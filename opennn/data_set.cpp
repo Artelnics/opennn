@@ -1017,45 +1017,44 @@ void DataSet::transform_time_series_data()
 
     time_series_data = data;
 
-    for(Index i = 0; i < time_series_data.size(); i++)
-    {
-        cout << time_series_data(i) << " ";
-    }
+    Tensor<type, 2> no_time_data(new_samples_number, new_variables_number);
+    data.resize(new_samples_number, new_variables_number + 1);
 
-    data.resize(new_samples_number, new_variables_number);
-
-    timestamp_index.resize(new_samples_number);
+    Tensor<type, 2> timestamp_index_column(new_samples_number, 1);
 
     Index index = 0;
 
     for(Index j = 0; j < old_variables_number; j++)
     {
-        Tensor<type, 1> timestamp_raw(old_samples_number);
 
        if(columns(get_column_index(j)).type == ColumnType::DateTime)
        {
-            for (Index i = 0; i < lags_number + steps_ahead; i++) 
-            {
-                memcpy(timestamp_index.data() + i * new_samples_number + index,
-                time_series_data.data() + i + j * old_samples_number, 
-                (old_samples_number - lags_number - steps_ahead + 1) * sizeof(type));
-           }
+            Tensor<type, 1> timestamp_raw(time_series_data.chip(j, 1));
 
-           index++;           
-           continue;
+            Index time_index = 0;
+
+            for (Index i = lags_number; i < lags_number + new_samples_number; i++) 
+            {
+                timestamp_index_column(time_index, 0) = timestamp_raw(i);
+                time_index++;
+            }
+
+            index++;           
+            continue;
        }
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
-            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
-                   time_series_data.data() + i + j*old_samples_number,
-                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+            memcpy(no_time_data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number,
+                   time_series_data.data() + i + j * old_samples_number,
+                   static_cast<size_t>(old_samples_number - lags_number - steps_ahead + 1) * sizeof(type));
         }
     }
 
+    data = timestamp_index_column.concatenate(no_time_data, 1);
+
     samples_uses.resize(new_samples_number);
     split_samples_random();
-
 }
 
 
@@ -4492,11 +4491,6 @@ const Tensor<type, 2>& DataSet::get_data() const
     return data;
 }
 
-const Tensor<type, 1>& DataSet::get_timestamp_index() const
-{
-    return timestamp_index;
-}
-
 
 Tensor<type, 2>* DataSet::get_data_pointer()
 {
@@ -5240,8 +5234,8 @@ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& co
 }
 
 //alvaros
-//Tensor<type, 2> DataSet::concat()
-//{
+// Tensor<type, 2> DataSet::concat()
+// {
 //    Tensor<type, 2> merged_data;
 //    bool is_first_iteration = true;
 
@@ -5261,7 +5255,7 @@ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& co
 //            merged_data = new_merged_data;
 //        }
 //    }
-//}
+// }
 
 Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 {

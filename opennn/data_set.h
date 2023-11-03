@@ -390,7 +390,6 @@ public:
     // Data get methods
 
     const Tensor<type, 2>& get_data() const;
-    const Tensor<type, 1>& get_timestamp_index() const;
     Tensor<type, 2>* get_data_pointer();
 
     const Tensor<type, 2>& get_time_series_data() const;
@@ -429,6 +428,7 @@ public:
     Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const string&) const;
     map<string, DataSet> group_by(const DataSet&, const string&) const;
+    Tensor<type, 2> concat();
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
     void add_sample(const Tensor<type, 1>&);
@@ -988,8 +988,6 @@ private:
     /// The number of columns is the number of variables.
 
     Tensor<type, 2> data;
-
-    Tensor<type, 1> timestamp_index;
 
     // Samples
 
