@@ -1229,22 +1229,26 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta1()
 
     Tensor<Index, 1> kernels_dimension(4);
     kernels_dimension.setValues({2, 2, 2, 2});
-    Tensor<type, 4> kernels(t1d2array<4>(kernels_dimension));
-    kernels.chip(0, 3).chip(0, 2).setConstant(-0.5);
-    kernels.chip(0, 3).chip(1, 2).setConstant(0.25);
-    kernels.chip(1, 3).chip(0, 2).setConstant(0.125);
-    kernels.chip(1, 3).chip(1, 2).setConstant(0.0625);
 
     ConvolutionalLayer convolutional_layer(inputs_dimension, kernels_dimension);
 
     Tensor<Index, 1> next_layer_inputs_dimension(4);
     next_layer_inputs_dimension.setValues({3, 3, 2, 2});
-    ConvolutionalLayer next_convolutional_layer(next_layer_inputs_dimension, kernels_dimension);
-    next_convolutional_layer.set_synaptic_weights(kernels);
 
-    Tensor<type, 1> biases(2);
-    biases.setValues({0, 1});
-    next_convolutional_layer.set_biases(biases);
+    Tensor<Index, 1> next_layer_kernel_dimension(4);
+    next_layer_kernel_dimension.setValues({2, 2, 2, 3});
+
+    ConvolutionalLayer next_convolutional_layer(next_layer_inputs_dimension, next_layer_kernel_dimension);
+
+    Tensor<type, 4> next_layer_kernels(t1d2array<4>(next_layer_kernel_dimension));
+    next_layer_kernels.chip(0, 3).chip(0, 2).setConstant(-type(1) / type (2));
+    next_layer_kernels.chip(0, 3).chip(1, 2).setConstant(type(1) / type (4));
+    next_layer_kernels.chip(1, 3).chip(0, 2).setConstant(type(1) / type (8));
+    next_layer_kernels.chip(1, 3).chip(1, 2).setConstant(type(1) / type (16));
+    next_layer_kernels.chip(2, 3).chip(0, 2).setConstant(type(1) / type (32));
+    next_layer_kernels.chip(2, 3).chip(1, 2).setConstant(type(1) / type (64));
+    
+    next_convolutional_layer.set_synaptic_weights(next_layer_kernels);
 
     ConvolutionalLayerForwardPropagation next_forward_propagation(2, &next_convolutional_layer);
     ConvolutionalLayerBackPropagation next_backward_propagation(2, &next_convolutional_layer);
@@ -1259,14 +1263,16 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta1()
     TensorMap<Tensor<type, 4>> delta(next_backward_propagation.deltas_data, next_backward_propagation_deltas_dimensions);
     delta.chip(0, 3).chip(0, 2).setConstant(1);
     delta.chip(0, 3).chip(1, 2).setConstant(2);
+    delta.chip(0, 3).chip(2, 2).setConstant(16);
     delta.chip(1, 3).chip(0, 2).setConstant(4);
     delta.chip(1, 3).chip(1, 2).setConstant(8);
+    delta.chip(1, 3).chip(2, 2).setConstant(32);
 
     next_forward_propagation.activations_derivatives.chip(0, 2).setConstant(0);
     next_forward_propagation.activations_derivatives.chip(1, 2).setConstant(1);
+    next_forward_propagation.activations_derivatives.chip(2, 2).setConstant(2);
 
     ConvolutionalLayerBackPropagation backward_propagation(2, &convolutional_layer);
-
     convolutional_layer.calculate_hidden_delta(&next_forward_propagation, &next_backward_propagation, &backward_propagation);
 
     Eigen::array<Index, 4> backward_propagation_deltas_dimensions({
@@ -1279,43 +1285,43 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta1()
     TensorMap<Tensor<type, 4>> delta_res(backward_propagation.deltas_data, backward_propagation_deltas_dimensions);
 
     Tensor<type, 4> expected_result(3, 3, 2, 2);
-    expected_result(0, 0, 0, 0) = type(0.25);
-    expected_result(0, 0, 1, 0) = type(0.125);
-    expected_result(0, 1, 0, 0) = type(0.5);
-    expected_result(0, 1, 1, 0) = type(0.25);
-    expected_result(0, 2, 0, 0) = type(0.25);
-    expected_result(0, 2, 1, 0) = type(0.125);
-    expected_result(1, 0, 0, 0) = type(0.5);
-    expected_result(1, 0, 1, 0) = type(0.25);
-    expected_result(1, 1, 0, 0) = type(1);
-    expected_result(1, 1, 1, 0) = type(0.5);
-    expected_result(1, 2, 0, 0) = type(0.5);
-    expected_result(1, 2, 1, 0) = type(0.25);
-    expected_result(2, 0, 0, 0) = type(0.25);
-    expected_result(2, 0, 1, 0) = type(0.125);
-    expected_result(2, 1, 0, 0) = type(0.5);
-    expected_result(2, 1, 1, 0) = type(0.25);
-    expected_result(2, 2, 0, 0) = type(0.25);
-    expected_result(2, 2, 1, 0) = type(0.125);
+    expected_result(0, 0, 0, 0) = type(5) / type(4);
+    expected_result(0, 0, 1, 0) = type(5) / type(8);
+    expected_result(0, 1, 0, 0) = type(5) / type(2);
+    expected_result(0, 1, 1, 0) = type(5) / type(4);
+    expected_result(0, 2, 0, 0) = type(5) / type(4);
+    expected_result(0, 2, 1, 0) = type(5) / type(8);
+    expected_result(1, 0, 0, 0) = type(5) / type(2);
+    expected_result(1, 0, 1, 0) = type(5) / type(4);
+    expected_result(1, 1, 0, 0) = type(5);
+    expected_result(1, 1, 1, 0) = type(5) / type(2);
+    expected_result(1, 2, 0, 0) = type(5) / type(2);
+    expected_result(1, 2, 1, 0) = type(5) / type(4);
+    expected_result(2, 0, 0, 0) = type(5) / type(4);
+    expected_result(2, 0, 1, 0) = type(5) / type(8);
+    expected_result(2, 1, 0, 0) = type(5) / type(2);
+    expected_result(2, 1, 1, 0) = type(5) / type(4);
+    expected_result(2, 2, 0, 0) = type(5) / type(4);
+    expected_result(2, 2, 1, 0) = type(5) / type(8);
 
-    expected_result(0, 0, 0, 1) = type(1);
-    expected_result(0, 0, 1, 1) = type(0.5);
-    expected_result(0, 1, 0, 1) = type(2);
-    expected_result(0, 1, 1, 1) = type(1);
-    expected_result(0, 2, 0, 1) = type(1);
-    expected_result(0, 2, 1, 1) = type(0.5);
-    expected_result(1, 0, 0, 1) = type(2);
-    expected_result(1, 0, 1, 1) = type(1);
-    expected_result(1, 1, 0, 1) = type(4);
-    expected_result(1, 1, 1, 1) = type(2);
-    expected_result(1, 2, 0, 1) = type(2);
-    expected_result(1, 2, 1, 1) = type(1);
-    expected_result(2, 0, 0, 1) = type(1);
-    expected_result(2, 0, 1, 1) = type(0.5);
-    expected_result(2, 1, 0, 1) = type(2);
-    expected_result(2, 1, 1, 1) = type(1);
-    expected_result(2, 2, 0, 1) = type(1);
-    expected_result(2, 2, 1, 1) = type(0.5);
+    expected_result(0, 0, 0, 1) = type(3);
+    expected_result(0, 0, 1, 1) = type(3) / type(2);
+    expected_result(0, 1, 0, 1) = type(6);
+    expected_result(0, 1, 1, 1) = type(3);
+    expected_result(0, 2, 0, 1) = type(3);
+    expected_result(0, 2, 1, 1) = type(3) / type(2);
+    expected_result(1, 0, 0, 1) = type(6);
+    expected_result(1, 0, 1, 1) = type(3);
+    expected_result(1, 1, 0, 1) = type(12);
+    expected_result(1, 1, 1, 1) = type(6);
+    expected_result(1, 2, 0, 1) = type(6);
+    expected_result(1, 2, 1, 1) = type(3);
+    expected_result(2, 0, 0, 1) = type(3);
+    expected_result(2, 0, 1, 1) = type(3) / type(2);
+    expected_result(2, 1, 0, 1) = type(6);
+    expected_result(2, 1, 1, 1) = type(3);
+    expected_result(2, 2, 0, 1) = type(3);
+    expected_result(2, 2, 1, 1) = type(3) / type(2);
 
     assert_true(
         is_equal<4>(expected_result, delta_res),
@@ -1337,7 +1343,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient1()
     input.chip(1, 3).chip(1, 2).setConstant(8);
 
     Tensor<Index, 1> kernels_dimension(4);
-    kernels_dimension.setValues({2, 2, 2, 2});
+    kernels_dimension.setValues({2, 2, 2, 3});
     
     ConvolutionalLayer convolutional_layer(inputs_dimension, kernels_dimension);
 
@@ -1345,27 +1351,32 @@ void ConvolutionalLayerTest::test_calculate_error_gradient1()
 
     forward_propagation.activations_derivatives.chip(0, 2).setConstant(0);
     forward_propagation.activations_derivatives.chip(1, 2).setConstant(1);
+    forward_propagation.activations_derivatives.chip(2, 2).setConstant(2);
 
     ConvolutionalLayerBackPropagation backward_propagation(2, &convolutional_layer);
 
     TensorMap<Tensor<type, 4>> delta(backward_propagation.deltas_data, t1d2array<4>(backward_propagation.deltas_dimensions));
     delta.chip(0, 3).chip(0, 2).setConstant(type(1) / type(2));
     delta.chip(0, 3).chip(1, 2).setConstant(type(1) / type(4));
+    delta.chip(0, 3).chip(2, 2).setConstant(type(1) / type(32));
     delta.chip(1, 3).chip(0, 2).setConstant(type(1) / type(8));
     delta.chip(1, 3).chip(1, 2).setConstant(type(1) / type(16));
+    delta.chip(1, 3).chip(2, 2).setConstant(type(1) / type(64));
 
     convolutional_layer.calculate_error_gradient(input.data(), &forward_propagation, &backward_propagation);
 
-    Tensor<type, 4> expected_synaptic_weights_derivatives(2, 2, 2, 2);
+    Tensor<type, 4> expected_synaptic_weights_derivatives(2, 2, 2, 3);
     expected_synaptic_weights_derivatives.chip(0, 3).chip(0, 2).setConstant(type(0));
     expected_synaptic_weights_derivatives.chip(0, 3).chip(1, 2).setConstant(type(0));
     expected_synaptic_weights_derivatives.chip(1, 3).chip(0, 2).setConstant(type(2));
     expected_synaptic_weights_derivatives.chip(1, 3).chip(1, 2).setConstant(type(4));
+    expected_synaptic_weights_derivatives.chip(2, 3).chip(0, 2).setConstant(type(3) / type(4));
+    expected_synaptic_weights_derivatives.chip(2, 3).chip(1, 2).setConstant(type(3) / type(2));
 
     assert_true(is_equal<4>(expected_synaptic_weights_derivatives, backward_propagation.synaptic_weights_derivatives), LOG);
 
-    Tensor<type, 1> expected_biases_derivatives(2);
-    expected_biases_derivatives.setValues({type(0), type(5) / type(4)});
+    Tensor<type, 1> expected_biases_derivatives(3);
+    expected_biases_derivatives.setValues({type(0), type(5) / type(4), type(3) / type(8)});
 
     assert_true(is_equal<1>(expected_biases_derivatives, backward_propagation.biases_derivatives), LOG);
 }
