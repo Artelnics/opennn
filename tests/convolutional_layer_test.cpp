@@ -1357,15 +1357,15 @@ void ConvolutionalLayerTest::test_calculate_error_gradient1()
     convolutional_layer.calculate_error_gradient(input.data(), &forward_propagation, &backward_propagation);
 
     Tensor<type, 4> expected_synaptic_weights_derivatives(2, 2, 2, 2);
-    expected_synaptic_weights_derivatives.chip(0, 3).chip(0, 2).setConstant(type(2));
-    expected_synaptic_weights_derivatives.chip(0, 3).chip(1, 2).setConstant(type(0.5));
-    expected_synaptic_weights_derivatives.chip(1, 3).chip(0, 2).setConstant(type(8));
-    expected_synaptic_weights_derivatives.chip(1, 3).chip(1, 2).setConstant(type(2));
+    expected_synaptic_weights_derivatives.chip(0, 3).chip(0, 2).setConstant(type(0));
+    expected_synaptic_weights_derivatives.chip(0, 3).chip(1, 2).setConstant(type(0));
+    expected_synaptic_weights_derivatives.chip(1, 3).chip(0, 2).setConstant(type(2));
+    expected_synaptic_weights_derivatives.chip(1, 3).chip(1, 2).setConstant(type(4));
 
     assert_true(is_equal<4>(expected_synaptic_weights_derivatives, backward_propagation.synaptic_weights_derivatives), LOG);
 
     Tensor<type, 1> expected_biases_derivatives(2);
-    expected_biases_derivatives.setValues({type(1), type(0.25)});
+    expected_biases_derivatives.setValues({type(0), type(5) / type(4)});
 
     assert_true(is_equal<1>(expected_biases_derivatives, backward_propagation.biases_derivatives), LOG);
 }
