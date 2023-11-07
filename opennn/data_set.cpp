@@ -14185,8 +14185,8 @@ void DataSet::read_csv_1()
         nans_columns = nans_columns_copy;
         nans_columns_copy.setConstant(false);
 
-        if(lines_number > 20)
-            break;
+//        if(lines_number > 20)
+//            break;
 
         for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
         {
