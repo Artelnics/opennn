@@ -1029,6 +1029,7 @@ void DataSet::transform_time_series_data()
 
        if(columns(get_column_index(j)).type == ColumnType::DateTime)
        {
+            time_column_index = get_column_index(j);
             Tensor<type, 1> timestamp_raw(time_series_data.chip(j, 1));
 
             Index time_index = 0;
@@ -1055,6 +1056,34 @@ void DataSet::transform_time_series_data()
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
+}
+
+void DataSet::fill_time_series_gaps()
+{
+    const Index rows_number = data.dimension(0);
+    const Index columns_number = data.dimension(1);    
+
+    quicksort_by_column(time_column_index);
+
+    Tensor<type, 1> time_data = data.chip(time_column_index, 1);   
+
+    Tensor<type, 1> time_difference_data = compute_elementwise_difference(time_data);
+
+    Tensor<type, 1> time_step_mode = compute_mode(time_difference_data);
+    cout << "time_step_mode: " << time_step_mode << endl;
+
+    Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
+
+    Tensor<type, 2> NaN_data(time_series_filled.size(), columns_number);
+    NaN_data.setConstant(type(NAN));
+
+    NaN_data.chip(time_column_index, 1) = time_series_filled;
+
+    Tensor<type, 2> final_data(data);
+
+    data.resize(time_data.size() + time_series_filled.size(), columns_number);
+
+    data = final_data.concatenate(NaN_data, 0);
 }
 
 
@@ -10356,6 +10385,8 @@ void DataSet::transform_time_series()
     if(lags_number == 0 || steps_ahead == 0) return;
 
     transform_time_series_data();
+
+    fill_time_series_gaps();
 
     transform_time_series_columns();
 

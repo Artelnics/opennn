@@ -21,7 +21,6 @@
 
 #include "../opennn/opennn.h"
 
-#include "kmeans.h"
 #include <iostream>
 
 using namespace std;
@@ -31,11 +30,35 @@ int main()
 {
    try
    {
-        cout << "Blank\n";
-/**/
+        cout << "Blank\n";      
+
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Data setc
+        DataSet data_set("/home/alvaromartin/Downloads/generation.csv", ',', true);
+
+        data_set.scrub_missing_values();
+
+        const Index neurons_number = 10;
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        Tensor<DataSet::Column, 1> columns = data_set.get_columns();
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, neurons_number, target_variables_number});
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(20);
+
+        training_strategy.perform_training();
+
+/*
+        // Data set
 
         DataSet data_set("/home/alvaromartin/Downloads/cars_time 3.csv", ',', true);
 
@@ -67,8 +90,6 @@ int main()
        {
            DataSet& subset = pair.second;
 
-            cout << "Raw data subset: " << subset.get_data() << endl;
-
            subset.set_columns_number(columns_number);
            subset.set_columns_names(columns_names);
            subset.set_columns_uses(columns_uses);
@@ -78,11 +99,7 @@ int main()
            subset.set_steps_ahead_number(1);
            subset.transform_time_series();
 
-           cout << "Category: " << pair.first << endl;
-           cout << "Data subset: " << subset.get_data() << endl;
-           cout << "Data subset dimensions: " << subset.get_data().dimensions() << endl;
-           cout << "Time index column subset: " << subset.get_timestamp_index() << endl;
-           cout << "Time index column subset dimensions: " << subset.get_timestamp_index().dimensions() << endl;
+           cout << pair.first << ": " << subset.get_data() << endl;
        }
 
        Tensor<type, 2> merged_data;
@@ -104,8 +121,10 @@ int main()
            }
        }
 
-       cout << "merged_data: " << merged_data << endl;
+       quicksort_by_column(merged_data, 0);
 
+       cout << "Ordered and merged_data: " << merged_data << endl;
+*/
         cout << "Bye!" << endl;
 
         return 0;
