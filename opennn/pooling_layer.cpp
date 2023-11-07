@@ -1061,6 +1061,89 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         set_padding_width(static_cast<Index>(stoi(padding_width_string)));
     }
 }
+
+PoolingLayerForwardPropagation::PoolingLayerForwardPropagation(const Index& numb_of_batches, Layer* layer_pointer)
+{
+    set(numb_of_batches, layer_pointer);
+}
+
+PoolingLayerForwardPropagation::PoolingLayerForwardPropagation()
+{
+
+}
+
+PoolingLayerForwardPropagation::~PoolingLayerForwardPropagation() 
+{
+}
+
+void PoolingLayerForwardPropagation::set(const Index& numb_of_batches, Layer* layer_pointer)
+{
+    batch_samples_number = numb_of_batches;
+    
+    this->layer_pointer = layer_pointer;
+
+    const Index numb_of_output_rows = static_cast<PoolingLayer*>(layer_pointer)->get_outputs_rows_number();
+    const Index numb_of_output_columns = static_cast<PoolingLayer*>(layer_pointer)->get_outputs_columns_number();
+    const Index numb_of_channels = static_cast<PoolingLayer*>(layer_pointer)->get_inputs_channels_number();
+
+    outputs_dimensions.resize(4);
+    outputs_dimensions.setValues({numb_of_output_rows, numb_of_output_columns, numb_of_channels, batch_samples_number});
+
+    outputs_data = static_cast<type*>(malloc(numb_of_output_rows * 
+                                            numb_of_output_columns * 
+                                            numb_of_channels * 
+                                            batch_samples_number * 
+                                            sizeof(type)));
+}
+
+void PoolingLayerForwardPropagation::print() const 
+{
+    cout << "PoolingLayerForwardPropagation\n";
+    //TODO: Print values
+}
+
+PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& numb_of_batches, Layer* layer_pointer)
+{
+    set(numb_of_batches, layer_pointer);
+}
+    
+PoolingLayerBackPropagation::PoolingLayerBackPropagation()
+{
+
+}
+
+PoolingLayerBackPropagation::~PoolingLayerBackPropagation()
+{
+
+}
+    
+void PoolingLayerBackPropagation::set(const Index& numb_of_batches, Layer* layer_pointer)
+{
+    batch_samples_number = numb_of_batches;
+
+    this->layer_pointer = layer_pointer;
+
+    const Index numb_of_output_rows = static_cast<PoolingLayer*>(layer_pointer)->get_outputs_rows_number();
+    const Index numb_of_output_columns = static_cast<PoolingLayer*>(layer_pointer)->get_outputs_columns_number();
+    const Index numb_of_channels = static_cast<PoolingLayer*>(layer_pointer)->get_inputs_channels_number();
+
+    deltas_dimensions.resize(4);
+    deltas_dimensions.setValues({numb_of_output_rows, numb_of_output_columns, numb_of_channels, batch_samples_number});
+
+    deltas_data = static_cast<type*>(malloc(numb_of_output_rows * 
+                                            numb_of_output_columns * 
+                                            numb_of_channels * 
+                                            batch_samples_number * 
+                                            sizeof(type)));
+
+}
+
+void PoolingLayerBackPropagation::print() const 
+{
+    cout << "PoolingLayerBackPropagation\n";
+    //TODO: print values
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

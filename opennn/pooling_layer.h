@@ -178,6 +178,25 @@ protected:
 #endif
 
 };
+
+struct PoolingLayerForwardPropagation : LayerForwardPropagation
+{
+    PoolingLayerForwardPropagation(const Index& numb_of_batches, Layer* layer_pointer);
+    PoolingLayerForwardPropagation();
+    ~PoolingLayerForwardPropagation() override;
+    void set(const Index& numb_of_batches, Layer* layer_pointer) override;
+    void print() const override;
+};
+
+struct PoolingLayerBackPropagation : LayerBackPropagation
+{
+    PoolingLayerBackPropagation(const Index& numb_of_batches, Layer* layer_pointer);
+    PoolingLayerBackPropagation();
+    ~PoolingLayerBackPropagation() override;
+    void set(const Index& numb_of_batches, Layer* layer_pointer) override;
+    void print() const override;
+};
+
 }
 
 #endif // POOLING_LAYER_H
