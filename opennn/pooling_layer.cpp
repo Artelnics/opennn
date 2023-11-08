@@ -26,6 +26,7 @@ PoolingLayer::PoolingLayer() : Layer()
 PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
     set_default();
+    set_input_variables_dimensions(new_input_variables_dimensions);
 }
 
 
@@ -36,11 +37,11 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
 {
-    pool_rows_number = pool_dimensions[0];
-
-    pool_columns_number = pool_dimensions[1];
-
     set_default();
+
+    set_pool_size(pool_dimensions[0], pool_dimensions[1]);
+
+    set_input_variables_dimensions(new_input_variables_dimensions);
 }
 
 
@@ -85,46 +86,40 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
-    const Index images_number = inputs.dimension(0);
+    const Index images_number = inputs.dimension(3);
 
-    const Index channels_number = inputs.dimension(1);
+    const Index channels_number = inputs.dimension(2);
 
-    const Index inputs_rows_number = inputs.dimension(2);
+    const Index inputs_rows_number = inputs.dimension(0);
 
-    const Index inputs_columns_number = inputs.dimension(3);
+    const Index inputs_columns_number = inputs.dimension(1);
 
     const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
     const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-    Tensor<type, 4> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
-
-    for(Index image_index = 0; image_index < images_number; image_index ++)
+    Tensor<type, 4> outputs(outputs_rows_number, outputs_columns_number, channels_number, images_number);
+    #pragma omp parallel for
+    for(Index image_index = 0; image_index < images_number; image_index++)
     {
-        for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
+        const Tensor<type, 3>& image = inputs.chip(image_index, 3);
+        for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
         {
-            for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
+            for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
             {
-                for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
-                {
-                    outputs(image_index, channel_index, row_index, column_index) = type(0);
-
-                    for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
-                    {
-                        const Index row = row_index*row_stride + window_row;
-
-                        for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
-                        {
-                            const Index column = column_index*column_stride + window_column;
-
-                            outputs(image_index, channel_index, row_index, column_index) += inputs(image_index, channel_index, row, column);
-                        }
-                    }
-
-                    outputs(image_index, channel_index, row_index, column_index) /= type(pool_rows_number*pool_columns_number);
-                }
+                const Eigen::array<Index, 3> offsets = {row_index * row_stride, column_index * column_stride, 0};
+                const Eigen::array<Index, 3> extents = {pool_rows_number, pool_columns_number, channels_number};
+                
+                const Eigen::array<Index, 2> reduce_dimensions({0, 1});
+                
+                const Index numb_of_elements = pool_rows_number * pool_columns_number;
+                
+                outputs.chip(image_index, 3).chip(row_index, 0).chip(column_index, 0) = image.slice(
+                    offsets, extents).sum(
+                        reduce_dimensions) / static_cast<type>(numb_of_elements);
             }
         }
+
     }
 
     return outputs;
@@ -579,11 +574,13 @@ Index PoolingLayer::get_neurons_number() const
 
 Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(3);
-
-//    outputs_dimensions[0] = input_variables_dimensions[0];
-//    outputs_dimensions[1] = get_outputs_rows_number();
-//    outputs_dimensions[2] = get_outputs_columns_number();
+    Tensor<Index, 1> outputs_dimensions(4);
+    outputs_dimensions.setValues({
+        get_outputs_rows_number(),
+        get_outputs_columns_number(),
+        get_inputs_channels_number(),
+        get_inputs_images_number()
+        });
 
     return outputs_dimensions;
 }
@@ -596,14 +593,18 @@ Index PoolingLayer::get_inputs_number() const
     return input_variables_dimensions.size();
 }
 
+/// Returns the number of input images
+
+Index PoolingLayer::get_inputs_images_number() const
+{
+    return input_variables_dimensions[3];
+}
 
 /// Returns the number of channels of the layers' input.
 
 Index PoolingLayer::get_inputs_channels_number() const
 {
-//    return input_variables_dimensions[0];
-
-    return 0;
+   return input_variables_dimensions[2];
 }
 
 
@@ -611,9 +612,7 @@ Index PoolingLayer::get_inputs_channels_number() const
 
 Index PoolingLayer::get_inputs_rows_number() const
 {
-//    return input_variables_dimensions[1];
-
-    return 0;
+    return input_variables_dimensions[0];
 }
 
 
@@ -621,9 +620,7 @@ Index PoolingLayer::get_inputs_rows_number() const
 
 Index PoolingLayer::get_inputs_columns_number() const
 {
-//    return input_variables_dimensions[2];
-
-    return 0;
+    return input_variables_dimensions[1];
 }
 
 
@@ -631,9 +628,7 @@ Index PoolingLayer::get_inputs_columns_number() const
 
 Index PoolingLayer::get_outputs_rows_number() const
 {
-//    return (input_variables_dimensions[1] - pool_rows_number)/row_stride + 1;
-
-    return 0;
+    return (get_inputs_rows_number() - get_pool_rows_number()) / get_row_stride() + 1;
 }
 
 
@@ -641,9 +636,7 @@ Index PoolingLayer::get_outputs_rows_number() const
 
 Index PoolingLayer::get_outputs_columns_number() const
 {
-//    return (input_variables_dimensions[2] - pool_columns_number)/column_stride + 1;
-
-    return 0;
+    return (get_inputs_columns_number() - get_pool_columns_number()) / get_column_stride() + 1;
 }
 
 

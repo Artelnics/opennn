@@ -56,6 +56,8 @@ public:
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
+    
+    Index get_inputs_images_number() const;
 
     Index get_inputs_channels_number() const;
 
