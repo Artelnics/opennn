@@ -180,7 +180,7 @@ bool is_constant(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
 
-    type first_not_nan_element;
+    type first_not_nan_element = 0.0;
 
     for(Index i = 0; i < size; i++)
     {

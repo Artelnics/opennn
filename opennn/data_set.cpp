@@ -14031,6 +14031,8 @@ void DataSet::read_csv_1()
 
     Index column_index = 0;
 
+    bool one_time = true;
+
     for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
     {
         if(has_rows_labels && i == 0) continue;
@@ -14093,6 +14095,8 @@ void DataSet::read_csv_2_simple()
 {   
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
+
+    cout << "read_csv_2_simple" << endl;
 
     #ifdef _WIN32
 
@@ -14200,6 +14204,8 @@ void DataSet::read_csv_3_simple()
 {
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
+
+    cout << "read_csv_3_simple" << endl;
 
     #ifdef _WIN32
 
@@ -14368,6 +14374,8 @@ void DataSet::read_csv_2_complete()
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
+    cout << "read_csv_2" << endl;
+
     #ifdef _WIN32
 
     if(regex_search(data_file_name, accent_regex))
@@ -14407,7 +14415,7 @@ void DataSet::read_csv_2_complete()
 
     const Index columns_number = columns.size();
 
-    for(unsigned j = 0; j < columns_number; j++)
+    for(Index j = 0; j < columns_number; j++)
     {
         if(columns(j).type != ColumnType::Categorical)
         {
@@ -14529,6 +14537,8 @@ void DataSet::read_csv_3_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
+
+    cout << "read_csv_3" << endl;
 
     #ifdef _WIN32
 
@@ -14731,7 +14741,7 @@ void DataSet::read_csv_3_complete()
 
     // Check Constant and DateTime to unused
 
-    check_constant_columns();
+    check_constant_columns(); //alvaros
 
     // Check binary
 
