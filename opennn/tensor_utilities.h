@@ -152,6 +152,10 @@ void push_back_index(Tensor<Index, 1>&, const Index&);
 void push_back_string(Tensor<string, 1>&, const string&);
 void push_back_type(Tensor<type, 1>&, const type&);
 
+Index partition(Tensor<type, 2>&, Index, Index, Index);
+void swap_rows(Tensor<type, 2>&, Index, Index);
+void quick_sort(Tensor<type, 2>&, Index, Index, Index);
+
 Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);

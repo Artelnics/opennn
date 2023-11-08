@@ -797,36 +797,16 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        cout << "----- (1) -----" << endl;
-
-        cout << "training_samples_number: " << training_samples_number << endl;
-        cout << "data_set_pointer: " << data_set_pointer << endl;
-        cout << "training_samples_indices: " << training_samples_indices << endl;
-        cout << "input_variables_indices: " << input_variables_indices << endl;
-        cout << "target_variables_indices: " << target_variables_indices << endl;
-//       cout << "training_batch size: " << training_batch.size() << endl;
-//        cout << "training_forward_propagation: " << training_forward_propagation << endl;
-//        cout << "training_forward_propagation: " << training_forward_propagation << endl;
-//        DataSetBatch training_batch(training_samples_number, data_set_pointer);
-//        training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
 
         // Loss index
-
-        cout << "----- (2) -----" << endl;
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
         // Update parameters
 
-        cout << "----- (3) -----" << endl;
-
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
-
-        cout << "----- (4) -----" << endl;
 
         if(has_selection)
         {
@@ -840,14 +820,10 @@ TrainingResults ConjugateGradient::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
-        cout << "----- (5) -----" << endl;
-
         // Optimization algorithm
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-        cout << "----- (6) -----" << endl;
 
         if(display && epoch%display_period == 0)
         {
@@ -859,8 +835,6 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Stopping Criteria       
 
-        cout << "----- (7) -----" << endl;
-
         if(results.training_error_history(epoch) < training_loss_goal)
         {
             stop_training = true;
@@ -869,8 +843,6 @@ TrainingResults ConjugateGradient::perform_training()
 
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
-
-        cout << "----- (8) -----" << endl;
 
         if(has_selection && selection_failures >= maximum_selection_failures)
         {
@@ -881,8 +853,6 @@ TrainingResults ConjugateGradient::perform_training()
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
-        cout << "----- (10) -----" << endl;
-
         if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
@@ -892,8 +862,6 @@ TrainingResults ConjugateGradient::perform_training()
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
 
-        cout << "----- (11) -----" << endl;
-
         if(elapsed_time >= maximum_time)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
@@ -902,8 +870,6 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
-
-        cout << "----- (12) -----" << endl;
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
@@ -915,8 +881,6 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
-
-        cout << "----- (13) -----" << endl;
 
         old_loss = training_back_propagation.loss;
 
@@ -938,14 +902,11 @@ TrainingResults ConjugateGradient::perform_training()
             break;
         }
 
-        cout << "----- (15) -----" << endl;
-
         // Update stuff
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
 
-    cout << "----- (sale del Main) ----" << endl;
 
     if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
     {
