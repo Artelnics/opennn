@@ -56,7 +56,7 @@ public:
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
-    
+
     Index get_inputs_images_number() const;
 
     Index get_inputs_channels_number() const;
@@ -121,6 +121,8 @@ public:
 
     Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
 
+    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&, Tensor<tuple<Index, Index, Index>, 4>& switches) const;
+    
     Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
 
     Tensor<type, 4> calculate_average_pooling_outputs(const Tensor<type, 4>&) const;
@@ -188,6 +190,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     ~PoolingLayerForwardPropagation() override;
     void set(const Index& numb_of_batches, Layer* layer_pointer) override;
     void print() const override;
+    
+    Tensor<tuple<Index, Index, Index>, 4> switches;
 };
 
 struct PoolingLayerBackPropagation : LayerBackPropagation

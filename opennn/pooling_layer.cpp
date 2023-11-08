@@ -112,11 +112,9 @@ Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<typ
                 
                 const Eigen::array<Index, 2> reduce_dimensions({0, 1});
                 
-                const Index numb_of_elements = pool_rows_number * pool_columns_number;
-                
                 outputs.chip(image_index, 3).chip(row_index, 0).chip(column_index, 0) = image.slice(
-                    offsets, extents).sum(
-                        reduce_dimensions) / static_cast<type>(numb_of_elements);
+                    offsets, extents).mean(
+                        reduce_dimensions);
             }
         }
 
@@ -140,49 +138,104 @@ Tensor<type, 4> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 4>
 
 Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
-    const Index images_number = inputs.dimension(0);
+    const Index images_number = inputs.dimension(3);
 
-    const Index channels_number = inputs.dimension(1);
+    const Index channels_number = inputs.dimension(2);
 
-    const Index inputs_rows_number = inputs.dimension(2);
+    const Index inputs_rows_number = inputs.dimension(0);
 
-    const Index inputs_columns_number = inputs.dimension(3);
+    const Index inputs_columns_number = inputs.dimension(1);
 
     const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
     const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-    Tensor<type, 4> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
+    Tensor<type, 4> outputs(outputs_rows_number, outputs_columns_number, channels_number, images_number);
 
-    for(Index image_index = 0; image_index < images_number; image_index ++)
+    #pragma omp parallel for
+    for(Index image_index = 0; image_index < images_number; image_index++)
     {
-        for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
+        const Tensor<type, 3>& image = inputs.chip(image_index, 3);
+        for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
         {
-            for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
+            for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
             {
-                for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
+                const Eigen::array<Index, 3> offsets = {row_index * row_stride, column_index * column_stride, 0};
+                const Eigen::array<Index, 3> extents = {pool_rows_number, pool_columns_number, channels_number};
+                
+                const Eigen::array<Index, 2> reduce_dimensions({0, 1});
+                
+                outputs.chip(image_index, 3).chip(row_index, 0).chip(column_index, 0) = image.slice(
+                    offsets, extents).maximum(
+                        reduce_dimensions);
+            }
+        }
+
+    }
+
+    return outputs;
+}
+
+/// Returns the result of applying max pooling to a batch of images and saves the indexes of the max elements in switches.
+/// @param inputs The batch of images.
+/// @param switches Saves index of the max values. Memory needs to be preallocated. The first element of the tuple is the row index, followed by column and channel index of the input.
+
+Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs, Tensor<tuple<Index, Index, Index>, 4>& switches) const
+{
+    const Index images_number = inputs.dimension(3);
+
+    const Index channels_number = inputs.dimension(2);
+
+    const Index inputs_rows_number = inputs.dimension(0);
+
+    const Index inputs_columns_number = inputs.dimension(1);
+
+    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
+
+    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
+
+    Tensor<type, 4> outputs(outputs_rows_number, outputs_columns_number, channels_number, images_number);
+
+    outputs.setConstant(numeric_limits<type>::min());
+
+    #pragma omp parallel for
+    for(Index image_index = 0; image_index < images_number; image_index++)
+    {
+        const Tensor<type, 3>& image = inputs.chip(image_index, 3);
+        for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
+        {
+            for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
+            {
+                const Eigen::array<Index, 3> offsets = {row_index * row_stride, column_index * column_stride, 0};
+                const Eigen::array<Index, 3> extents = {pool_rows_number, pool_columns_number, channels_number};
+                
+                const Eigen::array<Index, 2> reduce_dimensions({0, 1});
+                
+                const Tensor<type, 3>& image_sliced = image.slice(offsets, extents);
+
+                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
                 {
-                    outputs(image_index, channel_index, row_index, column_index) =
-                            inputs(image_index, channel_index, row_index*row_stride, column_index*column_stride);
-
-                    for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
+                    for(Index window_pos_y = 0; window_pos_y < pool_rows_number; window_pos_y++)
                     {
-                        const Index row = row_index*row_stride + window_row;
-
-                        for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
+                        for(Index window_pos_x = 0; window_pos_x < pool_columns_number; window_pos_x++)
                         {
-                            const Index column = column_index*column_stride + window_column;
-
-                            if(inputs(image_index, channel_index, row, column) > outputs(image_index, channel_index, row_index, column_index))
+                            type& output_val = outputs(row_index, column_index, channel_index, image_index);
+                            const type& input_val = image_sliced(window_pos_y, window_pos_x, channel_index);
+                            if(output_val < input_val) 
                             {
-                                outputs(image_index, channel_index, row_index, column_index) = inputs(image_index, channel_index, row, column);
-                            }
+                                const Index image_row_index = row_index * row_stride + window_pos_y;
+                                const Index image_column_index = column_index * column_stride + window_pos_x;
 
+                                switches(row_index, column_index, channel_index, image_index) = make_tuple(image_row_index, image_column_index, channel_index);
+                                
+                                output_val = input_val;
+                            }
                         }
-                    }
+                    } 
                 }
             }
         }
+
     }
 
     return outputs;
