@@ -1444,12 +1444,8 @@ string replace_non_allowed_programming_expressions(string& s)
             if(c=='-'){ out+="_res_";   continue;}
             if(c=='='){ out+="_equ_";   continue;}
             if(c=='!'){ out+="_not_";   continue;}
-<<<<<<< HEAD
             if(c==','){ out+="_colon_"; continue;}
             if(c=='\\'){ out+="_slash_";continue;}
-=======
->>>>>>> 7959cfe3b383af40e27267f8758c01cf17a172ff
-
             if(c=='&'){ out+="_amprsn_"; continue;}
             if(c=='?'){ out+="_ntrgtn_"; continue;}
             if(c=='<'){ out+="_lower_" ; continue;}
