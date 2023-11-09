@@ -58,7 +58,7 @@ void PoolingLayerTest::test_constructor()
     assert_true(pooling_layer.get_inputs_rows_number() == numb_of_rows &&
                 pooling_layer.get_inputs_columns_number() == numb_of_cols &&
                 pooling_layer.get_inputs_channels_number() == numb_of_channels &&
-                pooling_layer.get_inputs_number() == numb_of_images, LOG);
+                pooling_layer.get_inputs_images_number() == numb_of_images, LOG);
 
 }
 
@@ -85,7 +85,7 @@ void PoolingLayerTest::test_constructor1()
     assert_true(pooling_layer.get_inputs_rows_number() == numb_of_rows &&
                 pooling_layer.get_inputs_columns_number() == numb_of_cols &&
                 pooling_layer.get_inputs_channels_number() == numb_of_channels &&
-                pooling_layer.get_inputs_number() == numb_of_images, LOG);
+                pooling_layer.get_inputs_images_number() == numb_of_images, LOG);
 
 
     assert_true(pooling_layer.get_pool_rows_number() == numb_of_pooling_rows &&
@@ -229,16 +229,21 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
     pooling_dimension.setValues({numb_of_pooling_rows, numb_of_pooling_cols});
 
     PoolingLayer pooling_layer(inputs_dimension, pooling_dimension);
+    
+    const Index row_stride = 2;
+    const Index column_stride = 2;
+    
+    pooling_layer.set_row_stride(row_stride);
+    pooling_layer.set_column_stride(column_stride);
 
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 1).setConstant(type(1));
-    inputs.chip(1, 1).setConstant(type(2));
-    inputs.chip(2, 1).setConstant(type(3));
-    inputs.chip(3, 1).setConstant(type(4));
+    inputs.chip(0, 0).setConstant(type(1));
+    inputs.chip(1, 0).setConstant(type(2));
+    inputs.chip(2, 0).setConstant(type(3));
+    inputs.chip(3, 0).setConstant(type(4));
 
     Tensor<type, 4> outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
-
     assert_true(outputs.dimension(0) == 2 && 
                 outputs.dimension(1) == 2 &&
                 outputs.dimension(2) == 2 &&
@@ -246,8 +251,8 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     Tensor<type, 4> expected_outputs(2, 2, 2, 2);
 
-    expected_outputs.chip(0, 1).setConstant(type(3) / type(2));
-    expected_outputs.chip(1, 1).setConstant(type(7) / type(2));
+    expected_outputs.chip(0, 0).setConstant(type(3) / type(2));
+    expected_outputs.chip(1, 0).setConstant(type(7) / type(2));
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
 
@@ -382,12 +387,18 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     PoolingLayer pooling_layer(inputs_dimension, pooling_dimension);
 
+    const Index row_stride = 2;
+    const Index column_stride = 2;
+    
+    pooling_layer.set_row_stride(row_stride);
+    pooling_layer.set_column_stride(column_stride);
+
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 1).setConstant(type(1));
-    inputs.chip(1, 1).setConstant(type(2));
-    inputs.chip(2, 1).setConstant(type(3));
-    inputs.chip(3, 1).setConstant(type(4));
+    inputs.chip(0, 0).setConstant(type(1));
+    inputs.chip(1, 0).setConstant(type(2));
+    inputs.chip(2, 0).setConstant(type(3));
+    inputs.chip(3, 0).setConstant(type(4));
 
     Tensor<type, 4> outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -398,11 +409,31 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     Tensor<type, 4> expected_outputs(2, 2, 2, 2);
 
-    expected_outputs.chip(0, 1).setConstant(2);
-    expected_outputs.chip(0, 1).setConstant(4);
+    expected_outputs.chip(0, 0).setConstant(2);
+    expected_outputs.chip(1, 0).setConstant(4);
+ 
+    assert_true(is_equal<4>(expected_outputs, outputs), LOG);
+    
+    Tensor<tuple<Index, Index>, 4> switches(pooling_layer.get_outputs_rows_number(), pooling_layer.get_outputs_columns_number(), numb_of_channels, numb_of_images);
+
+    outputs = pooling_layer.calculate_max_pooling_outputs(inputs, switches);
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
 
+    Tensor<tuple<Index, Index>, 4> expected_switches(2, 2, numb_of_channels, numb_of_images);
+    expected_switches(0, 0, 0, 0) = make_tuple(1, 0);
+    expected_switches(0, 0, 1, 0) = make_tuple(1, 0);
+    expected_switches(0, 1, 0, 0) = make_tuple(1, 2);
+    expected_switches(0, 1, 1, 0) = make_tuple(1, 2);
+    expected_switches(1, 0, 0, 0) = make_tuple(3, 0);
+    expected_switches(1, 0, 1, 0) = make_tuple(3, 0);
+    expected_switches(1, 1, 0, 0) = make_tuple(3, 2);
+    expected_switches(1, 1, 1, 0) = make_tuple(3, 2);
+
+    expected_switches.chip(1, 3) = expected_switches.chip(0, 3);
+
+    Tensor<bool, 0> is_switches_same = (switches == expected_switches).all();
+    assert_true(is_switches_same(), LOG);
 //
 
 //    Tensor<type, 2> inputs;
@@ -534,12 +565,18 @@ void PoolingLayerTest::test_forward_propagate()
 
     PoolingLayer pooling_layer(inputs_dimension, pooling_dimension);
 
+    const Index row_stride = 2;
+    const Index column_stride = 2;
+    
+    pooling_layer.set_row_stride(row_stride);
+    pooling_layer.set_column_stride(column_stride);
+
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 1).setConstant(type(1));
-    inputs.chip(1, 1).setConstant(type(2));
-    inputs.chip(2, 1).setConstant(type(3));
-    inputs.chip(3, 1).setConstant(type(4));
+    inputs.chip(0, 0).setConstant(type(1));
+    inputs.chip(1, 0).setConstant(type(2));
+    inputs.chip(2, 0).setConstant(type(3));
+    inputs.chip(3, 0).setConstant(type(4));
 
     PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
@@ -552,13 +589,37 @@ void PoolingLayerTest::test_forward_propagate()
 
     Tensor<type, 4> expected_outputs(2, 2, 2, 2);
 
-    expected_outputs.chip(0, 1).setConstant(type(3) / type(2));
-    expected_outputs.chip(1, 1).setConstant(type(7) / type(2));
+    expected_outputs.chip(0, 0).setConstant(type(3) / type(2));
+    expected_outputs.chip(1, 0).setConstant(type(7) / type(2));
 
     TensorMap<Tensor<type, 4>> outputs(layer_forward_propagation.outputs_data, 
                                         t1d2array<4>(layer_forward_propagation.outputs_dimensions));
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
+
+    pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
+
+    pooling_layer.forward_propagate(inputs.data(), inputs_dimension, &layer_forward_propagation, switch_train);
+
+    expected_outputs.chip(0,0).setConstant(type(2));
+    expected_outputs.chip(1,0).setConstant(type(4));
+
+    assert_true(is_equal<4>(expected_outputs, outputs), LOG);
+
+    Tensor<tuple<Index, Index>, 4> expected_switches(2, 2, numb_of_channels, numb_of_images);
+    expected_switches(0, 0, 0, 0) = make_tuple(1, 0);
+    expected_switches(0, 0, 1, 0) = make_tuple(1, 0);
+    expected_switches(0, 1, 0, 0) = make_tuple(1, 2);
+    expected_switches(0, 1, 1, 0) = make_tuple(1, 2);
+    expected_switches(1, 0, 0, 0) = make_tuple(3, 0);
+    expected_switches(1, 0, 1, 0) = make_tuple(3, 0);
+    expected_switches(1, 1, 0, 0) = make_tuple(3, 2);
+    expected_switches(1, 1, 1, 0) = make_tuple(3, 2);
+
+    expected_switches.chip(1, 3) = expected_switches.chip(0, 3);
+
+    Tensor<bool, 0> is_switches_same = (layer_forward_propagation.switches == expected_switches).all();
+    assert_true(is_switches_same(), LOG);
 }
 
 void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
@@ -573,27 +634,35 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
     const Index numb_of_images = 2;
     inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
 
-    const Index numb_of_pooling_rows = 2;
-    const Index numb_of_pooling_cols = 2;
+    const Index numb_of_pooling_rows = 1;
+    const Index numb_of_pooling_cols = 1;
     
     Tensor<Index, 1> pooling_dimension(2);
     pooling_dimension.setValues({numb_of_pooling_rows, numb_of_pooling_cols});
 
     PoolingLayer pooling_layer(inputs_dimension, pooling_dimension);
 
+    const Index row_stride = 1;
+    const Index column_stride = 1;
+    
+    pooling_layer.set_row_stride(row_stride);
+    pooling_layer.set_column_stride(column_stride);
+
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 1).setConstant(type(1));
-    inputs.chip(1, 1).setConstant(type(2));
-    inputs.chip(2, 1).setConstant(type(3));
-    inputs.chip(3, 1).setConstant(type(4));
+    inputs.chip(0, 0).setConstant(type(1));
+    inputs.chip(1, 0).setConstant(type(2));
+    inputs.chip(2, 0).setConstant(type(3));
+    inputs.chip(3, 0).setConstant(type(4));
 
-    PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
+    PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::NoPooling;
 
     pooling_layer.set_pooling_method(pooling_method);
 
     PoolingLayer next_pooling_layer(pooling_layer.get_outputs_dimensions());
-    next_pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::NoPooling);
+    next_pooling_layer.set_column_stride(2);
+    next_pooling_layer.set_row_stride(2);
+    next_pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::AveragePooling);
     
     PoolingLayerBackPropagation next_back_propagation(numb_of_images, &next_pooling_layer);
     PoolingLayerForwardPropagation next_forward_propagation(numb_of_images, &next_pooling_layer);
@@ -603,7 +672,7 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
     next_delta(0, 0, 0, 0) = type(3);
     next_delta(0, 0, 1, 0) = type(4);
     next_delta(0, 1, 0, 0) = type(-2);
-    next_delta(0, 1, 1, 0) = type(3);
+    next_delta(0, 1, 1, 0) = type(2);
     next_delta(1, 0, 0, 0) = type(5);
     next_delta(1, 0, 1, 0) = type(2);
     next_delta(1, 1, 0, 0) = type(1);
@@ -622,44 +691,56 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
         numb_of_images, &pooling_layer);
 
     pooling_layer.calculate_hidden_delta(
-        &next_forward_propagation, 
-        &next_back_propagation, 
-        &back_propagation);
+        static_cast<PoolingLayerForwardPropagation*>(&next_forward_propagation), 
+        static_cast<PoolingLayerBackPropagation*>(&next_back_propagation), 
+        static_cast<PoolingLayerBackPropagation*>(&back_propagation));
 
+    //Test
     TensorMap<Tensor<type, 4>> delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
 
     Tensor<type, 4> expected_delta(4, 4, 2, 2);
 
-    expected_delta.setValues({
-        {
-            {
-                {type(0.75), type(1)}, {type(0.75), type(1)},{type(-0.5), type(0.5)},{type(-0.5), type(0.5)},
-            },
-            {
-                {type(0.75), type(1)}, {type(0.75), type(1)},{type(-0.5), type(0.5)},{type(-0.5), type(0.5)},
-            },
-            {
-                {type(1.25), type(0.5)}, {type(1.25), type(0.5)},{type(0.25), type(0.75)},{type(0.25), type(0.75)},
-            },
-            {
-                {type(1.25), type(0.5)}, {type(1.25), type(0.5)},{type(0.25), type(0.75)},{type(0.25), type(0.75)},
-            }
-        },
-        {
-            {
-                {type(1.25), type(0.5)}, {type(1.25), type(0.5)},{type(0.25), type(0.75)},{type(0.25), type(0.75)},
-            },
-            {
-                {type(1.25), type(0.5)}, {type(1.25), type(0.5)},{type(0.25), type(0.75)},{type(0.25), type(0.75)},
-            },
-            {
-                {type(0.75), type(1)}, {type(0.75), type(1)},{type(-0.5), type(0.5)},{type(-0.5), type(0.5)},
-            },
-            {
-                {type(0.75), type(1)}, {type(0.75), type(1)},{type(-0.5), type(0.5)},{type(-0.5), type(0.5)},
-            }
-        }
-    });
+    expected_delta(0, 0, 0, 0) = type(0.75);
+    expected_delta(0, 0, 1, 0) = type(1);
+    expected_delta(0, 1, 0, 0) = type(0.75);
+    expected_delta(0, 1, 1, 0) = type(1);
+    expected_delta(1, 0, 0, 0) = type(0.75);
+    expected_delta(1, 0, 1, 0) = type(1);
+    expected_delta(1, 1, 0, 0) = type(0.75);
+    expected_delta(1, 1, 1, 0) = type(1);
+
+    expected_delta(0, 2, 0, 0) = type(-0.5);
+    expected_delta(0, 2, 1, 0) = type(0.5);
+    expected_delta(0, 3, 0, 0) = type(-0.5);
+    expected_delta(0, 3, 1, 0) = type(0.5);
+    expected_delta(1, 2, 0, 0) = type(-0.5);
+    expected_delta(1, 2, 1, 0) = type(0.5);
+    expected_delta(1, 3, 0, 0) = type(-0.5);
+    expected_delta(1, 3, 1, 0) = type(0.5);
+
+    expected_delta(2, 0, 0, 0) = type(1.25);
+    expected_delta(2, 0, 1, 0) = type(0.5);
+    expected_delta(2, 1, 0, 0) = type(1.25);
+    expected_delta(2, 1, 1, 0) = type(0.5);
+    expected_delta(3, 0, 0, 0) = type(1.25);
+    expected_delta(3, 0, 1, 0) = type(0.5);
+    expected_delta(3, 1, 0, 0) = type(1.25);
+    expected_delta(3, 1, 1, 0) = type(0.5);
+    
+    expected_delta(2, 2, 0, 0) = type(0.25);
+    expected_delta(2, 2, 1, 0) = type(0.75);
+    expected_delta(2, 3, 0, 0) = type(0.25);
+    expected_delta(2, 3, 1, 0) = type(0.75);
+    expected_delta(3, 2, 0, 0) = type(0.25);
+    expected_delta(3, 2, 1, 0) = type(0.75);
+    expected_delta(3, 3, 0, 0) = type(0.25);
+    expected_delta(3, 3, 1, 0) = type(0.75);
+
+    expected_delta.chip(1, 3).chip(0, 0) = expected_delta.chip(0, 3).chip(2, 0);
+    expected_delta.chip(1, 3).chip(1, 0) = expected_delta.chip(0, 3).chip(2, 0);
+
+    expected_delta.chip(1, 3).chip(2,0) = expected_delta.chip(0, 3).chip(0, 0);
+    expected_delta.chip(1, 3).chip(3,0) = expected_delta.chip(0, 3).chip(0, 0);
 
     assert_true(is_equal<4>(expected_delta, delta), LOG);
 }
@@ -676,37 +757,52 @@ void PoolingLayerTest::test_calculate_hidden_delta_max_pooling()
     const Index numb_of_images = 2;
     inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
 
-    const Index numb_of_pooling_rows = 2;
-    const Index numb_of_pooling_cols = 2;
+    const Index numb_of_pooling_rows = 1;
+    const Index numb_of_pooling_cols = 1;
     
     Tensor<Index, 1> pooling_dimension(2);
     pooling_dimension.setValues({numb_of_pooling_rows, numb_of_pooling_cols});
 
     PoolingLayer pooling_layer(inputs_dimension, pooling_dimension);
 
-    Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
+    PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::NoPooling;
 
-    inputs.chip(0, 1).setConstant(type(1));
-    inputs.chip(1, 1).setConstant(type(2));
-    inputs.chip(2, 1).setConstant(type(3));
-    inputs.chip(3, 1).setConstant(type(4));
-
-    PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
-
+    pooling_layer.set_row_stride(1);
+    pooling_layer.set_column_stride(1);
+    
     pooling_layer.set_pooling_method(pooling_method);
 
-    PoolingLayer next_pooling_layer(pooling_layer.get_outputs_dimensions());
-    next_pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::NoPooling);
+    Tensor<Index, 1> next_pooling_dimension(2);
+    next_pooling_dimension.setValues({2, 2});
+
+    PoolingLayer next_pooling_layer(pooling_layer.get_outputs_dimensions(), next_pooling_dimension);
+
+    next_pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
+
+    const Index next_layer_row_stride = 2;
+    const Index next_layer_column_stride = 2;
+    next_pooling_layer.set_column_stride(next_layer_row_stride);
+    next_pooling_layer.set_row_stride(next_layer_column_stride);
     
     PoolingLayerBackPropagation next_back_propagation(numb_of_images, &next_pooling_layer);
     PoolingLayerForwardPropagation next_forward_propagation(numb_of_images, &next_pooling_layer);
+    next_forward_propagation.switches.resize(2, 2, 2, 2);
+    next_forward_propagation.switches(0, 0, 0, 0) = make_tuple(1, 0);
+    next_forward_propagation.switches(0, 0, 1, 0) = make_tuple(1, 0);
+    next_forward_propagation.switches(0, 1, 0, 0) = make_tuple(1, 2);
+    next_forward_propagation.switches(0, 1, 1, 0) = make_tuple(1, 2);
+    next_forward_propagation.switches(1, 0, 0, 0) = make_tuple(3, 0);
+    next_forward_propagation.switches(1, 0, 1, 0) = make_tuple(3, 0);
+    next_forward_propagation.switches(1, 1, 0, 0) = make_tuple(3, 2);
+    next_forward_propagation.switches(1, 1, 1, 0) = make_tuple(3, 2);
+    next_forward_propagation.switches.chip(1, 3) = next_forward_propagation.switches.chip(0, 3);
 
     TensorMap<Tensor<type, 4>> next_delta(next_back_propagation.deltas_data, t1d2array<4>(next_back_propagation.deltas_dimensions));
 
     next_delta(0, 0, 0, 0) = type(3);
     next_delta(0, 0, 1, 0) = type(4);
     next_delta(0, 1, 0, 0) = type(-2);
-    next_delta(0, 1, 1, 0) = type(3);
+    next_delta(0, 1, 1, 0) = type(2);
     next_delta(1, 0, 0, 0) = type(5);
     next_delta(1, 0, 1, 0) = type(2);
     next_delta(1, 1, 0, 0) = type(1);
@@ -723,11 +819,11 @@ void PoolingLayerTest::test_calculate_hidden_delta_max_pooling()
 
     PoolingLayerBackPropagation back_propagation(
         numb_of_images, &pooling_layer);
-
+    
     pooling_layer.calculate_hidden_delta(
-        &next_forward_propagation, 
-        &next_back_propagation, 
-        &back_propagation);
+        static_cast<LayerForwardPropagation*>(&next_forward_propagation), 
+        static_cast<LayerBackPropagation*>(&next_back_propagation), 
+        static_cast<LayerBackPropagation*>(&back_propagation));
 
     TensorMap<Tensor<type, 4>> delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
 

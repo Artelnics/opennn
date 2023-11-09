@@ -30,6 +30,9 @@
 
 namespace opennn
 {
+//Forward declaration
+struct PoolingLayerForwardPropagation;
+struct PoolingLayerBackPropagation;
 
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
 /// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
@@ -121,7 +124,7 @@ public:
 
     Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
 
-    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&, Tensor<tuple<Index, Index, Index>, 4>& switches) const;
+    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&, Tensor<tuple<Index, Index>, 4>& switches) const;
     
     Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
 
@@ -139,7 +142,7 @@ public:
     // First order activations
 
     void forward_propagate(type*, const Tensor<Index, 1>&,
-                           LayerForwardPropagation*, bool&) final {}
+                           LayerForwardPropagation*, bool&) final;
 
     void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*)
     {
@@ -150,6 +153,12 @@ public:
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
                                 LayerBackPropagation*) const;
+
+    
+    void calculate_hidden_delta(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                PoolingLayerBackPropagation*) const;
+
 
 //    Tensor<type, 4> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
     Tensor<type, 4> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
@@ -181,6 +190,21 @@ protected:
 #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
 #endif
 
+private:
+
+    void calculate_hidden_delta_average_pooling(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                PoolingLayerBackPropagation*) const;
+
+    void calculate_hidden_delta_max_pooling(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                PoolingLayerBackPropagation*) const;
+
+    void calculate_hidden_delta_no_pooling(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                PoolingLayerBackPropagation*) const;
+
+
 };
 
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
@@ -190,8 +214,8 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     ~PoolingLayerForwardPropagation() override;
     void set(const Index& numb_of_batches, Layer* layer_pointer) override;
     void print() const override;
-    
-    Tensor<tuple<Index, Index, Index>, 4> switches;
+
+    Tensor<tuple<Index, Index>, 4> switches;
 };
 
 struct PoolingLayerBackPropagation : LayerBackPropagation

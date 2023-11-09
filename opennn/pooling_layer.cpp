@@ -178,9 +178,9 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
 
 /// Returns the result of applying max pooling to a batch of images and saves the indexes of the max elements in switches.
 /// @param inputs The batch of images.
-/// @param switches Saves index of the max values. Memory needs to be preallocated. The first element of the tuple is the row index, followed by column and channel index of the input.
+/// @param switches Saves index of the max values. Memory needs to be preallocated. The first element of the tuple is the row index, followed by column index of the input.
 
-Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs, Tensor<tuple<Index, Index, Index>, 4>& switches) const
+Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs, Tensor<tuple<Index, Index>, 4>& switches) const
 {
     const Index images_number = inputs.dimension(3);
 
@@ -226,8 +226,8 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
                                 const Index image_row_index = row_index * row_stride + window_pos_y;
                                 const Index image_column_index = column_index * column_stride + window_pos_x;
 
-                                switches(row_index, column_index, channel_index, image_index) = make_tuple(image_row_index, image_column_index, channel_index);
-                                
+                                switches(row_index, column_index, channel_index, image_index) = make_tuple(image_row_index, image_column_index);
+
                                 output_val = input_val;
                             }
                         }
@@ -242,10 +242,84 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
 }
 
 
-void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation*,
-                                                     LayerBackPropagation*,
-                                                     LayerBackPropagation*) const
-{/*
+void PoolingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimension,
+                           LayerForwardPropagation* forward_propagation, bool& switch_train) 
+{
+    PoolingLayerForwardPropagation* pooling_layer_forward_propagation = static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
+
+    const Index image_number = inputs_dimension(3);
+    const Index channels_number = inputs_dimension(2);
+
+    const Index inputs_columns_number = inputs_dimension(1);
+    const Index inputs_rows_number = inputs_dimension(0);
+
+    TensorMap<Tensor<type, 4>> inputs(inputs_data, 
+        inputs_rows_number, 
+        inputs_columns_number, 
+        channels_number, 
+        image_number); 
+    
+    const Index outputs_columns_number = pooling_layer_forward_propagation->outputs_dimensions(1);
+    const Index outputs_rows_number = pooling_layer_forward_propagation->outputs_dimensions(0);
+
+    TensorMap<Tensor<type, 4>> outputs(pooling_layer_forward_propagation->outputs_data, outputs_rows_number, outputs_columns_number, channels_number, image_number); 
+
+    switch (pooling_method)
+    {
+    case PoolingMethod::AveragePooling:
+    {
+        outputs = calculate_average_pooling_outputs(inputs);
+    }
+        break;
+    case PoolingMethod::NoPooling:
+    {
+        outputs = calculate_no_pooling_outputs(inputs);
+    }
+        break;
+    case PoolingMethod::MaxPooling:
+    {
+        if(switch_train)
+        {
+            pooling_layer_forward_propagation->switches.resize(outputs_rows_number, outputs_columns_number, channels_number, image_number);
+            outputs = calculate_max_pooling_outputs(inputs, pooling_layer_forward_propagation->switches);
+        }
+        else
+        {
+            outputs = calculate_max_pooling_outputs(inputs);
+        }
+    }
+        break;
+    
+    default:
+        break;
+    }
+}
+
+void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
+                                                     LayerBackPropagation*  next_layer_back_propagation,
+                                                     LayerBackPropagation* back_propagation) const
+{
+    PoolingLayerBackPropagation* pooling_layer_back_propagation = static_cast<PoolingLayerBackPropagation*>(back_propagation); 
+    switch (next_layer_forward_propagation->layer_pointer->get_type())
+    {
+    case Layer::Type::Pooling:
+    {
+        PoolingLayerForwardPropagation* next_pooling_layer_forward_propagation = 
+            static_cast<PoolingLayerForwardPropagation*>(next_layer_forward_propagation);
+        PoolingLayerBackPropagation* next_pooling_layer_back_propagation = 
+            static_cast<PoolingLayerBackPropagation*>(next_layer_back_propagation);
+        
+        calculate_hidden_delta(
+            next_pooling_layer_forward_propagation, 
+            next_pooling_layer_back_propagation, 
+            pooling_layer_back_propagation);
+    }
+        break;
+    
+    default:
+        break;
+    }
+    /*
     if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;
 
     else
@@ -282,6 +356,197 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation*,
     */
 }
 
+
+void PoolingLayer::calculate_hidden_delta(
+    PoolingLayerForwardPropagation* next_layer_forward_propagation,
+    PoolingLayerBackPropagation*  next_layer_back_propagation,
+    PoolingLayerBackPropagation* back_propagation) const
+{
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);  
+    
+    switch (next_pooling_layer->get_pooling_method())
+    {
+    case PoolingMethod::NoPooling:
+    {
+        calculate_hidden_delta_no_pooling(
+            next_layer_forward_propagation,
+            next_layer_back_propagation,
+            back_propagation);
+    }
+        break;
+    case PoolingMethod::AveragePooling:
+    {
+        calculate_hidden_delta_average_pooling(next_layer_forward_propagation, next_layer_back_propagation, back_propagation);
+    }
+        break;
+    case PoolingMethod::MaxPooling:
+    {
+        calculate_hidden_delta_max_pooling(next_layer_forward_propagation, next_layer_back_propagation, back_propagation);
+    }
+        break;
+    default:
+        break;
+    }
+}
+
+void PoolingLayer::calculate_hidden_delta_no_pooling(
+    PoolingLayerForwardPropagation* next_layer_forward_propagation,
+    PoolingLayerBackPropagation*  next_layer_back_propagation,
+    PoolingLayerBackPropagation* back_propagation) const
+{
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
+
+    const Index next_delta_rows_number = next_layer_back_propagation->deltas_dimensions(0);
+    const Index next_delta_columns_number = next_layer_back_propagation->deltas_dimensions(1);
+
+    const Index channels_number = next_layer_back_propagation->deltas_dimensions(2);
+    const Index images_number = next_layer_back_propagation->deltas_dimensions(3);
+
+    TensorMap<Tensor<type, 4>> next_delta(
+        next_layer_back_propagation->deltas_data, 
+        next_delta_rows_number,
+        next_delta_columns_number,
+        channels_number,
+        images_number);
+    
+    const Index current_delta_rows_number = back_propagation->deltas_dimensions(0);
+    const Index current_delta_columns_number = back_propagation->deltas_dimensions(1);
+
+    TensorMap<Tensor<type, 4>> current_delta(
+        back_propagation->deltas_data,
+        current_delta_rows_number,
+        current_delta_columns_number,
+        channels_number,
+        images_number);
+
+    PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
+
+    current_delta.device(*thread_pool_device) = next_delta;
+}
+
+void PoolingLayer::calculate_hidden_delta_average_pooling(
+    PoolingLayerForwardPropagation* next_layer_forward_propagation,
+    PoolingLayerBackPropagation*  next_layer_back_propagation,
+    PoolingLayerBackPropagation* back_propagation) const
+{
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
+
+    const Index next_delta_rows_number = next_layer_back_propagation->deltas_dimensions(0);
+    const Index next_delta_columns_number = next_layer_back_propagation->deltas_dimensions(1);
+
+    const Index channels_number = next_layer_back_propagation->deltas_dimensions(2);
+    const Index images_number = next_layer_back_propagation->deltas_dimensions(3);
+
+    TensorMap<Tensor<type, 4>> next_delta(
+        next_layer_back_propagation->deltas_data, 
+        next_delta_rows_number,
+        next_delta_columns_number,
+        channels_number,
+        images_number);
+    
+    const Index current_delta_rows_number = back_propagation->deltas_dimensions(0);
+    const Index current_delta_columns_number = back_propagation->deltas_dimensions(1);
+
+    TensorMap<Tensor<type, 4>> current_delta(
+        back_propagation->deltas_data,
+        current_delta_rows_number,
+        current_delta_columns_number,
+        channels_number,
+        images_number);
+
+    PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
+
+    current_delta.setZero();
+
+    const Index next_row_stride = next_pooling_layer->get_row_stride();
+    const Index next_column_stride = next_pooling_layer->get_column_stride();
+
+    const Index next_pooling_rows_number =      
+        next_pooling_layer->get_pool_rows_number();
+    const Index next_pooling_columns_number =      
+        next_pooling_layer->get_pool_columns_number();
+
+    #pragma omp parallel for
+    for(Index image_index = 0; image_index < images_number; image_index++)
+    {
+        const Tensor<type, 3>& next_image_delta = next_delta.chip(image_index, 3);
+        for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
+        {
+            for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
+            {
+                const Eigen::array<Index, 3> offsets = {row_index * next_row_stride, column_index * next_column_stride, 0};
+                const Eigen::array<Index, 3> extents = {next_pooling_rows_number, next_pooling_columns_number, channels_number};
+                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+                {
+                    const type next_image_channel_delta_value = next_image_delta(row_index, column_index, channel_index);  
+                    const type numb_of_elements = static_cast<const type>(next_pooling_rows_number * next_pooling_columns_number);
+                    
+                    auto current_delta_channels = current_delta.chip(image_index, 3).slice(offsets, extents).chip(channel_index, 2); 
+
+                    current_delta_channels = current_delta_channels + next_image_channel_delta_value / numb_of_elements;
+                }
+            }
+        }
+
+    }
+
+}
+
+
+void PoolingLayer::calculate_hidden_delta_max_pooling(
+    PoolingLayerForwardPropagation* next_layer_forward_propagation,
+    PoolingLayerBackPropagation*  next_layer_back_propagation,
+    PoolingLayerBackPropagation* back_propagation) const
+{
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
+
+    const Index next_delta_rows_number = next_layer_back_propagation->deltas_dimensions(0);
+    const Index next_delta_columns_number = next_layer_back_propagation->deltas_dimensions(1);
+
+    const Index channels_number = next_layer_back_propagation->deltas_dimensions(2);
+    const Index images_number = next_layer_back_propagation->deltas_dimensions(3);
+
+    TensorMap<Tensor<type, 4>> next_delta(
+        next_layer_back_propagation->deltas_data, 
+        next_delta_rows_number,
+        next_delta_columns_number,
+        channels_number,
+        images_number);
+    
+    const Index current_delta_rows_number = back_propagation->deltas_dimensions(0);
+    const Index current_delta_columns_number = back_propagation->deltas_dimensions(1);
+
+    TensorMap<Tensor<type, 4>> current_delta(
+        back_propagation->deltas_data,
+        current_delta_rows_number,
+        current_delta_columns_number,
+        channels_number,
+        images_number);
+
+    PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
+
+    current_delta.setZero();
+
+    #pragma omp parallel for
+    for(Index image_index = 0; image_index < images_number; image_index++)
+    {
+        const Tensor<type, 3>& next_image_delta = next_delta.chip(image_index, 3);
+        for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
+        {
+            for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
+            {
+                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+                {
+                    auto [current_delta_row_index, current_delta_column_index] = 
+                        next_layer_forward_propagation->switches(row_index, column_index, channel_index, image_index);
+                    
+                    current_delta(current_delta_row_index, current_delta_column_index, channel_index, image_index) = 
+                        next_image_delta(row_index, column_index, channel_index);
+                }
+            }
+        }
+    } 
+}
 /*
 Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
         const Tensor<type, 4>&,
