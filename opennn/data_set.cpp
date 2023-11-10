@@ -12677,7 +12677,6 @@ void DataSet::read_csv()
 }
 
 
-<<<<<<< HEAD
 void DataSet::read_csv_language_model()
 {
     read_csv_1();
@@ -12688,11 +12687,7 @@ void DataSet::read_csv_language_model()
 }
 
 
-/*
-Tensor<unsigned char, 1> DataSet::remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
-=======
 Tensor<unsigned char, 1> DataSet::read_bmp_image(const string& filename)
->>>>>>> dev
 {
     FILE* file = fopen(filename.data(), "rb");
 

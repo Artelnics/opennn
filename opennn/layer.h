@@ -58,10 +58,6 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
-<<<<<<< HEAD
-    enum class Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
-              LongShortTermMemory,Recurrent, Unscaling, Bounding, Flatten, Resnet50, BatchNormalization, MultiheadAttention, Embedding};
-=======
     enum class Type{Scaling,
                     Convolutional,
                     Perceptron,
@@ -73,8 +69,9 @@ public:
                     Bounding,
                     Flatten,
                     RegionProposal,
-                    NonMaxSuppression};
->>>>>>> dev
+                    NonMaxSuppression,
+                    MultiheadAttention,
+                    Embedding};
 
     // Constructor
 
