@@ -13523,19 +13523,23 @@ void DataSet::read_txt_language_model()
 
     completion_vocabulary = text_analytics.calculate_word_bag(completion_tokens).words;
 
-    Index max_number_tokens = context_tokens(0).size();
-
-    for(Index i = 0; i < entry_number; i++){
-        if(context_tokens(i).size() > max_number_tokens) max_number_tokens = context_tokens(i).size();
-    }
-
-    for(Index i = 0; i < entry_number; i++){
-        if(completion_tokens(i).size() > max_number_tokens) max_number_tokens = completion_tokens(i).size();
-    }
-
     Index LIMIT = 50;
 
-    max_sentence_length = max_number_tokens > LIMIT ? LIMIT : max_number_tokens - 1;
+    Index max_context_tokens = context_tokens(0).size();
+
+    for(Index i = 0; i < entry_number; i++){
+        if(context_tokens(i).size() > max_context_tokens) max_context_tokens = context_tokens(i).size();
+    }
+
+    max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
+
+    Index max_completion_tokens = completion_tokens(0).size();
+
+    for(Index i = 0; i < entry_number; i++){
+        if(completion_tokens(i).size() > max_completion_tokens) max_completion_tokens = completion_tokens(i).size();
+    }
+
+    max_completion_length = max_completion_tokens > LIMIT ? LIMIT : max_completion_tokens;
 
     // Output
 
@@ -13548,15 +13552,15 @@ void DataSet::read_txt_language_model()
     std::ofstream file;
     file.open(transformed_data_path);
 
-    for(Index i  = 0; i < max_sentence_length + 2; i++)
+    for(Index i  = 0; i < max_context_length + 2; i++) /// there is start (=1) and end (=2) indicators
         file << "context_token_position_" << i << ";";
 
-    for(Index i  = 0; i < max_sentence_length + 2; i++)
+    for(Index i  = 0; i < max_completion_length + 1; i++)
         file << "input_token_position_" << i << ";";
 
-    for(Index i  = 0; i < max_sentence_length + 1; i++)
+    for(Index i  = 0; i < max_completion_length; i++)
         file << "target_token_position_" << i << ";";
-    file << "target_token_position_" << max_sentence_length + 1 << "\n";
+    file << "target_token_position_" << max_completion_length << "\n";
 
     // Data file preview
 
@@ -13573,7 +13577,8 @@ void DataSet::read_txt_language_model()
     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
 
-    Tensor<type, 1> row(max_sentence_length + 3); /// there is start (=1) and end (=2) indicators
+    Tensor<type, 1> context_row(max_context_length + 2);
+    Tensor<type, 1> completion_row(max_completion_length + 2);
 
     Index context_vocabulary_size = context_vocabulary.size();
     Index completion_vocabulary_size = completion_vocabulary.size();
@@ -13585,14 +13590,14 @@ void DataSet::read_txt_language_model()
 
     for(Index i = 0; i < entry_number; i++)
     {
-        row.setZero();
-        row(0) = 1;
+        context_row.setZero();
+        context_row(0) = 1; /// start indicator
 
         line_ended = false;
 
         line_tokens = context_tokens(i);
 
-        for(Index j = 1; j < max_sentence_length + 2; j++)
+        for(Index j = 1; j < max_context_length + 2; j++)
         {
             if( j <= line_tokens.size() && contains(context_vocabulary, line_tokens(j - 1)) )
             {
@@ -13600,33 +13605,33 @@ void DataSet::read_txt_language_model()
 
                 const Index word_index = it - context_vocabulary.data();
 
-                row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
+                context_row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
             }
             else
             {
-                if( j == line_tokens.size() + 1 || (j == max_sentence_length + 1 && !line_ended) )
+                if( j == line_tokens.size() + 1 || (j == max_context_length + 1 && !line_ended) )
                 {
-                    row(j) = 2;
+                    context_row(j) = 2; /// end indicator
                     line_ended = true;
                 }
                 else
                 {
-                    row(j) = 0;
+                    context_row(j) = 0;
                 }
             }
         }
 
-        for(Index j = 0; j < max_sentence_length + 2; j++)
-            file << row(j) << ";";
+        for(Index j = 0; j < max_context_length + 2; j++)
+            file << context_row(j) << ";";
 
-        row.setZero();
-        row(0) = 1;
+        completion_row.setZero();
+        completion_row(0) = 1;
 
         line_ended = false;
 
         line_tokens = completion_tokens(i);
 
-        for(Index j = 1; j < max_sentence_length + 3; j++)
+        for(Index j = 1; j < max_completion_length + 2; j++)
         {
             if( j <= line_tokens.size() && contains(completion_vocabulary, line_tokens(j - 1)) )
             {
@@ -13634,28 +13639,28 @@ void DataSet::read_txt_language_model()
 
                 const Index word_index = it - completion_vocabulary.data();
 
-                row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
+                completion_row(j) = type(word_index + 3); /// +3 because 0 (padding), 1 (start) and 2 (end) are reserved
             }
             else
             {
-                if( j == line_tokens.size() + 1 || (j == max_sentence_length + 2 && !line_ended) )
+                if( j == line_tokens.size() + 1 || (j == max_completion_length + 1 && !line_ended) )
                 {
-                    row(j) = 2;
+                    completion_row(j) = 2;
                     line_ended = true;
                 }
                 else
                 {
-                    row(j) = 0;
+                    completion_row(j) = 0;
                 }
             }
         }
 
-        for(Index j = 0; j < max_sentence_length + 2; j++)
-            file << row(j) << ";";
+        for(Index j = 0; j < max_completion_length + 1; j++)
+            file << completion_row(j) << ";";
 
-        for(Index j = 1; j < max_sentence_length + 2; j++) // Target is input shifted 1 position to the left
-            file << row(j) << ";";
-        file << row(max_sentence_length + 2) << "\n";
+        for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
+            file << completion_row(j) << ";";
+        file << completion_row(max_completion_length + 1) << "\n";
     }
 
     file.close();
@@ -13669,7 +13674,7 @@ void DataSet::read_txt_language_model()
     for(Index i = 0; i < get_columns_number(); i++)
     {
         set_column_type(i, ColumnType::Numeric);
-        if(i < 2*(max_sentence_length + 2))
+        if(i < max_context_length + max_completion_length + 4)
             set_column_use(i, VariableUse::Input);
         else
             set_column_use(i, VariableUse::Target);

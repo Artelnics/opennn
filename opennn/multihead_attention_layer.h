@@ -35,10 +35,6 @@ struct MultiheadAttentionLayerForwardPropagation;
 struct MultiheadAttentionLayerBackPropagation;
 struct MultiheadAttentionLayerBackPropagationLM;
 
-struct PerceptronLayerForwardPropagation;
-struct PerceptronLayerBackPropagation;
-struct PerceptronLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
 #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
@@ -67,27 +63,28 @@ public:
 
     explicit MultiheadAttentionLayer();
 
-    explicit MultiheadAttentionLayer(const Index&, /// Assuming Input and Context of same size. Improve?
+    explicit MultiheadAttentionLayer(const Index&, /// Input size
+                                     const Index&, /// Context size
                                      const Index&, /// Embedding depth
-                                     const Index&, /// Number of attention heads
-                                     const ActivationFunction& = MultiheadAttentionLayer::ActivationFunction::HyperbolicTangent);
+                                     const Index& /// Number of attention heads
+                                     );
 
     // Get methods
 
     bool is_empty() const;
 
-    Index get_input_size() const;  
+    Index get_input_size() const;
+    Index get_context_size() const;
     Index get_depth() const;
     Index get_number_of_heads() const;
-    PerceptronLayer get_input_perceptron() const;
-    PerceptronLayer get_context_perceptron() const;
-    PerceptronLayer get_output_perceptron() const;
+
+    Tensor<type, 3> get_query_kernel() const;
+    Tensor<type, 3> get_key_kernel() const;
+    Tensor<type, 3> get_value_kernel() const;
+
+    Tensor<type, 3> get_projection_kernel() const;
 
     Index get_parameters_number() const final;
-
-    const MultiheadAttentionLayer::ActivationFunction& get_activation_function() const;
-
-    string write_activation_function() const;
 
     // Display messages
 
@@ -96,8 +93,7 @@ public:
     // Set methods
 
     void set();
-    void set(const Index&, const Index&, const Index&,
-             const MultiheadAttentionLayer::ActivationFunction& = MultiheadAttentionLayer::ActivationFunction::HyperbolicTangent);
+    void set(const Index&, const Index&, const Index&, const Index&);
 
     void set_default();
     void set_name(const string&);
@@ -105,17 +101,24 @@ public:
     // Architecture
 
     void set_input_size(const Index&);
+    void set_context_size(const Index&);
     void set_depth(const Index&);
     void set_number_of_heads(const Index&);
 
-    void set_perceptrons();
-
-    void set_activation_function(const ActivationFunction&);
-    void set_activation_function(const string&);
+    void set_kernels();
+    void set_parameters_random() final;
 
     // Display messages
 
     void set_display(const bool&);
+
+    // Linear transformation & projection
+
+    void calculate_query_transformation(const Tensor<type, 3>&, type*);
+    void calculate_key_transformation(const Tensor<type, 3>&, type*);
+    void calculate_value_transformation(const Tensor<type, 3>&, type*);
+
+    void calculate_output_projection(const Tensor<type, 4>&, type*);
 
     // Attention computation
 
@@ -153,6 +156,10 @@ protected:
 
     Index input_size;
 
+    /// Context size
+
+    Index context_size;
+
     /// Embedding depth
 
     Index depth;
@@ -161,15 +168,15 @@ protected:
 
     Index number_of_heads;
 
-    /// Perceptron layers
+    /// Linear transformation kernels
 
-    PerceptronLayer input_perceptron_layer;
-    PerceptronLayer context_perceptron_layer;
-    PerceptronLayer output_perceptron_layer;
+    Tensor<type, 3> query_kernel;
+    Tensor<type, 3> key_kernel;
+    Tensor<type, 3> value_kernel;
 
-    /// Activation function variable.
+    /// Linear projection kernel
 
-    ActivationFunction activation_function;
+    Tensor<type, 3> projection_kernel;
 
     /// Display messages to screen.
 
@@ -200,13 +207,15 @@ protected:
             set(new_batch_samples_number, new_layer_pointer);
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
         {
             MultiheadAttentionLayer* layer_pointer = static_cast<MultiheadAttentionLayer*>(new_layer_pointer);
 
             batch_samples_number = new_batch_samples_number;
 
             const Index input_size = layer_pointer->get_input_size();
+
+            const Index context_size = layer_pointer->get_context_size();
 
             const Index depth = layer_pointer->get_depth();
 
@@ -221,16 +230,12 @@ protected:
 
             // Rest of quantities
 
-            attention_scores.resize(new_batch_samples_number, input_size, input_size, number_of_heads);
-            attention_output.resize(new_batch_samples_number, input_size, depth, number_of_heads);
+            transformed_query.resize(new_batch_samples_number, input_size, depth, number_of_heads);
+            transformed_key.resize(new_batch_samples_number, context_size, depth, number_of_heads);
+            transformed_value.resize(new_batch_samples_number, context_size, depth, number_of_heads);
 
-            PerceptronLayer input_perceptron = layer_pointer->get_input_perceptron();
-            PerceptronLayer context_perceptron = layer_pointer->get_context_perceptron();
-            PerceptronLayer output_perceptron = layer_pointer->get_output_perceptron();
-
-            input_perceptron_forward_propagation.set(new_batch_samples_number, &input_perceptron);
-            context_perceptron_forward_propagation.set(new_batch_samples_number, &context_perceptron);
-            output_perceptron_forward_propagation.set(new_batch_samples_number, &output_perceptron);
+            attention_scores.resize(new_batch_samples_number, input_size, context_size, number_of_heads);
+            attention_outputs.resize(new_batch_samples_number, input_size, depth, number_of_heads);
         }
 
         void print() const
@@ -249,22 +254,37 @@ protected:
 //            cout << attention_scores << endl;
         }
 
+        type* get_transformed_query_data()
+        {
+            return transformed_query.data();
+        }
+
+        type* get_transformed_key_data()
+        {
+            return transformed_key.data();
+        }
+
+        type* get_transformed_value_data()
+        {
+            return transformed_value.data();
+        }
+
         type* get_attention_scores_data()
         {
             return attention_scores.data();
         }
 
-        type* get_attention_output_data()
+        type* get_attention_outputs_data()
         {
-            return attention_output.data();
+            return attention_outputs.data();
         }
 
-        Tensor<type, 4> attention_scores;
-        Tensor<type, 4> attention_output;
+        Tensor<type, 4> transformed_query;
+        Tensor<type, 4> transformed_key;
+        Tensor<type, 4> transformed_value;
 
-        PerceptronLayerForwardPropagation input_perceptron_forward_propagation;
-        PerceptronLayerForwardPropagation context_perceptron_forward_propagation;
-        PerceptronLayerForwardPropagation output_perceptron_forward_propagation;
+        Tensor<type, 4> attention_scores;
+        Tensor<type, 4> attention_outputs;
     };
 
 

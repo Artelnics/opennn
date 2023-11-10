@@ -30,11 +30,11 @@ MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
 /// This constructor also initializes the rest of the class members to their default values.
 
 MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
-                                                 const Index& embedding_depth,
-                                                 const Index& number_of_heads,
-                                                 const MultiheadAttentionLayer::ActivationFunction& new_activation_function) : Layer()
+                                                 const Index& new_context_size,
+                                                 const Index& new_depth,
+                                                 const Index& new_number_of_heads) : Layer()
 {
-    set(new_input_size, embedding_depth, number_of_heads, new_activation_function);
+    set(new_input_size, new_context_size, new_depth, new_number_of_heads);
 
     layer_type = Type::MultiheadAttention;
 
@@ -47,6 +47,14 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
 Index MultiheadAttentionLayer::get_input_size() const
 {
     return input_size;
+}
+
+
+/// Returns the size of the context to the layer.
+
+Index MultiheadAttentionLayer::get_context_size() const
+{
+    return context_size;
 }
 
 
@@ -66,21 +74,29 @@ Index MultiheadAttentionLayer::get_number_of_heads() const
 }
 
 
-/// Each returns one of layer's Perceptron sub-layers.
+/// Returns linear transformation kernels
 
-PerceptronLayer MultiheadAttentionLayer::get_input_perceptron() const
+Tensor<type, 3> MultiheadAttentionLayer::get_query_kernel() const
 {
-    return input_perceptron_layer;
+    return query_kernel;
 }
 
-PerceptronLayer MultiheadAttentionLayer::get_context_perceptron() const
+Tensor<type, 3> MultiheadAttentionLayer::get_key_kernel() const
 {
-    return context_perceptron_layer;
+    return key_kernel;
 }
 
-PerceptronLayer MultiheadAttentionLayer::get_output_perceptron() const
+Tensor<type, 3> MultiheadAttentionLayer::get_value_kernel() const
 {
-    return output_perceptron_layer;
+    return value_kernel;
+}
+
+
+/// Returns the linear projection kernel
+
+Tensor<type, 3> MultiheadAttentionLayer::get_projection_kernel() const
+{
+    return projection_kernel;
 }
 
 
@@ -88,64 +104,7 @@ PerceptronLayer MultiheadAttentionLayer::get_output_perceptron() const
 
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
-    Index input_perceptron_parameters = input_perceptron_layer.get_parameters_number();
-    Index context_perceptron_parameters = context_perceptron_layer.get_parameters_number();
-    Index output_perceptron_parameters = output_perceptron_layer.get_parameters_number();
-    return input_perceptron_parameters + context_perceptron_parameters + output_perceptron_parameters;
-}
-
-
-/// Returns the activation function of the layer.
-/// The activation function of a layer is the activation function of all perceptrons in it.
-
-const MultiheadAttentionLayer::ActivationFunction& MultiheadAttentionLayer::get_activation_function() const
-{
-    return activation_function;
-}
-
-
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
-
-string MultiheadAttentionLayer::write_activation_function() const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Logistic:
-        return "Logistic";
-
-    case ActivationFunction::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case ActivationFunction::Threshold:
-        return "Threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";
-
-    case ActivationFunction::Linear:
-        return "Linear";
-
-    case ActivationFunction::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case ActivationFunction::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case ActivationFunction::SoftPlus:
-        return "SoftPlus";
-
-    case ActivationFunction::SoftSign:
-        return "SoftSign";
-
-    case ActivationFunction::HardSigmoid:
-        return "HardSigmoid";
-
-    case ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
-    }
-
-    return string();
+    return query_kernel.size() + key_kernel.size() + value_kernel.size() + projection_kernel.size();
 }
 
 
@@ -169,9 +128,11 @@ void MultiheadAttentionLayer::set()
 
     number_of_heads = 0;
 
-    input_perceptron_layer.set();
-    context_perceptron_layer.set();
-    output_perceptron_layer.set();
+    query_kernel.resize(0, 0, 0);
+    key_kernel.resize(0, 0, 0);
+    value_kernel.resize(0, 0, 0);
+
+    projection_kernel.resize(0, 0, 0);
 
     set_default();
 }
@@ -180,18 +141,20 @@ void MultiheadAttentionLayer::set()
 /// Sets new input size, embedding depth, number of attention heads and activation function of the layer.
 /// It also sets the rest of the members to their default values.
 
-void MultiheadAttentionLayer::set(const Index& new_input_size, const Index& new_depth, const Index& new_number_of_heads,
-                          const MultiheadAttentionLayer::ActivationFunction& new_activation_function)
+void MultiheadAttentionLayer::set(const Index& new_input_size,
+                                  const Index& new_context_size,
+                                  const Index& new_depth,
+                                  const Index& new_number_of_heads)
 {
     input_size = new_input_size;
+
+    context_size = new_context_size;
 
     depth = new_depth;
 
     number_of_heads = new_number_of_heads;
 
-    set_perceptrons();
-
-    activation_function = new_activation_function;
+    set_kernels();
 
     set_default();
 }
@@ -220,8 +183,14 @@ void MultiheadAttentionLayer::set_name(const string& new_layer_name)
 void MultiheadAttentionLayer::set_input_size(const Index& new_input_size)
 {
     input_size = new_input_size;
+}
 
-    set_perceptrons();
+
+/// Sets a new input size in the layer.
+
+void MultiheadAttentionLayer::set_context_size(const Index& new_context_size)
+{
+    context_size = new_context_size;
 }
 
 
@@ -231,7 +200,7 @@ void MultiheadAttentionLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 
-    set_perceptrons();
+    set_kernels();
 }
 
 
@@ -241,86 +210,55 @@ void MultiheadAttentionLayer::set_number_of_heads(const Index& new_number_of_hea
 {
     number_of_heads = new_number_of_heads;
 
-    set_perceptrons();
+    set_kernels();
 }
 
 
-/// Sets the perceptron sub-layers according to the layer's parameters.
+/// Sets the layer's kernels according to the parameters.
 
-void MultiheadAttentionLayer::set_perceptrons()
+void MultiheadAttentionLayer::set_kernels()
 {
-    input_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    context_perceptron_layer.set(input_size*depth, input_size*depth*number_of_heads);
-    output_perceptron_layer.set(input_size*depth*number_of_heads, input_size*depth);
-}
+    query_kernel.resize(depth, depth, number_of_heads);
+    key_kernel.resize(depth, depth, number_of_heads);
+    value_kernel.resize(depth, depth, number_of_heads);
 
-/// This class sets a new activation(or transfer) function in the layer.
+    projection_kernel.resize(depth, depth, number_of_heads);
 
-void MultiheadAttentionLayer::set_activation_function(const MultiheadAttentionLayer::ActivationFunction& new_activation_function)
-{
-    activation_function = new_activation_function;
+    set_parameters_random();
 }
 
 
-/// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function Activation function for that layer.
-
-void MultiheadAttentionLayer::set_activation_function(const string& new_activation_function_name)
+void MultiheadAttentionLayer::set_parameters_random()
 {
-    if(new_activation_function_name == "Logistic")
-    {
-        activation_function = ActivationFunction::Logistic;
-    }
-    else if(new_activation_function_name == "HyperbolicTangent")
-    {
-        activation_function = ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = ActivationFunction::SymmetricThreshold;
-    }
-    else if(new_activation_function_name == "Linear")
-    {
-        activation_function = ActivationFunction::Linear;
-    }
-    else if(new_activation_function_name == "RectifiedLinear")
-    {
-        activation_function = ActivationFunction::RectifiedLinear;
-    }
-    else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
-        activation_function = ActivationFunction::ScaledExponentialLinear;
-    }
-    else if(new_activation_function_name == "SoftPlus")
-    {
-        activation_function = ActivationFunction::SoftPlus;
-    }
-    else if(new_activation_function_name == "SoftSign")
-    {
-        activation_function = ActivationFunction::SoftSign;
-    }
-    else if(new_activation_function_name == "HardSigmoid")
-    {
-        activation_function = ActivationFunction::HardSigmoid;
-    }
-    else if(new_activation_function_name == "ExponentialLinear")
-    {
-        activation_function = ActivationFunction::ExponentialLinear;
-    }
-    else
-    {
-        ostringstream buffer;
+    const type minimum = type(-0.2);
+    const type maximum = type(0.2);
 
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_activation_function_name << ".\n";
+    for(Index i = 0; i < query_kernel.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        throw invalid_argument(buffer.str());
+        query_kernel(i) = minimum + (maximum - minimum)*random;
+    }
+
+    for(Index i = 0; i < key_kernel.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        key_kernel(i) = minimum + (maximum - minimum)*random;
+    }
+
+    for(Index i = 0; i < value_kernel.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        value_kernel(i) = minimum + (maximum - minimum)*random;
+    }
+
+    for(Index i = 0; i < projection_kernel.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        projection_kernel(i) = minimum + (maximum - minimum)*random;
     }
 }
 
@@ -336,155 +274,156 @@ void MultiheadAttentionLayer::set_display(const bool& new_display)
 }
 
 
-/// Computes the attention scores by comparing (via dot product) input and context.
-/// Attention scores must be computed separately for each batch element and each attention head.
-
-void MultiheadAttentionLayer::compute_attention_scores(type* input_data,
-                                                       const Tensor<Index, 1>& input_dimensions,
-                                                       type* context_data,
-                                                       const Tensor<Index, 1>& context_dimensions,
-                                                       type* attention_scores_data)
+/// @todo fix, update and explain
+void MultiheadAttentionLayer::calculate_query_transformation(const Tensor<type, 3>& query, type* query_transformation_data)
 {
-    if(input_dimensions(0) != context_dimensions(0))
+    const Index batch_size = get_dimensions(query)(0);
+
+    TensorMap<Tensor<type, 4>> transformed_query(query_transformation_data, batch_size, input_size, depth, number_of_heads);
+
+    Tensor<type, 2> batch_element(input_size, depth);
+
+    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void compute_attention_scores(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
-               << "Input batch size (" << input_dimensions(0) << ") and context batch size (" << context_dimensions(0) << ") not equal.\n";
-
-        throw invalid_argument(buffer.str());
+        batch_element = query.chip(batch_index, 0);
+        transformed_query.chip(batch_index, 0) = batch_element.contract(query_kernel, A_B);
     }
-
-    const Index batch_size = input_dimensions(0);
-
-    if(input_size*depth*number_of_heads != input_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void compute_attention_scores(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
-               << "Invalid input dimensions: " << input_dimensions << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(input_size*depth*number_of_heads != context_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void compute_attention_scores(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
-               << "Invalid context dimensions: " << context_dimensions << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    TensorMap<Tensor<type, 4>>  input(input_data, batch_size, input_size, depth, number_of_heads);
-    const TensorMap<Tensor<type, 4>>  context(context_data, batch_size, input_size, depth, number_of_heads);
-
-    const Tensor<type, 4> scaled_input = input / input.setConstant(sqrt(depth));
-
-    TensorMap<Tensor<type, 4>> attention_scores(attention_scores_data, batch_size, input_size, input_size, number_of_heads);
-
-    Tensor<type, 3> input_i(input_size, depth, number_of_heads);
-    Tensor<type, 3> context_i(input_size, depth, number_of_heads);
-
-    Tensor<type, 2> input_ij(input_size, depth);
-    Tensor<type, 2> context_ij(input_size, depth);
-
-//    Tensor<type, 4> raw_attention_scores(batch_size, input_size, input_size, number_of_heads);
-//    Tensor<Index, 1> attention_scores_dimensions = {input_size, input_size};
-
-#pragma omp parallel for collapse(2)
-        for(Index i = 0; i < batch_size; i++)
-        {
-            input_i = scaled_input.chip(i, 0);
-            context_i = context.chip(i, 0);
-
-                for(Index j = 0; j < number_of_heads ; j++)
-                {
-                    input_ij = input_i.chip(j, 2);
-                    context_ij = context_i.chip(j, 2);
-
-                    attention_scores.chip(i, 0).chip(j, 2) = input_ij.contract(context_ij, A_BT);
-//                    raw_attention_scores.chip(i, 0).chip(j, 2) = input_ij.contract(context_ij, A_BT);
-//                    softmax(raw_attention_scores.data(), attention_scores_dimensions,
-//                            attention_scores.chip(i, 0).chip(j, 2).data(), attention_scores_dimensions);
-
-                }
-        };
-    /// @todo softmax attention scores (rows of each A_ij)
-    /// softmax();
-    /// maybe add dropout?
 }
 
 
-void MultiheadAttentionLayer::compute_attention_output(type* value_data,
-                                                       const Tensor<Index, 1>& value_dimensions,
+void MultiheadAttentionLayer::calculate_key_transformation(const Tensor<type, 3>& key, type* key_transformation_data)
+{
+    const Index batch_size = get_dimensions(key)(0);
+
+    TensorMap<Tensor<type, 4>> transformed_key(key_transformation_data, batch_size, context_size, depth, number_of_heads);
+
+    Tensor<type, 2> batch_element(context_size, depth);
+
+    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
+    {
+        batch_element = key.chip(batch_index, 0);
+        transformed_key.chip(batch_index, 0) = batch_element.contract(key_kernel, A_B);
+    }
+}
+
+
+void MultiheadAttentionLayer::calculate_value_transformation(const Tensor<type, 3>& value, type* value_transformation_data)
+{
+    const Index batch_size = get_dimensions(value)(0);
+
+    TensorMap<Tensor<type, 4>> transformed_value(value_transformation_data, batch_size, context_size, depth, number_of_heads);
+
+    Tensor<type, 2> batch_element(context_size, depth);
+
+    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
+    {
+        batch_element = value.chip(batch_index, 0);
+        transformed_value.chip(batch_index, 0) = batch_element.contract(value_kernel, A_B);
+    }
+}
+
+
+void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>& attention_outputs, type* outputs_data)
+{
+    const Index batch_size = get_dimensions(attention_outputs)(0);
+
+    TensorMap<Tensor<type, 3>> outputs(outputs_data, batch_size, input_size, depth);
+
+    Tensor<type, 3> batch_element(input_size, depth, number_of_heads);
+
+    const Eigen::array<IndexPair<Index>, 2> contraction_indeces = {IndexPair<Index>(1, 0), IndexPair<Index>(2, 2)};
+
+    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
+    {
+        batch_element = attention_outputs.chip(batch_index, 0);
+        outputs.chip(batch_index, 0) = batch_element.contract(projection_kernel, contraction_indeces);
+    }
+}
+
+
+/// Computes the attention scores by comparing (via dot product) query and key.
+/// Attention scores must be computed separately for each batch element and each attention head (batch matrix multiplication).
+
+void MultiheadAttentionLayer::compute_attention_scores(type* transformed_query_data,
+                                                       const Tensor<Index, 1>& transformed_query_dimensions,
+                                                       type* transformed_key_data,
+                                                       const Tensor<Index, 1>& transformed_key_dimensions,
+                                                       type* attention_scores_data)
+{
+    if(transformed_query_dimensions(0) != transformed_key_dimensions(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
+               << "void compute_attention_scores(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
+               << "Input batch size (" << transformed_query_dimensions(0) << ") and context batch size (" << transformed_key_dimensions(0) << ") not equal.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const Index batch_size = transformed_query_dimensions(0);
+
+    TensorMap<Tensor<type, 4>>  transformed_query(transformed_query_data, batch_size, input_size, depth, number_of_heads);
+    const TensorMap<Tensor<type, 4>>  transformed_key(transformed_key_data, batch_size, context_size, depth, number_of_heads);
+
+    const Tensor<type, 4> scaled_query = transformed_query / transformed_query.constant(sqrt(depth));
+
+    Tensor<type, 4> raw_attention_scores(batch_size, input_size, context_size, number_of_heads);
+
+    TensorMap<Tensor<type, 4>> attention_scores(attention_scores_data, batch_size, input_size, context_size, number_of_heads);
+
+    Tensor<Index, 1> row_size(1);
+    row_size.setValues({context_size});
+
+#pragma omp parallel for collapse(2)
+        for(Index batch_index = 0; batch_index < batch_size; batch_index++)
+        {
+            for(Index head_index = 0; head_index < number_of_heads ; head_index++)
+            {
+            raw_attention_scores.chip(batch_index, 0).chip(head_index, 2)/*.device(thread_pool_device)*/ =
+                    scaled_query.chip(batch_index, 0).chip(head_index, 2).contract(
+                    transformed_key.chip(batch_index, 0).chip(head_index, 2), A_BT);
+
+                Tensor<type, 1> raw_attention_scores_row(context_size);
+                Tensor<type, 1> attention_scores_row(context_size);
+
+                for(Index row_index = 0; row_index < input_size; row_index++)
+                {
+                    raw_attention_scores_row = raw_attention_scores.chip(batch_index, 0).chip(head_index, 2).chip(row_index, 0);
+                    softmax(raw_attention_scores_row.data(),
+                            row_size,
+                            attention_scores_row.data(),
+                            row_size);
+                    attention_scores.chip(batch_index, 0).chip(head_index, 2).chip(row_index, 0) = attention_scores_row;
+                }
+            }
+        };
+    /// @todo add dropout
+}
+
+
+void MultiheadAttentionLayer::compute_attention_output(type* transformed_value_data,
+                                                       const Tensor<Index, 1>& transformed_value_dimensions,
                                                        type* attention_scores_data,
                                                        const Tensor<Index, 1>& attention_scores_dimensions,
                                                        type* attention_output_data)
 {    
+    const Index batch_size = transformed_value_dimensions(0);
 
-    if(value_dimensions(0) != attention_scores_dimensions(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void compute_attention_output(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
-               << "Value batch size (" << value_dimensions(0) << ") and attention scores batch size (" << attention_scores_dimensions(0) << ") not equal.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index batch_size = value_dimensions(0);
-
-    if(input_size*depth*number_of_heads != value_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void compute_attention_output(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
-               << "Invalid value dimensions: " << value_dimensions << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(input_size != attention_scores_dimensions(1) || input_size != attention_scores_dimensions(2) || number_of_heads != attention_scores_dimensions(3))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void compute_attention_output(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*) method.\n"
-               << "Invalid attention scores dimensions: " << attention_scores_dimensions << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    TensorMap<Tensor<type, 4>> value(value_data, batch_size, input_size, depth, number_of_heads);
-    TensorMap<Tensor<type, 4>> attention_scores(attention_scores_data, batch_size, input_size, input_size, number_of_heads);
+    TensorMap<Tensor<type, 4>> transformed_value(transformed_value_data, batch_size, context_size, depth, number_of_heads);
+    TensorMap<Tensor<type, 4>> attention_scores(attention_scores_data, batch_size, input_size, context_size, number_of_heads);
 
     TensorMap<Tensor<type, 4>> attention_output(attention_output_data, batch_size, input_size, depth, number_of_heads);
 
-    Tensor<type, 3> value_i(input_size, depth, number_of_heads);
-    Tensor<type, 3> attention_scores_i(input_size, input_size, number_of_heads);
-
-    Tensor<type, 2> value_ij(input_size, depth);
-    Tensor<type, 2> attention_scores_ij(input_size, input_size);
-
 #pragma omp parallel for collapse(2)
-        for(Index i = 0; i < batch_size; i++)
+        for(Index batch_index = 0; batch_index < batch_size; batch_index++)
         {
-            value_i = value.chip(i, 0);
-            attention_scores_i = attention_scores.chip(i, 0);
-
-                for(Index j = 0; j < number_of_heads ; j++)
-                {
-                    value_ij = value_i.chip(j, 2);
-                    attention_scores_ij = attention_scores_i.chip(j, 2);
-                    attention_output.chip(i, 0).chip(j, 2) = value_ij.contract(attention_scores_ij, AT_B);
-                }
+            for(Index head_index = 0; head_index < number_of_heads ; head_index++)
+            {
+                attention_output.chip(batch_index, 0).chip(head_index, 2) =
+                    attention_scores.chip(batch_index, 0).chip(head_index, 2).contract(
+                    transformed_value.chip(batch_index, 0).chip(head_index, 2), A_B);
+            }
         };
 }
 
@@ -494,75 +433,59 @@ void MultiheadAttentionLayer::forward_propagate(type* inputs_data,
                                         LayerForwardPropagation* forward_propagation,
                                         bool& switch_train)
 {
+    const Index batch_size = inputs_dimensions(1);
 
-    if(inputs_dimensions(1) != input_size*depth*2)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void MultiheadAttentionLayer::forward_propagate(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << input_size*depth*2 << ", (" << inputs_dimensions(1) << ").\n";
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index batch_size = inputs_dimensions(0);
+    Tensor<Index, 1> query_dimensions(3);
+    Tensor<Index, 1> key_dimensions(3);
+    query_dimensions.setValues({batch_size, input_size, depth});
+    key_dimensions.setValues({batch_size, context_size, depth});
+    /// check if inputs_dimensions(0)({1, 2, 3}) = query_dimensions and inputs_dimensions(1 & 2)({1, 2, 3}) = key_dimensions
 
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
 
-    Tensor<Index, 1> flattened_input_dimension(2);
+    /// @todo map inputs
+    const TensorMap<Tensor<type, 3>> query(inputs_data, batch_size, input_size, depth);
+    const TensorMap<Tensor<type, 3>> key(inputs_data + (batch_size*input_size*depth), batch_size, context_size, depth);
+    const TensorMap<Tensor<type, 3>> value(inputs_data + (input_size+context_size)*(batch_size*depth), batch_size, context_size, depth);
 
-    flattened_input_dimension.setValues({batch_size, input_size*depth});
+    type* transformed_query_data = multihead_attention_layer_forward_propagation->get_transformed_query_data();
+    type* transformed_key_data = multihead_attention_layer_forward_propagation->get_transformed_key_data();
+    type* transformed_value_data = multihead_attention_layer_forward_propagation->get_transformed_value_data();
 
-    PerceptronLayerForwardPropagation input_perceptron_forward_propagation =
-        multihead_attention_layer_forward_propagation->input_perceptron_forward_propagation;
+    calculate_query_transformation(query, transformed_query_data);
+    calculate_key_transformation(key, transformed_key_data);
+    calculate_value_transformation(value, transformed_value_data);
 
-    input_perceptron_layer.forward_propagate(inputs_data,
-                                              flattened_input_dimension,
-                                              &input_perceptron_forward_propagation,
-                                              switch_train);
-
-    PerceptronLayerForwardPropagation context_perceptron_forward_propagation =
-        multihead_attention_layer_forward_propagation->context_perceptron_forward_propagation;
-
-    context_perceptron_layer.forward_propagate(inputs_data + batch_size*input_size*depth,
-                                                     flattened_input_dimension,
-                                                     &context_perceptron_forward_propagation,
-                                                     switch_train);
+    Tensor<Index, 1> transformed_query_dimensions(4);
+    Tensor<Index, 1> transformed_key_dimensions(4);
+    transformed_query_dimensions.setValues({batch_size, input_size, depth, number_of_heads});
+    transformed_key_dimensions.setValues({batch_size, context_size, depth, number_of_heads});
 
     type* attention_scores_data = multihead_attention_layer_forward_propagation->get_attention_scores_data();
 
-    compute_attention_scores(input_perceptron_forward_propagation.outputs_data,
-                             input_perceptron_forward_propagation.outputs_dimensions,
-                             context_perceptron_forward_propagation.outputs_data,
-                             context_perceptron_forward_propagation.outputs_dimensions,
+    compute_attention_scores(transformed_query_data,
+                             transformed_query_dimensions,
+                             transformed_key_data,
+                             transformed_key_dimensions,
                              attention_scores_data);
 
     const Tensor<Index, 1> attention_scores_dimensions = get_dimensions(multihead_attention_layer_forward_propagation->attention_scores);
 
-    type* attention_output_data = multihead_attention_layer_forward_propagation->get_attention_output_data();
+    type* attention_outputs_data = multihead_attention_layer_forward_propagation->get_attention_outputs_data();
 
-    compute_attention_output(context_perceptron_forward_propagation.outputs_data,
-                             context_perceptron_forward_propagation.outputs_dimensions,
+    compute_attention_output(transformed_value_data,
+                             transformed_key_dimensions,
                              attention_scores_data,
                              attention_scores_dimensions,
-                             attention_output_data);
+                             attention_outputs_data);
 
-    PerceptronLayerForwardPropagation output_perceptron_forward_propagation =
-        multihead_attention_layer_forward_propagation->output_perceptron_forward_propagation;
+    const TensorMap<Tensor<type, 4>> attention_outputs(attention_outputs_data, batch_size, input_size, depth, number_of_heads);
 
-    Tensor<Index, 1> flattened_attention_output_dimension(2);
-
-    flattened_attention_output_dimension.setValues({batch_size, input_size*depth*number_of_heads});
-
-    output_perceptron_layer.forward_propagate(attention_output_data,
-                                              flattened_attention_output_dimension,
-                                              &output_perceptron_forward_propagation,
-                                              switch_train);
-
-    memcpy(multihead_attention_layer_forward_propagation->outputs_data,
-           output_perceptron_forward_propagation.outputs_data,
-           static_cast<size_t>(batch_size*input_size*depth*sizeof(type)));
+    calculate_output_projection(attention_outputs,
+                                multihead_attention_layer_forward_propagation->outputs_data);
 }
+
 
 /*
 void PerceptronLayer::forward_propagate(type* inputs_data,
@@ -618,49 +541,6 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                       derivatives_dimensions);
 }
 */
-
-
-string MultiheadAttentionLayer::write_activation_function_expression() const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Threshold:
-        return "threshold";
-
-    case ActivationFunction::SymmetricThreshold:
-        return "symmetric_threshold";
-
-    case ActivationFunction::Logistic:
-        return "logistic";
-
-    case ActivationFunction::HyperbolicTangent:
-        return "tanh";
-
-    case ActivationFunction::Linear:
-        return string();
-
-    case ActivationFunction::RectifiedLinear:
-        return "ReLU";
-
-    case ActivationFunction::ExponentialLinear:
-        return "ELU";
-
-    case ActivationFunction::ScaledExponentialLinear:
-        return "SELU";
-
-    case ActivationFunction::SoftPlus:
-        return "soft_plus";
-
-    case ActivationFunction::SoftSign:
-        return "soft_sign";
-
-    case ActivationFunction::HardSigmoid:
-        return "hard_sigmoid";
-
-    default:
-        return string();
-    }
-}
 
 /// @todo
 ///// Returns a string with the expression of the inputs-outputs relationship of the layer.

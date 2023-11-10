@@ -1077,7 +1077,9 @@ private:
 
     Tensor<string, 1> completion_vocabulary;
 
-    Index max_sentence_length;
+    Index max_completion_length;
+
+    Index max_context_length;
 
     // MISSING VALUES
 
