@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "layer.h"
-#include "perceptron_layer.h"
 
 #ifdef OPENNN_MKL
 #include "../mkl/mkl.h"
@@ -54,11 +53,6 @@ class MultiheadAttentionLayer : public Layer
 
 public:
 
-    /// Enumeration of the available activation functions for the perceptron neuron model.
-
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
-                                    ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
-
     // Constructors
 
     explicit MultiheadAttentionLayer();
@@ -77,6 +71,9 @@ public:
     Index get_context_size() const;
     Index get_depth() const;
     Index get_number_of_heads() const;
+
+    Tensor<Index, 1> get_inputs_dimensions() const final;
+    Tensor<Index, 1> get_outputs_dimensions() const final;
 
     Tensor<type, 3> get_query_kernel() const;
     Tensor<type, 3> get_key_kernel() const;
@@ -108,6 +105,8 @@ public:
     void set_kernels();
     void set_parameters_random() final;
 
+    void set_dropout_rate(const type&);
+
     // Display messages
 
     void set_display(const bool&);
@@ -128,7 +127,10 @@ public:
 
     // Multihead Attention layer outputs
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
+    void forward_propagate(Tensor<type*, 1>,
+                           const Tensor<Tensor<Index, 1>, 1>&,
+                           LayerForwardPropagation*,
+                           const bool&) final;
 
 /*
     void forward_propagate(type*,
@@ -177,6 +179,10 @@ protected:
     /// Linear projection kernel
 
     Tensor<type, 3> projection_kernel;
+
+    /// Dropour rate
+
+    type dropout_rate = type(0);
 
     /// Display messages to screen.
 

@@ -29,14 +29,10 @@
 #include "recurrent_layer.h"
 #include "probabilistic_layer.h"
 #include "scaling_layer.h"
-<<<<<<< HEAD
-#include "region_proposal_layer.h"
+// #include "region_proposal_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
-=======
 #include "kmeans.h"
-//#include "region_proposal_layer.h"
->>>>>>> dev
 #include "non_max_suppression_layer.h"
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
