@@ -12308,13 +12308,31 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             if(abs(data(sample_index, variable_index) - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
                     || abs(data(sample_index, variable_index) - maximums(i)) <= type(NUMERIC_LIMITS_MIN)) continue;
 
-            if(data(sample_index,variable_index) < minimums(i)
-                    || data(sample_index,variable_index) > maximums(i))
-            {
-                filtered_indices(sample_index) = type(1);
+//            if(data(sample_index,variable_index) < minimums(i)
+//                    || data(sample_index,variable_index) > maximums(i))
+//            {
+//                filtered_indices(sample_index) = type(1);
 
+//                set_sample_use(sample_index, SampleUse::Unused);
+//            }
+
+            if(minimums(i) == maximums(i))
+            {
+                // Si el mínimo es igual al máximo, marca como "No utilizada" si el valor es distinto al mínimo.
+                if(data(sample_index, variable_index) != minimums(i))
+                {
+                    filtered_indices(sample_index) = type(1);
+                    set_sample_use(sample_index, SampleUse::Unused);
+                }
+            }
+            else if(data(sample_index, variable_index) < minimums(i)
+                     || data(sample_index, variable_index) > maximums(i))
+            {
+                // Si el mínimo no es igual al máximo, realiza el filtro numérico convencional.
+                filtered_indices(sample_index) = type(1);
                 set_sample_use(sample_index, SampleUse::Unused);
             }
+
         }
     }
 
