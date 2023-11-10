@@ -45,36 +45,76 @@ int main(int argc, char *argv[])
     try
     {
         cout << "OpenNN. Region Based Object Detector Example." << endl;
-
+/*
         // UNDER DEVELOPMENT
 
         srand(time(NULL));
-/*
+
         DataSet data_set;
 
-        data_set.set_data_file_name("Z:/Images/DatasetRedDots-bmp/ground_truth.xml");
+        //        data_set.set_intersection_over_union_threshold(0.3);
+        //        data_set.set_regions_number(100);
+        //        data_set.set_region_rows(12);
+        //        data_set.set_region_columns(12);
+
+        data_set.set_data_file_name("../img/ground_truth.xml");
+
 
         data_set.read_ground_truth();
 
-        data_set.set_training();
+        DataSetBatch batch_training(1, &data_set);
 
-        const Index target_variables_number = data_set.get_target_variables_number();
-        const Index input_variables_number = data_set.get_input_variables_number();
+        Tensor<Index, 2> training_batches = data_set.get_batches(training_samples_indices, batch_samples_number_training, shuffle);
 
-        cout << "input_variables_number: "  << input_variables_number<< endl;
+        batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
-        Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
+        Tensor<Index, 1> inputs_dimensions(3);
+        inputs_dimensions(0) = 28;
+        inputs_dimensions(1) = 28;
+        inputs_dimensions(2) = 3;
 
-        cout << "input_variables_dimensions: " << input_variables_dimensions << endl;
-        */
+        RegionProposalLayer region_proposal_layer(inputs_dimensions);
+        region_proposal_layer.set_regions_number(2);
+        region_proposal_layer.set_region_rows(1);
+        region_proposal_layer.set_region_columns(1);
+        region_proposal_layer.set_channels_number(1);
+
+        const Tensor<Index, 1> region_proposal_layer_outputs_dimensions = region_proposal_layer.get_outputs_dimensions();
+
+        cout << region_proposal_layer_outputs_dimensions << endl;
+
+        FlattenLayer flatten_layer(region_proposal_layer_outputs_dimensions);
+
+        const Tensor<Index, 1> flatten_layer_outputs_dimensions = flatten_layer.get_outputs_dimensions();
+
+        cout << flatten_layer_outputs_dimensions << endl;
+
+        ProbabilisticLayer probabilistic_layer(1, 1);
+
+        NonMaxSuppressionLayer non_max_suppression_layer;
 
         NeuralNetwork neural_network;
 
-        RegionProposalLayer region_proposal_layer;
-        neural_network.add_layer(&region_proposal_layer);
+        neural_network.add_layer(&region_proposal_layer); // 0
+        neural_network.add_layer(&flatten_layer); // 1
+        neural_network.add_layer(&probabilistic_layer); // 2
+        neural_network.add_layer(&non_max_suppression_layer); // 3
+
+        Tensor<Index, 1> non_max_suppression_layer_inputs_indices(2);
+        non_max_suppression_layer_inputs_indices(0) = 0;
+        non_max_suppression_layer_inputs_indices(1) = 2;
+
+        neural_network.set_layer_inputs_indices(3, non_max_suppression_layer_inputs_indices);
+
+        neural_network.print_layers_inputs_indices();
+
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(1, &neural_network);
+        neural_network_forward_propagation.print();
+
+        neural_network.forward_propagate( neural_network_forward_propagation, false);
 
         const string filename = "Z:/Images/DatasetRedDots-bmp/9.bmp";
-        const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image_data(filename);
+        const Tensor<Tensor<type, 1>, 1> input_image = read_bmp_image(filename);
 
         Tensor<type, 2> image(1, input_image(0).dimensions()[0] + input_image(1).dimensions()[0]);
 
@@ -109,7 +149,6 @@ int main(int argc, char *argv[])
 
         cout << "output: " << output << endl;
 
-        /*
         FlattenLayer flatten_layer(input_variables_dimensions);
         neural_network.add_layer(&flatten_layer);
 
@@ -122,21 +161,17 @@ int main(int argc, char *argv[])
 
         NonMaxSuppressionLayer non_max_supression_layer;
         neural_network.add_layer(&non_max_supression_layer);
-        */
 
-        Tensor<type, 4> inputs(6,6,3,1);
-        inputs.setRandom();
-/*
         Tensor<Index, 1> inputs_dimensions(4);
         inputs_dimensions(0) = 6;
         inputs_dimensions(1) = 6;
         inputs_dimensions(2) = 3;
         inputs_dimensions(3) = 1;
-*/
+
 //        Tensor<type, 2> outputs(1, 108);
 
 //        Tensor<Index, 1> outputs_dimensions(2);
-//        outputs_dimensions(0) = 1;
+//        outputs_dimensions[0] = 1;
 //        outputs_dimensions(1) = 108;
 
 //        flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
@@ -151,7 +186,6 @@ int main(int argc, char *argv[])
 //        cout << "outputs_dimension: " << endl;
 //        cout << outputs.dimensions() << endl;
 
-/*
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -168,9 +202,8 @@ int main(int argc, char *argv[])
 
 //        training_strategy.get_mean_squared_error_pointer()->calculate_regularization();
 
-
         // Testing analysis
-/*
+
         Tensor<type, 4> inputs_4d;
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);

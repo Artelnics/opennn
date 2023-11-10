@@ -51,11 +51,9 @@ public:
 
    void test_calculate_activations_derivatives();
 
+   void test_forward_propagation();
+
   // Outputs
-
-//  void test_calculate_outputs();
-
-//  void test_calculate_outputs_2d();
 
   void test_insert_padding();
 

@@ -11,7 +11,6 @@
 namespace opennn
 {
 
-
 /// Default constructor.
 /// It creates a flatten layer.
 /// This constructor also initializes the rest of the class members to their default values.
@@ -22,10 +21,11 @@ FlattenLayer::FlattenLayer() : Layer()
 }
 
 
-FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
+FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
 {
-    input_variables_dimensions = new_input_variables_dimensions;
-    set(input_variables_dimensions);
+    inputs_dimensions = new_inputs_dimensions;
+
+    set(inputs_dimensions);
 
     layer_type = Type::Flatten;
 }
@@ -37,9 +37,9 @@ void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
 }
 
 
-Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
+Tensor<Index, 1> FlattenLayer::get_inputs_dimensions() const
 {
-    return input_variables_dimensions;
+    return inputs_dimensions;
 }
 
 
@@ -52,19 +52,17 @@ void FlattenLayer::set_name(const string& new_layer_name)
 /// @todo
 /// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
 
-//Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 Index FlattenLayer::get_outputs_number() const
 {
-    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
 }
+
 
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(2);
+    Tensor<Index, 1> outputs_dimensions(1);
 
-    /// @todo
-    outputs_dimensions(0) = input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
-    outputs_dimensions(1) = 1; // batches number
+    outputs_dimensions[0] = inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
 
     return outputs_dimensions;
 }
@@ -72,31 +70,25 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 /// @todo
 Index FlattenLayer::get_inputs_number() const
 {
-    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2) * input_variables_dimensions(3);
+    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2) * inputs_dimensions(3);
 }
 
 
-Index FlattenLayer::get_input_height() const
+Index FlattenLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions(2);
+    return inputs_dimensions(0);
 }
 
 
-Index FlattenLayer::get_input_width() const
+Index FlattenLayer::get_inputs_columns_number() const
 {
-    return input_variables_dimensions(1);
+    return inputs_dimensions(1);
 }
 
 
 Index FlattenLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions(0);
-}
-
-
-Index FlattenLayer::get_inputs_batch_number() const
-{
-    return input_variables_dimensions(3);
+    return inputs_dimensions(2);
 }
 
 
@@ -104,7 +96,7 @@ Index FlattenLayer::get_inputs_batch_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2);
+    return inputs_dimensions(0) * inputs_dimensions(1) * inputs_dimensions(2);
 }
 
 
@@ -137,146 +129,182 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
     layer_name = "flatten_layer";
 
-    input_variables_dimensions = new_inputs_dimensions;
-
+    inputs_dimensions = new_inputs_dimensions;
 }
 
 
-/// Obtain the connection between the convolutional and the conventional part
-/// of a neural network. That is a matrix which links to the perceptron layer.
-/// @param inputs 4d tensor(batch, channels, width, height)
-/// @return result 2d tensor(batch, number of pixels)
-
-/*
-Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
+void FlattenLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
+                                     LayerForwardPropagation* layer_forward_propagation,
+                                     const bool& is_training)
 {
-    const Index rows_number = inputs.dimension(0);
-    const Index columns_number= inputs.dimension(1);
-    const Index channels_number = inputs.dimension(2);
-    const Index batch_size = inputs.dimension(3);
+    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
-    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*rows_number*columns_number}};
-*/ // --> old
-void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                     type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-    const Index rows_number = inputs_dimensions(0);
-    const Index columns_number = inputs_dimensions(1);
-    const Index channels_number = inputs_dimensions(2);
-    const Index batch_size = inputs_dimensions(3);
+    const Index neurons_number = get_neurons_number();
 
-    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*columns_number*rows_number}};
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
-    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch_size, channels_number*columns_number*rows_number);
-
-    outputs = inputs.reshape(new_dims);
+    memcpy(outputs_data,
+           inputs_data(0),
+           batch_samples_number*neurons_number*sizeof(type));
 }
 
 
-//
-//void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
-// --> old
-void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                     LayerForwardPropagation* forward_propagation,
-                                     bool& switch_train)
+void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
+                                          LayerBackPropagation* next_layer_back_propagation,
+                                          LayerBackPropagation* this_layer_back_propagation) const
 {
-    FlattenLayerForwardPropagation* flatten_layer_forward_propagation
-            = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
+    FlattenLayerBackPropagation* flatten_layer_back_propagation =
+            static_cast<FlattenLayerBackPropagation*>(this_layer_back_propagation);
 
-#ifdef OPENNN_DEBUG
-
-    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
-
-    if(outputs_dimensions[0] != flatten_layer_forward_propagation->outputs.dimension(0))
+    switch(next_layer_back_propagation->layer_pointer->get_type())
     {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "FlattenLayer::forward_propagate.\n"
-               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must be equal to" << flatten_layer_forward_propagation->outputs.dimension(0)<<".\n";
+    case Type::Perceptron:
+    {
+        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
+                static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
 
-        throw invalid_argument(buffer.str());
+        PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
+
+        calculate_hidden_delta(next_perceptron_layer_forward_propagation,
+                               next_perceptron_layer_back_propagation,
+                               flatten_layer_back_propagation);
     }
+        break;
 
-    if(outputs_dimensions[1] != flatten_layer_forward_propagation->outputs.dimension(1))
+    case Type::Probabilistic:
     {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "FlattenLayer::forward_propagate.\n"
-               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must be equal to" << flatten_layer_forward_propagation->outputs.dimension(1)<<".\n";
+        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
+                static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
 
-        throw invalid_argument(buffer.str());
+        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
+
+        calculate_hidden_delta(next_probabilistic_layer_forward_propagation,
+                               next_probabilistic_layer_back_propagation,
+                               flatten_layer_back_propagation);
     }
+        break;
 
-#endif
+    default: return;
+    }
+}
 
-/*
 
-    const Index rows_number = inputs.dimension(0);
-    const Index columns_number = inputs.dimension(1);
-    const Index channels_number = inputs.dimension(2);
-//    const Index batch_size = inputs.dimension(3);
+void FlattenLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation,
+                                          PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation,
+                                          FlattenLayerBackPropagation* flatten_layer_back_propagation) const
+{
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_perceptron_layer_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    Index image_counter = 0;
-    Index variable_counter = 0;
+    const TensorMap<Tensor<type, 2>> next_deltas(next_perceptron_layer_back_propagation->deltas_data,
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(0),
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(1));
 
-    for(Index i = 0; i < flatten_layer_forward_propagation->outputs.size(); i++)
+    const Index batch_samples_number = flatten_layer_back_propagation->batch_samples_number;
+
+    const Index neurons_number = get_neurons_number();
+
+    TensorMap<Tensor<type, 2>> deltas(flatten_layer_back_propagation->deltas_data,
+                                      batch_samples_number,
+                                      neurons_number);
+
+    deltas.device(*thread_pool_device) = (next_deltas*next_perceptron_layer_forward_propagation->activations_derivatives)
+            .contract(next_synaptic_weights, A_BT);
+}
+
+
+void FlattenLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* next_perceptron_layer_forward_propagation,
+                                          ProbabilisticLayerBackPropagation* next_perceptron_layer_back_propagation,
+                                          FlattenLayerBackPropagation* flatten_layer_back_propagation) const
+{
+    const Index batch_samples_number = flatten_layer_back_propagation->batch_samples_number;
+
+    const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_perceptron_layer_back_propagation->layer_pointer);
+
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
+
+    const Index next_neurons_number = probabilistic_layer_pointer->get_biases_number();
+
+    const TensorMap<Tensor<type, 2>> next_deltas(next_perceptron_layer_back_propagation->deltas_data,
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(0),
+                                                 next_perceptron_layer_back_propagation->deltas_dimensions(1));;
+
+    TensorMap<Tensor<type, 2>> deltas(flatten_layer_back_propagation->deltas_data,
+                                      flatten_layer_back_propagation->deltas_dimensions(0),
+                                      flatten_layer_back_propagation->deltas_dimensions(1));
+
+    if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
     {
-        flatten_layer_forward_propagation->outputs(image_counter,variable_counter) = inputs(i);
+        const TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_perceptron_layer_forward_propagation->activations_derivatives.data(),
+                                                                 batch_samples_number, next_neurons_number);
 
-        variable_counter++;
+        deltas.device(*thread_pool_device) =
+                (next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
 
-        if(variable_counter == channels_number * rows_number * columns_number)
+    }
+    else // Multiple
+    {
+        if(probabilistic_layer_pointer->get_activation_function() != ProbabilisticLayer::ActivationFunction::Softmax)
         {
-            variable_counter = 0;
-            image_counter++;
+            deltas.device(*thread_pool_device) =
+                    (next_deltas*next_perceptron_layer_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_perceptron_layer_forward_propagation->activations_derivatives.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
         }
-    }
-*/ // check, old version
-
-//    if(inputs_dimensions.size() != 4)
-//    {
-//        ostringstream buffer;
-//        buffer << "OpenNN Exception: FlattenLayer class.\n"
-//               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
-//               << "Inputs rank must be equal to 4.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    const Index rows_number = inputs_dimensions(0);
-//    const Index columns_number = inputs_dimensions(1);
-//    const Index channels_number = inputs_dimensions(2);
-//    const Index batch_size = inputs_dimensions(3);
-
-//    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*columns_number*rows_number}};
-
-//    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-//    TensorMap<Tensor<type, 2>> outputs(flatten_layer_forward_propagation->outputs.data(), batch_size, channels_number*columns_number*rows_number);
-
-//     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
-
-    const Index rows_number = inputs_dimensions(0);
-    const Index columns_number = inputs_dimensions(1);
-    const Index channels_number = inputs_dimensions(2);
-        const Index batch_size = inputs_dimensions(3);
-
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data,rows_number,columns_number,channels_number,batch_size);
-
-    Index image_counter = 0;
-    Index variable_counter = 0;
-
-    for(Index i = 0; i < flatten_layer_forward_propagation->outputs.size(); i++)
-    {
-        flatten_layer_forward_propagation->outputs(image_counter,variable_counter) = inputs(i);
-
-        variable_counter++;
-
-        if(variable_counter == channels_number * rows_number * columns_number)
+        else
         {
-            variable_counter = 0;
-            image_counter++;
+            const Index samples_number = next_deltas.dimension(0); //aqui?
+            const Index outputs_number = next_deltas.dimension(1);
+            const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
+
+            if(outputs_number != next_layer_neurons_number)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,FlattenLayerBackPropagation*) const.\n"
+                       << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(next_perceptron_layer_forward_propagation->activations_derivatives.dimension(1) != next_layer_neurons_number)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,FlattenLayerBackPropagation*) const.\n"
+                       << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(next_perceptron_layer_forward_propagation->activations_derivatives.dimension(2) != next_layer_neurons_number)
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                       << "void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,FlattenLayerBackPropagation*) const.\n"
+                       << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            const Index step = next_layer_neurons_number*next_layer_neurons_number;
+
+            for(Index i = 0; i < samples_number; i++)
+            {
+                next_perceptron_layer_back_propagation->delta_row = next_deltas.chip(i,0);
+
+                TensorMap< Tensor<type, 2> > activations_derivatives_matrix(next_perceptron_layer_forward_propagation->activations_derivatives.data() + i*step,
+                                                                            next_layer_neurons_number, next_layer_neurons_number);
+
+                next_perceptron_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
+                        next_perceptron_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+            }
+
+            deltas.device(*thread_pool_device) =
+                    next_perceptron_layer_back_propagation->error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
         }
     }
 }
@@ -295,14 +323,14 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("InputHeight");
     buffer.str("");
-    buffer << get_input_height();
+    buffer << get_inputs_rows_number();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
 
     file_stream.OpenElement("InputWidth");
     buffer.str("");
-    buffer << get_input_width();
+    buffer << get_inputs_columns_number();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();
@@ -396,11 +424,17 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const Index input_channels_number = static_cast<Index>(atoi(input_channels_number_element->GetText()));
 
-    Tensor<Index,1> inputsDimensionTensor(4);
+//    Tensor<Index,1> inputsDimensionTensor(4);
 
-    inputsDimensionTensor.setValues({input_height, input_width, input_channels_number, 0});
+//    inputsDimensionTensor.setValues({input_height, input_width, input_channels_number, 0});
 
-    set(inputsDimensionTensor);
+//    set(inputsDimensionTensor);
+
+    Tensor<Index, 1> inputs_dimension_tensor(3);
+
+    inputs_dimension_tensor.setValues({input_height, input_width, input_channels_number});
+
+    set(inputs_dimension_tensor);
 }
 
 }

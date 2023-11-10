@@ -90,6 +90,9 @@ int main()
       Index tests_passed_count = 0;
       Index tests_failed_count = 0;
 
+      transform(test.begin(), test.end(), test.begin(),
+          [](unsigned char c){ return tolower(c); });
+
       if(test == "adaptive_moment_estimation" || test == "adam")
       {
          AdaptiveMomentEstimationTest adaptive_moment_estimation_test;

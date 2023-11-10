@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef NonMaxSuppressionLayer_H
-#define NonMaxSuppressionLayer_H
+#ifndef NONMAXSUPRESSIONLAYER_H
+#define NONMAXSUPRESSIONLAYER_H
 
 // System includes
 
@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "layer.h"
-#include "opennn_strings.h"
+//#include "opennn_images.h"
 
 namespace opennn
 {
@@ -35,12 +35,12 @@ public:
 
    explicit NonMaxSuppressionLayer();
 
-   // Perceptron layer outputs
-
    void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
-                          LayerForwardPropagation*);
+   void forward_propagate(Tensor<type*, 1>,
+                          const Tensor<Tensor<Index, 1>, 1>&,
+                          LayerForwardPropagation*,
+                          const bool&);
 
 
 protected:
@@ -70,16 +70,33 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;
 
+        outputs_data.resize(2);
+
+        // Bounding boxes
+
+        outputs_data(0) = nullptr;
+
+        // Scores
+
+        outputs_data(1) = nullptr;
     }
 
     void print() const
     {
+        cout << "Non max suppression layer forward propagation structure" << endl;
 
+        cout << "Outputs:" << endl;
+//        cout << TensorMap<Tensor<type,4>>(outputs_data,
+//                                          outputs_dimensions[0],
+//                                          outputs_dimensions(1),
+//                                          outputs_dimensions(2),
+//                                          outputs_dimensions(3)) << endl;
+
+        cout << "Outputs dimensions:" << endl;
+
+//        cout << outputs_dimensions << endl;
     }
-
-    Tensor<type, 2> outputs;
 };
-
 
 }
 #endif

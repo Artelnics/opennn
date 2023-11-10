@@ -172,8 +172,8 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -324,14 +324,14 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     const LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
-    const Tensor<Index, 1> outputs_dimensions = output_layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = output_layer_forward_propagation->outputs_dimensions[0];
 
-    const TensorMap<Tensor<type, 2>> outputs(output_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(output_layer_forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
 #ifdef OPENNN_DEBUG
-    if(outputs_dimensions(0) != batch.targets_dimensions(0) || outputs_dimensions(1) != batch.targets_dimensions(1))
+    if(outputs_dimensions[0] != batch.targets_dimensions(0) || outputs_dimensions(1) != batch.targets_dimensions(1))
     {
         ostringstream buffer;
 
@@ -363,13 +363,12 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation & neural_network_forward_propagation,
                                  LossIndexBackPropagationLM & loss_index_back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
-    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions[0];
 
-    const TensorMap<Tensor<type, 2>> outputs(neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(neural_network_forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
+                                             outputs_dimensions[0], outputs_dimensions(1));
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
@@ -421,6 +420,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     // Assemble gradient
 
     assemble_layers_error_gradient(back_propagation);
+
 }
 
 
@@ -485,14 +485,12 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index layers_number = neural_network_pointer->get_layers_number();
-
     const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
     loss_index_back_propagation_lm.squared_errors_jacobian.setZero();
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     Index mem_index = 0;
 
@@ -502,11 +500,15 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions[0];
 
-    const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data.get(), batch.inputs_dimensions(0), batch.inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data,
+                                            batch.inputs_dimensions(0),
+                                            batch.inputs_dimensions(1));
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
+                                             outputs_dimensions[0],
+                                             outputs_dimensions(1));
 
     // Layer 0
 
@@ -530,7 +532,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                                         mem_index,
                                                                         loss_index_back_propagation_lm.squared_errors_jacobian);
 
-        mem_index += trainable_layers_parameters_number(0)*batch_size;
+        mem_index += trainable_layers_parameters_number(0)*batch_samples_number;
     }
 
     // Rest of the layers
@@ -544,9 +546,9 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
             const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
                     = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(first_trainable_layer_index + i - 1));
 
-            const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
+            const Tensor<Index, 1> outputs_dimensions = perceptron_layer_forward_propagation->outputs_dimensions[0];
 
-            const TensorMap<Tensor<type, 2>> outputs(perceptron_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+            const TensorMap<Tensor<type, 2>> outputs(perceptron_layer_forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
 
             trainable_layers_pointers(i)->calculate_squared_errors_Jacobian_lm(outputs,
                                                                    forward_propagation.layers(first_trainable_layer_index + i),
@@ -556,7 +558,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                                             mem_index,
                                                                             loss_index_back_propagation_lm.squared_errors_jacobian);
 
-            mem_index += trainable_layers_parameters_number(i)*batch_size;
+            mem_index += trainable_layers_parameters_number(i)*batch_samples_number;
         }
             break;
 
@@ -683,7 +685,7 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 /// That matrix is symmetric, with size the number of parameters.
 /// @param parameters vector with the parameters to get the regularization term.
 
-void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
+void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
 {
     switch(regularization_method)
     {
@@ -705,8 +707,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-//    const Index layers_number = neural_network_pointer->get_layers_number();
-
     if(trainable_layers_number == 0) return;
 
     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
@@ -723,31 +723,10 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
-        // Needs to check flatten layer for convolutional
-        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten)
-        {
-            continue;
-        }
-        if(trainable_layers_pointers(i+1)->get_type() == Layer::Type::Flatten)
-        {
-            trainable_layers_pointers(i)
-                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+2), // Perceptron layer
-                                             back_propagation.neural_network.layers(i+2), // Perceptron layer
-                                             back_propagation.neural_network.layers(i));
-        }
-        else
-        {
-            trainable_layers_pointers(i)
-                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
-                                             back_propagation.neural_network.layers(i+1),
-                                             back_propagation.neural_network.layers(i));
-        }
-/* --> This part was in dev-fwd_refactoring, check
-        trainable_layers_pointers(i)->calculate_hidden_delta(
-            forward_propagation.layers(first_trainable_layer_index+i+1),
-            back_propagation.neural_network.layers(i+1),
-            back_propagation.neural_network.layers(i));
-*/
+        trainable_layers_pointers(i)
+                ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
+                                         back_propagation.neural_network.layers(i+1),
+                                         back_propagation.neural_network.layers(i));
     }
 }
 
@@ -795,14 +774,14 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
     const Index first_trainable_layers_index = neural_network_pointer->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+//    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data.get(),
+    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data,
                                                            forward_propagation.layers(first_trainable_layers_index),
                                                            back_propagation.neural_network.layers(0));
 
@@ -810,14 +789,15 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
     {
         const LayerForwardPropagation* layer_forward_propagation = forward_propagation.layers(first_trainable_layers_index+i-1);
 
-        const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions;
+        const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
 
-        const TensorMap<Tensor<type, 2>> outputs(layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+        const TensorMap<Tensor<type, 2>> outputs(layer_forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
 
-        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->outputs_data,
+        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->outputs_data(0),
                                                                forward_propagation.layers(first_trainable_layers_index+i),
                                                                back_propagation.neural_network.layers(i));
     }
+
 }
 
 

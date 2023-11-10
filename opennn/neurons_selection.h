@@ -237,11 +237,13 @@ struct NeuronsSelectionResults
 
    /// Value of loss for the neural network with minimum selection error.
 
-   type optimum_training_error /*- static_cast<type>(FLT_MAX)*/;
+//   int FLT_MAX=10;
+
+   type optimum_training_error = static_cast<type>(10);
 
    /// Value of minimum selection error.
 
-   type optimum_selection_error /*- static_cast<type>(FLT_MAX)*/;
+   type optimum_selection_error = static_cast<type>(10);
 
    // Model selection
 

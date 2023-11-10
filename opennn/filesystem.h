@@ -952,7 +952,7 @@ public:
     proxy operator++(int)
     {
         proxy p{**this};
-        ++*this;
+       ++*this;
         return p;
     }
 #endif
@@ -1018,7 +1018,7 @@ public:
     directory_iterator::proxy operator++(int)
     {
         directory_iterator::proxy proxy{**this};
-        ++*this;
+       ++*this;
         return proxy;
     }
 #endif
@@ -1605,10 +1605,10 @@ template <typename strT, typename std::enable_if<path::_is_basic_string<strT>::v
 inline std::string toUtf8(const strT& unicodeString)
 {
     std::string result;
-    for (auto iter = unicodeString.begin(); iter != unicodeString.end(); ++iter) {
+    for (auto iter = unicodeString.begin(); iter != unicodeString.end();++iter) {
         char32_t c = *iter;
         if (is_surrogate(c)) {
-            ++iter;
+           ++iter;
             if (iter != unicodeString.end() && is_high_surrogate(c) && is_low_surrogate(*iter)) {
                 appendUTF8(result, (char32_t(c) << 10) + *iter - 0x35fdc00);
             }
@@ -1835,8 +1835,8 @@ GHC_INLINE int compare_simple_insensitive(const path::value_type* str1, size_t l
     while (len1 > 0 && len2 > 0 && ::tolower(static_cast<unsigned char>(*str1)) == ::tolower(static_cast<unsigned char>(*str2))) {
         --len1;
         --len2;
-        ++str1;
-        ++str2;
+       ++str1;
+       ++str2;
     }
     if (len1 && len2) {
         return *str1 < *str2 ? -1 : 1;
@@ -2391,7 +2391,7 @@ GHC_INLINE u8arguments::u8arguments(int& argc, char**& argv)
     p = ::CommandLineToArgvW(::GetCommandLineW(), &argc);
     _args.reserve(static_cast<size_t>(argc));
     _argp.reserve(static_cast<size_t>(argc));
-    for (size_t i = 0; i < static_cast<size_t>(argc); ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(argc);++i) {
         _args.push_back(detail::toUtf8(std::wstring(p[i])));
         _argp.push_back((char*)_args[i].data());
     }
@@ -2563,7 +2563,7 @@ GHC_INLINE path& path::operator/=(const path& p)
     auto iter = p.begin();
     bool first = true;
     if (p.has_root_name()) {
-        ++iter;
+       ++iter;
     }
     while (iter != p.end()) {
         if (!first && !(!_path.empty() && _path[_path.length() - 1] == preferred_separator)) {
@@ -2934,14 +2934,14 @@ GHC_INLINE int path::compare(const path& p) const noexcept
         return hrd1 ? 1 : -1;
     }
     if (hrd1) {
-        ++rnl1;
-        ++rnl2;
+       ++rnl1;
+       ++rnl2;
     }
     auto iter1 = _path.begin() + static_cast<int>(rnl1);
     auto iter2 = p._path.begin() + static_cast<int>(rnl2);
     while (iter1 != _path.end() && iter2 != p._path.end() && *iter1 == *iter2) {
-        ++iter1;
-        ++iter2;
+       ++iter1;
+       ++iter2;
     }
     if (iter1 == _path.end()) {
         return iter2 == p._path.end() ? 0 : -1;
@@ -3226,8 +3226,8 @@ GHC_INLINE path path::lexically_relative(const path& base) const
     }
     const_iterator a = begin(), b = base.begin();
     while (a != end() && b != base.end() && *a == *b) {
-        ++a;
-        ++b;
+       ++a;
+       ++b;
     }
     if (a == end() && b == base.end()) {
         return path(".");
@@ -3235,7 +3235,7 @@ GHC_INLINE path path::lexically_relative(const path& base) const
     int count = 0;
     for (const auto& element : input_iterator_range<const_iterator>(b, base.end())) {
         if (element != "." && element != "" && element != "..") {
-            ++count;
+           ++count;
         }
         else if (element == "..") {
             --count;
@@ -3245,7 +3245,7 @@ GHC_INLINE path path::lexically_relative(const path& base) const
         return path();
     }
     path result;
-    for (int i = 0; i < count; ++i) {
+    for (int i = 0; i < count;++i) {
         result /= "..";
     }
     for (const auto& element : input_iterator_range<const_iterator>(a, end())) {
@@ -3295,14 +3295,14 @@ GHC_INLINE path::impl_string_type::const_iterator path::iterator::increment(cons
                 else {
                     // skip redundant slashes
                     while (i != _last && *i == preferred_separator) {
-                        ++i;
+                       ++i;
                     }
                 }
             }
         }
         else {
             if (fromStart && i != _last && *i == ':') {
-                ++i;
+               ++i;
             }
             else {
                 i = std::find(i, _last, preferred_separator);
@@ -3356,7 +3356,7 @@ GHC_INLINE path::iterator& path::iterator::operator++()
            *_iter == preferred_separator &&  // we are on a separator
            (_iter + 1) != _last              // the slash is not the last char
     ) {
-        ++_iter;
+       ++_iter;
     }
     updateCurrent();
     return *this;
@@ -3365,7 +3365,7 @@ GHC_INLINE path::iterator& path::iterator::operator++()
 GHC_INLINE path::iterator path::iterator::operator++(int)
 {
     path::iterator i{*this};
-    ++(*this);
+   ++(*this);
     return i;
 }
 
@@ -4817,13 +4817,13 @@ GHC_INLINE uintmax_t remove_all(const path& p, std::error_code& ec) noexcept
                 if (ec) {
                     return static_cast<uintmax_t>(-1);
                 }
-                ++count;
+               ++count;
             }
         }
     }
     if (!ec) {
         if (remove(p, ec)) {
-            ++count;
+           ++count;
         }
     }
     if (ec) {
@@ -4999,7 +4999,7 @@ GHC_INLINE path temp_directory_path(std::error_code& ec) noexcept
 #else
     static const char* temp_vars[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR", nullptr};
     const char* temp_path = nullptr;
-    for (auto temp_name = temp_vars; *temp_name != nullptr; ++temp_name) {
+    for (auto temp_name = temp_vars; *temp_name != nullptr;++temp_name) {
         temp_path = std::getenv(*temp_name);
         if (temp_path) {
             return path(temp_path);

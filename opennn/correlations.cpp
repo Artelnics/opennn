@@ -132,7 +132,6 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 {
     Correlation correlation;
 
-
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
@@ -641,7 +640,7 @@ Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, cons
 {
     Tensor<type, 1> confidence_interval(2);
 
-    const type z_standard_error = 1.959964;
+    const type z_standard_error = type(1.959964);
 
     confidence_interval(0) = z_correlation - z_standard_error * 1/sqrt(n - 3);
 
@@ -657,7 +656,7 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 
     vector<pair<type, size_t> > v_sort(n);
 
-    for (size_t i = 0U; i < v_sort.size(); ++i)
+    for(size_t i = 0U; i < v_sort.size();++i)
     {
         v_sort[i] = make_pair(x[i], i);
     }
@@ -667,11 +666,11 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
     vector<type> x_rank_vector(n);
     type rank = 1.0;
 
-    for (int i = 0U; i < v_sort.size(); ++i)
+    for(int i = 0U; i < v_sort.size();++i)
     {
         size_t repeated = 1U;
-        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
-        for (size_t k = 0; k < repeated; ++k)
+        for(size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first;++j,++repeated);
+        for(size_t k = 0; k < repeated;++k)
         {
             x_rank_vector[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
         }

@@ -384,7 +384,7 @@ void TextAnalytics::aux_remove_non_printable_chars(Tensor<string, 1> &documents)
     for(Index i = 0; i < documents.size(); i++)
     {
 
-        new_documents[i].erase(std::remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
+        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
 
     }
 
@@ -1654,11 +1654,9 @@ void TextAnalytics::delete_emails(Tensor<Tensor<string,1>,1>& documents) const
     {
         Tensor<string, 1> document = documents(i);
 
-        const Index document_size = document.size();
-
-        for(Index j = 0; j < document_size; j++)
+        for(Index j = 0; j < document.size(); j++)
         {
-            Tensor<string,1> tokens = get_tokens(document(j));
+            Tensor<string, 1> tokens = get_tokens(document(j));
 
             string result;
 
@@ -1848,7 +1846,7 @@ Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents
         {
             Tensor<string, 1> tokens = get_tokens(documents(i)(j));
 
-            std::copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
+            copy(tokens.data(), tokens.data() + tokens.size(), words_list.data() + current_tokens);
 
             current_tokens += tokens.size();
         }
@@ -1863,7 +1861,7 @@ Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents
 
 string TextAnalytics::read_txt_file(const string& path) const
 {
-    if (path.empty())
+    if(path.empty())
     {
         ostringstream buffer;
 
@@ -1874,9 +1872,9 @@ string TextAnalytics::read_txt_file(const string& path) const
         throw invalid_argument(buffer.str());
     }
 
-    std::ifstream file(path.c_str());
+    ifstream file(path.c_str());
 
-    if (!file.is_open())
+    if(!file.is_open())
     {
         ostringstream buffer;
 
@@ -1889,17 +1887,17 @@ string TextAnalytics::read_txt_file(const string& path) const
 
     string result="", line;
 
-    while (file.good())
+    while(file.good())
     {
         getline(file, line);
         trim(line);
         erase(line, '"');
 
-        if (line.empty()) continue;
+        if(line.empty()) continue;
 
         result += line;
 
-        if (file.peek() == EOF) break;
+        if(file.peek() == EOF) break;
     }
 
     return result;
@@ -1917,7 +1915,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<str
 
     const Tensor<Index, 1> descending_rank = calculate_rank_greater(count.cast<type>());
 
-    const Tensor<string,1> words = sort_by_rank(get_unique_elements(total),descending_rank);
+    const Tensor<string,1> words = sort_by_rank(get_unique_elements(total), descending_rank);
 
     const Tensor<Index,1> frequencies = sort_by_rank(count, descending_rank);
 
@@ -2159,21 +2157,24 @@ Tensor<Tensor<string,1>,1> TextAnalytics::preprocess_language_model(const Tensor
 
 void TextAnalytics::set_english_stop_words()
 {
-    stop_words.resize(180);
+    stop_words.resize(242);
 
-    stop_words.setValues({"i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he",
+    stop_words.setValues({"i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
                           "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
-                          "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have",
-                          "has", "had", "having", "do", "does", "did", "doing", "would", "shall", "should", "could", "ought", "i'm", "you're", "he's",
-                          "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd", "she'd", "we'd", "they'd",
-                          "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't", "haven't", "hadn't",
-                          "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't", "let's",
-                          "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't ", "needn't", "oughtn't",
-                          "mightn't", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
+                          "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
+                          "have", "has", "s", "ve", "re", "ll", "t", "had", "having", "do", "does", "did", "doing", "would", "d", "shall", "should", "could",
+                          "ought", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd",
+                          "she'd", "we'd", "they'd", "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't",
+                          "haven't", "hadn't", "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't",
+                          "let's", "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't", "needn't", "oughtn't",
+                          "mightn't", "shes", "its", "were", "theyre", "ive", "youve", "weve", "theyve", "id", "youd", "hed", "shed", "wed", "theyd",
+                          "ill", "youll", "hell", "shell", "well", "theyll", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt",
+                          "doesnt", "dont", "didnt", "wont", "wouldnt", "shant", "shouldnt", "cant", "cannot", "couldnt", "mustnt", "lets",
+                          "thats", "whos", "whats", "heres", "theres", "whens", "wheres", "whys", "hows", "darent", "neednt", "oughtnt",
+                          "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
                           "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
                           "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
                           "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very"});
-
 }
 
 
@@ -2434,7 +2435,7 @@ void TextAnalytics::load_documents(const string& path)
         throw invalid_argument(buffer.str());
     }
 
-    std::ifstream file(path.c_str());
+    ifstream file(path.c_str());
 
     if(!file.is_open())
     {
@@ -2484,7 +2485,7 @@ void TextAnalytics::load_documents(const string& path)
     Tensor<string, 1> document(lines_number);
     Tensor<string, 1> document_target(lines_number);
 
-    std::ifstream file2(path.c_str());
+    ifstream file2(path.c_str());
 
     Index tokens_number = 0;
 
@@ -2642,13 +2643,13 @@ void TextGenerationAlphabet::create_alphabet()
 
     sort(text_copy.begin(), text_copy.end());
 
-    auto ip = std::unique(text_copy.begin(), text_copy.end());
+    auto ip = unique(text_copy.begin(), text_copy.end());
 
-    text_copy.resize(std::distance(text_copy.begin(), ip));
+    text_copy.resize(distance(text_copy.begin(), ip));
 
     alphabet.resize(text_copy.length());
 
-    std::copy(text_copy.begin(), text_copy.end(), alphabet.data());
+    copy(text_copy.begin(), text_copy.end(), alphabet.data());
 }
 
 
@@ -2662,7 +2663,7 @@ void TextGenerationAlphabet::encode_alphabet()
     data_tensor.setZero();
 
 #pragma omp parallel for
-    for (Index i = 0; i < text.length(); i++)
+    for(Index i = 0; i < text.length(); i++)
     {
         const int word_index = get_alphabet_index(text[i]);
         data_tensor(i, word_index) = 1;
@@ -2689,7 +2690,7 @@ Index TextGenerationAlphabet::get_alphabet_index(const char& ch) const
 
     auto it = find(alphabet_begin, alphabet_end, str);
 
-    if (it != alphabet_end)
+    if(it != alphabet_end)
     {
         Index index = it - alphabet_begin;
         return index;
@@ -2793,7 +2794,7 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
     Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    std::copy(input_data.data(), input_data.data() + input_data.size(), flatten_input_data.data());
+    copy(input_data.data(), input_data.data() + input_data.size(), flatten_input_data.data());
 
     return flatten_input_data;
 }
@@ -2807,7 +2808,7 @@ string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_outpu
 
     Tensor<type, 2> output_data(tensor_size, alphabet_length);
 
-    std::copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
+    copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
 
     return multiple_one_hot_decode(output_data);
 }

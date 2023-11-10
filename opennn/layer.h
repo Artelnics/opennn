@@ -26,7 +26,8 @@
 #include "config.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
-#include "data_set.h"
+#include "scaling.h"
+//#include "data_set.h"
 
 #include <tuple>
 
@@ -57,8 +58,23 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
+<<<<<<< HEAD
     enum class Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
               LongShortTermMemory,Recurrent, Unscaling, Bounding, Flatten, Resnet50, BatchNormalization, MultiheadAttention, Embedding};
+=======
+    enum class Type{Scaling,
+                    Convolutional,
+                    Perceptron,
+                    Pooling,
+                    Probabilistic,
+                    LongShortTermMemory,
+                    Recurrent,
+                    Unscaling,
+                    Bounding,
+                    Flatten,
+                    RegionProposal,
+                    NonMaxSuppression};
+>>>>>>> dev
 
     // Constructor
 
@@ -78,6 +94,30 @@ public:
     {
         return layer_name;
     }
+
+    string get_output_shape() const
+    {
+        Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
+
+        stringstream output_shape_string;
+
+        output_shape_string << "(";
+
+        for(Index i = 0; i < output_dimensions.size(); i++)
+        {
+            output_shape_string << output_dimensions[i];
+            if(i != output_dimensions.size() - 1)
+            {
+                output_shape_string << ", ";
+            }
+        }
+        output_shape_string << ")";
+
+        return output_shape_string.str();
+    }
+
+    virtual Tensor<Index,  1> get_inputs_dimensions() const {return Tensor<Index,1>();}
+    virtual Tensor<Index,  1> get_outputs_dimensions() const {return Tensor<Index,1>();}
 
     // Parameters initialization methods
 
@@ -100,12 +140,11 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) = 0;
+    virtual void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&,
+                                   LayerForwardPropagation*, const bool&) = 0;
 
-    virtual void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
-
-//    virtual void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*);
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*);
+    virtual void forward_propagate(type*, const Tensor<Index, 1>&,
+                                   Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
 
@@ -116,6 +155,11 @@ public:
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
                                            LayerBackPropagationLM*,
                                            LayerBackPropagationLM*) const {}
+
+    // Jacobian
+
+    virtual void calculate_inputs_outputs_derivatives(LayerForwardPropagation*) const {}
+
 
     // Error gradient
 
@@ -168,7 +212,7 @@ protected:
 
     /// Layer type.
 
-    Type layer_type = Type::Perceptron;
+    Type layer_type;
 
     /// Activation functions
 
@@ -180,6 +224,7 @@ protected:
     void linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void logistic(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void leaky_rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void scaled_exponential_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void softmax(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void soft_plus(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
@@ -193,6 +238,7 @@ protected:
     void linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void logistic_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+    void leaky_rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void scaled_exponential_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void softmax_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
     void soft_plus_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
@@ -204,13 +250,12 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
 #else
 };
 #endif
+
 struct LayerForwardPropagation
 {
     /// Default constructor.
@@ -221,10 +266,13 @@ struct LayerForwardPropagation
 
     virtual ~LayerForwardPropagation()
     {
-        free(outputs_data);
+        for(Index i = 0; i < outputs_data.size(); i++)
+        {
+            free(outputs_data(i));
+        }
     }
 
-    virtual void set(const Index&, Layer*) {}
+    virtual void set(const Index&, Layer*) = 0;
 
     virtual void print() const {}
 
@@ -232,9 +280,10 @@ struct LayerForwardPropagation
 
     Layer* layer_pointer = nullptr;
 
-    type* outputs_data = nullptr;
+    Tensor<type*, 1> outputs_data;
 
-    Tensor<Index, 1> outputs_dimensions;
+    Tensor<Tensor<Index, 1>, 1> outputs_dimensions;
+
 };
 
 
@@ -253,25 +302,27 @@ struct LayerBackPropagation
 
     virtual void print() const {}   
 
-    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() {
-        {
-            ostringstream buffer;
+    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+    {
+        ostringstream buffer;
 
-            buffer << "OpenNN Exception: Layer class.\n"
-                   << "virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() method.\n"
-                   << "This method is not implemented in the layer type (" << layer_pointer->get_type_string() << ").\n";
+        buffer << "OpenNN Exception: Layer class.\n"
+               << "virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() method.\n"
+               << "This method is not implemented in the layer type (" << layer_pointer->get_type_string() << ").\n";
 
-            throw invalid_argument(buffer.str());
-        }
+        throw invalid_argument(buffer.str());
     }
 
     Index batch_samples_number;
 
     Layer* layer_pointer = nullptr;       
 
+    type* deltas_data = nullptr;
+
     Tensor<Index, 1> deltas_dimensions;
 
-    type* deltas_data = nullptr;
+    Tensor<type, 1> gradient;
+
 };
 
 

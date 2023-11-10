@@ -3,7 +3,7 @@
 #   OpenNN: Open Neural Networks Library                                                          #
 #   www.opennn.net                                                                                #
 #                                                                                                 #
-#   M N I S T    P R O J E C T                                                                    #
+#   O B J E C T   D E T E C T I O N    P R O J E C T                                              #
 #                                                                                                 #
 #   Artificial Intelligence Techniques SL (Artelnics)                                             #
 #   artelnics@artelnics.com                                                                       #
@@ -19,7 +19,7 @@ mac{
     CONFIG-=app_bundle
 }
 
-TARGET = mnist
+TARGET = object_detection
 
 DESTDIR = "$$PWD/bin"
 

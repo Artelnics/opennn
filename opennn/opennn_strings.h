@@ -56,9 +56,11 @@ namespace opennn
 
     bool contains_substring(const string&, const string&);
 
-    void replace_all_appearances(std::string& s, std::string const& toReplace, std::string const& replaceWith);
-    string replace_non_allowed_programming_expressions(std::string& s);
+    void replace_all_appearances(string& s, string const& toReplace, string const& replaceWith);
+    void replace_all_word_appearances(string& s, string const& toReplace, string const& replaceWith);
+
     vector<string> get_words_in_a_string(string str);
+    string replace_non_allowed_programming_expressions(string& s);
 
     Tensor<string, 1> fix_write_expression_outputs(const string&, const Tensor<string, 1>&, const string&);
     Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>&, Tensor<string, 1>&, ostringstream&);
@@ -67,7 +69,8 @@ namespace opennn
 
     void trim(string&);
     void erase(string&, const char&);
-    void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label);
+    //void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label);
+    void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label);
 
     string get_trimmed(const string&);
 
@@ -81,22 +84,25 @@ namespace opennn
     bool is_not_numeric(const Tensor<string, 1>&);
     bool is_mixed(const Tensor<string, 1>&);
 
-    void remove_non_printable_chars( std::string&);
+    void remove_non_printable_chars( string&);
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replac_substring_within_quotes(string&, const string&, const string&);
+    void replace_substring_in_string (Tensor<string, 1>& found_tokens, std::string& outputs_espresion, const std::string& keyword);
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
 
     bool find_string_in_tensor(Tensor<string, 1>& t, string val);
     string get_word_from_token(string&);
-    Tensor<string, 1> push_back_string (Tensor<string, 1>&, const string&);
 
-    string round_to_precision_string(type,const int&);
+    string round_to_precision_string(type, const int&);
     Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2>, const int&);
+
+    Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor);
+    Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<string, 1> tensor2);
 }
 
 #endif // OPENNNSTRINGS_H

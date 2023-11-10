@@ -55,6 +55,7 @@ Makefile.in
 /install-sh
 /missing
 /stamp-h1
+/parameters/
 ### C template
 # Object files
 *.o

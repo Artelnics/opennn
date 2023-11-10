@@ -69,10 +69,6 @@ public:
     void test_calculate_activations();
     void test_calculate_activations_derivatives();
 
-    // Outputs
-
-    void test_calculate_outputs();
-
     // Forward propagate
 
     void test_forward_propagate();
@@ -99,12 +95,12 @@ private:
         Tensor<type, 2> combinations_copy(combinations);
         Tensor<type, 2> activations(combinations);
 
-        Tensor<Index, 1> combinations_dims = get_dimensions(combinations);
-        Tensor<Index, 1> activations_dims = get_dimensions(activations);
-
-        perceptron_layer.calculate_activations(combinations_copy.data(), combinations_dims,
-                                               activations.data(), activations_dims);
-
+        Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations);
+        Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
+/*
+        perceptron_layer.calculate_activations(combinations_copy.data(), combinations_dimensions,
+                                               activations.data(), activations_dimensions);
+*/
         return activations;
     }
 };

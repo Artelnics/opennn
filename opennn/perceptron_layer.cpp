@@ -49,6 +49,31 @@ Index PerceptronLayer::get_inputs_number() const
     return synaptic_weights.dimension(0);
 }
 
+void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
+{
+    dropout_rate = new_dropout_rate;
+}
+
+
+Tensor<Index, 1> PerceptronLayer::get_inputs_dimensions() const
+{
+    Tensor<Index, 1> inputs_dimensions(1);
+
+    inputs_dimensions(0) = get_inputs_number();
+
+    return inputs_dimensions;
+}
+
+
+Tensor<Index, 1> PerceptronLayer::get_outputs_dimensions() const
+{
+    Tensor<Index, 1> outputs_dimensions(1);
+
+    outputs_dimensions[0] = get_neurons_number();
+
+    return outputs_dimensions;
+}
+
 
 /// Returns the number of neurons in the layer.
 
@@ -79,6 +104,10 @@ Index PerceptronLayer::get_parameters_number() const
     return biases.size() + synaptic_weights.size();
 }
 
+type PerceptronLayer::get_dropout_rate() const
+{
+    return dropout_rate;
+}
 
 /// Returns the biases from all the perceptrons in the layer.
 /// The format is a vector of real values.
@@ -88,6 +117,7 @@ const Tensor<type, 2>& PerceptronLayer::get_biases() const
 {
     return biases;
 }
+
 
 
 /// Returns the synaptic weights from the perceptrons.
@@ -142,13 +172,11 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    copy(biases.data(),
-         biases.data() + biases.size(),
-         parameters.data());
+    memcpy(parameters.data(),
+           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
 
-    copy(synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data() + biases.size());
+    memcpy(parameters.data() + synaptic_weights.size(),
+           biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
 
     return parameters;
 }
@@ -240,10 +268,6 @@ void PerceptronLayer::set()
 
     synaptic_weights.resize(0, 0);
 
-    inputs.resize(0,0);
-
-    outputs.resize(0,0);
-
     set_default();
 }
 
@@ -266,7 +290,6 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 
     set_default();
 }
-
 
 /// Sets those members not related to the vector of perceptrons to their default value.
 /// <ul>
@@ -344,19 +367,17 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {   
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+//    const Index biases_number = get_biases_number();
+//    const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy( new_parameters.data() + index,
-          new_parameters.data() + biases_number + index,
-          biases.data());
+    memcpy(synaptic_weights.data(),
+           new_parameters.data() + index,
+           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
 
-    copy( new_parameters.data() + biases_number+ index,
-          new_parameters.data() + biases_number + synaptic_weights_number + index,
-          synaptic_weights.data());
+    memcpy(biases.data(),
+           new_parameters.data() + index + synaptic_weights.size(),
+           static_cast<size_t>(biases.size())*sizeof(type));
 }
-
-
 /// This class sets a new activation(or transfer) function in a single layer.
 /// @param new_activation_function Activation function for the layer.
 
@@ -364,7 +385,6 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
 {
     activation_function = new_activation_function;
 }
-
 
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
@@ -493,10 +513,10 @@ void PerceptronLayer::set_parameters_random()
 }
 
 
-void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
+void PerceptronLayer::calculate_combinations(type* inputs_data,
                                              const Tensor<type, 2>& biases,
                                              const Tensor<type, 2>& synaptic_weights,
-                                             type* combinations_data) const
+                                             LayerForwardPropagation* layer_forward_propagation) const
 {
 #ifdef OPENNN_DEBUG
     check_columns_number(inputs, get_inputs_number(), LOG);
@@ -506,28 +526,44 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
 #endif
 
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
+
+    const Eigen::array<ptrdiff_t, 2> inputs_dimensions_array = perceptron_layer_forward_propagation->get_inputs_dimensions_array();
+
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions_array);
+
+
     const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_neurons_number();
 
-    TensorMap<Tensor<type, 2>> combinations(combinations_data, batch_samples_number, biases_number);
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
 
-//    TensorMap<Tensor<type,2>>inputs(inputs_data,inputs_dimension(0),inputs_dimension(1));
+    const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
 
-    for (Index i = 0; i < biases_number; i++)
+    TensorMap<Tensor<type, 2>> combinations(outputs_data, outputs_dimensions_array);
+
+    combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
+
+    for(Index i = 0; i < biases_number; i++)
     {
-        fill_n(combinations_data + i*batch_samples_number, batch_samples_number, biases(i));
+         TensorMap<Tensor<type,1>>column(outputs_data + i * batch_samples_number, batch_samples_number);
+
+         column.device(*thread_pool_device) = column + biases(i);
     }
+<<<<<<< HEAD
 
     combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 //    combinations += inputs.contract(synaptic_weights, A_B);
+=======
+>>>>>>> dev
 }
-
 
 /* @todo MKL implementation
 
 #ifdef OPENNN_MKL
 
-   if (typeid(type) == typeid(float))
+   if(typeid(type) == typeid(float))
     {
         cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
             CBLAS_TRANSPOSE::CblasNoTrans,
@@ -544,7 +580,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
             (float*)combinations_data,
             inputs.dimension(0));
     }
-    else if (typeid(type) == typeid(double))
+    else if(typeid(type) == typeid(double))
     {
         cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
             CBLAS_TRANSPOSE::CblasNoTrans,
@@ -567,9 +603,9 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 */
 
 
-void PerceptronLayer::calculate_activations(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
-                                            type* activations, const Tensor<Index, 1>& activations_dimensions) const
+void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forward_propagation) const
 {
+
 #ifdef OPENNN_DEBUG
     if(combinations_dimensions(1) != get_neurons_number())
     {
@@ -592,125 +628,106 @@ void PerceptronLayer::calculate_activations(type* combinations, const Tensor<Ind
     }
 #endif
 
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
+
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::Linear: linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::Logistic: logistic(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::Logistic: logistic(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::Threshold: threshold(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::Threshold: threshold(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::SoftPlus: soft_plus(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftSign: soft_sign(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::SoftSign: soft_sign(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, combinations_dimensions, activations, activations_dimensions); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions); return;
 
     default: return;
     }
 }
 
 
-void PerceptronLayer::calculate_activations_derivatives(type* combinations, const Tensor<Index, 1>& combinations_dimensions,
-                                                        type* activations, const Tensor<Index, 1>& activations_dimensions,
-                                                        type* activations_derivatives, const Tensor<Index, 1>& activations_derivatives_dimensions) const
+void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation* layer_forward_propagation) const
 {
-#ifdef OPENNN_DEBUG    
-    if(combinations_dimensions(1) != get_neurons_number())
-    {
-        ostringstream buffer;
+    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
 
-        buffer << "OpenNN Exception: " << LOG << endl
-               << "Combinations columns number must be equal to " << get_neurons_number() <<" (neurons number).\n";
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 
-        throw invalid_argument(buffer.str());
-    }
+    type* activations_derivatives_data = perceptron_layer_forward_propagation->activations_derivatives.data();
 
-    if(activations_dimensions(0) != combinations_dimensions(0) || activations_dimensions(1) != combinations_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << LOG << endl
-               << "Activations dimensions must be equal to combinations dimensions.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(activations_derivatives_dimensions(0) != combinations_dimensions(0) || activations_derivatives_dimensions(1) != combinations_dimensions(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: " << LOG << endl
-               << "Activations derivatives dimensions must be equal to combinations dimensions.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
 
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Linear: linear_derivatives(outputs_data,
+                                                        outputs_dimensions,
+                                                        outputs_data,
+                                                        outputs_dimensions,
+                                                        activations_derivatives_data,
+                                                        outputs_dimensions);
+        return;
 
-    case ActivationFunction::Logistic: logistic_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Logistic: logistic_derivatives(outputs_data,
+                                                            outputs_dimensions,
+                                                            outputs_data,
+                                                            outputs_dimensions,
+                                                            activations_derivatives_data,
+                                                            outputs_dimensions);
+        return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(outputs_data,
+                                                                               outputs_dimensions,
+                                                                               outputs_data,
+                                                                               outputs_dimensions,
+                                                                               activations_derivatives_data,
+                                                                               outputs_dimensions);
+        return;
 
-    case ActivationFunction::Threshold: threshold_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::Threshold: threshold_derivatives(outputs_data,
+                                                              outputs_dimensions,
+                                                              outputs_data,
+                                                              outputs_dimensions,
+                                                              activations_derivatives_data,
+                                                              outputs_dimensions);
+        return;
 
-    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations, combinations_dimensions, activations, activations_dimensions, activations_derivatives, activations_derivatives_dimensions); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions, activations_derivatives_data, outputs_dimensions); return;
 
     default: return;
     }
 }
 
 
-//void PerceptronLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-//                                        type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-//{
-//    if(inputs_dimensions.size() != 2)
-//    {
-//        ostringstream buffer;
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void PerceptronLayer::calculate_outputs(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)"
-//               << "Inputs dimensions must be equal to 2.\n";
-//        throw invalid_argument(buffer.str());
-//    }
-
-
-//  //  const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
-//    calculate_combinations(inputs_data, biases, synaptic_weights, outputs_data,inputs_dimensions);
-
-
-//    calculate_activations(outputs_data, outputs_dimensions, outputs_data, outputs_dimensions);
-//}
-
-void PerceptronLayer::forward_propagate(type* inputs_data,
-                                        const Tensor<Index,1>& inputs_dimensions,
-                                        LayerForwardPropagation* forward_propagation,
-                                        bool& switch_train)
+void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                        const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+                                        LayerForwardPropagation* layer_forward_propagation,
+                                        const bool& is_training)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -724,43 +741,53 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
 #endif
 
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
-
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-    type* combinations_data = perceptron_layer_forward_propagation->get_combinations_data();
-
-    calculate_combinations(inputs,
+    calculate_combinations(inputs_data(0),
                            biases,
                            synaptic_weights,
-                           combinations_data);
+                           layer_forward_propagation);
 
-    const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-    const Tensor<Index, 1> activations_derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
-
-    if(switch_train) // Perform training
+    if(is_training && dropout_rate > type(0))
     {
-        calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                          combinations_dimensions,
-                                          perceptron_layer_forward_propagation->outputs_data,
-                                          perceptron_layer_forward_propagation->outputs_dimensions,
-                                          perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                          activations_derivatives_dimensions);
+        type* outputs_data = layer_forward_propagation->outputs_data(0);
+
+        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+        const Index outputs_number = get_neurons_number();
+
+        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+        for(Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
+        {
+            const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
+
+            TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number, batch_samples_number);
+
+            if(random_number < dropout_rate)
+            {
+                column.setZero();
+            }
+            else
+            {
+                column = column*scaling_factor;
+            }
+        }
     }
-    else // Perform deployment
+
+    if(is_training) // Perform training
     {
-        calculate_activations(perceptron_layer_forward_propagation->combinations.data(),
-                              combinations_dimensions,
-                              perceptron_layer_forward_propagation->outputs_data,
-                              perceptron_layer_forward_propagation->outputs_dimensions);
+        calculate_activations_derivatives(layer_forward_propagation);
+    }
+    else
+    {
+        calculate_activations(layer_forward_propagation);
     }
 }
+
 
 
 void PerceptronLayer::forward_propagate(type* inputs_data,
                                         const Tensor<Index, 1>& inputs_dimensions,
                                         Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* forward_propagation)
+                                        LayerForwardPropagation* layer_forward_propagation)
 {
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
@@ -776,38 +803,48 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
     check_size(potential_parameters, get_parameters_number(), LOG);
 #endif
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
     const Index neurons_number = get_neurons_number();
 
     const Index inputs_number = get_inputs_number();
 
     const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), 1, neurons_number);
 
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data() + neurons_number,
+                                                                inputs_number,
+                                                                neurons_number);
 
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
-
-    const Tensor<Index, 1> activations_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
-
-    const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-
-    const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
-
-
-    calculate_combinations(inputs,
+    calculate_combinations(inputs_data,
                            potential_biases,
                            potential_synaptic_weights,
-                           perceptron_layer_forward_propagation->get_combinations_data());
+                           layer_forward_propagation);
 
+    if(dropout_rate > type(0))
+    {
+        type* outputs_data = layer_forward_propagation->outputs_data(0);
 
-    calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                      combinations_dimensions,
-                                      perceptron_layer_forward_propagation->outputs_data,
-                                      activations_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                      derivatives_dimensions);
+        const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+        const Index outputs_number = get_neurons_number();
+
+        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+        for(Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
+        {
+            const type random_number = static_cast<type>(rand()) / static_cast<type>(RAND_MAX);
+
+            TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number, batch_samples_number);
+
+            if(random_number < dropout_rate)
+            {
+                column.setZero();
+            }
+            else
+            {
+                column = column * scaling_factor;
+            }
+        }
+    }
+
+    calculate_activations_derivatives(layer_forward_propagation);
 }
 
 
@@ -858,28 +895,32 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));
+    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data,
+                                                 next_back_propagation->deltas_dimensions(0),
+                                                 next_back_propagation->deltas_dimensions(1));
 
-    TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
+    TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data,
+                                      back_propagation->deltas_dimensions(0),
+                                      back_propagation->deltas_dimensions(1));
 
     deltas.device(*thread_pool_device) = (next_deltas*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 
-    Tensor<type, 2> output_deltas(deltas);
+//    Tensor<type, 2> output_deltas(deltas);
 
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
+//    if(has_NAN(output_deltas))
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: perceptron layer class.\n"
-               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
+//        buffer << "OpenNN Exception: perceptron layer class.\n"
+//               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+//               << "NAN values found in deltas.";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
 //#ifdef OPENNN_MKL
 
-//   if (typeid(type) == typeid(float))
+//   if(typeid(type) == typeid(float))
 //    {
 //        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasNoTrans,
@@ -896,7 +937,7 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 //            deltas.data(),
 //            next_deltas.dimension(0));
 //    }
-//    else if (typeid(type) == typeid(double))
+//    else if(typeid(type) == typeid(double))
 //    {
 //        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasNoTrans,
@@ -936,11 +977,11 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
-
     if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
     {
         const TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_forward_propagation->activations_derivatives.data(),
-                                                                 batch_samples_number, next_neurons_number);
+                                                                      batch_samples_number, next_neurons_number);
+
         deltas.device(*thread_pool_device) =
                 (next_deltas*activations_derivatives_2d.reshape(Eigen::array<Index,2> {{activations_derivatives_2d.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
 
@@ -954,7 +995,7 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
         }
         else
         {
-            const Index samples_number = next_deltas.dimension(0);
+            const Index samples_number = next_deltas.dimension(0); //aqui?
             const Index outputs_number = next_deltas.dimension(1);
             const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
 
@@ -991,6 +1032,8 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
                 throw invalid_argument(buffer.str());
             }
 
+            /// @todo check if we can simplify all this.
+
             const Index step = next_layer_neurons_number*next_layer_neurons_number;
 
             for(Index i = 0; i < samples_number; i++)
@@ -1008,19 +1051,6 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
                     next_back_propagation->error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
         }
     }
-
-    Tensor<type, 2> output_deltas(deltas);
-
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: perceptron layer class.\n"
-               << "void calculate_hidden_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
-
-        throw invalid_argument(buffer.str());
-    }
 }
 
 
@@ -1028,6 +1058,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
                                                 LayerBackPropagationLM* next_layer_back_propagation,
                                                 LayerBackPropagationLM* layer_back_propagation) const
 {
+
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
 
@@ -1070,6 +1101,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
                                                            PerceptronLayerBackPropagationLM* next_back_propagation,
                                                            PerceptronLayerBackPropagationLM* back_propagation) const
 {
+
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
     back_propagation->deltas.device(*thread_pool_device) =
@@ -1081,7 +1113,8 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
 void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation* next_forward_propagation,
                                                               ProbabilisticLayerBackPropagationLM* next_back_propagation,
                                                               PerceptronLayerBackPropagationLM* back_propagation) const
-{           
+{
+
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
@@ -1211,18 +1244,19 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const Index batch_samples_number = back_propagation->batch_samples_number;
-
     const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, batch_samples_number, get_inputs_number());
+    const Eigen::array<ptrdiff_t, 2> inputs_dimensions_array = perceptron_layer_forward_propagation->get_inputs_dimensions_array();
+    const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
 
-    const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));//matrix with data deltas_data nrows= deltas_dimensions(0) ncolummns=deltas_dimensions(1)
-    
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions_array);
+
+    const TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, outputs_dimensions_array);
+
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
             (deltas * perceptron_layer_forward_propagation->activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
@@ -1231,7 +1265,7 @@ void PerceptronLayer::calculate_error_gradient(type* inputs_data,
 
 //#ifdef OPENNN_MKL
 
-//    if (typeid(type) == typeid(float))
+//    if(typeid(type) == typeid(float))
 //    {
 //        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasTrans,
@@ -1281,13 +1315,13 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(perceptron_layer_back_propagation->biases_derivatives.data(),
-         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
-         gradient.data() + index);
-
     copy(perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
          perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
-         gradient.data() + index + biases_number);
+         gradient.data() + index);
+
+    copy(perceptron_layer_back_propagation->biases_derivatives.data(),
+         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
+         gradient.data() + index + synaptic_weights_number);
 }
 
 

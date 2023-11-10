@@ -212,9 +212,9 @@ void GeneticAlgorithmTest::test_perform_selection()
     assert_true(selection(2) == 0 || selection(2) == 1,LOG);
     assert_true(selection(3) == 0 || selection(3) == 1,LOG);
 
-    assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
+    assert_true( count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
 
-    assert_true( std::count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
+    assert_true( count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 
     // 4 individuals with elitism size = 1
 
@@ -243,8 +243,8 @@ void GeneticAlgorithmTest::test_perform_selection()
     assert_true(selection(2) == 0 || selection(2) == 1,LOG);
     assert_true(selection(3) == 0 || selection(3) == 1,LOG);
 
-    assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
-    assert_true( std::count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
+    assert_true( count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
+    assert_true( count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 
     // 10 individuals without elitism
 
@@ -272,7 +272,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
         selection = genetic_algorithm.get_selection();
 
-        assert_true( std::count(selection.data(), selection.data() + selection.size(), 1)  == 4, LOG);
+        assert_true( count(selection.data(), selection.data() + selection.size(), 1)  == 4, LOG);
     }
 }
 
@@ -318,7 +318,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
         crossover_population = genetic_algorithm.get_population();
 
-        for(Index i=0; i<4; i++)
+        for(Index i = 0; i<4; i++)
         {
            assert_true(crossover_population(i,0) == 1, LOG);
            assert_true(crossover_population(i,1) == 0, LOG);
@@ -384,7 +384,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
         mutated_individual=mutated_population.chip(i,0);
 
-        for(Index j=0; j<10; j++)
+        for(Index j = 0; j<10; j++)
         {
             if(individual(j) != mutated_individual(j)) mutated_genes++;
         }

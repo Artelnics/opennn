@@ -64,8 +64,11 @@ string Layer::get_type_string() const
     case Type::Flatten:
         return "Flatten";
 
-    case Type::Resnet50:
-        return "Resnet50";
+    case Type::RegionProposal:
+        return "RegionProposal";
+
+    case Type::NonMaxSuppression:
+        return "NonMaxSuppression";
 
     default:
         return "Unkown type";
@@ -75,8 +78,8 @@ string Layer::get_type_string() const
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
-    if(thread_pool_device != nullptr) delete this->thread_pool_device;
+    if(thread_pool != nullptr) delete thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -85,27 +88,11 @@ void Layer::set_threads_number(const int& new_threads_number)
 
 void Layer::set_parameters_constant(const type&)
 {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters_constant(const type&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw invalid_argument(buffer.str());
 }
 
 
 void Layer::set_parameters_random()
 {
-/*
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters_random() method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw invalid_argument(buffer.str());
-*/
 }
 
 
@@ -157,19 +144,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-void Layer::calculate_outputs(type*, const Tensor<Index, 1>&,  type*, const Tensor<Index, 1>&)
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<type, 2>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw invalid_argument(buffer.str());
-};
-
-
-void Layer::forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&)
+void Layer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&)
 {
     ostringstream buffer;
 
@@ -252,9 +227,6 @@ void Layer::linear(type* x_data, const Tensor<Index, 1>& x_dimensions, type* y_d
     if(!same_dimensions(0))
     {
 
-        cout << "x: " << x_dimensions << endl;
-        cout << "y: " << y_dimensions << endl;
-
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Layer class.\n"
@@ -295,7 +267,7 @@ void Layer::linear_derivatives(type* combinations_data,
         throw invalid_argument(buffer.str());
     }
 
-    Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -356,6 +328,12 @@ void Layer::logistic(type* x_data, const Tensor<Index, 1>& x_dimensions, type* y
         TensorMap<Tensor<type, 2>> y(y_data, y_dimensions(0), y_dimensions(1));
         y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
     }
+    else if(rank == 3)
+    {
+        const TensorMap<Tensor<type, 3>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2));
+        TensorMap<Tensor<type, 3>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2));
+        y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+    }
     else if(rank == 4)
     {
         const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
@@ -381,7 +359,7 @@ void Layer::logistic_derivatives(type* combinations_data, const Tensor<Index, 1>
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -572,7 +550,7 @@ void Layer::hard_sigmoid_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -749,6 +727,12 @@ void Layer::hyperbolic_tangent(type* x_data, const Tensor<Index, 1>& x_dimension
         TensorMap<Tensor<type, 2>> y(y_data, y_dimensions(0), y_dimensions(1));
         y.device(*thread_pool_device) = x.tanh();
     }
+    else if(rank == 3)
+    {
+        const TensorMap<Tensor<type, 3>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2));
+        TensorMap<Tensor<type, 3>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2));
+        y.device(*thread_pool_device) = x.tanh();
+    }
     else if(rank == 4)
     {
         const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
@@ -790,7 +774,7 @@ void Layer::hyperbolic_tangent_derivatives(type* combinations_data,
         throw invalid_argument(buffer.str());
     }
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -947,7 +931,7 @@ void Layer::threshold_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1052,7 +1036,7 @@ void Layer::symmetric_threshold_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1079,7 +1063,7 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (x_dimensions== y_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (x_dimensions == y_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1123,14 +1107,14 @@ void Layer::rectified_linear(type* x_data, const Tensor<Index, 1>& x_dimensions,
     else if(rank == 4)
     {
         const TensorMap<Tensor<type, 4>> x(x_data, x_dimensions(0), x_dimensions(1), x_dimensions(2), x_dimensions(3));
+
         TensorMap<Tensor<type, 4>> y(y_data, y_dimensions(0), y_dimensions(1), y_dimensions(2), y_dimensions(3));
 
-        const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
+        y.setZero();
 
-        Tensor<type, 4> zeros(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
-        zeros.setConstant(type(0));
+        y.device(*thread_pool_device) = y.cwiseMax(x);
 
-        y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+        /// @todo do this for all ranks.
     }
     else
     {
@@ -1151,7 +1135,7 @@ void Layer::rectified_linear_derivatives(type* combinations_data, const Tensor<I
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1330,7 +1314,7 @@ void Layer::scaled_exponential_linear_derivatives(type* combinations_data, const
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1515,7 +1499,7 @@ void Layer::soft_plus_derivatives(type* combinations_data,
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1670,7 +1654,7 @@ void Layer::soft_sign_derivatives(type* combinations_data, const Tensor<Index, 1
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -1880,7 +1864,7 @@ void Layer::exponential_linear_derivatives(type* combinations_data, const Tensor
 {
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -2023,40 +2007,27 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
         const TensorMap<Tensor<type, 1>> x(x_data, x_dimensions(0));
         TensorMap<Tensor<type, 1>> y(y_data, y_dimensions(0));
 
-        Tensor<type, 0> sum;
-
-        sum.device(*thread_pool_device) = x.exp().sum();
-
-        y.device(*thread_pool_device) = x.exp() / sum(0);
+        y.device(*thread_pool_device) = (x - x.maximum()).exp();
+        y.device(*thread_pool_device) = y / y.sum();
     }
     else if(rank == 2)
     {
-        const TensorMap<Tensor<type, 2>> x(x_data, x_dimensions(0), x_dimensions(1));
-        TensorMap<Tensor<type, 2>> y(y_data, y_dimensions(0), y_dimensions(1));
+        const Eigen::array<int, 1> dimensions({1});
 
-        const Index columns_number = x.dimension(1);
-        const Index rows_number = x.dimension(0);
-        const Tensor<type, 0> x_maximum = x.maximum();
+        const Index rows_number = x_dimensions(0);
+        const Index columns_number = x_dimensions(1);
 
-        y.device(*thread_pool_device) = - x_maximum(0) + x;
-        y.device(*thread_pool_device) = y.exp();
+        const TensorMap<Tensor<type, 2>> x(x_data, rows_number, columns_number);
 
-        Tensor<type, 1> inverse_sums(rows_number);
-        inverse_sums.setZero();
+        TensorMap<Tensor<type, 2>> y(y_data, rows_number, columns_number);
 
-        Eigen::array<int, 1> dims({1}); // Eigen reduction cols Axis
-        inverse_sums = y.sum(dims).inverse();
+        y.device(*thread_pool_device) = x.exp();
 
-    #pragma omp parallel for
-        for (Index i = 0; i < columns_number; i++)
-        {
-            const TensorMap<Tensor<type, 1>> single_col(y.data()+rows_number*i, rows_number);
+        Tensor<type, 1> rows_sum(rows_number);
 
-            const Tensor<type, 1> tmp_result = single_col*inverse_sums;
+        rows_sum.device(*thread_pool_device) = y.sum(dimensions);
 
-            memcpy(y.data() + rows_number*i,
-                   tmp_result.data(), static_cast<size_t>(rows_number)*sizeof(type));
-        }
+        divide_columns(thread_pool_device, y, rows_sum);
     }
     else
     {
@@ -2072,12 +2043,15 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
 
 void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>& combinations_dimensions,
-                                 type* activations_data, const Tensor<Index, 1>& activations_dimensions,
-                                 type* activations_derivatives_data, const Tensor<Index, 1>& activations_derivatives_dimensions) const
+                                type* activations_data, const Tensor<Index, 1>& activations_dimensions,
+                                type* activations_derivatives_data, const Tensor<Index, 1>& activations_derivatives_dimensions) const
 {
+
     // Check equal sizes and ranks
 
-    const Tensor<bool, 0> same_dimensions = (combinations_dimensions== activations_dimensions).all();
+//    cout << "----- softmax_derivatives -----" << endl;
+
+    const Tensor<bool, 0> same_dimensions = (combinations_dimensions == activations_dimensions).all();
 
     if(!same_dimensions(0))
     {
@@ -2094,85 +2068,81 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
 
     const Index rank = combinations_dimensions.size();
 
-    const Index activations_derivatives_rank = activations_derivatives_dimensions.size();
-
     if(rank == 2)
     {
+        const Index samples_number = combinations_dimensions(0);
+        const Index variables_number = combinations_dimensions(1);
+
         softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
 
-        if(activations_derivatives_rank == 2)
+        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
+
+        TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data,
+                                                           samples_number,
+                                                           variables_number,
+                                                           variables_number);
+
+        for(Index i = 0; i < samples_number; i++)
         {
-            const TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
-            TensorMap<Tensor<type, 2>> activations(activations_data, activations_dimensions(0), activations_dimensions(1));
+            TensorMap<Tensor<type, 1>> sample_activations(activations_data + i*variables_number,
+                                                          variables_number);
 
-            TensorMap<Tensor<type, 2>> activations_derivatives(activations_derivatives_data, activations_derivatives_dimensions(0), activations_derivatives_dimensions(1));
+            TensorMap<Tensor<type, 2>> sample_activations_derivatives(activations_derivatives_data + i*variables_number*variables_number,
+                                                                      variables_number,
+                                                                      variables_number);
 
-            const Index dim = combinations.dimension(1);
+            kronecker_product_void(sample_activations, sample_activations_derivatives);
 
-            const Index matrix_number = activations.dimension(0);
+            sample_activations_derivatives = -sample_activations_derivatives;
 
-            type delta = type(0);
-            Index index= 0;
+            #pragma omp parallel for
 
-            for(Index row = 0; row < matrix_number; row++)
+            for(Index j = 0; j < variables_number; j++)
             {
-                for(Index i = 0; i < dim; i++)
-                {
-                    for(Index j = 0; j < dim; j++)
-                    {
-                        (i == j) ? delta = type(1) : delta = type(0);
-
-                        // row, i, j
-
-                        activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
-                        index++;
-                    }
-                }
-            }
-        }
-        else if(activations_derivatives_rank == 3)
-        {
-            const TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
-            TensorMap<Tensor<type, 2>> activations(activations_data, activations_dimensions(0), activations_dimensions(1));
-
-            TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data, activations_derivatives_dimensions(0), activations_derivatives_dimensions(1), activations_derivatives_dimensions(2));
-
-            const Index dim = combinations.dimension(1);
-
-            const Index matrix_number = activations.dimension(0);
-
-            type delta = type(0);
-            Index index= 0;
-
-            for(Index row = 0; row < matrix_number; row++)
-            {
-                for(Index i = 0; i < dim; i++)
-                {
-                    for(Index j = 0; j < dim; j++)
-                    {
-                        (i == j) ? delta = type(1) : delta = type(0);
-
-                        // row, i, j
-
-                        activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
-                        index++;
-                    }
-                }
+                sample_activations_derivatives(j,j) = sample_activations(j) + sample_activations_derivatives(j,j);
             }
         }
 
     }
-    else
+    else if(rank == 3)
     {
-        ostringstream buffer;
+        const Index samples_number = combinations_dimensions(0);
+        const Index variables_number1 = combinations_dimensions(1);
+        const Index variables_number2 = combinations_dimensions(2);
 
-        buffer << "OpenNN Exception: Layer class.\n"
-               << "void Layer::softmax_derivatives(type* combinations_data, Tensor<Index, 1>& combinations_dimensions,"
-               << "                                           type* activations_data, Tensor<Index, 1>& activations_dimensions,"
-               << "                                           type* activations_derivatives_data, Tensor<Index, 1>& activations_derivatives_dimensions) "
-               << "Softmax function is not implemented for rank " << rank << ".\n";
+        softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
 
-        throw invalid_argument(buffer.str());
+        const TensorMap<Tensor<type, 3>> combinations(combinations_data, samples_number, variables_number1, variables_number2);
+
+        TensorMap<Tensor<type, 3>> activations(activations_data, samples_number, variables_number1, variables_number2);
+
+        TensorMap<Tensor<type, 4>> activations_derivatives(activations_derivatives_data,
+                                                           samples_number,
+                                                           variables_number1,
+                                                           variables_number2,
+                                                           variables_number2);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            TensorMap<Tensor<type, 2>> sample_activations(activations_data,
+                                                          i*variables_number1*variables_number2,variables_number2);
+
+            TensorMap<Tensor<type, 3>> sample_activations_derivatives(activations_derivatives_data,
+                                                                      i*variables_number1*variables_number2*variables_number2,
+                                                                      variables_number1,
+                                                                      variables_number2);
+
+            sample_activations_derivatives = -sample_activations_derivatives;
+
+            #pragma omp parallel for collapse(2)
+            for(Index j = 0; j < variables_number1; j++)
+            {
+                for(Index k = 0; k < variables_number2; k++)
+                {
+                    sample_activations_derivatives(j, k, k) = sample_activations(j) + sample_activations_derivatives(j, k, k);
+                }
+            }
+        }
     }
 }
 

@@ -405,7 +405,7 @@ TrainingResults GradientDescent::perform_training()
     Index selection_failures = 0;
 
     bool stop_training = false;
-    bool switch_train = true;
+    bool is_training = true;
 
     type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
@@ -424,7 +424,7 @@ TrainingResults GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
 
         // Loss index
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
@@ -435,7 +435,7 @@ TrainingResults GradientDescent::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);

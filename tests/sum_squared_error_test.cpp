@@ -63,7 +63,7 @@ void SumSquaredErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         neurons_number = 1;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -86,7 +86,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -108,7 +108,7 @@ void SumSquaredErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%5;
         outputs_number = 1 + rand()%5;
         neurons_number = 1 + rand()%5;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -130,7 +130,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -151,7 +151,7 @@ void SumSquaredErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -171,7 +171,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -197,7 +197,7 @@ void SumSquaredErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%10;
         outputs_number = 1;
         neurons_number = 1 + rand()%10;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -218,7 +218,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -240,7 +240,7 @@ void SumSquaredErrorTest::test_back_propagate()
         inputs_number = 1;
         outputs_number = 1;
         samples_number = 1;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -260,7 +260,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -281,7 +281,7 @@ void SumSquaredErrorTest::test_back_propagate()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -302,7 +302,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -332,7 +332,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -353,7 +353,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -385,7 +385,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -406,7 +406,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 
@@ -438,7 +438,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         inputs_number = 1 + rand()%10;
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
-        bool switch_train = true;
+        bool is_training = true;
 
         // Data set
 
@@ -459,7 +459,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, switch_train);
+        neural_network.forward_propagate(batch, forward_propagation, is_training);
 
         // Loss index
 

@@ -207,9 +207,10 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions[0];
 
-    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data(0),
+                                             outputs_dimensions[0], outputs_dimensions(1));
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
     const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
@@ -225,10 +226,10 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = (static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient;
+    const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
 
     back_propagation.error = weighted_sum_squared_error(0)/coefficient;
 
@@ -252,10 +253,10 @@ void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
     Tensor<type, 0> error;
     error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = (static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient;
+    const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
 
     back_propagation.error = error()/coefficient;
 }
@@ -324,10 +325,10 @@ void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch
 
 #endif
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -345,10 +346,10 @@ void WeightedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
 
 #endif
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_size)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
@@ -541,9 +542,10 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions;
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions[0];
 
-    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data(0),
+                                             outputs_dimensions[0], outputs_dimensions(1));
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(outputs, outputs.constant(type(1)));
 

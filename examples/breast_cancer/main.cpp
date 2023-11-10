@@ -40,12 +40,14 @@ int main()
 
                 NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, neurons_number, target_variables_number});
 
+                neural_network.print();
+
                 // Training strategy
 
                 TrainingStrategy training_strategy(&neural_network, &data_set);
 
-                training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-                training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+                training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+                training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
                 training_strategy.perform_training();
 

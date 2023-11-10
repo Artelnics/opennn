@@ -707,6 +707,8 @@ TrainingResults ConjugateGradient::perform_training()
 
     // Data set
 
+    cout << "----- ConjugateGradient ----" << endl;
+
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
@@ -727,6 +729,16 @@ TrainingResults ConjugateGradient::perform_training()
 
     const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
+
+//    cout << "Training samples number: " << training_samples_number << endl;
+//    cout << "Selection samples number: " << selection_samples_number << endl;
+//    cout << "Has selection: " << (has_selection ? "Yes" : "No") << endl;
+
+//    cout << "Training samples indices: " << training_samples_indices << endl;
+//    cout << "Selection samples indices: " << selection_samples_indices << endl;
+
+//    cout << "Input variables indices: " << input_variables_indices << endl;
+//    cout << "Target variables indices: " << target_variables_indices << endl;
 
     // Neural network
 
@@ -770,7 +782,7 @@ TrainingResults ConjugateGradient::perform_training()
     type loss_decrease = numeric_limits<type>::max();
 
     bool stop_training = false;
-    bool switch_train = true;
+    bool is_training = true;
     Index selection_failures = 0;
 
     ConjugateGradientData optimization_data(this);
@@ -785,7 +797,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, switch_train);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
 
         // Loss index
 
@@ -798,7 +810,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, switch_train);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -894,6 +906,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
+
 
     if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
     {

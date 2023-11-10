@@ -147,6 +147,108 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 }
 
 
+void PoolingLayerTest::test_forward_propagate_average_pooling()
+{
+
+/*
+    const Index batch_samples_number = 1;
+
+    const Index inputs_channels_number = 3;
+    const Index inputs_rows_number = 5;
+    const Index inputs_columns_number = 5;
+
+    const Index pool_rows_number = 2;
+    const Index pool_columns_number = 2;
+
+    const Index targets_number = 1;
+
+    DataSet data_set(batch_samples_number,
+                     inputs_channels_number,
+                     inputs_rows_number,
+                     inputs_columns_number,
+                     targets_number);
+
+    data_set.set_data_constant(static_cast<type>(1));
+
+    Tensor<Index, 1> input_variables_dimensions(3);
+    input_variables_dimensions.setValues({inputs_channels_number,
+                                          inputs_rows_number,
+                                          inputs_columns_number});
+
+    Tensor<Index, 1> pool_dimensions(2);
+    pool_dimensions.setValues({pool_rows_number,
+                               pool_columns_number});
+
+    PoolingLayer pooling_layer(input_variables_dimensions, pool_dimensions);
+
+
+    PoolingLayerForwardPropagation pooling_layer_forward(batch_samples_number, &pooling_layer);
+
+    Tensor<type, 4> inputs_data(batch_samples_number,
+                                inputs_channels_number,
+                                inputs_rows_number,
+                                inputs_columns_number);
+
+    inputs_data.setValues({
+                    {
+        {
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0}
+        },
+        {
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0}
+        },
+        {
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0},
+            {0.0, 1.0, 2.0, 2.0, 2.0}
+        }
+    }
+});
+
+
+    bool is_training = true;
+
+    pooling_layer.forward_propagate_average_pooling(inputs_data.data(),
+                                                    input_variables_dimensions,
+                                                    &pooling_layer_forward,
+                                                    is_training);
+
+    Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
+
+    assert_true(outputs_dimensions.size() == input_variables_dimensions.size(), LOG);
+    for(Index i = 0; i < outputs_dimensions.size(); ++i)
+    {
+        assert_true(outputs_dimensions(i) <= input_variables_dimensions(i), LOG);
+    }
+
+    type* outputs_data = pooling_layer_forward.outputs_data(0);
+
+    TensorMap<Tensor<type, 4>> outputs(outputs_data,
+                                       outputs_dimensions[0],
+                                       outputs_dimensions(1),
+                                       outputs_dimensions(2),
+                                       outputs_dimensions(3));
+
+    Tensor<type, 3> batch = outputs.chip(0,0);
+
+    cout << "1 single channel: " << endl << batch.chip(0,0) << endl;
+
+    cout << "outputs: " << endl << outputs << endl;
+
+    cout << "Bye!" << endl;
+*/
+}
+
 void PoolingLayerTest::test_calculate_max_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";

@@ -48,7 +48,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
     Index outputs_number = neural_network_pointer->get_outputs_number();
 
     // Check if works for convolutional
-    const Index batch_samples_number = outputs_number * batch.get_batch_size();
+    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
 // This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
 
@@ -79,7 +79,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
     Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    const Index batch_samples_number = outputs_number * batch.get_batch_size();
+    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
@@ -105,7 +105,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      Index outputs_number = neural_network_pointer->get_outputs_number();
 
-     const Index batch_samples_number = outputs_number * batch.get_batch_size();
+     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
 //     This line was written in convolutional. Without it, batch samples number was 0.
 //     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
@@ -160,7 +160,7 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
 
-    divide_columns(output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
+    divide_columns(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
 }
 
 
@@ -175,9 +175,9 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 
     Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    const Index batch_size = outputs_number * batch.get_batch_size();
+    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-    const type coefficient = type(2)/static_cast<type>(batch_size);
+    const type coefficient = type(2)/static_cast<type>(batch_samples_number);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -196,7 +196,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
 
      Index outputs_number = neural_network_pointer->get_outputs_number();
 
-     const Index batch_samples_number = outputs_number * batch.get_batch_size();
+     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 

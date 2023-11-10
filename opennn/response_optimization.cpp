@@ -368,7 +368,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     Index index;
 
-    for(Index i = 0; i < variables_number; i ++)
+    for(Index i = 0; i < variables_number; i++)
     {
         if(contains(inputs_names,names[i]))
         {
@@ -535,6 +535,7 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
 Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 {
+
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
@@ -701,7 +702,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 }
 
 
-type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum) const
+type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum)
 {
     const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 

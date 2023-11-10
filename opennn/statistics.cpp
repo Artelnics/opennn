@@ -230,7 +230,7 @@ void BoxPlot::set(const type& new_minimum,
 
 void Descriptives::save(const string &file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -590,7 +590,7 @@ Index Histogram::calculate_frequency(const type&value) const
 void Histogram::save(const string& histogram_file_name) const
 {
     const Index number_of_bins = centers.dimension(0);
-    std::ofstream histogram_file(histogram_file_name);
+    ofstream histogram_file(histogram_file_name);
 
     histogram_file << "centers,frequencies" << endl;
     for(Index i = 0; i < number_of_bins; i++)
@@ -2538,15 +2538,15 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     type median = type(0);
 
-    Tensor<type, 1> sorted_column(0);
+    Tensor<type, 1> sorted_column;
 
-    Tensor<type, 1> column = matrix.chip(column_index,1);
+    const Tensor<type, 1> column = matrix.chip(column_index,1);
 
     for(Index i = 0; i < column.size(); i++)
     {
         if(!isnan(column(i)))
         {
-            sorted_column = push_back(sorted_column,column(i));
+            push_back_type(sorted_column, column(i));
         }
     }
 
@@ -2568,7 +2568,6 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 /// Returns a vector with the median values of given columns.
 /// The size of the vector is equal to the size of the column indices vector.
 /// @param columns_indices Indices of columns.
-
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
 {
@@ -2593,8 +2592,8 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
         for(Index i = 0; i < column.size(); i++)
         {
             if(!isnan(column(i)))
-            {
-                sorted_column = push_back(sorted_column,column(i));
+            {                
+                push_back_type(sorted_column,column(i));
             }
         }
 
@@ -2707,15 +2706,15 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
     {
         column_index = columns_indices(j);
 
-        Tensor<type, 1> sorted_column(0);
+        Tensor<type, 1> sorted_column;
 
         for(Index k = 0; k < row_indices_size; k++)
         {
             const Index row_index = row_indices(k);
 
             if(!isnan(matrix(row_index, column_index)))
-            {
-                sorted_column = push_back(sorted_column, matrix(row_index,column_index));
+            {                
+                push_back_type(sorted_column, matrix(row_index, column_index));
             }
         }
 
@@ -3046,7 +3045,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
 
     const Index size = vector.dimension(0);
     Tensor<Index, 1> minimal_indices(number);
-    Eigen::Tensor<type, 0> maxim = vector.maximum();
+    Tensor<type, 0> maxim = vector.maximum();
 
 #ifdef OPENNN_DEBUG
 
@@ -3090,7 +3089,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 {
     const Index size = vector.dimension(0);
 
-    const Eigen::Tensor<type, 0> minimum = vector.minimum();
+    const Tensor<type, 0> minimum = vector.minimum();
 
     Tensor<type, 1> vector_copy = vector;
 

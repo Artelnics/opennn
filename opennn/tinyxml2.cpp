@@ -212,9 +212,9 @@ char* StrPair::ParseText(char* p, const char* endTag, int strFlags, int* curLine
         }
         else if(*p == '\n')
         {
-            ++ (*curLineNumPtr);
+           ++ (*curLineNumPtr);
         }
-        ++p;
+       ++p;
         TIXMLASSERT(p );
     }
     return 0;
@@ -233,10 +233,10 @@ char* StrPair::ParseName(char* p )
     }
 
     char* const start = p;
-    ++p;
+   ++p;
     while(*p && XMLUtil::IsNameChar(*p ))
     {
-        ++p;
+       ++p;
     }
 
     Set(start, p, 0 );
@@ -266,11 +266,11 @@ void StrPair::CollapseWhitespace()
                     break;    // don't write to q; this trims the trailing space.
                 }
                 *q = ' ';
-                ++q;
+               ++q;
             }
             *q = *p;
-            ++q;
-            ++p;
+           ++q;
+           ++p;
         }
         *q = 0;
     }
@@ -304,10 +304,10 @@ const char* StrPair::GetStr()
                     }
                     else
                     {
-                        ++p;
+                       ++p;
                     }
                     *q = LF;
-                    ++q;
+                   ++q;
                 }
                 else if((_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == LF )
                 {
@@ -317,10 +317,10 @@ const char* StrPair::GetStr()
                     }
                     else
                     {
-                        ++p;
+                       ++p;
                     }
                     *q = LF;
-                    ++q;
+                   ++q;
                 }
                 else if((_flags & NEEDS_ENTITY_PROCESSING) && *p == '&')
                 {
@@ -338,8 +338,8 @@ const char* StrPair::GetStr()
                         if(adjusted == 0 )
                         {
                             *q = *p;
-                            ++p;
-                            ++q;
+                           ++p;
+                           ++q;
                         }
                         else
                         {
@@ -353,7 +353,7 @@ const char* StrPair::GetStr()
                     else
                     {
                         bool entityFound = false;
-                        for(int i = 0; i < NUM_ENTITIES; ++i )
+                        for(int i = 0; i < NUM_ENTITIES;++i )
                         {
                             const Entity& entity = entities[i];
                             if(strncmp(p + 1, entity.pattern, entity.length ) == 0
@@ -361,7 +361,7 @@ const char* StrPair::GetStr()
                             {
                                 // Found an entity - convert.
                                 *q = entity.value;
-                                ++q;
+                               ++q;
                                 p += entity.length + 2;
                                 entityFound = true;
                                 break;
@@ -370,16 +370,16 @@ const char* StrPair::GetStr()
                         if(!entityFound )
                         {
                             // fixme: treat as error?
-                            ++p;
-                            ++q;
+                           ++p;
+                           ++q;
                         }
                     }
                 }
                 else
                 {
                     *q = *p;
-                    ++p;
-                    ++q;
+                   ++p;
+                   ++q;
                 }
             }
             *q = 0;
@@ -836,7 +836,7 @@ XMLNode::~XMLNode()
 const char* XMLNode::Value() const
 {
     // Edge case: XMLDocuments don't have a Value. Return null.
-    if(this->ToDocument())
+    if(ToDocument())
         return 0;
     return _value.GetStr();
 }
@@ -855,10 +855,10 @@ void XMLNode::SetValue(const char* str, bool staticMem )
 
 XMLNode* XMLNode::DeepClone(XMLDocument* target) const
 {
-    XMLNode* clone = this->ShallowClone(target);
+    XMLNode* clone = ShallowClone(target);
     if(!clone) return 0;
 
-    for(const XMLNode* child = this->FirstChild(); child; child = child->NextSibling())
+    for(const XMLNode* child = FirstChild(); child; child = child->NextSibling())
     {
         XMLNode* childClone = child->DeepClone(target);
         TIXMLASSERT(childClone);
@@ -1237,7 +1237,7 @@ void XMLNode::InsertChildPreamble(XMLNode* insertThis ) const
 
 const XMLElement* XMLNode::ToElementWithName(const char* name ) const
 {
-    const XMLElement* element = this->ToElement();
+    const XMLElement* element = ToElement();
     if(element == 0 )
     {
         return 0;
@@ -1256,7 +1256,7 @@ const XMLElement* XMLNode::ToElementWithName(const char* name ) const
 // --------- XMLText ---------- //
 char* XMLText::ParseDeep(char* p, StrPair*, int* curLineNumPtr )
 {
-    if(this->CData())
+    if(CData())
     {
         p = _value.ParseText(p, "]]>", StrPair::NEEDS_NEWLINE_NORMALIZATION, curLineNumPtr );
         if(!p )
@@ -1294,7 +1294,7 @@ XMLNode* XMLText::ShallowClone(XMLDocument* doc ) const
         doc = _document;
     }
     XMLText* text = doc->NewText(Value());	// fixme: this will always allocate memory. Intern?
-    text->SetCData(this->CData());
+    text->SetCData(CData());
     return text;
 }
 
@@ -1492,7 +1492,7 @@ char* XMLAttribute::ParseDeep(char* p, bool processEntities, int* curLineNumPtr 
         return 0;
     }
 
-    ++p;	// move up to opening quote
+   ++p;	// move up to opening quote
     p = XMLUtil::SkipWhiteSpace(p, curLineNumPtr );
     if(*p != '\"' && *p != '\'')
     {
@@ -1500,7 +1500,7 @@ char* XMLAttribute::ParseDeep(char* p, bool processEntities, int* curLineNumPtr 
     }
 
     char endTag[2] = { *p, 0 };
-    ++p;	// move past opening quote
+   ++p;	// move past opening quote
 
     p = _value.ParseText(p, endTag, processEntities ? StrPair::ATTRIBUTE_VALUE : StrPair::ATTRIBUTE_VALUE_LEAVE_ENTITIES, curLineNumPtr );
     return p;
@@ -2022,7 +2022,7 @@ char* XMLElement::ParseAttributes(char* p, int* curLineNumPtr )
         // end of the tag
         else if(*p == '>')
         {
-            ++p;
+           ++p;
             break;
         }
         // end of the tag
@@ -2076,7 +2076,7 @@ char* XMLElement::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
     if(*p == '/')
     {
         _closingType = CLOSING;
-        ++p;
+       ++p;
     }
 
     p = _value.ParseName(p );
@@ -2219,7 +2219,7 @@ void XMLDocument::MarkInUse(XMLNode* node)
     TIXMLASSERT(node);
     TIXMLASSERT(node->_parent == 0);
 
-    for(int i = 0; i < _unlinked.Size(); ++i)
+    for(int i = 0; i < _unlinked.Size();++i)
     {
         if(node == _unlinked[i])
         {
@@ -2273,7 +2273,7 @@ void XMLDocument::DeepCopy(XMLDocument* target) const
     }
 
     target->Clear();
-    for(const XMLNode* node = this->FirstChild(); node; node = node->NextSibling())
+    for(const XMLNode* node = FirstChild(); node; node = node->NextSibling())
     {
         target->InsertEndChild(node->DeepClone(target));
     }
@@ -2599,12 +2599,12 @@ XMLPrinter::XMLPrinter(FILE* file, bool compact, int depth ) :
     _compactMode(compact ),
     _buffer()
 {
-    for(int i = 0; i <ENTITY_RANGE; ++i )
+    for(int i = 0; i <ENTITY_RANGE;++i )
     {
         _entityFlag[i] = false;
         _restrictedEntityFlag[i] = false;
     }
-    for(int i = 0; i <NUM_ENTITIES; ++i )
+    for(int i = 0; i <NUM_ENTITIES;++i )
     {
         const char entityValue = entities[i].value;
         const unsigned char flagint = (unsigned char)entityValue;
@@ -2674,7 +2674,7 @@ void XMLPrinter::Putc(char ch )
 
 void XMLPrinter::PrintSpace(int depth )
 {
-    for(int i = 0; i <depth; ++i )
+    for(int i = 0; i <depth;++i )
     {
         Write("   ");
     }
@@ -2708,7 +2708,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                         p += toPrint;
                     }
                     bool entityPatternPrinted = false;
-                    for(int i = 0; i <NUM_ENTITIES; ++i )
+                    for(int i = 0; i <NUM_ENTITIES;++i )
                     {
                         if(entities[i].value == *q )
                         {
@@ -2724,10 +2724,10 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                         // TIXMLASSERT(entityPatternPrinted ) causes gcc -Wunused-but-set-variable in release
                         TIXMLASSERT(false );
                     }
-                    ++p;
+                   ++p;
                 }
             }
-            ++q;
+           ++q;
             TIXMLASSERT(p <= q );
         }
     }
@@ -2776,7 +2776,7 @@ void XMLPrinter::OpenElement(const char* name, bool compactMode )
 
     _elementJustOpened = true;
     _firstElement = false;
-    ++_depth;
+   ++_depth;
 }
 
 

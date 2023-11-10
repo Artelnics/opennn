@@ -99,7 +99,7 @@ private:
 
     Index inputs_number;
     Index outputs_number;
-    Index batch_size;
+    Index batch_samples_number;
 
     Tensor<type, 2> data;
 

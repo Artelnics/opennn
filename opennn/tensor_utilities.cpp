@@ -26,6 +26,23 @@ void initialize_sequential(Tensor<Index, 1>& vector)
 }
 
 
+void initialize_sequential(Tensor<Index, 1>& new_tensor,
+                           const Index& start, const Index& step, const Index& end)
+{
+    const Index new_size = (end-start)/step+1;
+
+    new_tensor.resize(new_size);
+    new_tensor(0) = start;
+
+    for(Index i = 1; i < new_size-1; i++)
+    {
+        new_tensor(i) = new_tensor(i-1)+step;
+    }
+
+    new_tensor(new_size-1) = end;
+}
+
+
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index columns_number = matrix.dimension(1);
@@ -43,19 +60,29 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-    const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
-
-//    #pragma omp parallel for
+    const Index columns_number = matrix.dimension(1);
 
     for(Index j = 0; j < columns_number; j++)
     {
-        for(Index i = 0; i < rows_number; i++)
-        {
-           matrix(i,j) /= vector(i) == type(0) ? type(1) : vector(i);
-        }
+        TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
+
+        column.device(*thread_pool_device) = column/vector(j);
+    }
+}
+
+
+void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
+        column.device(*thread_pool_device) = column / vector;
     }
 }
 
@@ -72,6 +99,7 @@ bool is_zero(const Tensor<type, 1>& tensor)
     return true;
 }
 
+
 bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 {
     const Index size = tensor.size();
@@ -83,6 +111,7 @@ bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 
     return true;
 }
+
 
 bool is_nan(const Tensor<type,1>& tensor)
 {
@@ -118,6 +147,21 @@ bool is_false(const Tensor<bool, 1>& tensor)
     return true;
 }
 
+Index true_count(const Tensor<bool, 1>& tensor)
+{
+    Index trueCount = 0;
+
+    for (int i = 0; i < tensor.size(); ++i)
+    {
+        if(tensor(i))
+        {
+            trueCount++;
+        }
+    }
+
+    return trueCount;
+}
+
 
 bool is_binary(const Tensor<type, 2>& matrix)
 {
@@ -136,7 +180,7 @@ bool is_constant(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
 
-    type first_not_nan_element;
+    type first_not_nan_element = 0.0;
 
     for(Index i = 0; i < size; i++)
     {
@@ -175,7 +219,6 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 }
 
 
-
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
 {
     const Index size = vector_1.size();
@@ -187,7 +230,6 @@ bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2,
 
     return true;
 }
-
 
 
 bool are_equal(const Tensor<bool, 1>& vector_1, const Tensor<bool, 1>& vector_2)
@@ -230,7 +272,7 @@ bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    if (x.size() != y.size() || x.dimension(0) != y.dimension(0) || x.dimension(1) != y.dimension(1))
+    if(x.size() != y.size() || x.dimension(0) != y.dimension(0) || x.dimension(1) != y.dimension(1))
     {
         ostringstream buffer;
 
@@ -243,14 +285,14 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
-    for (int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
+    for(int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
 
     return result;
 }
 
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
-    std::ofstream file(filename);
+    ofstream file(filename);
 
     if(!file.is_open())
     {
@@ -319,7 +361,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
-    std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
+    replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
 
 
@@ -578,7 +620,7 @@ Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
 
-//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+//    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
 };
@@ -589,7 +631,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 {
     Tensor<Index, 1> new_vector(index);
 
-//    std::copy(new_vector.data(), new_vector.data() + index, vector.data());
+//    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
 };
@@ -717,23 +759,34 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
 };
 
 
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
 {
-    const Index size = x.size();
+    // Transform Tensors into Dense matrix
 
-    Tensor<type, 2> direct(size, size);
+    auto ml = Map<Matrix<type, Dynamic, Dynamic, RowMajor >>(x.data(), x.dimension(0), 1);
 
-    #pragma omp parallel for
+    auto mr = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(y.data(),y.dimension(0), 1);
 
-    for(Index i = 0; i < size; i++)
-    {
-        for(Index j = 0; j < size; j++)
-        {
-            direct(i, j) = x(i) * y(j);
-        }
-    }
+    // Kronecker Product
 
-    return direct;
+    auto product = kroneckerProduct(ml, mr).eval();
+
+    // Matrix into a Tensor
+
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), x.size(), y.size());
+
+    return direct_matrix;
+}
+
+
+void kronecker_product_void(TensorMap<Tensor<type, 1>>& x, TensorMap<Tensor<type, 2>>& y)
+{
+    const Index n = x.dimension(0);
+    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic> >(x.data(), n, 1);
+
+    auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n*n, 1);
+
+    product = kroneckerProduct(x_matrix, x_matrix).eval();
 }
 
 
@@ -796,7 +849,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 }
 
 
-void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
+void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
@@ -842,22 +895,20 @@ type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
 }
 
 
-type l2_distance(const TensorMap<Tensor<type, 0>>&x, const TensorMap<Tensor<type, 0>>&y)
+type l2_distance(const type& x, const type& y)
 {
-    Tensor<type, 0> distance;
+    const type distance = fabs(x - y);
 
-    distance = (x-y).square().sum().sqrt();
-
-    return distance(0);
+    return distance;
 }
 
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
 {
     Tensor<type, 1> distance(size);
 
-    Tensor<type, 2> difference = x - y;
+    const Tensor<type, 2> difference = x - y;
 
-    for(Index i = 0; i < difference.dimension(1); i ++)
+    for(Index i = 0; i < difference.dimension(1); i++)
     {
         distance(i) = abs(difference(i));
     }
@@ -871,9 +922,11 @@ void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
     const Index rows_number = matrix.dimension(0);
 
     #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
         matrix(i,i) += value;
 }
+
 
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
@@ -1081,8 +1134,8 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    std::copy(x.data(), x.data() + x.size(), data.data());
-    std::copy(y.data(), y.data() + y.size(), data.data() + x.size());
+    copy(x.data(), x.data() + x.size(), data.data());
+    copy(y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;
 }
@@ -1217,29 +1270,6 @@ string tensor_string_to_text(const Tensor<string,1>&x, string& separator)
     return line;
 
 }
-/*
-Matrix<string> Matrix<T>::to_string_matrix(const size_t& precision) const
-{
-   Matrix<string> string_matrix(rows_number, columns_number);
-
-   ostringstream buffer;
-
-   for(size_t i = 0; i < rows_number; i++)
-   {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-         buffer.str("");
-         buffer << setprecision(precision) <<(*this)(i,j);
-
-         string_matrix(i,j) = buffer.str();
-      }
-   }
-
-   if(!header.empty()) string_matrix.set_header(header);
-
-   return string_matrix;
-}
-*/
 
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
@@ -1311,6 +1341,17 @@ bool is_less_than(const Tensor<type, 1>& column, const type& value)
     return is_less(0);
 }
 
+
+bool contains(const Tensor<size_t,1>& vector, const size_t& value)
+{
+    Tensor<size_t, 1> copy(vector);
+
+    const size_t* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return it != (copy.data()+copy.size());
+}
+
+
 bool contains(const Tensor<type,1>& vector, const type& value)
 {
     Tensor<type, 1> copy(vector);
@@ -1318,7 +1359,7 @@ bool contains(const Tensor<type,1>& vector, const type& value)
     const type* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
-};
+}
 
 
 bool contains(const Tensor<Index,1>& vector, const Index& value)
@@ -1328,7 +1369,7 @@ bool contains(const Tensor<Index,1>& vector, const Index& value)
     const Index* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
-};
+}
 
 
 bool contains(const Tensor<string,1>& vector, const string& value)
@@ -1341,7 +1382,7 @@ bool contains(const Tensor<string,1>& vector, const string& value)
 };
 
 
-Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_element)
+void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
 {
     const Index old_size = old_vector.size();
 
@@ -1353,11 +1394,11 @@ Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_
 
     new_vector(new_size-1) = new_element;
 
-    return new_vector;
+    old_vector = new_vector;
 }
 
 
-Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& new_string)
+void push_back_string(Tensor<string, 1>& old_vector, const string& new_string)
 {
     const Index old_size = old_vector.size();
 
@@ -1369,23 +1410,23 @@ Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& n
 
     new_vector(new_size-1) = new_string;
 
-    return new_vector;
+    old_vector = new_vector;
 }
 
 
-Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_value)
+void push_back_type(Tensor<type, 1>& vector, const type& new_value)
 {
-    const Index old_size = old_vector.size();
+    const Index old_size = vector.size();
 
     const Index new_size = old_size+1;
 
     Tensor<type, 1> new_vector(new_size);
 
-    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+    for(Index i = 0; i < old_size; i++) new_vector(i) = vector(i);
 
     new_vector(new_size-1) = new_value;
 
-    return new_vector;
+    vector = new_vector;
 }
 
 
@@ -1395,41 +1436,104 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 
     for(Index i = 0; i < x.size(); i++)
     {
-        vector(i) = std::to_string(x(i));
+        vector(i) = to_string(x(i));
     }
-    return vector;
 
+    return vector;
 };
 
 
-void print_tensor(const float* vector, const int dims[])
+void print_tensor(const float* vector, const int dimensions[])
 {
     cout<<"Tensor"<<endl;
 
-    const int rows_number = dims[0];
-    const int cols_number = dims[1];
-    const int channels = dims[2];
-    const int batch = dims[3];
+    const int rows_number = dimensions[0];
+    const int cols_number = dimensions[1];
+    const int channels = dimensions[2];
+    const int batch = dimensions[3];
 
-    for (int l=0; l<batch; l++)
+    for(int l = 0; l<batch; l++)
     {
-        for (int k=0; k<channels; k++)
+        for(int k = 0; k<channels; k++)
         {
-            for (int i=0; i<rows_number; i++)
+            for(int i = 0; i<rows_number; i++)
             {
-                for (int j=0; j<cols_number; j++)
+                for(int j = 0; j<cols_number; j++)
                 {
-                    if (i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+                    if(i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+
                         cout<< "<--Batch-->"<<endl;
-                    if (i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+
+                    if(i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+
                         cout<< "*--Channel--*"<<endl;
 
                    cout<<*(vector + i + j*rows_number + k*rows_number*cols_number+ l*channels*rows_number*cols_number)<< " ";
                 }
+
                cout<<" "<<endl;
             }
         }
     }
+}
+
+void swap_rows(Tensor<type, 2>& data_matrix, Index row1, Index row2)
+{
+    Tensor<type, 1> temp = data_matrix.chip(row1, 0);
+    data_matrix.chip(row1, 0) = data_matrix.chip(row2, 0);
+    data_matrix.chip(row2, 0) = temp;
+}
+
+
+void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index target_column)
+{
+    if (start_index >= end_index)
+        return;
+
+    Index partition_index = partition(data, start_index, end_index, target_column);
+
+    quick_sort(data, start_index, partition_index - 1, target_column);
+    quick_sort(data, partition_index + 1, end_index, target_column);
+}
+
+Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index, Index target_column)
+{
+    Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
+    type pivot_value = pivot_row(target_column);
+    Index smaller_elements_count = 0;
+
+    for (Index current_index = start_index + 1; current_index <= end_index; current_index++)
+    {
+        if (data_matrix(current_index, target_column) <= pivot_value)
+        {
+            smaller_elements_count++;
+        }
+    }
+
+    Index pivot_position = start_index + smaller_elements_count;
+    swap_rows(data_matrix, pivot_position, start_index);
+
+    Index left_index = start_index, right_index = end_index;
+
+    while (left_index < pivot_position && right_index > pivot_position)
+    {
+        while (data_matrix(left_index, target_column) <= pivot_value)
+        {
+            left_index++;
+        }
+
+        while (data_matrix(right_index, target_column) > pivot_value)
+        {
+            right_index--;
+        }
+
+        if (left_index < pivot_position && right_index > pivot_position)
+        {
+            swap_rows(data_matrix, left_index++, right_index--);
+        }
+    }
+
+    return pivot_position;
 }
 
 }

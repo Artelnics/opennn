@@ -397,7 +397,10 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
+void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                      const Tensor<Tensor<Index, 1>, 1>& inputs_tensor_dimensions,
+                                      LayerForwardPropagation* forward_propagation,
+                                      const bool& is_training)
 {
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
@@ -408,104 +411,54 @@ void BoundingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>&
         ostringstream buffer;
 
         buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final method.\n"
+               << "void forward_propagate method.\n"
                << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
 
         throw invalid_argument(buffer.str());
     }
 #endif
 
-    if(bounding_method == BoundingMethod::Bounding)
-    {
-        TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type,2>> outputs(bounding_layer_forward_propagation->outputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
-        const Index rows_number = inputs_dimensions(0);
-        const Index columns_number = inputs_dimensions(1);
-
-        for(Index i = 0; i < rows_number; i++)
-                {
-                    for(Index j = 0; j < columns_number; j++)
-                    {
-                        if(inputs(i,j) < lower_bounds(j))
-                        {
-                            outputs(i,j) = lower_bounds(j);
-                        }
-                        else if(inputs(i,j) > upper_bounds(j))
-                        {
-                            outputs(i,j) = upper_bounds(j);
-                        }
-                        else
-                        {
-                            outputs(i,j) = inputs(i,j);
-                        }
-                    }
-                }
-
-    }
-    else
-    {
-        Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
-        copy(inputs_data, inputs_data + inputs_size(0), bounding_layer_forward_propagation->outputs_data);
-    }
-}
-
-/*
-/// Calculates the outputs from the bounding layer for a set of inputs to that layer.
-/// @param inputs Set of inputs to the bounding layer.
-
-void BoundingLayer::calculate_outputs(type* inputs_data , const Tensor<Index, 1>& inputs_dimensions,
-                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
-{
-#ifdef OPENNN_DEBUG
-    if(inputs_dimensions(1) != get_inputs_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
+    Tensor<Index, 1> inputs_dimensions(inputs_tensor_dimensions(0));
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        TensorMap<Tensor<type,2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type,2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
-
         const Index rows_number = inputs_dimensions(0);
         const Index columns_number = inputs_dimensions(1);
 
-        if(outputs_dimensions(0) != rows_number || outputs_dimensions(1) != columns_number)
-        {
-            ostringstream buffer;
+        TensorMap<Tensor<type,2>> inputs(inputs_data(0),
+                                         rows_number,
+                                         columns_number);
 
-            buffer << "OpenNN Exception: BoundingLayer class.\n"
-                   << "void calculate_outputs(type*, Tensor<Index, 1>&, type*, Tensor<Index, 1>&)"
-                   << "Inputs and outputs dimensions must be the same.\n";
-
-            throw invalid_argument(buffer.str());
-        }
+        TensorMap<Tensor<type,2>> outputs(bounding_layer_forward_propagation->outputs_data(0),
+                                          rows_number,
+                                          columns_number);
 
         for(Index i = 0; i < rows_number; i++)
         {
             for(Index j = 0; j < columns_number; j++)
             {
-                if(inputs(i,j) < lower_bounds(j)) outputs(i,j) = lower_bounds(j);
-                else if(inputs(i,j) > upper_bounds(j)) outputs(i,j) = upper_bounds(j);
-                else outputs(i,j) = inputs(i,j);
+                if(inputs(i,j) < lower_bounds(j))
+                {
+                    outputs(i,j) = lower_bounds(j);
+                }
+                else if(inputs(i,j) > upper_bounds(j))
+                {
+                    outputs(i,j) = upper_bounds(j);
+                }
+                else
+                {
+                    outputs(i,j) = inputs(i,j);
+                }
             }
         }
     }
     else
     {
         Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
-        copy(outputs_data, outputs_data + inputs_size(0), inputs_data);
+        copy(inputs_data(0), inputs_data(0) + inputs_size(0), bounding_layer_forward_propagation->outputs_data(0));
     }
 }
-*/
+
 
 /// Returns a string writing if use bounding layer or not.
 
