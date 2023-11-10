@@ -1447,7 +1447,10 @@ string replace_non_allowed_programming_expressions(string& s)
             if(c==','){ out+="_colon_"; continue;}
             if(c==';'){ out+="_semic_"; continue;}
             if(c=='\\'){ out+="_slash_";continue;}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4ae7d4033fe391d827fca06379df72f1f97c29fb
             if(c=='&'){ out+="_amprsn_"; continue;}
             if(c=='?'){ out+="_ntrgtn_"; continue;}
             if(c=='<'){ out+="_lower_" ; continue;}
