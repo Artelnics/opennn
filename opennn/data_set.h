@@ -747,6 +747,7 @@ public:
 
     Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_columns_correlations_spearman() const;
+    Tensor<Correlation, 2> calculate_relevant_input_target_columns_correlations(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
     void print_input_target_columns_correlations() const;
 
