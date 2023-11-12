@@ -83,6 +83,10 @@ public:
 
     bool is_empty() const;
 
+    // Gradients
+
+    void calculate_hidden_delta(LayerForwardPropagation*, LayerBackPropagation*, LayerBackPropagation*) const override;
+
     // Outputs
 
     void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;

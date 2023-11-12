@@ -163,10 +163,16 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
     #pragma omp parallel for
     for(Index image_index = 0; image_index < batch_size; image_index++)
     {
-        for(Index variable_counter = 0; variable_counter < variable_size; variable_counter++)
+        Index variable_counter = 0;
+        for(Index row_index = 0; row_index < rows_number; row_index++)
         {
-            outputs(image_index, variable_counter) = 
-                inputs(image_index * variable_size + variable_counter);
+            for(Index column_index = 0; column_index < columns_number; column_index++)
+            {
+                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+                {
+                    outputs(image_index, variable_counter++) = inputs(row_index, column_index, channel_index, image_index);
+                }
+            }
         }
     }
 }
@@ -214,7 +220,47 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     
 }
 
+void FlattenLayer::calculate_hidden_delta(
+    LayerForwardPropagation* next_layer_forwardpropagation,
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerBackPropagation* back_propagation) const
+{
+    const Index next_delta_pixel_numbers = next_layer_back_propagation->deltas_dimensions(0);
+    const Index images_number = next_layer_back_propagation->deltas_dimensions(1);
+    
+    TensorMap<Tensor<type, 2>> next_delta(
+        next_layer_back_propagation->deltas_data, 
+        images_number, 
+        next_delta_pixel_numbers);
 
+    const Index delta_row_numbers = back_propagation->deltas_dimensions(0);
+    const Index delta_column_numbers = back_propagation->deltas_dimensions(1);
+    const Index delta_channel_numbers = back_propagation->deltas_dimensions(2);
+
+    TensorMap<Tensor<type, 4>> delta(
+        back_propagation->deltas_data,
+        delta_row_numbers,
+        delta_column_numbers,
+        delta_channel_numbers,
+        images_number);
+
+    #pragma omp parallel for
+    for(Index image_index = 0; image_index < images_number; image_index++)
+    {
+        Tensor<type, 1> next_delta_1d = next_delta.chip(image_index, 0);
+        Index variable_counter = 0;
+        for(Index row_index = 0; row_index < delta_row_numbers; row_index++)
+        {
+            for(Index column_index = 0; column_index < delta_column_numbers; column_index++)
+            {
+                for(Index channel_index = 0; channel_index < delta_channel_numbers; channel_index++)
+                {
+                    delta(row_index, column_index, channel_index, image_index) = next_delta_1d(variable_counter++);
+                }
+            }
+        }
+    }
+}
 /// Serializes the flatten layer object into an XML document of the TinyXML.
 /// See the OpenNN manual for more information about the format of this document.
 
