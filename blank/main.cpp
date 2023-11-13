@@ -57,7 +57,7 @@ int main()
 
         training_strategy.perform_training();
 
-/*
+
         // Data set
 
         DataSet data_set("/home/alvaromartin/Downloads/cars_time 3.csv", ',', true);
@@ -124,7 +124,7 @@ int main()
        quicksort_by_column(merged_data, 0);
 
        cout << "Ordered and merged_data: " << merged_data << endl;
-*/
+
         cout << "Bye!" << endl;
 
         return 0;
