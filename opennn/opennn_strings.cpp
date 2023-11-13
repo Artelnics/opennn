@@ -1437,12 +1437,16 @@ string replace_non_allowed_programming_expressions(string& s)
             if(c=='9'){ out+="_nine_";  continue;}
             if(c=='0'){ out+="_zero_";  continue;}
 
+            if(c=='.'){ out+="_dot_";   continue;}
             if(c=='/'){ out+="_div_";   continue;}
             if(c=='*'){ out+="_mul_";   continue;}
             if(c=='+'){ out+="_sum_";   continue;}
             if(c=='-'){ out+="_res_";   continue;}
             if(c=='='){ out+="_equ_";   continue;}
             if(c=='!'){ out+="_not_";   continue;}
+            if(c==','){ out+="_colon_"; continue;}
+            if(c==';'){ out+="_semic_"; continue;}
+            if(c=='\\'){ out+="_slash_";continue;}
 
             if(c=='&'){ out+="_amprsn_"; continue;}
             if(c=='?'){ out+="_ntrgtn_"; continue;}
@@ -1542,8 +1546,8 @@ void trim(string& str)
 
     // Special character and string modifications
 
-    replace_first_and_last_char_with_missing_label(str, ';', "NA");
-    replace_first_and_last_char_with_missing_label(str, ',', "NA");
+    replace_first_and_last_char_with_missing_label(str, ';', "NA", "");
+    replace_first_and_last_char_with_missing_label(str, ',', "NA", "");
 
     replace_double_char_with_label(str, ";", "NA");
     replace_double_char_with_label(str, ",", "NA");
@@ -1553,19 +1557,19 @@ void trim(string& str)
 }
 
 
-void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &missing_label)
+void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
 {
     if(!str.empty())
     {
         if(str[0] == target_char)
         {
-            string new_string = missing_label + target_char;
+            string new_string = first_missing_label + target_char;
             str.replace(0, 1, new_string);
         }
 
         if(str[str.length() - 1] == target_char)
         {
-            string new_string = target_char + missing_label;
+            string new_string = target_char + last_missing_label;
             str.replace(str.length() - 1, 1, new_string);
         }
     }
