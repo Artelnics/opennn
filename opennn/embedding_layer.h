@@ -115,7 +115,7 @@ public:
 
     Tensor<type, 2> one_hot_encode_row(const Tensor<type, 1>&);
 
-    void lookup_embedding(const Tensor<type, 1>&, PerceptronLayerForwardPropagation*, bool&);
+    void lookup_embedding(const Tensor<type, 1>&, PerceptronLayerForwardPropagation*, const bool&);
 
     // Positional encoding
 
@@ -123,7 +123,7 @@ public:
 
     // Embedding layer outputs
 
-    void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*, bool&) final;
+    void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
 
     /*
     void forward_propagate(type*,
@@ -212,10 +212,12 @@ protected:
 
             // Outputs
 
-            outputs_dimensions.resize(3);
-            outputs_dimensions.setValues({batch_samples_number, input_length, depth});
+            outputs_dimensions.resize(1);
+            outputs_dimensions(0).resize(3);
+            outputs_dimensions(0).setValues({batch_samples_number, input_length, depth});
 
-            outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number * input_length * depth*sizeof(type)));
+            outputs_data.resize(1);
+            outputs_data(0) = (type*) malloc(static_cast<size_t>(batch_samples_number * input_length * depth*sizeof(type)));
 
             // Rest of quantities
 

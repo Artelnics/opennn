@@ -356,15 +356,21 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
 /// Saves the embedding matrix of the row in outputs_data of the given perceptron layer forward propagation structure
 
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 1>& input_row,
-                                                 PerceptronLayerForwardPropagation* perceptron_forward_propagation,
-                                                 bool& switch_train)
+                                    PerceptronLayerForwardPropagation* perceptron_forward_propagation,
+                                    const bool& is_training)
 {
     Tensor<type, 2> one_hot_encoded_input_row = one_hot_encode_row(input_row);
 
-    perceptron_layer.forward_propagate(one_hot_encoded_input_row.data(),
-                                       get_dimensions(one_hot_encoded_input_row), // input_length is batch_size
+    Tensor<type*, 1> one_hot_encoded_input_row_data(1);
+    one_hot_encoded_input_row_data.setValues({one_hot_encoded_input_row.data()});
+
+    Tensor<Tensor<Index, 1>, 1> one_hot_encoded_input_row_dimensions;
+    one_hot_encoded_input_row_dimensions.setValues({get_dimensions(one_hot_encoded_input_row)});
+
+    perceptron_layer.forward_propagate(one_hot_encoded_input_row_data,
+                                       one_hot_encoded_input_row_dimensions, // input_length is batch_size
                                        perceptron_forward_propagation,
-                                       switch_train);
+                                       is_training);
 };
 
 
@@ -401,12 +407,12 @@ const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
 };
 
 
-void EmbeddingLayer::forward_propagate(type* inputs_data,
-                                                const Tensor<Index,1>& inputs_dimensions,
-                                                LayerForwardPropagation* forward_propagation,
-                                                bool& switch_train)
+void EmbeddingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
+                                        const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+                                        LayerForwardPropagation* forward_propagation,
+                                        const bool& is_training)
 {
-    if(inputs_dimensions(1) != input_length)
+    if(inputs_dimensions(0)(1) != input_length)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
@@ -415,9 +421,9 @@ void EmbeddingLayer::forward_propagate(type* inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    const Index batch_size = inputs_dimensions(0);
+    const Index batch_size = inputs_dimensions(0)(0);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, batch_size, input_length);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_data(0), batch_size, input_length);
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
         = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
@@ -431,16 +437,16 @@ void EmbeddingLayer::forward_propagate(type* inputs_data,
     for(Index i = 0; i < batch_size; i++)
     {
         input_row = inputs.chip(i, 0);
-        lookup_embedding(input_row, &perceptron_layer_forward_propagation, switch_train);
+        lookup_embedding(input_row, &perceptron_layer_forward_propagation, is_training);
 
-        memcpy(embedding_layer_forward_propagation->outputs_data + i*input_length*depth,
-               perceptron_layer_forward_propagation.outputs_data,
+        memcpy(embedding_layer_forward_propagation->outputs_data(0) + i*input_length*depth,
+               perceptron_layer_forward_propagation.outputs_data(0),
                static_cast<size_t>(input_length*depth*sizeof(type)));
     }
 
     if(positional_encoding)
     {
-        TensorMap<Tensor<type, 3>> outputs(embedding_layer_forward_propagation->outputs_data, batch_size, input_length, depth);
+        TensorMap<Tensor<type, 3>> outputs(embedding_layer_forward_propagation->outputs_data(0), batch_size, input_length, depth);
 
         const Tensor<type, 2> positional_encoding_matrix = build_positional_encoding_matrix();
 #pragma omp parallel for

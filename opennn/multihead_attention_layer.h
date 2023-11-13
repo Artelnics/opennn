@@ -229,10 +229,12 @@ protected:
 
             // Outputs
 
-            outputs_dimensions.resize(3);
-            outputs_dimensions.setValues({batch_samples_number, input_size, depth});
+            outputs_dimensions.resize(1);
+            outputs_dimensions(0).resize(3);
+            outputs_dimensions(0).setValues({batch_samples_number, input_size, depth});
 
-            outputs_data = (type*) malloc(static_cast<size_t>(batch_samples_number * input_size * depth*sizeof(type)));
+            outputs_data.resize(1);
+            outputs_data(0) = (type*) malloc(static_cast<size_t>(batch_samples_number * input_size * depth*sizeof(type)));
 
             // Rest of quantities
 

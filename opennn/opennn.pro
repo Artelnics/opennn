@@ -55,6 +55,7 @@ HEADERS += \
     addition_layer.h \
     concatenation_layer.h \
     codification.h \
+    dynamic_tensor.h \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \

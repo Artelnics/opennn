@@ -83,6 +83,7 @@
 #include "json_to_xml.h"
 #include "text_analytics.h"
 #include "codification.h"
+#include "dynamic_tensor.h"
 
 #endif
 
