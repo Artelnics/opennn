@@ -747,6 +747,7 @@ public:
 
     Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_columns_correlations_spearman() const;
+    Tensor<Correlation, 2> calculate_relevant_input_target_columns_correlations(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
     void print_input_target_columns_correlations() const;
 
@@ -803,6 +804,7 @@ public:
     void transform_time_series();
     void transform_time_series_columns();
     void transform_time_series_data();
+    void fill_time_series_gaps();
 
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);
@@ -1041,6 +1043,8 @@ private:
     /// Index where time variable is located for forecasting applications.
 
     string time_column;
+
+    Index time_column_index;
 
     /// Number of lags.
 

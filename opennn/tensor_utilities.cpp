@@ -1496,6 +1496,81 @@ void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index
     quick_sort(data, partition_index + 1, end_index, target_column);
 }
 
+
+void quicksort_by_column(Tensor<type, 2>& data, Index target_column)
+{
+    Tensor<type, 2>* data_matrix_ptr = &data;
+    Index number_of_rows = data_matrix_ptr->dimension(0);
+
+    quick_sort(*data_matrix_ptr, 0, number_of_rows - 1, target_column);
+}
+
+Tensor<type, 1> compute_elementwise_difference(Tensor<type, 1>& data)
+{
+    Tensor<type, 1> difference_data(data.size());
+    difference_data(0) = 0;
+
+    if (data.size() <= 1) return Tensor<type, 1>();
+
+    for (int i = 1; i < data.size(); i++) difference_data(i) = data(i) - data(i - 1);
+
+    return difference_data;
+}
+
+Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
+{
+    Tensor<type, 1> mode_and_frequency(2);
+
+    std::map<type, type> frequency_map;
+
+    for (int i = 0; i < data.size(); i++) {
+        type value = data(i);
+        frequency_map[value]++;
+    }
+
+    type mode = -1;
+    type max_frequency = 0;
+
+    for (const auto& entry : frequency_map) {
+        if (entry.second > max_frequency) {
+            max_frequency = entry.second;
+            mode = entry.first;
+        }
+    }
+
+    if(mode == -1) Tensor<type, 1>();
+
+    mode_and_frequency(0) = mode;
+    mode_and_frequency(1) = max_frequency;
+
+    return mode_and_frequency;
+}
+
+
+Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, type value)
+{
+    std::vector<type> result;
+
+    for(Index i = 1; i < difference_data.size(); i++)
+    {
+        if(difference_data(i) != value)
+        {
+            type previous_time = data(i-1) + value;
+            do
+            {
+                result.push_back(previous_time);
+
+                previous_time += value;
+            } while (previous_time < data(i));                
+        }
+    }
+
+    TensorMap<Tensor<type, 1>> filled_data(result.data(), result.size());
+
+    return filled_data;
+}
+
+
 Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index, Index target_column)
 {
     Tensor<type, 1> pivot_row = data_matrix.chip(start_index, 0);
