@@ -34,35 +34,11 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        DataSet data_set("/home/alvaromartin/Downloads/generation.csv", ',', true);
-
-        data_set.scrub_missing_values();
-
-        const Index neurons_number = 10;
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        Tensor<DataSet::Column, 1> columns = data_set.get_columns();
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, neurons_number, target_variables_number});
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(20);
-
-        training_strategy.perform_training();
-
-
         // Data set
 
-        DataSet data_set("/home/alvaromartin/Downloads/cars_time 3.csv", ',', true);
+        DataSet data_set("/Users/alvaros/test_sample.csv", ',', true);
 
-        Tensor<string, 1> variables_names = data_set.get_variables_names();        
+        Tensor<string, 1> variables_names = data_set.get_variables_names();
         Tensor<string, 1>  columns_names = data_set.get_columns_names();
         Tensor<DataSet::VariableUse, 1> columns_uses = data_set.get_columns_uses();
         Tensor<string, 1> column_types = data_set.get_columns_types();
@@ -70,21 +46,7 @@ int main()
 
         Tensor<DataSet::Column, 1> old_columns = data_set.get_columns();
 
-        map<string, DataSet> groupedData = data_set.group_by(data_set, "model_name");
-        // DataSet DataSetA = groupedData["B"];
-
-        // cout << "DataSetA: " << DataSetA.get_data() << endl;
-
-        // DataSetA.set_columns_number(columns_number);
-        // DataSetA.set_columns_names(columns_names);
-        // DataSetA.set_columns_uses(columns_uses);
-        // DataSetA.set_columns_types(column_types);
-        // DataSetA.set_variables_names_from_columns(variables_names, old_columns);
-
-        // DataSetA.set_lags_number(1);
-        // DataSetA.set_steps_ahead_number(1);
-        // DataSetA.transform_time_series();
-
+        map<string, DataSet> groupedData = data_set.group_by(data_set, "block_id");
 
        for(auto& pair : groupedData)
        {
@@ -101,6 +63,8 @@ int main()
 
            cout << pair.first << ": " << subset.get_data() << endl;
        }
+
+       cout << "Bye!" << endl;
 
        Tensor<type, 2> merged_data;
        bool is_first_iteration = true;

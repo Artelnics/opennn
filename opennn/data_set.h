@@ -471,6 +471,8 @@ public:
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
     const string& get_time_column() const;
+    const string& get_group_by_column() const;
+
     Index get_time_series_time_column_index() const;
 
     const Index& get_short_words_length() const;
@@ -628,6 +630,7 @@ public:
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
     void set_time_column(const string&);
+    void set_group_by_column(const string&);
 
     void set_short_words_length(const Index&);
     void set_long_words_length(const Index&);
@@ -1045,6 +1048,10 @@ private:
     string time_column;
 
     Index time_column_index;
+
+    string group_by_column;
+
+    Index group_by_column_index;
 
     /// Number of lags.
 

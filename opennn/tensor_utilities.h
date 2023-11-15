@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <math.h>
 #include <vector>
 #include <numeric>
@@ -153,6 +154,7 @@ void push_back_string(Tensor<string, 1>&, const string&);
 void push_back_type(Tensor<type, 1>&, const type&);
 
 Index partition(Tensor<type, 2>&, Index, Index, Index);
+Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, Index, Index);
 void quick_sort(Tensor<type, 2>&, Index, Index, Index);
 void quicksort_by_column(Tensor<type, 2>&, Index);

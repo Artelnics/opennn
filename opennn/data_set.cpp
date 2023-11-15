@@ -1002,7 +1002,7 @@ void DataSet::transform_time_series_columns()
     columns = new_columns;
 }
 
-
+/*
 void DataSet::transform_time_series_data()
 {
     cout << "Transforming time series data..." << endl;
@@ -1056,21 +1056,58 @@ void DataSet::transform_time_series_data()
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
+}*/
+
+void DataSet::transform_time_series_data()
+{
+    cout << "Transforming time series data..." << endl;
+
+    // Categorical / Time columns?
+
+    const Index old_samples_number = data.dimension(0);
+    const Index old_variables_number = data.dimension(1);
+
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+    time_series_data = data;
+
+    data.resize(new_samples_number, new_variables_number);
+
+    Index index = 0;
+
+    for(Index j = 0; j < old_variables_number; j++)
+    {
+        if(columns(get_column_index(j)).type == ColumnType::DateTime)
+        {
+            index++;
+            continue;
+        }
+
+        for(Index i = 0; i < lags_number+steps_ahead; i++)
+        {
+            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
+                   time_series_data.data() + i + j*old_samples_number,
+                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+        }
+    }
+
+    samples_uses.resize(new_samples_number);
+    split_samples_random();
 }
 
 void DataSet::fill_time_series_gaps()
 {
     const Index rows_number = data.dimension(0);
-    const Index columns_number = data.dimension(1);    
+    const Index columns_number = data.dimension(1);
 
     quicksort_by_column(time_column_index);
 
-    Tensor<type, 1> time_data = data.chip(time_column_index, 1);   
+    Tensor<type, 1> time_data = data.chip(time_column_index, 1);
 
     Tensor<type, 1> time_difference_data = compute_elementwise_difference(time_data);
 
     Tensor<type, 1> time_step_mode = compute_mode(time_difference_data);
-    cout << "time_step_mode: " << time_step_mode << endl;
 
     Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
 
@@ -4091,29 +4128,21 @@ void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 
     const Index columns_number = get_columns_number();
 
-    cout << "columns_number: " << columns_number << endl;
-
     Index index = 0;
 
     for(Index i = 0; i < columns_number; i++)
     {
-        cout << "Column i: " << columns(i).name << endl;
 
         if(columns(i).type == ColumnType::Categorical)
         {
-            cout << "Is categorical "<< endl;
-            cout << columns(i).get_categories_number() << endl;
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
-                cout << "columns_name: " << columns(i).name << endl;
-                cout << "variable: " << new_variables_names(index) << endl;
                 columns(i).categories(j) = new_variables_names(index);
                 index++;
             }
         }
         else
         {
-            cout << "columns_name: " << columns(i).name << endl;
             columns(i).name = new_variables_names(index);
             index++;
         }
@@ -4741,6 +4770,11 @@ const Index& DataSet::get_steps_ahead() const
 const string& DataSet::get_time_column() const
 {
     return time_column;
+}
+
+const string& DataSet::get_group_by_column() const
+{
+    return group_by_column;
 }
 
 
@@ -6406,6 +6440,12 @@ void DataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
 void DataSet::set_time_column(const string& new_time_column)
 {
     time_column = new_time_column;
+}
+
+
+void DataSet::set_group_by_column(const string& new_group_by_column)
+{
+    group_by_column = new_group_by_column;
 }
 
 
@@ -8398,7 +8438,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
-
+/*
         // Data augmentation
         file_stream.OpenElement("randomReflectionAxisX");
         buffer.str("");
@@ -8447,7 +8487,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         buffer << get_random_vertical_translation_maximum();
         file_stream.PushText(buffer.str().c_str());
         file_stream.CloseElement();
-
+*/
     }
 
     // Lags number
@@ -8477,6 +8517,18 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Time Column
     {
         file_stream.OpenElement("TimeColumn");
+
+        buffer.str("");
+        buffer << get_time_column();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Group by Column
+    {
+        file_stream.OpenElement("GroupByColumn");
 
         buffer.str("");
         buffer << get_time_column();
@@ -9238,6 +9290,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const string new_time_column = time_column_element->GetText();
 
         set_time_column(new_time_column);
+    }
+
+    // Group by column
+
+    const tinyxml2::XMLElement* group_by_column_element = data_file_element->FirstChildElement("GroupByColumn");
+
+    if(!group_by_column_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Group by column element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(group_by_column_element->GetText())
+    {
+        const string new_group_by_column = group_by_column_element->GetText();
+
+        set_group_by_column(new_group_by_column);
     }
 
     // Text classification
@@ -10428,7 +10500,7 @@ void DataSet::transform_time_series()
 
     transform_time_series_data();
 
-    fill_time_series_gaps();
+//    fill_time_series_gaps();
 
     transform_time_series_columns();
 
@@ -12737,7 +12809,9 @@ void DataSet::scrub_missing_values()
 
 void DataSet::read_csv()
 {
+    cout << "read_csv_1 (1)" << endl;
     read_csv_1();
+    cout << "read_csv_1 (2)" << endl;
 
     if(!has_time_columns() && !has_categorical_columns())
     {
@@ -12747,9 +12821,13 @@ void DataSet::read_csv()
     }
     else
     {
+        cout << "read_csv_2 (1)" << endl;
         read_csv_2_complete();
+        cout << "read_csv_2 (2)" << endl;
 
+        cout << "read_csv_3 (1)" << endl;
         read_csv_3_complete();
+        cout << "read_csv_3 (2)" << endl;
     }
 }
 
@@ -14128,7 +14206,6 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
     return columns_names;
 }
 
-
 void DataSet::read_csv_1()
 {
     if(display) cout << "Path: " << data_file_name << endl;
@@ -14144,15 +14221,15 @@ void DataSet::read_csv_1()
         throw invalid_argument(buffer.str());
     }
 
-    regex accent_regex("[\\xC0-\\xFF]");
+    std::regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
 #ifdef _WIN32
 
-    if(regex_search(data_file_name, accent_regex))
+    if (std::regex_search(data_file_name, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_file_name);
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }else
     {
@@ -14264,18 +14341,12 @@ void DataSet::read_csv_1()
 
     bool has_nans_columns = false;
 
-    Tensor<bool, 1> nans_columns_copy(columns_number);
-    nans_columns_copy.setConstant(false);
+    do
+    {
+        has_nans_columns = false;
 
-    nans_columns.resize(columns_number);
-
-//    do
-//    {
-        nans_columns = nans_columns_copy;
-        nans_columns_copy.setConstant(false);
-
-//        if(lines_number > 20)
-//            break;
+        if(lines_number > 10)
+            break;
 
         for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
         {
@@ -14283,25 +14354,19 @@ void DataSet::read_csv_1()
 
             // Check if all are missing values
 
-            Index non_columns_header_index_correction = 0;
-
-            if(!has_columns_names) non_columns_header_index_correction = -1;
-
-            if(data_file_preview(1 + non_columns_header_index_correction)(i) == missing_values_label
-                    && data_file_preview(2 + non_columns_header_index_correction)(i) == missing_values_label
-                    && data_file_preview(lines_number - 2 + non_columns_header_index_correction)(i) == missing_values_label
-                    && data_file_preview(lines_number - 1 + non_columns_header_index_correction)(i) == missing_values_label)
+            if( data_file_preview(1)(i) == missing_values_label
+                    && data_file_preview(2)(i) == missing_values_label
+                    && data_file_preview(lines_number-2)(i) == missing_values_label
+                    && data_file_preview(lines_number-1)(i) == missing_values_label)
             {
                 has_nans_columns = true;
-                nans_columns_copy(i) = true;
             }
             else
             {
                 has_nans_columns = false;
-                nans_columns_copy(i) = false;
             }
 
-            if(nans_columns_copy(i))
+            if(has_nans_columns)
             {
                 lines_number++;
                 data_file_preview.resize(lines_number);
@@ -14331,7 +14396,6 @@ void DataSet::read_csv_1()
                     if(line.empty()) continue;
                     check_separators(line);
                     data_file_preview(lines_count) = get_tokens(line, separator_char);
-
                     lines_count++;
                     if(lines_count == lines_number) break;
                 }
@@ -14339,16 +14403,13 @@ void DataSet::read_csv_1()
                 file.close();
             }
         }
-
-//    }while(true_count(nans_columns_copy) != 0);
+    }while(has_nans_columns);
 
     // Columns types
 
     if(display) cout << "Setting columns types..." << endl;
 
     Index column_index = 0;
-
-    bool one_time = true;
 
     for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
     {
@@ -14359,12 +14420,7 @@ void DataSet::read_csv_1()
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
 
-        /*if(nans_columns(column_index))
-        {
-            columns(column_index).type = ColumnType::Constant;
-            column_index++;
-        }
-        else */if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+        if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
                 || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
                 || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
                 || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
@@ -14406,6 +14462,7 @@ void DataSet::read_csv_1()
     }
 
 }
+
 
 
 void DataSet::read_csv_2_simple()
@@ -14482,7 +14539,7 @@ void DataSet::read_csv_2_simple()
 
         trim(line);
 
-        //erase(line, '"');
+        erase(line, '"');
 
         if(line.empty()) continue;
 
@@ -14519,17 +14576,15 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    regex accent_regex("[\\xC0-\\xFF]");
+    std::regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
-
-    cout << "read_csv_3_simple" << endl;
 
     #ifdef _WIN32
 
-    if(regex_search(data_file_name, accent_regex))
+    if (std::regex_search(data_file_name, accent_regex))
     {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_file_name);
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring file_name_wide = conv.from_bytes(data_file_name);
         file.open(file_name_wide);
     }else
     {
@@ -14588,8 +14643,6 @@ void DataSet::read_csv_3_simple()
     Index sample_index = 0;
     Index column_index = 0;
 
-    Index nans_columns_count = 0;
-
     while(file.good())
     {
         getline(file, line);
@@ -14619,43 +14672,11 @@ void DataSet::read_csv_3_simple()
             }
             else if(is_float)
             {
-                if((nans_columns(column_index)) && (is_numeric_string(tokens(j))) && (nans_columns_count <= 2))
-                {
-                    columns(column_index).type = ColumnType::Numeric;
-                    nans_columns_count++;
-                }
-//                else if((nans_columns(column_index)) && (is_date_time_string(tokens(j))) && (nans_columns_count == 0))
-//                {
-//                    columns(column_index).type = ColumnType::DateTime;
-//                    nans_columns_count++;
-//                }
-//                else if(nans_columns(column_index) && (nans_columns_count == 0))
-//                {
-//                    columns(column_index).type = ColumnType::Categorical;
-//                    nans_columns_count++;
-//                }
-
                 data(sample_index, column_index) = type(strtof(tokens(j).data(), nullptr));
                 column_index++;
             }
             else
             {
-                if((nans_columns(column_index)) && (is_numeric_string(tokens(j))) && (nans_columns_count <= 2))
-                {
-                    columns(column_index).type = ColumnType::Numeric;
-                    nans_columns_count++;
-                }
-//                else if((nans_columns(column_index)) && (is_date_time_string(tokens(j))) && (nans_columns_count == 0))
-//                {
-//                    columns(column_index).type = ColumnType::DateTime;
-//                    nans_columns_count++;
-//                }
-//                else if(nans_columns(column_index) && (nans_columns_count == 0))
-//                {
-//                    columns(column_index).type = ColumnType::Categorical;
-//                    nans_columns_count++;
-//                }
-
                 data(sample_index, column_index) = type(stof(tokens(j)));
                 column_index++;
             }
@@ -14684,6 +14705,7 @@ void DataSet::read_csv_3_simple()
     set_binary_simple_columns();
 
 }
+
 
 
 void DataSet::read_csv_2_complete()
@@ -15058,7 +15080,7 @@ void DataSet::read_csv_3_complete()
 
     // Check Constant and DateTime to unused
 
-    check_constant_columns(); //alvaros
+    check_constant_columns();
 
     // Check binary
 

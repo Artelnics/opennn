@@ -1523,7 +1523,8 @@ Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
 
     std::map<type, type> frequency_map;
 
-    for (int i = 0; i < data.size(); i++) {
+    for (int i = 0; i < data.size(); i++)
+    {
         type value = data(i);
         frequency_map[value]++;
     }
@@ -1531,8 +1532,10 @@ Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
     type mode = -1;
     type max_frequency = 0;
 
-    for (const auto& entry : frequency_map) {
-        if (entry.second > max_frequency) {
+    for (const auto& entry : frequency_map)
+    {
+        if (entry.second > max_frequency)
+        {
             max_frequency = entry.second;
             mode = entry.first;
         }
@@ -1542,6 +1545,8 @@ Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
 
     mode_and_frequency(0) = mode;
     mode_and_frequency(1) = max_frequency;
+
+    cout << "mode_and_frequency: " << mode_and_frequency << endl;
 
     return mode_and_frequency;
 }
@@ -1609,6 +1614,44 @@ Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index
     }
 
     return pivot_position;
+}
+
+
+Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor1, const Tensor<Index, 1>& tensor2)
+{
+    Index intersection_index_number = 0;
+
+    for (Index i = 0; i < tensor1.size(); i++)
+    {
+        for (Index j = 0; j < tensor2.size(); j++)
+        {
+            if (tensor1(i) == tensor2(j)) {
+                intersection_index_number++;
+            }
+        }
+    }
+
+    if (intersection_index_number == 0)
+    {
+        return Tensor<Index, 1>(0);
+    }
+
+    Tensor<Index, 1> intersection(intersection_index_number);
+    Index count = 0;
+
+    for (Index i = 0; i < tensor1.size(); i++)
+    {
+        for (Index j = 0; j < tensor2.size(); j++)
+        {
+            if (tensor1(i) == tensor2(j))
+            {
+                intersection(count) = tensor2(j);
+                count++;
+            }
+        }
+    }
+
+    return intersection;
 }
 
 }
