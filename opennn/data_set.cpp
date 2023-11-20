@@ -1056,6 +1056,45 @@ void DataSet::transform_time_series_data()
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
+}
+*/
+/*
+void DataSet::transform_time_series_data()
+{
+    cout << "Transforming time series data..." << endl;
+
+    // Categorical / Time columns?
+
+    const Index old_samples_number = data.dimension(0);
+    const Index old_variables_number = data.dimension(1);
+
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+    time_series_data = data;
+
+    data.resize(new_samples_number, new_variables_number);
+
+    Index index = 0;
+
+    for(Index j = 0; j < old_variables_number; j++)
+    {
+        if(columns(get_column_index(j)).type == ColumnType::DateTime)
+        {
+            index++;
+            continue;
+        }
+
+        for(Index i = 0; i < lags_number+steps_ahead; i++)
+        {
+            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
+                   time_series_data.data() + i + j*old_samples_number,
+                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+        }
+    }
+
+    samples_uses.resize(new_samples_number);
+    split_samples_random();
 }*/
 
 void DataSet::transform_time_series_data()
@@ -1095,6 +1134,59 @@ void DataSet::transform_time_series_data()
     samples_uses.resize(new_samples_number);
     split_samples_random();
 }
+
+/*
+void DataSet::transform_time_series_data()
+{
+    cout << "Transforming time series data..." << endl;// Categorical / Time columns?
+
+    const Index old_samples_number = data.dimension(0);
+    const Index old_variables_number = data.dimension(1);
+
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+    Index categorical_index = get_column_index(get_group_by_column());;
+
+    Tensor<Index, 1> categorical_indices = get_categorical_to_indices(categorical_index);
+    Index categories_number = get_variable_indices(categorical_index).size();
+
+    time_series_data = data;
+
+    data.resize(new_samples_number, new_variables_number);
+
+    Index dataIndex = 0;
+    for (Index k = 0; k < categories_number; ++k)
+    {
+        Index index = 0;
+        for (Index j = 0; j < old_variables_number; j++)
+        {
+            if (columns(get_column_index(j)).type == ColumnType::DateTime)
+            {
+                index++;
+                continue;
+            }
+
+            for (Index i = 0; i < lags_number + steps_ahead; i++)
+            {
+                for (Index k = 0; k < old_samples_number - (lags_number + steps_ahead - 1); k++)
+                {
+                    if (categorical_indices[k] != k)
+                    {
+                        continue;
+                    }
+                           memcpy(data.data() + dataIndex++ * new_variables_number,
+                           time_series_data.data() + i + j * old_samples_number + k,
+                           sizeof(type));
+                }
+            }
+        }
+    }
+
+    samples_uses.resize(new_samples_number);
+    split_samples_random();
+}
+*/
 
 void DataSet::fill_time_series_gaps()
 {
@@ -3923,7 +4015,7 @@ void DataSet::set_columns_types(const Tensor<string, 1>& new_column_types)
 
 }
 
-Tensor<string, 1> DataSet::get_columns_types()
+Tensor<string, 1> DataSet::get_columns_types() const
 {
     const Index columns_number = columns.size();
 
@@ -5240,6 +5332,29 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
 }
 
 
+Tensor<Index, 1> DataSet::get_categorical_to_indices(const Index& column_index) const
+{
+    Tensor<type, 2> one_hot_data = get_column_data(column_index);
+
+    Index rows_number = one_hot_data.dimension(0);
+    Index categories_number = one_hot_data.dimension(1);
+
+    Tensor<Index, 1> indices(rows_number);
+
+    for(Index i = 0; i < rows_number; ++i) {
+        for(Index j = 0; j < categories_number; ++j) {
+            if(one_hot_data(i, j) == 1)
+            {
+                indices(i) = j + 1;
+                break;
+            }
+        }
+    }
+
+    return indices;
+}
+
+
 /// Returns the data from the data set column with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
 /// @param column_index Index of the column.
@@ -5259,6 +5374,7 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 
     return data.slice(offsets, extents);
 }
+
 
 map<string, DataSet> DataSet::group_by(const DataSet& original, const string& column_name) const
 {
@@ -5290,6 +5406,13 @@ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& co
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         string category = original.get_sample_category(sample_index, column_index);
+
+
+        if (result.find(category) == result.end())
+        {
+            cout << "jdhsafghjkdshjgfdsghjdfshjvjghdsf" << endl;
+            result[category].set_properties_from_parent(original);
+        }
 
         result[category].add_sample(original.get_sample(sample_index));
     }
@@ -5986,6 +6109,20 @@ void DataSet::set(const string& file_name)
 }
 
 
+
+void DataSet::set_properties_from_parent(const DataSet& parent)
+{
+    this->set_columns_number(parent.get_columns_number());
+    this->set_columns_names(parent.get_columns_names());
+    this->set_columns_uses(parent.get_columns_uses());
+    this->set_columns_types(parent.get_columns_types());
+
+    Tensor<string, 1> variables_names = parent.get_variables_names();
+    Tensor<DataSet::Column, 1> old_columns = parent.get_columns();
+
+    this->set_variables_names_from_columns(variables_names, old_columns);
+}
+
 /// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -6141,6 +6278,11 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 
     set(samples_number, variables_number);
 
+    data = new_data;
+}
+
+void DataSet::set_data(const Tensor<type, 2>& new_data, const bool& new_samples)
+{
     data = new_data;
 }
 

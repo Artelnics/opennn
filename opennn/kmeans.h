@@ -69,6 +69,7 @@ public:
     Index get_clusters_number();
 
     void fit(const Tensor<type, 2>&);
+    void set_cluster_number(const Index&);
     void set_centers_random(const Tensor<type, 2>&);
 
 private:
