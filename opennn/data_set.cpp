@@ -14268,12 +14268,12 @@ void DataSet::read_csv_1()
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
 
-        if(nans_columns(column_index))
+/*        if(nans_columns(column_index))
         {
             columns(column_index).type = ColumnType::Constant;
             column_index++;
         }
-        else if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
                 || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
                 || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
                 || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
