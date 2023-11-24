@@ -133,8 +133,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 }
 
 
-void FlattenLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
+void FlattenLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -142,10 +141,10 @@ void FlattenLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     const Index neurons_number = get_neurons_number();
 
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
     memcpy(outputs_data,
-           inputs_data(0),
+           inputs(0).get_data(),
            batch_samples_number*neurons_number*sizeof(type));
 }
 

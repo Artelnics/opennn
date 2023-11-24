@@ -207,8 +207,9 @@ void ProbabilisticLayerTest::test_calculate_combinations()
     Tensor<type, 2> synaptic_weights(1,1);
     Tensor<type, 1> parameters(1);
 
-    Tensor<type, 2> inputs(1,1);
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    Tensor<type, 2> inputs_tensor(1,1);
+    inputs_tensor.setConstant(type(3));
+    DynamicTensor<type> inputs(inputs_tensor);
 
     Tensor<type, 2> combinations(1,1);
     Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations);
@@ -217,9 +218,8 @@ void ProbabilisticLayerTest::test_calculate_combinations()
     synaptic_weights.setConstant(type(2));
 
     probabilistic_layer.set(1,1);
-    inputs.setConstant(type(3));
 
-    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dimensions, biases, synaptic_weights, combinations.data(), combinations_dimensions);
+    probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data(), combinations_dimensions);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -236,11 +236,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 1> parameters;
 
-    Tensor<type, 2> inputs;
+    Tensor<type, 2> inputs_tensor;
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
     Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations);
     Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
 
@@ -254,9 +253,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
     probabilistic_layer.set_parameters_constant(type(1));
 
-    inputs.resize(samples_number, inputs_number);
-    inputs_dimensions = get_dimensions(inputs);
-    inputs.setConstant(type(-1));
+    inputs_tensor.resize(samples_number, inputs_number);
+    inputs_tensor.setConstant(type(-1));
+    DynamicTensor<type> inputs(inputs_tensor);
 
     combinations.resize(samples_number, neurons_number);
     combinations_dimensions = get_dimensions(combinations);
@@ -267,7 +266,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setZero();
 
-    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dimensions, biases, synaptic_weights, combinations.data(), combinations_dimensions);
+    probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations.data(), combinations_dimensions);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Binary);
 
@@ -297,9 +296,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
     probabilistic_layer.set(2, 2);
     probabilistic_layer.set_parameters_constant(2);
 
-    inputs.resize(1,2);
-    inputs_dimensions = get_dimensions(inputs);
-    inputs.setConstant(2);
+    inputs_tensor.resize(1,2);
+    inputs_tensor.setConstant(2);
+    DynamicTensor<type> resized_inputs(inputs_tensor);
 
     combinations.resize(1,2);
     combinations_dimensions = get_dimensions(combinations);
@@ -315,7 +314,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
     synaptic_weights.resize(2,2);
     synaptic_weights.setZero();
 
-    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dimensions, biases, synaptic_weights, combinations.data(), combinations_dimensions);
+    probabilistic_layer.calculate_combinations(resized_inputs, biases, synaptic_weights, combinations.data(), combinations_dimensions);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
@@ -330,9 +329,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
     probabilistic_layer.set(3, 3);
 
-    inputs.resize(1,3);
-    inputs.setZero();
-    inputs_dimensions = get_dimensions(inputs);
+    inputs_tensor.resize(1,3);
+    inputs_tensor.setZero();
+    DynamicTensor<type> zeroes_inputs(inputs_tensor);
 
     combinations.resize(1,3);
     combinations.setValues({{1,0,-1}});
@@ -344,7 +343,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
-    probabilistic_layer.calculate_combinations(inputs.data(), inputs_dimensions, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations.data(), combinations_dimensions);
+    probabilistic_layer.calculate_combinations(zeroes_inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations.data(), combinations_dimensions);
 
     probabilistic_layer.calculate_activations(combinations.data(), combinations_dimensions, activations.data(), activations_dimensions);
 
@@ -501,8 +500,8 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set_parameters_constant(type(1));
 
-    Tensor<type, 2> inputs(samples_number,inputs_number);
-    inputs.setConstant(type(1));
+    Tensor<type, 2> inputs_tensor(samples_number,inputs_number);
+    inputs_tensor.setConstant(type(1));
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
@@ -510,23 +509,17 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    Tensor<type*, 1> inputs_data(samples_number);
-    inputs_data(0) = inputs.data();
+    Tensor<DynamicTensor<type>, 1> inputs(1);
+    inputs(0) = DynamicTensor<type>(inputs_tensor);
 
-    Tensor<Tensor<Index, 1>, 1> inputs_dimensions_tensor(1);
-    inputs_dimensions_tensor(0) = get_dimensions(inputs);
-
-    probabilistic_layer.forward_propagate(inputs_data,
-                                          inputs_dimensions_tensor,
+    probabilistic_layer.forward_propagate(inputs,
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
     Tensor<type,3> activations_derivatives;
     activations_derivatives = probabilistic_layer_forward_propagation.activations_derivatives;
 
-    TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation.outputs_data(0),
-                                       probabilistic_layer_forward_propagation.outputs_dimensions(0)(0),
-                                       probabilistic_layer_forward_propagation.outputs_dimensions(0)(1));
+    TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation.outputs(0).to_tensor_map_2();
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == samples_number, LOG);
@@ -549,20 +542,14 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set(inputs_number, neurons_number);
 
-    Tensor<type, 2> inputs_test_1(samples_number,inputs_number);
-    inputs_test_1.setConstant(type(1));
+    Tensor<type, 2> inputs_test_1_tensor(samples_number,inputs_number);
+    inputs_test_1_tensor.setConstant(type(1));
 
-    Tensor<type*, 1> inputs_test_1_data(1);
-    inputs_test_1_data(0) = inputs_test_1.data();
-
-    Tensor<Tensor<Index, 1>, 1> inputs_test_1_dimensions_tensor(samples_number);
-    inputs_test_1_dimensions_tensor(0) = get_dimensions(inputs_test_1);
+    Tensor<DynamicTensor<type>, 1> inputs_test_1(1);
+    inputs_test_1(0) = DynamicTensor<type>(inputs_test_1_tensor);
 
     synaptic_weights.resize(3, 4);
     biases.resize(1, 4);
-    inputs_test_1.resize(samples_number, inputs_number);
-
-    inputs_test_1.setConstant(type(1));
 
     biases.setConstant(type(1));
     synaptic_weights.setValues({{type(1),type(-1),type(0),type(1)},
@@ -576,8 +563,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
-    probabilistic_layer.forward_propagate(inputs_test_1_data,
-                                          inputs_test_1_dimensions_tensor,
+    probabilistic_layer.forward_propagate(inputs_test_1,
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -587,9 +573,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     Tensor<type,0> div = perceptron_sol.exp().sum();
     Tensor<type, 1> sol_ = perceptron_sol.exp() / div(0);
 
-    TensorMap<Tensor<type, 2>> outputs_test_1(probabilistic_layer_forward_propagation.outputs_data(0),
-                                       probabilistic_layer_forward_propagation.outputs_dimensions(0)(0),
-                                       probabilistic_layer_forward_propagation.outputs_dimensions(0)(1));
+    TensorMap<Tensor<type, 2>> outputs_test_1 = probabilistic_layer_forward_propagation.outputs(0).to_tensor_map_2();
 
     assert_true(outputs_test_1.rank() == 2, LOG);
     assert_true(outputs_test_1.dimension(0) == 1, LOG);
@@ -607,23 +591,17 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set(inputs_number, neurons_number);
 
-    Tensor<type, 2> inputs_test_2(samples_number,inputs_number);
-    inputs_test_2.setConstant(type(1));
+    Tensor<type, 2> inputs_test_2_tensor(samples_number,inputs_number);
+    inputs_test_2_tensor.setConstant(type(1));
 
-    Tensor<type*, 1> inputs_test_2_data(1);
-    inputs_test_2_data(0) = inputs_test_2.data();
+    Tensor<DynamicTensor<type>, 1> inputs_test_2(1);
+    inputs_test_2(0) = DynamicTensor<type>(inputs_test_2_tensor);
 
-    Tensor<Tensor<Index, 1>, 1> inputs_test_2_dimensions_tensor(samples_number);
-    inputs_test_2_dimensions_tensor(0) = get_dimensions(inputs_test_2);
-
-    probabilistic_layer.forward_propagate(inputs_test_2_data,
-                                          inputs_test_2_dimensions_tensor,
+    probabilistic_layer.forward_propagate(inputs_test_2,
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
-    TensorMap<Tensor<type, 2>> outputs_test_2(probabilistic_layer_forward_propagation.outputs_data(0),
-                                       probabilistic_layer_forward_propagation.outputs_dimensions(0)(0),
-                                       probabilistic_layer_forward_propagation.outputs_dimensions(0)(1));
+    TensorMap<Tensor<type, 2>> outputs_test_2 = probabilistic_layer_forward_propagation.outputs(0).to_tensor_map_2();
 /*
     cout << "outputs_test_2: " << outputs_test_2 << endl;
 

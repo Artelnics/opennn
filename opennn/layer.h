@@ -25,6 +25,7 @@
 
 #include "config.h"
 #include "tensor_utilities.h"
+#include "dynamic_tensor.h"
 #include "statistics.h"
 #include "scaling.h"
 //#include "data_set.h"
@@ -137,10 +138,10 @@ public:
 
     // Outputs
 
-    virtual void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&,
+    virtual void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                                    LayerForwardPropagation*, const bool&) = 0;
 
-    virtual void forward_propagate(type*, const Tensor<Index, 1>&,
+    virtual void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                                    Tensor<type, 1>&, LayerForwardPropagation*);
 
     // Deltas
@@ -263,10 +264,12 @@ struct LayerForwardPropagation
 
     virtual ~LayerForwardPropagation()
     {
-        for(Index i = 0; i < outputs_data.size(); i++)
+        /*
+        for(Index i = 0; i < outputs.size(); i++)
         {
-            free(outputs_data(i));
+            free(outputs(i).get_data());
         }
+        */
     }
 
     virtual void set(const Index&, Layer*) = 0;
@@ -277,10 +280,7 @@ struct LayerForwardPropagation
 
     Layer* layer_pointer = nullptr;
 
-    Tensor<type*, 1> outputs_data;
-
-    Tensor<Tensor<Index, 1>, 1> outputs_dimensions;
-
+    Tensor<DynamicTensor<type>, 1> outputs;
 };
 
 

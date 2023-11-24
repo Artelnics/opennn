@@ -130,7 +130,7 @@ public:
 
    // Combinations
 
-   void calculate_combinations(type*, const Tensor<Index,1>&,
+   void calculate_combinations(const DynamicTensor<type>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                type*, const Tensor<Index,1>&) const;
@@ -146,10 +146,9 @@ public:
 
    // Outputs
 
-   void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
 
-   void forward_propagate(type*,
-                          const Tensor<Index, 1>&,
+   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                           Tensor<type, 1>&,
                           LayerForwardPropagation*) final;
 
@@ -247,15 +246,10 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
         // Outputs
 
-        outputs_dimensions.resize(1);
-        outputs_dimensions[0].resize(2);
-        outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
-
-        //delete outputs_data;
-
-        outputs_data.resize(1);
-
-        outputs_data(0) = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)) );
+        outputs.resize(1);
+        Tensor<Index, 1> output_dimensions(2);
+        output_dimensions.setValues({batch_samples_number, neurons_number});
+        outputs(0).set_dimensions(output_dimensions);
 
         // Rest of quantities
 
@@ -269,7 +263,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         //cout << outputs_dimensions << endl;
 
         cout << "Outputs:" << endl;
-        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
+        cout << outputs(0).to_tensor_map_2() << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;

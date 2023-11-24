@@ -751,8 +751,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Tensor<Index, 1>, 1>& inputs_tensor_dimensions,
+void ScalingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
 {
@@ -770,7 +769,7 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     }
 #endif
 
-    Tensor<Index, 1> inputs_dimensions(inputs_tensor_dimensions(0));
+    Tensor<Index, 1> inputs_dimensions = inputs(0).get_dimensions();
 
     ScalingLayerForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayerForwardPropagation*>(forward_propagation);
@@ -784,8 +783,8 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
         const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type, 2>> outputs(scaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+        const TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
+        TensorMap<Tensor<type, 2>> outputs = scaling_layer_forward_propagation->outputs(0).to_tensor_map_2();
 
         if(inputs_dimensions(0) != points_number || inputs_dimensions(1) != neurons_number)
         {
@@ -802,7 +801,7 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         {
             const Scaler scaler = scalers(i);
 
-            Tensor<type, 1> column = inputs.chip(i, 1);
+            Tensor<type, 1> column = inputs_map.chip(i, 1);
 
             if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
@@ -829,7 +828,7 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
                     const type intercept =
                             (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
 
-                    column = intercept + slope*inputs.chip(i, 1);
+                    column = intercept + slope*inputs_map.chip(i, 1);
                 }
                 else if(scaler == Scaler::MeanStandardDeviation)
                 {
@@ -837,15 +836,15 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
                     const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
 
-                    column = intercept + slope*inputs.chip(i, 1);
+                    column = intercept + slope*inputs_map.chip(i, 1);
                 }
                 else if(scaler == Scaler::StandardDeviation)
                 {
-                    column = static_cast<type>(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/static_cast<type>(descriptives(i).standard_deviation);*/
+                    column = static_cast<type>(1/descriptives(i).standard_deviation) * inputs_map.chip(i, 1);/*column/static_cast<type>(descriptives(i).standard_deviation);*/
                 }
                 else if(scaler == Scaler::Logarithm)
                 {
-                    column = inputs.chip(i,1).log();
+                    column = inputs_map.chip(i,1).log();
                 }
                 else
                 {
@@ -864,21 +863,13 @@ void ScalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     }
     else if(input_rank == 4)
     {
-        TensorMap<Tensor<type, 4>> input(inputs_data(0),
-                                         inputs_dimensions(0),
-                                         inputs_dimensions(1),
-                                         inputs_dimensions(2),
-                                         inputs_dimensions(3));
+        TensorMap<Tensor<type, 4>> input_map = inputs(0).to_tensor_map_4();
 
-        TensorMap<Tensor<type, 4>> output(scaling_layer_forward_propagation->outputs_data(0),
-                                          inputs_dimensions(0),
-                                          inputs_dimensions(1),
-                                          inputs_dimensions(2),
-                                          inputs_dimensions(3));
+        TensorMap<Tensor<type, 4>> output = scaling_layer_forward_propagation->outputs(0).to_tensor_map_4();
 
-        for(Index i = 0; i < input.size(); i++)
+        for(Index i = 0; i < input_map.size(); i++)
         {
-            output(i) = -static_cast<type>(1) + static_cast<type>(2*input(i)/255);
+            output(i) = -static_cast<type>(1) + static_cast<type>(2*input_map(i)/255);
         }
     }
     else

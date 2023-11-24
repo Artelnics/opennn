@@ -110,7 +110,7 @@ void ConvolutionalLayer::calculate_convolutions(type* inputs_data,
     const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array
             = convolutional_layer_forward_propagation->get_inputs_dimensions_array();
 
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
     type* synaptic_weights_pointer = const_cast<type*>(synaptic_weights.data());
 
@@ -182,7 +182,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
-    type* outputs_data = convolutional_layer_forward_propagation->outputs_data(0);
+    type* outputs_data = convolutional_layer_forward_propagation->outputs(0).get_data();
 
     TensorMap<Tensor<type, 4>> outputs = convolutional_layer_forward_propagation->get_outputs();
 
@@ -240,7 +240,7 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
 
-    type* outputs_data = convolutional_layer_forward_propagation->outputs_data(0);
+    type* outputs_data = convolutional_layer_forward_propagation->outputs(0).get_data();
 
     const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index outputs_rows_number = get_outputs_rows_number();
@@ -265,9 +265,9 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 
 void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_forward_propagation) const
 {
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
-    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs[0].get_dimensions();
 
     switch(activation_function)
     {
@@ -302,9 +302,9 @@ void ConvolutionalLayer::calculate_activations(LayerForwardPropagation* layer_fo
 
 void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagation* layer_forward_propagation) const
 {
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
-    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs_dimensions[0];
+    const Tensor<Index, 1> outputs_dimensios = layer_forward_propagation->outputs[0].get_dimensions();
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
@@ -341,15 +341,14 @@ void ConvolutionalLayer::calculate_activations_derivatives(LayerForwardPropagati
 
 
 
-void ConvolutionalLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                           const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+void ConvolutionalLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {
 
     // Convolutions
 
-    calculate_convolutions(inputs_data(0), layer_forward_propagation);
+    calculate_convolutions(inputs(0).get_data(), layer_forward_propagation);
 
     // Batch normalization
 

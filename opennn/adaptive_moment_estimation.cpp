@@ -307,6 +307,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     }
 
     NeuralNetworkForwardPropagation training_forward_propagation(batch_samples_number_training, neural_network_pointer);
+    /*
+
 
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_samples_number_selection, neural_network_pointer);
 
@@ -347,11 +349,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_samples_number_training, shuffle);
-
         const Index batches_number = training_batches.dimension(0);
 
         training_loss = type(0);
@@ -361,13 +361,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-
+            /*
             // Data set
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+            cout << "testing" << endl;
 
             // Neural network
-
 
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, is_training);
 
@@ -381,6 +381,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
+
         }
 
         // Loss
@@ -395,9 +396,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_samples_number_selection, shuffle);
 
             selection_error = type(0);
-
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
+                /*
                 // Data set
 
                 batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
@@ -411,8 +412,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
-
                 selection_error += selection_back_propagation.error;
+
             }
 
             selection_error /= static_cast<type>(selection_batches_number);
@@ -526,8 +527,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     if(display) results.print();
 
+    cout << "end of perform training" << endl;
     return results;
-
+*/
+    return TrainingResults(0);
 
 }
 

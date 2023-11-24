@@ -325,8 +325,7 @@ void PoolingLayer::set_default()
 }
 
 
-void PoolingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
+void PoolingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -335,22 +334,19 @@ void PoolingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     switch(pooling_method)
     {
         case PoolingMethod::MaxPooling:
-            forward_propagate_max_pooling(inputs_data(0),
-                                          inputs_dimensions(0),
+            forward_propagate_max_pooling(inputs(0),
                                           layer_forward_propagation,
                                           is_training);
             break;
 
         case PoolingMethod::AveragePooling:
-            forward_propagate_average_pooling(inputs_data(0),
-                                              inputs_dimensions(0),
+            forward_propagate_average_pooling(inputs(0),
                                               layer_forward_propagation,
                                               is_training);
             break;
 
         case PoolingMethod::NoPooling:
-            forward_propagate_no_pooling(inputs_data(0),
-                                         inputs_dimensions(0),
+            forward_propagate_no_pooling(inputs(0),
                                          layer_forward_propagation,
                                          is_training);
             break;
@@ -361,8 +357,7 @@ void PoolingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 /// Returns the result of applying average pooling to a batch of images.
 /// @param inputs The batch of images.
 
-void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
-                       const Tensor<Index, 1>& inputs_dimensions,
+void PoolingLayer::forward_propagate_average_pooling(const DynamicTensor<type>& inputs,
                        LayerForwardPropagation* layer_forward_propagation,
                        const bool& is_training)
 {
@@ -372,21 +367,15 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
+    const TensorMap<Tensor<type, 4>> inputs_map = inputs.to_tensor_map_4();
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
-
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
-
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
-
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+    TensorMap<Tensor<type, 4>> outputs = pooling_layer_forward_propagation->outputs(0).to_tensor_map_4();
 
     Tensor<type, 4> kernel(1, pool_rows_number, pool_columns_number, 1);
 
     kernel.setConstant(static_cast<type>(1.0/kernel_size));
 
-    outputs = inputs.convolve(kernel, convolution_dimensions);
+    outputs = inputs_map.convolve(kernel, convolution_dimensions);
 
 }
 
@@ -394,8 +383,7 @@ void PoolingLayer::forward_propagate_average_pooling(type* inputs_data,
 /// Returns the result of applying no pooling to a batch of images.
 /// @param inputs The batch of images.
 
-void PoolingLayer::forward_propagate_no_pooling(type* inputs_data,
-                                                const Tensor<Index, 1>& inputs_dimensions,
+void PoolingLayer::forward_propagate_no_pooling(const DynamicTensor<type>& inputs,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
 {
@@ -404,38 +392,33 @@ void PoolingLayer::forward_propagate_no_pooling(type* inputs_data,
 
     const Index neurons_number = get_neurons_number();
 
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
     memcpy(outputs_data,
-           inputs_data,
+           inputs.get_data(),
            batch_samples_number*neurons_number*sizeof(type));
 }
 
 
 /// Returns the result of applying max pooling to a batch of images.
 
-void PoolingLayer::forward_propagate_max_pooling(type* inputs_data,
-                                                 const Tensor<Index, 1>& inputs_dimensions,
+void PoolingLayer::forward_propagate_max_pooling(const DynamicTensor<type>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
                                                  const bool& is_training)
 {
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-    const Eigen::array<ptrdiff_t, 4> inputs_dimensions_array = pooling_layer_forward_propagation->get_inputs_dimensions_array();
-
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions_array);
-
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    const TensorMap<Tensor<type, 4>> inputs_map = inputs.to_tensor_map_4();
 
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
 
-    TensorMap<Tensor<type, 4>> outputs(outputs_data, outputs_dimensions_array);
+    TensorMap<Tensor<type, 4>> outputs = layer_forward_propagation->outputs(0).to_tensor_map_4();
 
     const Index in_rows_stride = 1;
     const Index in_columns_stride = 1;
 
-    pooling_layer_forward_propagation->image_patches.device(*thread_pool_device) = inputs.extract_image_patches(pool_rows_number,
+    pooling_layer_forward_propagation->image_patches.device(*thread_pool_device) = inputs_map.extract_image_patches(pool_rows_number,
                                                            pool_columns_number,
                                                            row_stride,
                                                            column_stride,

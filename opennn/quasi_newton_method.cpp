@@ -564,9 +564,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 #endif
 
     // Start training
-
     if(display) cout << "Training with quasi-Newton method...\n";
-
     TrainingResults results(maximum_epochs_number+1);
 
     // Data set
@@ -628,10 +626,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
         FlattenLayer* flatten_layer_pointer = neural_network_pointer->get_flatten_layer_pointer();
         //flatten_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
-
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
@@ -680,6 +676,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         // Update parameters
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        cout << "testing" << endl;
 
         // Selection error
 

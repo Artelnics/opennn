@@ -174,8 +174,7 @@ public:
 
    // Outputs
 
-    void forward_propagate(Tensor<type*, 1>,
-                           const Tensor<Tensor<Index, 1>, 1>&,
+    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -320,10 +319,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
    TensorMap<Tensor<type, 4>> get_outputs() const
    {
-       const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array
-           = get_outputs_dimensions_array();
-
-       return TensorMap<Tensor<type, 4>>(outputs_data(0), outputs_dimensions_array);
+       return outputs(0).to_tensor_map_4();
    }
 
 
@@ -349,16 +345,13 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
                                   inputs_columns_number,
                                   inputs_channels_number);
 
-       outputs_data.resize(1);
-
-       outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
-
-       outputs_dimensions.resize(1);
-       outputs_dimensions[0].resize(4);
-       outputs_dimensions[0].setValues({batch_samples_number,
-                                        outputs_rows_number,
-                                        outputs_columns_number,
-                                        kernels_number});
+       outputs.resize(1);
+       Tensor<Index, 1> output_dimensions(4);
+       output_dimensions.setValues({batch_samples_number,
+                                    outputs_rows_number,
+                                    outputs_columns_number,
+                                    kernels_number});
+       outputs(0).set_dimensions(output_dimensions);
 
        means.resize(kernels_number);
        standard_deviations.resize(kernels_number);
@@ -376,14 +369,10 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
        cout << "Outputs:" << endl;
 
-       cout << TensorMap<Tensor<type,4>>(outputs_data(0),
-                                          outputs_dimensions[0](0),
-                                          outputs_dimensions[0](1),
-                                          outputs_dimensions[0](2),
-                                          outputs_dimensions[0](3)) << endl;
+       cout << outputs(0).to_tensor_map_4() << endl;
 
        cout << "Outputs dimensions:" << endl;
-       cout << outputs_dimensions[0] << endl;
+       cout << outputs[0].get_dimensions() << endl;
 
        cout << "Activations derivatives:" << endl;
        cout << activations_derivatives << endl;

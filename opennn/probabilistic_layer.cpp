@@ -574,12 +574,12 @@ void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, co
 }
 
 
-void ProbabilisticLayer::calculate_combinations(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+void ProbabilisticLayer::calculate_combinations(const DynamicTensor<type>& inputs,
                                             const Tensor<type, 2>& biases,
                                             const Tensor<type, 2>& synaptic_weights,
                                             type* outputs_data, const Tensor<Index, 1> &outputs_dimensions) const
 {
-    const Index batch_samples_number = inputs_dimensions(0);
+    const Index batch_samples_number = inputs.get_dimension(0);
 
     const Index biases_number = get_neurons_number();
 
@@ -594,7 +594,7 @@ void ProbabilisticLayer::calculate_combinations(type* inputs_data, const Tensor<
         throw invalid_argument(buffer.str());
     }
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs.to_tensor_map_2();
     TensorMap<Tensor<type, 2>> combinations(outputs_data, batch_samples_number, biases_number);
 
     Tensor<type, 2> biases_matrix(batch_samples_number, biases_number);
@@ -604,7 +604,7 @@ void ProbabilisticLayer::calculate_combinations(type* inputs_data, const Tensor<
         fill_n(biases_matrix.data() + i*batch_samples_number, batch_samples_number, biases(i));
     }
 
-    combinations.device(*thread_pool_device) = biases_matrix + inputs.contract(synaptic_weights, A_B);
+    combinations.device(*thread_pool_device) = biases_matrix + inputs_tensor_map.contract(synaptic_weights, A_B);
 
 }
 
@@ -702,8 +702,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(type* combinations, c
 }
 
 
-void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                           const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+void ProbabilisticLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                            LayerForwardPropagation* forward_propagation,
                                            const bool& is_training)
 {
@@ -713,7 +712,7 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         ostringstream buffer;
 
         buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final method.\n"
+               << "void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*) final method.\n"
                << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
 
         throw invalid_argument(buffer.str());
@@ -723,12 +722,11 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
-    type* outputs_data = probabilistic_layer_forward_propagation->outputs_data(0);
+    type* outputs_data = probabilistic_layer_forward_propagation->outputs(0).get_data();
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions[0];
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs[0].get_dimensions();
 
-    calculate_combinations(inputs_data(0),
-                           inputs_dimensions(0),
+    calculate_combinations(inputs(0),
                            biases,
                            synaptic_weights,
                            outputs_data,
@@ -755,8 +753,7 @@ void ProbabilisticLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 }
 
 
-void ProbabilisticLayer::forward_propagate(type* inputs_data,
-                                           const Tensor<Index, 1>& inputs_dimensions,
+void ProbabilisticLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                            Tensor<type, 1>& potential_parameters,
                                            LayerForwardPropagation* forward_propagation)
 {
@@ -787,12 +784,11 @@ void ProbabilisticLayer::forward_propagate(type* inputs_data,
     const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
                                                                 inputs_number, neurons_number);
 
-    type* outputs_data = probabilistic_layer_forward_propagation->outputs_data(0);
+    type* outputs_data = probabilistic_layer_forward_propagation->outputs(0).get_data();
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs_dimensions[0];
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs[0].get_dimensions();
 
-    calculate_combinations(inputs_data,
-                           inputs_dimensions(0),
+    calculate_combinations(inputs(0),
                            potential_biases,
                            potential_synaptic_weights,
                            outputs_data,

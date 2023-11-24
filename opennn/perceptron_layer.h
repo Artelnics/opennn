@@ -156,7 +156,7 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(type*,
+   void calculate_combinations(const DynamicTensor<type>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                LayerForwardPropagation*) const;
@@ -169,13 +169,11 @@ public:
 
    // Perceptron layer outputs
 
-   void forward_propagate(Tensor<type*, 1>,
-                          const Tensor<Tensor<Index, 1>, 1>&,
+   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(type*,
-                          const Tensor<Index, 1>&,
+   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                           Tensor<type, 1>&,
                           LayerForwardPropagation*) final;
 
@@ -315,13 +313,11 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
          // Outputs
 
-         outputs_dimensions.resize(1);
-         outputs_dimensions[0].resize(2);
-         outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
+         Tensor<Index, 1> output_dimensions(2);
+         output_dimensions.setValues({batch_samples_number, neurons_number});
 
-         outputs_data.resize(1);
-
-         outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
+         outputs.resize(1);
+         outputs(0).set_dimensions(output_dimensions);
 
          // Rest of quantities
 
@@ -334,10 +330,10 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
          cout << activations_derivatives.dimensions() << endl;
 
          cout << "Outputs dimensions:" << endl;
-         cout << outputs_dimensions[0] << endl;
+         cout << outputs[0].get_dimensions() << endl;
 
          cout << "Outputs:" << endl;
-         cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
+         cout << outputs(0).to_tensor_map_2() << endl;
 
          cout << "Activations derivatives:" << endl;
          cout << activations_derivatives << endl;

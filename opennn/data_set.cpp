@@ -15139,6 +15139,7 @@ void DataSet::read_csv_2_complete()
     samples_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
+
 }
 
 
@@ -15731,7 +15732,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_data);
+        fill_submatrix(data, samples, inputs, this->inputs(0).get_data());
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -15739,11 +15740,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs(inputs_data,
-                                          batch_size,
-                                          rows_number,
-                                          columns_number,
-                                          channels_number);
+        TensorMap<Tensor<type, 4>> inputs = this->inputs(0).to_tensor_map_4();
 
         #pragma omp parallel for
 
@@ -15769,8 +15766,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
         if(augmentation) perform_augmentation();
     }
-
-    fill_submatrix(data, samples, targets, targets_data);
+    fill_submatrix(data, samples, targets, this->targets.get_data());
 }
 
 
@@ -15803,7 +15799,7 @@ void DataSetBatch::perform_augmentation()
     for(Index batch = 0; batch < batch_size; batch++)
     {
 
-        TensorMap<Tensor<type, 3>> current_image(inputs_data + batch*input_size,
+        TensorMap<Tensor<type, 3>> current_image((this->inputs(0).get_data()) + batch*input_size,
                                                  rows_number,
                                                  columns_number,
                                                  channels_number);
@@ -15865,15 +15861,14 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-    size_t inputs_data_size = 0;
-    size_t targets_data_size = batch_size*target_variables_number*sizeof(type);
-
     if(input_variables_dimensions.size() == 1)
     {
-        inputs_dimensions.resize(2);
+        inputs.resize(1);
+
+        Tensor<Index, 1> inputs_dimensions(2);
         inputs_dimensions.setValues({batch_size, input_variables_number});
 
-        inputs_data_size = batch_size*input_variables_number*sizeof(type);
+        inputs(0).set_dimensions(inputs_dimensions);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -15881,18 +15876,17 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        inputs_dimensions.resize(4);
+        Tensor<Index, 1> inputs_dimensions(4);
         inputs_dimensions.setValues({batch_size, channels_number, rows_number, columns_number});
 
-        inputs_data_size = rows_number*columns_number*channels_number*batch_size*sizeof(type);
+        inputs.resize(1);
+        inputs(0) = DynamicTensor<type>(inputs_dimensions);
     }
 
-    targets_dimensions.resize(2);
+    Tensor<Index, 1> targets_dimensions(2);
     targets_dimensions.setValues({batch_size, target_variables_number});
 
-    inputs_data = (type*)malloc(static_cast<size_t>(inputs_data_size));
-
-    targets_data = (type*)malloc(static_cast<size_t>(targets_data_size));
+    targets.set_dimensions(targets_dimensions);
 }
 
 
@@ -15907,21 +15901,21 @@ void DataSetBatch::print() const
     cout << "Batch" << endl;
 
     cout << "Inputs dimensions:" << endl;
-    cout << inputs_dimensions << endl;
+    cout << inputs(0).get_dimensions() << endl;
 
     cout << "Dimensions " << endl;
-    cout << inputs_dimensions.dimensions() << endl;
+    cout << inputs(0).get_dimensions().dimensions() << endl;
 
     cout << "Inputs:" << endl;
-    if(inputs_dimensions.size() == 2)
-        cout << TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1)) << endl;
-    else if(inputs_dimensions.size() == 4)
-        cout << TensorMap<Tensor<type, 4>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3)) << endl;
+    if(inputs(0).get_dimensions().size() == 2)
+        cout << inputs(0).to_tensor_map_2() << endl;
+    else if(inputs(0).get_dimensions().size() == 4)
+        cout << inputs(0).to_tensor_map_4() << endl;
     cout << "Targets dimensions:" << endl;
-    cout << targets_dimensions << endl;
+    cout << targets.get_dimensions() << endl;
 
     cout << "Targets:" << endl;
-    cout << TensorMap<Tensor<type,2>>(targets_data, targets_dimensions(0), targets_dimensions(1)) << endl;
+    cout << targets.to_tensor_map_2() << endl;
 }
 
 

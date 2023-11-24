@@ -120,23 +120,19 @@ public:
 
     // First order activations
 
-    void forward_propagate(Tensor<type*, 1>,
-                           const Tensor<Tensor<Index, 1>, 1>&,
+    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    void forward_propagate_no_pooling(type*,
-                           const Tensor<Index, 1>&,
+    void forward_propagate_no_pooling(const DynamicTensor<type>&,
                            LayerForwardPropagation*,
                            const bool&);
 
-    void forward_propagate_max_pooling(type*,
-                           const Tensor<Index, 1>&,
+    void forward_propagate_max_pooling(const DynamicTensor<type>&,
                            LayerForwardPropagation*,
                            const bool&);
 
-    void forward_propagate_average_pooling(type*,
-                           const Tensor<Index, 1>&,
+    void forward_propagate_average_pooling(const DynamicTensor<type>&,
                            LayerForwardPropagation*,
                            const bool&);
 
@@ -252,19 +248,13 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const Index channels_number = pooling_layer_pointer->get_channels_number();
 
-        outputs_dimensions.resize(1);
-        outputs_dimensions[0].resize(4);
-        outputs_dimensions[0].setValues({batch_samples_number,
-                                      outputs_rows_number,
-                                      outputs_columns_number,
-                                      channels_number});
-
-        outputs_data.resize(1);
-
-        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number
-                                                          *outputs_rows_number
-                                                          *outputs_columns_number
-                                                          *channels_number*sizeof(type)));
+        outputs.resize(1);
+        Tensor<Index, 1> output_dimensions(4);
+        output_dimensions.setValues({batch_samples_number,
+                                     outputs_rows_number,
+                                     outputs_columns_number,
+                                     channels_number});
+        outputs(0).set_dimensions(output_dimensions);
 
         image_patches.resize(batch_samples_number,
                              pool_rows_number,
@@ -279,11 +269,11 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         cout << "Pooling layer forward propagation" << endl;
 
         cout << "Outputs dimensions:" << endl;
-        cout << outputs_dimensions[0] << endl;
+        cout << outputs[0].get_dimensions() << endl;
 
         cout << "Outputs:" << endl;
 
-        cout << TensorMap<Tensor<type,4>>(outputs_data(0), get_outputs_dimensions_array()) << endl;
+        cout << outputs(0).to_tensor_map_4() << endl;
 
         cout << "Image patches" << endl;
         cout << image_patches << endl;

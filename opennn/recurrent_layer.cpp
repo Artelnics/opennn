@@ -730,8 +730,7 @@ void RecurrentLayer::calculate_activations_derivatives(type* combinations_data, 
 }
 
 
-void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                       const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
+void RecurrentLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
@@ -773,14 +772,12 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions[0];
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
-
-    const Index samples_number = inputs_dimensions(0)(0);
+    const Index samples_number = inputs(0).get_dimension(0);
     const Index neurons_number = get_neurons_number();
 
-    TensorMap<Tensor<type, 2>> inputs(inputs_data(0), inputs_dimensions(0)(0), inputs_dimensions(0)(1));
+    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
 
     Tensor<Index, 1> combinations_dimensions;
     Tensor<Index, 1> activations_dimensions;
@@ -790,7 +787,7 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     {
         if(i%timesteps == 0) hidden_states.setZero();
 
-        recurrent_layer_forward_propagation->current_inputs = inputs.chip(i, 0);
+        recurrent_layer_forward_propagation->current_inputs = inputs_map.chip(i, 0);
 
         calculate_combinations(recurrent_layer_forward_propagation->current_inputs,
                                input_weights,
@@ -828,14 +825,14 @@ void RecurrentLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 }
 
 
-void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+void RecurrentLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                        Tensor<type, 1>&parameters,
                                        LayerForwardPropagation* forward_propagation)
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
             = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    if(inputs_dimensions.size() != 2)
+    if(inputs(0).get_dimensions().size() != 2)
     {
         ostringstream buffer;
 
@@ -846,9 +843,7 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
         throw invalid_argument(buffer.str());
     }
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions[0];
-
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -856,19 +851,19 @@ void RecurrentLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>
     const TensorMap<Tensor<type, 1>> biases(parameters.data(), neurons_number);
     const TensorMap<Tensor<type, 2>> input_weights(parameters.data()+neurons_number, inputs_number, neurons_number);
     const TensorMap<Tensor<type, 2>> recurrent_weights(parameters.data()+neurons_number+inputs_number*neurons_number, neurons_number, neurons_number);
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
 
     Tensor<Index, 1> combinations_dimensions;
     Tensor<Index, 1> activations_dimensions;
     Tensor<Index, 1> activations_derivatives_dimensions;
 
-    const Index samples_number = inputs_dimensions(0);
+    const Index samples_number = inputs(0).get_dimension(0);
 
     for(Index i = 0; i < samples_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
 
-        recurrent_layer_forward_propagation->current_inputs = inputs.chip(i, 0);
+        recurrent_layer_forward_propagation->current_inputs = inputs_map.chip(i, 0);
 
         calculate_combinations(recurrent_layer_forward_propagation->current_inputs,
                                input_weights,
@@ -1202,9 +1197,7 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
     // Derivatives of combinations with respect to recurrent weights
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs_dimensions[0];
-
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation->outputs_data(0), outputs_dimensions[0], outputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 

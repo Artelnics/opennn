@@ -397,8 +397,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                      const Tensor<Tensor<Index, 1>, 1>& inputs_tensor_dimensions,
+void BoundingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
@@ -418,36 +417,32 @@ void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     }
 #endif
 
-    Tensor<Index, 1> inputs_dimensions(inputs_tensor_dimensions(0));
+    const Tensor<Index, 1> inputs_dimensions = inputs(0).get_dimensions();
 
     if(bounding_method == BoundingMethod::Bounding)
     {
         const Index rows_number = inputs_dimensions(0);
         const Index columns_number = inputs_dimensions(1);
 
-        TensorMap<Tensor<type,2>> inputs(inputs_data(0),
-                                         rows_number,
-                                         columns_number);
+        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map_2();
 
-        TensorMap<Tensor<type,2>> outputs(bounding_layer_forward_propagation->outputs_data(0),
-                                          rows_number,
-                                          columns_number);
+        TensorMap<Tensor<type,2>> outputs = bounding_layer_forward_propagation->outputs(0).to_tensor_map_2();
 
         for(Index i = 0; i < rows_number; i++)
         {
             for(Index j = 0; j < columns_number; j++)
             {
-                if(inputs(i,j) < lower_bounds(j))
+                if(inputs_map(i,j) < lower_bounds(j))
                 {
                     outputs(i,j) = lower_bounds(j);
                 }
-                else if(inputs(i,j) > upper_bounds(j))
+                else if(inputs_map(i,j) > upper_bounds(j))
                 {
                     outputs(i,j) = upper_bounds(j);
                 }
                 else
                 {
-                    outputs(i,j) = inputs(i,j);
+                    outputs(i,j) = inputs_map(i,j);
                 }
             }
         }
@@ -455,7 +450,7 @@ void BoundingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     else
     {
         Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
-        copy(inputs_data(0), inputs_data(0) + inputs_size(0), bounding_layer_forward_propagation->outputs_data(0));
+        copy(inputs(0).get_data(), inputs(0).get_data() + inputs_size(0), bounding_layer_forward_propagation->outputs(0).get_data());
     }
 }
 

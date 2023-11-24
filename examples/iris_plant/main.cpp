@@ -48,12 +48,18 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        cout << "Before training" << endl;
         training_strategy.perform_training();
+        cout << "Good bye" << endl;
 
         // Testing analysis
 
+
+
+
+        /*
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
@@ -82,7 +88,7 @@ int main()
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/neural_network.c");
         neural_network.save_expression_python("../data/neural_network.py");
-
+*/
         return 0;
     }
     catch(const exception& e)

@@ -428,21 +428,20 @@ void MultiheadAttentionLayer::compute_attention_output(type* transformed_value_d
 }
 
 
-void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                        const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+void MultiheadAttentionLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                         LayerForwardPropagation* forward_propagation,
                                         const bool& is_training)
 {
-    if(inputs_data.size() != 3 || inputs_dimensions.size() != 3)
+    if(inputs.size() != 3)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
                << "void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index,1>, 1>&, LayerForwardPropagation*, const bool&)\n"
-               << "Number of input tensors (" << inputs_data.size() << ") must be 3 (key, query and value).\n";
+               << "Number of input tensors (" << inputs.size() << ") must be 3 (key, query and value).\n";
         throw invalid_argument(buffer.str());
     }
 
-    if(inputs_dimensions(0)(0) != inputs_dimensions(1)(0) || inputs_dimensions(0)(0) != inputs_dimensions(2)(0) || inputs_dimensions(1)(0) != inputs_dimensions(2)(0))
+    if(inputs(0).get_dimension(0) != inputs(1).get_dimension(0) || inputs(0).get_dimension(0) != inputs(2).get_dimension(0))
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
@@ -451,7 +450,7 @@ void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    if(inputs_dimensions(0)(1) != input_size)
+    if(inputs(0).get_dimension(1) != input_size)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
@@ -460,7 +459,7 @@ void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    if(inputs_dimensions(1)(1) != context_size || inputs_dimensions(2)(1) != context_size)
+    if(inputs(1).get_dimension(1) != context_size || inputs(2).get_dimension(1) != context_size)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
@@ -469,7 +468,7 @@ void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    if(inputs_dimensions(0)(2) != depth || inputs_dimensions(1)(2) != depth || inputs_dimensions(2)(2) != depth)
+    if(inputs(0).get_dimension(2) != depth || inputs(1).get_dimension(2) != depth || inputs(2).get_dimension(2) != depth)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
@@ -478,17 +477,17 @@ void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         throw invalid_argument(buffer.str());
     }
 
-    const Index batch_size = inputs_dimensions(0)(0);
+    const Index batch_size = inputs(0).get_dimension(0);
 
-    Tensor<Index, 1> query_dimensions = inputs_dimensions(0);
-    Tensor<Index, 1> key_dimensions = inputs_dimensions(1);
+    const Tensor<Index, 1> query_dimensions = inputs(0).get_dimensions();
+    const Tensor<Index, 1> key_dimensions = inputs(1).get_dimensions();
 
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> query(inputs_data(0), batch_size, input_size, depth);
-    const TensorMap<Tensor<type, 3>> key(inputs_data(1), batch_size, context_size, depth);
-    const TensorMap<Tensor<type, 3>> value(inputs_data(2), batch_size, context_size, depth);
+    const TensorMap<Tensor<type, 3>> query = inputs(0).to_tensor_map_3();
+    const TensorMap<Tensor<type, 3>> key = inputs(1).to_tensor_map_3();
+    const TensorMap<Tensor<type, 3>> value = inputs(2).to_tensor_map_3();
 
     type* transformed_query_data = multihead_attention_layer_forward_propagation->get_transformed_query_data();
     type* transformed_key_data = multihead_attention_layer_forward_propagation->get_transformed_key_data();
@@ -524,7 +523,7 @@ void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
     const TensorMap<Tensor<type, 4>> attention_outputs(attention_outputs_data, batch_size, input_size, depth, number_of_heads);
 
     calculate_output_projection(attention_outputs,
-                                multihead_attention_layer_forward_propagation->outputs_data(0));
+                                multihead_attention_layer_forward_propagation->outputs(0).get_data());
 }
 
 

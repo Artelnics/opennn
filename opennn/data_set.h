@@ -44,6 +44,7 @@
 #include "tensor_utilities.h"
 #include "text_analytics.h"
 #include "codification.h"
+#include "dynamic_tensor.h"
 
 using namespace std;
 using namespace Eigen;
@@ -1202,47 +1203,48 @@ struct DataSetBatch
 
     virtual ~DataSetBatch()
     {
-        if(targets_data != nullptr) free(targets_data);
     }
 
     Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
+/*
+    void set_inputs(const Tensor<DynamicTensor<type>, 1>& new_inputs)
+    {
+        inputs = new_inputs;
+    }
+
+    void set_inputs(const DynamicTensor<type>& new_inputs)
+    {
+        inputs.resize(1);
+        inputs(0) = new_inputs;
+    }
 
     void set_inputs(Tensor<type, 2>& new_inputs)
     {
-        inputs_data = new_inputs.data();
-
-        inputs_dimensions = get_dimensions(new_inputs);
+        inputs.resize(1);
+        inputs(0) = DynamicTensor<type>(new_inputs);
     }
 
     void set_inputs(Tensor<type, 4>& new_inputs)
     {
-        inputs_data = new_inputs.data();
-
-        inputs_dimensions = get_dimensions(new_inputs);
+        inputs.resize(1);
+        inputs(0) = DynamicTensor<type>(new_inputs);
     }
-
+*/
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     void perform_augmentation();
 
     void print() const;
 
-
     Index batch_size = 0;
 
     DataSet* data_set_pointer = nullptr;
 
-    Tensor<type, 4> data;
+    Tensor<DynamicTensor<type>, 1> inputs;
 
-    type* inputs_data = nullptr;
-
-    Tensor<Index, 1> inputs_dimensions;
-
-    type* targets_data = nullptr;
-
-    Tensor<Index, 1> targets_dimensions;
+    DynamicTensor<type> targets;
 };
 
 

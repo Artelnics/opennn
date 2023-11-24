@@ -144,7 +144,7 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-void Layer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&)
+void Layer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&)
 {
     ostringstream buffer;
 
@@ -156,7 +156,7 @@ void Layer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1
 }
 
 
-void Layer::forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*)
+void Layer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&, Tensor<type, 1>&, LayerForwardPropagation*)
 {
     ostringstream buffer;
 

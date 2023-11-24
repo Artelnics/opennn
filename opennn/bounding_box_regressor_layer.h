@@ -38,7 +38,7 @@ public:
 
    // Perceptron layer outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
+   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                           LayerForwardPropagation*,
                           const bool&);
 

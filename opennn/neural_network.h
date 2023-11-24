@@ -406,6 +406,7 @@ struct NeuralNetworkForwardPropagation
 
         const Index layers_number = layers_pointers.size();
 
+        /*
         layers.resize(layers_number);
 
         for(Index i = 0; i < layers_number; i++)
@@ -415,12 +416,13 @@ struct NeuralNetworkForwardPropagation
             case Layer::Type::Perceptron:
             {
                 layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+
             }
             break;
-
             case Layer::Type::Probabilistic:
             {
                 layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+
             }
             break;
 
@@ -487,6 +489,7 @@ struct NeuralNetworkForwardPropagation
             default: break;
             }
         }
+*/
     }
 
 

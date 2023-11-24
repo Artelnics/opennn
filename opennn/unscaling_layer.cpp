@@ -698,22 +698,21 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-void UnscalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                       const Tensor<Tensor<Index, 1>, 1>& inputs_tensor_dimensions,
+void UnscalingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
 
-    Tensor<Index, 1> inputs_dimensions(inputs_tensor_dimensions(0));
+    const Tensor<Index, 1> inputs_dimensions = inputs(0).get_dimensions();
 
     const Index input_rank = inputs_dimensions.size();
 
     if(input_rank == 2)
     {
-        TensorMap<Tensor<type,2>> inputs(inputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
-        TensorMap<Tensor<type,2>> outputs(unscaling_layer_forward_propagation->outputs_data(0), inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map_2();
+        TensorMap<Tensor<type,2>> outputs = unscaling_layer_forward_propagation->outputs(0).to_tensor_map_2();
 
         const Index neurons_number = get_neurons_number();
 
@@ -751,7 +750,7 @@ void UnscalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
         {
             const Scaler scaler = scalers(i);
 
-            Tensor<type, 1> column = inputs.chip(i, 1);
+            Tensor<type, 1> column = inputs_map.chip(i, 1);
 
             if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
@@ -774,7 +773,7 @@ void UnscalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
                     const type intercept = -(min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(max_range-min_range);
 
-                    column = intercept + slope*inputs.chip(i, 1);
+                    column = intercept + slope*inputs_map.chip(i, 1);
                 }
                 else if(scaler == Scaler::MeanStandardDeviation)
                 {
@@ -782,17 +781,17 @@ void UnscalingLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
                     const type intercept = descriptives(i).mean;
 
-                    column = intercept + slope*inputs.chip(i, 1);
+                    column = intercept + slope*inputs_map.chip(i, 1);
                 }
                 else if(scaler == Scaler::StandardDeviation)
                 {
                     const type standard_deviation = descriptives(i).standard_deviation;
 
-                    column = standard_deviation * inputs.chip(i, 1);
+                    column = standard_deviation * inputs_map.chip(i, 1);
                 }
                 else if(scaler == Scaler::Logarithm)
                 {
-                    column = inputs.chip(i,1).exp();
+                    column = inputs_map.chip(i,1).exp();
                 }
                 else
                 {

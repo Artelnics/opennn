@@ -168,8 +168,7 @@ void AdditionLayer::set_default()
 }
 
 
-void AdditionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
+void AdditionLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {

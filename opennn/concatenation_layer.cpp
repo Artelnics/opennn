@@ -168,8 +168,7 @@ void ConcatenationLayer::set_default()
 }
 
 
-void ConcatenationLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                     const Tensor<Tensor<Index, 1>, 1>& inputs_dimensions,
+void ConcatenationLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {

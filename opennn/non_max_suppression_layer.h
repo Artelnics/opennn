@@ -70,15 +70,15 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;
 
-        outputs_data.resize(2);
+        outputs.resize(2);
 
         // Bounding boxes
 
-        outputs_data(0) = nullptr;
+        outputs(0).set_data(nullptr);
 
         // Scores
 
-        outputs_data(1) = nullptr;
+        outputs(1).set_data(nullptr);
     }
 
     void print() const

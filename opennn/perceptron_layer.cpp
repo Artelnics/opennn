@@ -513,7 +513,7 @@ void PerceptronLayer::set_parameters_random()
 }
 
 
-void PerceptronLayer::calculate_combinations(type* inputs_data,
+void PerceptronLayer::calculate_combinations(const DynamicTensor<type>& inputs,
                                              const Tensor<type, 2>& biases,
                                              const Tensor<type, 2>& synaptic_weights,
                                              LayerForwardPropagation* layer_forward_propagation) const
@@ -529,21 +529,18 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 
-    const Eigen::array<ptrdiff_t, 2> inputs_dimensions_array = perceptron_layer_forward_propagation->get_inputs_dimensions_array();
+    const TensorMap<Tensor<type, 2>> inputs_map = inputs.to_tensor_map_2();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions_array);
-
-
-    const Index batch_samples_number = inputs.dimension(0);
+    const Index batch_samples_number = inputs.get_dimension(0);
     const Index biases_number = get_neurons_number();
 
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
     const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
 
     TensorMap<Tensor<type, 2>> combinations(outputs_data, outputs_dimensions_array);
 
-    combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
+    combinations.device(*thread_pool_device) = inputs_map.contract(synaptic_weights, A_B);
 
     for(Index i = 0; i < biases_number; i++)
     {
@@ -552,7 +549,7 @@ void PerceptronLayer::calculate_combinations(type* inputs_data,
          column.device(*thread_pool_device) = column + biases(i);
     }
 
-    combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+    combinations.device(*thread_pool_device) += inputs_map.contract(synaptic_weights, A_B);
 //    combinations += inputs.contract(synaptic_weights, A_B);
 
 }
@@ -626,8 +623,8 @@ void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forwa
     }
 #endif
 
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
-    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs[0].get_dimensions();
 
     switch(activation_function)
     {
@@ -660,8 +657,8 @@ void PerceptronLayer::calculate_activations(LayerForwardPropagation* layer_forwa
 
 void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation* layer_forward_propagation) const
 {
-    type* outputs_data = layer_forward_propagation->outputs_data(0);
-    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs_dimensions[0];
+    type* outputs_data = layer_forward_propagation->outputs(0).get_data();
+    const Tensor<Index, 1> outputs_dimensions = layer_forward_propagation->outputs[0].get_dimensions();
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -722,8 +719,7 @@ void PerceptronLayer::calculate_activations_derivatives(LayerForwardPropagation*
 }
 
 
-void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                        const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
+void PerceptronLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
@@ -739,14 +735,14 @@ void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
 #endif
 
-    calculate_combinations(inputs_data(0),
+    calculate_combinations(inputs(0),
                            biases,
                            synaptic_weights,
                            layer_forward_propagation);
 
     if(is_training && dropout_rate > type(0))
     {
-        type* outputs_data = layer_forward_propagation->outputs_data(0);
+        type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
         const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
         const Index outputs_number = get_neurons_number();
@@ -782,8 +778,7 @@ void PerceptronLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
 
 
-void PerceptronLayer::forward_propagate(type* inputs_data,
-                                        const Tensor<Index, 1>& inputs_dimensions,
+void PerceptronLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
                                         Tensor<type, 1>& potential_parameters,
                                         LayerForwardPropagation* layer_forward_propagation)
 {
@@ -811,14 +806,14 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
                                                                 inputs_number,
                                                                 neurons_number);
 
-    calculate_combinations(inputs_data,
+    calculate_combinations(inputs(0),
                            potential_biases,
                            potential_synaptic_weights,
                            layer_forward_propagation);
 
     if(dropout_rate > type(0))
     {
-        type* outputs_data = layer_forward_propagation->outputs_data(0);
+        type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
         const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
         const Index outputs_number = get_neurons_number();
