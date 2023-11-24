@@ -363,6 +363,7 @@ public:
     Index get_variable_index(const string&name) const;
 
     Tensor<Index, 1> get_variable_indices(const Index&) const;
+    Tensor<Index, 1> get_categorical_to_indices(const Index&) const;
     Tensor<Index, 1> get_unused_variables_indices() const;
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
@@ -427,6 +428,8 @@ public:
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const string&) const;
+    Tensor<type, 2> get_drop_column_data(const Index&) const;
+
     map<string, DataSet> group_by(const DataSet&, const string&) const;
     Tensor<type, 2> concat();
     string get_sample_category(const Index&, const Index&) const;
@@ -511,7 +514,7 @@ public:
     void set(const string&, const char&, const bool&);
     void set(const string&, const char&, const bool&, const DataSet::Codification&);
     void set(const Tensor<type, 1>&, const Index&);
-
+    void set_properties_from_parent(const DataSet&);
     void set_default();
 
     void set_project_type_string(const string&);
@@ -604,6 +607,7 @@ public:
 
     void set_data(const Tensor<type, 2>&);
     void set_data(const Tensor<type, 1>&);
+    void set_data(const Tensor<type, 2>&, const bool&);
 
     // Members set methods
 
@@ -679,7 +683,7 @@ public:
     Tensor<string, 1> unuse_constant_columns();
 
     Tensor<Index, 1> unuse_repeated_samples();
-    Tensor<string, 1> get_columns_types();
+    Tensor<string, 1> get_columns_types() const;
 
     Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
     Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
@@ -807,6 +811,7 @@ public:
     void transform_time_series();
     void transform_time_series_columns();
     void transform_time_series_data();
+    void transform_time_series_non_categorical_data();
     void fill_time_series_gaps();
 
     void get_time_series_columns_number(const Index&);
