@@ -1002,7 +1002,7 @@ void DataSet::transform_time_series_columns()
     columns = new_columns;
 }
 
-/*
+
 void DataSet::transform_time_series_data()
 {
     cout << "Transforming time series data..." << endl;
@@ -1026,10 +1026,9 @@ void DataSet::transform_time_series_data()
 
     for(Index j = 0; j < old_variables_number; j++)
     {
-
        if(columns(get_column_index(j)).type == ColumnType::DateTime)
        {
-            time_column_index = get_column_index(j);
+            time_variable_index = j;
             Tensor<type, 1> timestamp_raw(time_series_data.chip(j, 1));
 
             Index time_index = 0;
@@ -1056,8 +1055,9 @@ void DataSet::transform_time_series_data()
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
-}*/
+}
 
+/*
 void DataSet::transform_time_series_data()
 {
     cout << "Transforming time series data..." << endl;
@@ -1095,17 +1095,32 @@ void DataSet::transform_time_series_data()
     samples_uses.resize(new_samples_number);
     split_samples_random();
 }
-
+*/
 void DataSet::fill_time_series_gaps()
 {
     const Index rows_number = data.dimension(0);
     const Index columns_number = data.dimension(1);
 
-    quicksort_by_column(time_column_index);
+    quicksort_by_column(0);
 
-    Tensor<type, 1> time_data = data.chip(time_column_index, 1);
+    Tensor<type, 1> time_data = data.chip(0, 1);
 
     Tensor<type, 1> time_difference_data = compute_elementwise_difference(time_data);
+
+    // cout << "time_variable_index: " << time_variable_index << endl;
+    // cout << "time_data: " << endl;
+    
+    // for(Index i = 0; i < time_data.size(); i++)
+    // {
+    //     cout << time_data(i) << " ";
+    // }
+    
+    // cout << "elementwise_difference time_data: " << endl;
+
+    // for(Index i = 0; i < time_difference_data.size(); i++)
+    // {
+    //     cout << time_difference_data(i) << " ";
+    // }
 
     Tensor<type, 1> time_step_mode = compute_mode(time_difference_data);
 
@@ -1114,7 +1129,7 @@ void DataSet::fill_time_series_gaps()
     Tensor<type, 2> NaN_data(time_series_filled.size(), columns_number);
     NaN_data.setConstant(type(NAN));
 
-    NaN_data.chip(time_column_index, 1) = time_series_filled;
+    NaN_data.chip(0, 1) = time_series_filled;
 
     Tensor<type, 2> final_data(data);
 
@@ -10500,7 +10515,7 @@ void DataSet::transform_time_series()
 
     transform_time_series_data();
 
-//    fill_time_series_gaps();
+    fill_time_series_gaps();
 
     transform_time_series_columns();
 
@@ -12809,9 +12824,7 @@ void DataSet::scrub_missing_values()
 
 void DataSet::read_csv()
 {
-    cout << "read_csv_1 (1)" << endl;
     read_csv_1();
-    cout << "read_csv_1 (2)" << endl;
 
     if(!has_time_columns() && !has_categorical_columns())
     {
@@ -12821,13 +12834,9 @@ void DataSet::read_csv()
     }
     else
     {
-        cout << "read_csv_2 (1)" << endl;
         read_csv_2_complete();
-        cout << "read_csv_2 (2)" << endl;
 
-        cout << "read_csv_3 (1)" << endl;
         read_csv_3_complete();
-        cout << "read_csv_3 (2)" << endl;
     }
 }
 
@@ -14713,8 +14722,6 @@ void DataSet::read_csv_2_complete()
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
-    cout << "read_csv_2" << endl;
-
     #ifdef _WIN32
 
     if(regex_search(data_file_name, accent_regex))
@@ -14876,8 +14883,6 @@ void DataSet::read_csv_3_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
-
-    cout << "read_csv_3" << endl;
 
     #ifdef _WIN32
 

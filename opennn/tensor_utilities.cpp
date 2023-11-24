@@ -1507,11 +1507,16 @@ void quicksort_by_column(Tensor<type, 2>& data, Index target_column)
 
 Tensor<type, 1> compute_elementwise_difference(Tensor<type, 1>& data)
 {
+    if (data.size() <= 2) {
+        return Tensor<type, 1>();
+    }
+
     Tensor<type, 1> difference_data(data.size());
     difference_data(0) = 0;
 
     if (data.size() <= 1) return Tensor<type, 1>();
 
+    #pragma omp parallel for
     for (int i = 1; i < data.size(); i++) difference_data(i) = data(i) - data(i - 1);
 
     return difference_data;
@@ -1527,6 +1532,13 @@ Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
     {
         type value = data(i);
         frequency_map[value]++;
+    }
+
+    cout << "frequency_map: " << endl;
+    
+    for(auto it = frequency_map.cbegin(); it != frequency_map.cend(); ++it)
+    {
+        cout << "Key: " << it->first << ", Value: " << it->second << "\n";
     }
 
     type mode = -1;

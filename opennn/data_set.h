@@ -1047,7 +1047,7 @@ private:
 
     string time_column;
 
-    Index time_column_index;
+    Index time_variable_index;
 
     string group_by_column;
 
