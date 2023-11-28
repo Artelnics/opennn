@@ -594,7 +594,7 @@ void ProbabilisticLayer::calculate_combinations(const DynamicTensor<type>& input
         throw invalid_argument(buffer.str());
     }
 
-    const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs.to_tensor_map<2>();
     TensorMap<Tensor<type, 2>> combinations(outputs_data, batch_samples_number, biases_number);
 
     Tensor<type, 2> biases_matrix(batch_samples_number, biases_number);

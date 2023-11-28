@@ -783,8 +783,8 @@ void ScalingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& input
 
         const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
-        const TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
-        TensorMap<Tensor<type, 2>> outputs = scaling_layer_forward_propagation->outputs(0).to_tensor_map_2();
+        const TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map<2>();
+        TensorMap<Tensor<type, 2>> outputs = scaling_layer_forward_propagation->outputs(0).to_tensor_map<2>();
 
         if(inputs_dimensions(0) != points_number || inputs_dimensions(1) != neurons_number)
         {
@@ -863,9 +863,9 @@ void ScalingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& input
     }
     else if(input_rank == 4)
     {
-        TensorMap<Tensor<type, 4>> input_map = inputs(0).to_tensor_map_4();
+        TensorMap<Tensor<type, 4>> input_map = inputs(0).to_tensor_map<4>();
 
-        TensorMap<Tensor<type, 4>> output = scaling_layer_forward_propagation->outputs(0).to_tensor_map_4();
+        TensorMap<Tensor<type, 4>> output = scaling_layer_forward_propagation->outputs(0).to_tensor_map<4>();
 
         for(Index i = 0; i < input_map.size(); i++)
         {

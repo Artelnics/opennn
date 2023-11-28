@@ -218,7 +218,7 @@ struct ScalingLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << outputs(0).to_tensor_map_2() << endl;
+        cout << outputs(0).to_tensor_map<2>() << endl;
     }
 };
 

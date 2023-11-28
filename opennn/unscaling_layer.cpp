@@ -711,8 +711,8 @@ void UnscalingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
 
     if(input_rank == 2)
     {
-        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map_2();
-        TensorMap<Tensor<type,2>> outputs = unscaling_layer_forward_propagation->outputs(0).to_tensor_map_2();
+        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map<2>();
+        TensorMap<Tensor<type,2>> outputs = unscaling_layer_forward_propagation->outputs(0).to_tensor_map<2>();
 
         const Index neurons_number = get_neurons_number();
 

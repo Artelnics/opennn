@@ -319,7 +319,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
    TensorMap<Tensor<type, 4>> get_outputs() const
    {
-       return outputs(0).to_tensor_map_4();
+       return outputs(0).to_tensor_map<4>();
    }
 
 
@@ -369,7 +369,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
        cout << "Outputs:" << endl;
 
-       cout << outputs(0).to_tensor_map_4() << endl;
+       cout << outputs(0).to_tensor_map<4>() << endl;
 
        cout << "Outputs dimensions:" << endl;
        cout << outputs[0].get_dimensions() << endl;

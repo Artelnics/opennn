@@ -309,6 +309,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
         throw invalid_argument(buffer.str());
     }
+
 }
 
 

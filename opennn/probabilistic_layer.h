@@ -263,7 +263,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         //cout << outputs_dimensions << endl;
 
         cout << "Outputs:" << endl;
-        cout << outputs(0).to_tensor_map_2() << endl;
+        cout << outputs(0).to_tensor_map<2>() << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;

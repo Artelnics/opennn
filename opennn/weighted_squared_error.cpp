@@ -205,9 +205,9 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
-    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map<2>();
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
     const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
@@ -273,7 +273,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
     const Index batch_samples_number = batch.targets.get_dimension(0);
     const Index total_samples_number = data_set_pointer->get_samples_number();
@@ -534,12 +534,12 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map<2>();
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(outputs, outputs.constant(type(1)));
 

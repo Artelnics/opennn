@@ -485,9 +485,9 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<DynamicTensor<type>
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> query = inputs(0).to_tensor_map_3();
-    const TensorMap<Tensor<type, 3>> key = inputs(1).to_tensor_map_3();
-    const TensorMap<Tensor<type, 3>> value = inputs(2).to_tensor_map_3();
+    const TensorMap<Tensor<type, 3>> query = inputs(0).to_tensor_map<3>();
+    const TensorMap<Tensor<type, 3>> key = inputs(1).to_tensor_map<3>();
+    const TensorMap<Tensor<type, 3>> value = inputs(2).to_tensor_map<3>();
 
     type* transformed_query_data = multihead_attention_layer_forward_propagation->get_transformed_query_data();
     type* transformed_key_data = multihead_attention_layer_forward_propagation->get_transformed_key_data();

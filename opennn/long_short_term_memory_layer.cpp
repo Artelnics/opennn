@@ -1646,14 +1646,14 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<DynamicTensor<type
         throw invalid_argument(buffer.str());
     }
 
-    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
+    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map<2>();
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs[0].get_dimensions();
 
     Tensor<Index, 1> current_inputs_dimensions = get_dimensions(Tensor<Index, 1>(samples_number));
     Tensor<Index, 1> current_outputs_dimensions = get_dimensions(Tensor<Index, 1>(neurons_number));
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map<2>();
 
     type* current_inputs_data = long_short_term_memory_layer_forward_propagation->current_inputs.data();
     type* current_forget_combinations_data = long_short_term_memory_layer_forward_propagation->current_forget_combinations.data();
@@ -1940,11 +1940,11 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<DynamicTensor<type
 
     const Index samples_number = inputs(0).get_dimension(0);
 
-    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
+    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map<2>();
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation->outputs[0].get_dimensions();
 
-    TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
+    TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map<2>();
 
     Tensor<type, 1> forget_combinations(neurons_number);
     Tensor<type, 1> input_combinations(neurons_number);

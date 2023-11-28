@@ -1980,19 +1980,21 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
 {
-     /*
+
     const Index inputs_rank = inputs_dimensions.size();
 
     if(inputs_rank == 2)
     {
         DataSetBatch data_set_batch;
 
-        Tensor<DynamicTensor<type>, 1> inputs(1);
-        inputs(0) = DynamicTensor<type>(inputs_data, inputs_dimensions);
+        data_set_batch.inputs.resize(1);
+        data_set_batch.inputs(0).set_dimensions(inputs_dimensions);
 
-        data_set_batch.set_inputs(inputs);
+        const Tensor<Index, 0> size = inputs_dimensions.prod();
 
-        const Index batch_samples_number = inputs.dimension(0);
+        memcpy(data_set_batch.inputs(0).get_data(), inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
+
+        const Index batch_samples_number = inputs_dimensions(0);
 
         NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
@@ -2002,9 +2004,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
 
         if(layers_number == 0) return Tensor<type, 2>();
 
-        DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
-
-        return outputs.to_tensor_map_2();
+        return neural_network_forward_propagation.layers(layers_number - 1)->outputs(0).to_tensor_map<2>();
     }
     else
     {
@@ -2017,7 +2017,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
         throw invalid_argument(buffer.str());
     }
 
-*/
     return Tensor<type, 2>();
 }
 
@@ -2042,19 +2041,19 @@ Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Ten
 
         const Index layers_number = neural_network_forward_propagation.layers.size();
 
-        if(layers_number == 0) return inputs.to_tensor_map_2();
+        if(layers_number == 0) return inputs.to_tensor_map<2>();
 
         if(neural_network_forward_propagation.layers(layers_number - 1)->layer_pointer->get_type_string() == "Unscaling")
         {
             DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 2)->outputs(0);
 
-            return outputs.to_tensor_map_2();
+            return outputs.to_tensor_map<2>();
         }
         else
         {
             DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
 
-            return outputs.to_tensor_map_2();
+            return outputs.to_tensor_map<2>();
         }
     }
     else
@@ -2101,7 +2100,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
     DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
 
-    return outputs.to_tensor_map_2();
+    return outputs.to_tensor_map<2>();
 */
 
     return Tensor<type, 2>();
@@ -2148,7 +2147,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 
     DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);;
 
-    return outputs.to_tensor_map_2();
+    return outputs.to_tensor_map<2>();
 */
     return Tensor<type, 2>();
 
@@ -2206,7 +2205,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
             layers_pointers(0)->forward_propagate(scaled_inputs_tensor, forward_propagation.layers(0), is_training);
 
-            scaled_outputs = forward_propagation.layers(0)->outputs(0).to_tensor_map_2();
+            scaled_outputs = forward_propagation.layers(0)->outputs(0).to_tensor_map<2>();
         }
         else
         {
@@ -2231,7 +2230,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
                                                       forward_propagation.layers(i),
                                                       is_training);
 
-                scaled_outputs = forward_propagation.layers(i)->outputs(0).to_tensor_map_2();
+                scaled_outputs = forward_propagation.layers(i)->outputs(0).to_tensor_map<2>();
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);

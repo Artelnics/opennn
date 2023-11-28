@@ -422,7 +422,7 @@ void EmbeddingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
 
     const Index batch_size = inputs(0).get_dimension(0);
 
-    const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs(0).to_tensor_map<2>();
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
         = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
@@ -445,7 +445,7 @@ void EmbeddingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
 
     if(positional_encoding)
     {
-        TensorMap<Tensor<type, 3>> outputs = embedding_layer_forward_propagation->outputs(0).to_tensor_map_3();
+        TensorMap<Tensor<type, 3>> outputs = embedding_layer_forward_propagation->outputs(0).to_tensor_map<3>();
 
         const Tensor<type, 2> positional_encoding_matrix = build_positional_encoding_matrix();
 #pragma omp parallel for

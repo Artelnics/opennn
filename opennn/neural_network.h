@@ -406,7 +406,6 @@ struct NeuralNetworkForwardPropagation
 
         const Index layers_number = layers_pointers.size();
 
-        /*
         layers.resize(layers_number);
 
         for(Index i = 0; i < layers_number; i++)
@@ -489,7 +488,6 @@ struct NeuralNetworkForwardPropagation
             default: break;
             }
         }
-*/
     }
 
 

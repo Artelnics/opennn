@@ -772,12 +772,12 @@ void RecurrentLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map<2>();
 
     const Index samples_number = inputs(0).get_dimension(0);
     const Index neurons_number = get_neurons_number();
 
-    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
+    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map<2>();
 
     Tensor<Index, 1> combinations_dimensions;
     Tensor<Index, 1> activations_dimensions;
@@ -843,7 +843,7 @@ void RecurrentLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
         throw invalid_argument(buffer.str());
     }
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map<2>();
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -851,7 +851,7 @@ void RecurrentLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
     const TensorMap<Tensor<type, 1>> biases(parameters.data(), neurons_number);
     const TensorMap<Tensor<type, 2>> input_weights(parameters.data()+neurons_number, inputs_number, neurons_number);
     const TensorMap<Tensor<type, 2>> recurrent_weights(parameters.data()+neurons_number+inputs_number*neurons_number, neurons_number, neurons_number);
-    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map_2();
+    TensorMap<Tensor<type, 2>> inputs_map = inputs(0).to_tensor_map<2>();
 
     Tensor<Index, 1> combinations_dimensions;
     Tensor<Index, 1> activations_dimensions;
@@ -1197,7 +1197,7 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
     // Derivatives of combinations with respect to recurrent weights
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation->outputs(0).to_tensor_map<2>();
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 

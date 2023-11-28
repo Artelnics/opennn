@@ -40,15 +40,65 @@ public:
         set_dimensions(new_dimensions);
     }
 
+    DynamicTensor(const initializer_list<Index>& new_dimensions_array)
+    {
+        Tensor<Index, 1> new_dimensions_tensor(new_dimensions_array.size());
+        new_dimensions_tensor.setValues(new_dimensions_array);
+
+        set_dimensions(new_dimensions_tensor);
+    }
+
+
     DynamicTensor& operator = (const DynamicTensor& other)
     {
-        if (this != &other)
+        if(this != &other)
         {
-            dimensions = other.dimensions;
-            data = other.data;
+            const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
+
+            if(different_dimensions(0))
+            {
+                dimensions = other.dimensions;
+            }
+
+            if(data != nullptr)
+            {
+                free(data);
+            }
+
+            const Tensor<Index, 0> size = dimensions.prod();
+
+            data = (T*) malloc(static_cast<size_t>(size(0)*sizeof(T)));
+
+            memcpy(data, other.data, static_cast<size_t>(size(0)*sizeof(T)) );
         }
 
         return *this;
+    }
+
+    bool operator != (DynamicTensor& other)
+    {
+        if((dimensions != other.dimensions)(0))
+        {
+            return true;
+        }
+
+        const Tensor<Index, 0> size = dimensions.prod();
+
+        for(Index i = 0; i < size(0); i++)
+        {
+            if(*(data + i) != *(other.data + i))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    ostream& operator << (ostream& os)
+    {
+
     }
 
 /*
@@ -84,7 +134,7 @@ public:
         return data;
     }
 
-    const Tensor<Index, 1> get_dimensions() const
+    const Tensor<Index, 1>& get_dimensions() const
     {
         return dimensions;
     }
@@ -97,6 +147,8 @@ public:
 
     void set_data(const T* new_data)
     {
+        free(data);
+
         data = (T*) new_data;
     }
 
@@ -112,22 +164,19 @@ public:
         data = (T*) malloc(static_cast<size_t>(size(0)*sizeof(T)));
     }
 
-
-    TensorMap<Tensor<T, 2>> to_tensor_map_2() const
+    template <int rank>
+    TensorMap<Tensor<T, rank>> to_tensor_map() const
     {
-        return TensorMap<Tensor<T, 2>>(data, dimensions(0), dimensions(1));
-    }
+//        const int rank = dimensions.size();
 
-    TensorMap<Tensor<T, 3>> to_tensor_map_3() const
-    {
-        return TensorMap<Tensor<T, 3>>(data, dimensions(0), dimensions(1), dimensions(2));
-    }
+        std::array<Index, rank> sizes;
 
-    TensorMap<Tensor<T, 4>> to_tensor_map_4() const
-    {
-        return TensorMap<Tensor<T, 4>>(data, dimensions(0), dimensions(1), dimensions(2), dimensions(3));
-    }
+        for (Index i = 0; i < dimensions.size(); ++i) {
+            sizes[i] = dimensions(i);
+        }
 
+        return TensorMap<Tensor<T, rank>>(data, sizes);
+    }
 
 private:
 

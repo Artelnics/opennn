@@ -273,7 +273,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << outputs(0).to_tensor_map_4() << endl;
+        cout << outputs(0).to_tensor_map<4>() << endl;
 
         cout << "Image patches" << endl;
         cout << image_patches << endl;

@@ -529,7 +529,7 @@ void PerceptronLayer::calculate_combinations(const DynamicTensor<type>& inputs,
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
             = static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs_map = inputs.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> inputs_map = inputs.to_tensor_map<2>();
 
     const Index batch_samples_number = inputs.get_dimension(0);
     const Index biases_number = get_neurons_number();

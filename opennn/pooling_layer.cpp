@@ -367,9 +367,9 @@ void PoolingLayer::forward_propagate_average_pooling(const DynamicTensor<type>& 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 4>> inputs_map = inputs.to_tensor_map_4();
+    const TensorMap<Tensor<type, 4>> inputs_map = inputs.to_tensor_map<4>();
 
-    TensorMap<Tensor<type, 4>> outputs = pooling_layer_forward_propagation->outputs(0).to_tensor_map_4();
+    TensorMap<Tensor<type, 4>> outputs = pooling_layer_forward_propagation->outputs(0).to_tensor_map<4>();
 
     Tensor<type, 4> kernel(1, pool_rows_number, pool_columns_number, 1);
 
@@ -409,11 +409,11 @@ void PoolingLayer::forward_propagate_max_pooling(const DynamicTensor<type>& inpu
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 4>> inputs_map = inputs.to_tensor_map_4();
+    const TensorMap<Tensor<type, 4>> inputs_map = inputs.to_tensor_map<4>();
 
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array = pooling_layer_forward_propagation->get_outputs_dimensions_array();
 
-    TensorMap<Tensor<type, 4>> outputs = layer_forward_propagation->outputs(0).to_tensor_map_4();
+    TensorMap<Tensor<type, 4>> outputs = layer_forward_propagation->outputs(0).to_tensor_map<4>();
 
     const Index in_rows_stride = 1;
     const Index in_columns_stride = 1;

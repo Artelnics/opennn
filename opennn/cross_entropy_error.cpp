@@ -84,9 +84,9 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layers_number)->outputs[0].get_dimensions();
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layers_number)->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layers_number)->outputs(0).to_tensor_map<2>();
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
     Tensor<type, 2> binary_cross_entropy = - ((type(1)-targets)*((type(1)-outputs).log()));
 
@@ -122,9 +122,9 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs[0].get_dimensions();
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layer_index)->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layer_index)->outputs(0).to_tensor_map<2>();
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
     Tensor<type, 0> cross_entropy_error;
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum();
@@ -184,9 +184,9 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
-    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map<2>();
 
     deltas.device(*thread_pool_device)
             = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
@@ -220,9 +220,9 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
-    const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layer_index)->outputs(0).to_tensor_map_2();
+    const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layer_index)->outputs(0).to_tensor_map<2>();
 
     TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
 

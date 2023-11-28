@@ -424,9 +424,9 @@ void BoundingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inpu
         const Index rows_number = inputs_dimensions(0);
         const Index columns_number = inputs_dimensions(1);
 
-        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map_2();
+        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map<2>();
 
-        TensorMap<Tensor<type,2>> outputs = bounding_layer_forward_propagation->outputs(0).to_tensor_map_2();
+        TensorMap<Tensor<type,2>> outputs = bounding_layer_forward_propagation->outputs(0).to_tensor_map<2>();
 
         for(Index i = 0; i < rows_number; i++)
         {

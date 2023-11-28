@@ -193,7 +193,7 @@ struct ConcatenationLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Outputs:" << endl;
 
-        cout << outputs(0).to_tensor_map_4() << endl;
+        cout << outputs(0).to_tensor_map<4>() << endl;
      }
 };
 

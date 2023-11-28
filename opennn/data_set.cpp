@@ -15740,7 +15740,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs = this->inputs(0).to_tensor_map_4();
+        TensorMap<Tensor<type, 4>> inputs = this->inputs(0).to_tensor_map<4>();
 
         #pragma omp parallel for
 
@@ -15908,14 +15908,14 @@ void DataSetBatch::print() const
 
     cout << "Inputs:" << endl;
     if(inputs(0).get_dimensions().size() == 2)
-        cout << inputs(0).to_tensor_map_2() << endl;
+        cout << inputs(0).to_tensor_map<2>() << endl;
     else if(inputs(0).get_dimensions().size() == 4)
-        cout << inputs(0).to_tensor_map_4() << endl;
+        cout << inputs(0).to_tensor_map<4>() << endl;
     cout << "Targets dimensions:" << endl;
     cout << targets.get_dimensions() << endl;
 
     cout << "Targets:" << endl;
-    cout << targets.to_tensor_map_2() << endl;
+    cout << targets.to_tensor_map<2>() << endl;
 }
 
 
