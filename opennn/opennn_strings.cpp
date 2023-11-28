@@ -569,6 +569,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
     {
+
         if(stoi(matchs[1].str()) < 1970)
         {
             ostringstream buffer;

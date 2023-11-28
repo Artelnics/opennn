@@ -364,6 +364,7 @@ public:
     Index get_variable_index(const string&name) const;
 
     Tensor<Index, 1> get_variable_indices(const Index&) const;
+    Tensor<Index, 1> get_categorical_to_indices(const Index&) const;
     Tensor<Index, 1> get_unused_variables_indices() const;
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
@@ -428,6 +429,8 @@ public:
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const string&) const;
+    Tensor<type, 2> get_drop_column_data(const Index&) const;
+
     map<string, DataSet> group_by(const DataSet&, const string&) const;
     Tensor<type, 2> concat();
     string get_sample_category(const Index&, const Index&) const;
@@ -472,6 +475,8 @@ public:
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
     const string& get_time_column() const;
+    const string& get_group_by_column() const;
+
     Index get_time_series_time_column_index() const;
 
     const Index& get_short_words_length() const;
@@ -513,7 +518,7 @@ public:
     void set(const string&, const char&, const bool&);
     void set(const string&, const char&, const bool&, const DataSet::Codification&);
     void set(const Tensor<type, 1>&, const Index&);
-
+    void set_properties_from_parent(const DataSet&);
     void set_default();
 
     void set_project_type_string(const string&);
@@ -606,6 +611,7 @@ public:
 
     void set_data(const Tensor<type, 2>&);
     void set_data(const Tensor<type, 1>&);
+    void set_data(const Tensor<type, 2>&, const bool&);
 
     // Members set methods
 
@@ -632,6 +638,7 @@ public:
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
     void set_time_column(const string&);
+    void set_group_by_column(const string&);
 
     void set_short_words_length(const Index&);
     void set_long_words_length(const Index&);
@@ -680,7 +687,7 @@ public:
     Tensor<string, 1> unuse_constant_columns();
 
     Tensor<Index, 1> unuse_repeated_samples();
-    Tensor<string, 1> get_columns_types();
+    Tensor<string, 1> get_columns_types() const;
 
     Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
     Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
@@ -751,6 +758,7 @@ public:
 
     Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_columns_correlations_spearman() const;
+    Tensor<Correlation, 2> calculate_relevant_input_target_columns_correlations(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
     void print_input_target_columns_correlations() const;
 
@@ -807,6 +815,8 @@ public:
     void transform_time_series();
     void transform_time_series_columns();
     void transform_time_series_data();
+    void transform_time_series_non_categorical_data();
+    void fill_time_series_gaps();
 
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);
@@ -1051,6 +1061,12 @@ private:
     /// Index where time variable is located for forecasting applications.
 
     string time_column;
+
+    Index time_variable_index;
+
+    string group_by_column;
+
+    Index group_by_column_index;
 
     /// Number of lags.
 

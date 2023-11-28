@@ -188,7 +188,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
 
     Tensor<type, 1> final_endpoint(2);
     final_endpoint(0) = clusters_number;
-    final_endpoint(1) = sum_squared_error_values(clusters_number-1);
+    final_endpoint(1) = sum_squared_error_values(clusters_number -1);
 
     type max_distance = 0;
     Index optimal_clusters_number = 1;
@@ -233,6 +233,10 @@ Index KMeans::get_clusters_number()
     return clusters_number;
 }
 
+void KMeans::set_cluster_number(const Index& new_clusters_number)
+{
+    clusters_number = new_clusters_number;
+}
 
 void KMeans::set_centers_random(const Tensor<type, 2>& data)
 {

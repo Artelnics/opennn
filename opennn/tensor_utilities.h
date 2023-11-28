@@ -8,10 +8,12 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <math.h>
 #include <vector>
 #include <numeric>
 #include <stdio.h>
+#include <statistics.h>
 
 // OpenNN includes
 
@@ -63,6 +65,7 @@ void save_csv(const Tensor<type,2>&, const string&);
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
+Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots);
 
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
@@ -153,8 +156,14 @@ void push_back_string(Tensor<string, 1>&, const string&);
 void push_back_type(Tensor<type, 1>&, const type&);
 
 Index partition(Tensor<type, 2>&, Index, Index, Index);
+Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, Index, Index);
 void quick_sort(Tensor<type, 2>&, Index, Index, Index);
+void quicksort_by_column(Tensor<type, 2>&, Index);
+
+Tensor<type, 1> compute_elementwise_difference(Tensor<type, 1>&);
+Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, type);
+Tensor<type, 1> compute_mode(Tensor<type, 1>&);
 
 Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
 
