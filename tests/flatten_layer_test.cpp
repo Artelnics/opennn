@@ -181,7 +181,7 @@ void FlattenLayerTest::test_calculate_outputs()
 
 void FlattenLayerTest::test_forward_propagate()
 {    
-    cout << "test_calculate_flatten_outputs\n";
+    cout << "test_calculate_forward_propagate\n";
 
     const Index image_height = 2;
     const Index image_width = 2;
@@ -219,7 +219,7 @@ void FlattenLayerTest::test_forward_propagate()
 
     Tensor<type, 2> outputs;
 
-    FlattenLayerForwardPropagation(images_number, &flatten_layer);
+    FlattenLayerForwardPropagation flatten_layer_forward_propagation(images_number, &flatten_layer);
 
     flatten_layer.forward_propagate(inputs.data(), inputs_dimensions, &flatten_layer_forward_propagation, switch_train);
 
@@ -310,6 +310,8 @@ void FlattenLayerTest::test_calculate_hidden_delta()
         &next_layer_forward_propagation, 
         &next_layer_back_propagation,
         &back_propagation);
+
+    next_layer_back_propagation.deltas_data = nullptr; //to prevent double free
 
     Tensor<type, 4> expected_delta(
         row_inputs_number,

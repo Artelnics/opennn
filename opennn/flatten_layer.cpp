@@ -157,8 +157,11 @@ void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
     const Index batch_size = inputs_dimensions(3);
     const Index variable_size = rows_number * columns_number * channels_number;
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data,rows_number,columns_number,channels_number,batch_size);
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions(0), outputs_dimensions(1));
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number,columns_number, channels_number, batch_size);
+
+    const Index output_batch_numbers = outputs_dimensions(0);
+    const Index variable_size_numbers = outputs_dimensions(1);
+    TensorMap<Tensor<type, 2>> outputs(outputs_data, output_batch_numbers, variable_size_numbers);
 
     #pragma omp parallel for
     for(Index image_index = 0; image_index < batch_size; image_index++)
@@ -225,8 +228,8 @@ void FlattenLayer::calculate_hidden_delta(
     LayerBackPropagation* next_layer_back_propagation,
     LayerBackPropagation* back_propagation) const
 {
-    const Index next_delta_pixel_numbers = next_layer_back_propagation->deltas_dimensions(0);
-    const Index images_number = next_layer_back_propagation->deltas_dimensions(1);
+    const Index images_number = next_layer_back_propagation->deltas_dimensions(0);
+    const Index next_delta_pixel_numbers = next_layer_back_propagation->deltas_dimensions(1);
     
     TensorMap<Tensor<type, 2>> next_delta(
         next_layer_back_propagation->deltas_data, 
@@ -380,6 +383,89 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     inputsDimensionTensor.setValues({input_height, input_width, input_channels_number, 0});
 
     set(inputsDimensionTensor);
+}
+
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation() : LayerForwardPropagation()
+{
+}
+
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer_pointer);
+}
+
+void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+{
+    layer_pointer = new_layer_pointer;
+    
+    batch_samples_number = new_batch_samples_number;
+
+    const FlattenLayer* flatten_layer_pointer = static_cast<const FlattenLayer*>(layer_pointer);
+
+    const Index rows_number = flatten_layer_pointer->get_input_height();
+    const Index columns_number = flatten_layer_pointer->get_input_width();
+    const Index channels_number = flatten_layer_pointer->get_inputs_channels_number();
+
+
+    outputs_data = static_cast<type*>(malloc(batch_samples_number * rows_number * columns_number * channels_number * sizeof(type)));
+    
+    outputs_dimensions.resize(2);
+    outputs_dimensions.setValues({
+        batch_samples_number,
+        rows_number * columns_number * channels_number
+    });
+}
+
+void FlattenLayerForwardPropagation::print() const
+{
+    //TODO: output
+    cout << "Outputs:" << endl;
+}
+
+FlattenLayerBackPropagation::FlattenLayerBackPropagation() : LayerBackPropagation()
+{
+}
+
+FlattenLayerBackPropagation::~FlattenLayerBackPropagation()
+{
+}
+
+
+FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer_pointer);
+}
+
+
+void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+{
+    layer_pointer = new_layer_pointer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const FlattenLayer* flatten_layer_pointer = static_cast<const FlattenLayer*>(layer_pointer);
+
+    const Index rows_number = flatten_layer_pointer->get_input_height();
+    const Index columns_number = flatten_layer_pointer->get_input_width();
+    const Index channels_number = flatten_layer_pointer->get_inputs_channels_number();
+
+    deltas_data = static_cast<type*>(malloc(batch_samples_number * rows_number * columns_number * channels_number * sizeof(type)));
+    deltas_dimensions.resize(4);
+    deltas_dimensions.setValues({
+        rows_number,
+        columns_number,
+        channels_number,
+        batch_samples_number
+    });
+}
+
+
+void FlattenLayerBackPropagation::print() const
+{
+    //TODO: output
+    cout << "Deltas: " << endl;
 }
 
 }
