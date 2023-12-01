@@ -13,12 +13,12 @@
 #include <vector>
 #include <numeric>
 #include <stdio.h>
-#include <statistics.h>
 
 // OpenNN includes
 
 #include "config.h"
 #include "opennn_strings.h"
+#include "statistics.h"
 
 #include "../eigen/unsupported/Eigen/KroneckerProduct"
 

@@ -30,16 +30,12 @@
 
 // System includes
 
-//#include <iostream>
-//#include <fstream>
 //#include <sstream>
-//#include <string>
 //#include <cstring>
 //#include <time.h>
 //#include <omp.h>
 //#include <Eigen/Dense>
 //#include "unsupported/Eigen/CXX11/Tensor"
-//#include "config.h"
 
 // OpenNN includes
 
@@ -50,7 +46,7 @@ using opennn::type;
 using Eigen::Index;
 using namespace std;
 
-namespace OpenNN
+namespace opennn
 {
 
 class KMeans
