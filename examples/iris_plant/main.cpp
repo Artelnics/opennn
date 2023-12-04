@@ -51,7 +51,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
-
+/*
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -82,7 +82,9 @@ int main()
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/neural_network.c");
         neural_network.save_expression_python("../data/neural_network.py");
+*/
 
+        cout << "Bye!" << endl;
         return 0;
     }
     catch(const exception& e)

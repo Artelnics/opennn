@@ -5590,8 +5590,14 @@ Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) 
 Tensor<type, 2> DataSet::pivot_to_long_format(const Index& frequency)
 {
 
+    if (frequency <= 0 && frequency != -1)
+    {
+        throw std::invalid_argument("Frequency must be positive.");
+    }
+
     Index categorical_column_index = -1;
     Index numeric_column_index = -1;
+    Index time_colum_index = -1;
 
     for (Index column_index = 0; column_index < get_columns_number(); ++column_index)
     {
@@ -5605,41 +5611,27 @@ Tensor<type, 2> DataSet::pivot_to_long_format(const Index& frequency)
         }
         if(columns(column_index).type == ColumnType::DateTime)
         {
+            time_colum_index = column_index;
             this->quicksort_by_column(column_index);
         }
     }
 
-    if (categorical_column_index == -1 || numeric_column_index == -1)
+    if (categorical_column_index == -1 || numeric_column_index == -1 || time_colum_index == -1)
     {
-        throw runtime_error("The transformation to the long format could not be performed.");
+        throw std::runtime_error("The transformation to the long format could not be performed.");
     }
 
     Tensor<Index, 1> category_indices = get_categorical_to_indices(categorical_column_index);
     Index rows_number = get_samples_number();
 
-
-    Index number_of_periods = (frequency == -1) ? 1 : rows_number / frequency;
-
-    cout << "number_of_periods: " << number_of_periods << endl;
-
-    if (frequency != -1 && rows_number % frequency != 0)
-    {
-      throw runtime_error("The total number of rows is not divisible by the specified frequency.");
-    }
-
-
     Index categorical_number = columns(categorical_column_index).get_categories_number();
-
+    Index number_of_periods = (frequency == -1) ? 1 : rows_number / (categorical_number * frequency);
     Index total_rows = categorical_number * number_of_periods;
 
-    Index categorical_row_number = rows_number / categorical_number;
-
-    Tensor<type, 2> melt_data(total_rows, (frequency == -1) ? categorical_row_number : frequency);
+    Tensor<type, 2> melt_data(total_rows, (frequency == -1) ? rows_number / categorical_number : frequency);
     melt_data.setZero();
 
-    cout << "melt_data_dimensions: " << melt_data.dimensions() << endl;
-
-    Tensor<Index, 1> row_counters(categorical_number);
+    Tensor<Index, 1> row_counters(total_rows);
     row_counters.setZero();
 
     for (Index row_index = 0; row_index < rows_number; ++row_index)
@@ -5647,16 +5639,22 @@ Tensor<type, 2> DataSet::pivot_to_long_format(const Index& frequency)
         Index categorical_index = category_indices(row_index) - 1;
         if (categorical_index >= 0 && categorical_index < categorical_number)
         {
-            Index period = (frequency == -1) ? 0 : row_index / frequency;
+            Index date = get_column_data(time_colum_index)(row_index);
+            Index period = (frequency == -1) ? 0 : (date - 1) / frequency;
+
             Index position = categorical_index * number_of_periods + period;
 
-            melt_data(position, row_counters[position]++) = get_column_data(numeric_column_index)(row_index);
+            Index column = (frequency == -1) ? date - 1 : (date - 1) % frequency;
+
+            if (position < total_rows && column < (frequency == -1 ? rows_number / categorical_number : frequency))
+            {
+                melt_data(position, column) = get_column_data(numeric_column_index)(row_index);
+            }
         }
     }
 
     return melt_data;
 }
-
 /// Returns the data from the data set column with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
 /// @param column_index Index of the column.
