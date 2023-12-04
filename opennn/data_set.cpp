@@ -5438,7 +5438,6 @@ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& co
 
         if (result.find(category) == result.end())
         {
-            cout << "jdhsafghjkdshjgfdsghjdfshjvjghdsf" << endl;
             result[category].set_properties_from_parent(original);
         }
 
@@ -5586,6 +5585,77 @@ Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) 
     return time_series_data.slice(offsets, extents);
 }
 
+
+
+Tensor<type, 2> DataSet::pivot_to_long_format(const Index& frequency)
+{
+
+    Index categorical_column_index = -1;
+    Index numeric_column_index = -1;
+
+    for (Index column_index = 0; column_index < get_columns_number(); ++column_index)
+    {
+        if (columns(column_index).type == ColumnType::Categorical && categorical_column_index == -1)
+        {
+            categorical_column_index = column_index;
+        }
+        if (columns(column_index).type == ColumnType::Numeric)
+        {
+            numeric_column_index = column_index;
+        }
+        if(columns(column_index).type == ColumnType::DateTime)
+        {
+            this->quicksort_by_column(column_index);
+        }
+    }
+
+    if (categorical_column_index == -1 || numeric_column_index == -1)
+    {
+        throw runtime_error("The transformation to the long format could not be performed.");
+    }
+
+    Tensor<Index, 1> category_indices = get_categorical_to_indices(categorical_column_index);
+    Index rows_number = get_samples_number();
+
+
+    Index number_of_periods = (frequency == -1) ? 1 : rows_number / frequency;
+
+    cout << "number_of_periods: " << number_of_periods << endl;
+
+    if (frequency != -1 && rows_number % frequency != 0)
+    {
+      throw runtime_error("The total number of rows is not divisible by the specified frequency.");
+    }
+
+
+    Index categorical_number = columns(categorical_column_index).get_categories_number();
+
+    Index total_rows = categorical_number * number_of_periods;
+
+    Index categorical_row_number = rows_number / categorical_number;
+
+    Tensor<type, 2> melt_data(total_rows, (frequency == -1) ? categorical_row_number : frequency);
+    melt_data.setZero();
+
+    cout << "melt_data_dimensions: " << melt_data.dimensions() << endl;
+
+    Tensor<Index, 1> row_counters(categorical_number);
+    row_counters.setZero();
+
+    for (Index row_index = 0; row_index < rows_number; ++row_index)
+    {
+        Index categorical_index = category_indices(row_index) - 1;
+        if (categorical_index >= 0 && categorical_index < categorical_number)
+        {
+            Index period = (frequency == -1) ? 0 : row_index / frequency;
+            Index position = categorical_index * number_of_periods + period;
+
+            melt_data(position, row_counters[position]++) = get_column_data(numeric_column_index)(row_index);
+        }
+    }
+
+    return melt_data;
+}
 
 /// Returns the data from the data set column with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).

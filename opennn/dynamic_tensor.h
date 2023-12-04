@@ -53,9 +53,9 @@ public:
     {
         if(this != &other)
         {
-            const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
+//            const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
 
-            if(different_dimensions(0))
+//            if(different_dimensions(0))
             {
                 dimensions = other.dimensions;
             }
@@ -77,10 +77,10 @@ public:
 
     bool operator != (DynamicTensor& other)
     {
-        if((dimensions != other.dimensions)(0))
-        {
-            return true;
-        }
+//        if((dimensions != other.dimensions)(0))
+//        {
+//            return true;
+//        }
 
         const Tensor<Index, 0> size = dimensions.prod();
 

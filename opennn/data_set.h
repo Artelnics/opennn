@@ -823,6 +823,7 @@ public:
     void set_time_series_columns_number(const Index&);
 
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
+    Tensor<type, 2> pivot_to_long_format(const Index& = -1);
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
 
