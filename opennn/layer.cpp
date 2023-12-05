@@ -2023,13 +2023,22 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
         Tensor<type , 0> row_max;
 
-        for(Index i = 0; i < rows_number; i++){
-            row_max = y.chip(i, 0).abs().maximum();
-            if(row_max(0) > 88) // Numbers bigger than 88 give inf after .exp()
-                y.chip(i, 0) = y.chip(i, 0) / row_max(0);
-        }
+//        for(Index i = 0; i < rows_number; i++)
+//        {
+//            row_max = y.chip(i, 0).abs().maximum();
+//            if(row_max(0) > 88) // Numbers bigger than 88 give inf after .exp()
+//                y.chip(i, 0) = y.chip(i, 0) / row_max(0);
+//        }
 
         y.device(*thread_pool_device) = x.exp();
+
+        for(Index i = 0; i < y.size(); i++)
+        {
+            if( isinf(y(i)) )
+            {
+                y(i) = std::numeric_limits<type>::max();
+            }
+        }
 
         Tensor<type, 1> rows_sum(rows_number);
 
