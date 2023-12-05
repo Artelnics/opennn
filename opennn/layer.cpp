@@ -2021,6 +2021,14 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
         TensorMap<Tensor<type, 2>> y(y_data, rows_number, columns_number);
 
+        Tensor<type , 0> row_max;
+
+        for(Index i = 0; i < rows_number; i++){
+            row_max = y.chip(i, 0).abs().maximum();
+            if(row_max(0) > 88) // Numbers bigger than 88 give inf after .exp()
+                y.chip(i, 0) = y.chip(i, 0) / row_max(0);
+        }
+
         y.device(*thread_pool_device) = x.exp();
 
         Tensor<type, 1> rows_sum(rows_number);
@@ -2028,6 +2036,7 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
         rows_sum.device(*thread_pool_device) = y.sum(dimensions);
 
         divide_columns(thread_pool_device, y, rows_sum);
+
     }
     else
     {
@@ -2073,14 +2082,16 @@ void Layer::softmax_derivatives(type* combinations_data, const Tensor<Index, 1>&
         const Index samples_number = combinations_dimensions(0);
         const Index variables_number = combinations_dimensions(1);
 
+        TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
+
         softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
 
-        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
+//        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
 
-        TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data,
-                                                           samples_number,
-                                                           variables_number,
-                                                           variables_number);
+//        TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data,
+//                                                           samples_number,
+//                                                           variables_number,
+//                                                           variables_number);
 
         for(Index i = 0; i < samples_number; i++)
         {

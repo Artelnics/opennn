@@ -724,7 +724,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&
 
     type* outputs_data = probabilistic_layer_forward_propagation->outputs(0).get_data();
 
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs[0].get_dimensions();
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs(0).get_dimensions();
 
     calculate_combinations(inputs(0),
                            biases,
