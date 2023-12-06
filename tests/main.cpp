@@ -67,6 +67,7 @@ int main()
    "training_strategy | ts\n"
    "unscaling_layer | ul\n"
    "weighted_squared_error | wse\n"
+   "conv_pooling_layer | cpl\n"
    "\n" << endl;
 
    string test;
@@ -440,6 +441,14 @@ int main()
         tests_passed_count += response_optimization_test.get_tests_passed_count();
         tests_failed_count += response_optimization_test.get_tests_failed_count();
       }
+      else if(test == "conv_pooling_layer" || test == "cpl")
+      {
+        ConvolutionalPoolingLayerTest conv_pooling_layer_test;
+        conv_pooling_layer_test.run_test_case();
+        tests_count += conv_pooling_layer_test.get_tests_count();
+        tests_passed_count += conv_pooling_layer_test.get_tests_passed_count();
+        tests_failed_count += conv_pooling_layer_test.get_tests_failed_count();
+      }
 
       else if(test == "suite" || test == "")
       {
@@ -519,6 +528,14 @@ int main()
           tests_count += unscaling_layer_test.get_tests_count();
           tests_passed_count += unscaling_layer_test.get_tests_passed_count();
           tests_failed_count += unscaling_layer_test.get_tests_failed_count();
+          
+          //Convolutional and pooling layer
+
+          ConvolutionalPoolingLayerTest conv_pooling_layer_test;
+          conv_pooling_layer_test.run_test_case();
+          tests_count += conv_pooling_layer_test.get_tests_count();
+          tests_passed_count += conv_pooling_layer_test.get_tests_passed_count();
+          tests_failed_count += conv_pooling_layer_test.get_tests_failed_count();
 
           // bounding layer
 

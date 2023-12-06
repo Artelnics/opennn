@@ -24,6 +24,7 @@
 #include "perceptron_layer_test.h"
 #include "convolutional_layer_test.h"
 #include "pooling_layer_test.h"
+#include "convolutional_pooling_layer_test.h"
 
 #include "flatten_layer_test.h"
 
@@ -63,6 +64,7 @@
 
 #include "testing_analysis_test.h"
 #include "response_optimization_test.h"
+
 
 #endif
 
