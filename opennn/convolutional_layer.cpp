@@ -824,11 +824,35 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
+    const Index kernels_number = get_kernels_number();
+    const Index kernels_channels_number = get_kernels_channels_number();
+    const Index kernels_rows_number = get_kernels_rows_number();
+    const Index kernels_columns_number = get_kernels_columns_number();
+
     memcpy(parameters.data(),
            biases.data(), static_cast<size_t>(biases.size())*sizeof(float));
-
+    /*
     memcpy(parameters.data() + biases.size(),
            synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(float));
+    */
+
+    Index element_index = kernels_number;
+
+    #pragma omp parallel for
+    for(Index kernel_indx = 0; kernel_indx < kernels_number; kernel_indx++)
+    {
+        for(Index row_indx = 0; row_indx < kernels_rows_number; row_indx++)
+        {
+            for(Index column_indx = 0; column_indx < kernels_columns_number; column_indx++)
+            {
+                for(Index channel_indx = 0; channel_indx < kernels_channels_number; channel_indx++)
+                {
+                    parameters(element_index) = synaptic_weights(row_indx, column_indx, channel_indx, kernel_indx); 
+                    element_index ++;
+                }
+            }
+        }
+    }
 
     return parameters;
 }
@@ -1154,30 +1178,34 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
            new_parameters.data(),
            static_cast<size_t>(kernels_number)*sizeof(type));
 
+    /*
+    //Doesnt work like expected. Tensors are by default columnwise aligned in memory. 
+    //If this should work, change to rowwise alignment and change dimension to NxHxWxC.
     memcpy(synaptic_weights.data(),
            new_parameters.data()+ biases.size(),
            static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+    */
 
 
-/*
+
     Index element_index = kernels_number;
 
-#pragma omp for
-    for(Index i = 0; i < kernels_rows_number; i++)
+    #pragma omp parallel for
+    for(Index kernel_indx = 0; kernel_indx < kernels_number; kernel_indx++)
     {
-        for(Index j = 0; j < kernels_columns_number; j++)
+        for(Index row_indx = 0; row_indx < kernels_rows_number; row_indx++)
         {
-            for(Index k = 0; k < kernels_channels_number; k++)
+            for(Index column_indx = 0; column_indx < kernels_columns_number; column_indx++)
             {
-                for(Index l = 0; l < kernels_number; l++)
+                for(Index channel_indx = 0; channel_indx < kernels_channels_number; channel_indx++)
                 {
-                    synaptic_weights(i ,j, k, l) = new_parameters(element_index);
+                    synaptic_weights(row_indx, column_indx, channel_indx, kernel_indx) = new_parameters(element_index);
                     element_index ++;
                 }
             }
         }
     }
-    */
+    
 }
 
 /// Returns the number of biases in the layer.

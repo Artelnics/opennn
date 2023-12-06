@@ -231,21 +231,21 @@ void ConvolutionalLayerTest::test_set_parameters()
     parameters(1) = new_biases(1) = type(200);
     //First kernel
     parameters(2) = new_synaptic_weights(0,0,0,0) = type(1);
-    parameters(3) = new_synaptic_weights(1,0,0,0) = type(2);
+    parameters(3) = new_synaptic_weights(0,0,1,0) = type(2);
     parameters(4) = new_synaptic_weights(0,1,0,0) = type(3);
-    parameters(5) = new_synaptic_weights(1,1,0,0) = type(4);
-    parameters(6) = new_synaptic_weights(0,0,1,0) = type(5);
+    parameters(5) = new_synaptic_weights(0,1,1,0) = type(4);
+    parameters(6) = new_synaptic_weights(1,0,0,0) = type(5);
     parameters(7) = new_synaptic_weights(1,0,1,0) = type(6);
-    parameters(8) = new_synaptic_weights(0,1,1,0) = type(7);
+    parameters(8) = new_synaptic_weights(1,1,0,0) = type(7);
     parameters(9) = new_synaptic_weights(1,1,1,0) = type(8);
     //Second kernel
     parameters(10) = new_synaptic_weights(0,0,0,1) = type(9);
-    parameters(11) = new_synaptic_weights(1,0,0,1) = type(10);
+    parameters(11) = new_synaptic_weights(0,0,1,1) = type(10);
     parameters(12) = new_synaptic_weights(0,1,0,1) = type(11);
-    parameters(13) = new_synaptic_weights(1,1,0,1) = type(12);
-    parameters(14) = new_synaptic_weights(0,0,1,1) = type(13);
+    parameters(13) = new_synaptic_weights(0,1,1,1) = type(12);
+    parameters(14) = new_synaptic_weights(1,0,0,1) = type(13);
     parameters(15) = new_synaptic_weights(1,0,1,1) = type(14);
-    parameters(16) = new_synaptic_weights(0,1,1,1) = type(15);
+    parameters(16) = new_synaptic_weights(1,1,0,1) = type(15);
     parameters(17) = new_synaptic_weights(1,1,1,1) = type(16);
 
     convolutional_layer.set_parameters(parameters, 0);
@@ -253,9 +253,13 @@ void ConvolutionalLayerTest::test_set_parameters()
     const Tensor<type, 4> synaptic_weight = convolutional_layer.get_synaptic_weights();
     const Tensor<type, 1> biases = convolutional_layer.get_biases();
 
+    const Tensor<type, 1> output_parameters1d = convolutional_layer.get_parameters();
+
     assert_true(is_equal<1>(biases, new_biases),LOG);
 
     assert_true(is_equal<4>(synaptic_weight, new_synaptic_weights), LOG);
+    
+    assert_true(is_equal<1>(parameters, output_parameters1d), LOG);
 
 
 //    assert_true(!convolutional_layer.is_empty() &&
