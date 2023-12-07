@@ -299,7 +299,6 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
                                                      LayerBackPropagation*  next_layer_back_propagation,
                                                      LayerBackPropagation* back_propagation) const
 {
-    PoolingLayerBackPropagation* pooling_layer_back_propagation = static_cast<PoolingLayerBackPropagation*>(back_propagation); 
     switch (next_layer_forward_propagation->layer_pointer->get_type())
     {
     case Layer::Type::Pooling:
@@ -312,11 +311,18 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
         calculate_hidden_delta(
             next_pooling_layer_forward_propagation, 
             next_pooling_layer_back_propagation, 
-            pooling_layer_back_propagation);
+            back_propagation);
     }
         break;
     
     default:
+    {
+        //Forwarding
+        next_layer_forward_propagation->layer_pointer->calculate_hidden_delta(
+            next_layer_forward_propagation,
+            next_layer_back_propagation,
+            back_propagation);
+    }
         break;
     }
     /*
@@ -360,7 +366,7 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
 void PoolingLayer::calculate_hidden_delta(
     PoolingLayerForwardPropagation* next_layer_forward_propagation,
     PoolingLayerBackPropagation*  next_layer_back_propagation,
-    PoolingLayerBackPropagation* back_propagation) const
+    LayerBackPropagation* back_propagation) const
 {
     const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);  
     
@@ -392,7 +398,7 @@ void PoolingLayer::calculate_hidden_delta(
 void PoolingLayer::calculate_hidden_delta_no_pooling(
     PoolingLayerForwardPropagation* next_layer_forward_propagation,
     PoolingLayerBackPropagation*  next_layer_back_propagation,
-    PoolingLayerBackPropagation* back_propagation) const
+    LayerBackPropagation* back_propagation) const
 {
     const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
 
@@ -427,7 +433,7 @@ void PoolingLayer::calculate_hidden_delta_no_pooling(
 void PoolingLayer::calculate_hidden_delta_average_pooling(
     PoolingLayerForwardPropagation* next_layer_forward_propagation,
     PoolingLayerBackPropagation*  next_layer_back_propagation,
-    PoolingLayerBackPropagation* back_propagation) const
+    LayerBackPropagation* back_propagation) const
 {
     const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
 
@@ -496,7 +502,7 @@ void PoolingLayer::calculate_hidden_delta_average_pooling(
 void PoolingLayer::calculate_hidden_delta_max_pooling(
     PoolingLayerForwardPropagation* next_layer_forward_propagation,
     PoolingLayerBackPropagation*  next_layer_back_propagation,
-    PoolingLayerBackPropagation* back_propagation) const
+    LayerBackPropagation* back_propagation) const
 {
     const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
 

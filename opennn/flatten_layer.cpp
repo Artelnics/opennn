@@ -223,16 +223,20 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     
 }
 
+
+
+
 void FlattenLayer::calculate_hidden_delta(
-    LayerForwardPropagation* next_layer_forwardpropagation,
-    LayerBackPropagation* next_layer_back_propagation,
+    FlattenLayerForwardPropagation* next_flatten_layer_forwardpropagation,
+    FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
     LayerBackPropagation* back_propagation) const
 {
-    const Index images_number = next_layer_back_propagation->deltas_dimensions(0);
-    const Index next_delta_pixel_numbers = next_layer_back_propagation->deltas_dimensions(1);
+    (void)next_flatten_layer_forwardpropagation;
+    const Index images_number = next_flatten_layer_back_propagation->deltas_dimensions(0);
+    const Index next_delta_pixel_numbers = next_flatten_layer_back_propagation->deltas_dimensions(1);
     
     TensorMap<Tensor<type, 2>> next_delta(
-        next_layer_back_propagation->deltas_data, 
+        next_flatten_layer_back_propagation->deltas_data, 
         images_number, 
         next_delta_pixel_numbers);
 
@@ -262,6 +266,50 @@ void FlattenLayer::calculate_hidden_delta(
                 }
             }
         }
+    }
+}
+void FlattenLayer::calculate_hidden_delta(
+    LayerForwardPropagation* next_layer_forwardpropagation,
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerBackPropagation* back_propagation) const
+{
+    switch(next_layer_forwardpropagation->layer_pointer->get_type())
+    {
+        case Layer::Type::Flatten:
+        {
+            FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation = 
+                static_cast<FlattenLayerForwardPropagation*>(next_layer_forwardpropagation);
+            FlattenLayerBackPropagation* next_flatten_layer_back_propagation = 
+                static_cast<FlattenLayerBackPropagation*>(next_layer_back_propagation);
+            calculate_hidden_delta(
+                next_flatten_layer_forward_propagation, 
+                next_flatten_layer_back_propagation,
+                back_propagation);
+            
+        }
+        break;
+        default:
+        {
+            const Tensor<Index, 1> output_dimension = get_outputs_dimensions();
+            const Index numb_of_images = output_dimension(0);
+            const Index numb_of_variables = output_dimension(1);
+            
+            LayerBackPropagation tmp_back_propagation;
+            tmp_back_propagation.batch_samples_number = numb_of_images;
+            tmp_back_propagation.deltas_data = back_propagation->deltas_data;
+            tmp_back_propagation.deltas_dimensions.resize(2);
+            tmp_back_propagation.deltas_dimensions.setValues({numb_of_images, numb_of_variables});
+
+            //Forwarding
+            next_layer_forwardpropagation->layer_pointer->calculate_hidden_delta(
+                next_layer_forwardpropagation,
+                next_layer_back_propagation,
+                &tmp_back_propagation);
+            
+            //to prevent double free
+            tmp_back_propagation.deltas_data = nullptr;
+        }
+        break;
     }
 }
 /// Serializes the flatten layer object into an XML document of the TinyXML.

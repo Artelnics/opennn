@@ -192,8 +192,8 @@ public:
                                ConvolutionalLayerBackPropagation*) const;
 
     void calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_layer_forward_propagation,
-                                                ConvolutionalLayerBackPropagation* next_layer_back_propagation,
-                                                ConvolutionalLayerBackPropagation* layer_back_propagation) const;
+                                ConvolutionalLayerBackPropagation* next_layer_back_propagation,
+                                LayerBackPropagation* layer_back_propagation) const;
 
    // @todo probabilistic hidden delta
 

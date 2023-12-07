@@ -26,7 +26,9 @@
 namespace opennn
 {
 
-
+//forward declaration
+struct FlattenLayerForwardPropagation;
+struct FlattenLayerBackPropagation;
 /// This class represents a flatten layer.
 
 /// Flatten layers are included in the definition of a neural network.
@@ -105,6 +107,9 @@ protected:
     /// Display warning messages to screen.
 
     bool display = true;
+private:
+
+    void calculate_hidden_delta(FlattenLayerForwardPropagation*, FlattenLayerBackPropagation*, LayerBackPropagation*) const;
 };
 
 

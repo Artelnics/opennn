@@ -344,7 +344,7 @@ void ConvolutionalLayer::forward_propagate(type* inputs_data,
 
 void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_layer_forward_propagation,
                                                 ConvolutionalLayerBackPropagation* next_layer_back_propagation,
-                                                ConvolutionalLayerBackPropagation* layer_back_propagation) const
+                                                LayerBackPropagation* layer_back_propagation) const
 {
 
     const ConvolutionalLayer* next_layer = static_cast<const ConvolutionalLayer*>(next_layer_forward_propagation->layer_pointer);
@@ -432,9 +432,6 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
                                                 LayerBackPropagation* next_layer_back_propagation,
                                                 LayerBackPropagation* layer_back_propagation) const
 {
-    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
-            static_cast<ConvolutionalLayerBackPropagation*>(layer_back_propagation);
-
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {
     case Type::Perceptron:
@@ -447,7 +444,7 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 
         calculate_hidden_delta(perceptron_layer_forward_propagation,
                                perceptron_layer_back_propagation,
-                               convolutional_layer_back_propagation);
+                               layer_back_propagation);
     }
         break;
     case Type::Convolutional:
@@ -460,12 +457,17 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation* next_la
 
         calculate_hidden_delta(next_layer_convolutional_forward_propagation,
                                next_layer_convolutional_back_propagation,
-                               convolutional_layer_back_propagation);
+                               layer_back_propagation);
     }
         break;
     default:
     {
-        cout << "Neural network structure not implemented: " << next_layer_back_propagation->layer_pointer->get_type_string() << endl;
+        //Forwarding
+        next_layer_back_propagation->layer_pointer->calculate_hidden_delta(
+            next_layer_forward_propagation,
+            next_layer_back_propagation,
+            layer_back_propagation);
+        //cout << "Neural network structure not implemented: " << next_layer_back_propagation->layer_pointer->get_type_string() << endl;
         return;
     }
     }

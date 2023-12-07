@@ -309,14 +309,14 @@ void ConvolutionalPoolingLayerTest::test_convolution_pooling_backward_pass()
     pooling_layer_forward_propagation.switches(1, 1, 0, 0) = make_tuple(2, 3);
     pooling_layer_forward_propagation.switches(1, 1, 1, 0) = make_tuple(3, 2);
     //image 2
-    pooling_layer_forward_propagation.switches(0, 0, 0, 0) = make_tuple(1, 1);
-    pooling_layer_forward_propagation.switches(0, 0, 1, 0) = make_tuple(1, 0);
-    pooling_layer_forward_propagation.switches(0, 1, 0, 0) = make_tuple(0, 2);
-    pooling_layer_forward_propagation.switches(0, 1, 1, 0) = make_tuple(1, 2);
-    pooling_layer_forward_propagation.switches(1, 0, 0, 0) = make_tuple(2, 0);
-    pooling_layer_forward_propagation.switches(1, 0, 1, 0) = make_tuple(3, 1);
-    pooling_layer_forward_propagation.switches(1, 1, 0, 0) = make_tuple(3, 3);
-    pooling_layer_forward_propagation.switches(1, 1, 1, 0) = make_tuple(2, 2);
+    pooling_layer_forward_propagation.switches(0, 0, 0, 1) = make_tuple(1, 1);
+    pooling_layer_forward_propagation.switches(0, 0, 1, 1) = make_tuple(1, 0);
+    pooling_layer_forward_propagation.switches(0, 1, 0, 1) = make_tuple(0, 2);
+    pooling_layer_forward_propagation.switches(0, 1, 1, 1) = make_tuple(1, 2);
+    pooling_layer_forward_propagation.switches(1, 0, 0, 1) = make_tuple(2, 0);
+    pooling_layer_forward_propagation.switches(1, 0, 1, 1) = make_tuple(3, 1);
+    pooling_layer_forward_propagation.switches(1, 1, 0, 1) = make_tuple(3, 3);
+    pooling_layer_forward_propagation.switches(1, 1, 1, 1) = make_tuple(2, 2);
 
     PoolingLayerBackPropagation pooling_layer_back_propagation(
         numb_of_input_images,
@@ -371,6 +371,316 @@ void ConvolutionalPoolingLayerTest::test_convolution_pooling_backward_pass()
     assert_true(is_equal<4>(expected_output, output), LOG);
 }
 
+void ConvolutionalPoolingLayerTest::test_pooling_convolution_backward_pass()
+{
+    cout << "test_pooling_convolution_backward_pass\n";
+
+    const Index numb_of_input_rows = 4;
+    const Index numb_of_input_cols = 4;
+    const Index numb_of_input_chs = 2;
+    const Index numb_of_input_images = 2;
+
+    Tensor<Index, 1> pooling_input_dimension(4);
+    pooling_input_dimension.setValues({
+        numb_of_input_rows,
+        numb_of_input_cols,
+        numb_of_input_chs,
+        numb_of_input_images
+    });
+
+    const Index pool_row_size = 2;
+    const Index pool_col_size = 2;
+    Tensor<Index, 1> pool_dimension(2);
+    pool_dimension.setValues({
+        pool_row_size,
+        pool_col_size
+    });
+
+    const Index stride = 1;
+
+    PoolingLayer pooling_layer(pooling_input_dimension, pool_dimension);
+    pooling_layer.set_row_stride(stride);
+    pooling_layer.set_column_stride(stride);
+    pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
+
+    const Index numb_of_kernel_rows = 2;
+    const Index numb_of_kernel_cols = 2;
+    const Index numb_of_kernels = 1;
+
+    Tensor<Index, 1> kernel_dimension(4);
+    kernel_dimension.setValues({
+        numb_of_kernel_rows,
+        numb_of_kernel_cols,
+        numb_of_input_chs,
+        numb_of_kernels
+    });
+
+    Tensor<type, 4> kernel(t1d2array<4>(kernel_dimension));
+    kernel(0, 0, 0, 0) = type(1);
+    kernel(0, 0, 1, 0) = type(2);
+    kernel(0, 1, 0, 0) = type(3);
+    kernel(0, 1, 1, 0) = type(4);
+    kernel(1, 0, 0, 0) = type(5);
+    kernel(1, 0, 1, 0) = type(6);
+    kernel(1, 1, 0, 0) = type(7);
+    kernel(1, 1, 1, 0) = type(8);
+    
+    Tensor<Index, 1> conv_input_dimension = pooling_layer.get_outputs_dimensions();
+
+    ConvolutionalLayer conv_layer(conv_input_dimension, kernel_dimension);
+    conv_layer.set_synaptic_weights(kernel);
+    conv_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    
+    ConvolutionalLayerForwardPropagation conv_layer_forward_propagation(numb_of_input_images, &conv_layer);
+    conv_layer_forward_propagation.activations_derivatives.setZero();
+    conv_layer_forward_propagation.activations_derivatives(0, 0, 0, 0) = type(1);
+    conv_layer_forward_propagation.activations_derivatives(1, 1, 0, 0) = type(1);
+    conv_layer_forward_propagation.activations_derivatives.chip(1, 3) = conv_layer_forward_propagation.activations_derivatives.chip(0, 3);
+
+    ConvolutionalLayerBackPropagation conv_layer_back_propagation(numb_of_input_images, &conv_layer);
+    TensorMap<Tensor<type, 4>> delta(
+        conv_layer_back_propagation.deltas_data,
+        t1d2array<4>(conv_layer_back_propagation.deltas_dimensions));
+    //image 1
+    delta(0, 0, 0, 0) = type(1);
+    delta(0, 1, 0, 0) = type(2);
+    delta(1, 0, 0, 0) = type(3);
+    delta(1, 1, 0, 0) = type(4);
+    //image 2
+    delta(0, 0, 0, 1) = type(5);
+    delta(0, 1, 0, 1) = type(6);
+    delta(1, 0, 0, 1) = type(7);
+    delta(1, 1, 0, 1) = type(8);
+
+    PoolingLayerBackPropagation pooling_layer_back_propagation(
+        numb_of_input_images,
+        &pooling_layer);
+    pooling_layer.calculate_hidden_delta(
+        static_cast<LayerForwardPropagation*>(&conv_layer_forward_propagation),
+        static_cast<LayerBackPropagation*>(&conv_layer_back_propagation),
+        static_cast<LayerBackPropagation*>(&pooling_layer_back_propagation));
+
+    //test
+    Tensor<type, 4> expected_output(3, 3, 2, 2);
+    //image 1
+    expected_output(0, 0, 0, 0) = type(1);
+    expected_output(0, 0, 1, 0) = type(2);
+    expected_output(0, 1, 0, 0) = type(3);
+    expected_output(0, 1, 1, 0) = type(4);
+    expected_output(0, 2, 0, 0) = type(0);
+    expected_output(0, 2, 1, 0) = type(0);
+    expected_output(1, 0, 0, 0) = type(5);
+    expected_output(1, 0, 1, 0) = type(6);
+    expected_output(1, 1, 0, 0) = type(11);
+    expected_output(1, 1, 1, 0) = type(16);
+    expected_output(1, 2, 0, 0) = type(12);
+    expected_output(1, 2, 1, 0) = type(16);
+    expected_output(2, 0, 0, 0) = type(0);
+    expected_output(2, 0, 1, 0) = type(0);
+    expected_output(2, 1, 0, 0) = type(20);
+    expected_output(2, 1, 1, 0) = type(24);
+    expected_output(2, 2, 0, 0) = type(28);
+    expected_output(2, 2, 1, 0) = type(32);
+    //image 2
+    expected_output(0, 0, 0, 1) = type(5);
+    expected_output(0, 0, 1, 1) = type(10);
+    expected_output(0, 1, 0, 1) = type(15);
+    expected_output(0, 1, 1, 1) = type(20);
+    expected_output(0, 2, 0, 1) = type(0);
+    expected_output(0, 2, 1, 1) = type(0);
+    expected_output(1, 0, 0, 1) = type(25);
+    expected_output(1, 0, 1, 1) = type(30);
+    expected_output(1, 1, 0, 1) = type(43);
+    expected_output(1, 1, 1, 1) = type(56);
+    expected_output(1, 2, 0, 1) = type(24);
+    expected_output(1, 2, 1, 1) = type(32);
+    expected_output(2, 0, 0, 1) = type(0);
+    expected_output(2, 0, 1, 1) = type(0);
+    expected_output(2, 1, 0, 1) = type(40);
+    expected_output(2, 1, 1, 1) = type(48);
+    expected_output(2, 2, 0, 1) = type(56);
+    expected_output(2, 2, 1, 1) = type(64);
+
+    TensorMap<Tensor<type, 4>> output(
+        pooling_layer_back_propagation.deltas_data,
+        t1d2array<4>(pooling_layer_back_propagation.deltas_dimensions));
+
+    assert_true(is_equal<4>(expected_output, output), LOG);
+}
+
+void ConvolutionalPoolingLayerTest::test_pooling_flatten_forward_propagate()
+{
+    cout << "test_pooling_flatten_forward_propagate\n";
+
+    bool switch_train = true;
+
+    const Index numb_of_input_rows = 4;
+    const Index numb_of_input_cols = 4;
+    const Index numb_of_input_chs = 2;
+    const Index numb_of_input_images = 2;
+
+    Tensor<Index, 1> pooling_input_dimension(4);
+    pooling_input_dimension.setValues({
+        numb_of_input_rows,
+        numb_of_input_cols,
+        numb_of_input_chs,
+        numb_of_input_images
+    });
+
+    const Index pool_row_size = 2;
+    const Index pool_col_size = 2;
+    Tensor<Index, 1> pool_dimension(2);
+    pool_dimension.setValues({
+        pool_row_size,
+        pool_col_size
+    });
+
+    const Index stride = 2;
+
+    PoolingLayer pooling_layer(pooling_input_dimension, pool_dimension);
+    pooling_layer.set_row_stride(stride);
+    pooling_layer.set_column_stride(stride);
+    pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::AveragePooling);
+
+    Tensor<Index, 1> flatten_layer_input_dimensions = pooling_layer.get_outputs_dimensions();
+    
+    FlattenLayer flatten_layer(flatten_layer_input_dimensions);
+
+    Tensor<type, 4> input(t1d2array<4>(pooling_input_dimension));
+    //image 1
+    input(0, 0, 0, 0) = type(1);
+    input(0, 0, 1, 0) = type(2);
+    input(0, 1, 0, 0) = type(1);
+    input(0, 1, 1, 0) = type(2);
+    input(0, 2, 0, 0) = type(3);
+    input(0, 2, 1, 0) = type(4);
+    input(0, 3, 0, 0) = type(3);
+    input(0, 3, 1, 0) = type(4);
+    input.chip(0, 3).chip(1, 0) = input.chip(0, 3).chip(0, 0);
+    input.chip(0, 3).chip(2, 0) = input.chip(0, 3).chip(1, 0) + type(4);
+    input.chip(0, 3).chip(3, 0) = input.chip(0, 3).chip(2, 0);
+    //image 2
+    input.chip(1, 3) = input.chip(0, 3) + type(8);
+
+    FlattenLayerForwardPropagation flatten_layer_forward_propagation(
+        numb_of_input_images, &flatten_layer);
+    PoolingLayerForwardPropagation pooling_layer_forward_propagation(
+        numb_of_input_images, &pooling_layer);
+    
+    pooling_layer.forward_propagate(
+        input.data(), 
+        pooling_input_dimension, 
+        static_cast<LayerForwardPropagation*>(&pooling_layer_forward_propagation), 
+        switch_train);
+
+    flatten_layer.forward_propagate(
+        pooling_layer_forward_propagation.outputs_data, 
+        pooling_layer_forward_propagation.outputs_dimensions,
+        static_cast<LayerForwardPropagation*>(&flatten_layer_forward_propagation),
+        switch_train);
+
+    //test
+    Tensor<type, 2> expected_output(2, 8);
+    //image 1
+    expected_output(0, 0) = type(1);
+    expected_output(0, 1) = type(2);
+    expected_output(0, 2) = type(3);
+    expected_output(0, 3) = type(4);
+    expected_output(0, 4) = type(5);
+    expected_output(0, 5) = type(6);
+    expected_output(0, 6) = type(7);
+    expected_output(0, 7) = type(8);
+    //image 2
+    expected_output.chip(1, 0) = expected_output.chip(0, 0) + type(8);
+
+    TensorMap<Tensor<type, 2>> output(
+        flatten_layer_forward_propagation.outputs_data,
+        t1d2array<2>(flatten_layer_forward_propagation.outputs_dimensions));
+    
+    assert_true(is_equal<2>(expected_output, output), LOG);
+}
+
+void ConvolutionalPoolingLayerTest::test_pooling_flatten_backward_pass()
+{
+    cout << "test_pooling_flatten_backward_pass\n";
+
+    const Index numb_of_input_rows = 4;
+    const Index numb_of_input_cols = 4;
+    const Index numb_of_input_chs = 2;
+    const Index numb_of_input_images = 2;
+
+    Tensor<Index, 1> pooling_input_dimension(4);
+    pooling_input_dimension.setValues({
+        numb_of_input_rows,
+        numb_of_input_cols,
+        numb_of_input_chs,
+        numb_of_input_images
+    });
+
+    const Index pool_row_size = 2;
+    const Index pool_col_size = 2;
+    Tensor<Index, 1> pool_dimension(2);
+    pool_dimension.setValues({
+        pool_row_size,
+        pool_col_size
+    });
+
+    const Index stride = 2;
+
+    PoolingLayer pooling_layer(pooling_input_dimension, pool_dimension);
+    pooling_layer.set_row_stride(stride);
+    pooling_layer.set_column_stride(stride);
+    pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::AveragePooling);
+
+    Tensor<Index, 1> flatten_layer_input_dimensions = pooling_layer.get_outputs_dimensions();
+    
+    FlattenLayer flatten_layer(flatten_layer_input_dimensions);
+
+    FlattenLayerForwardPropagation flatten_layer_forward_propagation(numb_of_input_images, &flatten_layer);
+
+    FlattenLayerBackPropagation flatten_layer_back_propagation(numb_of_input_images, &pooling_layer);
+    TensorMap<Tensor<type, 2>> flatten_delta(
+        flatten_layer_back_propagation.deltas_data,
+        t1d2array<2>(flatten_layer_back_propagation.deltas_dimensions));
+    //image 1
+    flatten_delta(0, 0) = type(1);
+    flatten_delta(0, 1) = type(2);
+    flatten_delta(0, 2) = type(3);
+    flatten_delta(0, 3) = type(4);
+    flatten_delta(0, 4) = type(5);
+    flatten_delta(0, 5) = type(6);
+    flatten_delta(0, 6) = type(7);
+    flatten_delta(0, 7) = type(8);
+    //image 2
+    flatten_delta.chip(1, 0) = flatten_delta.chip(0, 0) + type(8);
+
+    PoolingLayerBackPropagation pooling_layer_back_propagation(numb_of_input_images, &pooling_layer);
+
+    pooling_layer.calculate_hidden_delta(
+        static_cast<LayerForwardPropagation*>(&flatten_layer_forward_propagation),
+        static_cast<LayerBackPropagation*>(&flatten_layer_back_propagation),
+        static_cast<LayerBackPropagation*>(&pooling_layer_back_propagation));
+    
+    //test
+    Tensor<type, 4> expected_output(2, 2, 2, 2);
+    //image 1
+    expected_output(0, 0, 0, 0) = type(1);
+    expected_output(0, 0, 1, 0) = type(2);
+    expected_output(0, 1, 0, 0) = type(3);
+    expected_output(0, 1, 1, 0) = type(4);
+    expected_output(1, 0, 0, 0) = type(5);
+    expected_output(1, 0, 1, 0) = type(6);
+    expected_output(1, 1, 0, 0) = type(7);
+    expected_output(1, 1, 1, 0) = type(8);
+    //image 2
+    expected_output.chip(1, 3) = expected_output.chip(0, 3) + type(8);
+
+    TensorMap<Tensor<type, 4>> output(
+        pooling_layer_back_propagation.deltas_data,
+        t1d2array<4>(pooling_layer_back_propagation.deltas_dimensions));
+
+    assert_true(is_equal<4>(expected_output, output), LOG);
+}
 
 void ConvolutionalPoolingLayerTest::run_test_case()
 {
@@ -378,6 +688,10 @@ void ConvolutionalPoolingLayerTest::run_test_case()
    test_convolution_pooling_forward_propagate();
    test_pooling_convolution_forward_propagate();
    test_convolution_pooling_backward_pass();
+   test_pooling_convolution_backward_pass();
+
+   test_pooling_flatten_forward_propagate();
+   test_pooling_flatten_backward_pass();
    
    cout << "End of convolutional layer test case.\n\n";
 }

@@ -157,7 +157,7 @@ public:
     
     void calculate_hidden_delta(PoolingLayerForwardPropagation*,
                                 PoolingLayerBackPropagation*,
-                                PoolingLayerBackPropagation*) const;
+                                LayerBackPropagation*) const;
 
 
 //    Tensor<type, 4> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
@@ -194,15 +194,15 @@ private:
 
     void calculate_hidden_delta_average_pooling(PoolingLayerForwardPropagation*,
                                 PoolingLayerBackPropagation*,
-                                PoolingLayerBackPropagation*) const;
+                                LayerBackPropagation*) const;
 
     void calculate_hidden_delta_max_pooling(PoolingLayerForwardPropagation*,
                                 PoolingLayerBackPropagation*,
-                                PoolingLayerBackPropagation*) const;
+                                LayerBackPropagation*) const;
 
     void calculate_hidden_delta_no_pooling(PoolingLayerForwardPropagation*,
                                 PoolingLayerBackPropagation*,
-                                PoolingLayerBackPropagation*) const;
+                                LayerBackPropagation*) const;
 
 
 };
