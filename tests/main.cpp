@@ -61,6 +61,7 @@ const std::array test_names{
   make_tuple<string_view, string_view, unique_ptr<UnitTesting>>("weighted_squared_error", "wse", unique_ptr<UnitTesting>(new WeightedSquaredErrorTest{})),
   make_tuple<string_view, string_view, unique_ptr<UnitTesting>>("conv_pooling_layer", "cpl", unique_ptr<UnitTesting>(new ConvolutionalPoolingLayerTest{})),
   make_tuple<string_view, string_view, unique_ptr<UnitTesting>>("flatten_pooling_layer", "fpl", unique_ptr<UnitTesting>(new FlattenPoolingLayerTest{})),
+  make_tuple<string_view, string_view, unique_ptr<UnitTesting>>("flatten_perceptron_layer", "fppl", unique_ptr<UnitTesting>(new FlattenPerceptronLayerTest{})),
 };
 
 UnitTesting* get_test_unit(string_view test_name)
