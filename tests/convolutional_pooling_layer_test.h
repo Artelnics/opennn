@@ -25,12 +25,10 @@ public:
   //Forward propagate
   void test_convolution_pooling_forward_propagate();
   void test_pooling_convolution_forward_propagate();
-  void test_pooling_flatten_forward_propagate();
 
   //Backward pass
   void test_convolution_pooling_backward_pass();
   void test_pooling_convolution_backward_pass();
-  void test_pooling_flatten_backward_pass();
 
   // Unit testing methods
 
