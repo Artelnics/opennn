@@ -25,6 +25,7 @@
 #include "convolutional_layer_test.h"
 #include "pooling_layer_test.h"
 #include "convolutional_pooling_layer_test.h"
+#include "flatten_pooling_layer_test.h"
 
 #include "flatten_layer_test.h"
 
