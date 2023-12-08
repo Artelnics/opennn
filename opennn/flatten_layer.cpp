@@ -290,24 +290,11 @@ void FlattenLayer::calculate_hidden_delta(
         break;
         default:
         {
-            const Tensor<Index, 1> output_dimension = get_outputs_dimensions();
-            const Index numb_of_images = output_dimension(0);
-            const Index numb_of_variables = output_dimension(1);
-            
-            LayerBackPropagation tmp_back_propagation;
-            tmp_back_propagation.batch_samples_number = numb_of_images;
-            tmp_back_propagation.deltas_data = back_propagation->deltas_data;
-            tmp_back_propagation.deltas_dimensions.resize(2);
-            tmp_back_propagation.deltas_dimensions.setValues({numb_of_images, numb_of_variables});
-
             //Forwarding
             next_layer_forwardpropagation->layer_pointer->calculate_hidden_delta(
                 next_layer_forwardpropagation,
                 next_layer_back_propagation,
-                &tmp_back_propagation);
-            
-            //to prevent double free
-            tmp_back_propagation.deltas_data = nullptr;
+                back_propagation);
         }
         break;
     }
@@ -500,12 +487,12 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Lay
     const Index channels_number = flatten_layer_pointer->get_inputs_channels_number();
 
     deltas_data = static_cast<type*>(malloc(batch_samples_number * rows_number * columns_number * channels_number * sizeof(type)));
-    deltas_dimensions.resize(4);
+    deltas_dimensions.resize(2);
     deltas_dimensions.setValues({
-        rows_number,
-        columns_number,
+        batch_samples_number,
+        rows_number *
+        columns_number *
         channels_number,
-        batch_samples_number
     });
 }
 

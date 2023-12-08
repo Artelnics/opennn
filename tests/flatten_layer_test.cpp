@@ -275,16 +275,27 @@ void FlattenLayerTest::test_calculate_hidden_delta()
 
     FlattenLayer flatten_layer(input_dimension);
 
-    FlattenLayerBackPropagation back_propagation(image_inputs_number, &flatten_layer);
+    LayerBackPropagation back_propagation;
+    back_propagation.deltas_dimensions.resize(4);
+    back_propagation.deltas_dimensions.setValues({
+        row_inputs_number,
+        column_inputs_number,
+        channel_inputs_number,
+        image_inputs_number});
+    back_propagation.deltas_data = static_cast<type*>(malloc(
+        row_inputs_number *
+        column_inputs_number *
+        channel_inputs_number *
+        image_inputs_number * sizeof(type)));
 
-    LayerForwardPropagation next_layer_forward_propagation;
+    FlattenLayerForwardPropagation next_layer_forward_propagation(image_inputs_number, &flatten_layer);
 
-    LayerBackPropagation next_layer_back_propagation;
-    next_layer_back_propagation.batch_samples_number = image_inputs_number;
-    next_layer_back_propagation.deltas_dimensions.resize(2);
-    next_layer_back_propagation.deltas_dimensions.setValues({image_inputs_number, input_pixel_numbers});
+    FlattenLayerBackPropagation next_layer_back_propagation(image_inputs_number, &flatten_layer);
     
-    Tensor<type, 2> next_deltas(image_inputs_number, input_pixel_numbers);
+    TensorMap<Tensor<type, 2>> next_deltas(
+        next_layer_back_propagation.deltas_data, 
+        image_inputs_number, 
+        input_pixel_numbers);
 
     next_deltas(0, 0) = type(1);
     next_deltas(0, 1) = type(2);
@@ -304,14 +315,10 @@ void FlattenLayerTest::test_calculate_hidden_delta()
     next_deltas(1, 6) = type(15);
     next_deltas(1, 7) = type(16);
 
-    next_layer_back_propagation.deltas_data = next_deltas.data();
-
     flatten_layer.calculate_hidden_delta(
-        &next_layer_forward_propagation, 
-        &next_layer_back_propagation,
+        static_cast<LayerForwardPropagation*>(&next_layer_forward_propagation), 
+        static_cast<LayerBackPropagation*>(&next_layer_back_propagation),
         &back_propagation);
-
-    next_layer_back_propagation.deltas_data = nullptr; //to prevent double free
 
     Tensor<type, 4> expected_delta(
         row_inputs_number,
