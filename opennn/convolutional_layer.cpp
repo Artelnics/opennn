@@ -654,14 +654,6 @@ string ConvolutionalLayer::write_activation_function() const
 Index ConvolutionalLayer::get_outputs_rows_number() const
 {
     return (get_inputs_rows_number() + 2*get_padding_height() - get_kernels_rows_number()) / row_stride + 1;
-
-    ///@todo padding
-
-    //    const Index kernels_rows_number = get_kernels_rows_number();
-
-    //    const Index padding_height = get_padding_height();
-
-    //    return ((input_variables_dimensions(2) - kernels_rows_number + 2 * padding_height)/row_stride) + 1;
 }
 
 
@@ -670,14 +662,6 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 Index ConvolutionalLayer::get_outputs_columns_number() const
 {
     return (get_inputs_columns_number() + 2*get_padding_width() - get_kernels_columns_number()) / column_stride + 1;
-
-    ///@todo padding
-
-    //    const Index kernels_columns_number = get_kernels_columns_number();
-
-    //    const Index padding_width = get_padding_width();
-
-    //    return ((input_variables_dimensions(3) - kernels_columns_number + 2 * padding_width)/column_stride) + 1;
 }
 
 
