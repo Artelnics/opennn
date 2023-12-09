@@ -156,29 +156,31 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Index next_image = inputs_rows_number*inputs_columns_number*kernels_channels_number;
     const Index next_kernel = kernels_rows_number*kernels_columns_number*kernels_channels_number;
 
-    const Index output_size_rows_columns = ((inputs_rows_number-kernels_rows_number)+1)*((inputs_columns_number-kernels_columns_number)+1);
+    const Index output_size_rows_columns = get_outputs_rows_number() * get_outputs_columns_number();
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-    Tensor<type, 4> inputs_pointer = inputs;
-    Tensor<type, 4> synaptic_weights_pointer = synaptic_weights; // ??
+    const Tensor<type, 4>& inputs_pointer = inputs;
+    const Tensor<type, 4>& synaptic_weights_pointer = synaptic_weights; // ??
+
+    const Eigen::array<Index, 3> strides{get_row_stride(), get_column_stride(), 1};
 
 #pragma omp parallel for
     for(int i = 0; i < images_number ;i++)
     {
-        const TensorMap<Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
+        const TensorMap<const Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
                                                       inputs_rows_number,
                                                       inputs_columns_number,
                                                       inputs_channels_number);
 
         for(int j = 0; j<kernels_number; j++)
         {
-            const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
+            const TensorMap<const Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
                                                            kernels_rows_number,
                                                            kernels_columns_number,
                                                            kernels_channels_number);
 
-            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims) + biases(j);
+            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims).stride(strides) + biases(j);
 
             memcpy(combinations +j*output_size_rows_columns +i*output_size_rows_columns*kernels_number,
                    tmp_result.data(), static_cast<size_t>(output_size_rows_columns)*sizeof(float));
@@ -394,31 +396,48 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     
     next_delta_times_activation_delta.device(*thread_pool_device) = (next_delta * next_layer_forward_propagation->activations_derivatives);
 
-    const Index rows_padding = (next_layer->get_inputs_rows_number() - next_layer->get_outputs_rows_number());
-    const Index cols_padding = (next_layer->get_inputs_columns_number() - next_layer->get_outputs_columns_number());
+    const Index next_kernel_rows_number = next_layer->get_kernels_rows_number();
+    const Index next_kernel_cols_number = next_layer->get_kernels_columns_number();
+
+    const Index rows_padding = (current_delta_rows_number - next_delta_rows_number + next_kernel_rows_number - 1) / 2;
+    const Index cols_padding = (current_delta_cols_number - next_delta_cols_number + next_kernel_cols_number - 1) / 2;
+
+    const Index next_delta_with_zeros_padded_rows_number = current_delta_rows_number + next_kernel_rows_number - 1;
+    const Index next_delta_with_zeros_padded_cols_number = current_delta_cols_number + next_kernel_cols_number - 1;
+
+    
+    Tensor<type, 3> next_delta_with_zeros_padded(
+        next_delta_with_zeros_padded_rows_number,
+        next_delta_with_zeros_padded_cols_number,
+        next_delta_channels_number);
+    next_delta_with_zeros_padded.setZero();
+    
+    const Eigen::array<Index, 3> offsets{rows_padding, cols_padding, 0};
+    const Eigen::array<Index, 3> extends{
+        next_delta_with_zeros_padded_rows_number - 2 * rows_padding, 
+        next_delta_with_zeros_padded_cols_number - 2 * cols_padding, 
+        next_delta_channels_number};
+
+    const Index row_stride = next_layer->get_row_stride();
+    const Index column_stride = next_layer->get_column_stride();
+    const Eigen::array<Index, 3> strides{row_stride, column_stride, 1};
 
     const Eigen::array<Index, 2> convolution_dimensions = {0, 1};
-
-    const Eigen::array<Index, 2> one_channel_dims({current_delta_rows_number, current_delta_cols_number}); 
-
-    const Eigen::array<pair<Index, Index>, 3> numb_of_padding({{
-        {rows_padding, rows_padding},
-        {cols_padding, cols_padding},
-        {0U, 0U}
-    }});
-
+    
     current_delta.setZero();
+
 
     #pragma omp parallel for
     for(Index image_idx = 0; image_idx < images_number; image_idx++)
     {
-        const Tensor<type, 3>& image = next_delta_times_activation_delta.chip(image_idx, 3);
-        Tensor<type, 3> padded_image = image.pad(numb_of_padding);
+        const auto& image = next_delta_times_activation_delta.chip(image_idx, 3);
+        next_delta_with_zeros_padded.slice(offsets, extends).stride(strides) = image;
+
         for(Index channel_idx = 0; channel_idx < current_delta_channels_number; channel_idx++)
         {
             for(Index kernel_idx = 0; kernel_idx < kernel_numbers; kernel_idx++)
             {
-                current_delta.chip(image_idx, 3).chip(channel_idx, 2) += padded_image.chip(kernel_idx, 2).convolve(
+                current_delta.chip(image_idx, 3).chip(channel_idx, 2) += next_delta_with_zeros_padded.chip(kernel_idx, 2).convolve(
                     next_synaptic_weights_flipped.chip(kernel_idx, 3).chip(channel_idx, 2),
                     convolution_dimensions);
             }
@@ -634,7 +653,7 @@ string ConvolutionalLayer::write_activation_function() const
 
 Index ConvolutionalLayer::get_outputs_rows_number() const
 {
-    return (input_variables_dimensions(0) - get_kernels_rows_number() + 1);
+    return (get_inputs_rows_number() + 2*get_padding_height() - get_kernels_rows_number()) / row_stride + 1;
 
     ///@todo padding
 
@@ -650,7 +669,7 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 
 Index ConvolutionalLayer::get_outputs_columns_number() const
 {
-    return (input_variables_dimensions(1) - get_kernels_columns_number()+1);
+    return (get_inputs_columns_number() + 2*get_padding_width() - get_kernels_columns_number()) / column_stride + 1;
 
     ///@todo padding
 
@@ -771,7 +790,8 @@ Index ConvolutionalLayer::get_padding_width() const
 
     case ConvolutionType::Same:
     {
-        return column_stride*(input_variables_dimensions[2] - 1) - input_variables_dimensions[2] + get_kernels_columns_number();
+        const Index input_cols_number = get_inputs_columns_number();
+        return (column_stride*(input_cols_number - 1) - input_cols_number + get_kernels_columns_number()) / 2;
     }
     }
 
@@ -792,7 +812,8 @@ Index ConvolutionalLayer::get_padding_height() const
 
     case ConvolutionType::Same:
     {
-        return row_stride*(input_variables_dimensions[1] - 1) - input_variables_dimensions[1] + get_kernels_rows_number();
+        const Index input_rows_number = get_inputs_rows_number();
+        return (row_stride*(input_rows_number - 1) - input_rows_number + get_kernels_rows_number()) / 2;
     }
     }
 
