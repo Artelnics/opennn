@@ -559,19 +559,32 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
     convolutional_layer_back_propagation->biases_derivatives = deltas_times_derivatives.sum(reduction_dimensions);
 
     // Weights gradient
+    const Eigen::array<Index, 2> strides{get_row_stride(), get_column_stride()};
+
     convolutional_layer_back_propagation->synaptic_weights_derivatives.setZero();
     const Eigen::array<Index, 2> convolution_dims = {0, 1};
+
+    Tensor<type, 3> deltas_times_derivatives_with_dilation(
+        back_propagation->deltas_dimensions(0) + get_row_stride() - 1, 
+        back_propagation->deltas_dimensions(1) + get_column_stride() - 1,
+        kernels_number);
+    deltas_times_derivatives_with_dilation.setZero();
 
     #pragma omp parallel for
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
+        auto selected_delta = deltas_times_derivatives_with_dilation.chip(kernel_index, 2).stride(strides);
+
         for(Index channel_index = 0; channel_index < channels_number; channel_index++)
         {
             for(Index image_index = 0; image_index < batch_samples_number; image_index++)
             {
+                //sets deltas times derivatives in dilation matrix
+                selected_delta = deltas_times_derivatives.chip(image_index, 3).chip(kernel_index, 2);
+
                 convolutional_layer_back_propagation->synaptic_weights_derivatives.chip(kernel_index, 3).chip(channel_index, 2) += inputs.chip(image_index, 3).chip(
                     channel_index, 2).convolve(
-                        deltas_times_derivatives.chip(image_index, 3).chip(kernel_index, 2), convolution_dims);
+                        selected_delta, convolution_dims);
             }
         }
     }
