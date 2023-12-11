@@ -1313,7 +1313,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
-    Tensor<type, 1> errors(4);
+    Tensor<type, 1> errors(5);
 
     // Results
 
@@ -1323,6 +1323,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
     errors(1) = errors(0)/type(testing_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_cross_entropy_error(targets, outputs);
 
     return errors;
 }
