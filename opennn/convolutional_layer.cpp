@@ -1184,7 +1184,7 @@ void ConvolutionalLayer::set_input_variables_dimenisons(const Tensor<Index,1>& n
 /// Sets the synaptic weights and biases to the given values.
 /// @param new_parameters A vector containing the synaptic weights and biases, in this order.
 
-void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& )
+void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& indx)
 {
     const Index kernels_number = get_kernels_number();
     const Index kernels_channels_number = get_kernels_channels_number();
@@ -1195,7 +1195,7 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     biases.resize(kernels_number);
 
     memcpy(biases.data(),
-           new_parameters.data(),
+           new_parameters.data() + indx,
            static_cast<size_t>(kernels_number)*sizeof(type));
 
     /*
@@ -1208,7 +1208,7 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
 
 
-    Index element_index = kernels_number;
+    Index element_index = kernels_number + indx;
 
     #pragma omp parallel for
     for(Index kernel_indx = 0; kernel_indx < kernels_number; kernel_indx++)
