@@ -723,25 +723,10 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
-        // Needs to check flatten layer for convolutional
-        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten)
-        {
-            continue;
-        }
-        if(trainable_layers_pointers(i+1)->get_type() == Layer::Type::Flatten)
-        {
-            trainable_layers_pointers(i)
-                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+2), // Perceptron layer
-                                             back_propagation.neural_network.layers(i+2), // Perceptron layer
-                                             back_propagation.neural_network.layers(i));
-        }
-        else
-        {
-            trainable_layers_pointers(i)
-                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
-                                             back_propagation.neural_network.layers(i+1),
-                                             back_propagation.neural_network.layers(i));
-        }
+        trainable_layers_pointers(i)
+                ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
+                                            back_propagation.neural_network.layers(i+1),
+                                            back_propagation.neural_network.layers(i));
 /* --> This part was in dev-fwd_refactoring, check
         trainable_layers_pointers(i)->calculate_hidden_delta(
             forward_propagation.layers(first_trainable_layer_index+i+1),
