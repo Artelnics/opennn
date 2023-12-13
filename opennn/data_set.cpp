@@ -14730,12 +14730,12 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     }
     else if(input_variables_dimensions.size() == 3)
     {
-        const Index channels_number = input_variables_dimensions(0);
+        const Index rows_number = input_variables_dimensions(0);
+        const Index columns_number = input_variables_dimensions(1);
+        const Index channels_number = input_variables_dimensions(2);
 //        const Index columns_number = input_variables_dimensions(1);
 //        const Index rows_number = input_variables_dimensions(2);
 
-        const Index rows_number = input_variables_dimensions(1);
-        const Index columns_number = input_variables_dimensions(2);
 
         TensorMap<Tensor<type, 4>> inputs(inputs_data.get(), rows_number, columns_number, channels_number, batch_size);
 
@@ -14757,18 +14757,22 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }*/
-
-        for(Index image = 0; image < batch_size; image++)
+        const Eigen::array<Index, 1> offset{0};
+        const Eigen::array<Index, 1> extend{rows_number * columns_number * channels_number};
+        
+        #pragma omp parallel for
+        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
+            const Tensor<type, 1> image = data.chip(samples(sample_index), 0).slice(offset, extend);
             index = 0;
 
-            for (Index row = rows_number - 1; row >= 0; row--)
+            for (Index row = 0; row < rows_number; row++)
             {
                 for(Index col = 0; col < columns_number; col++)
                 {
-                    for (Index channel = channels_number - 1; channel >= 0 ; channel--)
+                    for (Index channel = 0; channel < channels_number; channel++)
                     {
-                        inputs(row, col, channel, image) = data(image, index);
+                        inputs(row, col, channel, sample_index) = image(index);
                         index++;
                     }
                 }
@@ -14812,9 +14816,9 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     }
     else if(input_variables_dimensions.size() == 3)
     {
-        const Index channels_number = input_variables_dimensions(0);
+        const Index rows_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
-        const Index rows_number = input_variables_dimensions(2);
+        const Index channels_number = input_variables_dimensions(2);
 
         inputs_dimensions.resize(4);
         inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});

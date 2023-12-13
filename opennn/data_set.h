@@ -1160,8 +1160,11 @@ struct DataSetBatch
 
     void set(const Index&, DataSet*);
 
-    void set_inputs(Tensor<type, 2>& new_inputs)
+    template<int DIM>
+    void set_inputs(const Tensor<type, DIM>& new_inputs)
     {
+        static_assert(DIM == 2U || DIM == 4U, "Dimension has to be 2 or 4.");
+
         auto new_inputs_data = make_unique<type[]>(new_inputs.size());
         copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
 
