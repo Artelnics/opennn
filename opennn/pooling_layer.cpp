@@ -1141,6 +1141,11 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
     }
 }
 
+void PoolingLayer::set_parameters(const Tensor<type, 1>& param, const Index& indx)
+{
+    (void)param; (void)indx;
+}
+
 
 /// Sets the layer type to Layer::Pooling.
 

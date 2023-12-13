@@ -6015,6 +6015,230 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
     return trainable_layers_pointers(trainable_layers_number-1);
 }
 
+NeuralNetworkForwardPropagation::NeuralNetworkForwardPropagation() {}
+
+NeuralNetworkForwardPropagation::NeuralNetworkForwardPropagation(const Index& new_batch_samples_number,NeuralNetwork* new_neural_network_pointer)
+{
+    set(new_batch_samples_number, new_neural_network_pointer);
+}
+
+/// Destructor.
+
+NeuralNetworkForwardPropagation::~NeuralNetworkForwardPropagation()
+{
+    const Index layers_number = layers.size();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        delete layers(i);
+    }
+}
+
+
+void NeuralNetworkForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+{
+    batch_samples_number = new_batch_samples_number;
+
+    neural_network_pointer = new_neural_network_pointer;
+
+    const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
+
+    const Index layers_number = layers_pointers.size();
+
+    layers.resize(layers_number);
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        switch (layers_pointers(i)->get_type())
+        {
+        case Layer::Type::Perceptron:
+        {
+            layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Probabilistic:
+        {
+            layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Recurrent:
+        {
+            layers(i) = new RecurrentLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::LongShortTermMemory:
+        {
+            layers(i) = new LongShortTermMemoryLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Pooling:
+        {
+            layers(i) = new PoolingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+        case Layer::Type::Convolutional:
+        {
+            layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Flatten:
+        {
+            layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::BatchNormalization:
+        {
+            layers(i) = new BatchNormalizationLayerForwardPropagation(batch_samples_number, layers_pointers(i));;
+        }
+        break;
+
+        case Layer::Type::Scaling:
+        {
+            layers(i) = new ScalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Unscaling:
+        {
+            layers(i) = new UnscalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Bounding:
+        {
+            layers(i) = new BoundingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+        }
+        break;
+
+        default: break;
+        }
+    }
+}
+
+void NeuralNetworkForwardPropagation::print() const
+{
+    const Index layers_number = layers.size();
+
+    cout << "Layers number: " << layers_number << endl;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        cout << "Layer " << i + 1 << " " << layers(i)->layer_pointer->get_name() << endl;
+
+        layers(i)->print();
+
+//            cout << "Parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
+    }
+}
+
+NeuralNetworkBackPropagation::NeuralNetworkBackPropagation() {}
+
+NeuralNetworkBackPropagation::~NeuralNetworkBackPropagation()
+{
+    const Index layers_number = layers.size();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        delete layers(i);
+    }
+}
+
+NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network_pointer)
+{
+    neural_network_pointer = new_neural_network_pointer;
+}
+
+void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+{
+    batch_samples_number = new_batch_samples_number;
+
+    neural_network_pointer = new_neural_network_pointer;
+
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    layers.resize(trainable_layers_number);
+
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        switch (trainable_layers_pointers(i)->get_type())
+        {
+        case Layer::Type::Perceptron:
+        {
+            layers(i) = new PerceptronLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Probabilistic:
+        {
+            layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Recurrent:
+        {
+            layers(i) = new RecurrentLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::LongShortTermMemory:
+        {
+            layers(i) = new LongShortTermMemoryLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Convolutional:
+        {
+            layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Pooling:
+        {
+            layers(i) = new PoolingLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Flatten:
+        {
+            layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        case Layer::Type::Resnet50:
+        {
+            //layers(i) = new Resnet50LayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+        }
+        break;
+
+        default: break;
+        }
+    }
+}
+
+void NeuralNetworkBackPropagation::print() const
+{
+    cout << "Neural network back-propagation" << endl;
+
+    const Index layers_number = layers.size();
+
+    cout << "Layers number: " << layers_number << endl;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        cout << "Layer " << i + 1 << endl;
+
+        layers(i)->print();
+    }
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

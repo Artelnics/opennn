@@ -112,6 +112,8 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
+    void set_parameters(const Tensor<type, 1>&, const Index&) override final;
+
     void set_default();
 
     // Outputs
