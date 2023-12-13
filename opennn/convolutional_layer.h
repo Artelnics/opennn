@@ -147,7 +147,7 @@ public:
 
     // Padding
 
-    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&);
+    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Combinations
 

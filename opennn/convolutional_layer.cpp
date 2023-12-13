@@ -80,7 +80,7 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 /// @param input Tensor containing the inputs.
 /// @param padded_output input tensor padded.
 
-void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output)
+void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output) const
 {
     switch(convolution_type)
     {
@@ -121,6 +121,13 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     const Index inputs_channels_number = inputs.dimension(2);
     const Index images_number = inputs.dimension(3);
 
+    Tensor<type, 4> padded_input;
+    
+    insert_padding(inputs, padded_input);
+
+    const Index padded_inputs_rows_number = padded_input.dimension(0);
+    const Index padded_inputs_columns_number = padded_input.dimension(1);
+
     const Index kernels_rows_number = synaptic_weights.dimension(0);
     const Index kernels_columns_number = synaptic_weights.dimension(1);
     const Index kernels_channels_number = synaptic_weights.dimension(2);
@@ -152,15 +159,15 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     }
 */
 #endif
-
-    const Index next_image = inputs_rows_number*inputs_columns_number*kernels_channels_number;
+    
+    const Index next_image = padded_inputs_rows_number*padded_inputs_columns_number*kernels_channels_number;
     const Index next_kernel = kernels_rows_number*kernels_columns_number*kernels_channels_number;
 
     const Index output_size_rows_columns = get_outputs_rows_number() * get_outputs_columns_number();
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-    const Tensor<type, 4>& inputs_pointer = inputs;
+    const Tensor<type, 4>& inputs_pointer = padded_input;
     const Tensor<type, 4>& synaptic_weights_pointer = synaptic_weights; // ??
 
     const Eigen::array<Index, 3> strides{get_row_stride(), get_column_stride(), 1};
@@ -169,8 +176,8 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
     for(int i = 0; i < images_number ;i++)
     {
         const TensorMap<const Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
-                                                      inputs_rows_number,
-                                                      inputs_columns_number,
+                                                      padded_inputs_rows_number,
+                                                      padded_inputs_columns_number,
                                                       inputs_channels_number);
 
         for(int j = 0; j<kernels_number; j++)
@@ -542,7 +549,10 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
 
     TensorMap<Tensor<type,4>> inputs(input_data, inputs_rows_number, inputs_columns_number, channels_number, 
         batch_samples_number);
+    
+    Tensor<type,4> padded_inputs;
 
+    insert_padding(inputs, padded_inputs);
 
     const TensorMap<Tensor<type, 4>> deltas(
         back_propagation->deltas_data, 
@@ -582,7 +592,7 @@ void ConvolutionalLayer::calculate_error_gradient(type* input_data,
                 //sets deltas times derivatives in dilation matrix
                 selected_delta = deltas_times_derivatives.chip(image_index, 3).chip(kernel_index, 2);
 
-                convolutional_layer_back_propagation->synaptic_weights_derivatives.chip(kernel_index, 3).chip(channel_index, 2) += inputs.chip(image_index, 3).chip(
+                convolutional_layer_back_propagation->synaptic_weights_derivatives.chip(kernel_index, 3).chip(channel_index, 2) += padded_inputs.chip(image_index, 3).chip(
                     channel_index, 2).convolve(
                         selected_delta, convolution_dims);
             }
