@@ -5528,7 +5528,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
         throw logic_error("The specified column is not of categorical type.");
     }
 
-    for(Index column_index = column_index_start; column_index < columns.size(); ++column_index)
+    for(Index column_index = column_index_start; column_index < columns(column_index_start).categories.size(); ++column_index)
     {
         if(data(sample_index, column_index) == 1)
         {
