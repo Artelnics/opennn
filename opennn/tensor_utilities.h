@@ -29,6 +29,7 @@ using Eigen::MatrixXd;
 namespace opennn
 {
 
+void update_progress_bar(type);
 void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 
@@ -65,7 +66,7 @@ void save_csv(const Tensor<type,2>&, const string&);
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
-//Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots);
+Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots);
 
 Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);

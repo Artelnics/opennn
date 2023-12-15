@@ -92,6 +92,8 @@ public:
 
     explicit DataSet(const Tensor<type, 2>&);
 
+    explicit DataSet(const Tensor<type, 2>&, const Index&, const Tensor<string, 1>&, bool&);
+
     explicit DataSet(const Index&, const Index&);
 
     explicit DataSet(const Index&, const Index&, const Index&);
@@ -551,6 +553,8 @@ public:
 
     // Columns set methods
 
+    void set_indra_columns(const Tensor<string, 1>&);
+
     void set_columns(const Tensor<Column, 1>&);
 
     void set_default_columns_uses();
@@ -816,7 +820,6 @@ public:
     void transform_time_series_columns();
     void transform_time_series_data();
     void transform_time_series_non_categorical_data();
-    void fill_time_series_gaps();
 
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);

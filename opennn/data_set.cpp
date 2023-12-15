@@ -44,6 +44,28 @@ DataSet::DataSet(const Tensor<type, 2>& data)
     set_default();
 }
 
+/// @brief Indra DataSet constructor.
+/// @param data 
+/// @param indra 
+DataSet::DataSet(const Tensor<type, 2>& data, const Index& samples_number, const Tensor<string, 1>& columns_names, bool& indra)
+{
+    set();
+
+    set_default();
+
+    set(data);
+
+    samples_uses.resize(samples_number);
+
+    samples_uses.setConstant(SampleUse::Training);
+
+    split_samples_sequential();
+
+    set_indra_columns(columns_names);
+
+    set_default_columns_scalers();
+}
+
 
 /// Samples and variables number constructor.
 /// It creates a data set object with given samples and variables numbers.
@@ -1002,61 +1024,6 @@ void DataSet::transform_time_series_columns()
     columns = new_columns;
 }
 
-/*
-void DataSet::transform_time_series_data()
-{
-    cout << "Transforming time series data..." << endl;
-
-    // Categorical / Time columns?
-
-    const Index old_samples_number = data.dimension(0);
-    const Index old_variables_number = data.dimension(1);
-
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
-
-    time_series_data = data;
-
-    Tensor<type, 2> no_time_data(new_samples_number, new_variables_number);
-    data.resize(new_samples_number, new_variables_number + 1);
-
-    Tensor<type, 2> timestamp_index_column(new_samples_number, 1);
-
-    Index index = 0;
-
-    for(Index j = 0; j < old_variables_number; j++)
-    {
-       if(columns(get_column_index(j)).type == ColumnType::DateTime)
-       {
-            time_variable_index = j;
-            Tensor<type, 1> timestamp_raw(time_series_data.chip(j, 1));
-
-            Index time_index = 0;
-
-            for (Index i = lags_number; i < lags_number + new_samples_number; i++) 
-            {
-                timestamp_index_column(time_index, 0) = timestamp_raw(i);
-                time_index++;
-            }
-
-            index++;           
-            continue;
-       }
-
-        for(Index i = 0; i < lags_number+steps_ahead; i++)
-        {
-            memcpy(no_time_data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number,
-                   time_series_data.data() + i + j * old_samples_number,
-                   static_cast<size_t>(old_samples_number - lags_number - steps_ahead + 1) * sizeof(type));
-        }
-    }
-
-    data = timestamp_index_column.concatenate(no_time_data, 1);
-
-    samples_uses.resize(new_samples_number);
-    split_samples_random();
-}
-*/
 
 void DataSet::transform_time_series_data()
 {
@@ -1094,141 +1061,6 @@ void DataSet::transform_time_series_data()
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
-}
-
-/*
-void DataSet::transform_time_series_data()
-{
-    cout << "Transforming time series data..." << endl;
-
-    // Categorical / Time columns?
-
-    const Index old_samples_number = data.dimension(0);
-    const Index old_variables_number = data.dimension(1);
-
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
-
-    time_series_data = data;
-
-    data.resize(new_samples_number, new_variables_number);
-
-    Index index = 0;
-
-    for(Index j = 0; j < old_variables_number; j++)
-    {
-        if(columns(get_column_index(j)).type == ColumnType::DateTime)
-        {
-            index++;
-            continue;
-        }
-
-        for(Index i = 0; i < lags_number+steps_ahead; i++)
-        {
-            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
-                   time_series_data.data() + i + j*old_samples_number,
-                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
-        }
-    }
-
-    samples_uses.resize(new_samples_number);
-    split_samples_random();
-}
-*/
-
-/*
-void DataSet::transform_time_series_data()
-{
-    cout << "Transforming time series data..." << endl;// Categorical / Time columns?
-
-    const Index old_samples_number = data.dimension(0);
-    const Index old_variables_number = data.dimension(1);
-
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
-
-    Index categorical_index = get_column_index(get_group_by_column());;
-
-    Tensor<Index, 1> categorical_indices = get_categorical_to_indices(categorical_index);
-    Index categories_number = get_variable_indices(categorical_index).size();
-
-    time_series_data = data;
-
-    data.resize(new_samples_number, new_variables_number);
-
-    Index dataIndex = 0;
-    for (Index k = 0; k < categories_number; ++k)
-    {
-        Index index = 0;
-        for (Index j = 0; j < old_variables_number; j++)
-        {
-            if (columns(get_column_index(j)).type == ColumnType::DateTime)
-            {
-                index++;
-                continue;
-            }
-
-            for (Index i = 0; i < lags_number + steps_ahead; i++)
-            {
-                for (Index k = 0; k < old_samples_number - (lags_number + steps_ahead - 1); k++)
-                {
-                    if (categorical_indices[k] != k)
-                    {
-                        continue;
-                    }
-                           memcpy(data.data() + dataIndex++ * new_variables_number,
-                           time_series_data.data() + i + j * old_samples_number + k,
-                           sizeof(type));
-                }
-            }
-        }
-    }
-
-    samples_uses.resize(new_samples_number);
-    split_samples_random();
-}
-*/
-
-void DataSet::fill_time_series_gaps()
-{
-    const Index rows_number = data.dimension(0);
-    const Index columns_number = data.dimension(1);
-
-    quicksort_by_column(0);
-
-    Tensor<type, 1> time_data = data.chip(0, 1);
-
-    Tensor<type, 1> time_difference_data = compute_elementwise_difference(time_data);
-
-    // cout << "time_variable_index: " << time_variable_index << endl;
-    // cout << "time_data: " << endl;
-    
-    // for(Index i = 0; i < time_data.size(); i++)
-    // {
-    //     cout << time_data(i) << " ";
-    // }
-    
-    // cout << "elementwise_difference time_data: " << endl;
-
-    // for(Index i = 0; i < time_difference_data.size(); i++)
-    // {
-    //     cout << time_difference_data(i) << " ";
-    // }
-
-    Tensor<type, 1> time_step_mode = compute_mode(time_difference_data);
-
-    Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
-
-    Tensor<type, 2> NaN_data(time_series_filled.size(), columns_number);
-    NaN_data.setConstant(type(NAN));
-
-    NaN_data.chip(0, 1) = time_series_filled;
-
-    Tensor<type, 2> final_data(data);
-
-    data.resize(time_data.size() + time_series_filled.size(), columns_number);
-
-    data = final_data.concatenate(NaN_data, 0);
 }
 
 
@@ -2428,6 +2260,26 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
         i++;
     }
 }
+
+void DataSet::set_indra_columns(const Tensor<string, 1>& columns_names)
+{
+    Tensor<Index, 1> input_column_indices(columns.size() - 48);
+    Tensor<Index, 1> target_column_indices(48);
+
+    columns.resize(columns_names.size());
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        columns(i).name == columns_names(i);
+        columns(i).type = ColumnType::Numeric;
+
+        if (i < 48){ target_column_indices(i) = i;}
+        else { input_column_indices(i - 48) = i;}
+    }
+
+    set_input_target_columns(input_column_indices, target_column_indices);
+}
+
 
 
 void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
@@ -10738,8 +10590,6 @@ void DataSet::transform_time_series()
 
     transform_time_series_data();
 
-    fill_time_series_gaps();
-
     transform_time_series_columns();
 
     split_samples_sequential();
@@ -14945,8 +14795,6 @@ void DataSet::read_csv_2_simple()
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
-    cout << "read_csv_2_simple" << endl;
-
     #ifdef _WIN32
 
     if(regex_search(data_file_name, accent_regex))
@@ -15159,6 +15007,9 @@ void DataSet::read_csv_3_simple()
 
         column_index = 0;
         sample_index++;
+
+        type percentage = static_cast<type>(sample_index)/static_cast<type>(samples_number);
+        update_progress_bar(percentage);
     }
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
@@ -15664,6 +15515,9 @@ void DataSet::read_csv_3_complete()
         }
 
         sample_index++;
+
+        type percentage = static_cast<type>(sample_index)/static_cast<type>(data.dimension(0));
+        update_progress_bar(percentage);
     }
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;

@@ -383,7 +383,7 @@ const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
 
     type half_depth = type(depth)/2;
 
-#pragma omp parallel for collapse(2)
+// #pragma omp parallel for collapse(2)
     for(Index i = 0; i < input_length; i++)
     {
         for(Index j = 0; j < half_depth - 1; j++)

@@ -30,7 +30,7 @@ option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 
 option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
 
-option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
 
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)

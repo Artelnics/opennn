@@ -13,6 +13,20 @@
 namespace opennn
 {
 
+void update_progress_bar(type progress) {
+    const int barWidth = 50;
+
+    std::cout << "[";
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << std::setw(3) << static_cast<int>(progress * 100.0) << "%\r";
+    std::cout.flush();
+}
+
 void initialize_sequential(Tensor<type, 1>& vector)
 {
     for(Index i = 0; i < vector.size(); i++) vector(i) = type(i);
@@ -343,27 +357,27 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 }
 
 
-//Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
-//{
-//    const Index columns_number = box_plots.dimension(0);
+Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
+{
+   const Index columns_number = box_plots.dimension(0);
 
-//    Tensor<type, 2> summary(5, columns_number);
+   Tensor<type, 2> summary(5, columns_number);
 
-//    for(Index i = 0; i < columns_number; i++)
-//    {
-//        const BoxPlot& box_plot = box_plots(i);
-//        summary(0, i) = box_plot.minimum;
-//        summary(1, i) = box_plot.first_quartile;
-//        summary(2, i) = box_plot.median;
-//        summary(3, i) = box_plot.third_quartile;
-//        summary(4, i) = box_plot.maximum;
-//    }
+   for(Index i = 0; i < columns_number; i++)
+   {
+       const BoxPlot& box_plot = box_plots(i);
+       summary(0, i) = box_plot.minimum;
+       summary(1, i) = box_plot.first_quartile;
+       summary(2, i) = box_plot.median;
+       summary(3, i) = box_plot.third_quartile;
+       summary(4, i) = box_plot.maximum;
+   }
 
-//    Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
-//    Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
+   Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
+   Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
 
-//    return reshaped_summary;
-//}
+   return reshaped_summary;
+}
 
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
