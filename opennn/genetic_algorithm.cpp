@@ -303,7 +303,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
 #endif
 
-    Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
+    Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_numeric_variables_number();
 
     population.resize(new_individuals_number, new_genes_number);
 
@@ -630,7 +630,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     mt19937 gen(rd());
 
-    uniform_real_distribution<> dis(0, 1);
+    uniform_real_distribution<> distribution(0, 1);
 
     Index columns_active;
 
@@ -644,9 +644,9 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
         columns_active = 1 + rand() % columns_number;
 
-        while(count(individual_columns.data(), individual_columns.data() + individual_columns.size(), 1) < columns_active  )
+        while(count(individual_columns.data(), individual_columns.data() + individual_columns.size(), 1) < columns_active)
         {
-            arrow = dis(gen);
+            arrow = distribution(gen);
 
             if(arrow < inputs_activation_probabilities(0) && !individual_columns(0))
             {
@@ -656,8 +656,8 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
             for(Index j = 1; j < columns_number; j++)
             {
                 if(arrow >= inputs_activation_probabilities(j - 1)
-                    && arrow < inputs_activation_probabilities(j)
-                    && !individual_columns(j))
+                && arrow < inputs_activation_probabilities(j)
+                && !individual_columns(j))
                 {
                     individual_columns(j) = true;
                 }
@@ -763,7 +763,7 @@ void GeneticAlgorithm::evaluate_population()
 
         inputs_names = data_set_pointer->get_input_variables_names();
 
-        neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+        neural_network_pointer->set_inputs_number(data_set_pointer->get_input_numeric_variables_number());
 
         neural_network_pointer->set_inputs_names(inputs_names);
 
@@ -1101,7 +1101,7 @@ void GeneticAlgorithm::perform_mutation()
 
         for(Index j = 0; j < columns_number; j++)
         {
-            type random_0_1 = generate_random_between_0_and_1();
+            const type random_0_1 = generate_random_between_0_and_1();
 
             if(random_0_1 < mutation_rate)
             {
@@ -1338,7 +1338,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number( data_set_pointer->get_input_variables_number());
+    neural_network_pointer->set_inputs_number( data_set_pointer->get_input_numeric_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
@@ -1360,7 +1360,7 @@ void GeneticAlgorithm::check_categorical_columns()
 
     const Index individuals_number = get_individuals_number();
 
-    const Index variables_number = data_set_pointer->get_input_variables_number();
+    const Index variables_number = data_set_pointer->get_input_numeric_variables_number();
 
     Index column_index = 0;
 

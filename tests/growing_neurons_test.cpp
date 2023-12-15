@@ -87,7 +87,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     uses.setValues({DataSet::VariableUse::Input, DataSet::VariableUse::Target});
     data_set.set_columns_uses(uses);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,3,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,3,1});
     neural_network.set_parameters_constant(type(0));
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
@@ -133,7 +133,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, 3, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, 3, targets_number});
     neural_network.set_parameters_constant(type(0));
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);

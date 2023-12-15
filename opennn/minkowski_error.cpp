@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {

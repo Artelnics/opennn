@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "normalized_squared_error.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -357,7 +358,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
 
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();

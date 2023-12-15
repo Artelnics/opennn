@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "mean_squared_error.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {

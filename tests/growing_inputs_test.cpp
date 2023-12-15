@@ -69,7 +69,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     data_set.split_samples_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,1,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,1,1});
 
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
@@ -81,7 +81,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     neural_network.set();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
 
     TrainingStrategy training_strategy1(&neural_network, &data_set);
 

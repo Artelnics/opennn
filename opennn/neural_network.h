@@ -22,7 +22,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "data_set.h"
+#include "data_set_batch.h"
 #include "layer.h"
 #include "addition_layer.h"
 #include "perceptron_layer.h"
@@ -32,7 +32,6 @@
 #include "probabilistic_layer.h"
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
-//#include "region_proposal_layer.h"
 #include "non_max_suppression_layer.h"
 
 #include "pooling_layer.h"
@@ -55,21 +54,20 @@ class NeuralNetwork
 
 public:
 
-   enum class ProjectType{Approximation,
+   enum class ModelType{Approximation,
                           Classification,
                           Forecasting,
                           ImageClassification,
                           TextClassification,
-                          TextGeneration,
                           AutoAssociation};
 
    // Constructors
 
    explicit NeuralNetwork();
 
-   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
 
-   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const initializer_list<Index>&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
 
    explicit NeuralNetwork(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
@@ -107,8 +105,8 @@ public:
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
-   ProjectType get_project_type() const;
-   string get_project_type_string() const;
+   ModelType get_model_type() const;
+   string get_model_type_string() const;
 
    const Tensor<string, 1>& get_outputs_names() const;
    string get_output_name(const Index&) const;
@@ -144,8 +142,8 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
-   void set(const NeuralNetwork::ProjectType&, const initializer_list<Index>&);
+   void set(const NeuralNetwork::ModelType&, const Tensor<Index, 1>&);
+   void set(const NeuralNetwork::ModelType&, const initializer_list<Index>&);
    void set(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    void set(const string&);
@@ -158,8 +156,8 @@ public:
    void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
    void set_layer_inputs_indices(const string&, const string&);
 
-   void set_project_type(const ProjectType&);
-   void set_project_type_string(const string&);
+   void set_model_type(const ModelType&);
+   void set_model_type_string(const string&);
    void set_inputs_names(const Tensor<string, 1>&);
    void set_outputs_names(const Tensor<string, 1>&);
 
@@ -332,13 +330,11 @@ public:
 
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
-
-
 protected:
 
    string name = "neural_network";
 
-   NeuralNetwork::ProjectType project_type;
+   NeuralNetwork::ModelType model_type;
 
    /// Names of inputs
 
@@ -369,255 +365,6 @@ protected:
     #include "../../opennn-cuda/opennn-cuda/neural_network_cuda.h"
 #endif
 
-};
-
-
-struct NeuralNetworkForwardPropagation
-{
-    /// Default constructor.
-
-    NeuralNetworkForwardPropagation() {}
-
-    NeuralNetworkForwardPropagation(const Index& new_batch_samples_number,NeuralNetwork* new_neural_network_pointer)
-    {
-        set(new_batch_samples_number, new_neural_network_pointer);
-    }
-
-    /// Destructor.
-
-    virtual ~NeuralNetworkForwardPropagation()
-    {
-        const Index layers_number = layers.size();
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            delete layers(i);
-        }
-    }
-
-
-    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
-    {
-        batch_samples_number = new_batch_samples_number;
-
-        neural_network_pointer = new_neural_network_pointer;
-
-        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
-
-        const Index layers_number = layers_pointers.size();
-
-        layers.resize(layers_number);
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            switch (layers_pointers(i)->get_type())
-            {
-            case Layer::Type::Perceptron:
-            {
-                layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-
-            }
-            break;
-            case Layer::Type::Probabilistic:
-            {
-                layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-
-            }
-            break;
-
-            case Layer::Type::Recurrent:
-            {
-                layers(i) = new RecurrentLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::LongShortTermMemory:
-            {
-                layers(i) = new LongShortTermMemoryLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Convolutional:
-            {
-            //    layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Pooling:
-            {
-                layers(i) = new PoolingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Flatten:
-            {
-                layers(i) = new FlattenLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Scaling:
-            {
-                layers(i) = new ScalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Unscaling:
-            {
-                layers(i) = new UnscalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Bounding:
-            {
-                layers(i) = new BoundingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::RegionProposal:
-            {
-//                layers(i) = new RegionProposalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::NonMaxSuppression:
-            {
-                layers(i) = new NonMaxSuppressionLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-            }
-            break;
-
-            default: break;
-            }
-        }
-    }
-
-
-    void print() const
-    {
-        cout << "Neural network forward propagation" << endl;
-
-        const Index layers_number = layers.size();
-
-        cout << "Layers number: " << layers_number << endl;
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            cout << "Layer " << i + 1 << ": " << layers(i)->layer_pointer->get_name() << endl;
-
-            layers(i)->print();
-        }
-    }
-
-    Index batch_samples_number = 0;
-
-    NeuralNetwork* neural_network_pointer = nullptr;
-
-    Tensor<LayerForwardPropagation*, 1> layers;
-};
-
-
-struct NeuralNetworkBackPropagation
-{
-    NeuralNetworkBackPropagation() {}
-
-    virtual ~NeuralNetworkBackPropagation()
-    {
-        const Index layers_number = layers.size();
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            delete layers(i);
-        }
-    }
-
-    NeuralNetworkBackPropagation(NeuralNetwork* new_neural_network_pointer)
-    {
-        neural_network_pointer = new_neural_network_pointer;
-    }
-
-    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
-    {
-        batch_samples_number = new_batch_samples_number;
-
-        neural_network_pointer = new_neural_network_pointer;
-
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-        const Index trainable_layers_number = trainable_layers_pointers.size();
-
-        layers.resize(trainable_layers_number);
-
-        for(Index i = 0; i < trainable_layers_number; i++)
-        {
-            switch (trainable_layers_pointers(i)->get_type())
-            {
-            case Layer::Type::Perceptron:
-            {
-                layers(i) = new PerceptronLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Probabilistic:
-            {
-                layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Recurrent:
-            {
-                layers(i) = new RecurrentLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::LongShortTermMemory:
-            {
-                layers(i) = new LongShortTermMemoryLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Convolutional:
-            {
-            //    layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Pooling:
-            {
-                layers(i) = new PoolingLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            case Layer::Type::Flatten:
-            {
-                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
-            }
-            break;
-
-            default: break;
-            }
-        }
-    }
-
-    void print() const
-    {
-        cout << "Neural network back-propagation" << endl;
-
-        const Index layers_number = layers.size();
-
-        cout << "Layers number: " << layers_number << endl;
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            cout << "Layer " << i + 1 << endl;
-
-            layers(i)->print();
-        }
-    }
-
-    Index batch_samples_number = 0;
-
-    NeuralNetwork* neural_network_pointer = nullptr;
-
-    Tensor<LayerBackPropagation*, 1> layers;
 };
 
 
@@ -703,8 +450,6 @@ struct NeuralNetworkBackPropagationLM
 };
 
 }
-
-
 
 #endif
 

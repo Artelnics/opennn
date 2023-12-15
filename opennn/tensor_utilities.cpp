@@ -151,7 +151,7 @@ Index true_count(const Tensor<bool, 1>& tensor)
 {
     Index trueCount = 0;
 
-    for (int i = 0; i < tensor.size(); ++i)
+    for(int i = 0; i < tensor.size(); ++i)
     {
         if(tensor(i))
         {
@@ -908,7 +908,7 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 }
 
 
-type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
+type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     Tensor<type, 0> distance;
 
@@ -1510,7 +1510,7 @@ void swap_rows(Tensor<type, 2>& data_matrix, Index row1, Index row2)
 
 void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index target_column)
 {
-    if (start_index >= end_index)
+    if(start_index >= end_index)
         return;
 
     Index partition_index = partition(data, start_index, end_index, target_column);
@@ -1523,35 +1523,38 @@ void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index
 void quicksort_by_column(Tensor<type, 2>& data, Index target_column)
 {
     Tensor<type, 2>* data_matrix_ptr = &data;
-    Index number_of_rows = data_matrix_ptr->dimension(0);
+    Index rows_number = data_matrix_ptr->dimension(0);
 
-    quick_sort(*data_matrix_ptr, 0, number_of_rows - 1, target_column);
+    quick_sort(*data_matrix_ptr, 0, rows_number - 1, target_column);
 }
 
-Tensor<type, 1> compute_elementwise_difference(Tensor<type, 1>& data)
+
+Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
 {
-    if (data.size() <= 2) {
+    if(data.size() <= 2)
+    {
         return Tensor<type, 1>();
     }
 
     Tensor<type, 1> difference_data(data.size());
     difference_data(0) = 0;
 
-    if (data.size() <= 1) return Tensor<type, 1>();
+    if(data.size() <= 1) return Tensor<type, 1>();
 
     #pragma omp parallel for
-    for (int i = 1; i < data.size(); i++) difference_data(i) = data(i) - data(i - 1);
+    for(int i = 1; i < data.size(); i++) difference_data(i) = data(i) - data(i - 1);
 
     return difference_data;
 }
 
-Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
+
+Tensor<type, 1> mode(Tensor<type, 1>& data)
 {
     Tensor<type, 1> mode_and_frequency(2);
 
     std::map<type, type> frequency_map;
 
-    for (int i = 0; i < data.size(); i++)
+    for(int i = 0; i < data.size(); i++)
     {
         type value = data(i);
         frequency_map[value]++;
@@ -1567,9 +1570,9 @@ Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
     type mode = -1;
     type max_frequency = 0;
 
-    for (const auto& entry : frequency_map)
+    for(const auto& entry : frequency_map)
     {
-        if (entry.second > max_frequency)
+        if(entry.second > max_frequency)
         {
             max_frequency = entry.second;
             mode = entry.first;
@@ -1581,13 +1584,11 @@ Tensor<type, 1> compute_mode(Tensor<type, 1>& data)
     mode_and_frequency(0) = mode;
     mode_and_frequency(1) = max_frequency;
 
-    cout << "mode_and_frequency: " << mode_and_frequency << endl;
-
     return mode_and_frequency;
 }
 
 
-Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, type value)
+Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, const type& value)
 {
     std::vector<type> result;
 
@@ -1596,12 +1597,13 @@ Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& diffe
         if(difference_data(i) != value)
         {
             type previous_time = data(i-1) + value;
+
             do
             {
                 result.push_back(previous_time);
 
                 previous_time += value;
-            } while (previous_time < data(i));                
+            }while (previous_time < data(i));
         }
     }
 
@@ -1617,9 +1619,9 @@ Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index
     type pivot_value = pivot_row(target_column);
     Index smaller_elements_count = 0;
 
-    for (Index current_index = start_index + 1; current_index <= end_index; current_index++)
+    for(Index current_index = start_index + 1; current_index <= end_index; current_index++)
     {
-        if (data_matrix(current_index, target_column) <= pivot_value)
+        if(data_matrix(current_index, target_column) <= pivot_value)
         {
             smaller_elements_count++;
         }
@@ -1642,7 +1644,7 @@ Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index
             right_index--;
         }
 
-        if (left_index < pivot_position && right_index > pivot_position)
+        if(left_index < pivot_position && right_index > pivot_position)
         {
             swap_rows(data_matrix, left_index++, right_index--);
         }
@@ -1656,17 +1658,17 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor1, const Tensor<Inde
 {
     Index intersection_index_number = 0;
 
-    for (Index i = 0; i < tensor1.size(); i++)
+    for(Index i = 0; i < tensor1.size(); i++)
     {
-        for (Index j = 0; j < tensor2.size(); j++)
+        for(Index j = 0; j < tensor2.size(); j++)
         {
-            if (tensor1(i) == tensor2(j)) {
+            if(tensor1(i) == tensor2(j)) {
                 intersection_index_number++;
             }
         }
     }
 
-    if (intersection_index_number == 0)
+    if(intersection_index_number == 0)
     {
         return Tensor<Index, 1>(0);
     }
@@ -1674,11 +1676,11 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor1, const Tensor<Inde
     Tensor<Index, 1> intersection(intersection_index_number);
     Index count = 0;
 
-    for (Index i = 0; i < tensor1.size(); i++)
+    for(Index i = 0; i < tensor1.size(); i++)
     {
-        for (Index j = 0; j < tensor2.size(); j++)
+        for(Index j = 0; j < tensor2.size(); j++)
         {
-            if (tensor1(i) == tensor2(j))
+            if(tensor1(i) == tensor2(j))
             {
                 intersection(count) = tensor2(j);
                 count++;

@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "cross_entropy_error.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -79,7 +81,6 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
     const Index last_trainable_layers_number = neural_network_pointer->get_last_trainable_layer_index();
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layers_number)->outputs[0].get_dimensions();

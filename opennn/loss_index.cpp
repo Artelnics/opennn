@@ -6,7 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "neural_network_forward_propagation.h"
 #include "loss_index.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -985,7 +987,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
 
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
 
     DataSetBatch batch(samples_number, data_set_pointer);
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
@@ -1054,7 +1056,7 @@ Tensor<type, 2> LossIndex::calculate_jacobian_numerical_differentiation()
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
 
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 

@@ -36,7 +36,6 @@
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
-#include "../../opennn/opennn_strings.h"
 
 using namespace opennn;
 
@@ -50,11 +49,11 @@ int main()
 
         // Data set
 
-        DataSet data_set;
+        ImageDataSet image_data_set;
 
-        data_set.set_data_file_name("../data/images/");
+        image_data_set.set_data_source_path("../data/images/");
 
-        data_set.scale_input_variables();
+        image_data_set.scale_input_variables();
 
 //        augmentation = false;
 //        random_reflection_axis_x = false;
@@ -66,19 +65,16 @@ int main()
 //        random_horizontal_translation = 0;
 //        random_vertical_translation = 0;
 
+        const Index input_variables_number = image_data_set.get_input_numeric_variables_number();
+        const Index target_variables_number = image_data_set.get_target_numeric_variables_number();
 
-
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+        const Tensor<Index, 1> samples_indices = image_data_set.get_training_samples_indices();
         const Index samples_number = samples_indices.size();
 
-        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+        const Tensor<Index, 1> input_variables_indices = image_data_set.get_input_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = image_data_set.get_target_numeric_variables_indices();
 
-        const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
+        const Tensor<Index, 1> input_variables_dimensions = image_data_set.get_input_variables_dimensions();
         const Index inputs_channels_number = input_variables_dimensions[0];
         const Index inputs_rows_number = input_variables_dimensions[1];
         const Index inputs_columns_number = input_variables_dimensions[2];
@@ -124,7 +120,7 @@ int main()
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &image_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
@@ -138,10 +134,10 @@ int main()
 
         Tensor<type, 4> inputs_4d;
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
 
-        Tensor<unsigned char,1> zero = data_set.read_bmp_image("../data/images/zero/0_1.bmp");
-        Tensor<unsigned char,1> one = data_set.read_bmp_image("../data/images/one/1_1.bmp");
+        Tensor<unsigned char,1> zero = image_data_set.read_bmp_image("../data/images/zero/0_1.bmp");
+        Tensor<unsigned char,1> one = image_data_set.read_bmp_image("../data/images/one/1_1.bmp");
 
         vector<type> zero_int(zero.size()); ;
         vector<type> one_int(one.size());
@@ -167,7 +163,6 @@ int main()
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
 
         cout << "Bye!" << endl;
 

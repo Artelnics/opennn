@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "quasi_newton_method.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -584,7 +586,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
@@ -774,7 +776,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(stop_training) break;
     }
 
-    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
         Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);

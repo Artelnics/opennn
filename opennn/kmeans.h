@@ -58,7 +58,7 @@ class KMeans
 
 public:
 
-    KMeans(Index clusters = 3, string distance_calculation_metod = "euclidean", Index iter = 100);
+    KMeans(Index clusters = 3, string distance_calculation_method = "euclidean", Index iter = 100);
 
     Tensor<Index, 1> calculate_outputs(const Tensor<type, 2>&);
     Tensor<type, 1> elbow_method(const Tensor<type, 2>&, Index max_clusters=10);
@@ -80,7 +80,6 @@ private:
 
     Tensor<type, 2> cluster_centers;
     Tensor<Index, 1> rows_cluster_labels;
-
 };
 
 }

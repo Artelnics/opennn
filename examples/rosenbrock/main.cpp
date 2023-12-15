@@ -44,7 +44,7 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
         neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
 

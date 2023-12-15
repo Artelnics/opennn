@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error_test.h"
+#include "../opennn/loss_index_back_propagation.h"
 
 SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting() 
 {
@@ -75,14 +76,14 @@ void SumSquaredErrorTest::test_back_propagate()
         training_samples_indices = data_set.get_training_samples_indices();
 
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -119,14 +120,14 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -160,14 +161,14 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -207,14 +208,14 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -249,14 +250,14 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
@@ -291,14 +292,14 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -342,14 +343,14 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -395,14 +396,14 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
@@ -448,14 +449,14 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
+        target_variables_indices = data_set.get_target_numeric_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);

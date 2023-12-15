@@ -24,6 +24,7 @@
 // Eigen includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {

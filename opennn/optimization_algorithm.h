@@ -23,7 +23,6 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tensor_utilities.h"
 #include "loss_index.h"
 
 namespace opennn

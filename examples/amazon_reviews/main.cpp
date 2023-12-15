@@ -31,33 +31,33 @@ int main()
 
         // DataSet
 
-        DataSet data_set;
+        TextDataSet text_data_set;
 
-        data_set.set_data_file_name("../data/amazon_cells_labelled.txt");
-        data_set.set_text_separator(DataSet::Separator::Tab);
+        text_data_set.set_data_source_path("../data/amazon_cells_labelled.txt");
+        text_data_set.set_text_separator(DataSet::Separator::Tab);
 
-        data_set.read_txt();
+        text_data_set.read_txt();
 
-        data_set.split_samples_random();
+        text_data_set.split_samples_random();
 
-        const Tensor<string, 1> input_words = data_set.get_input_columns_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+        const Tensor<string, 1> input_words = text_data_set.get_input_columns_names();
+        const Tensor<string, 1> targets_names = text_data_set.get_target_variables_names();
 
-        const Index words_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index words_number = text_data_set.get_input_numeric_variables_number();
+        const Index target_variables_number = text_data_set.get_target_numeric_variables_number();
 
         // Neural Network
 
         const Index hidden_neurons_number = 6;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::TextClassification,
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
             {words_number , hidden_neurons_number, target_variables_number});
 
         neural_network.print();
 
         // Training Strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &text_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
@@ -65,20 +65,20 @@ int main()
         training_strategy.perform_training();
 
         // Testing Analysis
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &text_data_set);
 
         testing_analysis.print_binary_classification_tests();
 
         // Model deployment
 
         string review_1 = "Highly recommend for any one who has a bluetooth phone.";
-        Tensor<type,1> processed_review_1 = data_set.sentence_to_data(review_1);
+        Tensor<type,1> processed_review_1 = text_data_set.sentence_to_data(review_1);
 
         string review_2 = "You have to hold the phone at a particular angle for the other party to hear you clearly.";
-        Tensor<type,1> processed_review_2 = data_set.sentence_to_data(review_2);
+        Tensor<type,1> processed_review_2 = text_data_set.sentence_to_data(review_2);
 
         Tensor<type,2> input_data(2, words_number);
-        Tensor<Index, 1> input_dims = get_dimensions(input_data);
+        Tensor<Index, 1> inputs_dimension = get_dimensions(input_data);
 
         Tensor<type, 2> output_data;
 
@@ -88,7 +88,7 @@ int main()
           input_data(1,i) = processed_review_2(i);
         }
 
-        output_data = neural_network.calculate_outputs(input_data.data(), input_dims);
+        output_data = neural_network.calculate_outputs(input_data.data(), inputs_dimension);
 
         cout << "\n\n" << review_1 << endl << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
         cout << "\n" << review_2 << endl << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;

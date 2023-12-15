@@ -171,7 +171,7 @@ public:
 
         std::array<Index, rank> sizes;
 
-        for (Index i = 0; i < dimensions.size(); ++i) {
+        for(Index i = 0; i < dimensions.size(); ++i) {
             sizes[i] = dimensions(i);
         }
 

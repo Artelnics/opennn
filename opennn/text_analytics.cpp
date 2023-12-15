@@ -1907,7 +1907,7 @@ string TextAnalytics::read_txt_file(const string& path) const
 /// Create a word bag that contains all the unique words of the documents,
 /// their frequencies and their percentages in descending order
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) const
+WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& tokens) const
 {   
     const Tensor<string, 1> total = join(tokens);
 
@@ -1937,7 +1937,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<str
 /// of times in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_frequency Minimum frequency that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
                                                                            const Index& minimum_frequency) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
@@ -1964,7 +1964,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_frequency(const
 /// in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_percentage Minimum percentage of occurrence that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
+WordBag TextAnalytics::calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
                                                                             const double& minimum_percentage) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
@@ -1991,7 +1991,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_percentage(cons
 /// of frequency in the documents, their frequencies and their percentages in descending order.
 /// @param minimum_ratio Minimum ratio of frequency that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
+WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
                                                                        const double& minimum_ratio) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
@@ -2023,7 +2023,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Ten
 /// and their percentages in descending order.
 /// @param total_frequency Maximum cumulative frequency that words must have.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+WordBag TextAnalytics::calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
                                                                          const Index& total_frequency) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
@@ -2052,7 +2052,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_total_frequency(const T
 /// frequent words, their frequencies and their percentages in descending order.
 /// @param maximum_size Maximum size of words Tensor.
 
-TextAnalytics::WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
                                                                       const Index& maximum_size) const
 {
     WordBag word_bag = calculate_word_bag(tokens);
@@ -2069,7 +2069,7 @@ TextAnalytics::WordBag TextAnalytics::calculate_word_bag_maximum_size(const Tens
 
 /// Returns weights.
 
-Index TextAnalytics::calculate_weight(const Tensor<string, 1>& document_words, const TextAnalytics::WordBag& word_bag) const
+Index TextAnalytics::calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag) const
 {
     Index weight = 0;
 
@@ -2662,10 +2662,14 @@ void TextGenerationAlphabet::encode_alphabet()
     data_tensor.resize(rows_number, columns_number);
     data_tensor.setZero();
 
+    const Index length = text.length();
+
 #pragma omp parallel for
-    for(Index i = 0; i < text.length(); i++)
+
+    for(Index i = 0; i < length; i++)
     {
         const int word_index = get_alphabet_index(text[i]);
+
         data_tensor(i, word_index) = 1;
     }
 }
@@ -2673,6 +2677,9 @@ void TextGenerationAlphabet::encode_alphabet()
 
 void TextGenerationAlphabet::preprocess()
 {
+
+
+
     TextAnalytics ta;
 
     ta.replace_accented(text);

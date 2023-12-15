@@ -349,7 +349,7 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
 
-    //input_dims
+    //inputs_dimension
     const Index input_images = 1;
     const Index channels = 1;
 
@@ -411,7 +411,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
 
-    //input_dims
+    //inputs_dimension
     const Index input_images = 1;
     const Index channels = 1;
 

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
-#include "data_set.h"
 
 namespace opennn
 {
@@ -517,7 +516,7 @@ bool ends_with(const string& word, const Tensor<string,1>& endings)
 
     for(Index i = 0; i < endings_size; i++)
     {
-        if(ends_with(word,endings[i]))
+        if(ends_with(word, endings[i]))
         {
             return true;
         }
@@ -556,7 +555,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
     const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
-//    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/](0[1-9]|1[0-2])[.|/](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
     const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
     const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
     const string format_17 = "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/(\\d{2}) ([01]?\\d|2[0-3]):([0-5]\\d)$";
@@ -979,15 +977,15 @@ void replace_all_word_appearances(string& s, string const& toReplace, string con
         prevPos = pos;
         pos = s.find(toReplace, pos);
 
-        if (pos == string::npos)
+        if(pos == string::npos)
             break;
 
         // Verifica que no haya letras antes ni después de toReplace
-        if ((prevPos == 0 || !isalpha(s[prevPos - 1])) &&
+        if((prevPos == 0 || !isalpha(s[prevPos - 1])) &&
             (pos + toReplace.size() == s.size() || !isalpha(s[pos + toReplace.size()])))
         {
             // Verifica que no haya guiones bajos antes ni después de toReplace
-            if ((prevPos == 0 || s[prevPos - 1] != '_') &&
+            if((prevPos == 0 || s[prevPos - 1] != '_') &&
                 (pos + toReplace.size() == s.size() || s[pos + toReplace.size()] != '_'))
             {
                 buf.append(s, prevPos, pos - prevPos);
@@ -2051,7 +2049,7 @@ Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor)
     std::vector<std::string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
     std::sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
 
-    for (int i = 0; i < tensor.size(); i++)
+    for(int i = 0; i < tensor.size(); i++)
     {
         tensor(i) = tensorAsVector[i];
     }
@@ -2063,7 +2061,7 @@ Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<s
 {
     Tensor<string, 1> tensor = tensor2;
 
-    for (int i = 0; i < tensor1.dimension(0); ++i) push_back_string(tensor, tensor1(i));
+    for(int i = 0; i < tensor1.dimension(0); ++i) push_back_string(tensor, tensor1(i));
 
     return tensor;
 }
@@ -2088,7 +2086,7 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espres
 
         while((pos = espression.find(toReplace, pos)) != std::string::npos)
         {
-            if (pos > previous_pos)
+            if(pos > previous_pos)
             {
                 espression.replace(pos, toReplace.length(), newword);
                 pos += newword.length();

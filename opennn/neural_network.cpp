@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "neural_network.h"
+#include "neural_network_forward_propagation.h"
 
 namespace opennn
 {
@@ -29,13 +30,13 @@ NeuralNetwork::NeuralNetwork()
 /// (Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation).
 /// @param architecture Architecture of the neural network({inputs_number, hidden_neurons_number, outputs_number}).
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
+NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, const Tensor<Index, 1>& architecture)
 {
     set(model_type, architecture);
 }
 
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const initializer_list<Index>& architecture_list)
+NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, const initializer_list<Index>& architecture_list)
 {
     Tensor<Index, 1> architecture(architecture_list.size());
     architecture.setValues(architecture_list);
@@ -371,38 +372,38 @@ Index NeuralNetwork::get_input_index(const string& name) const
     return 0;
 }
 
-NeuralNetwork::ProjectType NeuralNetwork::get_project_type() const
+NeuralNetwork::ModelType NeuralNetwork::get_model_type() const
 {
-    return project_type;
+    return model_type;
 }
 
 
-string NeuralNetwork::get_project_type_string() const
+string NeuralNetwork::get_model_type_string() const
 {
-    if(project_type == ProjectType::Approximation)
+    if(model_type == ModelType::Approximation)
     {
         return "Approximation";
     }
-    else if(project_type == ProjectType::Classification)
+    else if(model_type == ModelType::Classification)
     {
         return "Classification";
     }
-    else if(project_type == ProjectType::Forecasting)
+    else if(model_type == ModelType::Forecasting)
     {
         return "Forecasting";
     }
-    else if(project_type == ProjectType::ImageClassification)
+    else if(model_type == ModelType::AutoAssociation)
+    {
+        return "AutoAssociation";
+    }
+    else if(model_type == ModelType::TextClassification)
+    {
+        return "TextClassification";
+    }
+    else if(model_type == ModelType::ImageClassification)
     {
         return "ImageClassification";
     }
-    else if(project_type == ProjectType::TextGeneration)
-    {
-        return "TextGeneration";
-    }
-    else if(project_type == ProjectType::AutoAssociation)
-    {
-        return "AutoAssociation";
-    }        
 }
 
 
@@ -765,7 +766,7 @@ void NeuralNetwork::set()
 /// It also sets the rest of the members to their default values.
 /// @param architecture Architecture of the neural network.
 
-void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
+void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor<Index, 1>& architecture)
 {
     delete_layers();
 
@@ -781,7 +782,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     ScalingLayer* scaling_layer_pointer = new ScalingLayer(inputs_number);
     add_layer(scaling_layer_pointer);
 
-    if(model_type == ProjectType::Approximation)
+    if(model_type == ModelType::Approximation)
     {
         for(Index i = 0; i < size-1; i++)
         {
@@ -800,7 +801,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         add_layer(bounding_layer_pointer);
     }
-    else if(model_type == ProjectType::Classification || model_type == ProjectType::TextClassification)
+    else if(model_type == ModelType::Classification || model_type == ModelType::TextClassification)
     {
 
         for(Index i = 0; i < size-2; i++)
@@ -816,7 +817,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         add_layer(probabilistic_layer_pointer);
     }
-    else if(model_type == ProjectType::Forecasting)
+    else if(model_type == ModelType::Forecasting)
     {
         //                LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
         //                RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
@@ -842,20 +843,11 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         add_layer(bounding_layer_pointer);
     }
-    else if(model_type == ProjectType::ImageClassification)
+    else if(model_type == ModelType::ImageClassification)
     {
         // Use the set mode build specifically for image classification
     }
-    else if(model_type == ProjectType::TextGeneration)
-    {
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-
-        ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer(architecture[1], architecture[2]);
-
-        add_layer(long_short_term_memory_layer_pointer);
-        add_layer(probabilistic_layer_pointer);
-    }
-    else if(model_type == ProjectType::AutoAssociation)
+    else if(model_type == ModelType::AutoAssociation)
     {
         const Index mapping_neurons_number = 10;
         const Index bottle_neck_neurons_number = architecture[1];
@@ -884,12 +876,12 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 }
 
 
-void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const initializer_list<Index>& architecture_list)
+void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const initializer_list<Index>& architecture_list)
 {
     Tensor<Index, 1> architecture(architecture_list.size());
     architecture.setValues(architecture_list);
 
-    set_project_type(model_type);
+    set_model_type(model_type);
 
     set(model_type, architecture);
 }
@@ -962,43 +954,43 @@ void NeuralNetwork::set(const string& file_name)
 }
 
 
-void NeuralNetwork::set_project_type(const NeuralNetwork::ProjectType& new_project_type)
+void NeuralNetwork::set_model_type(const NeuralNetwork::ModelType& new_model_type)
 {
-    project_type = new_project_type;
+    model_type = new_model_type;
 }
 
-void NeuralNetwork::set_project_type_string(const string& new_project_type)
+void NeuralNetwork::set_model_type_string(const string& new_model_type)
 {
-    if(new_project_type == "Approximation")
+    if(new_model_type == "Approximation")
     {
-        set_project_type(ProjectType::Approximation);
+        set_model_type(ModelType::Approximation);
     }
-    else if(new_project_type == "Classification")
+    else if(new_model_type == "Classification")
     {
-        set_project_type(ProjectType::Classification);
+        set_model_type(ModelType::Classification);
     }
-    else if(new_project_type == "Forecasting")
+    else if(new_model_type == "Forecasting")
     {
-        set_project_type(ProjectType::Forecasting);
+        set_model_type(ModelType::Forecasting);
     }
-    else if(new_project_type == "ImageClassification")
+    else if(new_model_type == "ImageClassification")
     {
-        set_project_type(ProjectType::ImageClassification);
+        set_model_type(ModelType::ImageClassification);
     }
-    else if(new_project_type == "TextClassification")
+    else if(new_model_type == "TextClassification")
     {
-        set_project_type(ProjectType::TextClassification);
+        set_model_type(ModelType::TextClassification);
     }
-    else if(new_project_type == "AutoAssociation")
+    else if(new_model_type == "AutoAssociation")
     {
-        set_project_type(ProjectType::AutoAssociation);
+        set_model_type(ModelType::AutoAssociation);
     }
     else
     {
         const string message =
                 "Neural Network class exception:\n"
-                "void set_project_type_string(const string&)\n"
-                "Unknown project type: " + new_project_type + "\n";
+                "void set_model_type_string(const string&)\n"
+                "Unknown project type: " + new_model_type + "\n";
 
         throw logic_error(message);
     }
@@ -2456,7 +2448,7 @@ string NeuralNetwork::generate_phrase(TextGenerationAlphabet& text_generation_al
 
     Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
 
-    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);   
 
     do{
         Tensor<type, 2> input_data(get_inputs_number(), 1);
@@ -2705,7 +2697,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    if(get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    if(get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         // BoxPlot
 
@@ -2955,7 +2947,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    if(get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    if(get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         {
             const tinyxml2::XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
@@ -3915,7 +3907,7 @@ string NeuralNetwork::write_expression_autoassociation_variables_distances(strin
 string NeuralNetwork::write_expression() const
 {
 
-    NeuralNetwork::ProjectType project_type = get_project_type();
+    NeuralNetwork::ModelType model_type = get_model_type();
 
     const Index layers_number = get_layers_number();
 
@@ -3990,7 +3982,7 @@ string NeuralNetwork::write_expression() const
         }
     }
 
-    if(project_type == ProjectType::AutoAssociation)
+    if(model_type == ModelType::AutoAssociation)
     {
         string input_list_string = "[";
         string output_list_string = "[";
@@ -4091,7 +4083,7 @@ string NeuralNetwork::write_expression_c() const
     string token;
     string expression = write_expression();
 
-    if(project_type == ProjectType::AutoAssociation)
+    if(model_type == ModelType::AutoAssociation)
     {
     // Delete intermediate calculations
 
@@ -4567,7 +4559,7 @@ string NeuralNetwork::write_expression_api() const
     string token;
     string expression = write_expression();
 
-    if(project_type == ProjectType::AutoAssociation)
+    if(model_type == ModelType::AutoAssociation)
     {
     // Delete intermediate calculations
 
@@ -4602,10 +4594,10 @@ string NeuralNetwork::write_expression_api() const
 
     while(getline(ss, token, '\n'))
     {
-        if (token.size() > 1 && token.back() == '{') break;
-        if (token.size() > 1 && token.back() != ';') token += ';';
+        if(token.size() > 1 && token.back() == '{') break;
+        if(token.size() > 1 && token.back() != ';') token += ';';
 
-        if (token.size() < 2) continue;
+        if(token.size() < 2) continue;
 
         push_back_string(tokens, token);
 
@@ -4987,7 +4979,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     const int maximum_output_variable_numbers = 5;
 
-    if(project_type == ProjectType::AutoAssociation)
+    if(model_type == ModelType::AutoAssociation)
     {
     // Delete intermediate calculations
 
@@ -5258,7 +5250,7 @@ string NeuralNetwork::write_expression_javascript() const
     }
     else
     {
-        for (int i = 0; i < outputs.dimension(0); i++)
+        for(int i = 0; i < outputs.dimension(0); i++)
         {
             buffer << "<tr style=\"height:3.5em\">" << endl;
             buffer << "<td> " << outputs_names[i] << " </td>" << endl;
@@ -5280,7 +5272,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     buffer << "<script>" << endl;
 
-    if (outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs.dimension(0) > maximum_output_variable_numbers)
     {
         buffer << "function updateSelectedCategory() {" << endl;
         buffer << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl;
@@ -5308,19 +5300,19 @@ string NeuralNetwork::write_expression_javascript() const
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
-    for (int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.dimension(0); i++)
     {
         buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl;
         buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
     }
 
-    if (outputs.dimension(0) > maximum_output_variable_numbers)
+    if(outputs.dimension(0) > maximum_output_variable_numbers)
     {
         buffer << "\t" << "updateSelectedCategory();" << endl;
     }
     //else
     //{
-    //    for (int i = 0; i < outputs.dimension(0); i++)
+    //    for(int i = 0; i < outputs.dimension(0); i++)
     //    {
     //        buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl;
     //        buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
@@ -5765,7 +5757,7 @@ string NeuralNetwork::write_expression_python() const
     buffer << "import numpy as np" << endl;
     buffer << "\n" << endl;
 
-    if(project_type == ProjectType::AutoAssociation)
+    if(model_type == ModelType::AutoAssociation)
     {
         buffer << "def calculate_distances(input, output):" << endl;
         buffer << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)" << endl;
@@ -5784,7 +5776,7 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "class NeuralNetwork:" << endl;
 
-    if(project_type == ProjectType::AutoAssociation)
+    if(model_type == ModelType::AutoAssociation)
     {
         buffer << "\t" << "minimum = " << to_string(distances_descriptives.minimum) << endl;
         buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
@@ -6004,7 +5996,7 @@ string NeuralNetwork::write_expression_python() const
 
     const Tensor<string, 1> fixed_outputs = fix_write_expression_outputs(expression, outputs, "python");
 
-    if(project_type != ProjectType::AutoAssociation)
+    if(model_type != ModelType::AutoAssociation)
     {
         for(int i = 0; i < fixed_outputs.dimension(0); i++)
         {
@@ -6024,7 +6016,7 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\n\t\t" << "self.time_step_counter += 1" << endl;
     }
 
-    if(project_type != ProjectType::AutoAssociation)
+    if(model_type != ModelType::AutoAssociation)
     {
         buffer << "\n\t\t" << "return out;" << endl;
     }

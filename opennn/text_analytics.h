@@ -23,6 +23,8 @@
 // OpenNN includes
 
 #include "config.h"
+#include "word_bag.h"
+
 #include "tensor_utilities.h"
 #include "opennn_strings.h"
 
@@ -50,41 +52,6 @@ public:
     /// Enumeration of available languages.
 
     enum Language {ENG, SPA};
-
-    ///
-    /// This structure is a necessary tool in text analytics, the word bag is similar a notebook
-    /// where you store the words and statistical processing is done to obtain relevant information.
-    /// Return various list with words, repetition frequencies and percentages.
-
-    struct WordBag
-    {
-        /// Default constructor.
-
-        explicit WordBag() {}
-
-        /// Destructor.
-
-        virtual ~WordBag() {}
-
-        Tensor<string, 1> words;
-        Tensor<Index, 1> frequencies;
-        Tensor<double, 1> percentages;
-
-        Index size() const
-        {
-            return words.size();
-        }
-
-        void print() const
-        {
-            const Index words_size = words.size();
-
-            cout << "Word bag size: " << words_size << endl;
-
-            for(Index i = 0; i < words_size; i++)
-                cout << words(i) << ": frequency= " << frequencies(i) << ", percentage= " << percentages(i) << endl;
-        }
-    };
 
     // Get methods
 
@@ -139,6 +106,8 @@ public:
     Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&) const;
 
     Index count(const Tensor<Tensor<string, 1>, 1>&) const;
+
+    Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag) const;
 
     Tensor<string, 1> join(const Tensor<Tensor<string, 1>, 1>&) const;
 
@@ -210,8 +179,6 @@ public:
     WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
 
     WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string, 1>, 1>&, const Index&) const;
-
-    Index calculate_weight(const Tensor<string, 1>&, const TextAnalytics::WordBag&) const;
 
     // Algorithms
 

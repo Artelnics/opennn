@@ -7,7 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "weighted_squared_error.h"
-#include "tensor_utilities.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -120,7 +121,7 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    if(data_set_pointer->get_target_variables_number() == 0)
+    if(data_set_pointer->get_target_numeric_variables_number() == 0)
     {
         positives_weight = type(1);
         negatives_weight = type(1);
@@ -164,7 +165,7 @@ void WeightedSquaredError::set_normalization_coefficient()
     }
     else if((data_set_pointer) && (data_set_pointer->get_target_columns().size() == 1) && (data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary))
     {
-        const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
 
         const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
@@ -195,9 +196,6 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                                            const NeuralNetworkForwardPropagation& forward_propagation,
                                            LossIndexBackPropagation& back_propagation) const
 {
-//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-//    const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);

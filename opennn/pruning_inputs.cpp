@@ -222,7 +222,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
     // First training
 
     Index input_columns_number = data_set_pointer->get_input_columns_number();
-    Index input_variables_number = data_set_pointer->get_input_variables_number();
+    Index input_variables_number = data_set_pointer->get_input_numeric_variables_number();
 
     neural_network_pointer->set_inputs_number(input_variables_number);
 
@@ -255,7 +255,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
         data_set_pointer->set_column_use(correlations_rank_descending[sorted_index], DataSet::VariableUse::Unused);
 
         input_columns_number = data_set_pointer->get_input_columns_number();
-        input_variables_number = data_set_pointer->get_input_variables_number();
+        input_variables_number = data_set_pointer->get_input_numeric_variables_number();
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
@@ -417,7 +417,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_numeric_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 

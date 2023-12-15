@@ -35,7 +35,7 @@ void NeuralNetworkTest::test_constructor()
 
     //  Approximation
 
-    NeuralNetwork neural_network_1(NeuralNetwork::ProjectType::Approximation, {1, 4, 2});
+    NeuralNetwork neural_network_1(NeuralNetwork::ModelType::Approximation, {1, 4, 2});
 
     assert_true(neural_network_1.get_layers_number() == 5, LOG);
     assert_true(neural_network_1.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
@@ -46,7 +46,7 @@ void NeuralNetworkTest::test_constructor()
 
     // Classification
 
-    NeuralNetwork neural_network_2(NeuralNetwork::ProjectType::Classification, {1, 4, 2});
+    NeuralNetwork neural_network_2(NeuralNetwork::ModelType::Classification, {1, 4, 2});
 
     assert_true(neural_network_2.get_layers_number() == 3, LOG);
     assert_true(neural_network_2.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
@@ -55,7 +55,7 @@ void NeuralNetworkTest::test_constructor()
 
     // Forecasting
 
-    NeuralNetwork neural_network_3(NeuralNetwork::ProjectType::Forecasting, {1, 4, 2});
+    NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1, 4, 2});
 
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
     assert_true(neural_network_3.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
@@ -403,21 +403,21 @@ void NeuralNetworkTest::test_set()
 
     // Approximation Project
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,0,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,0,1});
     assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
     assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
     assert_true(neural_network.get_layers_pointers().size() == 5, LOG);
 
     // Classification Project
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {1,0,1});
+    neural_network.set(NeuralNetwork::ModelType::Classification, {1,0,1});
     assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
     assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
     assert_true(neural_network.get_layers_pointers().size() == 3, LOG);
 
     // Forecasting Project
 
-    neural_network.set(NeuralNetwork::ProjectType::Forecasting, {1,0,1});
+    neural_network.set(NeuralNetwork::ModelType::Forecasting, {1,0,1});
     assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
     assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
     assert_true(neural_network.get_layers_pointers().size() == 5, LOG);
@@ -541,7 +541,7 @@ void NeuralNetworkTest::test_set_pointers()
 
     // Test // Device
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {1,0,1});
+    neural_network.set(NeuralNetwork::ModelType::Classification, {1,0,1});
 
     assert_true(neural_network.get_layers_number() == 3, LOG);
 
@@ -578,7 +578,7 @@ void NeuralNetworkTest::test_set_parameters()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,2});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,2});
 
     parameters_number = neural_network.get_parameters_number();
     parameters.resize(parameters_number);
@@ -611,7 +611,7 @@ void NeuralNetworkTest::test_set_parameters_constant()
 
     Tensor<type, 1> parameters;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,2,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,2,1});
 
     // Test
 
@@ -643,7 +643,7 @@ void NeuralNetworkTest::test_set_parameters_random()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,2,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,2,1});
 
     neural_network.set_parameters_random();
     parameters = neural_network.get_parameters();
@@ -661,7 +661,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {});
 
     parameters_norm = neural_network.calculate_parameters_norm();
 
@@ -669,7 +669,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,1,1,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,1,1,1});
 
     neural_network.set_parameters_constant(type(1));
 
@@ -679,7 +679,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,1,1,1,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,1,1,1,1});
 
     neural_network.set_parameters_constant(type(1));
 
@@ -706,7 +706,7 @@ void NeuralNetworkTest::test_perturbate_parameters()
     neurons_number = 1;
     outputs_number = 1;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
 
     parameters_number = neural_network.get_parameters_number();
     parameters.resize(parameters_number);
@@ -761,7 +761,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     neurons_number = 2;
     outputs_number = 3;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
     neural_network.set_parameters_constant(type(0));
 
     inputs.resize(batch_samples_number, inputs_number);
@@ -783,7 +783,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     neurons_number = 1;
     outputs_number = 5;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
 
     neural_network.set_parameters_constant(type(0));
 
@@ -802,7 +802,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 2});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 2});
 
     neural_network.set_parameters_constant(type(1));
 
@@ -819,7 +819,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {4, 3, 3});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {4, 3, 3});
 
     inputs.resize(1, 4);
     inputs.setZero();
@@ -838,7 +838,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 2});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 2});
 
     inputs_number = neural_network.get_inputs_number();
     parameters_number = neural_network.get_parameters_number();
@@ -866,7 +866,7 @@ void NeuralNetworkTest::test_calculate_outputs()
     neurons_number = 1;
     outputs_number = 1;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
 
     neural_network.set_parameters_constant(type(0));
 
@@ -882,7 +882,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {1,1});
+    neural_network.set(NeuralNetwork::ModelType::Classification, {1,1});
 
     neural_network.set_parameters_constant(type(0));
 
@@ -898,7 +898,7 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     // Test 7
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,3,3,3,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1,3,3,3,1});
 
     batch_samples_number = 2;
     inputs_number = neural_network.get_inputs_number();
@@ -940,7 +940,7 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {3, 4, 2});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {3, 4, 2});
     neural_network.set_parameters_constant(type(0));
 
     inputs.resize(2,3);
@@ -1003,7 +1003,7 @@ void NeuralNetworkTest::test_save()
 
     // Only network architecture
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2, 4, 3});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2, 4, 3});
     neural_network.save(file_name);
 
     // Test
@@ -1012,7 +1012,7 @@ void NeuralNetworkTest::test_save()
     neurons_number = 1;
     outputs_number = 1;
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
     neural_network.save(file_name);
 }
 
@@ -1025,7 +1025,7 @@ void NeuralNetworkTest::test_load()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2, 4, 3});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2, 4, 3});
     neural_network.save(file_name);
 
     neural_network.set();
@@ -1065,7 +1065,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
 
     PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
 

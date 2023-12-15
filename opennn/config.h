@@ -25,9 +25,7 @@
 
 #define NOMINMAX
 
-
 #define EIGEN_USE_THREADS
-
 
 //#pragma warning(push, 0)
 #include "tinyxml2.h"
