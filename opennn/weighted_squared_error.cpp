@@ -193,7 +193,7 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 
 void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
-                                           const NeuralNetworkForwardPropagation& forward_propagation,
+                                           const ForwardPropagation& forward_propagation,
                                            LossIndexBackPropagation& back_propagation) const
 {
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
@@ -242,7 +242,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
-                                              const NeuralNetworkForwardPropagation&,
+                                              const ForwardPropagation&,
                                               LossIndexBackPropagationLM &back_propagation) const
 {
     Tensor<type, 0> error;
@@ -258,7 +258,7 @@ void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                  NeuralNetworkForwardPropagation& ,
+                                                  ForwardPropagation& ,
                                                   LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -522,7 +522,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
 
 
 void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch,
-                                                       const NeuralNetworkForwardPropagation& forward_propagation,
+                                                       const ForwardPropagation& forward_propagation,
                                                        LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 //    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();

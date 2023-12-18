@@ -73,21 +73,21 @@ public:
    // Back propagation
      
    void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
+                        const ForwardPropagation&,
                         LossIndexBackPropagation&) const final;
 
    void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
+                               ForwardPropagation&,
                                LossIndexBackPropagation&) const final;
 
     // Back propagation LM
 
    void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
+                           const ForwardPropagation&,
                            LossIndexBackPropagationLM&) const final;
 
    void calculate_output_delta_lm(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
+                               ForwardPropagation&,
                                LossIndexBackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,

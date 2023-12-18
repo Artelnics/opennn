@@ -246,12 +246,12 @@ public:
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const DataSetBatch&,
-                                        NeuralNetworkForwardPropagation&,
+                                        ForwardPropagation&,
                                         LossIndexBackPropagation&,
                                         OptimizationAlgorithmData&) const;
 
    pair<type, type> calculate_directional_point(const DataSetBatch&,
-                                                NeuralNetworkForwardPropagation&,
+                                                ForwardPropagation&,
                                                 LossIndexBackPropagation&,
                                                 OptimizationAlgorithmData&) const;
 

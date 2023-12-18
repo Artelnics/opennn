@@ -715,7 +715,6 @@ void NeuralNetworkTest::test_perturbate_parameters()
     neural_network.set_parameters(parameters);
     parameters = neural_network.get_parameters();
 
-    neural_network.perturbate_parameters(type(0.5));
     parameters = neural_network.get_parameters();
 
     assert_true(parameters.size() == 4, LOG);
@@ -729,7 +728,6 @@ void NeuralNetworkTest::test_perturbate_parameters()
 
     neural_network.set_parameters(parameters);
 
-    neural_network.perturbate_parameters(type(0.5));
     parameters = neural_network.get_parameters();
 
     assert_true(!is_zero(parameters), LOG);

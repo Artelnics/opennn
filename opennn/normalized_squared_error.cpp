@@ -272,7 +272,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                                             const NeuralNetworkForwardPropagation&,
+                                             const ForwardPropagation&,
                                              LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -315,7 +315,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
-                                                const NeuralNetworkForwardPropagation&,
+                                                const ForwardPropagation&,
                                                 LossIndexBackPropagationLM& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -346,7 +346,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation&,
+                                                    ForwardPropagation&,
                                                     LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -385,7 +385,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
-                                                       NeuralNetworkForwardPropagation&,
+                                                       ForwardPropagation&,
                                                        LossIndexBackPropagationLM & loss_index_back_propagation) const
 {
 #ifdef OPENNN_DEBUG

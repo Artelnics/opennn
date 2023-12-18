@@ -278,8 +278,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             ? batch_samples_number_selection = selection_samples_number
             : batch_samples_number_selection = batch_samples_number;
 
-    DataSetBatch batch_training(batch_samples_number_training, data_set_pointer);
-    DataSetBatch batch_selection(batch_samples_number_selection, data_set_pointer);
+    DataSetBatch training_batch(batch_samples_number_training, data_set_pointer);
+    DataSetBatch selection_batch(batch_samples_number_selection, data_set_pointer);
 
     const Index training_batches_number = training_samples_number/batch_samples_number_training;
     const Index selection_batches_number = selection_samples_number/batch_samples_number_selection;
@@ -308,9 +308,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    NeuralNetworkForwardPropagation training_forward_propagation(batch_samples_number_training, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(batch_samples_number_training, neural_network_pointer);
 
-    NeuralNetworkForwardPropagation selection_forward_propagation(batch_samples_number_selection, neural_network_pointer);
+    ForwardPropagation selection_forward_propagation(batch_samples_number_selection, neural_network_pointer);
 
     // Loss index
 
@@ -359,21 +359,20 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         optimization_data.iteration = 1;
 
-
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
 
             // Data set
 
-            batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation, is_training);
+            neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
 
             // Loss index
 
-            loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation); // !!!
+            loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation); // !!!
 
             results.training_error_history(epoch) = training_back_propagation.error;
 
@@ -401,17 +400,17 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+                selection_batch.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation, is_training);
+                neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
 
                 // Loss
 
-                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
+                loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-                loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
+                loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
                 selection_error += selection_back_propagation.error;
 
             }
@@ -494,6 +493,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
 
+/*
     if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
@@ -501,7 +501,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         type* input_data = inputs.data();
 
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
+        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
         Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
@@ -520,7 +520,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
         neural_network_pointer->set_distances_descriptives(distances_descriptives);
     }
-
+*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())

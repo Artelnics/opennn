@@ -765,8 +765,8 @@ TrainingResults ConjugateGradient::perform_training()
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -798,7 +798,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
+        neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
 
         // Loss index
 
@@ -811,7 +811,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
+            neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -908,7 +908,7 @@ TrainingResults ConjugateGradient::perform_training()
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
 
-
+/*
     if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
@@ -916,7 +916,6 @@ TrainingResults ConjugateGradient::perform_training()
 
         type* input_data = inputs.data();
 
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
         Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
@@ -935,7 +934,7 @@ TrainingResults ConjugateGradient::perform_training()
         neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
         neural_network_pointer->set_distances_descriptives(distances_descriptives);
     }
-
+*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())
@@ -1005,7 +1004,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
 void ConjugateGradient::update_parameters(
         const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
+        ForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
         ConjugateGradientData& optimization_data) const
 {

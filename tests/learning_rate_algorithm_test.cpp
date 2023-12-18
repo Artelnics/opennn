@@ -66,7 +66,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     DataSetBatch batch;
 
-    NeuralNetworkForwardPropagation forward_propagation;
+    ForwardPropagation forward_propagation;
 
     LossIndexBackPropagation back_propagation;
 

@@ -63,7 +63,7 @@ private:
 
     DataSetBatch batch;
 
-    NeuralNetworkForwardPropagation forward_propagation;
+    ForwardPropagation forward_propagation;
 
     LossIndexBackPropagation back_propagation;
     LossIndexBackPropagationLM back_propagation_lm;

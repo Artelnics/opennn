@@ -25,20 +25,21 @@ namespace opennn{
 
 
 template <typename T>
-class DynamicTensor {
-
+class DynamicTensor
+{
 
 public:
 
     DynamicTensor()
     {
-
     }
+
 
     DynamicTensor(const Tensor<Index, 1>& new_dimensions)
     {
         set_dimensions(new_dimensions);
     }
+
 
     DynamicTensor(const initializer_list<Index>& new_dimensions_array)
     {
@@ -74,6 +75,7 @@ public:
 
         return *this;
     }
+
 
     bool operator != (DynamicTensor& other)
     {
@@ -129,10 +131,12 @@ public:
         free(data);
     }
 
+
     T* get_data() const
     {
         return data;
     }
+
 
     const Tensor<Index, 1>& get_dimensions() const
     {
@@ -144,6 +148,7 @@ public:
     {
         return dimensions(index);
     }
+
 
     void set_data(const T* new_data)
     {
@@ -164,14 +169,14 @@ public:
         data = (T*) malloc(static_cast<size_t>(size(0)*sizeof(T)));
     }
 
+
     template <int rank>
     TensorMap<Tensor<T, rank>> to_tensor_map() const
     {
-//        const int rank = dimensions.size();
-
         std::array<Index, rank> sizes;
 
-        for(Index i = 0; i < dimensions.size(); ++i) {
+        for(Index i = 0; i < dimensions.size(); ++i)
+        {
             sizes[i] = dimensions(i);
         }
 

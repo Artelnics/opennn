@@ -25,6 +25,7 @@
 #include "data_set.h"
 #include "neural_network.h"
 #include "neural_network_back_propagation.h"
+#include "neural_network_back_propagation_lm.h"
 
 namespace opennn
 {
@@ -161,65 +162,65 @@ public:
    // Back propagation
 
    void calculate_errors(const DataSetBatch&,
-                         const NeuralNetworkForwardPropagation&,
+                         const ForwardPropagation&,
                          LossIndexBackPropagation&) const;
 
    virtual void calculate_error(const DataSetBatch&,
-                                const NeuralNetworkForwardPropagation&,
+                                const ForwardPropagation&,
                                 LossIndexBackPropagation&) const = 0;
 
    virtual void calculate_output_delta(const DataSetBatch&,
-                                       NeuralNetworkForwardPropagation&,
+                                       ForwardPropagation&,
                                        LossIndexBackPropagation&) const = 0;
 
    void calculate_layers_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
+                               ForwardPropagation&,
                                LossIndexBackPropagation&) const;
 
    void calculate_layers_error_gradient(const DataSetBatch&,
-                                 const NeuralNetworkForwardPropagation&,
+                                 const ForwardPropagation&,
                                  LossIndexBackPropagation&) const;
 
    void assemble_layers_error_gradient(LossIndexBackPropagation&) const;
 
    void back_propagate(const DataSetBatch&,
-                       NeuralNetworkForwardPropagation&,
+                       ForwardPropagation&,
                        LossIndexBackPropagation&) const;
 
    // Back propagation LM
 
    void calculate_errors_lm(const DataSetBatch&,
-                            const NeuralNetworkForwardPropagation&,
+                            const ForwardPropagation&,
                             LossIndexBackPropagationLM&) const; // general
 
    virtual void calculate_squared_errors_lm(const DataSetBatch&,
-                                            const NeuralNetworkForwardPropagation&,
+                                            const ForwardPropagation&,
                                             LossIndexBackPropagationLM&) const;
 
    virtual void calculate_error_lm(const DataSetBatch&,
-                                   const NeuralNetworkForwardPropagation&,
+                                   const ForwardPropagation&,
                                    LossIndexBackPropagationLM&) const {}
 
    virtual void calculate_output_delta_lm(const DataSetBatch&,
-                                          NeuralNetworkForwardPropagation&,
+                                          ForwardPropagation&,
                                           LossIndexBackPropagationLM&) const {}
 
    void calculate_layers_delta_lm(const DataSetBatch&,
-                                  NeuralNetworkForwardPropagation&,
+                                  ForwardPropagation&,
                                   LossIndexBackPropagationLM&) const;
 
    virtual void calculate_error_gradient_lm(const DataSetBatch&,
                                       LossIndexBackPropagationLM&) const;
 
    void calculate_squared_errors_jacobian_lm(const DataSetBatch&,
-                                             NeuralNetworkForwardPropagation&,
+                                             ForwardPropagation&,
                                              LossIndexBackPropagationLM&) const;
 
    virtual void calculate_error_hessian_lm(const DataSetBatch&,
                                            LossIndexBackPropagationLM&) const {}
 
    void back_propagate_lm(const DataSetBatch&,
-                          NeuralNetworkForwardPropagation&,
+                          ForwardPropagation&,
                           LossIndexBackPropagationLM&) const;
 
    // Regularization methods

@@ -261,7 +261,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 void GradientDescent::update_parameters(
         const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
+        ForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
         GradientDescentData& optimization_data) const
 {
@@ -382,8 +382,8 @@ TrainingResults GradientDescent::perform_training()
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -426,7 +426,7 @@ TrainingResults GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
+        neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
 
         // Loss index
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
@@ -437,7 +437,7 @@ TrainingResults GradientDescent::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
+            neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -533,7 +533,7 @@ TrainingResults GradientDescent::perform_training()
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
-
+/*
     if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
@@ -561,7 +561,7 @@ TrainingResults GradientDescent::perform_training()
         neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
         neural_network_pointer->set_distances_descriptives(distances_descriptives);
     }
-
+*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())

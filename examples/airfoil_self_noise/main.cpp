@@ -64,7 +64,21 @@ int main()
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/airfoil_self_noise.c");
 
-        cout << "Good bye!" << endl;
+        // Deploy
+
+        NeuralNetwork new_neural_network;
+
+        new_neural_network.load("../data/neural_network.xml");
+
+        Tensor<DynamicTensor<type>, 1> inputs;
+
+        ForwardPropagation forward_propagation(1, &new_neural_network);
+
+        new_neural_network.forward_propagate(inputs, forward_propagation);
+
+        const Tensor<DynamicTensor<type>, 1>& outputs = forward_propagation.get_outputs();
+
+        cout << "Good bye!" << endl;       
 
         return 0;
     }

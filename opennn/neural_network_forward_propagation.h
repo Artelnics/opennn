@@ -12,20 +12,20 @@ using namespace Eigen;
 namespace opennn
 {
 
-struct NeuralNetworkForwardPropagation
+struct ForwardPropagation
 {
     /// Default constructor.
 
-    NeuralNetworkForwardPropagation() {}
+    ForwardPropagation() {}
 
-    NeuralNetworkForwardPropagation(const Index& new_batch_samples_number,NeuralNetwork* new_neural_network_pointer)
+    ForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
         set(new_batch_samples_number, new_neural_network_pointer);
     }
 
     /// Destructor.
 
-    virtual ~NeuralNetworkForwardPropagation()
+    virtual ~ForwardPropagation()
     {
         const Index layers_number = layers.size();
 
@@ -128,6 +128,13 @@ struct NeuralNetworkForwardPropagation
             default: break;
             }
         }
+    }
+
+    const Tensor<DynamicTensor<type>, 1>& get_outputs()
+    {
+        const Index layers_number = neural_network_pointer->get_layers_number();
+
+        return layers(layers_number-1)->outputs;
     }
 
 

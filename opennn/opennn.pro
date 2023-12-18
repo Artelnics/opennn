@@ -95,6 +95,8 @@ HEADERS += \
     neural_network.h \
     neural_network_forward_propagation.h \
     neural_network_back_propagation.h \
+    neural_network_back_propagation_lm.h \
+    auto_associative_neural_network.h \
     loss_index.h \
     loss_index_forward_propagation.h \
     loss_index_back_propagation.h \
@@ -102,7 +104,6 @@ HEADERS += \
     optimization_algorithm.h \
     stochastic_gradient_descent.h\
     training_strategy.h \
-    neural_network.h \
     sum_squared_error.h\
     normalized_squared_error.h\
     minkowski_error.h \
@@ -175,6 +176,7 @@ SOURCES += \
     long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
     neural_network.cpp \
+    auto_associative_neural_network.cpp \
     loss_index.cpp \
     mean_squared_error.cpp \
     stochastic_gradient_descent.cpp \

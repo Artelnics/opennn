@@ -96,7 +96,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -139,7 +139,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -178,7 +178,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -225,7 +225,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -268,7 +268,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -309,7 +309,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -359,7 +359,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -411,7 +411,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -463,7 +463,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -571,7 +571,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -611,7 +611,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -657,7 +657,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -700,7 +700,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -741,7 +741,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         // Loss index
 
@@ -1760,11 +1760,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         neural_network.add_layer(flatten_layer);
         neural_network.add_layer(perceptron_layer);
 
-        NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
+        ForwardPropagation forward_propagation(images_number, &neural_network);
 
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
-//        forward_propagation.print();
-//        system("pause");
+        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 

@@ -62,11 +62,11 @@ int main(int argc, char *argv[])
 
         data_set.read_ground_truth();
 
-        DataSetBatch batch_training(1, &data_set);
+        DataSetBatch training_batch(1, &data_set);
 
         Tensor<Index, 2> training_batches = data_set.get_batches(training_samples_indices, batch_samples_number_training, shuffle);
 
-        batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
+        training_batch.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
         Tensor<Index, 1> inputs_dimensions(3);
         inputs_dimensions(0) = 28;

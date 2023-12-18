@@ -380,12 +380,9 @@ void TextAnalytics::aux_remove_non_printable_chars(Tensor<string, 1> &documents)
 {
     Tensor<string, 1> new_documents(documents);
 
-
     for(Index i = 0; i < documents.size(); i++)
     {
-
         new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), isNotAlnum), new_documents[i].end());
-
     }
 
     documents = new_documents;
@@ -2548,6 +2545,127 @@ void TextAnalytics::load_documents(const string& path)
     targets(original_size) = document_target_copy;
 
     file2.close();
+}
+
+
+/// Generates a text output based on the neural network and some input letters given by the user.
+/// @param text_generation_alphabet TextGenerationAlphabet object used for the text generation model
+/// @param input_string Input string given by the user
+/// @param max_length Maximum length of the returned string
+/// @param one_word Boolean, if true returns just one word, if false returns a phrase
+
+string TextAnalytics::calculate_text_outputs(TextGenerationAlphabet& text_generation_alphabet, const string& input_string, const Index& max_length, const bool& one_word)
+{
+    string result = one_word ? generate_word(text_generation_alphabet, input_string, max_length) : generate_phrase(text_generation_alphabet, input_string, max_length);
+
+    return result;
+}
+
+
+/// @todo TEXT GENERATION
+
+string TextAnalytics::generate_word(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+           << "This method is not implemented yet.\n";
+
+    throw invalid_argument(buffer.str());
+
+    return string();
+
+    // Under development
+
+    //    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+
+    //    if(first_letters.length()*alphabet_length != get_inputs_number())
+    //    {
+    //        ostringstream buffer;
+
+    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+    //               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+    //               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+
+    //        throw invalid_argument(buffer.str());
+    //    }
+
+
+    //    string result = first_letters;
+
+    //    // 1. Input letters to one hot encode
+
+    //    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+
+    //    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
+    //    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+
+    //    punctuation_signs.setValues({" ",",",".","\n",":",";"});
+
+    //    // 2. Loop for forecasting the following letter in function of the last letters
+
+    //    do{
+    //        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+
+    //        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+
+    //        if(!contains(punctuation_signs, letter))
+    //        {
+    //            result += letter;
+
+    //            input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+    //        }
+
+    //    }while(result.length() < length);
+
+    //    return result;
+}
+
+
+/// @todo TEXT GENERATION
+
+string TextAnalytics::generate_phrase(TextGenerationAlphabet& text_generation_alphabet, const string& first_letters, const Index& length)
+{
+/*
+    const Index alphabet_length = text_generation_alphabet.get_alphabet_length();
+
+    if(first_letters.length()*alphabet_length != get_inputs_number())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
+               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    string result = first_letters;
+
+    Tensor<type, 2> input_data = text_generation_alphabet.multiple_one_hot_encode(first_letters);
+
+    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
+    do{
+        Tensor<type, 2> input_data(get_inputs_number(), 1);
+        input_data.setZero();
+        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+
+        Tensor<type, 2> output = calculate_outputs(input_data.data(), input_dimensions);
+
+        string letter = text_generation_alphabet.multiple_one_hot_decode(output);
+
+        result += letter;
+
+        input_data = text_generation_alphabet.multiple_one_hot_encode(result.substr(result.length() - first_letters.length()));
+
+    }while(result.length() < length);
+
+    return result;
+*/
+    return string();
 }
 
 

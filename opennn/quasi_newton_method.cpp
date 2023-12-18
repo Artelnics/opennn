@@ -446,7 +446,7 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
 
 void QuasiNewtonMethod::update_parameters(
         const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
+        ForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data) const
 {
@@ -601,8 +601,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     neural_network_pointer->set_inputs_names(inputs_names);
     neural_network_pointer->set_outputs_names(targets_names);
@@ -667,7 +667,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
+        neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
 
         // Loss index
 
@@ -683,7 +683,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
+            neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
 
             // Loss Index
 
@@ -775,7 +775,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(stop_training) break;
     }
-
+/*
     if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {
         Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
@@ -783,7 +783,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         type* input_data = inputs.data();
 
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
         Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
 
         Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
@@ -803,7 +802,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
         neural_network_pointer->set_distances_descriptives(distances_descriptives);
     }
-
+*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())

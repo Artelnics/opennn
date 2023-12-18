@@ -534,13 +534,15 @@ void PerceptronLayer::calculate_combinations(const DynamicTensor<type>& inputs,
     const Index batch_samples_number = inputs.get_dimension(0);
     const Index biases_number = get_neurons_number();
 
+    TensorMap<Tensor<type, 2>> outputs_map = layer_forward_propagation->outputs(0).to_tensor_map<2>();
+
     type* outputs_data = layer_forward_propagation->outputs(0).get_data();
 
-    const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
+//    const Eigen::array<ptrdiff_t, 2> outputs_dimensions_array = perceptron_layer_forward_propagation->get_outputs_dimensions_array();
 
-    TensorMap<Tensor<type, 2>> combinations(outputs_data, outputs_dimensions_array);
+//    TensorMap<Tensor<type, 2>> combinations(outputs_data, outputs_dimensions_array);
 
-    combinations.device(*thread_pool_device) = inputs_map.contract(synaptic_weights, A_B);
+    outputs_map.device(*thread_pool_device) = inputs_map.contract(synaptic_weights, A_B);
 
     for(Index i = 0; i < biases_number; i++)
     {
@@ -549,7 +551,7 @@ void PerceptronLayer::calculate_combinations(const DynamicTensor<type>& inputs,
          column.device(*thread_pool_device) = column + biases(i);
     }
 
-    combinations.device(*thread_pool_device) += inputs_map.contract(synaptic_weights, A_B);
+    outputs_map.device(*thread_pool_device) += inputs_map.contract(synaptic_weights, A_B);
 //    combinations += inputs.contract(synaptic_weights, A_B);
 
 }

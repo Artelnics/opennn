@@ -41,7 +41,7 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 // \param back_propagation
 
 void CrossEntropyError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const ForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {      
 #ifdef OPENNN_DEBUG
@@ -76,7 +76,7 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 
 
 void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
-                                               const NeuralNetworkForwardPropagation& forward_propagation,
+                                               const ForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
@@ -113,7 +113,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 
 
 void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
-                                                 const NeuralNetworkForwardPropagation& forward_propagation,
+                                                 const ForwardPropagation& forward_propagation,
                                                  LossIndexBackPropagation& back_propagation) const
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
@@ -146,7 +146,7 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
 
 
 void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
-                                               NeuralNetworkForwardPropagation& forward_propagation,
+                                               ForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -169,7 +169,7 @@ void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
 
 
 void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
-                                                      NeuralNetworkForwardPropagation& forward_propagation,
+                                                      ForwardPropagation& forward_propagation,
                                                       LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -210,7 +210,7 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 
 
 void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batch,
-                                                        NeuralNetworkForwardPropagation& forward_propagation,
+                                                        ForwardPropagation& forward_propagation,
                                                         LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();

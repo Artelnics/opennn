@@ -35,6 +35,8 @@
 namespace opennn
 {
 
+class TextGenerationAlphabet;
+
 /// This class represent the text analytics methodata_set.
 /// Text analytics is used to transform unstructured text into high-quality information.
 
@@ -90,6 +92,12 @@ public:
     void set_separator(const string&);
 
     // Auxiliar methods
+
+    string calculate_text_outputs(TextGenerationAlphabet&, const string&, const Index&, const bool&);
+
+    string generate_word(TextGenerationAlphabet&, const string&, const Index&);
+
+    string generate_phrase(TextGenerationAlphabet&, const string&, const Index&);
 
     void append_document(const string&);
 
@@ -220,6 +228,7 @@ private:
     Tensor<Tensor<string,1>,1> targets;
 
 };
+
 
 class TextGenerationAlphabet
 {
