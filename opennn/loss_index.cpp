@@ -343,8 +343,16 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
+    // cout << targets << endl;
+
+
     if(has_NAN(back_propagation.errors))
     {
+        cout << endl;
+        // cout << outputs << endl;
+        cout << "yes" << endl;
+        cout << endl;
+
         ostringstream buffer;
 
         buffer << "OpenNN Exception: loss_index class.\n"

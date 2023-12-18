@@ -2157,7 +2157,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
-/*
+
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
     {
@@ -2201,7 +2201,15 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         if(layers_pointers(0)->get_type_string() != "Scaling")
         {
             Tensor<DynamicTensor<type>, 1> scaled_inputs_tensor(1);
-            scaled_inputs_tensor(0) = DynamicTensor<type>(scaled_inputs_data, inputs_dimensions);
+
+            scaled_inputs_tensor(0).set_dimensions(inputs_dimensions);
+            const Tensor<Index, 0> size = inputs_dimensions.prod();
+            memcpy(scaled_inputs_tensor(0).get_data(), scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
+
+            // const Tensor<Index, 0> size = inputs_dimensions.prod();
+            // memcpy(data_set_batch.inputs(0).get_data(), inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
+
+            // DynamicTensor<type>(scaled_inputs_data, inputs_dimensions)
 
             layers_pointers(0)->forward_propagate(scaled_inputs_tensor, forward_propagation.layers(0), is_training);
 
@@ -2224,7 +2232,12 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
                 outputs_dimensions = get_dimensions(scaled_outputs);
 
                 Tensor<DynamicTensor<type>, 1> inputs_tensor(1);
-                inputs_tensor(0) = DynamicTensor<type>(last_layer_outputs.data(), last_layer_outputs_dimensions);
+                //inputs_tensor(0) = DynamicTensor<type>(last_layer_outputs.data(), last_layer_outputs_dimensions);
+
+                inputs_tensor(0).set_dimensions( last_layer_outputs_dimensions);
+                const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
+                memcpy(inputs_tensor(0).get_data(),last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
+
 
                 layers_pointers(i)->forward_propagate(inputs_tensor,
                                                       forward_propagation.layers(i),
@@ -2253,7 +2266,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         throw invalid_argument(buffer.str());
     }
-*/
+
     return Tensor<type, 2>();
 }
 

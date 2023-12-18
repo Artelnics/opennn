@@ -23,42 +23,46 @@
 #include <iostream>
 
 using namespace std;
-using namespace OpenNN;
-
-
-//Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
-//{
-//    const Index columns_number = box_plots.dimension(0);
-
-//    Tensor<type, 2> summary(5, columns_number);
-
-//    for(Index i = 0; i < columns_number; i++)
-//    {
-//        const BoxPlot& box_plot = box_plots(i);
-//        summary(0, i) = box_plot.minimum;
-//        summary(1, i) = box_plot.first_quartile;
-//        summary(2, i) = box_plot.median;
-//        summary(3, i) = box_plot.third_quartile;
-//        summary(4, i) = box_plot.maximum;
-//    }
-
-//    //todo
-//    Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
-//    Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
-
-//    return reshaped_summary;
-//}
+using namespace opennn;
 
 
 int main()
 {
    try
    {
-        cout << "Blank\n";
+        cout << "OpenNN. Simple Function Regression Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        cout << "Bye!" << endl;
+        // Data Set
+
+        DataSet data_set("/home/artelnics/Documents/NeuralDesignerProjects/concreteproperties/concreteproperties.csv", ';', true);
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index hidden_neurons_number = 3;
+
+        // Neural Network
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation,
+                                     {input_variables_number, hidden_neurons_number, target_variables_number});
+
+        // Training Strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_display_period(1000);
+        training_strategy.perform_training();
+
+        //Model Selection
+        GrowingNeurons gn(&training_strategy);
+        gn.perform_neurons_selection();
+
+        // Save results
+        neural_network.calculate_directional_inputs();
+        neural_network.save_expression_python("simple_function_regresion.py");
+
+        cout << "Bye Simple Function Regression" << endl;
 
         return 0;
    }

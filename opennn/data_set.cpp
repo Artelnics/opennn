@@ -8765,16 +8765,16 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Group by Column
-    {
-        file_stream.OpenElement("GroupByColumn");
+    // {
+    //     file_stream.OpenElement("GroupByColumn");
 
-        buffer.str("");
-        buffer << get_time_column();
+    //     buffer.str("");
+    //     buffer << get_time_column();
 
-        file_stream.PushText(buffer.str().c_str());
+    //     file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
-    }
+    //     file_stream.CloseElement();
+    // }
 
     // Text classification
 
@@ -9532,23 +9532,23 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Group by column
 
-    const tinyxml2::XMLElement* group_by_column_element = data_file_element->FirstChildElement("GroupByColumn");
+    // const tinyxml2::XMLElement* group_by_column_element = data_file_element->FirstChildElement("GroupByColumn");
 
-    if(!group_by_column_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Group by column element is nullptr.\n";
+    // if(!group_by_column_element)
+    // {
+    //     buffer << "OpenNN Exception: DataSet class.\n"
+    //            << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+    //            << "Group by column element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+    //     throw invalid_argument(buffer.str());
+    // }
 
-    if(group_by_column_element->GetText())
-    {
-        const string new_group_by_column = group_by_column_element->GetText();
+    // if(group_by_column_element->GetText())
+    // {
+    //     const string new_group_by_column = group_by_column_element->GetText();
 
-        set_group_by_column(new_group_by_column);
-    }
+    //     set_group_by_column(new_group_by_column);
+    // }
 
     // Text classification
 
