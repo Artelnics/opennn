@@ -2021,13 +2021,24 @@ void Layer::softmax(type* x_data, const Tensor<Index, 1>& x_dimensions,
 
         TensorMap<Tensor<type, 2>> y(y_data, rows_number, columns_number);
 
+        Tensor<type , 0> row_max;
+
         y.device(*thread_pool_device) = x.exp();
+
+        for(Index i = 0; i < y.size(); i++)
+        {
+            if( isinf(y(i)) )
+            {
+                y(i) = std::numeric_limits<type>::max();
+            }
+        }
 
         Tensor<type, 1> rows_sum(rows_number);
 
         rows_sum.device(*thread_pool_device) = y.sum(dimensions);
 
         divide_columns(thread_pool_device, y, rows_sum);
+
     }
     else
     {

@@ -1189,47 +1189,32 @@ void DataSet::transform_time_series_data()
 }
 */
 
-void DataSet::fill_time_series_gaps()
-{
-    const Index rows_number = data.dimension(0);
-    const Index columns_number = data.dimension(1);
+// void DataSet::fill_time_series_gaps()
+// {
+//     const Index rows_number = data.dimension(0);
+//     const Index columns_number = data.dimension(1);
 
-    quicksort_by_column(0);
+//     quicksort_by_column(0);
 
-    Tensor<type, 1> time_data = data.chip(0, 1);
+//     Tensor<type, 1> time_data = data.chip(0, 1);
 
-    Tensor<type, 1> time_difference_data = compute_elementwise_difference(time_data);
+//     Tensor<type, 1> time_difference_data = compute_elementwise_difference(time_data);
 
-    // cout << "time_variable_index: " << time_variable_index << endl;
-    // cout << "time_data: " << endl;
-    
-    // for(Index i = 0; i < time_data.size(); i++)
-    // {
-    //     cout << time_data(i) << " ";
-    // }
-    
-    // cout << "elementwise_difference time_data: " << endl;
+//     Tensor<type, 1> time_step_mode = compute_mode(time_difference_data);
 
-    // for(Index i = 0; i < time_difference_data.size(); i++)
-    // {
-    //     cout << time_difference_data(i) << " ";
-    // }
+//     Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
 
-    Tensor<type, 1> time_step_mode = compute_mode(time_difference_data);
+//     Tensor<type, 2> NaN_data(time_series_filled.size(), columns_number);
+//     NaN_data.setConstant(type(NAN));
 
-    Tensor<type, 1> time_series_filled = fill_gaps_by_value(time_data, time_difference_data, time_step_mode(0));
+//     NaN_data.chip(0, 1) = time_series_filled;
 
-    Tensor<type, 2> NaN_data(time_series_filled.size(), columns_number);
-    NaN_data.setConstant(type(NAN));
+//     Tensor<type, 2> final_data(data);
 
-    NaN_data.chip(0, 1) = time_series_filled;
+//     data.resize(time_data.size() + time_series_filled.size(), columns_number);
 
-    Tensor<type, 2> final_data(data);
-
-    data.resize(time_data.size() + time_series_filled.size(), columns_number);
-
-    data = final_data.concatenate(NaN_data, 0);
-}
+//     data = final_data.concatenate(NaN_data, 0);
+// }
 
 
 /// This method duplicates the columns for association problems.
@@ -10738,7 +10723,7 @@ void DataSet::transform_time_series()
 
     transform_time_series_data();
 
-    fill_time_series_gaps();
+    // fill_time_series_gaps();
 
     transform_time_series_columns();
 
