@@ -1224,11 +1224,18 @@ struct DataSetBatch
     Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
-/*
+
     void set_inputs(const Tensor<DynamicTensor<type>, 1>& new_inputs)
     {
-        inputs = new_inputs;
+        Index inputs_number = new_inputs.size();
+        inputs.resize(inputs_number);
+
+        for(Index i = 0; i < inputs_number; i++)
+        {
+            inputs(i) = new_inputs(i);
+        }
     }
+/*
 
     void set_inputs(const DynamicTensor<type>& new_inputs)
     {

@@ -85,6 +85,8 @@ public:
    void set(const Index&, const Index&);
    void set(const ProbabilisticLayer&);
 
+   void set_name(const string&);
+
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 

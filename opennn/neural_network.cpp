@@ -155,15 +155,13 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         for(Index i = 0; i < old_layers_number; i++) layers_inputs_indices(i) = old_layers_inputs_indices(i);
 
-        Tensor<Index, 1> new_layer_inputs_indices;
-
-        if(old_layers_number != 0)
-        {
+//        if(old_layers_number != 0)
+//        {
             Tensor<Index, 1> new_layer_inputs_indices(1);
             new_layer_inputs_indices(0) = old_layers_number-1;
 
             layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
-        }
+//        }
     }
     else
     {
@@ -481,6 +479,11 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
     const Index layers_number = get_layers_number();
+
+    if(layer_name == "dataset")
+    {
+        return -1;
+    }
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -1164,6 +1167,15 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const Ten
 }
 
 
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const initializer_list<string>& new_layer_inputs_names_list)
+{
+    Tensor<string, 1> new_layer_inputs_names(new_layer_inputs_names_list.size());
+    new_layer_inputs_names.setValues(new_layer_inputs_names_list);
+
+    set_layer_inputs_indices(layer_name, new_layer_inputs_names);
+}
+
+
 void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_inputs_name)
 {
     const Index layer_index = get_layer_index(layer_name);
@@ -1826,6 +1838,19 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 }
 
 
+bool NeuralNetwork::is_starting_layer(const Index& layer_index) const
+{
+    Tensor<Index, 1> layer_input_indices = layers_inputs_indices(layer_index);
+
+    for(Index i = 0; i < layer_input_indices.size(); i++)
+    {
+        if(layer_input_indices(i) != -1) return false;
+    }
+
+    return true;
+}
+
+
 /// Initializes all the biases and synaptic weights with a given value.
 
 void NeuralNetwork::set_parameters_constant(const type& value) const
@@ -1906,7 +1931,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation,
-                                      bool& is_training) const
+                                      const bool& is_training) const
 {
 
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
@@ -1914,19 +1939,47 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    const Tensor<DynamicTensor<type>, 1> inputs = batch.inputs;
+    const Tensor<DynamicTensor<type>, 1>& inputs = batch.inputs;
+    Index count = 0;
 
-    layers_pointers(first_trainable_layer_index)->forward_propagate(inputs,
-                                                                    forward_propagation.layers(first_trainable_layer_index),
-                                                                    is_training);
+//    layers_pointers(first_trainable_layer_index)->forward_propagate(inputs,
+//                                                                    forward_propagation.layers(first_trainable_layer_index),
+//                                                                    is_training);
 
-    for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
-    {       
-        const Tensor<DynamicTensor<type>, 1> outputs = forward_propagation.layers(i-1)->outputs;
+    Tensor<Index, 1> current_layer_inputs_indices;
+    Index current_layer_inputs_number;
 
-        layers_pointers(i)->forward_propagate(outputs,
-                                              forward_propagation.layers(i),
-                                              is_training);
+    for(Index i = first_trainable_layer_index /*+ 1*/; i <= last_trainable_layer_index; i++)
+    {
+        cout << layers_pointers(i)->get_name() << endl;
+        if(i == first_trainable_layer_index || is_starting_layer(i))
+        {
+            Tensor<DynamicTensor<type>, 1> layer_inputs(1);
+            layer_inputs(0) = inputs(count);
+            count++;
+
+            layers_pointers(i)->forward_propagate(layer_inputs,
+                                                  forward_propagation.layers(i),
+                                                  is_training);
+        }
+        else
+        {
+            current_layer_inputs_indices = layers_inputs_indices(i);
+            current_layer_inputs_number = current_layer_inputs_indices.size();
+
+            Tensor<DynamicTensor<type>, 1> outputs(current_layer_inputs_number);
+
+            for(Index j = 0; j < current_layer_inputs_number; j++)
+            {
+                outputs(j) = forward_propagation.layers(current_layer_inputs_indices(j))->outputs(0);
+            }
+
+            layers_pointers(i)->forward_propagate(outputs,
+                                                  forward_propagation.layers(i),
+                                                  is_training);
+        }
+
+//        const Tensor<DynamicTensor<type>, 1>& outputs = forward_propagation.layers(i-1)->outputs;
     }
 }
 
@@ -1940,7 +1993,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     const bool is_training = false;
 
-    Tensor<DynamicTensor<type>, 1> inputs = batch.inputs;
+    const Tensor<DynamicTensor<type>, 1>& inputs = batch.inputs;
 
     layers_pointers(0)->forward_propagate(inputs,
                                           forward_propagation.layers(0),
@@ -1948,7 +2001,7 @@ void NeuralNetwork::forward_propagate_deploy(DataSetBatch& batch,
 
     for(Index i = 1; i < layers_number; i++)
     {
-        const Tensor<DynamicTensor<type>, 1> outputs = forward_propagation.layers(i-1)->outputs;
+        const Tensor<DynamicTensor<type>, 1>& outputs = forward_propagation.layers(i-1)->outputs;
 
         layers_pointers(i)->forward_propagate(outputs,
                                               forward_propagation.layers(i),

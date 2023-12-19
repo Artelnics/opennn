@@ -8695,7 +8695,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
+/*
     // Group by Column
     {
         file_stream.OpenElement("GroupByColumn");
@@ -8707,7 +8707,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
+*/
     // Text classification
 
     if(project_type == ProjectType::TextClassification)
@@ -9461,7 +9461,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         set_time_column(new_time_column);
     }
-
+/*
     // Group by column
 
     const tinyxml2::XMLElement* group_by_column_element = data_file_element->FirstChildElement("GroupByColumn");
@@ -9481,7 +9481,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         set_group_by_column(new_group_by_column);
     }
-
+*/
     // Text classification
 
     const tinyxml2::XMLElement* short_words_length_element = data_file_element->FirstChildElement("ShortWordsLength");
@@ -14589,7 +14589,7 @@ void DataSet::read_txt_language_model()
     for(Index i = 0; i < get_columns_number(); i++)
     {
         set_column_type(i, ColumnType::Numeric);
-        if(i < max_context_length + max_completion_length + 4)
+        if(i < max_context_length + max_completion_length + 3)
             set_column_use(i, VariableUse::Input);
         else
             set_column_use(i, VariableUse::Target);
@@ -15987,6 +15987,8 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     const Tensor<type, 2>& data = data_set_pointer->get_data();
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
+    // Inputs
+
     if(input_variables_dimensions.size() == 1)
     {
         fill_submatrix(data, samples, inputs, this->inputs(0).get_data());
@@ -16023,6 +16025,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
         if(augmentation) perform_augmentation();
     }
+
+    // Contexts
+
+
+
+    // Targets
+
     fill_submatrix(data, samples, targets, this->targets.get_data());
 }
 
@@ -16122,10 +16131,7 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     {
         inputs.resize(1);
 
-        Tensor<Index, 1> inputs_dimensions(2);
-        inputs_dimensions.setValues({batch_size, input_variables_number});
-
-        inputs(0).set_dimensions(inputs_dimensions);
+        inputs(0).set_dimensions({batch_size, input_variables_number});
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -16133,17 +16139,11 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        Tensor<Index, 1> inputs_dimensions(4);
-        inputs_dimensions.setValues({batch_size, channels_number, rows_number, columns_number});
-
         inputs.resize(1);
-        inputs(0) = DynamicTensor<type>(inputs_dimensions);
+        inputs(0) = DynamicTensor<type>({batch_size, channels_number, rows_number, columns_number});
     }
 
-    Tensor<Index, 1> targets_dimensions(2);
-    targets_dimensions.setValues({batch_size, target_variables_number});
-
-    targets.set_dimensions(targets_dimensions);
+    targets.set_dimensions({batch_size, target_variables_number});
 }
 
 

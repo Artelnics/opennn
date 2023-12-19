@@ -53,11 +53,6 @@ class EmbeddingLayer : public Layer
 
 public:
 
-    /// Enumeration of the available activation functions for the perceptron neuron model.
-
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
-                                    ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
-
     // Constructors
 
     explicit EmbeddingLayer();
@@ -65,8 +60,7 @@ public:
     explicit EmbeddingLayer(const Index&, /// Input dim
                             const Index&, /// Input length
                             const Index&, /// Embedding depth
-                            const bool& = false, /// Add positional encoding or not
-                            const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::Linear);
+                            const bool& = false); /// Add positional encoding or not
 
     // Get methods
 
@@ -75,13 +69,9 @@ public:
     Index get_input_dim() const;
     Index get_input_length() const;
     Index get_depth() const;
-    PerceptronLayer get_perceptron_layer() const;
+    Tensor<type, 2> get_lookup_table() const;
 
     Index get_parameters_number() const final;
-
-    const PerceptronLayer::ActivationFunction& get_activation_function() const;
-
-    string write_activation_function() const;
 
     // Display messages
 
@@ -90,8 +80,7 @@ public:
     // Set methods
 
     void set();
-    void set(const Index&, const Index&, const Index&, const bool& = false,
-             const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::Linear);
+    void set(const Index&, const Index&, const Index&, const bool& = false);
 
     void set_default();
     void set_name(const string&);
@@ -102,10 +91,8 @@ public:
     void set_input_length(const Index&);
     void set_depth(const Index&);
 
-    void set_perceptron();
-
-    void set_activation_function(const PerceptronLayer::ActivationFunction&);
-    void set_activation_function(const string&);
+    void set_lookup_table();
+    void set_parameters_random() final;
 
     // Display messages
 
@@ -113,9 +100,9 @@ public:
 
     // Embedding lookup
 
-    Tensor<type, 2> one_hot_encode_row(const Tensor<type, 1>&);
+//    Tensor<type, 2> one_hot_encode_row(const Tensor<type, 1>&);
 
-    void lookup_embedding(const Tensor<type, 1>&, PerceptronLayerForwardPropagation*, const bool&);
+    void lookup_embedding(const Tensor<type, 2>&, EmbeddingLayerForwardPropagation*);
 
     // Positional encoding
 
@@ -134,8 +121,6 @@ public:
     // Expression methods
 
     //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-    string write_activation_function_expression() const;
 
     // Serialization methods
     /// @todo
@@ -159,17 +144,13 @@ protected:
 
     Index depth;
 
-    /// Perceptron layer
+    /// Lookup table
 
-    PerceptronLayer perceptron_layer;
+    Tensor<type, 2> lookup_table;
 
     /// Whether the layer has to add positional encoding or not
 
     bool positional_encoding;
-
-    /// Activation function variable.
-
-    PerceptronLayer::ActivationFunction activation_function;
 
     /// Display messages to screen.
 
@@ -219,9 +200,6 @@ protected:
 
             // Rest of quantities
 
-            PerceptronLayer perceptron_layer = layer_pointer-> get_perceptron_layer();
-
-            perceptron_forward_propagation.set(input_length, &perceptron_layer);
         }
 
         void print() const
@@ -240,7 +218,6 @@ protected:
             //            cout << attention_scores << endl;
         }
 
-        PerceptronLayerForwardPropagation perceptron_forward_propagation;
     };
 
 

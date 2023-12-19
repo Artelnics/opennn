@@ -72,6 +72,7 @@ HEADERS += \
     data_set.h \
     layer.h \
     scaling_layer.h \
+    transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
     probabilistic_layer.h \
@@ -141,6 +142,7 @@ SOURCES += \
     data_set.cpp \
     layer.cpp \
     scaling_layer.cpp \
+    transformer.cpp \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
     probabilistic_layer.cpp \

@@ -26,30 +26,6 @@ using namespace std;
 using namespace OpenNN;
 
 
-//Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
-//{
-//    const Index columns_number = box_plots.dimension(0);
-
-//    Tensor<type, 2> summary(5, columns_number);
-
-//    for(Index i = 0; i < columns_number; i++)
-//    {
-//        const BoxPlot& box_plot = box_plots(i);
-//        summary(0, i) = box_plot.minimum;
-//        summary(1, i) = box_plot.first_quartile;
-//        summary(2, i) = box_plot.median;
-//        summary(3, i) = box_plot.third_quartile;
-//        summary(4, i) = box_plot.maximum;
-//    }
-
-//    //todo
-//    Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
-//    Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
-
-//    return reshaped_summary;
-//}
-
-
 int main()
 {
    try
@@ -57,6 +33,69 @@ int main()
         cout << "Blank\n";
 
         srand(static_cast<unsigned>(time(nullptr)));
+
+        DataSet data_set;
+
+        data_set.set_data_file_name("../data/example2.txt");
+        data_set.set_text_separator(DataSet::Separator::Tab);
+
+        data_set.read_txt_language_model();
+
+        Tensor<type, 2> inputs_data = data_set.get_input_data();
+
+        Index batch_size = inputs_data.dimension(0);
+
+        Index input_length;
+
+        for(Index i = 1; i < inputs_data.dimension(1); i++)
+        {
+            if(inputs_data(0, i) == 1) input_length = i;
+        }
+
+        Index context_length = inputs_data.dimension(1) - input_length;
+
+        TensorMap<Tensor<type, 2>> input(inputs_data.data(), batch_size, input_length);
+        TensorMap<Tensor<type, 2>> context(inputs_data.data() + batch_size*(input_length), batch_size, context_length);
+
+        cout << "Input:" << endl << input << endl;
+        cout << "Context:" << endl << context << endl;
+
+        Tensor<type, 0> max_input_value = input.maximum();
+        Index input_dim = Index(max_input_value(0)) + 1;
+
+        Tensor<type, 0> max_context_value = context.maximum();
+        Index context_dim = Index(max_context_value(0)) + 1;
+
+        Tensor<DynamicTensor<type>, 1> inputs(2);
+        inputs(0) = DynamicTensor<type>((Tensor<type, 2>) context);
+        inputs(1) = DynamicTensor<type>((Tensor<type, 2>) input);
+
+        DataSetBatch dataset_batch;
+        dataset_batch.set_inputs(inputs);
+
+        Index embedding_depth = 5;
+        Index perceptron_depth = 7;
+        Index number_of_heads = 4;
+        Index number_of_layers = 1;
+
+        Transformer transformer({input_length, context_length, input_dim, context_dim,
+                                embedding_depth, perceptron_depth, number_of_heads, number_of_layers});
+
+        NeuralNetworkForwardPropagation forward_propagation(batch_size, &transformer);
+
+        auto start = std::chrono::system_clock::now();
+        transformer.forward_propagate(dataset_batch, forward_propagation, true);
+        auto end = std::chrono::system_clock::now();
+
+        std::chrono::duration<float,std::milli> duration = end - start;
+
+        std::cout << duration.count()/1000 << "s" << std::endl;
+
+//        Index total_number_of_layers = forward_propagation.layers();
+
+//        cout << forward_propagation.layers()
+
+        /// @todo encajar embedding con attention
 
         cout << "Bye!" << endl;
 

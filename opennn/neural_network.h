@@ -34,6 +34,8 @@
 #include "flatten_layer.h"
 //#include "region_proposal_layer.h"
 #include "non_max_suppression_layer.h"
+#include "embedding_layer.h"
+#include "multihead_attention_layer.h"
 
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
@@ -156,6 +158,7 @@ public:
    void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
 
    void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
+   void set_layer_inputs_indices(const string&, const initializer_list<string>&);
    void set_layer_inputs_indices(const string&, const string&);
 
    void set_project_type(const ProjectType&);
@@ -205,6 +208,8 @@ public:
    Index get_pooling_layers_number() const;
    Index get_long_short_term_memory_layers_number() const;
    Index get_recurrent_layers_number() const;
+
+   bool is_starting_layer(const Index&) const;
 
    // Architecture
 
@@ -326,7 +331,7 @@ public:
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&, bool&) const;
+   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&, const bool&) const;
 
    void forward_propagate_deploy(DataSetBatch&, NeuralNetworkForwardPropagation&) const;
 
@@ -482,6 +487,18 @@ struct NeuralNetworkForwardPropagation
             case Layer::Type::NonMaxSuppression:
             {
                 layers(i) = new NonMaxSuppressionLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::Embedding:
+            {
+                layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::MultiheadAttention:
+            {
+                layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 

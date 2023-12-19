@@ -343,7 +343,7 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
     return rank;
 }
 
-
+/*
 Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
 {
     const Index columns_number = box_plots.dimension(0);
@@ -365,7 +365,7 @@ Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
 
     return reshaped_summary;
 }
-
+*/
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 {

@@ -32,10 +32,9 @@ EmbeddingLayer::EmbeddingLayer() : Layer()
 EmbeddingLayer::EmbeddingLayer(const Index& new_input_dim,
                                const Index& new_input_length,
                                const Index& new_depth,
-                               const bool& new_positional_encoding,
-                               const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
+                               const bool& new_positional_encoding) : Layer()
 {
-    set(new_input_dim, new_input_length, new_depth, new_positional_encoding, new_activation_function);
+    set(new_input_dim, new_input_length, new_depth, new_positional_encoding);
 
     layer_type = Type::Embedding;
 
@@ -67,73 +66,11 @@ Index EmbeddingLayer::get_depth() const
 }
 
 
-/// Each returns the layer's Perceptron sub-layer.
-
-PerceptronLayer EmbeddingLayer::get_perceptron_layer() const
-{
-    return perceptron_layer;
-}
-
-
 /// Returns the number of parameters of the layer.
 
 Index EmbeddingLayer::get_parameters_number() const
 {
-    return perceptron_layer.get_parameters_number();
-}
-
-
-/// Returns the activation function of the layer.
-/// The activation function of a layer is the activation function of all perceptrons in it.
-
-const PerceptronLayer::ActivationFunction& EmbeddingLayer::get_activation_function() const
-{
-    return activation_function;
-}
-
-
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
-
-string EmbeddingLayer::write_activation_function() const
-{
-    switch(activation_function)
-    {
-    case PerceptronLayer::ActivationFunction::Logistic:
-        return "Logistic";
-
-    case PerceptronLayer::ActivationFunction::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case PerceptronLayer::ActivationFunction::Threshold:
-        return "Threshold";
-
-    case PerceptronLayer::ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";
-
-    case PerceptronLayer::ActivationFunction::Linear:
-        return "Linear";
-
-    case PerceptronLayer::ActivationFunction::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case PerceptronLayer::ActivationFunction::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case PerceptronLayer::ActivationFunction::SoftPlus:
-        return "SoftPlus";
-
-    case PerceptronLayer::ActivationFunction::SoftSign:
-        return "SoftSign";
-
-    case PerceptronLayer::ActivationFunction::HardSigmoid:
-        return "HardSigmoid";
-
-    case PerceptronLayer::ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
-    }
-
-    return string();
+    return lookup_table.size();
 }
 
 
@@ -159,7 +96,7 @@ void EmbeddingLayer::set()
 
     positional_encoding = false;
 
-    perceptron_layer.set();
+    lookup_table.resize(0, 0);
 
     set_default();
 }
@@ -171,8 +108,7 @@ void EmbeddingLayer::set()
 void EmbeddingLayer::set(const Index& new_input_dim,
                          const Index& new_input_length,
                          const Index& new_depth,
-                         const bool& new_positional_encoding,
-                         const PerceptronLayer::ActivationFunction& new_activation_function)
+                         const bool& new_positional_encoding)
 {
     input_dim = new_input_dim;
 
@@ -180,11 +116,9 @@ void EmbeddingLayer::set(const Index& new_input_dim,
 
     depth = new_depth;
 
-    set_perceptron();
+    set_lookup_table();
 
     positional_encoding = new_positional_encoding;
-
-    activation_function = new_activation_function;
 
     set_default();
 }
@@ -214,7 +148,7 @@ void EmbeddingLayer::set_input_dim(const Index& new_input_dim)
 {
     input_dim = new_input_dim;
 
-    set_perceptron();
+    set_lookup_table();
 }
 
 
@@ -232,84 +166,39 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 
-    set_perceptron();
+    set_lookup_table();
 }
 
 
-/// Sets the perceptron sub-layer according to the layer's parameters.
+/// Sets the lookup table and randomizes its parameters.
 
-void EmbeddingLayer::set_perceptron()
+void EmbeddingLayer::set_lookup_table()
 {
-    perceptron_layer.set(input_dim, depth, activation_function);
-}
+    lookup_table.resize(input_dim, depth);
 
-/// This class sets a new activation(or transfer) function in the layer.
-
-void EmbeddingLayer::set_activation_function(const PerceptronLayer::ActivationFunction& new_activation_function)
-{
-    activation_function = new_activation_function;
+    set_parameters_random();
 }
 
 
-/// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function Activation function for that layer.
-
-void EmbeddingLayer::set_activation_function(const string& new_activation_function_name)
+void EmbeddingLayer::set_parameters_random()
 {
-    if(new_activation_function_name == "Logistic")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::Logistic;
-    }
-    else if(new_activation_function_name == "HyperbolicTangent")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::SymmetricThreshold;
-    }
-    else if(new_activation_function_name == "Linear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::Linear;
-    }
-    else if(new_activation_function_name == "RectifiedLinear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::RectifiedLinear;
-    }
-    else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::ScaledExponentialLinear;
-    }
-    else if(new_activation_function_name == "SoftPlus")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::SoftPlus;
-    }
-    else if(new_activation_function_name == "SoftSign")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::SoftSign;
-    }
-    else if(new_activation_function_name == "HardSigmoid")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::HardSigmoid;
-    }
-    else if(new_activation_function_name == "ExponentialLinear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::ExponentialLinear;
-    }
-    else
-    {
-        ostringstream buffer;
+    const type minimum = type(-0.2);
+    const type maximum = type(0.2);
 
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_activation_function_name << ".\n";
+    // first row must is 0s because input value 0 is padding
+    for(Index j = 0; j < depth; j++)
+    {
+        lookup_table(0, j) = 0;
+    }
 
-        throw invalid_argument(buffer.str());
+    for(Index i = 1; i < input_dim; i++)
+    {
+        for(Index j = 0; j < depth; j++)
+        {
+            const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+            lookup_table(i, j) = minimum + (maximum - minimum)*random;
+        }
     }
 }
 
@@ -325,6 +214,7 @@ void EmbeddingLayer::set_display(const bool& new_display)
 }
 
 
+/*
 /// Calculates one-hot encoding, of dimension = input_dim, of an input row (assuming all input values are integers)
 /// @return Matrix of one-hot encodings of all values in input_row
 
@@ -350,27 +240,36 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
 
     return one_hot_encoded_input_row;
 }
+*/
 
 
 /// Looks up embedding of an input row, by passing its one-hot encoding through a perceptron layer (that corresponds to the lookup table)
 /// Saves the embedding matrix of the row in outputs_data of the given perceptron layer forward propagation structure
 
-void EmbeddingLayer::lookup_embedding(const Tensor<type, 1>& input_row,
-                                    PerceptronLayerForwardPropagation* perceptron_forward_propagation,
-                                    const bool& is_training)
+void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation)
 {
-    Tensor<type, 2> one_hot_encoded_input_row = one_hot_encode_row(input_row);
+    TensorMap<Tensor<type, 3>> output = embedding_layer_forward_propagation->outputs(0).to_tensor_map<3>();
 
-    Tensor<type*, 1> one_hot_encoded_input_row_data(1);
-    one_hot_encoded_input_row_data.setValues({one_hot_encoded_input_row.data()});
+    const Index batch_size = inputs.dimension(0);
 
-    Tensor<Tensor<Index, 1>, 1> one_hot_encoded_input_row_dimensions;
-    one_hot_encoded_input_row_dimensions.setValues({get_dimensions(one_hot_encoded_input_row)});
+//#pragma omp parallel for
+    for(Index batch_element = 0; batch_element < batch_size; batch_element++)
+    {
+        for(Index input_position = 0; input_position < input_length; input_position++)
+        {
+            output.chip(batch_element, 0).chip(input_position, 0) = lookup_table.chip(inputs(batch_element, input_position), 0);
+        }
+    }
 
-//    perceptron_layer.forward_propagate(one_hot_encoded_input_row_data,
-//                                       one_hot_encoded_input_row_dimensions, // input_length is batch_size
-//                                       perceptron_forward_propagation,
-//                                       is_training);
+    if(positional_encoding)
+    {
+        const Tensor<type, 2> positional_encoding_matrix = build_positional_encoding_matrix();
+//#pragma omp parallel for
+        for(Index batch_element = 0; batch_element < batch_size; batch_element++)
+        {
+            output.chip(batch_element, 0) += positional_encoding_matrix;
+        }
+    }
 };
 
 
@@ -386,7 +285,7 @@ const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
 #pragma omp parallel for collapse(2)
     for(Index i = 0; i < input_length; i++)
     {
-        for(Index j = 0; j < half_depth - 1; j++)
+        for(Index j = 0; j < static_cast<Index>(half_depth - 1); j++)
         {
             positional_encoding_matrix(i, 2*j) = sin( (i + 1) / pow(100000, (j + 1) / half_depth) );
             positional_encoding_matrix(i, 2*j+1) = cos( (i + 1) / pow(100000, (j + 1) / half_depth) );
@@ -420,39 +319,14 @@ void EmbeddingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inp
         throw invalid_argument(buffer.str());
     }
 
-    const Index batch_size = inputs(0).get_dimension(0);
-
     const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs(0).to_tensor_map<2>();
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
         = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation =
-        embedding_layer_forward_propagation->perceptron_forward_propagation;
-
-    Tensor<type, 1> input_row(input_length);
-
-//#pragma omp parallel for
-    for(Index i = 0; i < batch_size; i++)
-    {
-        input_row = inputs_tensor_map.chip(i, 0);
-        lookup_embedding(input_row, &perceptron_layer_forward_propagation, is_training);
-
-        memcpy(embedding_layer_forward_propagation->outputs(0).get_data() + i*input_length*depth,
-               perceptron_layer_forward_propagation.outputs(0).get_data(),
-               static_cast<size_t>(input_length*depth*sizeof(type)));
-    }
-
-    if(positional_encoding)
-    {
-        TensorMap<Tensor<type, 3>> outputs = embedding_layer_forward_propagation->outputs(0).to_tensor_map<3>();
-
-        const Tensor<type, 2> positional_encoding_matrix = build_positional_encoding_matrix();
-#pragma omp parallel for
-        for(Index i = 0; i < batch_size; i++)
-            outputs.chip(i, 0) += positional_encoding_matrix;
-    }
+    lookup_embedding(inputs_tensor_map, embedding_layer_forward_propagation);
 }
+
 
 /*
 void EmbeddingLayer::forward_propagate(type* inputs_data,
@@ -509,48 +383,6 @@ void EmbeddingLayer::forward_propagate(type* inputs_data,
 }
 */
 
-
-string EmbeddingLayer::write_activation_function_expression() const
-{
-    switch(activation_function)
-    {
-    case PerceptronLayer::ActivationFunction::Threshold:
-        return "threshold";
-
-    case PerceptronLayer::ActivationFunction::SymmetricThreshold:
-        return "symmetric_threshold";
-
-    case PerceptronLayer::ActivationFunction::Logistic:
-        return "logistic";
-
-    case PerceptronLayer::ActivationFunction::HyperbolicTangent:
-        return "tanh";
-
-    case PerceptronLayer::ActivationFunction::Linear:
-        return string();
-
-    case PerceptronLayer::ActivationFunction::RectifiedLinear:
-        return "ReLU";
-
-    case PerceptronLayer::ActivationFunction::ExponentialLinear:
-        return "ELU";
-
-    case PerceptronLayer::ActivationFunction::ScaledExponentialLinear:
-        return "SELU";
-
-    case PerceptronLayer::ActivationFunction::SoftPlus:
-        return "soft_plus";
-
-    case PerceptronLayer::ActivationFunction::SoftSign:
-        return "soft_sign";
-
-    case PerceptronLayer::ActivationFunction::HardSigmoid:
-        return "hard_sigmoid";
-
-    default:
-        return string();
-    }
-}
 
 /// @todo
 ///// Returns a string with the expression of the inputs-outputs relationship of the layer.
