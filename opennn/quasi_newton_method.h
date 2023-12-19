@@ -117,7 +117,7 @@ public:
 
    Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   void update_parameters(const DataSetBatch& , NeuralNetworkForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData&) const;
+   void update_parameters(const DataSetBatch& , ForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training() final;
 

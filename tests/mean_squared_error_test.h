@@ -12,6 +12,8 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/neural_network_forward_propagation.h"
+#include "../opennn/loss_index_back_propagation.h"
 
 class MeanSquaredErrorTest : public UnitTesting 
 {
@@ -61,7 +63,7 @@ private:
 
     DataSetBatch batch;
 
-    NeuralNetworkForwardPropagation forward_propagation;
+    ForwardPropagation forward_propagation;
 
     LossIndexBackPropagation back_propagation;
 

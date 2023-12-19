@@ -67,12 +67,12 @@ int main(void)
         Tensor<type, 2> true_outlier = data_set.get_column_data("outlier");
         data_set.set_column_use("outlier", DataSet::VariableUse::Unused);
 
-        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index input_variables_number = data_set.get_input_numeric_variables_number();
 
         t0 = clock();
 
-        Tensor<Index, 1> outliers = data_set.calculate_local_outlier_factor_outliers(K, data_set.get_used_samples_number(), contamination);
-
+//        Tensor<Index, 1> outliers = data_set.calculate_local_outlier_factor_outliers(K, data_set.get_used_samples_number(), contamination);
+        Tensor<Index, 1> outliers;
         t1 = clock();
         double time = (double(t1-t0)/CLOCKS_PER_SEC);
 

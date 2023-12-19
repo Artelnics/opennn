@@ -15,6 +15,10 @@
 // Data set
 
 #include "data_set.h"
+#include "time_series_data_set.h"
+#include "auto_association_data_set.h"
+#include "text_data_set.h"
+#include "image_data_set.h"
 
 // Neural network
 
@@ -38,6 +42,7 @@
 #include "flatten_layer.h"
 #include "neural_network.h"
 #include "transformer.h"
+#include "neural_network_forward_propagation.h"
 #include "vgg16.h"
 
 // Training strategy

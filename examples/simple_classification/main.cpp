@@ -37,7 +37,7 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 

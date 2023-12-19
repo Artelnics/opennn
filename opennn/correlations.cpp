@@ -264,7 +264,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
 
     exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
 
-    exponential_correlation.correlation_type = CorrelationType::Exponential;
+    exponential_correlation.form = Correlation::Form::Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
 
@@ -490,7 +490,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 #endif
 
     Correlation linear_correlation;
-    linear_correlation.correlation_type = CorrelationType::Linear;
+    linear_correlation.form = Correlation::Form::Linear;
 
     if(is_constant(x) && !is_constant(y))
     {
@@ -743,7 +743,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
 
     logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y);
 
-    logarithmic_correlation.correlation_type = CorrelationType::Logarithmic;
+    logarithmic_correlation.form = Correlation::Form::Logarithmic;
 
     return logarithmic_correlation;
 }
@@ -768,7 +768,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationType::Logistic;
+        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -782,7 +782,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {1,1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -823,7 +823,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
-    correlation.correlation_type = CorrelationType::Logistic;
+    correlation.form = Correlation::Form::Logistic;
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
@@ -852,7 +852,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationType::Logistic;
+        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -866,7 +866,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {1,1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -905,7 +905,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
-    correlation.correlation_type = CorrelationType::Logistic;
+    correlation.form = Correlation::Form::Logistic;
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
@@ -935,7 +935,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationType::Logistic;
+        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -944,7 +944,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationType::Logistic;
+        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -963,10 +963,10 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     data_set.set_training();
 
-    const Index input_variables_number = data_set.get_input_variables_number();
-    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index input_variables_number = data_set.get_input_numeric_variables_number();
+    const Index target_variables_number = data_set.get_target_numeric_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
@@ -1007,7 +1007,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
-    correlation.correlation_type = CorrelationType::Logistic;
+    correlation.form = Correlation::Form::Logistic;
 
     return correlation;
 }
@@ -1042,7 +1042,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
         {
             correlation.r = static_cast<type>(1);
 
-            correlation.correlation_type = CorrelationType::Logistic;
+            correlation.form = Correlation::Form::Logistic;
 
             return correlation;
         }
@@ -1054,7 +1054,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationType::Logistic;
+        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -1064,7 +1064,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     {
         correlation.r = static_cast<type>(NAN);
 
-        correlation.correlation_type = CorrelationType::Logistic;
+        correlation.form = Correlation::Form::Logistic;
 
         return correlation;
     }
@@ -1089,10 +1089,10 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     data_set.set_training();
 
-    const Index input_variables_number = data_set.get_input_variables_number();
-    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index input_variables_number = data_set.get_input_numeric_variables_number();
+    const Index target_variables_number = data_set.get_target_numeric_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
@@ -1133,7 +1133,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
-    correlation.correlation_type = CorrelationType::Logistic;
+    correlation.form = Correlation::Form::Logistic;
 
     return correlation;
 }
@@ -1187,7 +1187,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 
     power_correlation = linear_correlation(thread_pool_device, x.log(), y.log());
 
-    power_correlation.correlation_type = CorrelationType::Power;
+    power_correlation.form = Correlation::Form::Power;
 
     power_correlation.a = exp(power_correlation.a);
 

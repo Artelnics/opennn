@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "mean_squared_error.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -40,7 +41,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 /// \param back_propagation
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation&,
+                     const ForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -72,7 +73,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation&,
+                     const ForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -90,7 +91,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                              NeuralNetworkForwardPropagation&,
+                                              ForwardPropagation&,
                                               LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -133,7 +134,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
-                                                 NeuralNetworkForwardPropagation&,
+                                                 ForwardPropagation&,
                                                  LossIndexBackPropagationLM& loss_index_back_propagation) const
 {
 #ifdef OPENNN_DEBUG

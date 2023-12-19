@@ -31,8 +31,8 @@ namespace OpenNN
 {
 
 
-KMeans::KMeans(Index clusters, string distance_calculation_metod, Index iterations_number)
-    : clusters_number(clusters), maximum_iterations(iterations_number), metric(distance_calculation_metod)
+KMeans::KMeans(Index clusters, string distance_calculation_method, Index iterations_number)
+    : clusters_number(clusters), maximum_iterations(iterations_number), metric(distance_calculation_method)
 {
 }
 
@@ -51,9 +51,9 @@ void KMeans::fit(const Tensor<type, 2>& data)
 
     set_centers_random(data);
 
-    for (Index iterations_number = 0; iterations_number < maximum_iterations; iterations_number++)
-    {
-        for (Index row_index = 0; row_index < rows_number; row_index++)
+    for(Index iterations_number = 0; iterations_number < maximum_iterations; iterations_number++)
+    {              
+        for(Index row_index = 0; row_index < rows_number; row_index++)
         {
             row = data.chip(row_index, 0);
 
@@ -69,7 +69,7 @@ void KMeans::fit(const Tensor<type, 2>& data)
 
                 const type distance = l2_distance(row, center);
 
-                if (distance < minimum_distance)
+                if(distance < minimum_distance)
                 {
                     minimum_distance = distance;
                     minimal_distance_cluster_index = cluster_index;
@@ -85,9 +85,9 @@ void KMeans::fit(const Tensor<type, 2>& data)
 
             Index count = 0;
 
-            for (Index row_index = 0; row_index < rows_number; row_index++)
+            for(Index row_index = 0; row_index < rows_number; row_index++)
             {
-                if (rows_cluster_labels(row_index) == cluster_index)
+                if(rows_cluster_labels(row_index) == cluster_index)
                 {
                     row = data.chip(row_index, 0);
 
@@ -96,12 +96,11 @@ void KMeans::fit(const Tensor<type, 2>& data)
                 }
             }
 
-            if (count != 0)
+            if(count != 0)
             {
                 center = center_sum / static_cast<type>(count);
                 cluster_centers.chip(cluster_index, 0) = center;
             }
-
         }
     }
 }
@@ -115,7 +114,7 @@ Tensor<Index, 1> KMeans::calculate_outputs(const Tensor<type, 2>& data)
 
     Tensor<Index, 1> predictions(rows_number);
 
-    for (Index row_index = 0; row_index < rows_number; row_index++)
+    for(Index row_index = 0; row_index < rows_number; row_index++)
     {
         row = data.chip(row_index, 0);
         center = cluster_centers.chip(0, 0);
@@ -128,7 +127,7 @@ Tensor<Index, 1> KMeans::calculate_outputs(const Tensor<type, 2>& data)
             center = cluster_centers.chip(cluster_index, 0);
             const type distance = l2_distance(row, center);
 
-            if (distance < minimum_distance)
+            if(distance < minimum_distance)
             {
                 minimum_distance = distance;
                 minimal_distance_cluster_index = cluster_index;
@@ -153,14 +152,15 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
     Index original_clusters_number = clusters_number;
     type sum_squared_error;
 
-    for (Index cluster_index = 1; cluster_index <= max_clusters; cluster_index++)
+    for(Index cluster_index = 1; cluster_index <= max_clusters; cluster_index++)
     {
         clusters_number = cluster_index;
+
         fit(data);
 
         sum_squared_error = 0;
 
-        for (Index row_index = 0; row_index < rows_number; row_index++)
+        for(Index row_index = 0; row_index < rows_number; row_index++)
         {
             data_point = data.chip(row_index, 0);
             cluster_center = cluster_centers.chip(rows_cluster_labels(row_index), 0);
@@ -196,7 +196,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
     Tensor<type, 1> current_point(2);
     type perpendicular_distance;
 
-    for (Index cluster_index = 1; cluster_index <= cluster_number; cluster_index++)
+    for(Index cluster_index = 1; cluster_index <= cluster_number; cluster_index++)
     {
         current_point(0) = cluster_index;
         current_point(1) = sum_squared_error_values(cluster_index-1);
@@ -206,7 +206,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
                                      final_endpoint(0) * initial_endpoint(1) - final_endpoint(1) * initial_endpoint(0)) /
                                      sqrt(pow(final_endpoint(1) - initial_endpoint(1), 2) + pow(final_endpoint(0) - initial_endpoint(0), 2));
 
-        if (perpendicular_distance > max_distance)
+        if(perpendicular_distance > max_distance)
         {
             max_distance = perpendicular_distance;
             optimal_clusters_number = cluster_index;
@@ -246,7 +246,7 @@ void KMeans::set_centers_random(const Tensor<type, 2>& data)
     mt19937 gen(rd());
     uniform_int_distribution<> index_distribution(0, data_size - 1);
 
-    for (Index i = 0; i < clusters_number; i++)
+    for(Index i = 0; i < clusters_number; i++)
     {
         cluster_centers.chip(i, 0) = data.chip(index_distribution(gen), 0);
     }

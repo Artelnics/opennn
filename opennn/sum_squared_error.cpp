@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -33,7 +34,7 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, Data
 
 
 void SumSquaredError::calculate_error(const DataSetBatch&,
-                     const NeuralNetworkForwardPropagation&,
+                     const ForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -56,7 +57,7 @@ void SumSquaredError::calculate_error(const DataSetBatch&,
 
 
 void SumSquaredError::calculate_error_lm(const DataSetBatch&,
-                     const NeuralNetworkForwardPropagation&,
+                     const ForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -68,7 +69,7 @@ void SumSquaredError::calculate_error_lm(const DataSetBatch&,
 
 
 void SumSquaredError::calculate_output_delta(const DataSetBatch&,
-                                             NeuralNetworkForwardPropagation&,
+                                             ForwardPropagation&,
                                              LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -103,7 +104,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
 
 void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
-                                                NeuralNetworkForwardPropagation&,
+                                                ForwardPropagation&,
                                                 LossIndexBackPropagationLM& loss_index_back_propagation) const
 {
 #ifdef OPENNN_DEBUG

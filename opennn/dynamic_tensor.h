@@ -25,14 +25,13 @@ namespace opennn{
 
 
 template <typename T>
-class DynamicTensor {
-
+class DynamicTensor
+{
 
 public:
 
     DynamicTensor()
     {
-        dimensions.resize(0);
     }
 
 
@@ -151,6 +150,7 @@ public:
     }
 
 
+
     T* get_data() const
     {
         return data;
@@ -206,7 +206,8 @@ public:
     {
         std::array<Index, rank> sizes;
 
-        for (Index i = 0; i < dimensions.size(); ++i) {
+        for(Index i = 0; i < dimensions.size(); ++i)
+        {
             sizes[i] = dimensions(i);
         }
 

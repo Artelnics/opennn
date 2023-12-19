@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "growing_inputs.h"
+#include "correlations.h"
 
 namespace opennn
 {
@@ -243,7 +244,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         data_set_pointer->set_column_use(correlations_rank_descending[column_index], DataSet::VariableUse::Input);
 
         Index input_columns_number = data_set_pointer->get_input_columns_number();
-        Index input_variables_number = data_set_pointer->get_input_variables_number();
+        Index input_variables_number = data_set_pointer->get_input_numeric_variables_number();
 
         if(input_columns_number >= minimum_inputs_number)
         {
@@ -408,7 +409,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_numeric_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 

@@ -6,7 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "neural_network_forward_propagation.h"
 #include "loss_index.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -317,7 +319,7 @@ void LossIndex::check() const
 
 
 void LossIndex::calculate_errors(const DataSetBatch& batch,
-                                 const NeuralNetworkForwardPropagation& forward_propagation,
+                                 const ForwardPropagation& forward_propagation,
                                  LossIndexBackPropagation& back_propagation) const
 {
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
@@ -359,7 +361,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
 
 void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
-                                 const NeuralNetworkForwardPropagation & neural_network_forward_propagation,
+                                 const ForwardPropagation & neural_network_forward_propagation,
                                  LossIndexBackPropagationLM & loss_index_back_propagation) const
 {
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
@@ -373,7 +375,7 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
 
 void LossIndex::calculate_squared_errors_lm(const DataSetBatch& ,
-                                            const NeuralNetworkForwardPropagation& ,
+                                            const ForwardPropagation& ,
                                             LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
     loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = loss_index_back_propagation_lm.errors.square().sum(rows_sum).sqrt();
@@ -381,7 +383,7 @@ void LossIndex::calculate_squared_errors_lm(const DataSetBatch& ,
 
 
 void LossIndex::back_propagate(const DataSetBatch& batch,
-                               NeuralNetworkForwardPropagation& forward_propagation,
+                               ForwardPropagation& forward_propagation,
                                LossIndexBackPropagation& back_propagation) const
 {
     // Loss index
@@ -425,7 +427,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 /// Returns a second-order terms loss structure, which contains the values and the Hessian of the error terms function.
 
 void LossIndex::back_propagate_lm(const DataSetBatch& batch,
-                                  NeuralNetworkForwardPropagation& forward_propagation,
+                                  ForwardPropagation& forward_propagation,
                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
     calculate_errors_lm(batch, forward_propagation, loss_index_back_propagation_lm);
@@ -476,7 +478,7 @@ void LossIndex::back_propagate_lm(const DataSetBatch& batch,
 /// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
-                                                  NeuralNetworkForwardPropagation& forward_propagation,
+                                                  ForwardPropagation& forward_propagation,
                                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -688,7 +690,7 @@ void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Te
 
 
 void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
-                                       NeuralNetworkForwardPropagation& forward_propagation,
+                                       ForwardPropagation& forward_propagation,
                                        LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -718,7 +720,7 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
 
 void LossIndex::calculate_layers_delta_lm(const DataSetBatch& batch,
-                                          NeuralNetworkForwardPropagation& forward_propagation,
+                                          ForwardPropagation& forward_propagation,
                                           LossIndexBackPropagationLM& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -748,7 +750,7 @@ void LossIndex::calculate_layers_delta_lm(const DataSetBatch& batch,
 
 
 void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
-                                                const NeuralNetworkForwardPropagation& forward_propagation,
+                                                const ForwardPropagation& forward_propagation,
                                                 LossIndexBackPropagation& back_propagation) const
 {
     #ifdef OPENNN_DEBUG
@@ -985,12 +987,12 @@ Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
 
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
 
     DataSetBatch batch(samples_number, data_set_pointer);
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-    NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+    ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
     LossIndexBackPropagation back_propagation(samples_number, this);
 
@@ -1054,11 +1056,11 @@ Tensor<type, 2> LossIndex::calculate_jacobian_numerical_differentiation()
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
 
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-    NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+    ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
     LossIndexBackPropagation back_propagation(samples_number, this);
 

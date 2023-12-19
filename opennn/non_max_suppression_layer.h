@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "layer.h"
-//#include "opennn_images.h"
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {

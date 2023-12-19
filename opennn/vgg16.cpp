@@ -3,7 +3,7 @@
 
 VGG16::VGG16() : NeuralNetwork()
 {
-    set_project_type(ProjectType::ImageClassification);
+    set_model_type(ModelType::ImageClassification);
 
     Tensor<Index, 1> input_variables_dimensions(3);
     input_variables_dimensions.setValues({224,224,3});

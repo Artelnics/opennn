@@ -100,6 +100,7 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     return image_data;
 }
 
+
 void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
 {
     unsigned char* aux_row = nullptr;
@@ -118,8 +119,9 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
     }
 }
 
+
 void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
-                         TensorMap<Tensor<type, 3>>& output)
+                     TensorMap<Tensor<type, 3>>& output)
 {
     const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
 
@@ -129,6 +131,7 @@ void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
 
     output = input.reverse(reflect_horizontal_dimesions);
 }
+
 
 void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
                      TensorMap<Tensor<type, 3>>& output)
@@ -141,6 +144,7 @@ void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
 
     output = input.reverse(reflect_vertical_dimesions);
 }
+
 
 void rotate_image(TensorMap<Tensor<type, 3>>& input,
                   TensorMap<Tensor<type, 3>>& output,
@@ -206,11 +210,9 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
 
         }
     }
-*/}
+*/
+}
 
-//    void rescale_image(const Tensor<type, 3>& input,
-//                       Tensor<type, 3>& output,
-//                       const type& )
 
 void translate_image(TensorMap<Tensor<type, 3>>& input,
                      TensorMap<Tensor<type, 3>>& output,
@@ -270,8 +272,10 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
             }
         }
     }
+
     return data_without_padding;
 }
+
 
 Tensor<Tensor<type, 1>, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>& image_data, const Index& width_to_resize, const Index& height_to_resize)
 {
@@ -438,6 +442,7 @@ Tensor<type, 1> get_bounding_box(const Tensor<Tensor<type, 1>, 1>& image,
     return bounding_box_data;
 }
 
+
 Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>& input_image,
                                         Index& x_top_left, Index& y_top_left,
                                         Index& x_bottom_right, Index& y_bottom_right)
@@ -446,6 +451,7 @@ Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>& input_image,
     return ground_truth_image;
 }
 
+
 Tensor<type, 1> resize_image(Tensor<type, 1>& input_image)
 {
     Tensor<type, 1> output_image;
@@ -453,9 +459,12 @@ Tensor<type, 1> resize_image(Tensor<type, 1>& input_image)
 }
 
 
-Tensor<type, 1> resize_proposed_region(const Tensor<type, 1> region_data, const Index& channels_number,
-                                       const Index& region_width, const Index& region_height,
-                                       const Index& new_width, const Index& new_height)
+Tensor<type, 1> resize_proposed_region(const Tensor<type, 1> region_data,
+                                       const Index& channels_number,
+                                       const Index& region_width,
+                                       const Index& region_height,
+                                       const Index& new_width,
+                                       const Index& new_height)
 {
     Tensor<type, 1> new_resized_region_data(channels_number * new_width * new_height);
 
@@ -492,9 +501,9 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                                       const Index &channels_number)
 {
     /*
-    const fs::path path = data_file_name;
+    const fs::path path = data_source_path;
 
-    if(data_file_name.empty())
+    if(data_source_path.empty())
     {
         ostringstream buffer;
 

@@ -23,6 +23,7 @@
 #include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 #include "../eigen/Eigen/Dense"
+#include "statistics.h"
 
 using Eigen::MatrixXd;
 
@@ -161,9 +162,9 @@ void swap_rows(Tensor<type, 2>&, Index, Index);
 void quick_sort(Tensor<type, 2>&, Index, Index, Index);
 void quicksort_by_column(Tensor<type, 2>&, Index);
 
-Tensor<type, 1> compute_elementwise_difference(Tensor<type, 1>&);
-Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, type);
-Tensor<type, 1> compute_mode(Tensor<type, 1>&);
+Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
+Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
+Tensor<type, 1> mode(Tensor<type, 1>&);
 
 Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
 

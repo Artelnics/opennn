@@ -29,9 +29,9 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
-#include "config.h"
 
 namespace opennn
 {

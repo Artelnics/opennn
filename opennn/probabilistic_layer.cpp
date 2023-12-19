@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn_strings.h"
 #include "probabilistic_layer.h"
 
 namespace opennn

@@ -65,7 +65,7 @@ void StochasticGradientDescentTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
@@ -79,7 +79,7 @@ void StochasticGradientDescentTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(-1);
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);

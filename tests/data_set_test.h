@@ -150,7 +150,7 @@ public:
 
    string data_string;
 
-   string data_file_name;
+   string data_source_path;
 
 
    Index inputs_number;

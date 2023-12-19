@@ -64,13 +64,25 @@ HEADERS += \
     opennn_strings.h \
     opennn_images.h \
     statistics.h \
+    descriptives.h \
+    box_plot.h \
+    histogram.h \
     scaling.h \
     correlations.h \
+    correlation.h \
     codification.h \
     tinyxml2.h \
     filesystem.h \
     data_set.h \
+    data_set_batch.h \
+    time_series_data_set.h \
+    auto_association_data_set.h \
+    image_data_set.h \
+    text_data_set.h \
+    language_data_set.h \
     layer.h \
+    layer_forward_propagation.h \
+    layer_back_propagation.h \
     scaling_layer.h \
     transformer.h \
     unscaling_layer.h \
@@ -82,12 +94,17 @@ HEADERS += \
     long_short_term_memory_layer.h \
     recurrent_layer.h \
     neural_network.h \
+    neural_network_forward_propagation.h \
+    neural_network_back_propagation.h \
+    neural_network_back_propagation_lm.h \
+    auto_associative_neural_network.h \
     loss_index.h \
+    loss_index_forward_propagation.h \
+    loss_index_back_propagation.h \
     mean_squared_error.h \
     optimization_algorithm.h \
     stochastic_gradient_descent.h\
     training_strategy.h \
-    neural_network.h \
     sum_squared_error.h\
     normalized_squared_error.h\
     minkowski_error.h \
@@ -122,6 +139,9 @@ HEADERS += \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
     multihead_attention_layer.h \
+    bounding_box.h \
+    unscaling_layer_forward_propagation.h \
+    word_bag.h \
     opennn.h
 
 SOURCES += \
@@ -140,6 +160,12 @@ SOURCES += \
     codification.cpp \
     tinyxml2.cpp \
     data_set.cpp \
+    data_set_batch.cpp \
+    time_series_data_set.cpp \
+    auto_association_data_set.cpp \
+    image_data_set.cpp \
+    text_data_set.cpp \
+    language_data_set.cpp \
     layer.cpp \
     scaling_layer.cpp \
     transformer.cpp \
@@ -152,12 +178,12 @@ SOURCES += \
     long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
     neural_network.cpp \
+    auto_associative_neural_network.cpp \
     loss_index.cpp \
     mean_squared_error.cpp \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \
     optimization_algorithm.cpp \
-    data_set.cpp \
     sum_squared_error.cpp \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
@@ -189,6 +215,7 @@ SOURCES += \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \
     multihead_attention_layer.cpp \
+    bounding_box.cpp \
     unit_testing.cpp
 
 

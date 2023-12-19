@@ -22,6 +22,8 @@
 
 #include "config.h"
 #include "layer.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
 
 #ifdef OPENNN_MKL
 #include "../mkl/mkl.h"
@@ -48,7 +50,6 @@ struct MultiheadAttentionLayerBackPropagationLM;
 /// Layers of Multihead Attention will be used to construct Transformer models .
 
 class MultiheadAttentionLayer : public Layer
-
 {
 
 public:
@@ -292,58 +293,6 @@ protected:
         DynamicTensor<type> attention_scores;
         DynamicTensor<type> attention_outputs;
     };
-
-
-    struct MultiheadAttentionLayerBackPropagationLM : LayerBackPropagationLM
-    {
-        // Default constructor
-
-        explicit MultiheadAttentionLayerBackPropagationLM() : LayerBackPropagationLM()
-        {
-
-        }
-
-
-        explicit MultiheadAttentionLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-            : LayerBackPropagationLM()
-        {
-            set(new_batch_samples_number, new_layer_pointer);
-        }
-
-
-        virtual ~MultiheadAttentionLayerBackPropagationLM()
-        {
-
-        }
-
-
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
-
-            batch_samples_number = new_batch_samples_number;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-            const Index parameters_number = layer_pointer->get_parameters_number();
-
-            deltas.resize(batch_samples_number, neurons_number);
-
-            squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-        }
-
-        void print() const
-        {
-            cout << "Deltas:" << endl;
-            cout << deltas << endl;
-
-            cout << "Squared errors Jacobian: " << endl;
-            cout << squared_errors_Jacobian << endl;
-
-        }
-
-        Tensor<type, 2> squared_errors_Jacobian;
-    };
-
 
 
     struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation

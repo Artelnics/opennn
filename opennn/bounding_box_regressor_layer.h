@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 #include "opennn_strings.h"
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {

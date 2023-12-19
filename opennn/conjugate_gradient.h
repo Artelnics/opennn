@@ -139,7 +139,7 @@ public:
 
    void update_parameters(
            const DataSetBatch&,
-           NeuralNetworkForwardPropagation&,
+           ForwardPropagation&,
            LossIndexBackPropagation&,
            ConjugateGradientData&) const;
 

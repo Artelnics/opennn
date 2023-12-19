@@ -31,7 +31,7 @@ int main()
    try
    {
         cout << "Blank\n";
-
+/*
         srand(static_cast<unsigned>(time(nullptr)));
 
         DataSet data_set;
@@ -90,7 +90,7 @@ int main()
         std::chrono::duration<float,std::milli> duration = end - start;
 
         std::cout << duration.count()/1000 << "s" << std::endl;
-
+*/
 //        Index total_number_of_layers = forward_propagation.layers();
 
 //        cout << forward_propagation.layers()

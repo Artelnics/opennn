@@ -33,14 +33,14 @@ int main()
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index input_variables_number = data_set.get_input_numeric_variables_number();
+        const Index target_variables_number = data_set.get_target_numeric_variables_number();
 
         // Neural network
 
         const Index neurons_number = 10;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {input_variables_number, neurons_number, target_variables_number});
 
         // Training strategy
 
@@ -64,7 +64,21 @@ int main()
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/airfoil_self_noise.c");
 
-        cout << "Good bye!" << endl;
+        // Deploy
+
+        NeuralNetwork new_neural_network;
+
+        new_neural_network.load("../data/neural_network.xml");
+
+        Tensor<DynamicTensor<type>, 1> inputs;
+
+        ForwardPropagation forward_propagation(1, &new_neural_network);
+
+        new_neural_network.forward_propagate(inputs, forward_propagation);
+
+        const Tensor<DynamicTensor<type>, 1>& outputs = forward_propagation.get_outputs();
+
+        cout << "Good bye!" << endl;       
 
         return 0;
     }

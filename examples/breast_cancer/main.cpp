@@ -31,14 +31,14 @@ int main()
 
                 DataSet data_set("../data/breast_cancer.csv", ';', true);
 
-                const Index input_variables_number = data_set.get_input_variables_number();
-                const Index target_variables_number = data_set.get_target_variables_number();
+                const Index input_variables_number = data_set.get_input_numeric_variables_number();
+                const Index target_variables_number = data_set.get_target_numeric_variables_number();
 
                 // Neural network
 
                 const Index neurons_number = 6;
 
-                NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, neurons_number, target_variables_number});
+                NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, neurons_number, target_variables_number});
 
                 neural_network.print();
 

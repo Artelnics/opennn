@@ -89,7 +89,7 @@ private:
         data_set.set_variables_names(names);
         data_set.set_training();
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation,
+        neural_network.set(NeuralNetwork::ModelType::Approximation,
                                      { input_variables_number, hidden_neurons_number, target_variables_number});
 
         training_strategy.set(&neural_network, &data_set);
@@ -123,8 +123,8 @@ private:
 
         data_set.set_input_target_columns(inputs_index,outputs_index);
 
-        neural_network_2.set(NeuralNetwork::ProjectType::Approximation,
-                                     { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
+        neural_network_2.set(NeuralNetwork::ModelType::Approximation,
+                                     { data_set.get_input_numeric_variables_number(), 2, data_set.get_target_numeric_variables_number()});
 
         training_strategy.set(&neural_network_2, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);

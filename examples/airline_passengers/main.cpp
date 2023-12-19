@@ -31,18 +31,18 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/airline_passengers.csv", ',', true);
+        TimeSeriesDataSet time_series_data_set("../data/airline_passengers.csv", ',', true);
 
         const Index lags_number = 2;
         const Index steps_ahead_number = 1;
 
-        data_set.set_lags_number(lags_number);
-        data_set.set_steps_ahead_number(steps_ahead_number);
+        time_series_data_set.set_lags_number(lags_number);
+        time_series_data_set.set_steps_ahead_number(steps_ahead_number);
 
-        data_set.transform_time_series();
+        time_series_data_set.transform_time_series();
 
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index input_variables_number = time_series_data_set.get_input_numeric_variables_number();
+        const Index target_variables_number = time_series_data_set.get_target_numeric_variables_number();
 
         cout << "Input variables number: " << input_variables_number << endl;
         cout << "Target variables number: " << target_variables_number << endl;
@@ -51,11 +51,11 @@ int main()
 
         const Index hidden_neurons_number = 10;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &time_series_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
@@ -68,17 +68,15 @@ int main()
         // Calculate outputs
 
         Tensor<type, 2> input(4,2);
-        Tensor<Index, 1> input_dims = get_dimensions(input);
-        input.setValues({
-                                 {150,146},
-                                 {124,253},
-                                 {124,264},
-                                 {124,221}
-                             });
+        Tensor<Index, 1> inputs_dimension = get_dimensions(input);
+        input.setValues({{150,146},
+                         {124,253},
+                         {124,264},
+                         {124,221}});
 
         Tensor<type, 2> output;
 
-        output = neural_network.calculate_outputs(input.data(), input_dims);
+        output = neural_network.calculate_outputs(input.data(), inputs_dimension);
 
         cout << "Input data:\n" << input << "\nPredictions:\n" << output << endl;
 

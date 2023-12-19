@@ -22,12 +22,12 @@
 
 #include "config.h"
 #include "layer.h"
-#include "statistics.h"
-#include "opennn_strings.h"
-
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {
+
+//struct UnscalingLayerForwardPropagation;
 
 /// This class represents a layer of unscaling neurons.
 
@@ -35,7 +35,7 @@ namespace opennn
 /// Unscaling layers are included in the definition of a neural network.
 /// They are used to unnormalize variables so they are in the original range after computer processing.
 
-class   UnscalingLayer : public Layer
+class UnscalingLayer : public Layer
 {
 
 public:
@@ -122,7 +122,6 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-
 protected:
 
    // MEMBERS
@@ -144,6 +143,7 @@ protected:
 
    bool display = true;
 };
+
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {

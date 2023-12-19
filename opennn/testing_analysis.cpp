@@ -246,7 +246,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
 
 #endif
 
-    const Index outputs_number = data_set_pointer->get_target_variables_number();
+    const Index outputs_number = data_set_pointer->get_target_numeric_variables_number();
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
@@ -625,7 +625,7 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descrip
 
 void TestingAnalysis::print_error_data_descriptives() const
 {
-    const Index targets_number = data_set_pointer->get_target_variables_number();
+    const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
@@ -3534,7 +3534,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
     outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
 
-    const Index targets_number = data_set_pointer->get_target_variables_number();
+    const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
     const Tensor<type, 2> error = targets - outputs;
 
@@ -3603,7 +3603,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
 #endif
 
-    const Index targets_number = data_set_pointer->get_target_variables_number();
+    const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
@@ -3933,8 +3933,6 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 }
 
 
-
-
 void TestingAnalysis::print_binary_classification_tests() const
 {
     const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
@@ -3962,7 +3960,7 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
-    const Index targets_number = data_set_pointer->get_target_variables_number();
+    const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
@@ -4126,6 +4124,7 @@ type TestingAnalysis::calculate_logloss() const
     }
 
 #endif
+
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);

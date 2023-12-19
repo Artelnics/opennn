@@ -7,7 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "learning_rate_algorithm_test.h"
-
+#include "../opennn/neural_network_forward_propagation.h"
+#include "../opennn/loss_index_back_propagation.h"
 
 LearningRateAlgorithmTest::LearningRateAlgorithmTest() : UnitTesting()
 {
@@ -65,7 +66,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     DataSetBatch batch;
 
-    NeuralNetworkForwardPropagation forward_propagation;
+    ForwardPropagation forward_propagation;
 
     LossIndexBackPropagation back_propagation;
 
@@ -84,7 +85,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 //    data_set.set(samples_number, inputs_number, targets_number);
 //    data_set.set_data_random();
 
-//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+//    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, targets_number});
 
 //    batch.set(samples_number, &data_set);
 //    forward_propagation.set(samples_number, &neural_network);
@@ -150,7 +151,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
-//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+//    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -171,7 +172,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
-//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+//    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -200,7 +201,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
     data_set.set(1, 1, 1);
 //    Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
 
 //    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
@@ -239,7 +240,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     indices.setValues({inputs_number,targets_number,samples_number-1});
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number,neurons_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, targets_number,neurons_number});
     neural_network.set_parameters_constant(type(1));
 
     /// @todo loss_index.calculate_training_loss not available

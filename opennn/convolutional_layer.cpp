@@ -1270,7 +1270,7 @@ Index ConvolutionalLayer::get_inputs_channels_number() const
 
 //    Tensor<type, 0> standard_deviation;
 
-//    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+//    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
 //    {
 //        const TensorMap<Tensor<type, 1>> single_kernel_output(outputs_data + kernel_index * single_output_size,
 //                                                               single_output_size);

@@ -20,17 +20,14 @@
 
 // OpenNN includes
 
-#include "layer.h"
-#include "statistics.h"
 #include "scaling.h"
-#include "opennn_strings.h"
+#include "layer.h"
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {
 
 /// This class represents a layer of scaling neurons.
-
-///
 /// Scaling layers are included in the definition of a neural network.
 /// They are used to normalize variables so they are in an appropriate range for computer processing.
 
@@ -39,7 +36,7 @@ class ScalingLayer : public Layer
 
 public:
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
+   enum class ModelType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
 
    // Constructors
 
