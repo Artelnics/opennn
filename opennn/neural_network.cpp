@@ -2529,6 +2529,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             outputs_from_XML(outputs_document);
         }
     }
+
 /*
     if(get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {

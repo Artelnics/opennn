@@ -739,7 +739,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
+            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
             {
                 // Categories
 

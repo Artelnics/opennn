@@ -138,13 +138,13 @@ void ImageDataSet::set(const Index& new_images_number,
         {
             columns(i).name = "column_" + to_string(i+1);
             columns(i).column_use = VariableUse::Input;
-            columns(i).type = ColumnType::Numeric;
+            columns(i).type = RawVariableType::Numeric;
         }
         else
         {
             columns(i).name = "column_" + to_string(i+1);
             columns(i).column_use = VariableUse::Target;
-            columns(i).type = ColumnType::Numeric;
+            columns(i).type = RawVariableType::Numeric;
         }
     }
 
@@ -988,7 +988,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
+            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
             {
                 // Categories
 

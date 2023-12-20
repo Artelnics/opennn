@@ -48,7 +48,7 @@ public:
     const Index& get_steps_ahead() const;
 
     Index get_time_series_columns_number() const;
-    Tensor<Column, 1> get_time_series_columns() const;
+    Tensor<RawVariable, 1> get_time_series_columns() const;
 
     Index get_input_time_series_columns_number() const;
     Index get_target_time_series_columns_number() const;
@@ -82,7 +82,8 @@ public:
 
     const Tensor<type, 2>& get_time_series_data() const;
 
-    void write_XML(tinyxml2::XMLPrinter& file_stream) const;
+    void write_XML(tinyxml2::XMLPrinter&) const;
+    void from_XML(const tinyxml2::XMLDocument&);
 
     Tensor<string, 1> get_time_series_columns_names() const;
 
@@ -108,7 +109,7 @@ private:
 
     Tensor<type, 2> time_series_data;
 
-    Tensor<Column, 1> time_series_columns;
+    Tensor<RawVariable, 1> time_series_columns;
 
     /// Index where time variable is located for forecasting applications.
 

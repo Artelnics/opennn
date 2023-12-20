@@ -130,23 +130,23 @@ public:
     /// This enumeration represents the data type of a column
     /// (numeric, binary, categorical or time).
 
-    enum class ColumnType{Numeric, Binary, Categorical, DateTime, Constant};
+    enum class RawVariableType{Numeric, Binary, Categorical, DateTime, Constant};
 
     // Structs
 
     /// This structure represents the columns of the DataSet.
 
-    struct Column
+    struct RawVariable
     {
         /// Default constructor.
 
-        Column();
+        RawVariable();
 
         /// Values constructor
 
-        Column(const string&,
+        RawVariable(const string&,
                const DataSet::VariableUse&,
-               const DataSet::ColumnType& = DataSet::ColumnType::Numeric,
+               const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                const Scaler& = Scaler::MeanStandardDeviation,
                const Tensor<string, 1>& = Tensor<string, 1>(),
                const Tensor<DataSet::VariableUse, 1>& = Tensor<DataSet::VariableUse, 1>());
@@ -161,7 +161,7 @@ public:
 
         /// Column type.
 
-        DataSet::ColumnType type = DataSet::ColumnType::Numeric;
+        DataSet::RawVariableType type = DataSet::RawVariableType::Numeric;
 
         /// Categories within the column.
 
@@ -243,11 +243,11 @@ public:
 
     // Columns get methods
 
-    Tensor<Column, 1> get_columns() const;
-    Tensor<Column, 1> get_input_columns() const;
+    Tensor<RawVariable, 1> get_columns() const;
+    Tensor<RawVariable, 1> get_input_columns() const;
     Tensor<bool, 1> get_input_columns_binary() const;
-    Tensor<Column, 1> get_target_columns() const;
-    Tensor<Column, 1> get_used_columns() const;
+    Tensor<RawVariable, 1> get_target_columns() const;
+    Tensor<RawVariable, 1> get_used_columns() const;
 
     Index get_columns_number() const;
     Index get_constant_columns_number() const;
@@ -277,8 +277,8 @@ public:
     Tensor<string, 1> get_target_columns_names() const;
     Tensor<string, 1> get_used_columns_names() const;
 
-    ColumnType get_column_type(const Index& index) const {return columns[index].type;}
-    string get_column_type_string(const ColumnType&) const;
+    RawVariableType get_column_type(const Index& index) const {return columns[index].type;}
+    string get_column_type_string(const RawVariableType&) const;
 
     VariableUse get_column_use(const Index& ) const;
     Tensor<VariableUse, 1> get_columns_uses() const;
@@ -456,7 +456,7 @@ public:
 
     // Columns set methods
 
-    void set_columns(const Tensor<Column, 1>&);
+    void set_columns(const Tensor<RawVariable, 1>&);
 
     void set_default_columns_uses();
 
@@ -479,8 +479,8 @@ public:
     void set_column_use(const Index&, const VariableUse&);
     void set_column_use(const string&, const VariableUse&);
 
-    void set_column_type(const Index&, const ColumnType&);
-    void set_column_type(const string&, const ColumnType&);
+    void set_column_type(const Index&, const RawVariableType&);
+    void set_column_type(const string&, const RawVariableType&);
 
     void set_columns_names(const Tensor<string, 1>&);
 
@@ -501,7 +501,7 @@ public:
     // Variables set methods
 
     void set_variables_names(const Tensor<string, 1>&);
-    void set_variables_names_from_columns(const Tensor<string, 1>&, const Tensor<DataSet::Column, 1>&);
+    void set_variables_names_from_columns(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
     void set_variable_name(const Index&, const string&);
 
     void set_input();
@@ -806,7 +806,7 @@ protected:
 
     // Columns
 
-    Tensor<Column, 1> columns;
+    Tensor<RawVariable, 1> columns;
 
     Tensor<Index, 1> input_variables_dimensions;
 

@@ -36,7 +36,7 @@ public:
    explicit AutoAssociationDataSet();
 
 
-    Tensor<Column, 1> get_associative_columns() const;
+    Tensor<RawVariable, 1> get_associative_columns() const;
     const Tensor<type, 2>& get_associative_data() const;
     void set_auto_associative_samples_uses();
 
@@ -55,7 +55,7 @@ private:
 
     Tensor<type, 2> associative_data;
 
-    Tensor<Column, 1> associative_columns;
+    Tensor<RawVariable, 1> associative_columns;
 
 };
 

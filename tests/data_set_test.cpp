@@ -916,10 +916,10 @@ void DataSetTest::test_read_adult_csv()
         data_set.read_csv();
 
         assert_true(data_set.get_samples_number() == 1000, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Categorical, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Categorical, LOG);
     }
     catch (const exception&)
     {
@@ -938,13 +938,13 @@ void DataSetTest::test_read_car_csv()
         data_set.set("../../datasets/car.data",',',false);
 
         assert_true(data_set.get_samples_number() == 1728, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Categorical, LOG);
-        assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Categorical, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(4) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(5) == DataSet::RawVariableType::Categorical, LOG);
+        assert_true(data_set.get_column_type(6) == DataSet::RawVariableType::Categorical, LOG);
     }
     catch(const exception&)
     {
@@ -984,20 +984,20 @@ void DataSetTest::test_read_heart_csv()
 
         assert_true(data_set.get_samples_number() == 303, LOG);
         assert_true(data_set.get_numeric_variables_number() == 14, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(8) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(9) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(10) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(11) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(12) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(13) == DataSet::ColumnType::Binary, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(4) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(5) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(6) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(7) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(8) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(9) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(10) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(11) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(12) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(13) == DataSet::RawVariableType::Binary, LOG);
     }
     catch (const exception&)
     {
@@ -1016,11 +1016,11 @@ void DataSetTest::test_read_iris_csv()
 
         assert_true(data_set.get_samples_number() == 150, LOG);
         assert_true(data_set.get_numeric_variables_number() == 7, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Categorical, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(4) == DataSet::RawVariableType::Categorical, LOG);
     }
     catch (const exception&)
     {
@@ -1057,7 +1057,7 @@ void DataSetTest::test_read_one_variable_csv()
 
         assert_true(data_set.get_samples_number() == 7, LOG);
         assert_true(data_set.get_numeric_variables_number() == 1, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
     }
     catch (const exception&)
     {
@@ -1076,19 +1076,19 @@ void DataSetTest::test_read_pollution_csv()
 
         assert_true(data_set.get_samples_number() == 1000, LOG);
         assert_true(data_set.get_numeric_variables_number() == 13, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::DateTime, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(8) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(9) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(10) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(11) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(12) == DataSet::ColumnType::Numeric, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::DateTime, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(4) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(5) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(6) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(7) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(8) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(9) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(10) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(11) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(12) == DataSet::RawVariableType::Numeric, LOG);
     }
     catch (const exception&)
     {
@@ -1116,14 +1116,14 @@ void DataSetTest::test_read_urinary_inflammations_csv()
 
         assert_true(data_set.get_samples_number() == 120, LOG);
         assert_true(data_set.get_numeric_variables_number() == 8, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Binary, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(4) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(5) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(6) == DataSet::RawVariableType::Binary, LOG);
+        assert_true(data_set.get_column_type(7) == DataSet::RawVariableType::Binary, LOG);
     }
     catch (const exception&)
     {
@@ -1142,20 +1142,20 @@ void DataSetTest::test_read_wine_csv()
 
         assert_true(data_set.get_samples_number() == 178, LOG);
         assert_true(data_set.get_numeric_variables_number() == 14, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(8) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(9) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(10) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(11) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(12) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(13) == DataSet::ColumnType::Numeric, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(3) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(4) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(5) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(6) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(7) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(8) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(9) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(10) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(11) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(12) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(13) == DataSet::RawVariableType::Numeric, LOG);
     }
     catch (const exception&)
     {
@@ -1173,9 +1173,9 @@ void DataSetTest::test_read_binary_csv()
 
         assert_true(data_set.get_samples_number() == 8, LOG);
         assert_true(data_set.get_numeric_variables_number() == 3, LOG);
-        assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Numeric, LOG);
-        assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Binary, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(1) == DataSet::RawVariableType::Numeric, LOG);
+        assert_true(data_set.get_column_type(2) == DataSet::RawVariableType::Binary, LOG);
     }
     catch (const exception&)
     {
@@ -1269,8 +1269,8 @@ void DataSetTest::test_has_time_columns()
 
     data_set.set_data(data);
 
-    data_set.set_column_type(0,DataSet::ColumnType::DateTime);
-    data_set.set_column_type(1,DataSet::ColumnType::DateTime);
+    data_set.set_column_type(0,DataSet::RawVariableType::DateTime);
+    data_set.set_column_type(1,DataSet::RawVariableType::DateTime);
 
     assert_true(data_set.has_time_columns(), LOG);
 }

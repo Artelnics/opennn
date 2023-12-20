@@ -59,7 +59,7 @@ void AutoAssociationDataSet::transform_associative_columns()
 
     const Index columns_number = get_columns_number();
 
-    Tensor<Column, 1> new_columns;
+    Tensor<RawVariable, 1> new_columns;
 
     new_columns.resize(2*columns_number);
 
@@ -184,7 +184,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     }
 }
 
-Tensor<DataSet::Column, 1> AutoAssociationDataSet::get_associative_columns() const
+Tensor<DataSet::RawVariable, 1> AutoAssociationDataSet::get_associative_columns() const
 {
     return associative_columns;
 }

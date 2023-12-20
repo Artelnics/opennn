@@ -813,7 +813,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
+            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
             {
                 // Categories
 
@@ -1496,7 +1496,7 @@ void TextDataSet::read_txt()
     read_csv();
 
     for(Index i = 0; i < get_input_columns_number(); i++)
-        set_column_type(i,ColumnType::Numeric);
+        set_column_type(i,RawVariableType::Numeric);
 };
 
 
