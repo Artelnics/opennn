@@ -322,9 +322,7 @@ void TimeSeriesDataSet::set_group_by_column(const string& new_group_by_column)
 
 /// This method transforms the columns into time series for forecasting problems.
 
-void TimeSeriesDataSet::
-
-transform_time_series_columns()
+void TimeSeriesDataSet::transform_time_series_columns()
 {
     cout << "Transforming time series columns..." << endl;
 
@@ -407,61 +405,6 @@ transform_time_series_columns()
     columns = new_columns;
 }
 
-/*
-void TimeSeriesDataSet::transform_time_series_data()
-{
-    cout << "Transforming time series data..." << endl;
-
-    // Categorical / Time columns?
-
-    const Index old_samples_number = data.dimension(0);
-    const Index old_variables_number = data.dimension(1);
-
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
-
-    time_series_data = data;
-
-    Tensor<type, 2> no_time_data(new_samples_number, new_variables_number);
-    data.resize(new_samples_number, new_variables_number + 1);
-
-    Tensor<type, 2> timestamp_index_column(new_samples_number, 1);
-
-    Index index = 0;
-
-    for(Index j = 0; j < old_variables_number; j++)
-    {
-       if(columns(get_column_index(j)).type == ColumnType::DateTime)
-       {
-            time_variable_index = j;
-            Tensor<type, 1> timestamp_raw(time_series_data.chip(j, 1));
-
-            Index time_index = 0;
-
-            for(Index i = lags_number; i < lags_number + new_samples_number; i++)
-            {
-                timestamp_index_column(time_index, 0) = timestamp_raw(i);
-                time_index++;
-            }
-
-            index++;
-            continue;
-       }
-
-        for(Index i = 0; i < lags_number+steps_ahead; i++)
-        {
-            memcpy(no_time_data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number,
-                   time_series_data.data() + i + j * old_samples_number,
-                   static_cast<size_t>(old_samples_number - lags_number - steps_ahead + 1) * sizeof(type));
-        }
-    }
-
-    data = timestamp_index_column.concatenate(no_time_data, 1);
-
-    samples_uses.resize(new_samples_number);
-    split_samples_random();
-}
-*/
 
 void TimeSeriesDataSet::transform_time_series_data()
 {
@@ -510,30 +453,13 @@ void TimeSeriesDataSet::transform_time_series()
 
     if(lags_number == 0 || steps_ahead == 0) return;
 
-    ofstream myfile;
-    myfile.open("C:/Users/alvaromartin/Documents/lags.txt");
-
-    myfile << "lags_number: " << lags_number;
-    myfile << "steps_ahead: " << steps_ahead;
-
-
     transform_time_series_data();
-
-    myfile << "transform_time_series_data: ";
 
     transform_time_series_columns();
 
-    myfile << "transform_time_series_columns: ";
-
     split_samples_sequential();
 
-    myfile << "split_samples_sequential: ";
-
     unuse_constant_columns();
-
-    myfile << "unuse_constant_columns: ";
-
-    myfile.close();
 }
 
 
@@ -552,28 +478,16 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataFile");
 
-    if(model_type != ModelType::ImageClassification)
+
+    // File type
     {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
+        file_stream.OpenElement("FileType");
 
-            file_stream.PushText("csv");
+        file_stream.PushText("csv");
 
-            file_stream.CloseElement();
-        }
+        file_stream.CloseElement();
     }
-    else
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
 
-            file_stream.PushText("bmp");
-
-            file_stream.CloseElement();
-        }
-    }
 
     // Data file name
     {
@@ -1091,6 +1005,90 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     else
     {
         set_missing_values_label("NA");
+    }
+
+    // alvaros123
+
+    // Forecasting
+
+    // Lags number
+
+    const tinyxml2::XMLElement* lags_number_element = data_file_element->FirstChildElement("LagsNumber");
+
+    if(!lags_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Lags number element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(lags_number_element->GetText())
+    {
+        const Index new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
+
+        set_lags_number(new_lags_number);
+    }
+
+    // Steps ahead
+
+    const tinyxml2::XMLElement* steps_ahead_element = data_file_element->FirstChildElement("StepsAhead");
+
+    if(!steps_ahead_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Steps ahead element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(steps_ahead_element->GetText())
+    {
+        const Index new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
+
+        set_steps_ahead_number(new_steps_ahead);
+    }
+
+    // Time column
+
+    const tinyxml2::XMLElement* time_column_element = data_file_element->FirstChildElement("TimeColumn");
+
+    if(!time_column_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Time column element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(time_column_element->GetText())
+    {
+        const string new_time_column = time_column_element->GetText();
+
+        set_time_column(new_time_column);
+    }
+
+    // Group by column
+
+    const tinyxml2::XMLElement* group_by_column_element = data_file_element->FirstChildElement("GroupByColumn");
+
+    if(!group_by_column_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Group by column element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(group_by_column_element->GetText())
+    {
+        const string new_group_by_column = group_by_column_element->GetText();
+
+        set_group_by_column(new_group_by_column);
     }
 
     // Codification

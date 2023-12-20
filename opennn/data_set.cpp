@@ -7542,13 +7542,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-    ofstream myfile;
-    myfile.open("C:/Users/alvaromartin/Documents/test_stream_normal.txt");
-
-    myfile << " nORMAL DATASET FROM XML jajajajajajajjajajajajajjajajalkj";
-
-    myfile.close();
-
     ostringstream buffer;
 
     // Data set element
