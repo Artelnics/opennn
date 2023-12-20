@@ -1,0 +1,226 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de main.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son blank\main.cpp, eigen\bench\btl\libs\blas\main.cpp, eigen\bench\btl\libs\blaze\main.cpp, eigen\bench\btl\libs\gmm\main.cpp, eigen\bench\btl\libs\mtl4\main.cpp, eigen\bench\btl\libs\stl\main.cpp, eigen\bench\btl\libs\tvmet\main.cpp, eigen\bench\btl\libs\ublas\main.cpp, examples\airfoil_self_noise\main.cpp, examples\airline_passengers\main.cpp, examples\amazon_reviews\main.cpp, examples\breast_cancer\main.cpp, examples\iris_plant\main.cpp, examples\leukemia\main.cpp, examples\logical_operations\main.cpp, examples\mnist\main.cpp, examples\outlier_detection\main.cpp, examples\rosenbrock\main.cpp, examples\simple_approximation\main.cpp, examples\simple_classification\main.cpp, tests\main.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de main_adv.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\bench\btl\libs\eigen2\main_adv.cpp, eigen\bench\btl\libs\eigen3\main_adv.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de main_linear.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\bench\btl\libs\eigen2\main_linear.cpp, eigen\bench\btl\libs\eigen3\main_linear.cpp, eigen\bench\btl\libs\tensors\main_linear.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de main_matmat.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\bench\btl\libs\eigen2\main_matmat.cpp, eigen\bench\btl\libs\eigen3\main_matmat.cpp, eigen\bench\btl\libs\tensors\main_matmat.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de main_vecmat.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\bench\btl\libs\eigen2\main_vecmat.cpp, eigen\bench\btl\libs\eigen3\main_vecmat.cpp, eigen\bench\btl\libs\tensors\main_vecmat.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de sparse_product.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\bench\sparse_product.cpp, eigen\test\sparse_product.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de complex_double.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\blas\complex_double.cpp, eigen\lapack\complex_double.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de complex_single.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\blas\complex_single.cpp, eigen\lapack\complex_single.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de double.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\blas\double.cpp, eigen\lapack\double.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de single.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\blas\single.cpp, eigen\lapack\single.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de cholesky.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\lapack\cholesky.cpp, eigen\test\cholesky.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de lu.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\lapack\lu.cpp, eigen\test\lu.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de conjugate_gradient.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\test\conjugate_gradient.cpp, opennn\conjugate_gradient.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de EulerAngles.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\unsupported\doc\examples\EulerAngles.cpp, eigen\unsupported\test\EulerAngles.cpp.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Dos o más archivos con el mismo nombre de FFT.cpp producirán salidas en la misma ubicación. Esto puede dar lugar a un resultado de compilación incorrecto. Los archivos implicados son eigen\unsupported\doc\examples\FFT.cpp, eigen\unsupported\test\FFT.cpp.
+  main.cpp
+  The contents of <filesystem> are available only with C++17 or later.
+C:\Users\Usuario\Documents\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: "&": compruebe la prioridad de operador para posibles errores; utilice paréntesis para indicar la prioridad
+C:\Users\Usuario\Documents\opennn\opennn\statistics.h(187): message : Vea la referencia a la creación de una instancia de clase plantilla "Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>" que se está compilando
+  The contents of <string_view> are available only with C++17 or later.
+C:\Users\Usuario\Documents\opennn\opennn\region_based_object_detector.h(85,27): warning C4305: 'inicializando': truncamiento de 'double' a 'opennn::type'
+  analyze-blocking-sizes.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\analyze-blocking-sizes.cpp(22,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  basicbenchmark.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchUtil.h(5,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchBlasGemm.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchBlasGemm.cpp(11,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchCholesky.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchCholesky.cpp(12,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchEigenSolver.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchEigenSolver.cpp(14,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchFFT.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchFFT.cpp(12,10): fatal error C1083: No se puede abrir el archivo incluir: 'bench/BenchUtil.h': No such file or directory
+  benchGeometry.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchGeometry.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchmark-blocking-sizes.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchmark-blocking-sizes.cpp(24,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchmark.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchmark.cpp(5,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchmarkSlice.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchmarkSlice.cpp(5,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchmarkX.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchmarkX.cpp(5,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchmarkXcwise.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchmarkXcwise.cpp(4,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchVecAdd.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\benchVecAdd.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  bench_gemm.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\bench_gemm.cpp(14,10): fatal error C1083: No se puede abrir el archivo incluir: 'bench/BenchTimer.h': No such file or directory
+  bench_move_semantics.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchTimer.h(42,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  bench_norm.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\bench_norm.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  bench_reverse.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\bench_reverse.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  bench_sum.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\bench_sum.cpp(2,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  mean.cxx
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\data\mean.cxx(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  Generando código...
+  Compilando...
+  regularize.cxx
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\data\regularize.cxx(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  smooth.cxx
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\data\smooth.cxx(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\blas\main.cpp(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\blaze\main.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  btl_blitz.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\blitz\btl_blitz.cpp(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  btl_tiny_blitz.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\blitz\btl_tiny_blitz.cpp(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  btl_tiny_eigen2.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen2\btl_tiny_eigen2.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_adv.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen2\main_adv.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_linear.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen2\main_linear.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_matmat.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen2\main_matmat.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_vecmat.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen2\main_vecmat.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  btl_tiny_eigen3.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen3\btl_tiny_eigen3.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_adv.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen3\main_adv.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_linear.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen3\main_linear.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_matmat.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen3\main_matmat.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_vecmat.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\eigen3\main_vecmat.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\gmm\main.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\mtl4\main.cpp(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\stl\main.cpp(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_linear.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\tensors\main_linear.cpp(10,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  Generando código...
+  Compilando...
+  main_matmat.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\tensors\main_matmat.cpp(9,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main_vecmat.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\tensors\main_vecmat.cpp(9,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\tvmet\main.cpp(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  main.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\btl\libs\ublas\main.cpp(20,10): fatal error C1083: No se puede abrir el archivo incluir: 'utilities.h': No such file or directory
+  check_cache_queries.cpp
+  dense_solvers.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchTimer.h(42,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  eig33.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\eig33.cpp(40,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  geometry.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\geometry.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Geometry': No such file or directory
+  gemm.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemm_common.h(5,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  gemv.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemv_common.h(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  gemvt.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemv_common.h(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  lazy_gemm.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\lazy_gemm.cpp(4,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  llt.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemm_common.h(5,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  trmv_lo.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemv_common.h(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  trmv_lot.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemv_common.h(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  trmv_up.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemv_common.h(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  trmv_upt.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\perf_monitoring\gemv_common.h(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'eigen_src/Eigen/Core': No such file or directory
+  product_threshold.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\product_threshold.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  quatmul.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\quatmul.cpp(2,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  quat_slerp.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\quat_slerp.cpp(3,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Geometry': No such file or directory
+  Generando código...
+  Compilando...
+  sparse_cholesky.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\sparse_cholesky.cpp(4,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Sparse': No such file or directory
+  sparse_dense_product.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchSparseUtil.h(2,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Sparse': No such file or directory
+  sparse_lu.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\sparse_lu.cpp(6,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Sparse': No such file or directory
+  sparse_product.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\shared\windef.h(190,3): error C2059: error de sintaxis: 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\shared\windef.h(192,9): error C2059: error de sintaxis: 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\shared\windef.h(193,9): error C2059: error de sintaxis: 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(1102,13): error C3646: 'szlDevice': especificador de invalidación desconocido
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(1102,22): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(1103,13): error C3646: 'szlMillimeters': especificador de invalidación desconocido
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(1103,27): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(1113,13): error C3646: 'szlMicrometers': especificador de invalidación desconocido
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(1113,27): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4009,67): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4033,71): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4190,11): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4199,11): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4214,11): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4223,11): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4241,11): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4253,11): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4315,108): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4322,55): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4490,62): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(4492,60): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5134,91): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5136,89): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5141,121): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5142,119): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5143,98): error C2061: error de sintaxis: identificador 'LPSIZE'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5612,13): error C3646: 'szlExtent': especificador de invalidación desconocido
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5612,22): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5666,13): error C3646: 'szlCorner': especificador de invalidación desconocido
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5666,22): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5777,13): error C3646: 'szlStroke': especificador de invalidación desconocido
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\wingdi.h(5777,22): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(4435,14): error C2059: error de sintaxis: 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(4450,11): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(4450,11): error C2059: error de sintaxis: 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(4450,22): error C2238: símbolos (token) inesperados delante de ';'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(7562,16): error C4430: falta el especificador de tipo; se presupone int. Nota: C++ no admite default-int
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(7562,16): error C2143: error de sintaxis: falta ')' delante de 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(7562,16): error C2143: error de sintaxis: falta ';' delante de 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(7562,16): error C2059: error de sintaxis: 'constante'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\winuser.h(7565,36): error C2059: error de sintaxis: ')'
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchTimer.h(42,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  sparse_randomsetter.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\sparse_randomsetter.cpp(7,10): fatal error C1083: No se puede abrir el archivo incluir: 'ext/hash_map': No such file or directory
+  sparse_setter.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\sparse_setter.cpp(28,10): fatal error C1083: No se puede abrir el archivo incluir: 'google/sparse_hash_map': No such file or directory
+  sparse_transpose.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchSparseUtil.h(2,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Sparse': No such file or directory
+  sparse_trisolver.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchSparseUtil.h(2,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Sparse': No such file or directory
+  spbenchsolver.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\spbench\spbenchsolver.cpp(1,10): fatal error C1083: No se puede abrir el archivo incluir: 'bench/spbench/spbenchsolver.h': No such file or directory
+  sp_solver.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\spbench\sp_solver.cpp(7,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Jacobi': No such file or directory
+  test_sparseLU.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\spbench\test_sparseLU.cpp(7,10): fatal error C1083: No se puede abrir el archivo incluir: 'unsupported/Eigen/SparseExtra': No such file or directory
+  spmv.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\BenchTimer.h(42,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  benchmark_main.cc
+C:\Users\Usuario\Documents\opennn\eigen\bench\tensors\benchmark_main.cc(17,10): fatal error C1083: No se puede abrir el archivo incluir: 'regex.h': No such file or directory
+  contraction_benchmarks_cpu.cc
+C:\Users\Usuario\Documents\opennn\eigen\bench\tensors\tensor_benchmarks.h(7,10): fatal error C1083: No se puede abrir el archivo incluir: 'unsupported/Eigen/CXX11/Tensor': No such file or directory
+  tensor_benchmarks_cpu.cc
+C:\Users\Usuario\Documents\opennn\eigen\bench\tensors\tensor_benchmarks.h(7,10): fatal error C1083: No se puede abrir el archivo incluir: 'unsupported/Eigen/CXX11/Tensor': No such file or directory
+  tensor_benchmarks_sycl.cc
+  tensor_contract_sycl_bench.cc
+C:\Users\Usuario\Documents\opennn\eigen\bench\tensors\tensor_contract_sycl_bench.cc(18,10): fatal error C1083: No se puede abrir el archivo incluir: 'SYCL/sycl.hpp': No such file or directory
+  vdw_new.cpp
+C:\Users\Usuario\Documents\opennn\eigen\bench\vdw_new.cpp(2,10): fatal error C1083: No se puede abrir el archivo incluir: 'Eigen/Core': No such file or directory
+  complex_double.cpp
+  complex_single.cpp
+  Generando código...
+  Compilando...
+  double.cpp
+MSBUILD : error MSB4166: El nodo secundario "2" se cerró antes de tiempo. Se finalizará la ejecución ahora. Puede encontrar información de diagnóstico en los archivos en "C:\Users\Usuario\AppData\Local\Temp\" y recibirá el nombre MSBuild_*.failure.txt. Esta ubicación se puede cambiar estableciendo la variable de entorno MSBUILDDEBUGPATH en un directorio diferente.

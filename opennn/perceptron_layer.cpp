@@ -549,7 +549,7 @@ void PerceptronLayer::calculate_combinations(const DynamicTensor<type>& inputs,
          column.device(*thread_pool_device) = column + biases(i);
     }
 
-    combinations.device(*thread_pool_device) += inputs_map.contract(synaptic_weights, A_B);
+//    combinations.device(*thread_pool_device) += inputs_map.contract(synaptic_weights, A_B);
 //    combinations += inputs.contract(synaptic_weights, A_B);
 
 }
