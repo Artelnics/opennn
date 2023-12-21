@@ -1493,7 +1493,11 @@ void TextDataSet::read_txt()
     separator = Separator::Semicolon;
     has_columns_names = true;
 
-    read_csv();
+    cout << "----- in load_data -----" << endl;
+
+    load_data(); // read_csv()
+
+    cout << "----- out load_data -----" << endl;
 
     for(Index i = 0; i < get_input_columns_number(); i++)
         set_column_type(i,RawVariableType::Numeric);

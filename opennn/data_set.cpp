@@ -10275,7 +10275,7 @@ void DataSet::read_csv_3_complete()
 
     const Index columns_number = columns.size();
 
-    const Index raw_columns_number = has_rows_labels ? columns_number+1 : columns_number;
+    const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
 
     string line;
 

@@ -870,11 +870,6 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
-    ofstream myfile;
-    myfile.open("C:/Users/alvaromartin/Documents/test_stream_timeseries.txt");
-
-    myfile << " tIME SERIES FROM XML jajajajajajajjajajajajajjajajalkj";
-
     ostringstream buffer;
 
     // Data set element
@@ -921,9 +916,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const string new_data_file_name = data_file_name_element->GetText();
 
         set_data_source_path(new_data_file_name);
-        myfile << "new_data_file_name: " << new_data_file_name;
     }
-
 
     // Separator
 
@@ -954,7 +947,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(columns_names_element)
     {
         const string new_columns_names_string = columns_names_element->GetText();
-        myfile << "new_columns_names_string: " << new_columns_names_string;
 
         try
         {
@@ -973,7 +965,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(rows_label_element)
     {
         const string new_rows_label_string = rows_label_element->GetText();
-        myfile << "new_rows_label_string: " << new_rows_label_string;
 
         try
         {
@@ -1177,8 +1168,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 const string new_name = name_element->GetText();
 
-                myfile << "new_name: " << new_name;
-
                 columns(i).name = new_name;
             }
 
@@ -1198,8 +1187,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(scaler_element->GetText())
             {
                 const string new_scaler = scaler_element->GetText();
-
-                myfile << "new_scaler: " << new_scaler;
 
                 columns(i).set_scaler(new_scaler);
             }
@@ -1240,8 +1227,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(type_element->GetText())
             {
                 const string new_type = type_element->GetText();
-
-                myfile << "new_type: " << new_type;
 
                 columns(i).set_type(new_type);
             }
@@ -1314,8 +1299,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         time_series_new_columns_number = static_cast<Index>(atoi(time_series_columns_number_element->GetText()));
 
-        myfile << "time_series_new_columns_number: " << time_series_new_columns_number;
-
         set_time_series_columns_number(time_series_new_columns_number);
     }
 
@@ -1355,8 +1338,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(time_series_name_element->GetText())
             {
                 const string time_series_new_name = time_series_name_element->GetText();
-
-                myfile << "time_series_new_name: " << time_series_new_name;
 
                 time_series_columns(i).name = time_series_new_name;
             }
@@ -1723,10 +1704,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
-
-    myfile.close();
 }
-
 
 /// Substitutes all the missing values by the mean of the corresponding variable.
 
