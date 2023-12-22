@@ -52,7 +52,7 @@ struct PacketType : internal::packet_traits<Scalar> {
 };
 
 // For CUDA packet types when using a GpuDevice
-#if defined(EIGEN_USE_GPU) && defined(EIGEN_HAS_GPU_FP16)
+#if defined(EIGEN_USE_GPU) && defined(EIGEN_HAS_GPU_FP16) && defined(EIGEN_GPU_COMPILE_PHASE)
 
 typedef ulonglong2 Packet4h2;
 template<>
@@ -261,10 +261,10 @@ template <typename Idx> struct IndexPair {
 #ifdef EIGEN_HAS_SFINAE
 namespace internal {
 
-  template<typename IndexType, typename Index, Index... Is>
+  template<typename IndexType, typename Index, Index First, Index... Is>
   EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  array<Index, sizeof...(Is)> customIndices2Array(IndexType& idx, numeric_list<Index, Is...>) {
-    return { idx[Is]... };
+  array<Index, 1 + sizeof...(Is)> customIndices2Array(IndexType& idx, numeric_list<Index, First, Is...>) {
+    return { static_cast<Index>(idx[First]), static_cast<Index>(idx[Is])... };
   }
   template<typename IndexType, typename Index>
   EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE

@@ -52,6 +52,12 @@ inline T REF_FREXP(const T& x, T& exp) {
   EIGEN_USING_STD(frexp)
   const T out = static_cast<T>(frexp(x, &iexp));
   exp = static_cast<T>(iexp);
+  
+  // The exponent value is unspecified if the input is inf or NaN, but MSVC
+  // seems to set it to 1.  We need to set it back to zero for consistency.
+  if (!(numext::isfinite)(x)) {
+    exp = T(0);
+  }
   return out;
 }
 
@@ -353,10 +359,10 @@ template <typename Scalar, typename Packet>
 void packetmath_minus_zero_add() {
   const int PacketSize = internal::unpacket_traits<Packet>::size;
   const int size = 2 * PacketSize;
-  EIGEN_ALIGN_MAX Scalar data1[size];
-  EIGEN_ALIGN_MAX Scalar data2[size];
-  EIGEN_ALIGN_MAX Scalar ref[size];
-
+  EIGEN_ALIGN_MAX Scalar data1[size] = {};
+  EIGEN_ALIGN_MAX Scalar data2[size] = {};
+  EIGEN_ALIGN_MAX Scalar ref[size] = {};
+  
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = Scalar(-0.0);
     data1[i + PacketSize] = Scalar(-0.0);
@@ -631,9 +637,19 @@ void packetmath_real() {
   const int PacketSize = internal::unpacket_traits<Packet>::size;
 
   const int size = PacketSize * 4;
-  EIGEN_ALIGN_MAX Scalar data1[PacketSize * 4];
-  EIGEN_ALIGN_MAX Scalar data2[PacketSize * 4];
-  EIGEN_ALIGN_MAX Scalar ref[PacketSize * 4];
+  EIGEN_ALIGN_MAX Scalar data1[PacketSize * 4] = {};
+  EIGEN_ALIGN_MAX Scalar data2[PacketSize * 4] = {};
+  EIGEN_ALIGN_MAX Scalar ref[PacketSize * 4] = {};
+  
+  // Negate with -0.
+  if (PacketTraits::HasNegate) {
+    test::packet_helper<PacketTraits::HasNegate,Packet> h;
+    data1[0] = Scalar(-0);
+    h.store(data2, internal::pnegate(h.load(data1)));
+    typedef typename internal::make_unsigned<typename internal::make_integer<Scalar>::type>::type Bits;
+    Bits bits = numext::bit_cast<Bits>(data2[0]);
+    VERIFY_IS_EQUAL(bits, static_cast<Bits>(Bits(1)<<(sizeof(Scalar)*CHAR_BIT - 1)));
+  }
 
   for (int i = 0; i < size; ++i) {
     data1[i] = Scalar(internal::random<double>(0, 1) * std::pow(10., internal::random<double>(-6, 6)));

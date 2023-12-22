@@ -72,9 +72,9 @@ void pow_test() {
     for (int j = 0; j < num_cases; ++j) {
       Scalar e = static_cast<Scalar>(std::pow(x(i,j), y(i,j)));
       Scalar a = actual(i, j);
-      bool fail = !(a==e) && !internal::isApprox(a, e, tol) && !((numext::isnan)(a) && (numext::isnan)(e));
-      all_pass &= !fail;
-      if (fail) {
+      bool success = (a==e) || ((numext::isfinite)(e) && internal::isApprox(a, e, tol)) || ((numext::isnan)(a) && (numext::isnan)(e));
+      all_pass &= success;
+      if (!success) {
         std::cout << "pow(" << x(i,j) << "," << y(i,j) << ")   =   " << a << " !=  " << e << std::endl;
       }
     }

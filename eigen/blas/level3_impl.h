@@ -362,18 +362,18 @@ int EIGEN_BLAS_FUNC(syrk)(const char *uplo, const char *op, const int *n, const 
   typedef void (*functype)(DenseIndex, DenseIndex, const Scalar *, DenseIndex, const Scalar *, DenseIndex, Scalar *, DenseIndex, DenseIndex, const Scalar&, internal::level3_blocking<Scalar,Scalar>&);
   static const functype func[8] = {
     // array index: NOTR  | (UP << 2)
-    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,ColMajor,false,Scalar,RowMajor,ColMajor,Conj, 1, Upper>::run),
+    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,ColMajor,false,Scalar,RowMajor,Conj,ColMajor, 1, Upper>::run),
     // array index: TR    | (UP << 2)
-    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,false,Scalar,ColMajor,ColMajor,Conj, 1, Upper>::run),
+    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,false,Scalar,ColMajor,Conj,ColMajor, 1, Upper>::run),
     // array index: ADJ   | (UP << 2)
-    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,Conj, Scalar,ColMajor,ColMajor,false,1, Upper>::run),
+    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,Conj, Scalar,ColMajor,false,ColMajor, 1, Upper>::run),
     0,
     // array index: NOTR  | (LO << 2)
-    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,ColMajor,false,Scalar,RowMajor,ColMajor,Conj, 1, Lower>::run),
+    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,ColMajor,false,Scalar,RowMajor,Conj,ColMajor, 1, Lower>::run),
     // array index: TR    | (LO << 2)
-    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,false,Scalar,ColMajor,ColMajor,Conj, 1, Lower>::run),
+    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,false,Scalar,ColMajor,Conj,ColMajor, 1, Lower>::run),
     // array index: ADJ   | (LO << 2)
-    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,Conj, Scalar,ColMajor,ColMajor,false,1, Lower>::run),
+    (internal::general_matrix_matrix_triangular_product<DenseIndex,Scalar,RowMajor,Conj, Scalar,ColMajor,false,ColMajor, 1, Lower>::run),
     0
   };
   #endif

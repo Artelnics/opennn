@@ -14,8 +14,8 @@ In particular, it supports \b slicing that consists in taking a set of rows, col
 All the aforementioned operations are handled through the generic DenseBase::operator()(const RowIndices&, const ColIndices&) method.
 Each argument can be:
   - An integer indexing a single row or column, including symbolic indices.
-  - The symbol Eigen::all representing the whole set of respective rows or columns in increasing order.
-  - An ArithmeticSequence as constructed by the Eigen::seq, Eigen::seqN, or Eigen::lastN functions.
+  - The symbol Eigen::placeholders::all representing the whole set of respective rows or columns in increasing order.
+  - An ArithmeticSequence as constructed by the Eigen::seq, Eigen::seqN, or Eigen::placeholders::lastN functions.
   - Any 1D vector/array of integers including %Eigen's vector/array, expressions, std::vector, std::array, as well as plain C arrays: `int[N]`.
 
 More generally, it can accepts any object exposing the following two member functions:
@@ -72,7 +72,7 @@ Here are some examples for a 2D array/matrix \c A and a 1D array/vector \c v.
 </tr>
 <tr>
   <td>%Block starting at \c i,j having \c m rows, and \c n columns</td>
-  <td>\code A(seqN(i,m), seqN(i,n) \endcode</td>
+  <td>\code A(seqN(i,m), seqN(i,n)) \endcode</td>
   <td>\code A.block(i,j,m,n) \endcode</td>
 </tr>
 <tr>
@@ -129,12 +129,12 @@ Here comes \link Eigen::lastN(SizeType) Eigen::lastN(size) \endlink, and \link E
 </tr>
 <tr>
   <td>Bottom-right corner of A of size \c m times \c n</td>
-  <td>\code v(lastN(m), lastN(n)) \endcode</td>
+  <td>\code A(lastN(m), lastN(n)) \endcode</td>
   <td>\code A.bottomRightCorner(m,n) \endcode</td>
 </tr>
 <tr>
   <td>Bottom-right corner of A of size \c m times \c n</td>
-  <td>\code v(lastN(m), lastN(n)) \endcode</td>
+  <td>\code A(lastN(m), lastN(n)) \endcode</td>
   <td>\code A.bottomRightCorner(m,n) \endcode</td>
 </tr>
 <tr>

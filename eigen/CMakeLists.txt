@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 3.5.0)
 
 project(Eigen3)
 
+# Remove this block after bumping CMake to v3.21.0
+# PROJECT_IS_TOP_LEVEL is defined then by default
+if(CMAKE_VERSION VERSION_LESS 3.21.0)
+  if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(PROJECT_IS_TOP_LEVEL TRUE)
+  else()
+    set(PROJECT_IS_TOP_LEVEL FALSE)
+  endif()
+endif()
+
 # guard against in-source builds
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
@@ -23,7 +33,7 @@ endif()
 
 
 #############################################################################
-# retrieve version information                                               #
+# retrieve version information                                              #
 #############################################################################
 
 # automatically parse the version number
@@ -88,6 +98,20 @@ else()
   ei_add_cxx_compiler_flag("-std=c++03")
 endif()
 
+function(ei_maybe_separate_arguments variable mode args)
+  # Use separate_arguments if the input is a single string containing a space.
+  # Otherwise, if it is already a list or doesn't have a space, just propagate
+  # the original value.  This is to better support multi-argument lists.
+  list(LENGTH args list_length)
+  if (${list_length} EQUAL 1)
+    string(FIND "${args}" " " has_space)
+    if (${has_space} GREATER -1)
+      separate_arguments(args ${mode} "${args}")
+    endif()
+  endif()
+  set(${variable} ${args} PARENT_SCOPE)
+endfunction(ei_maybe_separate_arguments)
+
 # Determine if we should build shared libraries on this platform.
 get_cmake_property(EIGEN_BUILD_SHARED_LIBS TARGET_SUPPORTS_SHARED_LIBS)
 
@@ -101,6 +125,10 @@ find_package(StandardMathLibrary)
 set(EIGEN_TEST_CUSTOM_LINKER_FLAGS  "" CACHE STRING "Additional linker flags when linking unit tests.")
 set(EIGEN_TEST_CUSTOM_CXX_FLAGS     "" CACHE STRING "Additional compiler flags when compiling unit tests.")
 
+# Convert space-separated arguments into CMake lists for downstream consumption.
+ei_maybe_separate_arguments(EIGEN_TEST_CUSTOM_LINKER_FLAGS NATIVE_COMMAND "${EIGEN_TEST_CUSTOM_LINKER_FLAGS}")
+ei_maybe_separate_arguments(EIGEN_TEST_CUSTOM_CXX_FLAGS NATIVE_COMMAND "${EIGEN_TEST_CUSTOM_CXX_FLAGS}")
+
 set(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO "")
 
 if(NOT STANDARD_MATH_LIBRARY_FOUND)
@@ -109,13 +137,11 @@ if(NOT STANDARD_MATH_LIBRARY_FOUND)
     "Can't link to the standard math library. Please report to the Eigen developers, telling them about your platform.")
 
 else()
-
   if(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO)
     set(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO "${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO} ${STANDARD_MATH_LIBRARY}")
   else()
     set(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO "${STANDARD_MATH_LIBRARY}")
   endif()
-
 endif()
 
 if(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO)
@@ -125,6 +151,7 @@ else()
 endif()
 
 option(EIGEN_BUILD_BTL "Build benchmark suite" OFF)
+option(EIGEN_BUILD_SPBENCH "Build sparse benchmark suite" OFF)
 
 # Disable pkgconfig only for native Windows builds
 if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
@@ -253,18 +280,12 @@ if(NOT MSVC)
   option(EIGEN_TEST_AVX512 "Enable/Disable AVX512 in tests/examples" OFF)
   if(EIGEN_TEST_AVX512)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512f -mfma")
-    if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6")
-    endif()
     message(STATUS "Enabling AVX512 in tests/examples")
   endif()
 
   option(EIGEN_TEST_AVX512DQ "Enable/Disable AVX512DQ in tests/examples" OFF)
   if(EIGEN_TEST_AVX512DQ)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512dq")
-    if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6")
-    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512dq -mfma")
     message(STATUS "Enabling AVX512DQ in tests/examples")
   endif()
 
@@ -369,9 +390,17 @@ else()
   endif()
 
   option(EIGEN_TEST_FMA "Enable/Disable FMA/AVX2 in tests/examples" OFF)
-  if(EIGEN_TEST_FMA AND NOT EIGEN_TEST_NEON)
+  option(EIGEN_TEST_AVX2 "Enable/Disable FMA/AVX2 in tests/examples" OFF)
+  if((EIGEN_TEST_FMA AND NOT EIGEN_TEST_NEON) OR EIGEN_TEST_AVX2)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
     message(STATUS "Enabling FMA/AVX2 in tests/examples")
+  endif()
+
+  option(EIGEN_TEST_AVX512 "Enable/Disable AVX512 in tests/examples" OFF)
+  option(EIGEN_TEST_AVX512DQ "Enable/Disable AVX512DQ in tests/examples" OFF)
+  if(EIGEN_TEST_AVX512 OR EIGEN_TEST_AVX512DQ)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
+    message(STATUS "Enabling AVX512 in tests/examples")
   endif()
 
 endif()
@@ -416,7 +445,8 @@ if(EIGEN_TEST_NO_EXCEPTIONS)
   message(STATUS "Disabling exceptions in tests/examples")
 endif()
 
-set(EIGEN_CUDA_COMPUTE_ARCH 30 CACHE STRING "The CUDA compute architecture level to target when compiling CUDA code")
+set(EIGEN_CUDA_CXX_FLAGS "" CACHE STRING "Additional flags to pass to the cuda compiler.")
+set(EIGEN_CUDA_COMPUTE_ARCH 30 CACHE STRING "The CUDA compute architecture(s) to target when compiling CUDA code")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -482,8 +512,9 @@ if(EIGEN_BUILD_DOC)
 endif()
 
 
-option(BUILD_TESTING "Enable creation of Eigen tests." ON)
-if(BUILD_TESTING)
+cmake_dependent_option(BUILD_TESTING "Enable creation of tests." ON "PROJECT_IS_TOP_LEVEL" OFF)
+option(EIGEN_BUILD_TESTING "Enable creation of Eigen tests." ${BUILD_TESTING})
+if(EIGEN_BUILD_TESTING)
   include(EigenConfigureTesting)
 
   if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
@@ -495,6 +526,9 @@ if(BUILD_TESTING)
   add_subdirectory(failtest)
 endif()
 
+include(CMakeDetermineFortranCompiler)
+option(EIGEN_BUILD_BLAS "Toggles the building of the Eigen Blas library" ${CMAKE_Fortran_COMPILER})
+option(EIGEN_BUILD_LAPACK "Toggles the building of the included Eigen LAPACK library" ${CMAKE_Fortran_COMPILER})
 if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
   add_subdirectory(blas)
   add_subdirectory(lapack)
@@ -545,13 +579,13 @@ if(EIGEN_BUILD_BTL)
   add_subdirectory(bench/btl EXCLUDE_FROM_ALL)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND EIGEN_BUILD_SPBENCH)
   add_subdirectory(bench/spbench EXCLUDE_FROM_ALL)
 endif()
 
 configure_file(scripts/cdashtesting.cmake.in cdashtesting.cmake @ONLY)
 
-if(BUILD_TESTING)
+if(EIGEN_BUILD_TESTING)
   ei_testing_print_summary()
 endif()
 
@@ -559,34 +593,35 @@ message(STATUS "")
 message(STATUS "Configured Eigen ${EIGEN_VERSION_NUMBER}")
 message(STATUS "")
 
-string(TOLOWER "${CMAKE_GENERATOR}" cmake_generator_tolower)
-if(cmake_generator_tolower MATCHES "makefile")
-  message(STATUS "Available targets (use: make TARGET):")
-else()
-  message(STATUS "Available targets (use: cmake --build . --target TARGET):")
+if(PROJECT_IS_TOP_LEVEL)
+  string(TOLOWER "${CMAKE_GENERATOR}" cmake_generator_tolower)
+  if(cmake_generator_tolower MATCHES "makefile")
+    message(STATUS "Available targets (use: make TARGET):")
+  else()
+    message(STATUS "Available targets (use: cmake --build . --target TARGET):")
+  endif()
+  message(STATUS "---------+--------------------------------------------------------------")
+  message(STATUS "Target   |   Description")
+  message(STATUS "---------+--------------------------------------------------------------")
+  message(STATUS "install  | Install Eigen. Headers will be installed to:")
+  message(STATUS "         |     <CMAKE_INSTALL_PREFIX>/<INCLUDE_INSTALL_DIR>")
+  message(STATUS "         |   Using the following values:")
+  message(STATUS "         |     CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+  message(STATUS "         |     INCLUDE_INSTALL_DIR:  ${INCLUDE_INSTALL_DIR}")
+  message(STATUS "         |   Change the install location of Eigen headers using:")
+  message(STATUS "         |     cmake . -DCMAKE_INSTALL_PREFIX=yourprefix")
+  message(STATUS "         |   Or:")
+  message(STATUS "         |     cmake . -DINCLUDE_INSTALL_DIR=yourdir")
+  message(STATUS "doc      | Generate the API documentation, requires Doxygen & LaTeX")
+  if(EIGEN_BUILD_TESTING)
+    message(STATUS "check    | Build and run the unit-tests. Read this page:")
+    message(STATUS "         |   http://eigen.tuxfamily.org/index.php?title=Tests")
+  endif()
+  message(STATUS "blas     | Build BLAS library (not the same thing as Eigen)")
+  message(STATUS "uninstall| Remove files installed by the install target")
+  message(STATUS "---------+--------------------------------------------------------------")
+  message(STATUS "")
 endif()
-message(STATUS "---------+--------------------------------------------------------------")
-message(STATUS "Target   |   Description")
-message(STATUS "---------+--------------------------------------------------------------")
-message(STATUS "install  | Install Eigen. Headers will be installed to:")
-message(STATUS "         |     <CMAKE_INSTALL_PREFIX>/<INCLUDE_INSTALL_DIR>")
-message(STATUS "         |   Using the following values:")
-message(STATUS "         |     CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
-message(STATUS "         |     INCLUDE_INSTALL_DIR:  ${INCLUDE_INSTALL_DIR}")
-message(STATUS "         |   Change the install location of Eigen headers using:")
-message(STATUS "         |     cmake . -DCMAKE_INSTALL_PREFIX=yourprefix")
-message(STATUS "         |   Or:")
-message(STATUS "         |     cmake . -DINCLUDE_INSTALL_DIR=yourdir")
-message(STATUS "doc      | Generate the API documentation, requires Doxygen & LaTeX")
-if(BUILD_TESTING)
-  message(STATUS "check    | Build and run the unit-tests. Read this page:")
-  message(STATUS "         |   http://eigen.tuxfamily.org/index.php?title=Tests")
-endif()
-message(STATUS "blas     | Build BLAS library (not the same thing as Eigen)")
-message(STATUS "uninstall| Remove files installed by the install target")
-message(STATUS "---------+--------------------------------------------------------------")
-message(STATUS "")
-
 
 set ( EIGEN_VERSION_STRING ${EIGEN_VERSION_NUMBER} )
 set ( EIGEN_VERSION_MAJOR  ${EIGEN_WORLD_VERSION} )
@@ -612,6 +647,8 @@ set_target_properties (eigen PROPERTIES EXPORT_NAME Eigen)
 
 install (TARGETS eigen EXPORT Eigen3Targets)
 
+option(EIGEN_BUILD_CMAKE_PACKAGE "Enables the creation of EigenConfig.cmake and related files" ON)
+if(EIGEN_BUILD_CMAKE_PACKAGE)
 configure_package_config_file (
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Eigen3Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
@@ -647,6 +684,7 @@ install ( FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UseEigen3.cmake
 # Add uninstall target
 add_custom_target ( uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/EigenUninstall.cmake)
+endif()
 
 if (EIGEN_SPLIT_TESTSUITE)
   ei_split_testsuite("${EIGEN_SPLIT_TESTSUITE}")

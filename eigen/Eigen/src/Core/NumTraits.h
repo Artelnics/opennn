@@ -245,12 +245,25 @@ template<> struct NumTraits<double> : GenericNumTraits<double>
   static inline double dummy_precision() { return 1e-12; }
 };
 
+// GPU devices treat `long double` as `double`.
+#ifndef EIGEN_GPU_COMPILE_PHASE
 template<> struct NumTraits<long double>
   : GenericNumTraits<long double>
 {
-  EIGEN_CONSTEXPR
-  static inline long double dummy_precision() { return 1e-15l; }
+  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+  static inline long double dummy_precision() { return static_cast<long double>(1e-15l); }
+
+#if defined(EIGEN_ARCH_PPC) && (__LDBL_MANT_DIG__ == 106)
+  // PowerPC double double causes issues with some values
+  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+  static inline long double epsilon()
+  {
+    // 2^(-(__LDBL_MANT_DIG__)+1)
+    return static_cast<long double>(2.4651903288156618919116517665087e-32l);
+  }
+#endif
 };
+#endif
 
 template<typename _Real> struct NumTraits<std::complex<_Real> >
   : GenericNumTraits<std::complex<_Real> >

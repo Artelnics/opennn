@@ -233,7 +233,7 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
     }                                                           \
   }                                                             \
 
-#define writeRegToShmem(_)                      \
+#define writeRegToShmem()                       \
   lhs_shmem[lhs_store_idx_0] = lhs_pf0;         \
   rhs_shmem[rhs_store_idx_0] = rhs_pf0;         \
                                                 \

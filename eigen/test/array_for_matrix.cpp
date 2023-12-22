@@ -211,6 +211,40 @@ template<typename MatrixType> void cwise_min_max(const MatrixType& m)
   VERIFY_IS_APPROX(MatrixType::Constant(rows,cols, maxM1).array(), (m1.array().max)( maxM1));
   VERIFY_IS_APPROX(m1.array(), (m1.array().max)( minM1));
 
+  // Test NaN propagation for min/max.
+  if (!NumTraits<Scalar>::IsInteger) {
+    m1(0,0) = NumTraits<Scalar>::quiet_NaN();
+    // Elementwise.
+    VERIFY((numext::isnan)(m1.template cwiseMax<PropagateNaN>(MatrixType::Constant(rows,cols, Scalar(1)))(0,0)));
+    VERIFY((numext::isnan)(m1.template cwiseMin<PropagateNaN>(MatrixType::Constant(rows,cols, Scalar(1)))(0,0)));
+    VERIFY(!(numext::isnan)(m1.template cwiseMax<PropagateNumbers>(MatrixType::Constant(rows,cols, Scalar(1)))(0,0)));
+    VERIFY(!(numext::isnan)(m1.template cwiseMin<PropagateNumbers>(MatrixType::Constant(rows,cols, Scalar(1)))(0,0)));
+    VERIFY((numext::isnan)(m1.template cwiseMax<PropagateNaN>(Scalar(1))(0,0)));
+    VERIFY((numext::isnan)(m1.template cwiseMin<PropagateNaN>(Scalar(1))(0,0)));
+    VERIFY(!(numext::isnan)(m1.template cwiseMax<PropagateNumbers>(Scalar(1))(0,0)));
+    VERIFY(!(numext::isnan)(m1.template cwiseMin<PropagateNumbers>(Scalar(1))(0,0)));
+
+
+    VERIFY((numext::isnan)(m1.array().template max<PropagateNaN>(MatrixType::Constant(rows,cols, Scalar(1)).array())(0,0)));
+    VERIFY((numext::isnan)(m1.array().template min<PropagateNaN>(MatrixType::Constant(rows,cols, Scalar(1)).array())(0,0)));
+    VERIFY(!(numext::isnan)(m1.array().template max<PropagateNumbers>(MatrixType::Constant(rows,cols, Scalar(1)).array())(0,0)));
+    VERIFY(!(numext::isnan)(m1.array().template min<PropagateNumbers>(MatrixType::Constant(rows,cols, Scalar(1)).array())(0,0)));
+    VERIFY((numext::isnan)(m1.array().template max<PropagateNaN>(Scalar(1))(0,0)));
+    VERIFY((numext::isnan)(m1.array().template min<PropagateNaN>(Scalar(1))(0,0)));
+    VERIFY(!(numext::isnan)(m1.array().template max<PropagateNumbers>(Scalar(1))(0,0)));
+    VERIFY(!(numext::isnan)(m1.array().template min<PropagateNumbers>(Scalar(1))(0,0)));
+
+    // Reductions.
+    VERIFY((numext::isnan)(m1.template maxCoeff<PropagateNaN>()));
+    VERIFY((numext::isnan)(m1.template minCoeff<PropagateNaN>()));
+    if (m1.size() > 1) {
+      VERIFY(!(numext::isnan)(m1.template maxCoeff<PropagateNumbers>()));
+      VERIFY(!(numext::isnan)(m1.template minCoeff<PropagateNumbers>()));
+    } else {
+      VERIFY((numext::isnan)(m1.template maxCoeff<PropagateNumbers>()));
+      VERIFY((numext::isnan)(m1.template minCoeff<PropagateNumbers>()));
+    }
+  }
 }
 
 template<typename MatrixTraits> void resize(const MatrixTraits& t)

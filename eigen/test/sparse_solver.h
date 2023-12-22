@@ -99,6 +99,13 @@ void check_sparse_solving(Solver& solver, const typename Solver::MatrixType& A, 
     VERIFY(solver.info() == Success && "solving failed when using Map");
     VERIFY(oldb.isApprox(bm) && "sparse solver testing: the rhs should not be modified!");
     VERIFY(xm.isApprox(refX,test_precision<Scalar>()));
+    
+    // Test with a Map and non-unit stride.
+    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> out(2*xm.rows(), 2*xm.cols());
+    out.setZero();
+    Eigen::Map<DenseRhs, 0, Stride<Eigen::Dynamic, 2> > outm(out.data(), xm.rows(), xm.cols(), Stride<Eigen::Dynamic, 2>(2 * xm.rows(), 2));
+    outm = solver.solve(bm);
+    VERIFY(outm.isApprox(refX,test_precision<Scalar>()));
   }
   
   // if not too large, do some extra check:

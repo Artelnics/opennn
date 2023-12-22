@@ -95,7 +95,11 @@ private:
 
     Tensor<type, 1> f2_2(const Index& cte, const Tensor<type, 2>& matrix_x) const
     {
+        Tensor<type, 1> y;
+      /*
         return  type(cte)*matrix_x.maximum();
+*/
+        return y;
     }
 
     Tensor<type, 1> f2_2(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const

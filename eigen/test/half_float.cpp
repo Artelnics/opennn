@@ -224,6 +224,8 @@ void test_comparison()
 
 void test_basic_functions()
 {
+  const float PI = static_cast<float>(EIGEN_PI);
+
   VERIFY_IS_EQUAL(float(numext::abs(half(3.5f))), 3.5f);
   VERIFY_IS_EQUAL(float(abs(half(3.5f))), 3.5f);
   VERIFY_IS_EQUAL(float(numext::abs(half(-3.5f))), 3.5f);
@@ -251,8 +253,8 @@ void test_basic_functions()
 
   VERIFY_IS_EQUAL(float(numext::exp(half(0.0f))), 1.0f);
   VERIFY_IS_EQUAL(float(exp(half(0.0f))), 1.0f);
-  VERIFY_IS_APPROX(float(numext::exp(half(EIGEN_PI))), 20.f + float(EIGEN_PI));
-  VERIFY_IS_APPROX(float(exp(half(EIGEN_PI))), 20.f + float(EIGEN_PI));
+  VERIFY_IS_APPROX(float(numext::exp(half(PI))), 20.f + PI);
+  VERIFY_IS_APPROX(float(exp(half(PI))), 20.f + PI);
 
   VERIFY_IS_EQUAL(float(numext::expm1(half(0.0f))), 0.0f);
   VERIFY_IS_EQUAL(float(expm1(half(0.0f))), 0.0f);
@@ -277,25 +279,26 @@ void test_basic_functions()
 
 void test_trigonometric_functions()
 {
+  const float PI = static_cast<float>(EIGEN_PI);
   VERIFY_IS_APPROX(numext::cos(half(0.0f)), half(cosf(0.0f)));
   VERIFY_IS_APPROX(cos(half(0.0f)), half(cosf(0.0f)));
-  VERIFY_IS_APPROX(numext::cos(half(EIGEN_PI)), half(cosf(EIGEN_PI)));
-  // VERIFY_IS_APPROX(numext::cos(half(EIGEN_PI/2)), half(cosf(EIGEN_PI/2)));
-  // VERIFY_IS_APPROX(numext::cos(half(3*EIGEN_PI/2)), half(cosf(3*EIGEN_PI/2)));
+  VERIFY_IS_APPROX(numext::cos(half(PI)), half(cosf(PI)));
+  // VERIFY_IS_APPROX(numext::cos(half(PI/2)), half(cosf(PI/2)));
+  // VERIFY_IS_APPROX(numext::cos(half(3*PI/2)), half(cosf(3*PI/2)));
   VERIFY_IS_APPROX(numext::cos(half(3.5f)), half(cosf(3.5f)));
 
   VERIFY_IS_APPROX(numext::sin(half(0.0f)), half(sinf(0.0f)));
   VERIFY_IS_APPROX(sin(half(0.0f)), half(sinf(0.0f)));
-  //  VERIFY_IS_APPROX(numext::sin(half(EIGEN_PI)), half(sinf(EIGEN_PI)));
-  VERIFY_IS_APPROX(numext::sin(half(EIGEN_PI/2)), half(sinf(EIGEN_PI/2)));
-  VERIFY_IS_APPROX(numext::sin(half(3*EIGEN_PI/2)), half(sinf(3*EIGEN_PI/2)));
+  //  VERIFY_IS_APPROX(numext::sin(half(PI)), half(sinf(PI)));
+  VERIFY_IS_APPROX(numext::sin(half(PI/2)), half(sinf(PI/2)));
+  VERIFY_IS_APPROX(numext::sin(half(3*PI/2)), half(sinf(3*PI/2)));
   VERIFY_IS_APPROX(numext::sin(half(3.5f)), half(sinf(3.5f)));
 
   VERIFY_IS_APPROX(numext::tan(half(0.0f)), half(tanf(0.0f)));
   VERIFY_IS_APPROX(tan(half(0.0f)), half(tanf(0.0f)));
-  //  VERIFY_IS_APPROX(numext::tan(half(EIGEN_PI)), half(tanf(EIGEN_PI)));
-  //  VERIFY_IS_APPROX(numext::tan(half(EIGEN_PI/2)), half(tanf(EIGEN_PI/2)));
-  //VERIFY_IS_APPROX(numext::tan(half(3*EIGEN_PI/2)), half(tanf(3*EIGEN_PI/2)));
+  //  VERIFY_IS_APPROX(numext::tan(half(PI)), half(tanf(PI)));
+  //  VERIFY_IS_APPROX(numext::tan(half(PI/2)), half(tanf(PI/2)));
+  //VERIFY_IS_APPROX(numext::tan(half(3*PI/2)), half(tanf(3*PI/2)));
   VERIFY_IS_APPROX(numext::tan(half(3.5f)), half(tanf(3.5f)));
 }
 
