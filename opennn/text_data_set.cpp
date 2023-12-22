@@ -329,7 +329,6 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Samples uses
-
     {
         file_stream.OpenElement("SamplesUses");
 
@@ -436,6 +435,23 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Words frequencies
+    {
+        file_stream.OpenElement("WordsFrequencies");
+
+        for(Index i = 0; i < words_frequencies.size(); i++)
+        {
+            buffer.str("");
+            buffer << words_frequencies(i);
+
+            file_stream.PushText(buffer.str().c_str());
+            if(i != words_frequencies.size()-1) file_stream.PushText(" ");
+
+        }
+
+        file_stream.CloseElement();
+    }
+
     // Preview data
 
     file_stream.OpenElement("PreviewData");
@@ -444,34 +460,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    if(model_type != ModelType::TextClassification)
-    {
-        buffer << data_file_preview.size();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-
-        for(Index i = 0; i < data_file_preview.size(); i++)
-        {
-            file_stream.OpenElement("Row");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            for(Index j = 0; j < data_file_preview(i).size(); j++)
-            {
-                file_stream.PushText(data_file_preview(i)(j).c_str());
-
-                if(j != data_file_preview(i).size()-1)
-                {
-                    file_stream.PushText(",");
-                }
-            }
-
-            file_stream.CloseElement();
-        }
-    }
-    else
+    // Row and Targets
     {
         buffer << text_data_file_preview.dimension(0);
 
