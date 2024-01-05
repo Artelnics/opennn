@@ -403,6 +403,10 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     back_propagation.loss = back_propagation.error;
 
+    // Assemble gradient
+
+    assemble_layers_error_gradient(back_propagation);
+    
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
@@ -418,9 +422,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight * back_propagation.regularization_gradient;
     }
 
-    // Assemble gradient
-
-    assemble_layers_error_gradient(back_propagation);
 }
 
 
