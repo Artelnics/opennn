@@ -613,9 +613,40 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
          convolutional_layer_back_propagation->biases_derivatives.data() + biases_number,
          gradient.data() + index);
 
-    copy(convolutional_layer_back_propagation->synaptic_weights_derivatives.data(),
-         convolutional_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
-         gradient.data() + index + biases_number);
+    const Index kernel_rows_number = get_kernels_rows_number();
+    const Index kernel_cols_number = get_kernels_columns_number();
+    const Index kernel_channels_number = get_kernels_channels_number();
+    const Index kernel_numbers = get_kernels_number();
+    const Index numb_of_weights_per_kernel = kernel_rows_number * kernel_cols_number * kernel_channels_number;
+
+    Tensor<type, 1> lin_weights_gradient(synaptic_weights_number);
+
+    #pragma omp parallel for
+    for (Index kernel_index = 0; kernel_index < kernel_numbers; kernel_index++)
+    {
+        Index element_indx = 0;
+        for(Index row_index = 0; row_index < kernel_rows_number; row_index++)
+        {
+            for(Index column_index = 0; column_index < kernel_cols_number; column_index++)
+            {
+                for(Index channel_index = 0; channel_index < kernel_channels_number; channel_index++)
+                {
+                    lin_weights_gradient(kernel_index * numb_of_weights_per_kernel + element_indx) = 
+                            convolutional_layer_back_propagation->synaptic_weights_derivatives(row_index, 
+                            column_index, 
+                            channel_index, 
+                            kernel_index);
+
+                    element_indx++;
+                }    
+            }    
+        } 
+    }
+    
+
+   copy(lin_weights_gradient.data(),
+        lin_weights_gradient.data() + synaptic_weights_number,
+        gradient.data() + index + biases_number);
 }
 
 
