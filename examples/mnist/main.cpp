@@ -157,13 +157,21 @@ void test(const TestingAnalysis& ta)
     cout << endl;
 }
 
-TrainingResults do_example1(NeuralNetwork& nn, TrainingStrategy& ts)
+TrainingResults do_example1(DataSet& ds)
 {
-    auto ds = ts.get_data_set_pointer();
+    NeuralNetwork nn;
+    TrainingStrategy ts(&nn, &ds);
+    TestingAnalysis ta(&nn, &ds);
+
+    ts.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+    ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    ts.set_default();
+    ts.set_maximum_epochs_number(10);
+    ts.set_display(false);
     
     Tensor<Index, 1> input_variable_dimension(1);
     input_variable_dimension.setValues({NUMB_OF_INPUT_VARIABLES});
-    ds->set_input_variables_dimensions(input_variable_dimension);
+    ds.set_input_variables_dimensions(input_variable_dimension);
 
     PerceptronLayer* pcll = new PerceptronLayer(NUMB_OF_INPUT_VARIABLES, 128U, PerceptronLayer::ActivationFunction::RectifiedLinear);
     ProbabilisticLayer* pl = new ProbabilisticLayer(pcll->get_neurons_number(), NUMB_OF_LABELS);
@@ -171,15 +179,28 @@ TrainingResults do_example1(NeuralNetwork& nn, TrainingStrategy& ts)
     nn.add_layer(pcll);
     nn.add_layer(pl);
     
-    return ts.perform_training();
+    TrainingResults r = ts.perform_training();
+   
+    test(ta);
+
+    return r;
 }
 
-TrainingResults do_example2(NeuralNetwork& nn, TrainingStrategy& ts)
+TrainingResults do_example2(DataSet& ds)
 {
-    auto ds = ts.get_data_set_pointer();
+    NeuralNetwork nn;
+    TrainingStrategy ts(&nn, &ds);
+    TestingAnalysis ta(&nn, &ds);
+
+    ts.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+    ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    ts.set_default();
+    ts.set_maximum_epochs_number(10);
+    ts.set_display(false);
+
     Tensor<Index, 1> input_variable_dimension(3);
     input_variable_dimension.setValues({NUMB_OF_ROWS_PER_IMAGE, NUMB_OF_COLUMNS_PER_IMAGE, 1});
-    ds->set_input_variables_dimensions(input_variable_dimension);
+    ds.set_input_variables_dimensions(input_variable_dimension);
 
     const Index batch_samples = 100U;
     Tensor<Index, 1> conv_input_dimension(4);
@@ -225,15 +246,28 @@ TrainingResults do_example2(NeuralNetwork& nn, TrainingStrategy& ts)
     nn.add_layer(pcl);
     nn.add_layer(pll);
 
-    return ts.perform_training();
+    TrainingResults r = ts.perform_training();
+   
+    test(ta);
+
+    return r;
 }
 
-TrainingResults do_example3(NeuralNetwork& nn, TrainingStrategy& ts)
+TrainingResults do_example3(DataSet& ds)
 {
-    auto ds = ts.get_data_set_pointer();
+    NeuralNetwork nn;
+    TrainingStrategy ts(&nn, &ds);
+    TestingAnalysis ta(&nn, &ds);
+
+    ts.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+    ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    ts.set_default();
+    ts.set_maximum_epochs_number(10);
+    ts.set_display(false);
+
     Tensor<Index, 1> input_variable_dimension(3);
     input_variable_dimension.setValues({NUMB_OF_ROWS_PER_IMAGE, NUMB_OF_COLUMNS_PER_IMAGE, 1});
-    ds->set_input_variables_dimensions(input_variable_dimension);
+    ds.set_input_variables_dimensions(input_variable_dimension);
 
     const Index batch_samples = 100U;
     Tensor<Index, 1> conv_input_dimension(4);
@@ -297,7 +331,11 @@ TrainingResults do_example3(NeuralNetwork& nn, TrainingStrategy& ts)
     nn.add_layer(pcl1);
     nn.add_layer(pll);
 
-    return ts.perform_training();
+    TrainingResults r = ts.perform_training();
+   
+    test(ta);
+
+    return r;
 }
 
 void save_errors(const TrainingResults& tr, string_view sv)        
@@ -316,41 +354,26 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-        DataSet ds = get_data_set();
         
-        NeuralNetwork nn;
-
-        TrainingStrategy ts(&nn, &ds);
-        ts.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        ts.set_maximum_epochs_number(10);
-        ts.set_display(false);
-
-        TestingAnalysis ta(&nn, &ds);
+        DataSet ds = get_data_set();
 
         cout << "Model 1: \n";
-        TrainingResults tr0 = do_example1(nn, ts);
+        TrainingResults tr0 = do_example1(ds);
         tr0.print();
         cout << "Training time: " << tr0.elapsed_time << " \n";
         save_errors(tr0, "tr0");
-        test(ta);
-        nn.delete_layers();
 
         cout << "Model 2: \n";
-        TrainingResults tr1 = do_example2(nn, ts);
+        TrainingResults tr1 = do_example2(ds);
         save_errors(tr1, "tr1");
         tr1.print();
         cout << "Training time: " << tr1.elapsed_time << " \n";
-        test(ta);
-        nn.delete_layers();
-        
 
         cout << "Model 3: \n";
-        TrainingResults tr2 = do_example3(nn, ts);
+        TrainingResults tr2 = do_example3(ds);
         save_errors(tr2, "tr2");
         tr2.print();
         cout << "Training time: " << tr2.elapsed_time << " \n";
-        test(ta);
 
         return 0;
     }
