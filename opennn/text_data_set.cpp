@@ -635,7 +635,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(short_words_length_element->GetText())
         {
-            const int new_short_words_length = static_cast<Index>(atoi(short_words_length_element->GetText()));
+            const int new_short_words_length = Index(atoi(short_words_length_element->GetText()));
 
             set_short_words_length(new_short_words_length);
         }
@@ -647,7 +647,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(long_words_length_element->GetText())
         {
-            const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
+            const int new_long_words_length = Index(atoi(long_words_length_element->GetText()));
 
             set_long_words_length(new_long_words_length);
         }
@@ -709,7 +709,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
+        new_columns_number = Index(atoi(columns_number_element->GetText()));
 
         set_columns_number(new_columns_number);
     }
@@ -885,7 +885,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //        if(time_series_columns_number_element->GetText())
 //        {
-//            time_series_new_columns_number = static_cast<Index>(atoi(time_series_columns_number_element->GetText()));
+//            time_series_new_columns_number = Index(atoi(time_series_columns_number_element->GetText()));
 
 //            set_time_series_columns_number(time_series_new_columns_number);
 //        }
@@ -1097,7 +1097,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
+        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
 
@@ -1168,7 +1168,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number_element->GetText())
     {
-        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
     }
 
     if(missing_values_number > 0)
@@ -1213,7 +1213,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(rows_missing_values_number_element->GetText())
         {
-            rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
+            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
         }
     }
 
@@ -1247,7 +1247,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(preview_size_element->GetText())
     {
-        new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
+        new_preview_size = Index(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
         if(new_preview_size > 0) text_data_file_preview.resize(new_preview_size, 2);
@@ -1372,7 +1372,7 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
             auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), word_bag.words(i));
             const Index index = it - columns_names.data();
 
-            vector(index) = word_bag.frequencies(i);
+            vector(index) = type(word_bag.frequencies(i));
         }
     }
 
@@ -1426,7 +1426,7 @@ void TextDataSet::read_txt()
     std::ofstream file;
     file.open(transformed_data_path);
 
-    for(Index i  = 0; i < document_words_number; i++)
+    for(Index i  = type(0); i < document_words_number; i++)
         file << columns_names(i) << ";";
     file << "target_variable" << "\n";
 

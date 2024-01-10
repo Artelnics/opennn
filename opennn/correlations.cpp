@@ -495,12 +495,12 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(is_constant(x) && !is_constant(y))
     {
         cout << "Warning: Column X is constant." << endl;
-        linear_correlation.a = NAN;
-        linear_correlation.b = NAN;
-        linear_correlation.r = NAN;
+        linear_correlation.a = type(NAN);
+        linear_correlation.b = type(NAN);
+        linear_correlation.r = type(NAN);
 
-        linear_correlation.lower_confidence = NAN;
-        linear_correlation.upper_confidence = NAN;
+        linear_correlation.lower_confidence = type(NAN);
+        linear_correlation.upper_confidence = type(NAN);
 
         return linear_correlation;
     }
@@ -510,11 +510,11 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         linear_correlation.a = y(0);
         linear_correlation.b = type(0);
-        linear_correlation.r = NAN;
+        linear_correlation.r = type(NAN);
 
 
-        linear_correlation.lower_confidence = NAN;
-        linear_correlation.upper_confidence = NAN;
+        linear_correlation.lower_confidence = type(NAN);
+        linear_correlation.upper_confidence = type(NAN);
 
         return linear_correlation;
     }
@@ -522,12 +522,12 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     {
         cout << "Warning: Column X and column Y are constant." << endl;
 
-        linear_correlation.a = NAN;
-        linear_correlation.b = NAN;
-        linear_correlation.r = NAN;
+        linear_correlation.a = type(NAN);
+        linear_correlation.b = type(NAN);
+        linear_correlation.r = type(NAN);
 
-        linear_correlation.lower_confidence = NAN;
-        linear_correlation.upper_confidence = NAN;
+        linear_correlation.lower_confidence = type(NAN);
+        linear_correlation.upper_confidence = type(NAN);
 
         return linear_correlation;
     }
@@ -543,12 +543,12 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     {
         cout << "Warning: Column X and Y hasn't common rows." << endl;
 
-        linear_correlation.a = NAN;
-        linear_correlation.b = NAN;
-        linear_correlation.r = NAN;
+        linear_correlation.a = type(NAN);
+        linear_correlation.b = type(NAN);
+        linear_correlation.r = type(NAN);
 
-        linear_correlation.lower_confidence = NAN;
-        linear_correlation.upper_confidence = NAN;
+        linear_correlation.lower_confidence = type(NAN);
+        linear_correlation.upper_confidence = type(NAN);
 
         return linear_correlation;
     }
@@ -585,21 +585,21 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
-        linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
-        linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
+        linear_correlation.a = type(s_y() * s_xx() - s_x() * s_xy()) / type(double(n) * s_xx() - s_x() * s_x());
+        linear_correlation.b = type(double(n) * s_xy() - s_x() * s_y()) / type(double(n) * s_xx() - s_x() * s_x());
 
-        const double denominator = sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y()));
+        const double denominator = sqrt((double(n) * s_xx() - s_x() * s_x()) *(double(n) * s_yy() - s_y() * s_y()));
 
         if(denominator < NUMERIC_LIMITS_MIN)
         {
-            linear_correlation.r = NAN;
-            linear_correlation.lower_confidence = NAN;
-            linear_correlation.upper_confidence = NAN;
+            linear_correlation.r = type(NAN);
+            linear_correlation.lower_confidence = type(NAN);
+            linear_correlation.upper_confidence = type(NAN);
         }
         else
         {
             linear_correlation.r
-                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(denominator);
+                    = type(double(n) * s_xy() - s_x() * s_y()) / type(denominator);
 
             const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
@@ -610,9 +610,9 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
             linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
         }
 
-        linear_correlation.r = clamp(linear_correlation.r, static_cast<type>(-1), static_cast<type>(1));
-        linear_correlation.lower_confidence = clamp(linear_correlation.lower_confidence, static_cast<type>(-1), static_cast<type>(1));
-        linear_correlation.upper_confidence = clamp(linear_correlation.upper_confidence, static_cast<type>(-1), static_cast<type>(1));
+        linear_correlation.r = clamp(linear_correlation.r, type(-1), type(1));
+        linear_correlation.lower_confidence = clamp(linear_correlation.lower_confidence, type(-1), type(1));
+        linear_correlation.upper_confidence = clamp(linear_correlation.upper_confidence, type(-1), type(1));
     }
 
     return linear_correlation;
@@ -621,7 +621,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 type r_correlation_to_z_correlation(const type& r_correlation)
 {
-    const type z_correlation = 0.5*log((1+r_correlation)/(1 - r_correlation));
+    const type z_correlation = type(0.5*log((1 + r_correlation)/(1 - r_correlation)));
 
     return z_correlation;
 }
@@ -629,7 +629,7 @@ type r_correlation_to_z_correlation(const type& r_correlation)
 
 type z_correlation_to_r_correlation (const type& z_correlation)
 {
-    const type r_correlation = (exp(2*z_correlation)-1) / (exp(2*z_correlation)+1);
+    const type r_correlation = type((exp(2*z_correlation)-1) / (exp(2*z_correlation)+1));
 
     return r_correlation;
 }
@@ -642,9 +642,9 @@ Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, cons
 
     const type z_standard_error = type(1.959964);
 
-    confidence_interval(0) = z_correlation - z_standard_error * 1/sqrt(n - 3);
+    confidence_interval(0) = z_correlation - z_standard_error * type(1/sqrt(n - 3));
 
-    confidence_interval(1) = z_correlation + z_standard_error * 1/sqrt(n - 3);
+    confidence_interval(1) = z_correlation + z_standard_error * type(1/sqrt(n - 3));
 
     return confidence_interval;
 }
@@ -664,18 +664,21 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
     sort(v_sort.begin(), v_sort.end());
 
     vector<type> x_rank_vector(n);
-    type rank = 1.0;
+
+    type rank = type(1);
 
     for(int i = 0U; i < v_sort.size();++i)
     {
         size_t repeated = 1U;
+
         for(size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first;++j,++repeated);
+
         for(size_t k = 0; k < repeated;++k)
         {
-            x_rank_vector[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
+            x_rank_vector[v_sort[i + k].second] = rank + type(repeated - 1) / type(2);
         }
         i += repeated - 1;
-        rank += repeated;
+        rank += type(repeated);
     }
 
     TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
@@ -766,7 +769,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     if(x_filtered.size() == 0)
     {
-        correlation.r = static_cast<type>(NAN);
+        correlation.r = type(NAN);
 
         correlation.form = Correlation::Form::Logistic;
 
@@ -783,7 +786,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
-    neural_network.get_scaling_layer_pointer()->set_display(false);
+    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
 
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
@@ -850,7 +853,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     if(x_filtered.size() == 0)
     {
-        correlation.r = static_cast<type>(NAN);
+        correlation.r = type(NAN);
 
         correlation.form = Correlation::Form::Logistic;
 
@@ -867,7 +870,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
-    neural_network.get_scaling_layer_pointer()->set_display(false);
+    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
 
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
@@ -933,7 +936,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     {
         cout << "Warning: Y variable has too many categories." << endl;
 
-        correlation.r = static_cast<type>(NAN);
+        correlation.r = type(NAN);
 
         correlation.form = Correlation::Form::Logistic;
 
@@ -942,7 +945,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     if(x_filtered.size() == 0)
     {
-        correlation.r = static_cast<type>(NAN);
+        correlation.r = type(NAN);
 
         correlation.form = Correlation::Form::Logistic;
 
@@ -952,7 +955,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Tensor<type, 2> data = opennn::assemble_vector_matrix(x_filtered, y_filtered);
 
     Tensor<Index, 1> input_columns_indices(1);
-    input_columns_indices(0) = 0;
+    input_columns_indices(0) = type(0);
 
     Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
     for(Index i = 0; i < y_filtered.dimension(1); i++) target_columns_indices(i) = i + 1;
@@ -968,7 +971,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    neural_network.get_scaling_layer_pointer()->set_display(false);
+    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -1040,7 +1043,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
         if(are_equal(0))
         {
-            correlation.r = static_cast<type>(1);
+            correlation.r = type(1);
 
             correlation.form = Correlation::Form::Logistic;
 
@@ -1052,7 +1055,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     {
         cout << "Warning: One variable has too many categories." << endl;
 
-        correlation.r = static_cast<type>(NAN);
+        correlation.r = type(NAN);
 
         correlation.form = Correlation::Form::Logistic;
 
@@ -1062,7 +1065,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     if(x_filtered.size() == 0 && y_filtered.size() == 0)
     {
-        correlation.r = static_cast<type>(NAN);
+        correlation.r = type(NAN);
 
         correlation.form = Correlation::Form::Logistic;
 
@@ -1094,7 +1097,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    neural_network.get_scaling_layer_pointer()->set_display(false);
+    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 

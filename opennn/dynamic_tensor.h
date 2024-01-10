@@ -19,10 +19,10 @@
 #include <sstream>
 
 #include "config.h"
-#include "tensor_utilities.h"
+//#include "tensor_utilities.h"
 
-namespace opennn{
-
+namespace opennn
+{
 
 template <typename T>
 class DynamicTensor
@@ -103,29 +103,7 @@ public:
 
     }
 
-/*
-    DynamicTensor(const T* new_data, const Tensor<Index, 1>& new_dimensions)
-    {
-        /// @todo check if data size matches dimensions
-        data = (T*) new_data;
 
-        dimensions = new_dimensions;
-    }
-
-    DynamicTensor(const Tensor<T, 2>& new_tensor_2)
-    {
-        dimensions = opennn::get_dimensions(new_tensor_2);
-
-        data = (T*) new_tensor_2.data();
-    }
-
-    DynamicTensor(const Tensor<T, 4>& new_tensor_4)
-    {
-        dimensions = opennn::get_dimensions(new_tensor_4);
-
-        data = (T*) new_tensor_4.data();
-    }
-*/
     virtual ~DynamicTensor()
     {
         free(data);
@@ -150,6 +128,14 @@ public:
     }
 
 
+    Index get_size() const
+    {
+        const Tensor<Index, 0> size = dimensions.prod();
+
+        return size(0);
+    }
+
+
     void set_data(const T* new_data)
     {
         free(data);
@@ -158,15 +144,15 @@ public:
     }
 
 
-    void set_dimensions(const Tensor<Index, 1> new_dimensions)
+    void set_dimensions(const Tensor<Index, 1>& new_dimensions)
     {
         free(data);
 
         dimensions = new_dimensions;
 
-        const Tensor<Index, 0> size = dimensions.prod();
+        const Index size = get_size();
 
-        data = (T*) malloc(static_cast<size_t>(size(0)*sizeof(T)));
+        data = (T*) malloc(static_cast<size_t>(size*sizeof(T)));
     }
 
 

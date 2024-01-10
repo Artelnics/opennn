@@ -2,10 +2,7 @@
 #ifndef OPENNN_CONFIG_H
 #define OPENNN_CONFIG_H
 
-
-#include "half.hpp"
-
-#define NUMERIC_LIMITS_MIN 0.000001
+#define NUMERIC_LIMITS_MIN type(0.000001)
 
 //#define OPENNN_MKL
 
@@ -55,8 +52,10 @@ namespace opennn
 {
     using namespace std;
     using namespace Eigen;
-    using type = float;
-//    typedef double type;
+
+    using type = Eigen::half;
+
+    typedef vector<vector<Index>> dimensions;
 }
 
 

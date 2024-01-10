@@ -24,31 +24,7 @@
 
 using namespace std;
 using namespace OpenNN;
-
-
-//Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
-//{
-//    const Index columns_number = box_plots.dimension(0);
-
-//    Tensor<type, 2> summary(5, columns_number);
-
-//    for(Index i = 0; i < columns_number; i++)
-//    {
-//        const BoxPlot& box_plot = box_plots(i);
-//        summary(0, i) = box_plot.minimum;
-//        summary(1, i) = box_plot.first_quartile;
-//        summary(2, i) = box_plot.median;
-//        summary(3, i) = box_plot.third_quartile;
-//        summary(4, i) = box_plot.maximum;
-//    }
-
-//    //todo
-//    Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
-//    Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
-
-//    return reshaped_summary;
-//}
-
+using namespace Eigen;
 
 int main()
 {
@@ -58,6 +34,29 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Create a 2D tensor (matrix)
+        Eigen::Tensor<double, 2> matrix(3, 3); // Replace the dimensions with your actual matrix size
+
+        // Create a 1D tensor (vector)
+        Eigen::Tensor<double, 1> vector(3); // Replace the size with your actual vector size
+
+        // Fill matrix and vector with some values
+        matrix.setValues({{1, 2, 3},
+                          {4, 5, 6},
+                          {7, 8, 9}});
+
+        vector.setValues({2, 3, 4});
+
+        // Divide columns of the matrix by corresponding elements of the vector
+        Eigen::array<int, 2> dimensions = {0, 1}; // Along columns
+/*
+        auto result = matrix / vector.reshape(dimensions);
+/*
+        // Display the result
+        std::cout << "Original Matrix:\n" << matrix << "\n\n";
+        std::cout << "Vector:\n" << vector << "\n\n";
+        std::cout << "Result Matrix:\n" << result << "\n";
+*/
         cout << "Bye!" << endl;
 
         return 0;

@@ -142,7 +142,7 @@ void WeightedSquaredError::set_weights()
         }
 
         negatives_weight = type(1);
-        positives_weight = static_cast<type>(negatives)/static_cast<type>(positives);
+        positives_weight = type(negatives)/type(positives);
     }
 }
 
@@ -161,7 +161,7 @@ void WeightedSquaredError::set_normalization_coefficient()
 
     if(data_set_pointer->get_target_columns().size()==0)
     {
-        normalization_coefficient = static_cast<type>(1);
+        normalization_coefficient = type(1);
     }
     else if((data_set_pointer) && (data_set_pointer->get_target_columns().size() == 1) && (data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary))
     {
@@ -169,11 +169,11 @@ void WeightedSquaredError::set_normalization_coefficient()
 
         const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
-        normalization_coefficient = type(negatives)*negatives_weight*static_cast<type>(0.5);
+        normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
     }
     else
     {
-        normalization_coefficient = static_cast<type>(1);
+        normalization_coefficient = type(1);
     }
 }
 
@@ -203,9 +203,13 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
+    const Tensor<type, 2>& targets = batch.targets;
 
-    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map<2>();
+    const pair<type*, dimensions> outputs = probabilistic_layer_forward_propagation->get_outputs();
+
+    const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
+
+    /// @todo remove allocation
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
     const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
@@ -217,27 +221,16 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     f_2 = back_propagation.errors.square()*negatives_weight;
 
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
-    f_3 = outputs.constant(type(0));
+    f_3 = outputs_map.constant(type(0));
 
     const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
+    const type coefficient = (type(batch_samples_number)/type(total_samples_number))*normalization_coefficient;
 
     back_propagation.error = weighted_sum_squared_error(0)/coefficient;
-
-    if(is_nan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: weighted_squared_error class.\n"
-               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
 }
 
 
@@ -251,7 +244,7 @@ void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
+    const type coefficient = (type(batch_samples_number)/type(total_samples_number))*normalization_coefficient;
 
     back_propagation.error = error()/coefficient;
 }
@@ -261,22 +254,16 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                   ForwardPropagation& ,
                                                   LossIndexBackPropagation& back_propagation) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
+    const Tensor<type, 2>& targets = batch.targets;
 
-    const Index batch_samples_number = batch.targets.get_dimension(0);
+    const Index batch_samples_number = batch.targets.dimension(0);
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2.0)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
     const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
@@ -290,29 +277,18 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
     f_3 = targets.constant(type(0));
 
-    TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
 
-    deltas.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
+    TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 
-    Tensor<type, 2> output_deltas(deltas);
-
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: weighted_squared_error class.\n"
-               << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
-
-        throw invalid_argument(buffer.str());
-    }
+    deltas_map.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
 }
 
 
 /// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
 
 void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
-                                              LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -323,7 +299,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -344,7 +320,7 @@ void WeightedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
@@ -437,7 +413,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            set_positives_weight(static_cast<type>(atof(string.c_str())));
+            set_positives_weight(type(atof(string.c_str())));
         }
         catch(const invalid_argument& e)
         {
@@ -455,7 +431,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
         try
         {
-            set_negatives_weight(static_cast<type>(atof(string.c_str())));
+            set_negatives_weight(type(atof(string.c_str())));
         }
         catch(const invalid_argument& e)
         {
@@ -532,20 +508,24 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
 
-    const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
+    const Tensor<type, 2>& targets = batch.targets;
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> outputs = probabilistic_layer_forward_propagation->outputs(0).to_tensor_map<2>();
+    const pair<type*, dimensions> outputs = probabilistic_layer_forward_propagation->get_outputs();
 
-    const Tensor<bool, 2> if_sentence = elements_are_equal(outputs, outputs.constant(type(1)));
+    const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
-    Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
-    f_1 = (outputs - targets)*positives_weight;
+    /// @todo remove allocation
 
-    Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
-    f_2 = (outputs - targets)*negatives_weight;
+    const Tensor<bool, 2> if_sentence = elements_are_equal(outputs_map, outputs_map.constant(type(1)));
+
+    Tensor<type, 2> f_1(outputs_map.dimension(0), outputs_map.dimension(1));
+    f_1 = (outputs_map - targets)*positives_weight;
+
+    Tensor<type, 2> f_2(outputs_map.dimension(0), outputs_map.dimension(1));
+    f_2 = (outputs_map - targets)*negatives_weight;
 
     loss_index_back_propagation_lm.squared_errors = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
 }

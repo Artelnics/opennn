@@ -267,7 +267,7 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
         }
         catch(const invalid_argument&)
         {
-            type_vector(i) = static_cast<type>(nan(""));
+            type_vector(i) = type(nan(""));
         }
     }
 
@@ -2010,8 +2010,10 @@ Tensor<Tensor<string,1>, 1> fix_input_output_variables(Tensor<string, 1>& inputs
 
 string round_to_precision_string(type x, const int& precision)
 {
-    type factor = pow(10,precision);
+    type factor = type(pow(10, precision));
+
     type rounded_value = (round(factor*x))/factor;
+
     stringstream ss;
     ss << fixed << setprecision(precision) << rounded_value;
     string result = ss.str();
@@ -2022,7 +2024,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 {
     Tensor<string,2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
 
-    type factor = pow(10,precision);
+    type factor = type(pow(10, precision));
 
     for(int i = 0; i< matrix_rounded.dimension(0); i++)
     {
@@ -2039,14 +2041,16 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 
-Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor)
+/// @todo clean this method Clang-tidy gives warnings.
+
+Tensor<string,1> sort_string_tensor(Tensor<string, 1> tensor)
 {
-    auto compareStringLength = [](const std::string &a, const std::string &b)
+    auto compareStringLength = [](const string &a, const string &b)
     {
         return a.length() > b.length();
     };
 
-    std::vector<std::string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
+    std::vector<string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
     std::sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
 
     for(int i = 0; i < tensor.size(); i++)
@@ -2057,11 +2061,12 @@ Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor)
     return tensor;
 }
 
-Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<string, 1> tensor2)
-{
-    Tensor<string, 1> tensor = tensor2;
 
-    for(int i = 0; i < tensor1.dimension(0); ++i) push_back_string(tensor, tensor1(i));
+Tensor<string,1> concatenate_string_tensors(const Tensor<string, 1>& tensor_1, const Tensor<string, 1>& tensor_2)
+{
+    Tensor<string, 1> tensor = tensor_2;
+
+    for(int i = 0; i < tensor_1.dimension(0); ++i) push_back_string(tensor, tensor_1(i));
 
     return tensor;
 }
@@ -2072,9 +2077,9 @@ Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<s
 /// @param token_to_replace String to be put modyfied.
 /// @param new_token String to be put instead.
 
-void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espression, const std::string& keyword)
+void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression, const string& keyword)
 {
-    std::string::size_type previous_pos = 0;
+    string::size_type previous_pos = 0;
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
@@ -2082,9 +2087,9 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espres
         string toReplace(found_token);
         string newword = keyword + " " + found_token;
 
-        std::string::size_type pos = 0;
+        string::size_type pos = 0;
 
-        while((pos = espression.find(toReplace, pos)) != std::string::npos)
+        while((pos = espression.find(toReplace, pos)) != string::npos)
         {
             if(pos > previous_pos)
             {
@@ -2100,8 +2105,6 @@ void replace_substring_in_string (Tensor<string, 1>& tokens, std::string& espres
         }
     }
 }
-
-
 
 }
 

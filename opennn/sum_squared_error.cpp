@@ -39,20 +39,10 @@ void SumSquaredError::calculate_error(const DataSetBatch&,
 {
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
+    sum_squared_error.device(*thread_pool_device)
+        = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0);
-
-    if(is_nan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: sum_squared_error class.\n"
-               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
 }
 
 
@@ -62,7 +52,8 @@ void SumSquaredError::calculate_error_lm(const DataSetBatch&,
 {
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
+    sum_squared_error.device(*thread_pool_device)
+        = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
     back_propagation.error = sum_squared_error(0);
 }
@@ -72,34 +63,17 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
                                              ForwardPropagation&,
                                              LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef OPENNN_DEBUG
-
-     check();
-
-     #endif
-
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     const type coefficient = static_cast<type>(2.0);
+     const type coefficient = type(2.0);
 
-     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
 
-     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 
-     Tensor<type, 2> output_deltas(deltas);
-
-     if(has_NAN(output_deltas))
-     {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: sum_squared_error class.\n"
-                << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-                << "NAN values found in deltas.";
-
-         throw invalid_argument(buffer.str());
-     }
+     deltas_map.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 
@@ -119,7 +93,8 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
-    if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
+    if(output_layer_pointer->get_type() != Layer::Type::Perceptron
+    && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
@@ -146,7 +121,7 @@ void SumSquaredError::calculate_error_gradient_lm(const DataSetBatch& ,
 
 #endif
 
-    const type coefficient = (static_cast<type>(2.0));
+    const type coefficient = (type(2.0));
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -165,7 +140,7 @@ void SumSquaredError::calculate_error_hessian_lm(const DataSetBatch&,
 
      #endif
 
-     const type coefficient = static_cast<type>(2.0);
+     const type coefficient = type(2.0);
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
              = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);

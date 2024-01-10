@@ -505,7 +505,7 @@ void TextAnalytics::delete_short_words(Tensor<Tensor<string,1>,1>& documents, co
 
             for(Index k = 0; k < tokens_number; k++)
             {
-                if( static_cast<Index>(tokens(k).length()) >= minimum_length )
+                if( Index(tokens(k).length()) >= minimum_length )
                 {
                     result += tokens(k) + " ";
                 }
@@ -541,7 +541,7 @@ void TextAnalytics::delete_long_words(Tensor<Tensor<string,1>,1>& documents, con
 
             for(Index k = 0; k < tokens_number; k++)
             {
-                if( static_cast<Index>(tokens(k).length()) <= maximum_length )
+                if( Index(tokens(k).length()) <= maximum_length )
                 {
                     result += tokens(k) + " ";
                 }
@@ -1831,7 +1831,7 @@ Index TextAnalytics::count(const Tensor<Tensor<string,1>,1>& documents) const
 
 Tensor<string,1> TextAnalytics::join(const Tensor<Tensor<string,1>,1>& documents) const
 {
-    const type words_number = count(documents);
+    const type words_number = type(count(documents));
 
     Tensor<string,1> words_list(words_number);
 
@@ -1918,7 +1918,7 @@ WordBag TextAnalytics::calculate_word_bag(const Tensor<Tensor<string,1>,1>& toke
 
     const Tensor<Index,0> total_frequencies = frequencies.sum();
 
-    const Tensor<double,1> percentages = ( 100/static_cast<double>(total_frequencies(0)) * frequencies.cast<double>()  );
+    const Tensor<double,1> percentages = ( 100/double(total_frequencies(0)) * frequencies.cast<double>()  );
 
     WordBag word_bag;
     word_bag.words = words;
@@ -1999,7 +1999,7 @@ WordBag TextAnalytics::calculate_word_bag_minimum_ratio(const Tensor<Tensor<stri
 
     const Tensor<Index,0> frequencies_sum = frequencies.sum();
 
-    const Tensor<double,1> ratios = frequencies.cast<double>()/static_cast<double>(frequencies_sum(0));
+    const Tensor<double,1> ratios = frequencies.cast<double>()/double(frequencies_sum(0));
 
     const Tensor<Index, 1> indices = get_indices_less_than(ratios, minimum_ratio);
 
@@ -2272,7 +2272,7 @@ Tensor<double, 1> TextAnalytics::get_words_presence_percentage(const Tensor<Tens
             }
         }
 
-        word_presence_percentage(i) = static_cast<double>(sum)*(static_cast<double>(100.0/tokens.size()));
+        word_presence_percentage(i) = double(sum)*(double(100.0/tokens.size()));
     }
 
 
@@ -2788,7 +2788,7 @@ void TextGenerationAlphabet::encode_alphabet()
     {
         const int word_index = get_alphabet_index(text[i]);
 
-        data_tensor(i, word_index) = 1;
+        data_tensor(i, word_index) = type(1);
     }
 }
 
@@ -2835,7 +2835,7 @@ Tensor<type, 1> TextGenerationAlphabet::one_hot_encode(const string &ch) const
 
     const int word_index = get_alphabet_index(ch[0]);
 
-    result(word_index) = 1;
+    result(word_index) = type(1);
 
     return result;
 }
@@ -2855,7 +2855,7 @@ Tensor<type, 2> TextGenerationAlphabet::multiple_one_hot_encode(const string &ph
     {
         const Index index = get_alphabet_index(phrase[i]);
 
-        result(i, index) = 1;
+        result(i, index) = type(1);
     }
 
     return result;
@@ -2902,7 +2902,7 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
 
     for(Index i = 0; i < tensor.dimension(0); i++)
     {
-        Tensor<type, 1> row = tensor.chip(i,0);
+        Tensor<type, 1> row = tensor.chip(i, 0);
 
         auto index = max_element(row.data(), row.data() + row.size()) - row.data();
 

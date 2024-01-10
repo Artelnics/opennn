@@ -168,7 +168,7 @@ void ConcatenationLayer::set_default()
 }
 
 
-void ConcatenationLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
+void ConcatenationLayer::forward_propagate(const pair<type*, dimensions>& inputs,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -177,32 +177,11 @@ void ConcatenationLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&
 }
 
 
-void ConcatenationLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-                                          LayerBackPropagation* next_layer_back_propagation,
+void ConcatenationLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
+                                          LayerBackPropagation* next_back_propagation,
                                           LayerBackPropagation* this_layeer_back_propagation) const
 {
-    /// @todo put switch
-    /*
-    if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;
 
-    else
-    {
-        const Type layer_type = next_layer_pointer->get_type();
-
-        if(layer_type == Type::Convolutional)
-        {
-            ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
-        }
-        else if(layer_type == Type::Pooling)
-        {
-            ConcatenationLayer* pooling_layer = dynamic_cast<ConcatenationLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
-        }
-    }
-    */
 }
 
 

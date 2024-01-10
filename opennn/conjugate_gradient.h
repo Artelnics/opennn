@@ -145,7 +145,7 @@ public:
 
 private:
 
-   type first_learning_rate = static_cast<type>(0.01);
+   type first_learning_rate = type(0.01);
 
    /// Applied method for calculating the conjugate gradient direction.
 

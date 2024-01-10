@@ -44,9 +44,9 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     image.setZero();
 
     Tensor<type, 1> image_dimensions(3);
-    image_dimensions(0) = static_cast<type>(image_height);
-    image_dimensions(1) = static_cast<type>(image_width);
-    image_dimensions(2) = static_cast<type>(channels_number);
+    image_dimensions(0) = type(image_height);
+    image_dimensions(1) = type(image_width);
+    image_dimensions(2) = type(channels_number);
 
     image_data(1) = image_dimensions;
 
@@ -59,12 +59,12 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     if(channels_number == 3)
     {
         const int rows_number = static_cast<int>(image_height);
-        const int cols_number = static_cast<int>(image_width);
+        const int columns_number = static_cast<int>(image_width);
 
-        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, cols_number, padding);
+        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
 
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, cols_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*cols_number};
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
@@ -78,9 +78,9 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
         green_channel_flatted_sorted.setZero();
         blue_channel_flatted_sorted.setZero();
 
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, cols_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, cols_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,cols_number);
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,columns_number);
 
         Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
@@ -101,21 +101,21 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
 }
 
 
-void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& cols_number)
+void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& columns_number)
 {
     unsigned char* aux_row = nullptr;
 
-    aux_row = (unsigned char*)malloc(static_cast<size_t>(cols_number*sizeof(unsigned char)));
+    aux_row = (unsigned char*)malloc(static_cast<size_t>(columns_number*sizeof(unsigned char)));
 
-    const int rows_number = static_cast<int>(original.size()/cols_number);
+    const int rows_number = static_cast<int>(original.size()/columns_number);
 
     for(int i = 0; i <rows_number; i++)
     {
-        memcpy(aux_row, original.data() + cols_number*rows_number - (i+1)*cols_number , static_cast<size_t>(cols_number)*sizeof(unsigned char));
+        memcpy(aux_row, original.data() + columns_number*rows_number - (i+1)*columns_number , static_cast<size_t>(columns_number)*sizeof(unsigned char));
 
-        //        reverse(aux_row, aux_row + cols_number); //uncomment this if the lower right corner px should be in the upper left corner.
+        //        reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
-        memcpy(sorted.data() + cols_number*i , aux_row, static_cast<size_t>(cols_number)*sizeof(unsigned char));
+        memcpy(sorted.data() + columns_number*i , aux_row, static_cast<size_t>(columns_number)*sizeof(unsigned char));
     }
 }
 
@@ -149,7 +149,7 @@ void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
 void rotate_image(TensorMap<Tensor<type, 3>>& input,
                   TensorMap<Tensor<type, 3>>& output,
                   const type& angle_degree)
-{/*
+{
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
     assert(input.dimension(2) == output.dimension(2));
@@ -158,10 +158,10 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
     const Index height = input.dimension(1);
     const Index channels = input.dimension(2);
 
-    const type rotation_center_x = width / 2.0;
-    const type rotation_center_y = height / 2.0;
+    const type rotation_center_x = type(width) / type(2);
+    const type rotation_center_y = type(height) / type(2);
 
-    const type angle_rad = -angle_degree * M_PI / 180.0;
+    const type angle_rad = -angle_degree * type(3.1415927) / type(180.0);
     const type cos_angle = cos(angle_rad);
     const type sin_angle = sin(angle_rad);
 
@@ -174,7 +174,7 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
     rotation_matrix(1, 1) = cos_angle;
     rotation_matrix(0, 2) = rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y;
     rotation_matrix(1, 2) = rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y;
-    rotation_matrix(2, 2) = 1;
+    rotation_matrix(2, 2) = type(1);
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);
@@ -184,14 +184,14 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
     {
         for(Index y = 0; y < height; y++)
         {
-            coordinates(0) = x;
-            coordinates(1) = y;
-            coordinates(2) = 1;
+            coordinates(0) = type(x);
+            coordinates(1) = type(y);
+            coordinates(2) = type(1);
 
             transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
 
             if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width &&
-                transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
+               transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
             {
                 for(Index channel = 0; channel < channels; channel++)
                 {
@@ -204,13 +204,11 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
             {
                 for(Index channel = 0; channel < channels; channel++)
                 {
-                    output(x, y, channel) = 0;
+                    output(x, y, channel) = type(0);
                 }
             }
-
         }
     }
-*/
 }
 
 
@@ -248,7 +246,7 @@ void translate_image(TensorMap<Tensor<type, 3>>& input,
 }
 
 
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& cols_number, const int& padding)
+Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& columns_number, const int& padding)
 {
     Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
 
@@ -256,7 +254,7 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
 
     if(rows_number % 4 == 0)
     {
-        memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels*rows_number)*sizeof(unsigned char));
+        memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(columns_number*channels*rows_number)*sizeof(unsigned char));
     }
     else
     {
@@ -264,11 +262,11 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
         {
             if(i == 0)
             {
-                memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(columns_number*channels)*sizeof(unsigned char));
             }
             else
             {
-                memcpy(data_without_padding.data() + channels*cols_number*i, img.data() + channels*cols_number*i + padding*i, static_cast<size_t>(cols_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data() + channels*columns_number*i, img.data() + channels*columns_number*i + padding*i, static_cast<size_t>(columns_number*channels)*sizeof(unsigned char));
             }
         }
     }
@@ -307,8 +305,8 @@ Tensor<Tensor<type, 1>, 1> propose_single_random_region(const Tensor<Tensor<type
 
 
     Tensor<type, 1> region_parameters(4);
-    region_parameters.setValues({static_cast<type>(x_top_left), static_cast<type>(y_top_left),
-                                 static_cast<type>(x_bottom_right), static_cast<type>(y_bottom_right)});
+    region_parameters.setValues({type(x_top_left), type(y_top_left),
+                                 type(x_bottom_right), type(y_bottom_right)});
     Tensor<type, 1> random_region(channels_number * region_width * region_height);
 
     // We resize the region after its random proposal
@@ -340,24 +338,26 @@ type intersection_over_union(const Index& x_top_left_box_1,
                              const Index& x_bottom_right_box_2,
                              const Index& y_bottom_right_box_2)
 {
-    Index intersection_x_top_left = max(x_top_left_box_1, x_top_left_box_2);
-    Index intersection_y_top_left = max(y_top_left_box_1, y_top_left_box_2);
-    Index intersection_x_bottom_right = min(x_bottom_right_box_1, x_bottom_right_box_2);
-    Index intersection_y_bottom_right = min(y_bottom_right_box_1, y_bottom_right_box_2);
+    const Index intersection_x_top_left = max(x_top_left_box_1, x_top_left_box_2);
+    const Index intersection_y_top_left = max(y_top_left_box_1, y_top_left_box_2);
+    const Index intersection_x_bottom_right = min(x_bottom_right_box_1, x_bottom_right_box_2);
+    const Index intersection_y_bottom_right = min(y_bottom_right_box_1, y_bottom_right_box_2);
 
-    if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left)) return 0;
+    if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left))
+        return type(0);
 
-    type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left) * (intersection_y_bottom_right - intersection_y_top_left));
+    const type intersection_area
+        = type((intersection_x_bottom_right - intersection_x_top_left)*(intersection_y_bottom_right - intersection_y_top_left));
 
-    type ground_truth_bounding_box_area = (x_bottom_right_box_1 - x_top_left_box_1) *
-                                    (y_bottom_right_box_1 - y_top_left_box_1);
+    const type ground_truth_bounding_box_area
+        = type((x_bottom_right_box_1 - x_top_left_box_1)*(y_bottom_right_box_1 - y_top_left_box_1));
 
-    type proposed_bounding_box_area = (x_bottom_right_box_2 - x_top_left_box_2) *
-                                        (y_bottom_right_box_2 - y_top_left_box_2);
+    const type proposed_bounding_box_area
+        = type((x_bottom_right_box_2 - x_top_left_box_2)*(y_bottom_right_box_2 - y_top_left_box_2));
 
-    type union_area = ground_truth_bounding_box_area + proposed_bounding_box_area - intersection_area;
+    const type union_area = ground_truth_bounding_box_area + proposed_bounding_box_area - intersection_area;
 
-    type intersection_over_union = static_cast<type>(intersection_area / union_area);
+    const type intersection_over_union = type(intersection_area / union_area);
 
     return intersection_over_union;
 }
@@ -513,6 +513,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
         throw invalid_argument(buffer.str());
     }
+
     has_columns_names = true;
     has_rows_labels = true;
 
@@ -604,7 +605,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
             }
             else if(classes_number == 2 && i == 1)
             {
-                data(row_index, image_size) = 0;
+                data(row_index, image_size) = type(0);
             }
             else
             {

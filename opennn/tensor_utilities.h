@@ -13,22 +13,26 @@
 #include <vector>
 #include <numeric>
 #include <stdio.h>
-//#include <statistics.h>
 
 // OpenNN includes
 
 #include "config.h"
 #include "opennn_strings.h"
+#include "statistics.h"
+
 
 #include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 #include "../eigen/Eigen/Dense"
-#include "statistics.h"
 
 using Eigen::MatrixXd;
 
 namespace opennn
 {
+
+type calculate_random_uniform(const type& = type(0), const type& = type(1));
+
+bool calculate_random_bool();
 
 void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
@@ -37,8 +41,9 @@ void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const 
 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
+void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+
 void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
-void divide_columns(ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);
@@ -134,7 +139,7 @@ void check_size(const Tensor<type, 1>&, const Index&, const string&);
 void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
 
 void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
-void check_rows_number(const Tensor<type, 2>&, const Index&, const string& );
+void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 
 bool contains(const Tensor<size_t,1>&, const size_t&);
 bool contains(const Tensor<type,1>&, const type&);

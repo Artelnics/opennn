@@ -78,7 +78,7 @@ public:
 
    // Set methods
 
-   void set_default() override;
+   void set_default() final;
 
    void set_damping_parameter(const type&);
 

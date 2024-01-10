@@ -10,7 +10,6 @@
 #define OPENNN_H
 
 #include "config.h"
-#include "half.hpp"
 
 // Data set
 
@@ -32,7 +31,8 @@
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 #include "probabilistic_layer.h"
-#include "scaling_layer.h"
+#include "scaling_layer_2d.h"
+#include "scaling_layer_4d.h"
 // #include "region_proposal_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
@@ -88,7 +88,7 @@
 #include "json_to_xml.h"
 #include "text_analytics.h"
 #include "codification.h"
-#include "dynamic_tensor.h"
+
 
 #endif
 

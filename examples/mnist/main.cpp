@@ -65,7 +65,6 @@ int main()
 //        random_horizontal_translation = 0;
 //        random_vertical_translation = 0;
 
-        const Index input_variables_number = image_data_set.get_input_numeric_variables_number();
         const Index target_variables_number = image_data_set.get_target_numeric_variables_number();
 
         const Tensor<Index, 1> samples_indices = image_data_set.get_training_samples_indices();
@@ -106,10 +105,11 @@ int main()
 
         NeuralNetwork neural_network;
 
-        ScalingLayer scaling_layer(input_variables_dimensions);
+        ScalingLayer4D scaling_layer(input_variables_dimensions);
         neural_network.add_layer(&scaling_layer);
 
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+        ConvolutionalLayer* convolutional_layer
+            = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
         neural_network.add_layer(convolutional_layer);
 
         FlattenLayer flatten_layer(flatten_layer_inputs_dimensions);

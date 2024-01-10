@@ -108,12 +108,12 @@ private:
     bool augmentation = false;
     bool random_reflection_axis_x = false;
     bool random_reflection_axis_y = false;
-    type random_rotation_minimum = 0;
-    type random_rotation_maximum = 0;
-    type random_horizontal_translation_minimum = 0;
-    type random_horizontal_translation_maximum = 0;
-    type random_vertical_translation_minimum = 0;
-    type random_vertical_translation_maximum = 0;
+    type random_rotation_minimum = type(0);
+    type random_rotation_maximum = type(0);
+    type random_horizontal_translation_minimum = type(0);
+    type random_horizontal_translation_maximum = type(0);
+    type random_vertical_translation_minimum = type(0);
+    type random_vertical_translation_maximum = type(0);
 
     Index categories_number = 0;
 

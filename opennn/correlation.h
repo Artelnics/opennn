@@ -51,18 +51,18 @@ struct Correlation
 
     /// Independent coefficient of the regression function.
 
-    type a = static_cast<type>(NAN);
+    type a = type(NAN);
 
     /// x coefficient of the regression function.
 
-    type b = static_cast<type>(NAN);
+    type b = type(NAN);
 
     /// Correlation coefficient of the regression.
 
-    type r = static_cast<type>(NAN);
+    type r = type(NAN);
 
-    type lower_confidence = static_cast<type>(NAN);
-    type upper_confidence = static_cast<type>(NAN);
+    type lower_confidence = type(NAN);
+    type upper_confidence = type(NAN);
 
     /// Regression method type
 

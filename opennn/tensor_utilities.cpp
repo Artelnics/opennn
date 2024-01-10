@@ -14,6 +14,32 @@
 namespace opennn
 {
 
+
+type calculate_random_uniform(const type& minimum, const type& maximum)
+{
+    const type random = type(rand()/(RAND_MAX+1.0));
+
+    const type random_uniform = minimum + (maximum - minimum) * random;
+
+    return random_uniform;
+}
+
+
+///Generate a random boolean
+
+bool calculate_random_bool()
+{
+    if(rand() % 2 == 1)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 void initialize_sequential(Tensor<type, 1>& vector)
 {
     for(Index i = 0; i < vector.size(); i++) vector(i) = type(i);
@@ -45,8 +71,8 @@ void initialize_sequential(Tensor<Index, 1>& new_tensor,
 
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
-    const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
 
     #pragma omp parallel for
 
@@ -74,7 +100,7 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
 }
 
 
-void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -82,7 +108,8 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type,
     for(Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
-        column.device(*thread_pool_device) = column / vector;
+
+        column.device(*thread_pool_device) = column + vector(i);
     }
 }
 
@@ -180,7 +207,7 @@ bool is_constant(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
 
-    type first_not_nan_element = 0.0;
+    type first_not_nan_element = type(0);
 
     for(Index i = 0; i < size; i++)
     {
@@ -465,7 +492,7 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Inde
 
     Index index = 0;
 
-    for(Index i  = 0; i < vector.size(); i++)
+    for(Index i  = type(0); i < vector.size(); i++)
     {
          if(vector(i) < bound)
          {
@@ -502,7 +529,7 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
 
     Index index = 0;
 
-    for(Index i  = 0; i < vector.size(); i++)
+    for(Index i  = type(0); i < vector.size(); i++)
     {
          if(vector(i) < bound)
          {
@@ -537,7 +564,7 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const 
 
     Index index = 0;
 
-    for(Index i  = 0; i < vector.size(); i++)
+    for(Index i  = type(0); i < vector.size(); i++)
     {
          if(vector(i) > bound)
          {
@@ -757,7 +784,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
     {
         if(matrix(i,column_index) >= minimum && matrix(i, column_index) <= maximum)
         {
-            row = matrix.chip(i,0);
+            row = matrix.chip(i, 0);
 
             set_row(new_matrix, row, row_index);
 
@@ -805,6 +832,7 @@ Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
 void kronecker_product_void(TensorMap<Tensor<type, 1>>& x, TensorMap<Tensor<type, 2>>& y)
 {
     const Index n = x.dimension(0);
+
     auto x_matrix = Map< Matrix<type, Dynamic, Dynamic> >(x.data(), n, 1);
 
     auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n*n, 1);
@@ -920,10 +948,11 @@ type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 
 type l2_distance(const type& x, const type& y)
 {
-    const type distance = fabs(x - y);
+    const type distance = type(fabs(x - y));
 
     return distance;
 }
+
 
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
 {
@@ -1471,7 +1500,7 @@ void print_tensor(const float* vector, const int dimensions[])
     cout<<"Tensor"<<endl;
 
     const int rows_number = dimensions[0];
-    const int cols_number = dimensions[1];
+    const int columns_number = dimensions[1];
     const int channels = dimensions[2];
     const int batch = dimensions[3];
 
@@ -1481,17 +1510,17 @@ void print_tensor(const float* vector, const int dimensions[])
         {
             for(int i = 0; i<rows_number; i++)
             {
-                for(int j = 0; j<cols_number; j++)
+                for(int j = 0; j<columns_number; j++)
                 {
-                    if(i + rows_number*j + k*rows_number*cols_number + l*channels*rows_number*cols_number % rows_number*cols_number*channels == 0)
+                    if(i + rows_number*j + k*rows_number*columns_number + l*channels*rows_number*columns_number % rows_number*columns_number*channels == 0)
 
                         cout<< "<--Batch-->"<<endl;
 
-                    if(i + rows_number*j + k*rows_number*cols_number % rows_number*cols_number == 0)
+                    if(i + rows_number*j + k*rows_number*columns_number % rows_number*columns_number == 0)
 
                         cout<< "*--Channel--*"<<endl;
 
-                   cout<<*(vector + i + j*rows_number + k*rows_number*cols_number+ l*channels*rows_number*cols_number)<< " ";
+                   cout<<*(vector + i + j*rows_number + k*rows_number*columns_number+ l*channels*rows_number*columns_number)<< " ";
                 }
 
                cout<<" "<<endl;
@@ -1537,7 +1566,7 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
     }
 
     Tensor<type, 1> difference_data(data.size());
-    difference_data(0) = 0;
+    difference_data(0) = type(0);
 
     if(data.size() <= 1) return Tensor<type, 1>();
 
@@ -1567,8 +1596,8 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
         cout << "Key: " << it->first << ", Value: " << it->second << "\n";
     }
 
-    type mode = -1;
-    type max_frequency = 0;
+    type mode = type(-1);
+    type max_frequency = type(0);
 
     for(const auto& entry : frequency_map)
     {
@@ -1654,15 +1683,15 @@ Index partition(Tensor<type, 2>& data_matrix, Index start_index, Index end_index
 }
 
 
-Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor1, const Tensor<Index, 1>& tensor2)
+Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Index, 1>& tensor_2)
 {
     Index intersection_index_number = 0;
 
-    for(Index i = 0; i < tensor1.size(); i++)
+    for(Index i = 0; i < tensor_1.size(); i++)
     {
-        for(Index j = 0; j < tensor2.size(); j++)
+        for(Index j = 0; j < tensor_2.size(); j++)
         {
-            if(tensor1(i) == tensor2(j)) {
+            if(tensor_1(i) == tensor_2(j)) {
                 intersection_index_number++;
             }
         }
@@ -1676,13 +1705,13 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor1, const Tensor<Inde
     Tensor<Index, 1> intersection(intersection_index_number);
     Index count = 0;
 
-    for(Index i = 0; i < tensor1.size(); i++)
+    for(Index i = 0; i < tensor_1.size(); i++)
     {
-        for(Index j = 0; j < tensor2.size(); j++)
+        for(Index j = 0; j < tensor_2.size(); j++)
         {
-            if(tensor1(i) == tensor2(j))
+            if(tensor_1(i) == tensor_2(j))
             {
-                intersection(count) = tensor2(j);
+                intersection(count) = tensor_2(j);
                 count++;
             }
         }

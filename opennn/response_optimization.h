@@ -103,8 +103,6 @@ private:
     Tensor<type, 1> outputs_maximums;
 
     Index evaluations_number = 1000;
-
-    static type calculate_random_uniform(const type&, const type&);
 };
 
 

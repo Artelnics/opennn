@@ -25,6 +25,7 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
@@ -87,7 +88,7 @@ public:
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 
-   void set_biases(const Tensor<type, 2>&);
+   void set_biases(const Tensor<type, 1>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
@@ -96,20 +97,18 @@ public:
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
 
-   virtual void set_default();
+   void set_default();
 
    // Parameters
 
-   const Tensor<type, 2>& get_biases() const;
+   const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Tensor<type, 2> get_biases(Tensor<type, 1>&) const;
+   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;   
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
-
-   Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
 
    // Display messages
 
@@ -127,33 +126,46 @@ public:
 
    void insert_parameters(const Tensor<type, 1>&, const Index&);
 
-   // Combinations
+   // Forward propagation
 
-   void calculate_combinations(const DynamicTensor<type>&,
+   void calculate_combinations(const Tensor<type, 2>&,
+                               const Tensor<type, 1>&,
                                const Tensor<type, 2>&,
-                               const Tensor<type, 2>&,
-                               type*, const Tensor<Index,1>&) const;
+                               Tensor<type, 2>&) const;
 
-   // Activations
+   void calculate_activations(const Tensor<type, 2>&,
+                              Tensor<type, 2>&) const;
 
-   void calculate_activations(type*, const Tensor<Index, 1>&,
-                              type*, const Tensor<Index, 1>&) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
+                                          Tensor<type, 3>&) const;
 
-   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&) const;
+   void softmax(const Tensor<type, 2>&,
+                Tensor<type, 2>&) const;
+
+   void softmax_derivatives(const Tensor<type, 2>&,
+                            Tensor<type, 2>&,
+                            Tensor<type, 3>&) const;
+
+   void logistic_derivatives(const Tensor<type, 2>&,
+                            Tensor<type, 2>&,
+                            Tensor<type, 3>&) const;
+
+   void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
    // Outputs
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const pair<type*, dimensions>&,
+                          LayerForwardPropagation*,
+                          const bool&) final;
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
+   void forward_propagate(const pair<type*, dimensions>&,
                           Tensor<type, 1>&,
                           LayerForwardPropagation*) final;
 
    // Gradient methods
 
-   void calculate_error_gradient(type*,
+   void calculate_error_gradient(const pair<type*, dimensions>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
@@ -193,7 +205,7 @@ protected:
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Tensor<type, 2> biases;
+   Tensor<type, 1> biases;
 
    /// This matrix contains conection strengths from a layer's inputs to its neurons.
 
@@ -215,6 +227,7 @@ protected:
 };
 #endif
 
+
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
     // Constructor
@@ -222,6 +235,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     explicit ProbabilisticLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
+
 
     // Constructor
 
@@ -231,11 +245,21 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
+
     virtual ~ProbabilisticLayerForwardPropagation()
     {
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+
+    pair<type*, dimensions> get_outputs() const final
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -243,14 +267,9 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        // Outputs
+        outputs.resize(batch_samples_number, neurons_number);
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
-
-        // Rest of quantities
+        outputs_data = outputs.data();
 
         activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
     }
@@ -259,72 +278,15 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     void print() const
     {
         cout << "Outputs:" << endl;
-        //cout << outputs_dimensions << endl;
-
-        cout << "Outputs:" << endl;
-        cout << outputs(0).to_tensor_map<2>() << endl;
+        cout << outputs << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives << endl;
     }
 
+    Tensor<type, 2> outputs;
     Tensor<type, 3> activations_derivatives;
 };
-
-
-struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
-{
-    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagationLM()
-    {
-
-    }
-
-
-    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagationLM()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-    virtual ~ProbabilisticLayerBackPropagationLM()
-    {
-
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-        delta_row.resize(neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-
-        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-    }
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Squared errors Jacobian: " << endl;
-        cout << squared_errors_Jacobian << endl;
-    }
-
-    Tensor<type, 1> delta_row;
-
-    Tensor<type, 2> error_combinations_derivatives;
-
-    Tensor<type, 2> squared_errors_Jacobian;
-};
-
 
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
@@ -346,7 +308,15 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    pair<type*, dimensions> get_deltas() const final
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -355,37 +325,24 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        deltas_dimensions.resize(2);
-        deltas_dimensions.setValues({batch_samples_number, neurons_number});
+        deltas.resize(batch_samples_number, neurons_number);
 
-        deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+        deltas_data = deltas.data();
 
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-        delta_row.resize(neurons_number);
+        deltas_row.resize(neurons_number);
 
         error_combinations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
-    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-    {
-        Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
-
-        const Index inputs_number = layer_pointer->get_inputs_number();
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
-        layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
-
-        return layer_gradient;
-    }
 
     void print() const
     {
         cout << "Deltas:" << endl;
-        cout << TensorMap<Tensor<type,2>>(deltas_data, deltas_dimensions(0), deltas_dimensions(1)) << endl;
+        cout << deltas << endl;
 
         cout << "Biases derivatives:" << endl;
         cout << biases_derivatives << endl;
@@ -394,12 +351,70 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 1> delta_row;
+    Tensor<type, 2> deltas;
+
+    Tensor<type, 1> deltas_row;
 
     Tensor<type, 2> error_combinations_derivatives;
 
-    Tensor<type, 2> synaptic_weights_derivatives;
     Tensor<type, 1> biases_derivatives;
+    Tensor<type, 2> synaptic_weights_derivatives;
+};
+
+
+struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
+{
+    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagationLM()
+    {
+
+    }
+
+
+    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagationLM()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    virtual ~ProbabilisticLayerBackPropagationLM()
+    {
+
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index parameters_number = layer_pointer->get_parameters_number();
+
+        deltas.resize(batch_samples_number, neurons_number);
+        deltas_row.resize(neurons_number);
+
+        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+
+        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    }
+
+
+    void print() const
+    {
+        cout << "Deltas:" << endl;
+        cout << deltas << endl;
+
+        cout << "Squared errors Jacobian: " << endl;
+        cout << squared_errors_Jacobian << endl;
+    }
+
+    Tensor<type, 1> deltas_row;
+
+    Tensor<type, 2> error_combinations_derivatives;
+
+    Tensor<type, 2> squared_errors_Jacobian;
 };
 
 }

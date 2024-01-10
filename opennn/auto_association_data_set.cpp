@@ -115,7 +115,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     // Get number of samples for training and testing
 
-    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
+    const Index testing_samples_number = Index(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index training_samples_number = used_samples_number - testing_samples_number;
 
     const Index sum_samples_number = training_samples_number + testing_samples_number;

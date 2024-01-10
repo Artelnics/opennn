@@ -268,7 +268,7 @@ protected:
 
    /// Regularization weight value.
 
-   type regularization_weight = static_cast<type>(0.01);
+   type regularization_weight = type(0.01);
 
    /// Display messages to screen. 
 
@@ -280,6 +280,8 @@ protected:
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 
    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/loss_index_cuda.h"
@@ -342,6 +344,7 @@ struct LossIndexBackPropagationLM
 
         squared_errors.resize(batch_samples_number);
     }
+
 
     void print() const
     {

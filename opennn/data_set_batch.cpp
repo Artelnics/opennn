@@ -1,19 +1,22 @@
 #include "data_set_batch.h"
+#include "tensor_utilities.h"
+#include "image_data_set.h"
+#include "opennn_images.h"
 
 namespace opennn
 {
 
 
-void DataSetBatch::fill(const Tensor<Index, 1>& samples,
-                        const Tensor<Index, 1>& inputs,
-                        const Tensor<Index, 1>& targets)
+void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
+                        const Tensor<Index, 1>& inputs_indices,
+                        const Tensor<Index, 1>& targets_indices)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, this->inputs(0).get_data());
+        fill_submatrix(data, samples_indices, inputs_indices, inputs_tensor.data());
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -21,7 +24,11 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs = this->inputs(0).to_tensor_map<4>();
+        TensorMap<Tensor<type, 4>> inputs_map(inputs_tensor.data(),
+                                              batch_size,
+                                              rows_number,
+                                              columns_number,
+                                              channels_number);
 
         #pragma omp parallel for
 
@@ -35,7 +42,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 {
                     for(Index channel = 0; channel < channels_number ; channel++)
                     {
-                        inputs(image, row, column, channel) = data(image, index);
+                        inputs_map(image, row, column, channel) = data(image, index);
 
                         index++;
                     }
@@ -48,13 +55,16 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         if(augmentation) perform_augmentation();
 */
     }
-    fill_submatrix(data, samples, targets, this->targets.get_data());
+
+    fill_submatrix(data, samples_indices, targets_indices, targets.data());
 }
 
 
 void DataSetBatch::perform_augmentation()
 {
-/*
+    ImageDataSet* image_data_set
+            = static_cast<ImageDataSet*>(data_set_pointer);
+
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
     const Index rows_number = input_variables_dimensions(0);
@@ -68,63 +78,62 @@ void DataSetBatch::perform_augmentation()
 //                                      columns_number,
 //                                      channels_number);
 
-    const bool random_reflection_axis_x = data_set_pointer->get_random_reflection_axis_x();
-    const bool random_reflection_axis_y = data_set_pointer->get_random_reflection_axis_y();
-    const type random_rotation_minimum = data_set_pointer->get_random_rotation_minimum();
-    const type random_rotation_maximum = data_set_pointer->get_random_rotation_maximum();
+    const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
+    const bool random_reflection_axis_y = image_data_set->get_random_reflection_axis_y();
+    const type random_rotation_minimum = image_data_set->get_random_rotation_minimum();
+    const type random_rotation_maximum = image_data_set->get_random_rotation_maximum();
     const type random_rescaling_minimum = type(0);
     const type random_rescaling_maximum = type(0);
-    const type random_horizontal_translation_minimum = data_set_pointer->get_random_horizontal_translation_minimum();
-    const type random_horizontal_translation_maximum = data_set_pointer->get_random_horizontal_translation_maximum();
-    const type random_vertical_translation_minimum = data_set_pointer->get_random_vertical_translation_minimum();
-    const type random_vertical_translation_maximum = data_set_pointer->get_random_vertical_translation_maximum();
+    const type random_horizontal_translation_minimum = image_data_set->get_random_horizontal_translation_minimum();
+    const type random_horizontal_translation_maximum = image_data_set->get_random_horizontal_translation_maximum();
+    // const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
+    // const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
 
     for(Index batch = 0; batch < batch_size; batch++)
     {
-
-        TensorMap<Tensor<type, 3>> current_image((this->inputs(0).get_data()) + batch*input_size,
-                                                 rows_number,
-                                                 columns_number,
-                                                 channels_number);
+        TensorMap<Tensor<type, 3>> image(inputs_tensor.data() + batch*input_size,
+                                         rows_number,
+                                         columns_number,
+                                         channels_number);
 
         if(random_reflection_axis_x)
         {
-            reflect_image_x(current_image, current_image);
+            reflect_image_x(image, image);
         }
 
         if(random_reflection_axis_y)
         {
-            reflect_image_y(current_image, current_image);
+            reflect_image_y(image, image);
         }
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
         {
             const type angle = (random_rotation_minimum < random_rotation_maximum)
-                    ? random_rotation_minimum + rand()
+                    ? random_rotation_minimum + type(rand())
                     : random_rotation_maximum;
 
-            rotate_image(current_image, current_image, angle);
+            rotate_image(image, image, angle);
         }
 
         if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
         {
             const type rescaling = (random_rescaling_minimum < random_rescaling_maximum)
-                    ? random_rescaling_minimum + rand()
+                    ? random_rescaling_minimum + type(rand())
                     : random_rescaling_maximum;
-
-//            rescale_image(current_image, current_image, rescaling);
+/*
+            rescale_image(image, image, rescaling);
+*/
         }
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
         {
             const type translation = (random_horizontal_translation_minimum < random_rescaling_maximum)
-                    ? random_horizontal_translation_minimum + rand()
+                    ? random_horizontal_translation_minimum + type(rand())
                     : random_rescaling_maximum;
 
-            translate_image(current_image, current_image, translation);
+            translate_image(image, image, translation);
         }
     }
-*/
 }
 
 
@@ -147,12 +156,10 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     if(input_variables_dimensions.size() == 1)
     {
-        inputs.resize(1);
+        inputs_dimensions = {{batch_size, input_variables_number}};
 
-        Tensor<Index, 1> inputs_dimensions(2);
-        inputs_dimensions.setValues({batch_size, input_variables_number});
-
-        inputs(0).set_dimensions(inputs_dimensions);
+        inputs_tensor.resize(1);
+        inputs_tensor.resize(batch_size*input_variables_number);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -160,17 +167,15 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        Tensor<Index, 1> inputs_dimensions(4);
-        inputs_dimensions.setValues({batch_size, channels_number, rows_number, columns_number});
+        inputs_dimensions = {{batch_size, channels_number, rows_number, columns_number}};
 
-        inputs.resize(1);
-        inputs(0) = DynamicTensor<type>(inputs_dimensions);
+        inputs_tensor.resize(1);
+        inputs_tensor.resize(batch_size*channels_number*rows_number*columns_number);
     }
 
-    Tensor<Index, 1> targets_dimensions(2);
-    targets_dimensions.setValues({batch_size, target_variables_number});
+    inputs_data = inputs_tensor.data();
 
-    targets.set_dimensions(targets_dimensions);
+    targets.resize(batch_size, target_variables_number);
 }
 
 
@@ -185,24 +190,18 @@ void DataSetBatch::print() const
     cout << "Batch" << endl;
 
     cout << "Inputs dimensions:" << endl;
-    cout << inputs(0).get_dimensions() << endl;
 
-    cout << "Dimensions " << endl;
-    cout << inputs(0).get_dimensions().dimensions() << endl;
+    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    {
+//        cout << inputs_dimensions[i] << endl;
+    }
 
     cout << "Inputs:" << endl;
-    if(inputs(0).get_dimensions().size() == 2)
-        cout << inputs(0).to_tensor_map<2>() << endl;
-    else if(inputs(0).get_dimensions().size() == 4)
-        cout << inputs(0).to_tensor_map<4>() << endl;
-    cout << "Targets dimensions:" << endl;
-    cout << targets.get_dimensions() << endl;
+    cout << inputs_tensor << endl;
 
     cout << "Targets:" << endl;
-    cout << targets.to_tensor_map<2>() << endl;
+    cout << targets << endl;
 }
-
-
 
 }
 

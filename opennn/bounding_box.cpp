@@ -94,11 +94,13 @@ BoundingBox BoundingBox::resize(const Index& new_channels_number, const Index& n
 
 void BoundingBox::print() const
 {
+/*
     cout << "Showing the values from the bounding box of size " << width << " x " << height << " x " << channels_number << ": " << endl;
 
     cout << data << endl;
 
     cout << "Total size of the bounding box data: " << data.size() << endl;
+*/
 }
 
 }

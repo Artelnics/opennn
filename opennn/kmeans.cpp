@@ -98,7 +98,7 @@ void KMeans::fit(const Tensor<type, 2>& data)
 
             if(count != 0)
             {
-                center = center_sum / static_cast<type>(count);
+                center = center_sum / type(count);
                 cluster_centers.chip(cluster_index, 0) = center;
             }
         }
@@ -158,14 +158,14 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
 
         fit(data);
 
-        sum_squared_error = 0;
+        sum_squared_error = type(0);
 
         for(Index row_index = 0; row_index < rows_number; row_index++)
         {
             data_point = data.chip(row_index, 0);
             cluster_center = cluster_centers.chip(rows_cluster_labels(row_index), 0);
 
-            sum_squared_error += pow(l2_distance(data_point, cluster_center), 2);
+            sum_squared_error += type(pow(l2_distance(data_point, cluster_center), 2));
         }
 
         sum_squared_error_values(cluster_index-1) = sum_squared_error;
@@ -183,14 +183,14 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
     Index cluster_number = sum_squared_error_values.dimension(0);
 
     Tensor<type, 1> initial_endpoint(2);
-    initial_endpoint(0) = 1;
-    initial_endpoint(1) = sum_squared_error_values(0);
+    initial_endpoint(0) = type(1);
+    initial_endpoint(1) = type(sum_squared_error_values(0));
 
     Tensor<type, 1> final_endpoint(2);
-    final_endpoint(0) = clusters_number;
+    final_endpoint(0) = type(clusters_number);
     final_endpoint(1) = sum_squared_error_values(clusters_number -1);
 
-    type max_distance = 0;
+    type max_distance = type(0);
     Index optimal_clusters_number = 1;
 
     Tensor<type, 1> current_point(2);
@@ -198,13 +198,14 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
 
     for(Index cluster_index = 1; cluster_index <= cluster_number; cluster_index++)
     {
-        current_point(0) = cluster_index;
+        current_point(0) = type(cluster_index);
         current_point(1) = sum_squared_error_values(cluster_index-1);
 
-        perpendicular_distance = abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
-                                     (final_endpoint(0) - initial_endpoint(0)) * current_point(1) +
-                                     final_endpoint(0) * initial_endpoint(1) - final_endpoint(1) * initial_endpoint(0)) /
-                                     sqrt(pow(final_endpoint(1) - initial_endpoint(1), 2) + pow(final_endpoint(0) - initial_endpoint(0), 2));
+        perpendicular_distance
+            = type(abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
+                  (final_endpoint(0) - initial_endpoint(0)) * current_point(1) +
+                   final_endpoint(0) * initial_endpoint(1) - final_endpoint(1) * initial_endpoint(0))) /
+              type(sqrt(pow(final_endpoint(1) - initial_endpoint(1), 2) + pow(final_endpoint(0) - initial_endpoint(0), 2)));
 
         if(perpendicular_distance > max_distance)
         {

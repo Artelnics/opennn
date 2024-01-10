@@ -20,12 +20,12 @@
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
+using namespace Eigen;
 
 int main()
 {
     try
     {
-        cout << "OpenNN. Airfoil self noise example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
 
@@ -40,7 +40,8 @@ int main()
 
         const Index neurons_number = 10;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {input_variables_number, neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+                                     {input_variables_number, neurons_number, target_variables_number});
 
         // Training strategy
 
@@ -48,7 +49,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         training_strategy.set_maximum_epochs_number(100);
 
         training_strategy.perform_training();
@@ -56,27 +57,26 @@ int main()
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-
+/*
         testing_analysis.print_goodness_of_fit_analysis();
-
+/*
         // Save results
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/airfoil_self_noise.c");
-
+*/
         // Deploy
 
         NeuralNetwork new_neural_network;
 
         new_neural_network.load("../data/neural_network.xml");
 
-        Tensor<DynamicTensor<type>, 1> inputs;
+        Tensor<type, 2> inputs(1, input_variables_number);
+        inputs.setRandom();
 
-        ForwardPropagation forward_propagation(1, &new_neural_network);
+//      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
-        new_neural_network.forward_propagate(inputs, forward_propagation);
-
-        const Tensor<DynamicTensor<type>, 1>& outputs = forward_propagation.get_outputs();
+//        cout << outputs << endl;
 
         cout << "Good bye!" << endl;       
 

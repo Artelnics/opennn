@@ -235,7 +235,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         time(&current_time);
 
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         // Stopping criteria
 
@@ -515,7 +515,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_minimum_neurons = static_cast<Index>(atoi(element->GetText()));
+            const Index new_minimum_neurons = Index(atoi(element->GetText()));
 
             try
             {
@@ -534,7 +534,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_neurons = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_neurons = Index(atoi(element->GetText()));
 
             try
             {
@@ -553,7 +553,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_step = static_cast<Index>(atoi(element->GetText()));
+            const Index new_step = Index(atoi(element->GetText()));
 
             try
             {
@@ -572,7 +572,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_trials_number = Index(atoi(element->GetText()));
 
             try
             {
@@ -591,7 +591,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
+            const type new_selection_error_goal = type(atof(element->GetText()));
 
             try
             {
@@ -610,7 +610,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
 
             try
             {

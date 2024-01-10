@@ -8,6 +8,7 @@
 
 #include "image_data_set.h"
 #include "opennn_images.h"
+#include "opennn_strings.h"
 
 namespace opennn
 {
@@ -196,20 +197,21 @@ type ImageDataSet::calculate_intersection_over_union(const BoundingBox& bounding
 
     const Index intersection_y_bottom_right = min(bounding_box_1.y_bottom_right, bounding_box_2.y_bottom_right);
 
-    if((intersection_x_bottom_right < intersection_x_top_left) || (intersection_y_bottom_right < intersection_y_top_left)) return 0;
+    if(intersection_x_bottom_right < intersection_x_top_left || intersection_y_bottom_right < intersection_y_top_left)
+        return type(0);
 
-    const type intersection_area = static_cast<type>((intersection_x_bottom_right - intersection_x_top_left)
+    const type intersection_area = type((intersection_x_bottom_right - intersection_x_top_left)
                                                      * (intersection_y_bottom_right - intersection_y_top_left));
 
-    const type bounding_box_1_area = (bounding_box_1.x_bottom_right - bounding_box_1.x_top_left) *
-                                     (bounding_box_1.y_bottom_right - bounding_box_1.y_top_left);
+    const type bounding_box_1_area
+        = type((bounding_box_1.x_bottom_right - bounding_box_1.x_top_left)*(bounding_box_1.y_bottom_right - bounding_box_1.y_top_left));
 
-    const type bounding_box_2_area = (bounding_box_2.x_bottom_right - bounding_box_2.x_top_left) *
-                                     (bounding_box_2.y_bottom_right - bounding_box_2.y_top_left);
+    const type bounding_box_2_area
+        = type((bounding_box_2.x_bottom_right - bounding_box_2.x_top_left)*(bounding_box_2.y_bottom_right - bounding_box_2.y_top_left));
 
     const type union_area = bounding_box_1_area + bounding_box_2_area - intersection_area;
 
-    const type intersection_over_union = static_cast<type>(intersection_area / union_area);
+    const type intersection_over_union = type(intersection_area / union_area);
 
     return intersection_over_union;
 }
@@ -699,7 +701,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(channels_number_element->GetText())
         {
-            const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
+            const Index channels = Index(atoi(channels_number_element->GetText()));
 
             set_channels_number(channels);
         }
@@ -713,7 +715,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(image_width_element->GetText())
         {
-            const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
+            const Index width = Index(atoi(image_width_element->GetText()));
 
             set_image_width(width);
         }
@@ -727,7 +729,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(image_height_element->GetText())
         {
-            const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
+            const Index height = Index(atoi(image_height_element->GetText()));
 
             set_image_height(height);
         }
@@ -741,7 +743,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(image_padding_element->GetText())
         {
-            const Index padding = static_cast<Index>(atoi(image_padding_element->GetText()));
+            const Index padding = Index(atoi(image_padding_element->GetText()));
 
             set_image_padding(padding);
         }
@@ -756,7 +758,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_reflection_axis_element_x->GetText())
         {
-            const bool randomReflectionAxisX = static_cast<Index>(atoi(random_reflection_axis_element_x->GetText()));
+            const bool randomReflectionAxisX = Index(atoi(random_reflection_axis_element_x->GetText()));
 
             set_random_reflection_axis_x(randomReflectionAxisX);
 
@@ -769,7 +771,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_reflection_axis_element_x->GetText())
         {
-            const bool randomReflectionAxisY = static_cast<Index>(atoi(random_reflection_axis_element_y->GetText()));
+            const bool randomReflectionAxisY = Index(atoi(random_reflection_axis_element_y->GetText()));
 
             set_random_reflection_axis_y(randomReflectionAxisY);
 
@@ -782,7 +784,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_rotation_minimum->GetText())
         {
-            const type randomRotationMinimum = static_cast<Index>(atoi(random_rotation_minimum->GetText()));
+            const type randomRotationMinimum = type(atoi(random_rotation_minimum->GetText()));
 
             set_random_rotation_minimum(randomRotationMinimum);
 
@@ -795,7 +797,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_rotation_maximum->GetText())
         {
-            const type randomRotationMaximum = static_cast<Index>(atoi(random_rotation_maximum->GetText()));
+            const type randomRotationMaximum = type(atoi(random_rotation_maximum->GetText()));
 
             set_random_rotation_minimum(randomRotationMaximum);
 
@@ -808,7 +810,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_horizontal_translation_minimum->GetText())
         {
-            const type randomHorizontalTranslationMinimum = static_cast<Index>(atoi(random_horizontal_translation_minimum->GetText()));
+            const type randomHorizontalTranslationMinimum = type(atoi(random_horizontal_translation_minimum->GetText()));
 
             set_random_horizontal_translation_minimum(randomHorizontalTranslationMinimum);
 
@@ -821,7 +823,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_vertical_translation_minimum->GetText())
         {
-            const type randomVerticalTranslationMinimum = static_cast<Index>(atoi(random_vertical_translation_minimum->GetText()));
+            const type randomVerticalTranslationMinimum = type(atoi(random_vertical_translation_minimum->GetText()));
 
             set_random_vertical_translation_minimum(randomVerticalTranslationMinimum);
 
@@ -834,7 +836,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_horizontal_translation_maximum->GetText())
         {
-            const type randomHorizontalTranslationMaximum = static_cast<Index>(atoi(random_horizontal_translation_maximum->GetText()));
+            const type randomHorizontalTranslationMaximum = type(atoi(random_horizontal_translation_maximum->GetText()));
 
             set_random_horizontal_translation_maximum(randomHorizontalTranslationMaximum);
 
@@ -847,7 +849,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(random_vertical_translation_minimum->GetText())
         {
-            const type randomVerticalTranslationMaximum = static_cast<Index>(atoi(random_vertical_translation_maximum->GetText()));
+            const type randomVerticalTranslationMaximum = type(atoi(random_vertical_translation_maximum->GetText()));
 
             set_random_vertical_translation_maximum(randomVerticalTranslationMaximum);
 
@@ -884,7 +886,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
+        new_columns_number = Index(atoi(columns_number_element->GetText()));
 
         set_columns_number(new_columns_number);
     }
@@ -1060,7 +1062,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //        if(time_series_columns_number_element->GetText())
 //        {
-//            time_series_new_columns_number = static_cast<Index>(atoi(time_series_columns_number_element->GetText()));
+//            time_series_new_columns_number = Index(atoi(time_series_columns_number_element->GetText()));
 
 //            set_time_series_columns_number(time_series_new_columns_number);
 //        }
@@ -1272,7 +1274,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
+        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
 
@@ -1343,7 +1345,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number_element->GetText())
     {
-        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
     }
 
     if(missing_values_number > 0)
@@ -1388,7 +1390,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(rows_missing_values_number_element->GetText())
         {
-            rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
+            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
         }
     }
 
@@ -1459,12 +1461,12 @@ Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
     if(channels_number == 3)
     {
         const int rows_number = static_cast<int>(get_image_height());
-        const int cols_number = static_cast<int>(get_image_width());
+        const int columns_number = static_cast<int>(get_image_width());
 
-        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, cols_number, padding);
+        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
 
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, cols_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*cols_number};
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
@@ -1478,9 +1480,9 @@ Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
         green_channel_flatted_sorted.setZero();
         blue_channel_flatted_sorted.setZero();
 
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, cols_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, cols_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,cols_number);
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,columns_number);
 
         Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
@@ -1628,7 +1630,7 @@ void ImageDataSet::read_bmp()
 
             for(Index k = 0; k < image_size; k++)
             {
-                data(row_index, k) = static_cast<type>(image[k]);
+                data(row_index, k) = type(image[k]);
             }
 
             if(classes_number == 2 && i == 0)
@@ -1637,7 +1639,7 @@ void ImageDataSet::read_bmp()
             }
             else if(classes_number == 2 && i == 1)
             {
-                data(row_index, image_size) = 0;
+                data(row_index, image_size) = type(0);
             }
             else
             {
@@ -1834,7 +1836,7 @@ void ImageDataSet::fill_image_data(const int& width, const int& height, const in
             }
             else if(classes_number == 2 && i == 1)
             {
-                data(row_index, image_size) = 0;
+                data(row_index, image_size) = type(0);
             }
             else
             {
@@ -2037,7 +2039,7 @@ void ImageDataSet::read_ground_truth()
         throw invalid_argument(buffer.str());
     }
 
-    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+    const Index images_number = Index(atoi(images_number_element->GetText()));
 
     const tinyxml2::XMLElement* start_images_element = images_number_element;
 
@@ -2087,7 +2089,7 @@ void ImageDataSet::read_ground_truth()
             throw invalid_argument(buffer.str());
         }
 
-        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+        const Index annotations_number = Index(atoi(annotations_number_element->GetText()));
 
         const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
 
@@ -2178,7 +2180,7 @@ void ImageDataSet::read_ground_truth()
                 {
                     if(classes_number == 1)
                     {
-                        data(row_index, pixels_number) = 0;
+                        data(row_index, pixels_number) = type(0);
                     }
                     else
                     {
@@ -2324,7 +2326,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
         throw invalid_argument(buffer.str());
     }
 
-    const Index images_number = static_cast<Index>(atoi(images_number_element->GetText()));
+    const Index images_number = Index(atoi(images_number_element->GetText()));
 
     set_images_number(images_number);
 
@@ -2374,7 +2376,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
             throw invalid_argument(buffer.str());
         }
 
-        const Index annotations_number = static_cast<Index>(atoi(annotations_number_element->GetText()));
+        const Index annotations_number = Index(atoi(annotations_number_element->GetText()));
 
         const tinyxml2::XMLElement* start_annotations_element = annotations_number_element;
 
@@ -2505,7 +2507,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
 
     if(labels_number_element->GetText())
     {
-        const Index labels_number = static_cast<Index>(atoi(labels_number_element->GetText()));
+        const Index labels_number = Index(atoi(labels_number_element->GetText()));
 
         set_categories_number(labels_number);
     }
@@ -2609,9 +2611,9 @@ Tensor<type, 1> ImageDataSet::get_bounding_box(const Tensor<unsigned char, 1>& i
 
             if(i >= left_margin && i < right_margin)
             {
-                bounding_box_red_channel(data_index) = static_cast<type>(image_red_channel_flatted_sorted[i]);
-                bounding_box_green_channel(data_index) = static_cast<type>(image_green_channel_flatted_sorted[i]);
-                bounding_box_blue_channel(data_index) = static_cast<type>(image_blue_channel_flatted_sorted[i]);
+                bounding_box_red_channel(data_index) = type(image_red_channel_flatted_sorted[i]);
+                bounding_box_green_channel(data_index) = type(image_green_channel_flatted_sorted[i]);
+                bounding_box_blue_channel(data_index) = type(image_blue_channel_flatted_sorted[i]);
 
                 data_index++;
             }
@@ -2634,7 +2636,7 @@ Tensor<type, 1> ImageDataSet::get_bounding_box(const Tensor<unsigned char, 1>& i
 
             if(i >= left_margin && i < right_margin)
             {
-                bounding_box_data(data_index) = static_cast<type>(image[i]);
+                bounding_box_data(data_index) = type(image[i]);
                 data_index++;
             }
         }

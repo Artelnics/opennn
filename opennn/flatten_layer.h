@@ -62,8 +62,6 @@ public:
     Tensor<type, 1> get_parameters() const final;
     Index get_parameters_number() const;
 
-    Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
-
     // Set methods
 
     void set();
@@ -86,11 +84,11 @@ public:
 
     // Outputs
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+    void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
 
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+                                LayerBackPropagation*) const final;
 
     void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
                                 PerceptronLayerBackPropagation*,
@@ -133,19 +131,25 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
+   pair<type*, dimensions> get_outputs() const final
+   {
+       const Index neurons_number = layer_pointer->get_neurons_number();
 
+       return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+   }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    {
         batch_samples_number = new_batch_samples_number;
 
         layer_pointer = new_layer_pointer;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
+        outputs.resize(batch_samples_number, neurons_number);
+
+        outputs_data = outputs.data();
     }
 
 
@@ -153,10 +157,12 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
        cout << "Outputs:" << endl;
 
-       //cout << outputs << endl;
+       cout << outputs << endl;
    }
-};
 
+
+   Tensor<type, 2> outputs;
+};
 
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
@@ -168,10 +174,6 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    virtual ~FlattenLayerBackPropagation()
-    {
-    }
-
 
     explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
@@ -180,7 +182,20 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    virtual ~FlattenLayerBackPropagation()
+    {
+    }
+
+
+    pair<type*, dimensions> get_deltas() const final
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -188,22 +203,21 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
         const Index neurons_number = new_layer_pointer->get_neurons_number();
 
-        deltas_dimensions.resize(2);
+        deltas.resize(batch_samples_number, neurons_number);
 
-        deltas_dimensions.setValues({batch_samples_number, neurons_number});
-
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+        deltas_data = deltas.data();
     }
 
 
     void print() const
     {
         cout << "Deltas: " << endl;
-
-//        cout << deltas << endl;
+        cout << deltas << endl;
     }
-};
 
+
+    Tensor<type, 2> deltas;
+};
 
 }
 

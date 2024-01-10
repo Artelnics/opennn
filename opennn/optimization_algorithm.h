@@ -98,7 +98,7 @@ public:
 
    virtual void check() const;
 
-   /// Trains a neural network which has a loss index associated. 
+   /// Trains a neural network which has a loss index associated.
 
    virtual TrainingResults perform_training() = 0;
 

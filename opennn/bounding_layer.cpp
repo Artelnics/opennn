@@ -352,12 +352,6 @@ void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
 
 void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
-#ifdef OPENNN_DEBUG
-check_size(new_upper_bounds, get_neurons_number(), LOG);
-#endif
-
-    // Set upper bound of neurons
-
     upper_bounds = new_upper_bounds;
 }
 
@@ -397,36 +391,23 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
+void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
+    const TensorMap<Tensor<type,2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
 
-#ifdef OPENNN_DEBUG
-    if(inputs_dimensions(1) != get_inputs_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "void forward_propagate method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
-
-    const Tensor<Index, 1> inputs_dimensions = inputs(0).get_dimensions();
+    Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const Index rows_number = inputs_dimensions(0);
-        const Index columns_number = inputs_dimensions(1);
+        const Index rows_number = inputs_map.dimension(0);
+        const Index columns_number = inputs_map.dimension(1);
 
-        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map<2>();
-
-        TensorMap<Tensor<type,2>> outputs = bounding_layer_forward_propagation->outputs(0).to_tensor_map<2>();
+        #pragma omp parallel for
 
         for(Index i = 0; i < rows_number; i++)
         {
@@ -449,8 +430,7 @@ void BoundingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inpu
     }
     else
     {
-        Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
-        copy(inputs(0).get_data(), inputs(0).get_data() + inputs_size(0), bounding_layer_forward_propagation->outputs(0).get_data());
+        outputs = inputs_map;
     }
 }
 
@@ -638,7 +618,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
+    const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
@@ -681,7 +661,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 if(lower_bound_element->GetText())
                 {
-                    lower_bounds[index-1] = static_cast<type>(atof(lower_bound_element->GetText()));
+                    lower_bounds[index-1] = type(atof(lower_bound_element->GetText()));
                 }
             }
 
@@ -693,7 +673,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 if(upper_bound_element->GetText())
                 {
-                    upper_bounds[index-1] = static_cast<type>(atof(upper_bound_element->GetText()));
+                    upper_bounds[index-1] = type(atof(upper_bound_element->GetText()));
                 }
             }
         }
@@ -705,7 +685,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(use_bounding_layer_element)
         {
-            Index new_method = static_cast<Index>(atoi(use_bounding_layer_element->GetText()));
+            Index new_method = Index(atoi(use_bounding_layer_element->GetText()));
 
             if(new_method == 1)
             {

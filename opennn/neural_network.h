@@ -26,7 +26,8 @@
 #include "layer.h"
 #include "addition_layer.h"
 #include "perceptron_layer.h"
-#include "scaling_layer.h"
+#include "scaling_layer_2d.h"
+#include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
@@ -121,7 +122,8 @@ public:
 
    Tensor<Tensor<Index, 1>, 1> get_layers_inputs_indices() const;
 
-   ScalingLayer* get_scaling_layer_pointer() const;
+   ScalingLayer2D* get_scaling_layer_2d_pointer() const;
+   ScalingLayer4D* get_scaling_layer_4d_pointer() const;
    UnscalingLayer* get_unscaling_layer_pointer() const;
    BoundingLayer* get_bounding_layer_pointer() const;
    FlattenLayer* get_flatten_layer_pointer() const;
@@ -168,7 +170,8 @@ public:
 
    void set_threads_number(const int&);
 
-   void set_scaling_layer(ScalingLayer&);
+   void set_scaling_layer_2d(ScalingLayer2D&);
+   void set_scaling_layer_4d(ScalingLayer4D&);
 
    void set_display(const bool&);
 
@@ -222,7 +225,7 @@ public:
 
    Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
-//   Tensor<type, 2> calculate_outputs(Tensor<type, 4>&);
+   Tensor<type, 2> calculate_outputs(Tensor<type, 4>&);
 
    Tensor<type, 2> calculate_unscaled_outputs(type*, Tensor<Index, 1>&);
 
@@ -249,7 +252,7 @@ public:
    void save(const string&) const;
    void save_parameters(const string&) const;
 
-   virtual void load(const string&);
+   virtual void load(const string&) final;
    void load_parameters_binary(const string&);
 
    Tensor<string, 1> get_layers_names() const;
@@ -271,9 +274,9 @@ public:
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, ForwardPropagation&, const bool& = false) const;
+   void forward_propagate(const pair<type*, dimensions>&, ForwardPropagation&, const bool& = false) const;
 
-   void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, ForwardPropagation&) const;
+   void forward_propagate(const pair<type*, dimensions>&, Tensor<type, 1>&, ForwardPropagation&) const;
 
 protected:
 

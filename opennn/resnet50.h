@@ -35,8 +35,6 @@ private:
     ConvolutionalLayer convolutional_layer_1_1_b;
     PoolingLayer pooling_layer_1_1_b;
 
-
-/*
     // Residual block 2
 
     ConvolutionalLayer convolutional_layer_5;
@@ -51,7 +49,7 @@ private:
 
     ConvolutionalLayer convolutional_layer_11;
     PoolingLayer pooling_layer_5;
-*/
+
     FlattenLayer flatten_layer;
 
     ProbabilisticLayer probabilistic_layer;

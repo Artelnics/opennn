@@ -207,11 +207,11 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
         throw invalid_argument(buffer.str());
     }
 
-    type new_minimum = 0;
+    type new_minimum = type(0);
 
     if(minimum_element->GetText())
     {
-        new_minimum = static_cast<type>(stod(minimum_element->GetText()));
+        new_minimum = type(stod(minimum_element->GetText()));
         set_box_plot_minimum(new_minimum);
     }
 
@@ -228,11 +228,11 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
         throw invalid_argument(buffer.str());
     }
 
-    type new_first_quartile = 0;
+    type new_first_quartile = type(0);
 
     if(first_quartile_element->GetText())
     {
-        new_first_quartile = static_cast<type>(stod(first_quartile_element->GetText()));
+        new_first_quartile = type(stod(first_quartile_element->GetText()));
         set_box_plot_first_quartile(new_first_quartile);
     }
 
@@ -249,11 +249,11 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
         throw invalid_argument(buffer.str());
     }
 
-    type new_median = 0;
+    type new_median = type(0);
 
     if(median_element->GetText())
     {
-        new_median = static_cast<type>(stod(median_element->GetText()));
+        new_median = type(stod(median_element->GetText()));
         set_box_plot_median(new_median);
     }
 
@@ -270,11 +270,11 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
         throw invalid_argument(buffer.str());
     }
 
-    type new_third_quartile = 0;
+    type new_third_quartile = type(0);
 
     if(third_quartile_element->GetText())
     {
-        new_third_quartile = static_cast<type>(stod(third_quartile_element->GetText()));
+        new_third_quartile = type(stod(third_quartile_element->GetText()));
         set_box_plot_third_quartile(new_third_quartile);
     }
 
@@ -291,11 +291,11 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
         throw invalid_argument(buffer.str());
     }
 
-    type new_maximum = 0;
+    type new_maximum = type(0);
 
     if(maximum_element->GetText())
     {
-        new_maximum = static_cast<type>(stod(maximum_element->GetText()));
+        new_maximum = type(stod(maximum_element->GetText()));
         set_box_plot_maximum(new_maximum);
     }
 }
@@ -329,11 +329,11 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
         throw invalid_argument(buffer.str());
     }
 
-    type new_minimum = 0;
+    type new_minimum = type(0);
 
     if(minimum_element->GetText())
     {
-        new_minimum = static_cast<type>(stod(minimum_element->GetText()));
+        new_minimum = type(stod(minimum_element->GetText()));
         set_box_plot_minimum(new_minimum);
     }
 
@@ -350,11 +350,11 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
         throw invalid_argument(buffer.str());
     }
 
-    type new_maximum = 0;
+    type new_maximum = type(0);
 
     if(maximum_element->GetText())
     {
-        new_maximum = static_cast<type>(stod(maximum_element->GetText()));
+        new_maximum = type(stod(maximum_element->GetText()));
     }
 
     // Median
@@ -370,11 +370,11 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
         throw invalid_argument(buffer.str());
     }
 
-    type new_mean = 0;
+    type new_mean = type(0);
 
     if(mean_element->GetText())
     {
-        new_mean = static_cast<type>(stod(mean_element->GetText()));
+        new_mean = type(stod(mean_element->GetText()));
     }
 
     // ThirdQuartile
@@ -390,11 +390,11 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
         throw invalid_argument(buffer.str());
     }
 
-    type new_standard_deviation = 0;
+    type new_standard_deviation = type(0);
 
     if(standard_deviation_element->GetText())
     {
-        new_standard_deviation = static_cast<type>(stod(standard_deviation_element->GetText()));
+        new_standard_deviation = type(stod(standard_deviation_element->GetText()));
     }
 
     Descriptives distances_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
@@ -429,7 +429,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
         throw invalid_argument(buffer.str());
     }
 
-    const Index variables_number = static_cast<Index>(atoi(variables_number_element->GetText()));
+    const Index variables_number = Index(atoi(variables_number_element->GetText()));
 
     multivariate_distances_box_plot.resize(variables_number);
     variables_distances_names.resize(variables_number);
@@ -455,11 +455,11 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
             const char* new_box_plot_parameters_element = variable_box_plot_element->GetText();
             Tensor<string,1> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, '\\');
             variables_distances_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
-            multivariate_distances_box_plot[i].minimum = static_cast<type>(stof(splitted_box_plot_parameters_element[1]));
-            multivariate_distances_box_plot[i].first_quartile = static_cast<type>(stof(splitted_box_plot_parameters_element[2]));
-            multivariate_distances_box_plot[i].median = static_cast<type>(stof(splitted_box_plot_parameters_element[3]));
-            multivariate_distances_box_plot[i].third_quartile = static_cast<type>(stof(splitted_box_plot_parameters_element[4]));
-            multivariate_distances_box_plot[i].maximum = static_cast<type>(stof(splitted_box_plot_parameters_element[5]));
+            multivariate_distances_box_plot[i].minimum = type(stof(splitted_box_plot_parameters_element[1]));
+            multivariate_distances_box_plot[i].first_quartile = type(stof(splitted_box_plot_parameters_element[2]));
+            multivariate_distances_box_plot[i].median = type(stof(splitted_box_plot_parameters_element[3]));
+            multivariate_distances_box_plot[i].third_quartile = type(stof(splitted_box_plot_parameters_element[4]));
+            multivariate_distances_box_plot[i].maximum = type(stof(splitted_box_plot_parameters_element[5]));
         }
     }
 }

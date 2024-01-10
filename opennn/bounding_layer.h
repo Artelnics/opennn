@@ -92,7 +92,7 @@ public:
 
    // Lower and upper bounds
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
 
    // Expression methods
 
@@ -143,7 +143,20 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    virtual ~BoundingLayerForwardPropagation()
+    {
+    }
+
+
+    pair<type*, dimensions> get_outputs() const final
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -151,21 +164,20 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
 
         batch_samples_number = new_batch_samples_number;
 
-        // Allocate memory for outputs_data
+        outputs.resize(batch_samples_number, neurons_number);
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
+        outputs_data = outputs.data();
     }
 
 
     void print() const
     {
         cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<4>() << endl;
+        cout << outputs << endl;
     }
+
+
+    Tensor<type, 2> outputs;
 };
 
 }

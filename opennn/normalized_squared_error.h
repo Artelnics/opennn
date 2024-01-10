@@ -52,7 +52,7 @@ public:
 
    // Set methods
 
-    void set_normalization_coefficient() override;
+    void set_normalization_coefficient();
     void set_normalization_coefficient(const type&);
 
     void set_time_series_normalization_coefficient();
@@ -60,7 +60,7 @@ public:
     void set_selection_normalization_coefficient();
     void set_selection_normalization_coefficient(const type&);
 
-    virtual void set_default();
+    void set_default();
 
     void set_data_set_pointer(DataSet* new_data_set_pointer) final;
 

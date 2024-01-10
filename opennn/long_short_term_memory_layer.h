@@ -82,8 +82,6 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const final;
 
-   Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_parameters() final;
-
    // Activation functions
 
    const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
@@ -173,33 +171,40 @@ public:
 
    void set_parameters_random() final;
 
-   // Long short-term memory layer combinations
+   // Forward propagation
 
-   void calculate_combinations(type*, const Tensor<Index, 1>&,
+   void calculate_combinations(const Tensor<type, 1>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>&,
                                const Tensor<type, 1>&,
-                               type*, const Tensor<Index, 1>&);
+                               Tensor<type, 1>&);
 
-   // Long short-term memory layer activations
+   void calculate_activations(const Tensor<type, 1>&,
+                              Tensor<type, 1>&) const;
 
-   void calculate_activations(type*, const Tensor<Index,1>&, type*, const Tensor<Index,1>&);
+   void calculate_activations_derivatives(const Tensor<type, 1>&,
+                                          Tensor<type, 1>&,
+                                          Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_activations(Tensor<type, 1>&) const;
+   void calculate_recurrent_activations(const Tensor<type, 1>&,
+                                        Tensor<type, 1>&) const;
 
-   void calculate_recurrent_activations(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
+   void calculate_recurrent_activations_derivatives(const Tensor<type, 1>&,
+                                                    Tensor<type, 1>&,
+                                                    Tensor<type, 1>&) const;
 
-   // Long short-term memory layer derivatives
+   void forward_propagate(const pair<type*, dimensions>&,
+                          LayerForwardPropagation*,
+                          const bool&) final;
 
-   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&);
+   void forward_propagate_forget_gate() const;
 
-   void calculate_recurrent_activations_derivatives(type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&,
-                                          type*, const Tensor<Index, 1>&);
+   void forward_propagate(const pair<type*, dimensions>&,
+                          Tensor<type, 1>&,
+                          LayerForwardPropagation*) final;
 
-   // Long short-term memory layer outputs
+
+   // Back propagation
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
@@ -213,17 +218,13 @@ public:
                                ProbabilisticLayerBackPropagation*,
                                LongShortTermMemoryLayerBackPropagation*) const;
 
-   // Forward propagate
+   void insert_gradient(LayerBackPropagation*,
+                        const Index& ,
+                        Tensor<type, 1>&) const final;
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
-
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
-
-   // Eror gradient
-
-   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const final;
-
-   void calculate_error_gradient(type*, LayerForwardPropagation*, LayerBackPropagation*) const final;
+   void calculate_error_gradient(const pair<type*, dimensions>&,
+                                 LayerForwardPropagation*,
+                                 LayerBackPropagation*) const final;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 LongShortTermMemoryLayerForwardPropagation*,
@@ -275,9 +276,11 @@ public:
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
    string write_recurrent_activation_function_expression() const;
+
    string write_activation_function_expression() const;
+
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization methods
 
@@ -339,7 +342,13 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    pair<type*, dimensions> get_outputs() const final
+    {
+        return pair<type*, dimensions>();
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -348,14 +357,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
         batch_samples_number = new_batch_samples_number;
 
-        // Outputs
-
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
-
-        // Rest of quantities
+        outputs.resize(batch_samples_number, neurons_number);
 
         previous_hidden_state_activations.resize(neurons_number);
         previous_cell_state_activations.resize(neurons_number);
@@ -414,6 +416,8 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         cout << "Current input activations derivatives: " << endl;
         cout << current_input_activations_derivatives << endl;
      }
+
+    Tensor<type, 2> outputs;
 
     Tensor<type, 2> combinations;
 
@@ -475,7 +479,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -484,13 +488,9 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        deltas_dimensions.resize(2);
-        deltas_dimensions.setValues({batch_samples_number, neurons_number});
+        deltas.resize(batch_samples_number, neurons_number);
 
-        //delete deltas_data;
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
-
-        current_layer_deltas.resize(neurons_number);
+        current_deltas.resize(neurons_number);
 
         forget_weights_derivatives.resize(inputs_number*neurons_number);
         input_weights_derivatives.resize(inputs_number*neurons_number);
@@ -530,72 +530,16 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
         hidden_states_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
         cell_state_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
-
     }
+
 
     void print() const
     {
     }
 
-    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-    {
-        Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(30);
+    Tensor<type, 2> deltas;
 
-        auto create_TensorMap_one_dim = [&](Tensor<type, 1> &v, size_t i)
-        {
-            layer_gradient(i) = new TensorMap<Tensor<type, 1>>(v.data(), v.size());
-        };
-
-        auto create_TensorMap_two_dims = [&](Tensor<type, 2> &v, size_t i)
-        {
-            layer_gradient(i) = new TensorMap<Tensor<type, 1>>(v.data(), v.size());
-        };
-
-        create_TensorMap_one_dim(input_biases_derivatives, 0);
-        create_TensorMap_one_dim(forget_biases_derivatives, 1);
-        create_TensorMap_one_dim(state_biases_derivatives, 2);
-        create_TensorMap_one_dim(output_biases_derivatives, 3);
-
-        create_TensorMap_one_dim(input_weights_derivatives, 4);
-        create_TensorMap_one_dim(forget_weights_derivatives, 5);
-        create_TensorMap_one_dim(state_weights_derivatives, 6);
-        create_TensorMap_one_dim(output_weights_derivatives, 7);
-
-        create_TensorMap_one_dim(input_recurrent_weights_derivatives, 8);
-        create_TensorMap_one_dim(forget_recurrent_weights_derivatives, 9);
-        create_TensorMap_one_dim(state_recurrent_weights_derivatives, 10);
-        create_TensorMap_one_dim(output_recurrent_weights_derivatives, 11);
-
-        create_TensorMap_two_dims(input_combinations_biases_derivatives, 12);
-        create_TensorMap_two_dims(forget_combinations_biases_derivatives, 13);
-        create_TensorMap_two_dims(state_combinations_biases_derivatives, 14);
-        create_TensorMap_two_dims(output_combinations_biases_derivatives, 15);
-
-        create_TensorMap_two_dims(hidden_states_biases_derivatives, 16);
-        create_TensorMap_two_dims(cell_state_biases_derivatives, 17);
-
-        create_TensorMap_two_dims(input_combinations_weights_derivatives, 18);
-        create_TensorMap_two_dims(forget_combinations_weights_derivatives, 19);
-        create_TensorMap_two_dims(state_combinations_weights_derivatives, 20);
-        create_TensorMap_two_dims(output_combinations_weights_derivatives, 21);
-
-        create_TensorMap_two_dims(hidden_states_weights_derivatives, 22);
-        create_TensorMap_two_dims(cell_state_weights_derivatives, 23);
-
-        create_TensorMap_two_dims(input_combinations_recurrent_weights_derivatives, 24);
-        create_TensorMap_two_dims(forget_combinations_recurrent_weights_derivatives, 25);
-        create_TensorMap_two_dims(state_combinations_recurrent_weights_derivatives, 26);
-        create_TensorMap_two_dims(output_combinations_recurrent_weights_derivatives, 27);
-
-        create_TensorMap_two_dims(hidden_states_recurrent_weights_derivatives, 28);
-        create_TensorMap_two_dims(cell_state_recurrent_weights_derivatives, 29);
-
-        return layer_gradient;
-    }
-
-
-
-    Tensor<type, 1> current_layer_deltas;
+    Tensor<type, 1> current_deltas;
 
     Tensor<type, 1> forget_weights_derivatives;
     Tensor<type, 1> input_weights_derivatives;

@@ -66,7 +66,14 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+
+    pair<type*, dimensions> get_outputs() const final
+    {
+        return pair<type*, dimensions>();
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
@@ -74,11 +81,11 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
 
         // Bounding boxes
 
-        outputs(0).set_data(nullptr);
+        //outputs(0).set_data(nullptr);
 
         // Scores
 
-        outputs(1).set_data(nullptr);
+        //outputs(1).set_data(nullptr);
     }
 
     void print() const
@@ -96,6 +103,8 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
 
 //        cout << outputs_dimensions << endl;
     }
+
+    Tensor<Tensor<type, 2>, 1> outputs;
 };
 
 }

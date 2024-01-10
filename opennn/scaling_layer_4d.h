@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   U N S C A L I N G   L A Y E R   C L A S S   H E A D E R               
+//   S C A L I N G   L A Y E R   4 D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef UNSCALINGLAYER_H
-#define UNSCALINGLAYER_H
+#ifndef ScalingLayer4D4D_H
+#define ScalingLayer4D4D_H
 
 // System includes
 
@@ -20,49 +20,57 @@
 
 // OpenNN includes
 
-#include "config.h"
+#include "scaling.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
-#include "scaling.h"
 
 namespace opennn
 {
 
-//struct UnscalingLayerForwardPropagation;
+/// This class represents a layer of scaling neurons.
+/// Scaling layers are included in the definition of a neural network.
+/// They are used to normalize variables so they are in an appropriate range for computer processing.
 
-/// This class represents a layer of unscaling neurons.
-
-///
-/// Unscaling layers are included in the definition of a neural network.
-/// They are used to unnormalize variables so they are in the original range after computer processing.
-
-class UnscalingLayer : public Layer
+class ScalingLayer4D : public Layer
 {
 
 public:
 
    // Constructors
 
-   explicit UnscalingLayer();
+   explicit ScalingLayer4D();
 
-   explicit UnscalingLayer(const Index&);
+   explicit ScalingLayer4D(const Index&);
+   explicit ScalingLayer4D(const Tensor<Index, 1>&);
 
-   explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
+   explicit ScalingLayer4D(const Tensor<Descriptives, 1>&);
 
-   // Get methods  
+   // Get methods
 
-   Index get_inputs_number() const override;
+   Tensor<Index, 1> get_outputs_dimensions() const;
+
+   Index get_inputs_number() const final;
+   Tensor<Index, 1> get_inputs_dimensions() const;
    Index get_neurons_number() const final;
 
-   Tensor<Descriptives, 1> get_descriptives() const; 
+   // Inputs descriptives
+
+   Tensor<Descriptives, 1> get_descriptives() const;
+   Descriptives get_descriptives(const Index&) const;
 
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
+   Tensor<type, 1> get_means() const;
+   Tensor<type, 1> get_standard_deviations() const;
 
-   Tensor<Scaler, 1> get_unscaling_method() const;
+   // Variables scaling and unscaling
 
-   Tensor<string, 1> write_unscaling_methods() const;
-   Tensor<string, 1> write_unscaling_method_text() const;
+   Tensor<Scaler, 1> get_scaling_methods() const;
+
+   Tensor<string, 1> write_scalers() const;
+   Tensor<string, 1> write_scalers_text() const;
+
+   // Display messages
 
    const bool& get_display() const;
 
@@ -70,20 +78,19 @@ public:
 
    void set();
    void set(const Index&);
+   void set(const Tensor<Index, 1>&);
    void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
-   void set(const UnscalingLayer&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 
    void set_default();
 
-   // Output variables descriptives
+   // Descriptives
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
-
    void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_minimum(const Index&, const type&);
@@ -91,14 +98,16 @@ public:
    void set_mean(const Index&, const type&);
    void set_standard_deviation(const Index&, const type&);
 
-   void set_min_max_range(const type min, const type max);
+   void set_min_max_range(const type& min, const type& max);
 
-   // Outputs unscaling method
+   // Scaling method
 
-   void set_scalers(const Tensor<Scaler,1>&);
-   void set_scalers(const string&);
+   void set_scalers(const Tensor<Scaler, 1>&);
    void set_scalers(const Tensor<string, 1>&);
+
+   void set_scaler(const Index&, const Scaler&);
    void set_scalers(const Scaler&);
+   void set_scalers(const string&);
 
    // Display messages
 
@@ -110,53 +119,68 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   // Forward propagation methods
-
    void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
-
-   // Serialization methods
-
-   void from_XML(const tinyxml2::XMLDocument&) final;
-   void write_XML(tinyxml2::XMLPrinter&) const final;
 
    // Expression methods
 
+   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
+   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
+   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
+   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+
+   // Serialization methods
+
+   void print() const;
+
+   virtual void from_XML(const tinyxml2::XMLDocument&) final;
+
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
-   // MEMBERS
+   Tensor<Index, 1> inputs_dimensions;
 
-   /// Descriptives of output variables.
+   /// Descriptives of input variables.
 
    Tensor<Descriptives, 1> descriptives;
 
-   /// Unscaling method for the output variables.
+   /// Vector of scaling methods for each variable.
 
    Tensor<Scaler, 1> scalers;
 
-   /// min and max range for unscaling
+   /// Min and max range for minmaxscaling
 
    type min_range;
    type max_range;
 
-   /// Display warning messages to screen. 
+   /// Display warning messages to screen.
 
    bool display = true;
+
 };
 
 
-struct UnscalingLayerForwardPropagation : LayerForwardPropagation
+struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
 {
     // Constructor
 
-    explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
+    explicit ScalingLayer4DForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+
+    virtual ~ScalingLayer4DForwardPropagation()
     {
     }
 
     // Constructor
 
-    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ScalingLayer4DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer_pointer);
@@ -167,7 +191,7 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number, 1, 1}});
     }
 
 
@@ -175,11 +199,11 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;
 
-        const Index neurons_number = static_cast<UnscalingLayer*>(layer_pointer)->get_neurons_number();
+        const Index neurons_number = layer_pointer->get_neurons_number();
 
         batch_samples_number = new_batch_samples_number;
 
-        outputs.resize(batch_samples_number, neurons_number);
+        outputs.resize(batch_samples_number, neurons_number, 1, 1);
 
         outputs_data = outputs.data();
     }
@@ -191,8 +215,7 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
         cout << outputs << endl;
     }
 
-
-    Tensor<type, 2> outputs;
+    Tensor<type, 4> outputs;
 };
 
 }

@@ -12,20 +12,7 @@
 // System includes
 
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
 #include <limits>
-#include <cmath>
-#include <ctime>
-#include <chrono>
-#include <time.h>
-#include <iostream>
-#include <ctime>
-#include <ratio>
-#include <chrono>
 
 // OpenNN includes
 
@@ -126,7 +113,7 @@ private:
 
    /// Initial learning rate
 
-   type initial_learning_rate = static_cast<type>(0.001);
+   type initial_learning_rate = type(0.001);
 
    /// Learning rate decay over each update.
 
@@ -134,15 +121,15 @@ private:
 
    /// Exponential decay over gradient estimates.
 
-   type beta_1 = static_cast<type>(0.9);
+   type beta_1 = type(0.9);
 
    /// Exponential decay over square gradient estimates.
 
-   type beta_2 = static_cast<type>(0.999);
+   type beta_2 = type(0.999);
 
    /// Small number to prevent any division by zero
 
-   type epsilon =static_cast<type>(1.e-7);
+   type epsilon =type(1.e-7);
 
     // Stopping criteria
 

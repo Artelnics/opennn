@@ -3,9 +3,8 @@
 
 #include <string>
 
-#include "dynamic_tensor.h"
 #include "layer.h"
-
+#include "config.h"
 
 using namespace std;
 using namespace Eigen;
@@ -29,11 +28,13 @@ struct LayerForwardPropagation
 
     virtual void print() const {}
 
-    Index batch_samples_number;
+    Index batch_samples_number = type(0);
 
     Layer* layer_pointer = nullptr;
 
-    Tensor<DynamicTensor<type>, 1> outputs;
+    type* outputs_data = nullptr;
+
+    virtual pair<type*, dimensions> get_outputs() const = 0;
 };
 
 
