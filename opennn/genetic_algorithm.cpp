@@ -451,7 +451,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     original_target_columns_indices = data_set_pointer->get_target_columns_indices();
 
-    Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
+    Tensor<DataSet::RawVariable, 1> columns = data_set_pointer->get_columns();
 
     Index index = 0;
 
@@ -550,7 +550,7 @@ void GeneticAlgorithm::initialize_population_random()
             Tensor<bool, 1> individual_columns_false = get_individual_columns(individual_variables);
 
 
-            Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
+            Tensor<DataSet::RawVariable, 1> columns = data_set_pointer->get_columns();
 
             for(Index j = 0; j < columns_number; j++)
             {
@@ -1043,7 +1043,7 @@ void GeneticAlgorithm::perform_crossover()
 
             if(is_false(descendent_genes))
             {
-                const Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
+                const Tensor<DataSet::RawVariable, 1> columns = data_set_pointer->get_columns();
 
                 Tensor<bool, 1> individual_columns_false = get_individual_columns(descendent_genes);
 
@@ -1116,7 +1116,7 @@ void GeneticAlgorithm::perform_mutation()
 
             Tensor<bool, 1> individual_columns_false = get_individual_columns(new_individual_variables);
 
-            Tensor<DataSet::Column, 1> columns = training_strategy_pointer->get_data_set_pointer()->get_columns();
+            Tensor<DataSet::RawVariable, 1> columns = training_strategy_pointer->get_data_set_pointer()->get_columns();
 
             for(Index j = 0; j < columns_number; j++)
             {
@@ -1368,9 +1368,9 @@ void GeneticAlgorithm::check_categorical_columns()
     {
         for(Index i = 0; i < variables_number; i++)
         {
-            const DataSet::ColumnType column_type = data_set_pointer->get_column_type(column_index);
+            const DataSet::RawVariableType column_type = data_set_pointer->get_column_type(column_index);
 
-            if(column_type != DataSet::ColumnType::Categorical)
+            if(column_type != DataSet::RawVariableType::Categorical)
             {
                 column_index++;
                 continue;
@@ -1416,7 +1416,7 @@ Tensor<bool,1 > GeneticAlgorithm::get_individual_columns(Tensor<bool,1>& individ
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(data_set_pointer->get_column_type(i) == DataSet::ColumnType::Categorical)
+        if(data_set_pointer->get_column_type(i) == DataSet::RawVariableType::Categorical)
         {
             Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
 
@@ -1497,7 +1497,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
     Tensor <bool, 1> individual_columns_to_variables(genes_number);
     individual_columns_to_variables.setConstant(false);
 
-    const Tensor<DataSet::Column, 1> columns = data_set_pointer->get_columns();
+    const Tensor<DataSet::RawVariable, 1> columns = data_set_pointer->get_columns();
 
     Index variable_index = 0;
 
@@ -1505,7 +1505,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
     {
         if(individual_columns(i))
         {
-            if(columns(i).type == DataSet::ColumnType::Categorical)
+            if(columns(i).type == DataSet::RawVariableType::Categorical)
             {
                 Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
 
@@ -1523,7 +1523,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
         }
         else
         {
-            if(columns(i).type == DataSet::ColumnType::Categorical)
+            if(columns(i).type == DataSet::RawVariableType::Categorical)
             {
                 Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
 
@@ -1554,7 +1554,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
     {
         if(original_input_columns(i))
         {
-            if(columns(i).type == DataSet::ColumnType::Categorical)
+            if(columns(i).type == DataSet::RawVariableType::Categorical)
             {
                 Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
 
@@ -1572,7 +1572,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
         }
         else
         {
-            if(columns(i).type == DataSet::ColumnType::Categorical)
+            if(columns(i).type == DataSet::RawVariableType::Categorical)
             {
                 Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
 
@@ -1614,7 +1614,7 @@ Tensor <bool, 1> GeneticAlgorithm::get_individual_variables_to_indexes(Tensor <b
     {
         for(Index i = 0; i < columns_number; i++)
         {
-            if(data_set_pointer->get_column_type(i) == DataSet::ColumnType::Categorical)
+            if(data_set_pointer->get_column_type(i) == DataSet::RawVariableType::Categorical)
             {
                 const Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
 

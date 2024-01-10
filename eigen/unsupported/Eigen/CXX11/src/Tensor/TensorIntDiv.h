@@ -28,8 +28,6 @@ namespace Eigen {
 
 namespace internal {
 
-namespace {
-
   // Note: result is undefined if val == 0
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
@@ -135,8 +133,6 @@ namespace {
 #endif
     }
   };
-}
-
 
 template <typename T, bool div_gt_one = false>
 struct TensorIntDivisor {
@@ -252,7 +248,7 @@ private:
 
 
 template <typename T, bool div_gt_one>
-static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T operator / (const T& numerator, const TensorIntDivisor<T, div_gt_one>& divisor) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T operator / (const T& numerator, const TensorIntDivisor<T, div_gt_one>& divisor) {
   return divisor.divide(numerator);
 }
 

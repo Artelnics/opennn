@@ -61,8 +61,8 @@ public:
     explicit MultiheadAttentionLayer(const Index&, /// Input size
                                      const Index&, /// Context size
                                      const Index&, /// Embedding depth
-                                     const Index& /// Number of attention heads
-                                     );
+                                     const Index&, /// Number of attention heads
+                                     const bool & = false); /// Apply causal mask
 
     // Get methods
 
@@ -73,6 +73,12 @@ public:
     Index get_depth() const;
     Index get_number_of_heads() const;
 
+<<<<<<< HEAD
+=======
+//    Tensor<Index, 1> get_inputs_dimensions() const final;
+//    Tensor<Index, 1> get_outputs_dimensions() const final;
+
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
     Tensor<type, 3> get_query_kernel() const;
     Tensor<type, 3> get_key_kernel() const;
     Tensor<type, 3> get_value_kernel() const;
@@ -104,6 +110,7 @@ public:
     void set_parameters_random() final;
 
     void set_dropout_rate(const type&);
+    void set_causal_mask(const bool&);
 
     // Display messages
 
@@ -111,17 +118,15 @@ public:
 
     // Linear transformation & projection
 
-    void calculate_query_transformation(const Tensor<type, 3>&, type*);
-    void calculate_key_transformation(const Tensor<type, 3>&, type*);
-    void calculate_value_transformation(const Tensor<type, 3>&, type*);
+    void calculate_transformation(const Tensor<type, 3>&, DynamicTensor<type>&, const Tensor<type, 3>&);
 
-    void calculate_output_projection(const Tensor<type, 4>&, type*);
+    void calculate_output_projection(DynamicTensor<type>&, DynamicTensor<type>&);
 
     // Attention computation
 
-    void compute_attention_scores(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*); /// Softmax before saving
+    void compute_attention_scores(DynamicTensor<type>&, DynamicTensor<type>&, DynamicTensor<type>&);
 
-    void compute_attention_output(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*);
+    void compute_attention_output(DynamicTensor<type>&, DynamicTensor<type>&, DynamicTensor<type>&);
 
     // Multihead Attention layer outputs
 
@@ -169,9 +174,13 @@ protected:
 
     Tensor<type, 3> projection_kernel;
 
-    /// Dropour rate
+    /// Dropout rate
 
     type dropout_rate = type(0);
+
+    /// Apply causal mask or not
+
+    bool causal_mask = false;
 
     /// Display messages to screen.
 
@@ -216,14 +225,23 @@ protected:
 
             const Index number_of_heads = layer_pointer->get_number_of_heads();
 
+<<<<<<< HEAD
             outputs.resize(batch_samples_number, input_size, depth);
+=======
+            // Outputs
 
-            transformed_query.resize(new_batch_samples_number, input_size, depth, number_of_heads);
-            transformed_key.resize(new_batch_samples_number, context_size, depth, number_of_heads);
-            transformed_value.resize(new_batch_samples_number, context_size, depth, number_of_heads);
+            outputs.resize(1);
+            outputs(0).set_dimensions({batch_samples_number, input_size, depth});
 
-            attention_scores.resize(new_batch_samples_number, input_size, context_size, number_of_heads);
-            attention_outputs.resize(new_batch_samples_number, input_size, depth, number_of_heads);
+            // Rest of quantities
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+
+            transformed_query.set_dimensions({new_batch_samples_number, input_size, depth, number_of_heads});
+            transformed_key.set_dimensions({new_batch_samples_number, context_size, depth, number_of_heads});
+            transformed_value.set_dimensions({new_batch_samples_number, context_size, depth, number_of_heads});
+
+            attention_scores.set_dimensions({new_batch_samples_number, input_size, context_size, number_of_heads});
+            attention_outputs.set_dimensions({new_batch_samples_number, input_size, depth, number_of_heads});
         }
 
         void print() const
@@ -239,39 +257,45 @@ protected:
 //            cout << attention_scores << endl;
         }
 
-        type* get_transformed_query_data()
+        DynamicTensor<type> get_transformed_query()
         {
-            return transformed_query.data();
+            return transformed_query;
         }
 
-        type* get_transformed_key_data()
+        DynamicTensor<type> get_transformed_key()
         {
-            return transformed_key.data();
+            return transformed_key;
         }
 
-        type* get_transformed_value_data()
+        DynamicTensor<type> get_transformed_value()
         {
-            return transformed_value.data();
+            return transformed_value;
         }
 
-        type* get_attention_scores_data()
+        DynamicTensor<type> get_attention_scores()
         {
-            return attention_scores.data();
+            return attention_scores;
         }
 
-        type* get_attention_outputs_data()
+        DynamicTensor<type> get_attention_outputs()
         {
-            return attention_outputs.data();
+            return attention_outputs;
         }
 
+<<<<<<< HEAD
         Tensor<type, 3> outputs;
 
         Tensor<type, 4> transformed_query;
         Tensor<type, 4> transformed_key;
         Tensor<type, 4> transformed_value;
+=======
+        DynamicTensor<type> transformed_query;
+        DynamicTensor<type> transformed_key;
+        DynamicTensor<type> transformed_value;
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
-        Tensor<type, 4> attention_scores;
-        Tensor<type, 4> attention_outputs;
+        DynamicTensor<type> attention_scores;
+        DynamicTensor<type> attention_outputs;
     };
 
 

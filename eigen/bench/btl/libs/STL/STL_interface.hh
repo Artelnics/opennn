@@ -84,9 +84,12 @@ public :
     for (int j=0;j<N;j++){
       for (int i=0;i<N;i++){
         somme=0.0;
+        if(i>=j)
+        {
         for (int k=0;k<N;k++)
           somme += A[i][k]*A[j][k];
         X[j][i]=somme;
+	}
       }
     }
   }

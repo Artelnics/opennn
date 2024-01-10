@@ -127,28 +127,11 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataFile");
 
-    if(model_type != ModelType::ImageClassification)
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
+    file_stream.OpenElement("FileType");
 
-            file_stream.PushText("csv");
+    file_stream.PushText("csv");
 
-            file_stream.CloseElement();
-        }
-    }
-    else
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
-
-            file_stream.PushText("bmp");
-
-            file_stream.CloseElement();
-        }
-    }
+    file_stream.CloseElement();
 
     // Data file name
     {
@@ -164,6 +147,15 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("Separator");
 
         file_stream.PushText(get_separator_string().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Text separator
+    {
+        file_stream.OpenElement("TextSeparator");
+
+        file_stream.PushText(get_text_separator_string().c_str());
 
         file_stream.CloseElement();
     }
@@ -202,16 +194,61 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    // Short words length
+    {
+        file_stream.OpenElement("ShortWordsLength");
+
+        buffer.str("");
+        buffer << get_short_words_length();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Long words length
+    {
+        file_stream.OpenElement("LongWordsLength");
+
+        buffer.str("");
+        buffer << get_long_words_length();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Stop words list
+    {
+        file_stream.OpenElement("StopWordsList");
+
+        const Index stop_words_number = stop_words.dimension(0);
+
+        buffer.str("");
+
+        for(Index i = 0; i < stop_words_number; i++)
+        {
+            buffer << stop_words(i);
+
+            if(i != stop_words_number-1) buffer << ",";
+        }
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
     // Codification
+    {
+        file_stream.OpenElement("Codification");
 
-    file_stream.OpenElement("Codification");
+        buffer.str("");
+        buffer << get_codification_string();
 
-    buffer.str("");
-    buffer << get_codification_string();
+        file_stream.PushText(buffer.str().c_str());
 
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
+        file_stream.CloseElement();
+    }
 
     // Close DataFile
 
@@ -236,7 +273,6 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Columns items
 
     const Index columns_number = get_columns_number();
-
     {
         for(Index i = 0; i < columns_number; i++)
         {
@@ -293,7 +329,6 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Samples uses
-
     {
         file_stream.OpenElement("SamplesUses");
 
@@ -400,6 +435,23 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Words frequencies
+    {
+        file_stream.OpenElement("WordsFrequencies");
+
+        for(Index i = 0; i < words_frequencies.size(); i++)
+        {
+            buffer.str("");
+            buffer << words_frequencies(i);
+
+            file_stream.PushText(buffer.str().c_str());
+            if(i != words_frequencies.size()-1) file_stream.PushText(" ");
+
+        }
+
+        file_stream.CloseElement();
+    }
+
     // Preview data
 
     file_stream.OpenElement("PreviewData");
@@ -408,34 +460,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
 
-    if(model_type != ModelType::TextClassification)
-    {
-        buffer << data_file_preview.size();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-
-        for(Index i = 0; i < data_file_preview.size(); i++)
-        {
-            file_stream.OpenElement("Row");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            for(Index j = 0; j < data_file_preview(i).size(); j++)
-            {
-                file_stream.PushText(data_file_preview(i)(j).c_str());
-
-                if(j != data_file_preview(i).size()-1)
-                {
-                    file_stream.PushText(",");
-                }
-            }
-
-            file_stream.CloseElement();
-        }
-    }
-    else
+    // Row and Targets
     {
         buffer << text_data_file_preview.dimension(0);
 
@@ -629,6 +654,8 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_label("NA");
     }
 
+    // short words length
+
     const tinyxml2::XMLElement* short_words_length_element = data_file_element->FirstChildElement("ShortWordsLength");
 
     if(short_words_length_element)
@@ -641,6 +668,8 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+    // Long words length
+
     const tinyxml2::XMLElement* long_words_length_element = data_file_element->FirstChildElement("LongWordsLength");
 
     if(long_words_length_element)
@@ -652,6 +681,8 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             set_long_words_length(new_long_words_length);
         }
     }
+
+    // Stop words list
 
     const tinyxml2::XMLElement* stop_words_list_element = data_file_element->FirstChildElement("StopWordsList");
 
@@ -813,7 +844,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
+            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
             {
                 // Categories
 
@@ -1493,10 +1524,14 @@ void TextDataSet::read_txt()
     separator = Separator::Semicolon;
     has_columns_names = true;
 
-    read_csv();
+    cout << "----- in load_data -----" << endl;
+
+    load_data(); // read_csv()
+
+    cout << "----- out load_data -----" << endl;
 
     for(Index i = 0; i < get_input_columns_number(); i++)
-        set_column_type(i,ColumnType::Numeric);
+        set_column_type(i,RawVariableType::Numeric);
 };
 
 

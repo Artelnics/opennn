@@ -71,8 +71,8 @@ int main(void)
 
         t0 = clock();
 
-        Tensor<Index, 1> outliers = data_set.calculate_local_outlier_factor_outliers(K, data_set.get_used_samples_number(), contamination);
-
+//        Tensor<Index, 1> outliers = data_set.calculate_local_outlier_factor_outliers(K, data_set.get_used_samples_number(), contamination);
+        Tensor<Index, 1> outliers;
         t1 = clock();
         double time = (double(t1-t0)/CLOCKS_PER_SEC);
 

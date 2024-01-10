@@ -166,8 +166,12 @@ struct GenericDimReducer<-1, Self, Op> {
 };
 
 template <typename Self, typename Op, bool Vectorizable = (Self::InputPacketAccess && Self::ReducerTraits::PacketAccess),
-          bool UseTreeReduction = (!Self::ReducerTraits::IsStateful &&
-                                   !Self::ReducerTraits::IsExactlyAssociative)>
+    bool UseTreeReduction = (!Self::ReducerTraits::IsStateful &&
+                             !Self::ReducerTraits::IsExactlyAssociative &&
+                             // GPU threads can quickly run out of stack space
+                             // for moderately sized inputs.
+                             !Self::RunningOnGPU
+                             )>
 struct InnerMostDimReducer {
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Self::CoeffReturnType reduce(const Self& self, typename Self::Index firstIndex, typename Self::Index numValuesToReduce, Op& reducer) {
     typename Self::CoeffReturnType accum = reducer.initialize();
@@ -528,6 +532,18 @@ struct TensorReductionEvaluatorBase<const TensorReductionOp<Op, Dims, ArgType, M
     // Subset of strides of the input tensor for the non-reduced dimensions.
   // Indexed by output dimensions.
   static const int NumPreservedStrides = max_n_1<NumOutputDims>::size;
+  
+  // For full reductions
+#if defined(EIGEN_USE_GPU) && (defined(EIGEN_GPUCC))
+  static constexpr bool RunningOnGPU = internal::is_same<Device, Eigen::GpuDevice>::value;
+  static constexpr bool RunningOnSycl = false;
+#elif defined(EIGEN_USE_SYCL)
+static const bool RunningOnSycl = internal::is_same<typename internal::remove_all<Device>::type, Eigen::SyclDevice>::value;
+static const bool RunningOnGPU = false;
+#else
+  static constexpr bool RunningOnGPU = false;
+  static constexpr bool RunningOnSycl = false;
+#endif
 
   enum {
     IsAligned = false,
@@ -578,7 +594,7 @@ struct TensorReductionEvaluatorBase<const TensorReductionOp<Op, Dims, ArgType, M
           m_fastOutputStrides[i] = internal::TensorIntDivisor<Index>(m_outputStrides[i]);
         }
       } else {
-        m_outputStrides[NumOutputDims - 1] = 1;
+        m_outputStrides[static_cast<size_t>(NumOutputDims - 1)] = 1;
         for (int i = NumOutputDims - 2; i >= 0; --i) {
           m_outputStrides[i] = m_outputStrides[i + 1] * m_dimensions[i + 1];
           m_fastOutputStrides[i] = internal::TensorIntDivisor<Index>(m_outputStrides[i]);
@@ -950,17 +966,6 @@ struct TensorReductionEvaluatorBase<const TensorReductionOp<Op, Dims, ArgType, M
   // Operation to apply for computing the reduction.
   Op m_reducer;
 
-  // For full reductions
-#if defined(EIGEN_USE_GPU) && (defined(EIGEN_GPUCC))
-  static const bool RunningOnGPU = internal::is_same<Device, Eigen::GpuDevice>::value;
-  static const bool RunningOnSycl = false;
-#elif defined(EIGEN_USE_SYCL)
-static const bool RunningOnSycl = internal::is_same<typename internal::remove_all<Device>::type, Eigen::SyclDevice>::value;
-static const bool RunningOnGPU = false;
-#else
-  static const bool RunningOnGPU = false;
-  static const bool RunningOnSycl = false;
-#endif
   EvaluatorPointerType m_result;
 
   const Device EIGEN_DEVICE_REF m_device;

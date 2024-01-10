@@ -126,7 +126,7 @@ and contrary to what one might think at first, this implementation is fine unles
 MatrixXf x,y,z;
 MatrixXf C = cov(x,y+z);
 \endcode
-In this special case, the example is fine and will be working because both parameters are declared as \e const references. The compiler creates a temporary and evaluates the expression x+z into this temporary. Once the function is processed, the temporary is released and the result is assigned to C.
+In this special case, the example is fine and will be working because both parameters are declared as \e const references. The compiler creates a temporary and evaluates the expression y+z into this temporary. Once the function is processed, the temporary is released and the result is assigned to C.
 
 \b Note: Functions taking \e const references to Matrix (or Array) can process expressions at the cost of temporaries.
 

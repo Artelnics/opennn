@@ -254,10 +254,10 @@ struct nested<const TensorRef<PlainObjectType> >
 // the SAME case.
 // When the stride is 1, we have the simplified case R'=R-K+1, C'=C-K+1, Pr=0,
 // Pc=0.
-typedef enum {
+enum PaddingType {
   PADDING_VALID = 1,
   PADDING_SAME = 2
-} PaddingType;
+};
 
 }  // end namespace Eigen
 

@@ -156,15 +156,13 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         for(Index i = 0; i < old_layers_number; i++) layers_inputs_indices(i) = old_layers_inputs_indices(i);
 
-        Tensor<Index, 1> new_layer_inputs_indices;
-
-        if(old_layers_number != 0)
-        {
+//        if(old_layers_number != 0)
+//        {
             Tensor<Index, 1> new_layer_inputs_indices(1);
             new_layer_inputs_indices(0) = old_layers_number-1;
 
             layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
-        }
+//        }
     }
     else
     {
@@ -482,6 +480,11 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
     const Index layers_number = get_layers_number();
+
+    if(layer_name == "dataset")
+    {
+        return -1;
+    }
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -1126,6 +1129,15 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const Ten
 }
 
 
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const initializer_list<string>& new_layer_inputs_names_list)
+{
+    Tensor<string, 1> new_layer_inputs_names(new_layer_inputs_names_list.size());
+    new_layer_inputs_names.setValues(new_layer_inputs_names_list);
+
+    set_layer_inputs_indices(layer_name, new_layer_inputs_names);
+}
+
+
 void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_inputs_name)
 {
     const Index layer_index = get_layer_index(layer_name);
@@ -1601,6 +1613,19 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 }
 
 
+bool NeuralNetwork::is_starting_layer(const Index& layer_index) const
+{
+    Tensor<Index, 1> layer_input_indices = layers_inputs_indices(layer_index);
+
+    for(Index i = 0; i < layer_input_indices.size(); i++)
+    {
+        if(layer_input_indices(i) != -1) return false;
+    }
+
+    return true;
+}
+
+
 /// Initializes all the biases and synaptic weights with a given value.
 
 void NeuralNetwork::set_parameters_constant(const type& value) const
@@ -1650,8 +1675,12 @@ type NeuralNetwork::calculate_parameters_norm() const
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
+<<<<<<< HEAD
 
 void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
+=======
+void NeuralNetwork::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {
@@ -2292,6 +2321,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             outputs_from_XML(outputs_document);
         }
     }
+
 /*
     if(get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
     {

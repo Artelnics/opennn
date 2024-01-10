@@ -124,11 +124,11 @@ const bool& DataSet::get_display() const
 
 /// Column default constructor
 
-DataSet::Column::Column()
+DataSet::RawVariable::RawVariable()
 {
     name = "";
     column_use = VariableUse::Input;
-    type = ColumnType::Numeric;
+    type = RawVariableType::Numeric;
     categories.resize(0);
     categories_uses.resize(0);
 
@@ -138,9 +138,9 @@ DataSet::Column::Column()
 
 /// Column default constructor
 
-DataSet::Column::Column(const string& new_name,
+DataSet::RawVariable::RawVariable(const string& new_name,
                         const VariableUse& new_column_use,
-                        const ColumnType& new_type,
+                        const RawVariableType& new_type,
                         const Scaler& new_scaler,
                         const Tensor<string, 1>& new_categories,
                         const Tensor<VariableUse, 1>& new_categories_uses)
@@ -154,13 +154,13 @@ DataSet::Column::Column(const string& new_name,
 }
 
 
-void DataSet::Column::set_scaler(const Scaler& new_scaler)
+void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 {
     scaler = new_scaler;
 }
 
 
-void DataSet::Column::set_scaler(const string& new_scaler)
+void DataSet::RawVariable::set_scaler(const string& new_scaler)
 {
     if(new_scaler == "NoScaling")
     {
@@ -198,7 +198,7 @@ void DataSet::Column::set_scaler(const string& new_scaler)
 /// Sets the use of the column and of the categories.
 /// @param new_column_use New use of the column.
 
-void DataSet::Column::set_use(const VariableUse& new_column_use)
+void DataSet::RawVariable::set_use(const VariableUse& new_column_use)
 {
     column_use = new_column_use;
 
@@ -212,7 +212,7 @@ void DataSet::Column::set_use(const VariableUse& new_column_use)
 /// Sets the use of the column and of the categories.
 /// @param new_column_use New use of the column in string format.
 
-void DataSet::Column::set_use(const string& new_column_use)
+void DataSet::RawVariable::set_use(const string& new_column_use)
 {
     if(new_column_use == "Input")
     {
@@ -246,27 +246,27 @@ void DataSet::Column::set_use(const string& new_column_use)
 /// Sets the column type.
 /// @param new_column_type Column type in string format.
 
-void DataSet::Column::set_type(const string& new_column_type)
+void DataSet::RawVariable::set_type(const string& new_column_type)
 {
     if(new_column_type == "Numeric")
     {
-        type = ColumnType::Numeric;
+        type = RawVariableType::Numeric;
     }
     else if(new_column_type == "Binary")
     {
-        type = ColumnType::Binary;
+        type = RawVariableType::Binary;
     }
     else if(new_column_type == "Categorical")
     {
-        type = ColumnType::Categorical;
+        type = RawVariableType::Categorical;
     }
     else if(new_column_type == "DateTime")
     {
-        type = ColumnType::DateTime;
+        type = RawVariableType::DateTime;
     }
     else if(new_column_type == "Constant")
     {
-        type = ColumnType::Constant;
+        type = RawVariableType::Constant;
     }
     else
     {
@@ -286,7 +286,7 @@ void DataSet::Column::set_type(const string& new_column_type)
 /// It also adds a default use for the category
 /// @param new_category String that contains the name of the new category
 
-void DataSet::Column::add_category(const string & new_category)
+void DataSet::RawVariable::add_category(const string & new_category)
 {
     const Index old_categories_number = categories.size();
 
@@ -308,7 +308,7 @@ void DataSet::Column::add_category(const string & new_category)
 }
 
 
-void DataSet::Column::set_categories(const Tensor<string, 1>& new_categories)
+void DataSet::RawVariable::set_categories(const Tensor<string, 1>& new_categories)
 {
     categories.resize(new_categories.size());
 
@@ -319,7 +319,7 @@ void DataSet::Column::set_categories(const Tensor<string, 1>& new_categories)
 /// Sets the categories uses in the data set.
 /// @param new_categories_uses String vector that contains the new categories of the data set.
 
-void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categories_uses)
+void DataSet::RawVariable::set_categories_uses(const Tensor<string, 1>& new_categories_uses)
 {
     const Index new_categories_uses_number = new_categories_uses.size();
 
@@ -361,13 +361,13 @@ void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categorie
 /// Sets the categories uses in the data set.
 /// @param new_categories_use New categories use
 
-void DataSet::Column::set_categories_uses(const VariableUse& new_categories_use)
+void DataSet::RawVariable::set_categories_uses(const VariableUse& new_categories_use)
 {
     categories_uses.setConstant(new_categories_use);
 }
 
 
-void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
+void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document)
 {
     ostringstream buffer;
 
@@ -450,7 +450,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         set_type(new_type);
     }
 
-    if(type == ColumnType::Categorical)
+    if(type == RawVariableType::Categorical)
     {
         // Categories
 
@@ -495,7 +495,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
 }
 
 
-void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void DataSet::RawVariable::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Name
 
@@ -553,22 +553,22 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(type)
     {
-    case ColumnType::Numeric: file_stream.PushText("Numeric"); break;
+    case RawVariableType::Numeric: file_stream.PushText("Numeric"); break;
 
-    case ColumnType::Binary: file_stream.PushText("Binary"); break;
+    case RawVariableType::Binary: file_stream.PushText("Binary"); break;
 
-    case ColumnType::Categorical: file_stream.PushText("Categorical"); break;
+    case RawVariableType::Categorical: file_stream.PushText("Categorical"); break;
 
-    case ColumnType::Constant: file_stream.PushText("Constant"); break;
+    case RawVariableType::Constant: file_stream.PushText("Constant"); break;
 
-    case ColumnType::DateTime: file_stream.PushText("DateTime"); break;
+    case RawVariableType::DateTime: file_stream.PushText("DateTime"); break;
 
     default: break;
     }
 
     file_stream.CloseElement();
 
-    if(type == ColumnType::Categorical || type == ColumnType::Binary)
+    if(type == RawVariableType::Categorical || type == RawVariableType::Binary)
     {
         if(categories.size() == 0) return;
 
@@ -620,7 +620,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void DataSet::Column::print() const
+void DataSet::RawVariable::print() const
 {
     cout << "Name: " << name << endl;
 
@@ -656,25 +656,25 @@ void DataSet::Column::print() const
 
     switch(type)
     {
-    case ColumnType::Numeric:
+    case RawVariableType::Numeric:
         cout << "Numeric" << endl;
         break;
 
-    case ColumnType::Binary:
+    case RawVariableType::Binary:
         cout << "Binary" << endl;
         cout << "Categories: " << categories << endl;
         break;
 
-    case ColumnType::Categorical:
+    case RawVariableType::Categorical:
         cout << "Categorical" << endl;
         cout << "Categories: " << categories << endl;
         break;
 
-    case ColumnType::DateTime:
+    case RawVariableType::DateTime:
         cout << "DateTime" << endl;
         break;
 
-    case ColumnType::Constant:
+    case RawVariableType::Constant:
         cout << "Constant" << endl;
         break;
 
@@ -751,9 +751,9 @@ string DataSet::get_model_type_string(const DataSet::ModelType& new_model_type) 
 }
 
 
-Index DataSet::Column::get_numeric_variables_number() const
+Index DataSet::RawVariable::get_numeric_variables_number() const
 {
-    if(type == ColumnType::Categorical)
+    if(type == RawVariableType::Categorical)
     {
         return categories.size();
     }
@@ -766,7 +766,7 @@ Index DataSet::Column::get_numeric_variables_number() const
 
 /// Returns the number of categories.
 
-Index DataSet::Column::get_categories_number() const
+Index DataSet::RawVariable::get_categories_number() const
 {
     return categories.size();
 }
@@ -774,7 +774,7 @@ Index DataSet::Column::get_categories_number() const
 
 /// Returns the number of used categories.
 
-Index DataSet::Column::get_used_categories_number() const
+Index DataSet::RawVariable::get_used_categories_number() const
 {
     Index used_categories_number = 0;
 
@@ -789,16 +789,16 @@ Index DataSet::Column::get_used_categories_number() const
 
 /// Returns a string vector that contains the names of the used variables in the data set.
 
-Tensor<string, 1> DataSet::Column::get_used_numeric_variables_names() const
+Tensor<string, 1> DataSet::RawVariable::get_used_numeric_variables_names() const
 {
     Tensor<string, 1> used_variables_names;
 
-    if(type != ColumnType::Categorical && column_use != VariableUse::Unused)
+    if(type != RawVariableType::Categorical && column_use != VariableUse::Unused)
     {
         used_variables_names.resize(1);
         used_variables_names.setConstant(name);
     }
-    else if(type == ColumnType::Categorical)
+    else if(type == RawVariableType::Categorical)
     {
         used_variables_names.resize(get_used_categories_number());
 
@@ -933,26 +933,26 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
     {
         switch(columns(i).type)
         {
-        case ColumnType::Numeric:
+        case RawVariableType::Numeric:
             if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += to_string(double(data(sample_index, variable_index)));
             variable_index++;
             break;
 
-        case ColumnType::Binary:
+        case RawVariableType::Binary:
             if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += columns(i).categories(Index(data(sample_index, variable_index)));
             variable_index++;
             break;
 
-        case ColumnType::DateTime:
+        case RawVariableType::DateTime:
             // @todo do something
             if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += to_string(double(data(sample_index, variable_index)));
             variable_index++;
             break;
 
-        case ColumnType::Categorical:
+        case RawVariableType::Categorical:
             if(isnan(data(sample_index, variable_index)))
             {
                 sample_string += missing_values_label;
@@ -973,7 +973,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
             }
             break;
 
-        case ColumnType::Constant:
+        case RawVariableType::Constant:
             if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += to_string(double(data(sample_index, variable_index)));
             variable_index++;
@@ -1852,7 +1852,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 }
 
 
-void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
+void DataSet::set_columns(const Tensor<RawVariable, 1>& new_columns)
 {
     columns = new_columns;
 }
@@ -1883,7 +1883,7 @@ void DataSet::set_default_columns_uses()
 
         for(Index i = columns.size()-1; i >= 0; i--)
         {
-            if(columns(i).type == ColumnType::Constant || columns(i).type == ColumnType::DateTime)
+            if(columns(i).type == RawVariableType::Constant || columns(i).type == RawVariableType::DateTime)
             {
                 columns(i).set_use(VariableUse::Unused);
                 continue;
@@ -1938,23 +1938,23 @@ DataSet::VariableUse DataSet::get_numeric_variable_use(const Index& index) const
 }
 
 
-string DataSet::get_column_type_string(const ColumnType& column_type) const
+string DataSet::get_column_type_string(const RawVariableType& column_type) const
 {
     switch(column_type)
     {
-    case ColumnType::Numeric:
+    case RawVariableType::Numeric:
         return "Numeric";
 
-    case ColumnType::Constant:
+    case RawVariableType::Constant:
         return "Constant";
 
-    case ColumnType::Binary:
+    case RawVariableType::Binary:
         return "Binary";
 
-    case ColumnType::Categorical:
+    case RawVariableType::Categorical:
         return "Categorical";
 
-    case ColumnType::DateTime:
+    case RawVariableType::DateTime:
         return "DateTime";
 
     default:
@@ -2002,7 +2002,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_numeric_variables_uses() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
             {
@@ -2049,7 +2049,7 @@ string DataSet::get_numeric_variable_name(const Index& variable_index) const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
@@ -2093,7 +2093,7 @@ Tensor<string, 1> DataSet::get_numeric_variables_names() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories.size(); j++)
             {
@@ -2319,7 +2319,7 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
     const Index input_columns_number = get_input_columns_number();
     const Index input_variables_number = get_input_numeric_variables_number();
 
-    const Tensor<Column, 1> input_columns = get_input_columns();
+    const Tensor<RawVariable, 1> input_columns = get_input_columns();
 
     Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
 
@@ -2343,7 +2343,7 @@ Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
     const Index target_columns_number = get_target_columns_number();
     const Index target_variables_number = get_target_numeric_variables_number();
 
-    const Tensor<Column, 1> target_columns = get_target_columns();
+    const Tensor<RawVariable, 1> target_columns = get_target_columns();
 
     Tensor<Scaler, 1> target_variables_scalers(target_variables_number);
 
@@ -2550,7 +2550,7 @@ Index DataSet::get_variables_less_target() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             if(columns(i).column_use == VariableUse::Input)
             {
@@ -2654,7 +2654,7 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
 
 /// Returns the columns of the data set.
 
-Tensor<DataSet::Column, 1> DataSet::get_columns() const
+Tensor<DataSet::RawVariable, 1> DataSet::get_columns() const
 {
     return columns;
 }
@@ -2662,11 +2662,11 @@ Tensor<DataSet::Column, 1> DataSet::get_columns() const
 
 /// Returns the input columns of the data set.
 
-Tensor<DataSet::Column, 1> DataSet::get_input_columns() const
+Tensor<DataSet::RawVariable, 1> DataSet::get_input_columns() const
 {
     const Index inputs_number = get_input_columns_number();
 
-    Tensor<Column, 1> input_columns(inputs_number);
+    Tensor<RawVariable, 1> input_columns(inputs_number);
     Index input_index = 0;
 
     for(Index i = 0; i < columns.size(); i++)
@@ -2704,11 +2704,11 @@ Tensor<bool, 1> DataSet::get_input_columns_binary() const
 
 /// Returns the target columns of the data set.
 
-Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
+Tensor<DataSet::RawVariable, 1> DataSet::get_target_columns() const
 {
     const Index targets_number = get_target_columns_number();
 
-    Tensor<Column, 1> target_columns(targets_number);
+    Tensor<RawVariable, 1> target_columns(targets_number);
     Index target_index = 0;
 
     for(Index i = 0; i < columns.size(); i++)
@@ -2726,13 +2726,13 @@ Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
 
 /// Returns the used columns of the data set.
 
-Tensor<DataSet::Column, 1> DataSet::get_used_columns() const
+Tensor<DataSet::RawVariable, 1> DataSet::get_used_columns() const
 {
     const Index used_columns_number = get_used_columns_number();
 
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-    Tensor<DataSet::Column, 1> used_columns(used_columns_number);
+    Tensor<DataSet::RawVariable, 1> used_columns(used_columns_number);
 
     for(Index i = 0; i < used_columns_number; i++)
     {
@@ -2759,7 +2759,7 @@ Index DataSet::get_constant_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Constant)
+        if(columns(i).type == RawVariableType::Constant)
             constant_number++;
     }
 
@@ -2775,7 +2775,7 @@ Index DataSet::get_numeric_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             variables_number += columns(i).categories.size();
         }
@@ -2800,7 +2800,7 @@ Index DataSet::get_input_numeric_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
@@ -2828,7 +2828,7 @@ Index DataSet::get_target_numeric_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
@@ -2856,7 +2856,7 @@ Index DataSet::get_unused_numeric_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
@@ -2907,7 +2907,7 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
@@ -2951,7 +2951,7 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
@@ -2997,7 +2997,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
@@ -3036,7 +3036,7 @@ Index DataSet::get_numerical_input_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        if((columns(i).type == RawVariableType::Numeric) && (columns(i).column_use == VariableUse::Input))
         {
             numeric_input_columns_number++;
         }
@@ -3058,7 +3058,7 @@ Tensor<Index, 1> DataSet::get_numeric_input_columns() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        if((columns(i).type == RawVariableType::Numeric) && (columns(i).column_use == VariableUse::Input))
         {
             numeric_columns_indices(numeric_columns_index) = i;
             numeric_columns_index++;
@@ -3082,7 +3082,7 @@ Tensor<Index, 1> DataSet::get_numeric_input_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
@@ -3091,11 +3091,11 @@ Tensor<Index, 1> DataSet::get_numeric_input_variables_indices() const
                 input_variable_index++;
             }
         }
-        else if((columns(i).type == ColumnType::Binary) && (columns(i).column_use == VariableUse::Input))
+        else if((columns(i).type == RawVariableType::Binary) && (columns(i).column_use == VariableUse::Input))
         {
             input_variable_index++;
         }
-        else if((columns(i).type == ColumnType::Numeric) && (columns(i).column_use == VariableUse::Input))
+        else if((columns(i).type == RawVariableType::Numeric) && (columns(i).column_use == VariableUse::Input))
         {
             numeric_input_variables_indices(numeric_input_index) = input_variable_index;
 
@@ -3127,7 +3127,7 @@ Tensor<Index, 1> DataSet::get_target_numeric_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
@@ -3333,7 +3333,7 @@ void DataSet::set_column_use(const Index& index, const VariableUse& new_use)
 {
     columns(index).column_use = new_use;
 
-    if(columns(index).type == ColumnType::Categorical)
+    if(columns(index).type == RawVariableType::Categorical)
     {
         columns(index).set_categories_uses(new_use);
     }
@@ -3358,13 +3358,13 @@ void DataSet::set_column_use(const string& name, const VariableUse& new_use)
     set_column_use(index, new_use);
 }
 
-void DataSet::set_column_type(const Index& index, const ColumnType& new_type)
+void DataSet::set_column_type(const Index& index, const RawVariableType& new_type)
 {
     columns[index].type = new_type;
 }
 
 
-void DataSet::set_column_type(const string& name, const ColumnType& new_type)
+void DataSet::set_column_type(const string& name, const RawVariableType& new_type)
 {
     const Index index = get_column_index(name);
 
@@ -3401,7 +3401,7 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
@@ -3464,7 +3464,7 @@ void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
     for(Index i = 0; i < columns_number; i++)
     {
 
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
@@ -3482,7 +3482,7 @@ void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 
 
 void DataSet::set_variables_names_from_columns(const Tensor<string, 1>& new_variables_names,
-                                               const Tensor<DataSet::Column, 1>& new_columns)
+                                               const Tensor<DataSet::RawVariable, 1>& new_columns)
 {
     const Index columns_number = get_columns_number();
 
@@ -3490,7 +3490,7 @@ void DataSet::set_variables_names_from_columns(const Tensor<string, 1>& new_vari
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             columns(i).categories.resize(new_columns(i).get_categories_number());
 
@@ -3542,7 +3542,7 @@ void DataSet::set_input()
 {
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Constant) continue;
+        if(columns(i).type == RawVariableType::Constant) continue;
 
         columns(i).set_use(VariableUse::Input);
     }
@@ -3627,7 +3627,7 @@ void DataSet::set_binary_simple_columns()
 
     for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
-        if(columns(column_index).type == ColumnType::Numeric)
+        if(columns(column_index).type == RawVariableType::Numeric)
         {
             Tensor<type, 1> values(3);
             values.setRandom();
@@ -3662,7 +3662,7 @@ void DataSet::set_binary_simple_columns()
 
             if(is_binary)
             {
-                columns(column_index).type = ColumnType::Binary;
+                columns(column_index).type = RawVariableType::Binary;
                 scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 columns(column_index).categories.resize(2);
 
@@ -3720,7 +3720,7 @@ void DataSet::set_binary_simple_columns()
 
             variable_index++;
         }
-        else if(columns(column_index).type == ColumnType::Binary)
+        else if(columns(column_index).type == RawVariableType::Binary)
         {
             Tensor<string,1> positive_words(4);
             Tensor<string,1> negative_words(4);
@@ -3752,7 +3752,7 @@ void DataSet::set_binary_simple_columns()
 
             variable_index++;
         }
-        else if(columns(column_index).type == ColumnType::Categorical)
+        else if(columns(column_index).type == RawVariableType::Categorical)
         {
             variable_index += columns(column_index).get_categories_number();
         }
@@ -3774,41 +3774,41 @@ void DataSet::check_constant_columns()
 
     for(Index column = 0; column < get_columns_number(); column++)
     {
-        if(columns(column).type == ColumnType::Numeric)
+        if(columns(column).type == RawVariableType::Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
             if(is_constant(numeric_column))
             {
-                columns(column).type = ColumnType::Constant;
+                columns(column).type = RawVariableType::Constant;
                 columns(column).column_use = VariableUse::Unused;
             }
             variable_index++;
         }
-        else if(columns(column).type == ColumnType::DateTime)
+        else if(columns(column).type == RawVariableType::DateTime)
         {
             columns(column).column_use = VariableUse::Unused;
             variable_index++;
         }
-        else if(columns(column).type == ColumnType::Constant)
+        else if(columns(column).type == RawVariableType::Constant)
         {
             variable_index++;
         }
-        else if(columns(column).type == ColumnType::Binary)
+        else if(columns(column).type == RawVariableType::Binary)
         {
             if(columns(column).get_categories_number() == 1)
             {
-                columns(column).type = ColumnType::Constant;
+                columns(column).type = RawVariableType::Constant;
                 columns(column).column_use = VariableUse::Unused;
             }
 
             variable_index++;
         }
-        else if(columns(column).type == ColumnType::Categorical)
+        else if(columns(column).type == RawVariableType::Categorical)
         {
             if(columns(column).get_categories_number() == 1)
             {
-                columns(column).type = ColumnType::Constant;
+                columns(column).type = RawVariableType::Constant;
                 columns(column).column_use = VariableUse::Unused;
             }
 
@@ -4425,7 +4425,7 @@ Index DataSet::get_column_index(const Index& variable_index) const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             total_variables_number += columns(i).get_categories_number();
         }
@@ -4456,7 +4456,7 @@ Tensor<Index, 1> DataSet::get_numeric_variable_indices(const Index& column_index
 
     for(Index i = 0; i < column_index; i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             index += columns(i).categories.size();
         }
@@ -4466,7 +4466,7 @@ Tensor<Index, 1> DataSet::get_numeric_variable_indices(const Index& column_index
         }
     }
 
-    if(columns(column_index).type == ColumnType::Categorical)
+    if(columns(column_index).type == RawVariableType::Categorical)
     {
         Tensor<Index, 1> variable_indices(columns(column_index).categories.size());
 
@@ -4519,7 +4519,7 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
     Index columns_number = 1;
     const Index rows_number = data.dimension(0);
 
-    if(columns(column_index).type == ColumnType::Categorical)
+    if(columns(column_index).type == RawVariableType::Categorical)
     {
         columns_number = columns(column_index).get_categories_number();
     }
@@ -4545,7 +4545,7 @@ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& co
 
     for(Index i = 0; i < columns_number; ++i)
     {
-        if(original.columns(i).name == column_name && original.columns(i).type == DataSet::ColumnType::Categorical)
+        if(original.columns(i).name == column_name && original.columns(i).type == DataSet::RawVariableType::Categorical)
         {
             is_categorical = true;
             column_index = i;
@@ -4617,7 +4617,7 @@ void DataSet::add_sample(const Tensor<type, 1>& sample)
 string DataSet::get_sample_category(const Index& sample_index, const Index& column_index_start) const
 {
 
-    if(columns[column_index_start].type != ColumnType::Categorical)
+    if(columns[column_index_start].type != RawVariableType::Categorical)
     {
         throw logic_error("The specified column is not of categorical type.");
     }
@@ -4950,7 +4950,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
         {
             columns(i+j).name = "column_" + to_string(i+j+1);
             columns(i+j).column_use = VariableUse::Input;
-            columns(i+j).type = ColumnType::Numeric;
+            columns(i+j).type = RawVariableType::Numeric;
         }
     }
 
@@ -4958,7 +4958,7 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
     {
         columns(inputs_variables_dimensions.dimension(0) + i).name = "column_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
         columns(inputs_variables_dimensions.dimension(0) + i).column_use = VariableUse::Target;
-        columns(inputs_variables_dimensions.dimension(0) + i).type = ColumnType::Numeric;
+        columns(inputs_variables_dimensions.dimension(0) + i).type = RawVariableType::Numeric;
     }
 }
 
@@ -5064,12 +5064,12 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
     {
         columns(index).name = "column_" + to_string(index+1);
         columns(index).column_use = VariableUse::Input;
-        columns(index).type = ColumnType::Numeric;
+        columns(index).type = RawVariableType::Numeric;
     }
 
     columns(new_variables_number-1).name = "column_" + to_string(new_variables_number);
     columns(new_variables_number-1).column_use = VariableUse::Target;
-    columns(new_variables_number-1).type = ColumnType::Numeric;
+    columns(new_variables_number-1).type = RawVariableType::Numeric;
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -5101,13 +5101,13 @@ void DataSet::set(const Index& new_samples_number,
         {
             columns(i).name = "column_" + to_string(i+1);
             columns(i).column_use = VariableUse::Input;
-            columns(i).type = ColumnType::Numeric;
+            columns(i).type = RawVariableType::Numeric;
         }
         else
         {
             columns(i).name = "column_" + to_string(i+1);
             columns(i).column_use = VariableUse::Target;
-            columns(i).type = ColumnType::Numeric;
+            columns(i).type = RawVariableType::Numeric;
         }
     }
 
@@ -5171,7 +5171,7 @@ void DataSet::set_properties_from_parent(const DataSet& parent)
     set_columns_types(parent.get_columns_types());
 
     const Tensor<string, 1> variables_names = parent.get_numeric_variables_names();
-    const Tensor<DataSet::Column, 1> old_columns = parent.get_columns();
+    const Tensor<DataSet::RawVariable, 1> old_columns = parent.get_columns();
 
     set_variables_names_from_columns(variables_names, old_columns);
 }
@@ -5540,7 +5540,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Constant)
+        if(columns(i).type == RawVariableType::Constant)
         {
             columns(i).set_use(VariableUse::Unused);
 
@@ -5691,7 +5691,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Numeric)
+        if(columns(i).type == RawVariableType::Numeric)
         {
             if(columns(i).column_use == VariableUse::Unused)
             {
@@ -5712,7 +5712,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else if(columns(i).type == ColumnType::Categorical)
+        else if(columns(i).type == RawVariableType::Categorical)
         {
             const Index categories_number = columns(i).get_categories_number();
 
@@ -5747,7 +5747,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else if(columns(i).type == ColumnType::Binary)
+        else if(columns(i).type == RawVariableType::Binary)
         {
             if(columns(i).column_use == VariableUse::Unused)
             {
@@ -5775,7 +5775,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else if(columns(i).type == ColumnType::DateTime)
+        else if(columns(i).type == RawVariableType::DateTime)
         {
             // @todo
 
@@ -5852,7 +5852,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Numeric || columns(i).type == ColumnType::Binary)
+        if(columns(i).type == RawVariableType::Numeric || columns(i).type == RawVariableType::Binary)
         {
             if(columns(i).column_use != VariableUse::Unused)
             {
@@ -5867,7 +5867,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
             variable_index++;
         }
-        else if(columns(i).type == ColumnType::Categorical)
+        else if(columns(i).type == RawVariableType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
 
@@ -6815,7 +6815,7 @@ void DataSet::set_default_columns_scalers()
     {
         for(Index i = 0; i < columns_number; i++)
         {
-            if(columns(i).type == ColumnType::Numeric)
+            if(columns(i).type == RawVariableType::Numeric)
             {
                 columns(i).scaler = Scaler::MeanStandardDeviation;
             }
@@ -7827,7 +7827,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
+            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
             {
                 // Categories
 
@@ -8403,11 +8403,11 @@ void DataSet::print_columns_types() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Numeric) cout << "Numeric ";
-        else if(columns(i).type == ColumnType::Binary) cout << "Binary ";
-        else if(columns(i).type == ColumnType::Categorical) cout << "Categorical ";
-        else if(columns(i).type == ColumnType::DateTime) cout << "DateTime ";
-        else if(columns(i).type == ColumnType::Constant) cout << "Constant ";
+        if(columns(i).type == RawVariableType::Numeric) cout << "Numeric ";
+        else if(columns(i).type == RawVariableType::Binary) cout << "Binary ";
+        else if(columns(i).type == RawVariableType::Categorical) cout << "Categorical ";
+        else if(columns(i).type == RawVariableType::DateTime) cout << "DateTime ";
+        else if(columns(i).type == RawVariableType::Constant) cout << "Constant ";
     }
 
     cout << endl;
@@ -8794,7 +8794,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 #pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
+        if(columns(i).column_use == VariableUse::Unused && columns(i).type == RawVariableType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
             continue;
@@ -8805,13 +8805,13 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             continue;
         }
 
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
             used_variable_index++;
             continue;
         }
-        else if(columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        else if(columns(i).type == RawVariableType::Binary || columns(i).type == RawVariableType::DateTime)
         {
             variable_index++;
             used_variable_index++;
@@ -8882,7 +8882,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 #pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use == VariableUse::Unused && columns(i).type == ColumnType::Categorical)
+        if(columns(i).column_use == VariableUse::Unused && columns(i).type == RawVariableType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
             continue;
@@ -8893,13 +8893,13 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
             continue;
         }
 
-        if(columns(i).type == ColumnType::Categorical)
+        if(columns(i).type == RawVariableType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
             used_variable_index++;
             continue;
         }
-        else if(columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
+        else if(columns(i).type == RawVariableType::Binary || columns(i).type == RawVariableType::DateTime)
         {
             variable_index++;
             used_variable_index++;
@@ -9678,7 +9678,7 @@ void DataSet::read_csv_1()
                 || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
                 || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
         {
-            columns(column_index).type = ColumnType::DateTime;
+            columns(column_index).type = RawVariableType::DateTime;
 //            time_column = columns(column_index).name;
             column_index++;
         }
@@ -9687,12 +9687,12 @@ void DataSet::read_csv_1()
                 || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
                 || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
         {
-            columns(column_index).type = ColumnType::Numeric;
+            columns(column_index).type = RawVariableType::Numeric;
             column_index++;
         }
         else
         {
-            columns(column_index).type = ColumnType::Categorical;
+            columns(column_index).type = RawVariableType::Categorical;
             column_index++;
         }
     }
@@ -10131,7 +10131,7 @@ void DataSet::read_csv_2_complete()
 
     for(Index j = 0; j < columns_number; j++)
     {
-        if(columns(j).type != ColumnType::Categorical)
+        if(columns(j).type != RawVariableType::Categorical)
         {
             columns(j).column_use = VariableUse::Input;
         }
@@ -10191,7 +10191,7 @@ void DataSet::read_csv_2_complete()
         {
             if(has_rows_labels && j == 0) continue;
 
-            if(columns(column_index).type == ColumnType::Categorical)
+            if(columns(column_index).type == RawVariableType::Categorical)
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
@@ -10217,11 +10217,11 @@ void DataSet::read_csv_2_complete()
 
     for(Index j = 0; j < columns_number; j++)
     {
-        if(columns(j).type == ColumnType::Categorical)
+        if(columns(j).type == RawVariableType::Categorical)
         {
             if(columns(j).categories.size() == 2)
             {
-                columns(j).type = ColumnType::Binary;
+                columns(j).type = RawVariableType::Binary;
             }
         }
     }
@@ -10286,7 +10286,7 @@ void DataSet::read_csv_3_complete()
 
     const Index columns_number = columns.size();
 
-    const Index raw_columns_number = has_rows_labels ? columns_number+1 : columns_number;
+    const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
 
     string line;
 
@@ -10346,7 +10346,7 @@ void DataSet::read_csv_3_complete()
                 rows_labels(sample_index) = tokens(j);
                 continue;
             }
-            else if(columns(column_index).type == ColumnType::Numeric)
+            else if(columns(column_index).type == RawVariableType::Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10372,7 +10372,7 @@ void DataSet::read_csv_3_complete()
                     }
                 }
             }
-            else if(columns(column_index).type == ColumnType::DateTime)
+            else if(columns(column_index).type == RawVariableType::DateTime)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10385,7 +10385,7 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(columns(column_index).type == ColumnType::Categorical)
+            else if(columns(column_index).type == RawVariableType::Categorical)
             {
                 for(Index k = 0; k < columns(column_index).get_categories_number(); k++)
                 {
@@ -10401,7 +10401,7 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(columns(column_index).type == ColumnType::Binary)
+            else if(columns(column_index).type == RawVariableType::Binary)
             {
                 string lower_case_token = tokens(j);
 
@@ -10566,7 +10566,7 @@ bool DataSet::has_binary_columns() const
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).type == ColumnType::Binary) return true;
+        if(columns(i).type == RawVariableType::Binary) return true;
     }
 
     return false;
@@ -10579,7 +10579,7 @@ bool DataSet::has_categorical_columns() const
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).type == ColumnType::Categorical) return true;
+        if(columns(i).type == RawVariableType::Categorical) return true;
     }
 
     return false;
@@ -10592,7 +10592,7 @@ bool DataSet::has_time_columns() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::DateTime) return true;
+        if(columns(i).type == RawVariableType::DateTime) return true;
     }
 
     return false;
@@ -10778,7 +10778,7 @@ void DataSet::fix_repeated_names()
                     {
                         const Index column_index = get_column_index(i);
 
-                        if(columns(column_index).type != ColumnType::Categorical) continue;
+                        if(columns(column_index).type != RawVariableType::Categorical) continue;
 
                         variables_names(i) = variables_names(i) + "_" + columns(column_index).name;
                     }
@@ -11113,7 +11113,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 continue;
             }
 
-            if(columns(i).type == ColumnType::Numeric)
+            if(columns(i).type == RawVariableType::Numeric)
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
@@ -11131,7 +11131,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
                 variable_index++;
             }
-            else if(columns(i).type == ColumnType::Binary)
+            else if(columns(i).type == RawVariableType::Binary)
             {
                 if(tokens(token_index) == missing_values_label)
                 {
@@ -11149,7 +11149,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
                 variable_index++;
             }
-            else if(columns(i).type == ColumnType::Categorical)
+            else if(columns(i).type == RawVariableType::Categorical)
             {
                 for(Index k = 0; k < columns(i).get_categories_number(); k++)
                 {
@@ -11166,7 +11166,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                     variable_index++;
                 }
             }
-            else if(columns(i).type == ColumnType::DateTime)
+            else if(columns(i).type == RawVariableType::DateTime)
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
@@ -11180,7 +11180,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
                 variable_index++;
             }
-            else if(columns(i).type == ColumnType::Constant)
+            else if(columns(i).type == RawVariableType::Constant)
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {

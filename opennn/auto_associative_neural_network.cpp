@@ -600,6 +600,427 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     file.close();
 }
 
+void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    file_stream.OpenElement("NeuralNetwork");
+
+    // Inputs
+
+    file_stream.OpenElement("Inputs");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    //    buffer << get_inputs_number();
+    buffer << inputs_names.size();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs names
+
+    for(Index i = 0; i < inputs_names.size(); i++)
+    {
+        file_stream.OpenElement("Input");
+
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+
+        file_stream.PushText(inputs_names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Inputs (end tag)
+
+    file_stream.CloseElement();
+
+    // Layers
+
+    file_stream.OpenElement("Layers");
+
+    // Layers number
+
+    file_stream.OpenElement("LayersTypes");
+
+    buffer.str("");
+
+    for(Index i = 0; i < layers_pointers.size(); i++)
+    {
+        buffer << layers_pointers[i]->get_type_string();
+        if(i != (layers_pointers.size()-1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Layers information
+
+    for(Index i = 0; i < layers_pointers.size(); i++)
+    {
+        layers_pointers[i]->write_XML(file_stream);
+    }
+
+    // Layers (end tag)
+
+    file_stream.CloseElement();
+
+    // Ouputs
+
+    file_stream.OpenElement("Outputs");
+
+    // Outputs number
+
+    const Index outputs_number = outputs_names.size();
+
+    file_stream.OpenElement("OutputsNumber");
+
+    buffer.str("");
+    buffer << outputs_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs names
+
+    for(Index i = 0; i < outputs_number; i++)
+    {
+        file_stream.OpenElement("Output");
+
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+
+        file_stream.PushText(outputs_names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    //Outputs (end tag)
+
+    file_stream.CloseElement();
+
+// ----------------------------------------------------------------
+
+    // BoxPlot
+
+    file_stream.OpenElement("BoxPlotDistances");
+
+    // Minimum
+
+    file_stream.OpenElement("Minimum");
+
+    buffer.str("");
+    buffer << get_box_plot_minimum();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // First quartile
+
+    file_stream.OpenElement("FirstQuartile");
+
+    buffer.str("");
+    buffer << get_box_plot_first_quartile();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Median
+
+    file_stream.OpenElement("Median");
+
+    buffer.str("");
+    buffer << get_box_plot_median();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Third Quartile
+
+    file_stream.OpenElement("ThirdQuartile");
+
+    buffer.str("");
+    buffer << get_box_plot_third_quartile();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum
+
+    file_stream.OpenElement("Maximum");
+
+    buffer.str("");
+    buffer << get_box_plot_maximum();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    //BoxPlotDistances (end tag)
+
+    file_stream.CloseElement();
+
+    // DistancesDescriptives
+
+    Descriptives distances_descriptives = get_distances_descriptives();
+
+    file_stream.OpenElement("DistancesDescriptives");
+
+    // Minimum
+
+    file_stream.OpenElement("Minimum");
+
+    buffer.str("");
+    buffer << distances_descriptives.minimum;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // First quartile
+
+    file_stream.OpenElement("Maximum");
+
+    buffer.str("");
+    buffer << distances_descriptives.maximum;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Median
+
+    file_stream.OpenElement("Mean");
+
+    buffer.str("");
+    buffer << distances_descriptives.mean;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Third Quartile
+
+    file_stream.OpenElement("StandardDeviation");
+
+    buffer.str("");
+    buffer << distances_descriptives.standard_deviation;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    //DistancesDescriptives (end tag)
+
+    file_stream.CloseElement();
+
+    // Multivariate BoxPlot
+
+    file_stream.OpenElement("MultivariateDistancesBoxPlot");
+
+    // Variables Number
+
+    file_stream.OpenElement("VariablesNumber");
+
+    buffer.str("");
+    buffer << variables_distances_names.size();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    for(Index i = 0; i < variables_distances_names.size(); i++)
+    {
+        // Scaling neuron
+
+        file_stream.OpenElement("VariableBoxPlot");
+
+        buffer.str(""); buffer << variables_distances_names(i).c_str();
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
+
+        buffer.str(""); buffer << multivariate_distances_box_plot(i).minimum;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
+
+        buffer.str(""); buffer << multivariate_distances_box_plot(i).first_quartile;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
+
+        buffer.str(""); buffer << multivariate_distances_box_plot(i).median;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
+
+        buffer.str(""); buffer << multivariate_distances_box_plot(i).third_quartile;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
+
+        buffer.str(""); buffer << multivariate_distances_box_plot(i).maximum;
+        file_stream.PushText(buffer.str().c_str());
+
+        // VariableBoxPlot (end tag)
+
+        file_stream.CloseElement();
+    }
+
+    //MultivariateDistancesBoxPlot (end tag)
+
+    file_stream.CloseElement();
+
+    // ----------------------------------------------------------------
+
+    // Neural network (end tag)
+
+    file_stream.CloseElement();
+}
+
+
+/// Deserializes a TinyXML document into this neural network object.
+/// @param document XML document containing the member data.
+
+void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
+
+    if(!root_element)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Neural network element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Inputs
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Inputs");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument inputs_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&inputs_document);
+
+            inputs_document.InsertFirstChild(element_clone);
+
+            inputs_from_XML(inputs_document);
+        }
+    }
+
+    // Layers
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Layers");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument layers_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&layers_document);
+
+            layers_document.InsertFirstChild(element_clone);
+
+            layers_from_XML(layers_document);
+        }
+    }
+
+    // Outputs
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument outputs_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&outputs_document);
+
+            outputs_document.InsertFirstChild(element_clone);
+
+            outputs_from_XML(outputs_document);
+        }
+    }
+
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument box_plot_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&box_plot_document);
+
+            box_plot_document.InsertFirstChild(element_clone);
+
+            box_plot_from_XML(box_plot_document);
+        }
+    }
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("DistancesDescriptives");
+
+        if(element)
+        {
+            tinyxml2::XMLDocument distances_descriptives_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&distances_descriptives_document);
+
+            distances_descriptives_document.InsertFirstChild(element_clone);
+
+            distances_descriptives_from_XML(distances_descriptives_document);
+        }
+    }
+
+    const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
+
+    if(element)
+    {
+        tinyxml2::XMLDocument multivariate_box_plot_document;
+        tinyxml2::XMLNode* element_clone;
+
+        element_clone = element->DeepClone(&multivariate_box_plot_document);
+
+        multivariate_box_plot_document.InsertFirstChild(element_clone);
+
+        multivariate_box_plot_from_XML(multivariate_box_plot_document);
+    }
+
+
+    // Display
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+
+        if(element)
+        {
+            const string new_display_string = element->GetText();
+
+            try
+            {
+                set_display(new_display_string != "0");
+            }
+            catch(const invalid_argument& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -85,6 +85,42 @@ template<typename MatrixType> void generalized_eigensolver_real(const MatrixType
   }
 }
 
+template<typename MatrixType>
+void generalized_eigensolver_assert() {
+    GeneralizedEigenSolver<MatrixType> eig;
+    // all raise assert if uninitialized
+    VERIFY_RAISES_ASSERT(eig.info());
+    VERIFY_RAISES_ASSERT(eig.eigenvectors());
+    VERIFY_RAISES_ASSERT(eig.eigenvalues());
+    VERIFY_RAISES_ASSERT(eig.alphas());
+    VERIFY_RAISES_ASSERT(eig.betas());
+
+    // none raise assert after compute called
+    eig.compute(MatrixType::Random(20, 20), MatrixType::Random(20, 20));
+    VERIFY(eig.info() == Success);
+    eig.eigenvectors();
+    eig.eigenvalues();
+    eig.alphas();
+    eig.betas();
+
+    // eigenvectors() raises assert, if eigenvectors were not requested
+    eig.compute(MatrixType::Random(20, 20), MatrixType::Random(20, 20), false);
+    VERIFY(eig.info() == Success);
+    VERIFY_RAISES_ASSERT(eig.eigenvectors());
+    eig.eigenvalues();
+    eig.alphas();
+    eig.betas();
+
+    // all except info raise assert if realQZ did not converge
+    eig.setMaxIterations(0); // force real QZ to fail.
+    eig.compute(MatrixType::Random(20, 20), MatrixType::Random(20, 20));
+    VERIFY(eig.info() == NoConvergence);
+    VERIFY_RAISES_ASSERT(eig.eigenvectors());
+    VERIFY_RAISES_ASSERT(eig.eigenvalues());
+    VERIFY_RAISES_ASSERT(eig.alphas());
+    VERIFY_RAISES_ASSERT(eig.betas());
+}
+
 EIGEN_DECLARE_TEST(eigensolver_generalized_real)
 {
   for(int i = 0; i < g_repeat; i++) {
@@ -98,6 +134,7 @@ EIGEN_DECLARE_TEST(eigensolver_generalized_real)
     CALL_SUBTEST_2( generalized_eigensolver_real(MatrixXd(2,2)) );
     CALL_SUBTEST_3( generalized_eigensolver_real(Matrix<double,1,1>()) );
     CALL_SUBTEST_4( generalized_eigensolver_real(Matrix2d()) );
+    CALL_SUBTEST_5( generalized_eigensolver_assert<MatrixXd>() );
     TEST_SET_BUT_UNUSED_VARIABLE(s)
   }
 }

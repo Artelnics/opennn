@@ -369,8 +369,9 @@ class TensorSlicingOp : public TensorBase<TensorSlicingOp<StartIndices, Sizes, X
 };
 
 
+namespace internal {
+
 // Fixme: figure out the exact threshold
-namespace {
 template <typename Index, typename Device, bool BlockAccess> struct MemcpyTriggerForSlicing {
   EIGEN_DEVICE_FUNC MemcpyTriggerForSlicing(const Device& device) : threshold_(2 * device.numThreads()) { }
   EIGEN_DEVICE_FUNC bool operator ()(Index total, Index contiguous) const {
@@ -400,7 +401,7 @@ template <typename Index, bool BlockAccess> struct MemcpyTriggerForSlicing<Index
 };
 #endif
 
-}
+}  // namespace internal
 
 // Eval as rvalue
 template<typename StartIndices, typename Sizes, typename ArgType, typename Device>
@@ -511,7 +512,7 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
         }
       }
       // Use memcpy if it's going to be faster than using the regular evaluation.
-      const MemcpyTriggerForSlicing<Index, Device, BlockAccess> trigger(m_device);
+      const internal::MemcpyTriggerForSlicing<Index, Device, BlockAccess> trigger(m_device);
       if (trigger(internal::array_prod(dimensions()), contiguous_values)) {
         EvaluatorPointerType src = (EvaluatorPointerType)m_impl.data();
         for (Index i = 0; i < internal::array_prod(dimensions()); i += contiguous_values) {

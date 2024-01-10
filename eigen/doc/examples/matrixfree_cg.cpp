@@ -9,7 +9,7 @@ using Eigen::SparseMatrix;
 
 namespace Eigen {
 namespace internal {
-  // MatrixReplacement looks-like a SparseMatrix, so let's inherits its traits:
+  // MatrixReplacement looks-like a SparseMatrix, so let's inherit its traits:
   template<>
   struct traits<MatrixReplacement> :  public Eigen::internal::traits<Eigen::SparseMatrix<double> >
   {};
@@ -66,7 +66,7 @@ namespace internal {
     {
       // This method should implement "dst += alpha * lhs * rhs" inplace,
       // however, for iterative solvers, alpha is always equal to 1, so let's not bother about it.
-      assert(alpha==Scalar(1) && "scaling is not implemented");
+      eigen_assert(alpha==Scalar(1) && "scaling is not implemented");
       EIGEN_ONLY_USED_FOR_DEBUG(alpha);
 
       // Here we could simply call dst.noalias() += lhs.my_matrix() * rhs,

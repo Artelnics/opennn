@@ -81,9 +81,14 @@ HEADERS += \
     layer.h \
     layer_forward_propagation.h \
     layer_back_propagation.h \
+<<<<<<< HEAD
     layer_back_propagation_lm.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
+=======
+    scaling_layer.h \
+    transformer.h \
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
     unscaling_layer.h \
     perceptron_layer.h \
     probabilistic_layer.h \
@@ -166,8 +171,13 @@ SOURCES += \
     text_data_set.cpp \
     language_data_set.cpp \
     layer.cpp \
+<<<<<<< HEAD
     scaling_layer_2d.cpp \
     scaling_layer_4d.cpp \
+=======
+    scaling_layer.cpp \
+    transformer.cpp \
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
     unscaling_layer.cpp \
     perceptron_layer.cpp \
     probabilistic_layer.cpp \

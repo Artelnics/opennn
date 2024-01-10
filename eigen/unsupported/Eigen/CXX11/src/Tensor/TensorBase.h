@@ -513,34 +513,34 @@ class TensorBase<Derived, ReadOnlyAccessors>
     // Comparisons and tests.
     template<typename OtherDerived> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const TensorCwiseBinaryOp<internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_LT>, const Derived, const OtherDerived>
-    operator<(const OtherDerived& other) const {
+    operator<(const TensorBase<OtherDerived, ReadOnlyAccessors>& other) const {
       return binaryExpr(other.derived(), internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_LT>());
     }
     template<typename OtherDerived> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const TensorCwiseBinaryOp<internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_LE>, const Derived, const OtherDerived>
-    operator<=(const OtherDerived& other) const {
+    operator<=(const TensorBase<OtherDerived, ReadOnlyAccessors>& other) const {
       return binaryExpr(other.derived(), internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_LE>());
     }
     template<typename OtherDerived> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const TensorCwiseBinaryOp<internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_GT>, const Derived, const OtherDerived>
-    operator>(const OtherDerived& other) const {
+    operator>(const TensorBase<OtherDerived, ReadOnlyAccessors>& other) const {
       return binaryExpr(other.derived(), internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_GT>());
     }
     template<typename OtherDerived> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const TensorCwiseBinaryOp<internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_GE>, const Derived, const OtherDerived>
-    operator>=(const OtherDerived& other) const {
+    operator>=(const TensorBase<OtherDerived, ReadOnlyAccessors>& other) const {
       return binaryExpr(other.derived(), internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_GE>());
     }
 
     template<typename OtherDerived> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const TensorCwiseBinaryOp<internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_EQ>, const Derived, const OtherDerived>
-    operator==(const OtherDerived& other) const {
+    operator==(const TensorBase<OtherDerived, ReadOnlyAccessors>& other) const {
       return binaryExpr(other.derived(), internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_EQ>());
     }
 
     template<typename OtherDerived> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const TensorCwiseBinaryOp<internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_NEQ>, const Derived, const OtherDerived>
-    operator!=(const OtherDerived& other) const {
+    operator!=(const TensorBase<OtherDerived, ReadOnlyAccessors>& other) const {
       return binaryExpr(other.derived(), internal::scalar_cmp_op<Scalar, Scalar, internal::cmp_NEQ>());
     }
 

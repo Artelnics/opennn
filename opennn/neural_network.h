@@ -34,6 +34,9 @@
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
 #include "non_max_suppression_layer.h"
+#include "embedding_layer.h"
+#include "multihead_attention_layer.h"
+
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
@@ -156,6 +159,7 @@ public:
    void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
 
    void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
+   void set_layer_inputs_indices(const string&, const initializer_list<string>&);
    void set_layer_inputs_indices(const string&, const string&);
 
    void set_model_type(const ModelType&);
@@ -191,6 +195,8 @@ public:
    Index get_pooling_layers_number() const;
    Index get_long_short_term_memory_layers_number() const;
    Index get_recurrent_layers_number() const;
+
+   bool is_starting_layer(const Index&) const;
 
    // Architecture
 

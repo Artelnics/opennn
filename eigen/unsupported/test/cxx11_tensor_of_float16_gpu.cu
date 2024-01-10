@@ -113,7 +113,7 @@ void test_gpu_unary() {
 
   gpu_float.device(gpu_device) = gpu_float.random() - gpu_float.constant(0.5f);
   gpu_res_float.device(gpu_device) = gpu_float.abs();
-  gpu_res_half.device(gpu_device) = gpu_float.cast<Eigen::half>().abs().cast<float>();
+  gpu_res_half.device(gpu_device) = gpu_float.cast<Eigen::half>().abs().template cast<float>();
 
   Tensor<float, 1> half_prec(num_elem);
   Tensor<float, 1> full_prec(num_elem);
@@ -154,7 +154,7 @@ void test_gpu_elementwise() {
   gpu_float1.device(gpu_device) = gpu_float1.random();
   gpu_float2.device(gpu_device) = gpu_float2.random();
   gpu_res_float.device(gpu_device) = (gpu_float1 + gpu_float2) * gpu_float1;
-  gpu_res_half.device(gpu_device) = ((gpu_float1.cast<Eigen::half>() + gpu_float2.cast<Eigen::half>()) * gpu_float1.cast<Eigen::half>()).cast<float>();
+  gpu_res_half.device(gpu_device) = ((gpu_float1.cast<Eigen::half>() + gpu_float2.cast<Eigen::half>()) * gpu_float1.cast<Eigen::half>()).template cast<float>();
 
   Tensor<float, 1> half_prec(num_elem);
   Tensor<float, 1> full_prec(num_elem);
@@ -444,8 +444,8 @@ void test_gpu_forced_evals() {
 
   gpu_float.device(gpu_device) = gpu_float.random() - gpu_float.constant(0.5f);
   gpu_res_float.device(gpu_device) = gpu_float.abs();
-  gpu_res_half1.device(gpu_device) = gpu_float.cast<Eigen::half>().abs().eval().cast<float>();
-  gpu_res_half2.device(gpu_device) = gpu_float.cast<Eigen::half>().abs().broadcast(no_bcast).eval().cast<float>();
+  gpu_res_half1.device(gpu_device) = gpu_float.cast<Eigen::half>().abs().eval().template cast<float>();
+  gpu_res_half2.device(gpu_device) = gpu_float.cast<Eigen::half>().abs().broadcast(no_bcast).eval().template cast<float>();
 
   Tensor<float, 1> half_prec1(num_elem);
   Tensor<float, 1> half_prec2(num_elem);

@@ -44,8 +44,8 @@ This storage scheme is better explained on an example. The following matrix
 
 and one of its possible sparse, \b column \b major representation:
 <table class="manual">
-<tr><td>Values:</td>        <td>22</td><td>7</td><td>_</td><td>3</td><td>5</td><td>14</td><td>_</td><td>_</td><td>1</td><td>_</td><td>17</td><td>8</td></tr>
-<tr><td>InnerIndices:</td>  <td> 1</td><td>2</td><td>_</td><td>0</td><td>2</td><td> 4</td><td>_</td><td>_</td><td>2</td><td>_</td><td> 1</td><td>4</td></tr>
+<tr><td>Values:</td>        <td>22</td><td>7</td><td>_</td><td>3</td><td>5</td><td>_</td><td>14</td><td>_</td><td>1</td><td>_</td><td>17</td><td>8</td></tr>
+<tr><td>InnerIndices:</td>  <td> 1</td><td>2</td><td>_</td><td>0</td><td>2</td><td>_</td><td>4</td><td>_</td><td>2</td><td>_</td><td> 1</td><td>4</td></tr>
 </table>
 <table class="manual">
 <tr><td>OuterStarts:</td><td>0</td><td>3</td><td>5</td><td>8</td><td>10</td><td>\em 12 </td></tr>

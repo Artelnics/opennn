@@ -555,15 +555,15 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
         {
             used_column_index = used_columns_indices(j);
 
-            DataSet::ColumnType column_type = data_set_pointer->get_column_type(used_column_index);
+            DataSet::RawVariableType column_type = data_set_pointer->get_column_type(used_column_index);
 
-            if(column_type == DataSet::ColumnType::Numeric || column_type == DataSet::ColumnType::Constant)
+            if(column_type == DataSet::RawVariableType::Numeric || column_type == DataSet::RawVariableType::Constant)
             {
                 inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
 
-            else if(column_type == DataSet::ColumnType::Binary)
+            else if(column_type == DataSet::RawVariableType::Binary)
             {
                 if(inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
                 {
@@ -576,7 +576,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 index++;
             }
 
-            else if(column_type == DataSet::ColumnType::Categorical)
+            else if(column_type == DataSet::RawVariableType::Categorical)
             {
                 Index categories_number = data_set_pointer->get_columns()(used_column_index).get_categories_number();
                 Index equal_index = -1;

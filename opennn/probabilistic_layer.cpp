@@ -37,6 +37,12 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Ind
 }
 
 
+void ProbabilisticLayer::set_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
+}
+
+
 Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
@@ -707,7 +713,13 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
+<<<<<<< HEAD
     calculate_combinations(inputs_map,
+=======
+    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs(0).get_dimensions();
+
+    calculate_combinations(inputs(0),
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
                            biases,
                            synaptic_weights,
                            outputs);
