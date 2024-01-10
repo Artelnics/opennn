@@ -155,6 +155,10 @@ void ImageDataSet::set(const Index& new_images_number,
     split_samples_random();
 }
 
+void ImageDataSet::set_image_data_source_path(const string& new_data_source_path)
+{
+    image_data_source_path = new_data_source_path;
+}
 
 void ImageDataSet::set_channels_number(const int& new_channels_number)
 {
@@ -285,78 +289,59 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("DataFile");
 
     // File type
-    {
-        file_stream.OpenElement("FileType");
 
-        file_stream.PushText("bmp");
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("FileType");
+    file_stream.PushText("bmp");
+    file_stream.CloseElement();
 
     // Data file name
-    {
-        file_stream.OpenElement("DataFileName");
 
-        file_stream.PushText(data_source_path.c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("DataFileName");
+    file_stream.PushText(image_data_source_path.c_str());
+    file_stream.CloseElement();
 
     // Rows labels
-    {
-        file_stream.OpenElement("RowsLabels");
 
-        buffer.str("");
-
-        buffer << has_rows_labels;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
+    file_stream.OpenElement("RowsLabels");
+    buffer.str("");
+    buffer << has_rows_labels;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
 
     // Channels
 
     file_stream.OpenElement("Channels");
-
     buffer.str("");
     buffer << get_channels_number();
-
     file_stream.PushText(buffer.str().c_str());
-
     file_stream.CloseElement();
 
     // Width
-    file_stream.OpenElement("Width");
 
+    file_stream.OpenElement("Width");
     buffer.str("");
     buffer << get_image_width();
-
     file_stream.PushText(buffer.str().c_str());
-
     file_stream.CloseElement();
 
     // Height
-    file_stream.OpenElement("Height");
 
+    file_stream.OpenElement("Height");
     buffer.str("");
     buffer << get_image_height();
-
     file_stream.PushText(buffer.str().c_str());
-
     file_stream.CloseElement();
 
     // Padding
-    file_stream.OpenElement("Padding");
 
+    file_stream.OpenElement("Padding");
     buffer.str("");
     buffer << get_image_padding();
-
     file_stream.PushText(buffer.str().c_str());
-
     file_stream.CloseElement();
 
     // Data augmentation
+
     file_stream.OpenElement("randomReflectionAxisX");
     buffer.str("");
     buffer << get_random_reflection_axis_x();
@@ -408,12 +393,9 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Codification
 
     file_stream.OpenElement("Codification");
-
     buffer.str("");
     buffer << get_codification_string();
-
     file_stream.PushText(buffer.str().c_str());
-
     file_stream.CloseElement();
 
     // Close DataFile
@@ -590,26 +572,6 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw invalid_argument(buffer.str());
     }
 
-    // Data file name
-
-    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
-
-    if(!data_file_name_element)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataFileName element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(data_file_name_element->GetText())
-    {
-        const string new_data_file_name = data_file_name_element->GetText();
-
-        set_data_source_path(new_data_file_name);
-    }
-
     // File type
 
     const tinyxml2::XMLElement* file_type_element = data_file_element->FirstChildElement("FileType");
@@ -628,6 +590,26 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const string new_file_type = file_type_element->GetText();
 
 //        set_data_source_path(new_data_file_name);
+    }
+
+    // Data file name
+
+    const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
+
+    if(!data_file_name_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "DataFileName element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(data_file_name_element->GetText())
+    {
+        const string new_data_file_name = data_file_name_element->GetText();
+
+        set_data_source_path(new_data_file_name);
     }
 
     // Rows labels
@@ -704,7 +686,6 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             set_image_padding(padding);
         }
     }
-
 
     // Data augmentation
 
@@ -803,7 +784,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(random_vertical_translation_maximum)
     {
-        if(random_vertical_translation_minimum->GetText())
+        if(random_vertical_translation_maximum->GetText())
         {
             const type randomVerticalTranslationMaximum = static_cast<Index>(atoi(random_vertical_translation_maximum->GetText()));
 
@@ -811,6 +792,19 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         }
     }
+
+    const tinyxml2::XMLElement* codification_element = data_file_element->FirstChildElement("Codification");
+
+    if(codification_element)
+    {
+        if(codification_element->GetText())
+        {
+            const string codification = codification_element->GetText();
+
+            set_codification(codification);
+        }
+    }
+
 
     // Columns
 
@@ -1510,20 +1504,21 @@ void ImageDataSet::read_bmp()
 }
 
 
-void ImageDataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
-{/*
-    const fs::path path = data_source_path;
+void ImageDataSet::fill_image_data(const string& new_data_source_path, const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
+{
+    const fs::path path = new_data_source_path;
 
-    if(data_source_path.empty())
+    if(new_data_source_path.empty())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
+               << "void fill_image_data() method.\n"
                << "Data file name is empty.\n";
 
         throw invalid_argument(buffer.str());
     }
+
     has_columns_names = true;
     has_rows_labels = true;
 
@@ -1641,7 +1636,7 @@ void ImageDataSet::fill_image_data(const int& width, const int& height, const in
                 for(Index k = 0; k < height ; k++)
                 {
                     columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                    columns(column_index).type = ColumnType::Numeric;
+                    columns(column_index).type = RawVariableType::Numeric;
                     columns(column_index).column_use = VariableUse::Input;
                     columns(column_index).scaler = Scaler::MinimumMaximum;
                     column_index++;
@@ -1681,11 +1676,11 @@ void ImageDataSet::fill_image_data(const int& width, const int& height, const in
 
     if(classes_number == 2)
     {
-        columns(image_size).type = ColumnType::Binary;
+        columns(image_size).type = RawVariableType::Binary;
     }
     else
     {
-        columns(image_size).type = ColumnType::Categorical;
+        columns(image_size).type = RawVariableType::Categorical;
     }
 
     samples_uses.resize(images_number);
@@ -1696,7 +1691,7 @@ void ImageDataSet::fill_image_data(const int& width, const int& height, const in
     channels_number = channels;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({height, width, channels});*/
+    input_variables_dimensions.setValues({height, width, channels});
 }
 
 
