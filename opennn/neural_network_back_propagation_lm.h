@@ -45,7 +45,7 @@ struct NeuralNetworkBackPropagationLM
 
         for(Index i = 0; i < trainable_layers_number; i++)
         {
-            switch (trainable_layers_pointers(i)->get_type())
+            switch(trainable_layers_pointers(i)->get_type())
             {
             case Layer::Type::Perceptron:
 

@@ -24,6 +24,9 @@
 
 using namespace std;
 using namespace OpenNN;
+<<<<<<< HEAD
+using namespace Eigen;
+=======
 
 
 int main()
@@ -44,6 +47,7 @@ int main()
         Tensor<type, 2> inputs_data = data_set.get_input_data();
 
         Index batch_size = inputs_data.dimension(0);
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
         Index input_length;
 
@@ -97,6 +101,29 @@ int main()
 
         /// @todo encajar embedding con attention
 
+        // Create a 2D tensor (matrix)
+        Eigen::Tensor<double, 2> matrix(3, 3); // Replace the dimensions with your actual matrix size
+
+        // Create a 1D tensor (vector)
+        Eigen::Tensor<double, 1> vector(3); // Replace the size with your actual vector size
+
+        // Fill matrix and vector with some values
+        matrix.setValues({{1, 2, 3},
+                          {4, 5, 6},
+                          {7, 8, 9}});
+
+        vector.setValues({2, 3, 4});
+
+        // Divide columns of the matrix by corresponding elements of the vector
+        Eigen::array<int, 2> dimensions = {0, 1}; // Along columns
+/*
+        auto result = matrix / vector.reshape(dimensions);
+/*
+        // Display the result
+        std::cout << "Original Matrix:\n" << matrix << "\n\n";
+        std::cout << "Vector:\n" << vector << "\n\n";
+        std::cout << "Result Matrix:\n" << result << "\n";
+*/
         cout << "Bye!" << endl;
 
         return 0;

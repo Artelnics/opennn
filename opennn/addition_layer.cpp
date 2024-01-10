@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+
 #include "addition_layer.h"
 
 namespace opennn
@@ -168,7 +169,7 @@ void AdditionLayer::set_default()
 }
 
 
-void AdditionLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
+void AdditionLayer::forward_propagate(const pair<type*, dimensions>&,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -177,36 +178,14 @@ void AdditionLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
 }
 
 
-void AdditionLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-                                          LayerBackPropagation* next_layer_back_propagation,
+void AdditionLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
+                                          LayerBackPropagation* next_back_propagation,
                                           LayerBackPropagation* this_layeer_back_propagation) const
 {
-    /// @todo put switch
-    /*
-    if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;
-
-    else
-    {
-        const Type layer_type = next_layer_pointer->get_type();
-
-        if(layer_type == Type::Convolutional)
-        {
-            ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
-        }
-        else if(layer_type == Type::Pooling)
-        {
-            AdditionLayer* pooling_layer = dynamic_cast<AdditionLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
-        }
-    }
-    */
 }
 
 
-/// Serializes the convolutional layer object into an XML document of the TinyXML.
+/// Serializes the addition layer object into an XML document of the TinyXML.
 /// See the OpenNN manual for more information about the format of this document.
 
 void AdditionLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const

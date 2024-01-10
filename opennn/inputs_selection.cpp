@@ -407,7 +407,7 @@ string InputsSelection::write_time(const type& time) const
 
 #ifdef OPENNN_DEBUG
 
-    if(time > static_cast<type>(3600e5))
+    if(time > type(3600e5))
     {
         ostringstream buffer;
 
@@ -418,7 +418,7 @@ string InputsSelection::write_time(const type& time) const
         throw invalid_argument(buffer.str());
     }
 
-    if(time < static_cast<type>(0))
+    if(time < type(0))
     {
         ostringstream buffer;
 

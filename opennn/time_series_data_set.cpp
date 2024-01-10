@@ -190,7 +190,7 @@ Index TimeSeriesDataSet::get_time_series_time_column_index() const
         if(time_series_columns(i).type == RawVariableType::DateTime) return i;
     }
 
-    return static_cast<Index>(NAN);
+    return Index(NAN);
 }
 
 
@@ -1805,15 +1805,15 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
                         if(isnan(preview_value))
                         {
-                            data(current_sample, current_variable) = next_value;
+                            data(current_sample, current_variable) = type(next_value);
                         }
                         else if(isnan(next_value))
                         {
-                            data(current_sample, current_variable) = preview_value;
+                            data(current_sample, current_variable) = type(preview_value);
                         }
                         else
                         {
-                            data(current_sample, current_variable) = (preview_value + next_value) / 2.0;
+                            data(current_sample, current_variable) = type((preview_value + next_value)/2);
                         }
                     }
                 }

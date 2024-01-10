@@ -2,8 +2,8 @@
 #define BOUNDINGBOX_H
 
 #include <string>
-#include "dynamic_tensor.h"
 
+#include "config.h"
 
 using namespace std;
 using namespace Eigen;

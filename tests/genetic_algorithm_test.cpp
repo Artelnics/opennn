@@ -380,9 +380,9 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     for(Index i = 0; i < population.dimension(0); i++)
     {
-        individual=population.chip(i,0);
+        individual=population.chip(i, 0);
 
-        mutated_individual=mutated_population.chip(i,0);
+        mutated_individual=mutated_population.chip(i, 0);
 
         for(Index j = 0; j<10; j++)
         {

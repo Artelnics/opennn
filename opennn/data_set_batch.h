@@ -2,7 +2,7 @@
 #define DATASETBATCH_H
 
 #include <string>
-#include "dynamic_tensor.h"
+
 #include "data_set.h"
 
 using namespace std;
@@ -25,33 +25,21 @@ struct DataSetBatch
     {
     }
 
+
+    pair<type*, dimensions> get_inputs() const
+    {
+        pair<type*, dimensions> inputs;
+
+        inputs.first = inputs_data;
+        inputs.second = inputs_dimensions;
+
+        return inputs;
+    }
+
     Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
-/*
-    void set_inputs(const Tensor<DynamicTensor<type>, 1>& new_inputs)
-    {
-        inputs = new_inputs;
-    }
 
-    void set_inputs(const DynamicTensor<type>& new_inputs)
-    {
-        inputs.resize(1);
-        inputs(0) = new_inputs;
-    }
-
-    void set_inputs(Tensor<type, 2>& new_inputs)
-    {
-        inputs.resize(1);
-        inputs(0) = DynamicTensor<type>(new_inputs);
-    }
-
-    void set_inputs(Tensor<type, 4>& new_inputs)
-    {
-        inputs.resize(1);
-        inputs(0) = DynamicTensor<type>(new_inputs);
-    }
-*/
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     void perform_augmentation();
@@ -62,12 +50,14 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-    Tensor<DynamicTensor<type>, 1> inputs;
+    dimensions inputs_dimensions;
 
-    DynamicTensor<type> targets;
+    Tensor<type, 1> inputs_tensor;
+
+    type* inputs_data = nullptr;
+
+    Tensor<type, 2> targets;
 };
-
-
 
 }
 #endif

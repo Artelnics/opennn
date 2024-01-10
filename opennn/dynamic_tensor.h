@@ -19,10 +19,10 @@
 #include <sstream>
 
 #include "config.h"
-#include "tensor_utilities.h"
+//#include "tensor_utilities.h"
 
-namespace opennn{
-
+namespace opennn
+{
 
 template <typename T>
 class DynamicTensor
@@ -125,6 +125,12 @@ public:
     {
         const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
 
+<<<<<<< HEAD
+    }
+
+
+    virtual ~DynamicTensor()
+=======
         if(different_dimensions(0))
         {
             return true;
@@ -145,6 +151,7 @@ public:
 
 
     ostream& operator << (ostream& os)
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
     {
 
     }
@@ -169,6 +176,14 @@ public:
     }
 
 
+    Index get_size() const
+    {
+        const Tensor<Index, 0> size = dimensions.prod();
+
+        return size(0);
+    }
+
+
     void set_data(const T* new_data)
     {
         free(data);
@@ -177,7 +192,7 @@ public:
     }
 
 
-    void set_dimensions(const Tensor<Index, 1> new_dimensions)
+    void set_dimensions(const Tensor<Index, 1>& new_dimensions)
     {
         if(data != nullptr)
         {
@@ -186,9 +201,9 @@ public:
 
         dimensions = new_dimensions;
 
-        const Tensor<Index, 0> size = dimensions.prod();
+        const Index size = get_size();
 
-        data = (T*) malloc(static_cast<size_t>(size(0)*sizeof(T)));
+        data = (T*) malloc(static_cast<size_t>(size*sizeof(T)));
     }
 
 

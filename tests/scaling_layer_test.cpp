@@ -369,7 +369,7 @@ void ScalingLayerTest::test_forward_propagate()
 
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
-/*
+
     scaling_layer.forward_propagate(inputs_data,
                                     inputs_dimensions,
                                     &scaling_layer_forward_propagation,
@@ -377,7 +377,7 @@ void ScalingLayerTest::test_forward_propagate()
 
     outputs = TensorMap<Tensor<type, 1>>(scaling_layer_forward_propagation.outputs_data(0),
                                          scaling_layer_forward_propagation.outputs_dimensions);
-
+/*
     assert_true(outputs.dimension(0) == samples_number, LOG);
 //    assert_true(outputs.dimension(1) == inputs_number, LOG);
 

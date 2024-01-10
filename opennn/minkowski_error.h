@@ -50,7 +50,7 @@ public:
 
    // Set methods
 
-   virtual void set_default();
+   void set_default();
 
    void set_Minkowski_parameter(const type&);
 

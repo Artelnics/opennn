@@ -54,7 +54,7 @@ public:
 
     // Set methods
 
-    virtual void set_default() override;
+    virtual void set_default() final;
 
     void set_maximum_inputs_number(const Index&);
 

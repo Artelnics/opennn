@@ -811,7 +811,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       kernel.chip(1,3).setConstant(type(1./9.));
 //       kernel.chip(2,3).setConstant(type(1./27.));
 
-////       bias.setValues({0, 0, 0});
+//       bias.setValues({0, 0, 0});
 
 //       neural_network.set(NeuralNetwork::ModelType::ImageClassification,
 //                          {inputs_number_convolution, output_number_convolution, 1});

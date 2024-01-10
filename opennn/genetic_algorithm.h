@@ -165,9 +165,7 @@ public:
 
     // Serialization method
 
-    Tensor <string, 2> to_string_matrix() const;
-
-    bool calculate_random_bool();
+    Tensor<string, 2> to_string_matrix() const;
 
     void from_XML(const tinyxml2::XMLDocument&);
 

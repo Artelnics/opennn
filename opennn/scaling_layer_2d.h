@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S C A L I N G   L A Y E R   C L A S S   H E A D E R
+//   S C A L I N G   L A Y E R   2 D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef SCALINGLAYER_H
-#define SCALINGLAYER_H
+#ifndef SCALINGLAYER2D_H
+#define SCALINGLAYER2D_H
 
 // System includes
 
@@ -31,21 +31,19 @@ namespace opennn
 /// Scaling layers are included in the definition of a neural network.
 /// They are used to normalize variables so they are in an appropriate range for computer processing.
 
-class ScalingLayer : public Layer
+class ScalingLayer2D : public Layer
 {
 
 public:
 
-   enum class ModelType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
-
    // Constructors
 
-   explicit ScalingLayer();
+   explicit ScalingLayer2D();
 
-   explicit ScalingLayer(const Index&);
-   explicit ScalingLayer(const Tensor<Index, 1>&);
+   explicit ScalingLayer2D(const Index&);
+   explicit ScalingLayer2D(const Tensor<Index, 1>&);
 
-   explicit ScalingLayer(const Tensor<Descriptives, 1>&);
+   explicit ScalingLayer2D(const Tensor<Descriptives, 1>&);
 
    // Get methods
 
@@ -122,9 +120,7 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
-
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
+   void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
 
    // Expression methods
 
@@ -158,7 +154,7 @@ protected:
 
    Tensor<Scaler, 1> scalers;
 
-   /// min and max range for minmaxscaling
+   /// Min and max range for minmaxscaling
 
    type min_range;
    type max_range;
@@ -169,54 +165,57 @@ protected:
 
 };
 
-struct ScalingLayerForwardPropagation : LayerForwardPropagation
+struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 {
     // Constructor
 
-    explicit ScalingLayerForwardPropagation() : LayerForwardPropagation()
+    explicit ScalingLayer2DForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    virtual ~ScalingLayerForwardPropagation()
+
+    virtual ~ScalingLayer2DForwardPropagation()
     {
     }
 
     // Constructor
 
-    explicit ScalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerForwardPropagation()
     {
         set(new_batch_samples_number, new_layer_pointer);
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    pair<type*, dimensions> get_outputs() const final
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         layer_pointer = new_layer_pointer;
 
-        const Tensor<Index, 1> input_variables_dimensions = static_cast<ScalingLayer*>(layer_pointer)->get_inputs_dimensions();
         const Index neurons_number = layer_pointer->get_neurons_number();
 
         batch_samples_number = new_batch_samples_number;
 
-        // Allocate memory for outputs_data
+        outputs.resize(batch_samples_number, neurons_number);
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
+        outputs_data = outputs.data();
     }
 
 
     void print() const
     {
-        cout << "Outputs dimension 0: " << outputs[0].get_dimension(0) << endl;
-        cout << "Outputs dimension 1: " << outputs[0].get_dimension(1) << endl;
-
         cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<2>() << endl;
+        cout << outputs << endl;
     }
+
+    Tensor<type, 2> outputs;
 };
 
 }

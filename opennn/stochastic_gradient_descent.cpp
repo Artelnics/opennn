@@ -99,7 +99,7 @@ void StochasticGradientDescent::set_default()
 {
     // TRAINING OPERATORS
 
-    initial_learning_rate = static_cast<type>(0.01);
+    initial_learning_rate = type(0.01);
     initial_decay = type(0);
     momentum = type(0);
     nesterov = false;
@@ -130,7 +130,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_learning_rate <= static_cast<type>(0.0))
+    if(new_learning_rate <= type(0.0))
     {
         ostringstream buffer;
 
@@ -156,7 +156,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_dacay < static_cast<type>(0.0))
+    if(new_dacay < type(0.0))
     {
         ostringstream buffer;
 
@@ -183,7 +183,7 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_momentum < static_cast<type>(0.0))
+    if(new_momentum < type(0.0))
     {
         ostringstream buffer;
 
@@ -218,7 +218,7 @@ void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maxim
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_epochs_number < static_cast<type>(0.0))
+    if(new_maximum_epochs_number < type(0.0))
     {
         ostringstream buffer;
 
@@ -254,7 +254,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0.0))
     {
         ostringstream buffer;
 
@@ -290,7 +290,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
         }
         else
         {
-            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
         }
     }
     else
@@ -335,19 +335,19 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    Index batch_samples_number_training = 0;
-    Index batch_samples_number_selection = 0;
+    Index training_batch_samples_number = 0;
+    Index selection_batch_samples_number = 0;
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     training_samples_number < batch_samples_number
-            ? batch_samples_number_training = training_samples_number
-            : batch_samples_number_training = batch_samples_number;
+            ? training_batch_samples_number = training_samples_number
+            : training_batch_samples_number = batch_samples_number;
 
     selection_samples_number < batch_samples_number && selection_samples_number != 0
-            ? batch_samples_number_selection = selection_samples_number
-            : batch_samples_number_selection = batch_samples_number;
+            ? selection_batch_samples_number = selection_samples_number
+            : selection_batch_samples_number = batch_samples_number;
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
@@ -358,14 +358,19 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
 
-    DataSetBatch training_batch(batch_samples_number_training, data_set_pointer);
-    DataSetBatch selection_batch(batch_samples_number_selection, data_set_pointer);
+    DataSetBatch training_batch(training_batch_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_batch_samples_number, data_set_pointer);
 
-    const Index training_batches_number = training_samples_number/batch_samples_number_training;
-    const Index selection_batches_number = selection_samples_number/batch_samples_number_selection;
+    const pair<type*, dimensions> training_inputs = training_batch.get_inputs();
 
-    Tensor<Index, 2> training_batches(training_batches_number, batch_samples_number_training);
-    Tensor<Index, 2> selection_batches(selection_batches_number, batch_samples_number_selection);
+    const Index training_batches_number = training_samples_number/training_batch_samples_number;
+    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
+
+    Tensor<Index, 2> training_batches(training_batches_number, training_batch_samples_number);
+    Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
+
+    Tensor<Index, 1> training_batch_indices(training_batch_samples_number);
+    Tensor<Index, 1> selection_batch_indices(training_batch_samples_number);
 
     // Neural network
 
@@ -376,7 +381,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     if(neural_network_pointer->has_scaling_layer())
     {
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
+        ScalingLayer2D* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_2d_pointer();
         scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
 
@@ -388,19 +393,18 @@ TrainingResults StochasticGradientDescent::perform_training()
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    ForwardPropagation training_forward_propagation(batch_samples_number_training, neural_network_pointer);
-    ForwardPropagation selection_forward_propagation(batch_samples_number_selection, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network_pointer);
+    ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network_pointer);
 
     // Loss index
 
     loss_index_pointer->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(batch_samples_number_training, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(batch_samples_number_selection, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
 
-    type training_error = type(0);
     type training_loss = type(0);
-
+    type training_error = type(0);
     type selection_error = type(0);
 
     Index selection_failures = 0;
@@ -429,7 +433,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_samples_number_training, shuffle);
+        training_batches = data_set_pointer->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -444,15 +448,25 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Data set
 
-            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+            training_batch_indices = training_batches.chip(iteration, 0);
+
+            training_batch.fill(training_batch_indices,
+                                input_variables_indices,
+                                target_variables_indices);
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
+            neural_network_pointer->forward_propagate(training_inputs,
+                                                      training_forward_propagation,
+                                                      is_training);
+
 
             // Loss index
 
-            loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+            loss_index_pointer->back_propagate(training_batch,
+                                               training_forward_propagation,
+                                               training_back_propagation);
+
             results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
@@ -465,14 +479,14 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         // Loss
 
-        training_loss /= static_cast<type>(batches_number);
-        training_error /= static_cast<type>(batches_number);
+        training_loss /= type(batches_number);
+        training_error /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_samples_number_selection, shuffle);
+            selection_batches = data_set_pointer->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
 
             selection_error = type(0);
 
@@ -480,22 +494,30 @@ TrainingResults StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                selection_batch.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+                selection_batch_indices = selection_batches.chip(iteration,0);
+
+                selection_batch.fill(selection_batch_indices,
+                                     input_variables_indices,
+                                     target_variables_indices);
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
+                neural_network_pointer->forward_propagate(selection_batch.get_inputs(),
+                                                          selection_forward_propagation,
+                                                          is_training);
+
                 results.selection_error_history(epoch) = selection_error;
 
                 // Loss
 
                 loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
+
                 loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
                 selection_error += selection_back_propagation.error;
             }
 
-            selection_error /= static_cast<type>(selection_batches_number);
+            selection_error /= type(selection_batches_number);
 
             results.selection_error_history(epoch) = selection_error;
 
@@ -505,7 +527,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         // Elapsed time
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display && epoch%display_period == 0)
         {
@@ -572,33 +594,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
-/*
-    if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-        type* input_data = inputs.data();
-
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())
@@ -686,7 +682,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("ApplyMomentum");
 
     buffer.str("");
-    buffer << (momentum > static_cast<type>(0.0));
+    buffer << (momentum > type(0.0));
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -763,7 +759,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     if(batch_samples_number_element)
     {
-        const Index new_batch_samples_number = static_cast<Index>(atoi(batch_samples_number_element->GetText()));
+        const Index new_batch_samples_number = Index(atoi(batch_samples_number_element->GetText()));
 
         try
         {
@@ -787,11 +783,11 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         {
             if(new_apply_momentum_state != "0")
             {
-                set_momentum(static_cast<type>(0.9));
+                set_momentum(type(0.9));
             }
             else
             {
-                set_momentum(static_cast<type>(0.0));
+                set_momentum(type(0.0));
             }
         }
         catch(const invalid_argument& e)
@@ -806,7 +802,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_loss_goal = static_cast<type>(atof(element->GetText()));
+            const type new_loss_goal = type(atof(element->GetText()));
 
             try
             {
@@ -825,7 +821,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
 
             try
             {
@@ -844,7 +840,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_time = type(atof(element->GetText()));
 
             try
             {

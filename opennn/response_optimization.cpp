@@ -37,8 +37,8 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     outputs_conditions.resize(outputs_number);
     outputs_conditions.setConstant(Condition::None);
 
-    inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
-    inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
+    inputs_minimums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_minimums();
+    inputs_maximums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_maximums();
 
     if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
     {
@@ -70,8 +70,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network_pointer)
     outputs_conditions.resize(outputs_number);
     outputs_conditions.setConstant(Condition::None);
 
-    inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
-    inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
+    inputs_minimums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_minimums();
+    inputs_maximums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_maximums();
 
     if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
     {
@@ -571,7 +571,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 }
                 else
                 {
-                    inputs(i,index) = rand() % 2;
+                    inputs(i,index) = type(rand() % 2);
                 }
                 index++;
             }
@@ -583,7 +583,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
                 for(Index k = 0; k < categories_number; k++)
                 {
-                    inputs(i,index + k) = 0;
+                    inputs(i,index + k) = type(0);
                     if(inputs_conditions(index + k) == ResponseOptimization::Condition::EqualTo)
                     {
                         inputs(i,index + k) = inputs_minimums(index +k);
@@ -596,15 +596,16 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
                 if(equal_index == -1)
                 {
-                    Index random =  rand() % categories_number ;
-                    random =  rand() % categories_number ;
-                    inputs(i, index + random) = 1;
+                    const Index random = rand() % categories_number;
+
+                    inputs(i, index + random) = type(1);
                 }
-                index+=(categories_number);
+
+                index += categories_number;
             }
             else
             {
-                inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                inputs(i, index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
         }
@@ -699,16 +700,6 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     }
 
     return results;
-}
-
-
-type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum)
-{
-    const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
-
-    const type random_uniform = minimum + (maximum - minimum) * random;
-
-    return random_uniform;
 }
 
 }

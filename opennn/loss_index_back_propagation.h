@@ -99,7 +99,5 @@ struct LossIndexBackPropagation
     Tensor<type, 1> regularization_gradient;
 };
 
-
-
 }
 #endif

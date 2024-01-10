@@ -76,7 +76,7 @@ public:
 
    void set_learning_rate_algorithm(const LearningRateAlgorithm&);
 
-   void set_default() override;
+   void set_default() final;
 
    // Stopping criteria
 
@@ -119,7 +119,7 @@ private:
 
    LearningRateAlgorithm learning_rate_algorithm;
 
-   const type first_learning_rate = static_cast<type>(0.01);
+   const type first_learning_rate = type(0.01);
 
    // Stopping criteria 
 

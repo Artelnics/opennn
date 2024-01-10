@@ -73,9 +73,12 @@ public:
     Index get_depth() const;
     Index get_number_of_heads() const;
 
+<<<<<<< HEAD
+=======
 //    Tensor<Index, 1> get_inputs_dimensions() const final;
 //    Tensor<Index, 1> get_outputs_dimensions() const final;
 
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
     Tensor<type, 3> get_query_kernel() const;
     Tensor<type, 3> get_key_kernel() const;
     Tensor<type, 3> get_value_kernel() const;
@@ -127,27 +130,19 @@ public:
 
     // Multihead Attention layer outputs
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
+    void forward_propagate(const pair<type*, dimensions>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
-/*
-    void forward_propagate(type*,
-                           const Tensor<Index, 1>&,
-                           Tensor<type, 1>&,
-                           LayerForwardPropagation*) final;
-*/
     // Expression methods
 
-//    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-    string write_activation_function_expression() const;
+    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     // Serialization methods
     /// @todo
 
-//    void from_XML(const tinyxml2::XMLDocument&) final;
-//    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -230,12 +225,16 @@ protected:
 
             const Index number_of_heads = layer_pointer->get_number_of_heads();
 
+<<<<<<< HEAD
+            outputs.resize(batch_samples_number, input_size, depth);
+=======
             // Outputs
 
             outputs.resize(1);
             outputs(0).set_dimensions({batch_samples_number, input_size, depth});
 
             // Rest of quantities
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
             transformed_query.set_dimensions({new_batch_samples_number, input_size, depth, number_of_heads});
             transformed_key.set_dimensions({new_batch_samples_number, context_size, depth, number_of_heads});
@@ -250,9 +249,6 @@ protected:
 //            cout << "Attention scores:" << endl;
 //            cout << attention_scores.dimensions() << endl;
 
-
-//            cout << "Outputs dimensions:" << endl;
-//            cout << outputs_dimensions << endl;
 
 //            cout << "Outputs:" << endl;
 //            cout << TensorMap<Tensor<type,3>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2)) << endl;
@@ -286,9 +282,17 @@ protected:
             return attention_outputs;
         }
 
+<<<<<<< HEAD
+        Tensor<type, 3> outputs;
+
+        Tensor<type, 4> transformed_query;
+        Tensor<type, 4> transformed_key;
+        Tensor<type, 4> transformed_value;
+=======
         DynamicTensor<type> transformed_query;
         DynamicTensor<type> transformed_key;
         DynamicTensor<type> transformed_value;
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
         DynamicTensor<type> attention_scores;
         DynamicTensor<type> attention_outputs;
@@ -316,12 +320,12 @@ protected:
         }
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
         {
             layer_pointer = new_layer_pointer;
 
             batch_samples_number = new_batch_samples_number;
-
+/*
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
@@ -335,21 +339,8 @@ protected:
             synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
             deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+*/
         }
-
-        Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-        {
-            Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
-
-            const Index inputs_number = layer_pointer->get_inputs_number();
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
-            layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
-
-            return layer_gradient;
-        }
-
 
         void print() const
         {

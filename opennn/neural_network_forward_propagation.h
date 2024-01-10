@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "dynamic_tensor.h"
+
 #include "neural_network.h"
 
 using namespace std;
@@ -50,7 +50,7 @@ struct ForwardPropagation
 
         for(Index i = 0; i < layers_number; i++)
         {
-            switch (layers_pointers(i)->get_type())
+            switch(layers_pointers(i)->get_type())
             {
             case Layer::Type::Perceptron:
             {
@@ -95,9 +95,9 @@ struct ForwardPropagation
             }
             break;
 
-            case Layer::Type::Scaling:
+            case Layer::Type::Scaling2D:
             {
-                layers(i) = new ScalingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+                layers(i) = new ScalingLayer2DForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
@@ -128,13 +128,6 @@ struct ForwardPropagation
             default: break;
             }
         }
-    }
-
-    const Tensor<DynamicTensor<type>, 1>& get_outputs()
-    {
-        const Index layers_number = neural_network_pointer->get_layers_number();
-
-        return layers(layers_number-1)->outputs;
     }
 
 

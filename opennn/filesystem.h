@@ -227,7 +227,7 @@
 #endif  // GHC_EXPAND_IMPL
 
 // After standard library includes.
-// Standard library support for std::string_view.
+// Standard library support for string_view.
 #if defined(__cpp_lib_string_view)
 #define GHC_HAS_STD_STRING_VIEW
 #elif defined(_LIBCPP_VERSION) && (_LIBCPP_VERSION >= 4000) && (__cplusplus >= 201402)
@@ -258,7 +258,7 @@
 // Behaviour Switches (see README.md, should match the config in test/filesystem_test.cpp):
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Enforce C++17 API where possible when compiling for C++20, handles the following cases:
-// * fs::path::u8string() returns std::string instead of std::u8string
+// * fs::path::u8string() returns string instead of std::u8string
 // #define GHC_FILESYSTEM_ENFORCE_CPP17_API
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // LWG #2682 disables the since then invalid use of the copy option create_symlinks on directories
@@ -282,9 +282,9 @@
 #define LWG_2937_BEHAVIOUR
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // UTF8-Everywhere is the original behaviour of ghc::filesystem. But since v1.5 the windows
-// version defaults to std::wstring storage backend. Still all std::string will be interpreted
+// version defaults to std::wstring storage backend. Still all string will be interpreted
 // as UTF-8 encoded. With this define you can enfoce the old behavior on Windows, using
-// std::string as backend and for fs::path::native() and char for fs::path::c_str(). This
+// string as backend and for fs::path::native() and char for fs::path::c_str(). This
 // needs more conversions so it is (an was before v1.5) slower, bot might help keeping source
 // homogeneous in a multi platform project.
 // #define GHC_WIN_DISABLE_WSTRING_STORAGE_TYPE
@@ -370,10 +370,10 @@ public:
 #else
 #define GHC_NATIVEWP(p) p.wstring().c_str()
 #define GHC_PLATFORM_LITERAL(str) str
-    : private path_helper_base<std::string::value_type>
+    : private path_helper_base<string::value_type>
 {
 public:
-    using path_helper_base<std::string::value_type>::value_type;
+    using path_helper_base<string::value_type>::value_type;
 #endif
     using string_type = std::basic_string<value_type>;
     using path_helper_base<value_type>::preferred_separator;
@@ -501,12 +501,12 @@ public:
     operator string_type() const;
     template <class EcharT, class traits = std::char_traits<EcharT>, class Allocator = std::allocator<EcharT>>
     std::basic_string<EcharT, traits, Allocator> string(const Allocator& a = Allocator()) const;
-    std::string string() const;
+    string string() const;
     std::wstring wstring() const;
 #if defined(__cpp_lib_char8_t) && !defined(GHC_FILESYSTEM_ENFORCE_CPP17_API)
     std::u8string u8string() const;
 #else
-    std::string u8string() const;
+    string u8string() const;
 #endif
     std::u16string u16string() const;
     std::u32string u32string() const;
@@ -514,12 +514,12 @@ public:
     // [fs.path.generic.obs] generic format observers
     template <class EcharT, class traits = std::char_traits<EcharT>, class Allocator = std::allocator<EcharT>>
     std::basic_string<EcharT, traits, Allocator> generic_string(const Allocator& a = Allocator()) const;
-    std::string generic_string() const;
+    string generic_string() const;
     std::wstring generic_wstring() const;
 #if defined(__cpp_lib_char8_t) && !defined(GHC_FILESYSTEM_ENFORCE_CPP17_API)
     std::u8string generic_u8string() const;
 #else
-    std::string generic_u8string() const;
+    string generic_u8string() const;
 #endif
     std::u16string generic_u16string() const;
     std::u32string generic_u32string() const;
@@ -650,15 +650,15 @@ path u8path(InputIterator first, InputIterator last);
 class GHC_FS_API_CLASS filesystem_error : public std::system_error
 {
 public:
-    filesystem_error(const std::string& what_arg, std::error_code ec);
-    filesystem_error(const std::string& what_arg, const path& p1, std::error_code ec);
-    filesystem_error(const std::string& what_arg, const path& p1, const path& p2, std::error_code ec);
+    filesystem_error(const string& what_arg, std::error_code ec);
+    filesystem_error(const string& what_arg, const path& p1, std::error_code ec);
+    filesystem_error(const string& what_arg, const path& p1, const path& p2, std::error_code ec);
     const path& path1() const noexcept;
     const path& path2() const noexcept;
     const char* what() const noexcept override;
 
 private:
-    std::string _what_arg;
+    string _what_arg;
     std::error_code _ec;
     path _p1, _p2;
 };
@@ -1268,7 +1268,7 @@ private:
     char**& _refargv;
     bool _isvalid;
 #ifdef GHC_OS_WINDOWS
-    std::vector<std::string> _args;
+    std::vector<string> _args;
     std::vector<char*> _argp;
 #endif
 };
@@ -1279,7 +1279,7 @@ private:
 
 namespace detail {
 enum utf8_states_t { S_STRT = 0, S_RJCT = 8 };
-GHC_FS_API void appendUTF8(std::string& str, uint32_t unicode);
+GHC_FS_API void appendUTF8(string& str, uint32_t unicode);
 GHC_FS_API bool is_surrogate(uint32_t c);
 GHC_FS_API bool is_high_surrogate(uint32_t c);
 GHC_FS_API bool is_low_surrogate(uint32_t c);
@@ -1308,7 +1308,7 @@ namespace detail {
 GHC_INLINE std::error_code make_error_code(portable_error err)
 {
 #ifdef GHC_OS_WINDOWS
-    switch (err) {
+    switch(err) {
         case portable_error::none:
             return std::error_code();
         case portable_error::exists:
@@ -1329,7 +1329,7 @@ GHC_INLINE std::error_code make_error_code(portable_error err)
 #endif
     }
 #else
-    switch (err) {
+    switch(err) {
         case portable_error::none:
             return std::error_code();
         case portable_error::exists:
@@ -1440,7 +1440,7 @@ GHC_INLINE bool is_low_surrogate(uint32_t c)
     return (c & 0xfffffc00) == 0xdc00;
 }
 
-GHC_INLINE void appendUTF8(std::string& str, uint32_t unicode)
+GHC_INLINE void appendUTF8(string& str, uint32_t unicode)
 {
     if(unicode <= 0x7f) {
         str.push_back(static_cast<char>(unicode));
@@ -1484,9 +1484,9 @@ GHC_INLINE unsigned consumeUtf8Fragment(const unsigned state, const uint8_t frag
     return state == S_RJCT ? static_cast<unsigned>(S_RJCT) : static_cast<unsigned>((utf8_state_info[category + 16] >> (state << 2)) & 0xf);
 }
 
-GHC_INLINE bool validUtf8(const std::string& utf8String)
+GHC_INLINE bool validUtf8(const string& utf8String)
 {
-    std::string::const_iterator iter = utf8String.begin();
+    string::const_iterator iter = utf8String.begin();
     unsigned utf8_state = S_STRT;
     std::uint32_t codepoint = 0;
     while (iter < utf8String.end()) {
@@ -1596,15 +1596,15 @@ inline StringType fromUtf8(const charT (&utf8String)[N])
 }
 
 template <typename strT, typename std::enable_if<path::_is_basic_string<strT>::value && (sizeof(typename strT::value_type) == 1), int>::type size = 1>
-inline std::string toUtf8(const strT& unicodeString)
+inline string toUtf8(const strT& unicodeString)
 {
-    return std::string(unicodeString.begin(), unicodeString.end());
+    return string(unicodeString.begin(), unicodeString.end());
 }
 
 template <typename strT, typename std::enable_if<path::_is_basic_string<strT>::value && (sizeof(typename strT::value_type) == 2), int>::type size = 2>
-inline std::string toUtf8(const strT& unicodeString)
+inline string toUtf8(const strT& unicodeString)
 {
-    std::string result;
+    string result;
     for(auto iter = unicodeString.begin(); iter != unicodeString.end();++iter) {
         char32_t c = *iter;
         if(is_surrogate(c)) {
@@ -1631,9 +1631,9 @@ inline std::string toUtf8(const strT& unicodeString)
 }
 
 template <typename strT, typename std::enable_if<path::_is_basic_string<strT>::value && (sizeof(typename strT::value_type) == 4), int>::type size = 4>
-inline std::string toUtf8(const strT& unicodeString)
+inline string toUtf8(const strT& unicodeString)
 {
-    std::string result;
+    string result;
     for(auto c : unicodeString) {
         appendUTF8(result, static_cast<uint32_t>(c));
     }
@@ -1641,7 +1641,7 @@ inline std::string toUtf8(const strT& unicodeString)
 }
 
 template <typename charT>
-inline std::string toUtf8(const charT* unicodeString)
+inline string toUtf8(const charT* unicodeString)
 {
 #ifdef GHC_WITH_STRING_VIEW
     return toUtf8(basic_string_view<charT, std::char_traits<charT>>(unicodeString));
@@ -1739,7 +1739,7 @@ GHC_INLINE void path::postprocess_path_with_format(path::format fmt)
         throw filesystem_error("Illegal byte sequence for unicode character.", t, std::make_error_code(std::errc::illegal_byte_sequence));
     }
 #endif
-    switch (fmt) {
+    switch(fmt) {
 #ifdef GHC_OS_WINDOWS
         case path::native_format:
         case path::auto_format:
@@ -1861,13 +1861,13 @@ GHC_INLINE const char* strerror_adapter(int posix, char* buffer)
 }
 
 template <typename ErrorNumber>
-GHC_INLINE std::string systemErrorText(ErrorNumber code = 0)
+GHC_INLINE string systemErrorText(ErrorNumber code = 0)
 {
 #if defined(GHC_OS_WINDOWS)
     LPVOID msgBuf;
     DWORD dw = code ? static_cast<DWORD>(code) : ::GetLastError();
     FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&msgBuf, 0, NULL);
-    std::string msg = toUtf8(std::wstring((LPWSTR)msgBuf));
+    string msg = toUtf8(std::wstring((LPWSTR)msgBuf));
     LocalFree(msgBuf);
     return msg;
 #else
@@ -2122,7 +2122,7 @@ GHC_INLINE path resolveSymlink(const path& p, std::error_code& ec)
     auto reparseData = detail::getReparseData(p, ec);
     if(!ec) {
         if(reparseData && IsReparseTagMicrosoft(reparseData->ReparseTag)) {
-            switch (reparseData->ReparseTag) {
+            switch(reparseData->ReparseTag) {
                 case IO_REPARSE_TAG_SYMLINK: {
                     auto printName = std::wstring(&reparseData->SymbolicLinkReparseBuffer.PathBuffer[reparseData->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR)], reparseData->SymbolicLinkReparseBuffer.PrintNameLength / sizeof(WCHAR));
                     auto substituteName =
@@ -2133,7 +2133,7 @@ GHC_INLINE path resolveSymlink(const path& p, std::error_code& ec)
                     else {
                         result = substituteName;
                     }
-                    if(reparseData->SymbolicLinkReparseBuffer.Flags & 0x1 /*SYMLINK_FLAG_RELATIVE*/) {
+                    if(reparseData->SymbolicLinkReparseBuffer.Flags & 0x1) { // SYMLINK_FLAG_RELATIVE
                         result = p.parent_path() / result;
                     }
                     break;
@@ -2158,7 +2158,7 @@ GHC_INLINE path resolveSymlink(const path& p, std::error_code& ec)
             return path();
         }
         else if(rc < static_cast<int>(bufferSize)) {
-            return path(std::string(buffer.data(), static_cast<std::string::size_type>(rc)));
+            return path(string(buffer.data(), static_cast<string::size_type>(rc)));
         }
         bufferSize *= 2;
     }
@@ -2302,7 +2302,7 @@ GHC_INLINE file_status status_ex(const path& p, std::error_code& ec, file_status
     ec.clear();
 #ifdef GHC_OS_WINDOWS
     if(recurse_count > 16) {
-        ec = detail::make_system_error(0x2A9 /*ERROR_STOPPED_ON_SYMLINK*/);
+        ec = detail::make_system_error(0x2A9); // ERROR_STOPPED_ON_SYMLINK
         return file_status(file_type::unknown);
     }
     WIN32_FILE_ATTRIBUTE_DATA attr;
@@ -2444,7 +2444,7 @@ template <class Source, typename>
 inline path::path(const Source& source, const std::locale& loc, format fmt)
     : path(source, fmt)
 {
-    std::string locName = loc.name();
+    string locName = loc.name();
     if(!(locName.length() >= 5 && (locName.substr(locName.length() - 5) == "UTF-8" || locName.substr(locName.length() - 5) == "utf-8"))) {
         throw filesystem_error("This implementation only supports UTF-8 locales!", path(_path), detail::make_error_code(detail::portable_error::not_supported));
     }
@@ -2454,7 +2454,7 @@ template <class InputIterator>
 inline path::path(InputIterator first, InputIterator last, const std::locale& loc, format fmt)
     : path(std::basic_string<typename std::iterator_traits<InputIterator>::value_type>(first, last), fmt)
 {
-    std::string locName = loc.name();
+    string locName = loc.name();
     if(!(locName.length() >= 5 && (locName.substr(locName.length() - 5) == "UTF-8" || locName.substr(locName.length() - 5) == "utf-8"))) {
         throw filesystem_error("This implementation only supports UTF-8 locales!", path(_path), detail::make_error_code(detail::portable_error::not_supported));
     }
@@ -2782,7 +2782,7 @@ inline std::basic_string<EcharT, traits, Allocator> path::string(const Allocator
 
 #ifdef GHC_EXPAND_IMPL
 
-GHC_INLINE std::string path::string() const
+GHC_INLINE string path::string() const
 {
 #ifdef GHC_USE_WCHAR_T
     return detail::toUtf8(native());
@@ -2810,7 +2810,7 @@ GHC_INLINE std::u8string path::u8string() const
 #endif
 }
 #else
-GHC_INLINE std::string path::u8string() const
+GHC_INLINE string path::u8string() const
 {
 #ifdef GHC_USE_WCHAR_T
     return detail::toUtf8(native());
@@ -2858,10 +2858,10 @@ inline std::basic_string<EcharT, traits, Allocator> path::generic_string(const A
 
 #ifdef GHC_EXPAND_IMPL
 
-GHC_INLINE std::string path::generic_string() const
+GHC_INLINE string path::generic_string() const
 {
 #ifdef GHC_OS_WINDOWS
-    return generic_string<std::string::value_type, std::string::traits_type, std::string::allocator_type>();
+    return generic_string<string::value_type, string::traits_type, string::allocator_type>();
 #else
     return _path;
 #endif
@@ -2886,10 +2886,10 @@ GHC_INLINE std::u8string path::generic_u8string() const
 #endif
 }
 #else
-GHC_INLINE std::string path::generic_u8string() const
+GHC_INLINE string path::generic_u8string() const
 {
 #ifdef GHC_OS_WINDOWS
-    return generic_string<std::string::value_type, std::string::traits_type, std::string::allocator_type>();
+    return generic_string<string::value_type, string::traits_type, string::allocator_type>();
 #else
     return _path;
 #endif
@@ -2964,7 +2964,7 @@ GHC_INLINE int path::compare(const path& p) const noexcept
     if(rnc) {
         return rnc;
     }
-    return _path.compare(rnl1, std::string::npos, p._path, rnl2, std::string::npos);
+    return _path.compare(rnl1, string::npos, p._path, rnl2, string::npos);
 #else
     return _path.compare(p._path);
 #endif
@@ -3031,7 +3031,7 @@ GHC_INLINE path path::root_name() const
 GHC_INLINE path path::root_directory() const
 {
     if(has_root_directory()) {
-        static const path _root_dir(std::string(1, preferred_separator), native_format);
+        static const path _root_dir(string(1, preferred_separator), native_format);
         return _root_dir;
     }
     return path();
@@ -3092,7 +3092,7 @@ GHC_INLINE path path::extension() const
         auto iter = end();
         const auto& fn = *--iter;
         impl_string_type::size_type pos = fn._path.rfind('.');
-        if(pos != std::string::npos && pos > 0) {
+        if(pos != string::npos && pos > 0) {
             return path(fn._path.substr(pos), native_format);
         }
     }
@@ -3107,7 +3107,7 @@ GHC_INLINE bool has_executable_extension(const path& p)
         auto iter = p.end();
         const auto& fn = *--iter;
         auto pos = fn._path.find_last_of('.');
-        if(pos == std::string::npos || pos == 0 || fn._path.length() - pos != 3) {
+        if(pos == string::npos || pos == 0 || fn._path.length() - pos != 3) {
             return false;
         }
         const path::value_type* ext = fn._path.c_str() + pos + 1;
@@ -3422,7 +3422,7 @@ GHC_INLINE void swap(path& lhs, path& rhs) noexcept
 
 GHC_INLINE size_t hash_value(const path& p) noexcept
 {
-    return std::hash<std::string>()(p.generic_string());
+    return std::hash<string>()(p.generic_string());
 }
 
 #ifdef GHC_HAS_THREEWAY_COMP
@@ -3530,14 +3530,14 @@ inline std::basic_istream<charT, traits>& operator>>(std::basic_istream<charT, t
 
 //-----------------------------------------------------------------------------
 // [fs.class.filesystem_error] Class filesystem_error
-GHC_INLINE filesystem_error::filesystem_error(const std::string& what_arg, std::error_code ec)
+GHC_INLINE filesystem_error::filesystem_error(const string& what_arg, std::error_code ec)
     : std::system_error(ec, what_arg)
     , _what_arg(what_arg)
     , _ec(ec)
 {
 }
 
-GHC_INLINE filesystem_error::filesystem_error(const std::string& what_arg, const path& p1, std::error_code ec)
+GHC_INLINE filesystem_error::filesystem_error(const string& what_arg, const path& p1, std::error_code ec)
     : std::system_error(ec, what_arg)
     , _what_arg(what_arg)
     , _ec(ec)
@@ -3548,7 +3548,7 @@ GHC_INLINE filesystem_error::filesystem_error(const std::string& what_arg, const
     }
 }
 
-GHC_INLINE filesystem_error::filesystem_error(const std::string& what_arg, const path& p1, const path& p2, std::error_code ec)
+GHC_INLINE filesystem_error::filesystem_error(const string& what_arg, const path& p1, const path& p2, std::error_code ec)
     : std::system_error(ec, what_arg)
     , _what_arg(what_arg)
     , _ec(ec)
@@ -5663,7 +5663,7 @@ public:
         _dir_entry._status = file_status();
 #else
         _dir_entry._symlink_status.permissions(perms::unknown);
-        switch (_entry->d_type) {
+        switch(_entry->d_type) {
             case DT_BLK:
                 _dir_entry._symlink_status.type(file_type::block);
                 break;

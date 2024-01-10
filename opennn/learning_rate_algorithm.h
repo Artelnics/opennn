@@ -238,7 +238,7 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default();
+   void set_default();
 
    // Learning rate methods
 
@@ -287,7 +287,7 @@ protected:
 
    bool display = true;
 
-   const type golden_ratio = static_cast<type>(1.618);
+   const type golden_ratio = type(1.618);
 
    ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;

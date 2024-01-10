@@ -662,7 +662,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(short_words_length_element->GetText())
         {
-            const int new_short_words_length = static_cast<Index>(atoi(short_words_length_element->GetText()));
+            const int new_short_words_length = Index(atoi(short_words_length_element->GetText()));
 
             set_short_words_length(new_short_words_length);
         }
@@ -676,7 +676,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         if(long_words_length_element->GetText())
         {
-            const int new_long_words_length = static_cast<Index>(atoi(long_words_length_element->GetText()));
+            const int new_long_words_length = Index(atoi(long_words_length_element->GetText()));
 
             set_long_words_length(new_long_words_length);
         }
@@ -740,7 +740,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
+        new_columns_number = Index(atoi(columns_number_element->GetText()));
 
         set_columns_number(new_columns_number);
     }
@@ -889,6 +889,183 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+//    // Time series columns
+
+//    const tinyxml2::XMLElement* time_series_columns_element = data_set_element->FirstChildElement("TimeSeriesColumns");
+
+//    if(!time_series_columns_element)
+//    {
+//        // do nothing
+//    }
+//    else
+//    {
+//        // Time series columns number
+
+//        const tinyxml2::XMLElement* time_series_columns_number_element = time_series_columns_element->FirstChildElement("TimeSeriesColumnsNumber");
+
+//        if(!time_series_columns_number_element)
+//        {
+//            buffer << "OpenNN Exception: DataSet class.\n"
+//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Time seires columns number element is nullptr.\n";
+
+//            throw invalid_argument(buffer.str());
+//        }
+
+//        Index time_series_new_columns_number = 0;
+
+//        if(time_series_columns_number_element->GetText())
+//        {
+//            time_series_new_columns_number = Index(atoi(time_series_columns_number_element->GetText()));
+
+//            set_time_series_columns_number(time_series_new_columns_number);
+//        }
+
+//        // Time series columns
+
+//        const tinyxml2::XMLElement* time_series_start_element = time_series_columns_number_element;
+
+//        if(time_series_new_columns_number > 0)
+//        {
+//            for(Index i = 0; i < time_series_new_columns_number; i++)
+//            {
+//                const tinyxml2::XMLElement* time_series_column_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
+//                time_series_start_element = time_series_column_element;
+
+//                if(time_series_column_element->Attribute("Item") != to_string(i+1))
+//                {
+//                    buffer << "OpenNN Exception: DataSet class.\n"
+//                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_column_element->Attribute("Item") << ").\n";
+
+//                    throw invalid_argument(buffer.str());
+//                }
+
+//                // Name
+
+//                const tinyxml2::XMLElement* time_series_name_element = time_series_column_element->FirstChildElement("Name");
+
+//                if(!time_series_name_element)
+//                {
+//                    buffer << "OpenNN Exception: DataSet class.\n"
+//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "Time series name element is nullptr.\n";
+
+//                    throw invalid_argument(buffer.str());
+//                }
+
+//                if(time_series_name_element->GetText())
+//                {
+//                    const string time_series_new_name = time_series_name_element->GetText();
+
+//                    time_series_columns(i).name = time_series_new_name;
+//                }
+
+//                // Scaler
+
+//                const tinyxml2::XMLElement* time_series_scaler_element = time_series_column_element->FirstChildElement("Scaler");
+
+//                if(!time_series_scaler_element)
+//                {
+//                    buffer << "OpenNN Exception: DataSet class.\n"
+//                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "Time series scaler element is nullptr.\n";
+
+//                    throw invalid_argument(buffer.str());
+//                }
+
+//                if(time_series_scaler_element->GetText())
+//                {
+//                    const string time_series_new_scaler = time_series_scaler_element->GetText();
+
+//                    time_series_columns(i).set_scaler(time_series_new_scaler);
+//                }
+
+//                // Column use
+
+//                const tinyxml2::XMLElement* time_series_column_use_element = time_series_column_element->FirstChildElement("ColumnUse");
+
+//                if(!time_series_column_use_element)
+//                {
+//                    buffer << "OpenNN Exception: DataSet class.\n"
+//                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "Time series column use element is nullptr.\n";
+
+//                    throw invalid_argument(buffer.str());
+//                }
+
+//                if(time_series_column_use_element->GetText())
+//                {
+//                    const string time_series_new_column_use = time_series_column_use_element->GetText();
+
+//                    time_series_columns(i).set_use(time_series_new_column_use);
+//                }
+
+//                // Type
+
+//                const tinyxml2::XMLElement* time_series_type_element = time_series_column_element->FirstChildElement("Type");
+
+//                if(!time_series_type_element)
+//                {
+//                    buffer << "OpenNN Exception: DataSet class.\n"
+//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                           << "Time series type element is nullptr.\n";
+
+//                    throw invalid_argument(buffer.str());
+//                }
+
+//                if(time_series_type_element->GetText())
+//                {
+//                    const string time_series_new_type = time_series_type_element->GetText();
+//                    time_series_columns(i).set_type(time_series_new_type);
+//                }
+
+//                if(time_series_columns(i).type == ColumnType::Categorical || time_series_columns(i).type == ColumnType::Binary)
+//                {
+//                    // Categories
+
+//                    const tinyxml2::XMLElement* time_series_categories_element = time_series_column_element->FirstChildElement("Categories");
+
+//                    if(!time_series_categories_element)
+//                    {
+//                        buffer << "OpenNN Exception: DataSet class.\n"
+//                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                               << "Time series categories element is nullptr.\n";
+
+//                        throw invalid_argument(buffer.str());
+//                    }
+
+//                    if(time_series_categories_element->GetText())
+//                    {
+//                        const string time_series_new_categories = time_series_categories_element->GetText();
+
+//                        time_series_columns(i).categories = get_tokens(time_series_new_categories, ';');
+//                    }
+
+//                    // Categories uses
+
+//                    const tinyxml2::XMLElement* time_series_categories_uses_element = time_series_column_element->FirstChildElement("CategoriesUses");
+
+//                    if(!time_series_categories_uses_element)
+//                    {
+//                        buffer << "OpenNN Exception: DataSet class.\n"
+//                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                               << "Time series categories uses element is nullptr.\n";
+
+//                        throw invalid_argument(buffer.str());
+//                    }
+
+//                    if(time_series_categories_uses_element->GetText())
+//                    {
+//                        const string time_series_new_categories_uses = time_series_categories_uses_element->GetText();
+
+//                        time_series_columns(i).set_categories_uses(get_tokens(time_series_new_categories_uses, ';'));
+//                    }
+//                }
+//            }
+//        }
+//    }
+
     // Rows label
 
     if(has_rows_labels)
@@ -951,7 +1128,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
+        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
 
@@ -1022,7 +1199,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number_element->GetText())
     {
-        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
     }
 
     if(missing_values_number > 0)
@@ -1067,7 +1244,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(rows_missing_values_number_element->GetText())
         {
-            rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
+            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
         }
     }
 
@@ -1101,7 +1278,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(preview_size_element->GetText())
     {
-        new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
+        new_preview_size = Index(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
         if(new_preview_size > 0) text_data_file_preview.resize(new_preview_size, 2);
@@ -1226,7 +1403,7 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
             auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), word_bag.words(i));
             const Index index = it - columns_names.data();
 
-            vector(index) = word_bag.frequencies(i);
+            vector(index) = type(word_bag.frequencies(i));
         }
     }
 
@@ -1280,7 +1457,7 @@ void TextDataSet::read_txt()
     std::ofstream file;
     file.open(transformed_data_path);
 
-    for(Index i  = 0; i < document_words_number; i++)
+    for(Index i  = type(0); i < document_words_number; i++)
         file << columns_names(i) << ";";
     file << "target_variable" << "\n";
 

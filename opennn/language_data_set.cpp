@@ -635,7 +635,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
+        new_columns_number = Index(atoi(columns_number_element->GetText()));
 
         set_columns_number(new_columns_number);
     }
@@ -811,7 +811,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //        if(time_series_columns_number_element->GetText())
 //        {
-//            time_series_new_columns_number = static_cast<Index>(atoi(time_series_columns_number_element->GetText()));
+//            time_series_new_columns_number = Index(atoi(time_series_columns_number_element->GetText()));
 
 //            set_time_series_columns_number(time_series_new_columns_number);
 //        }
@@ -1023,7 +1023,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
+        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
 
@@ -1094,7 +1094,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number_element->GetText())
     {
-        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
     }
 
     if(missing_values_number > 0)
@@ -1139,7 +1139,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(rows_missing_values_number_element->GetText())
         {
-            rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
+            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
         }
     }
 
@@ -1173,7 +1173,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(preview_size_element->GetText())
     {
-        new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
+        new_preview_size = Index(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
         if(new_preview_size > 0) text_data_file_preview.resize(new_preview_size, 2);
@@ -1381,13 +1381,13 @@ void LanguageDataSet::read_txt_language_model()
     std::ofstream file;
     file.open(transformed_data_path);
 
-    for(Index i  = 0; i < max_context_length + 2; i++) /// there is start (=1) and end (=2) indicators
+    for(Index i  = type(0); i < max_context_length + 2; i++) /// there is start (=1) and end (=2) indicators
         file << "context_token_position_" << i << ";";
 
-    for(Index i  = 0; i < max_completion_length + 1; i++)
+    for(Index i  = type(0); i < max_completion_length + 1; i++)
         file << "input_token_position_" << i << ";";
 
-    for(Index i  = 0; i < max_completion_length; i++)
+    for(Index i  = type(0); i < max_completion_length; i++)
         file << "target_token_position_" << i << ";";
     file << "target_token_position_" << max_completion_length << "\n";
 
@@ -1445,7 +1445,7 @@ void LanguageDataSet::read_txt_language_model()
                 }
                 else
                 {
-                    context_row(j) = 0;
+                    context_row(j) = type(0);
                 }
             }
         }
@@ -1479,7 +1479,7 @@ void LanguageDataSet::read_txt_language_model()
                 }
                 else
                 {
-                    completion_row(j) = 0;
+                    completion_row(j) = type(0);
                 }
             }
         }

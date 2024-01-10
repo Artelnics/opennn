@@ -231,7 +231,7 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_learning_rate_tolerance <= static_cast<type>(0.0))
+    if(new_learning_rate_tolerance <= type(0.0))
     {
         ostringstream buffer;
 
@@ -365,7 +365,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*V.first;
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        neural_network_pointer->forward_propagate(batch.get_inputs(), optimization_data.potential_parameters, forward_propagation);
 
         loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
@@ -513,12 +513,12 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     {
         count++;
 
-        triplet.B.first = optimization_data.initial_learning_rate*static_cast<type>(count);
+        triplet.B.first = optimization_data.initial_learning_rate*type(count);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        neural_network_pointer->forward_propagate(batch.get_inputs(), optimization_data.potential_parameters, forward_propagation);
 
         loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
@@ -538,7 +538,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        neural_network_pointer->forward_propagate(batch.get_inputs(),
+                                                  optimization_data.potential_parameters,
+                                                  forward_propagation);
 
         loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
@@ -557,7 +559,9 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
-            neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+            neural_network_pointer->forward_propagate(batch.get_inputs(),
+                                                      optimization_data.potential_parameters,
+                                                      forward_propagation);
 
             loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
@@ -569,12 +573,14 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     }
     else if(triplet.A.second < triplet.B.second)
     {
-        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*static_cast<type>(0.382);
+        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        neural_network_pointer->forward_propagate(batch.get_inputs(),
+                                                  optimization_data.potential_parameters,
+                                                  forward_propagation);
 
         loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
@@ -587,12 +593,12 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         {
             triplet.B = triplet.U;
 
-            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*static_cast<type>(0.382);
+            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
 
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
 
-            neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+            neural_network_pointer->forward_propagate(batch.get_inputs(), optimization_data.potential_parameters, forward_propagation);
 
             loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
@@ -622,15 +628,15 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 {
     type learning_rate;
 
-    const type middle = triplet.A.first + static_cast<type>(0.5)*(triplet.B.first - triplet.A.first);
+    const type middle = triplet.A.first + type(0.5)*(triplet.B.first - triplet.A.first);
 
     if(triplet.U.first < middle)
     {
-        learning_rate = triplet.A.first + static_cast<type>(0.618)*(triplet.B.first - triplet.A.first);
+        learning_rate = triplet.A.first + type(0.618)*(triplet.B.first - triplet.A.first);
     }
     else
     {
-        learning_rate = triplet.A.first + static_cast<type>(0.382)*(triplet.B.first - triplet.A.first);
+        learning_rate = triplet.A.first + type(0.382)*(triplet.B.first - triplet.A.first);
     }
 
 #ifdef OPENNN_DEBUG
@@ -682,7 +688,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 
     const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
 
-    return u - static_cast<type>(0.5)*numerator/denominator;
+    return u - type(0.5)*numerator/denominator;
 }
 
 
@@ -767,7 +773,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_learning_rate_tolerance = static_cast<type>(atof(element->GetText()));
+            const type new_learning_rate_tolerance = type(atof(element->GetText()));
 
             try
             {

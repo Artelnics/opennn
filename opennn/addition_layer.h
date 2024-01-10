@@ -9,23 +9,24 @@
 #ifndef ADDITIONLAYER_H
 #define ADDITIONLAYER_H
 
-//// System includes
+// System includes
 
 #include <cmath>
 #include <cstdlib>
 #include <ctype.h>
 #include <fstream>
+#include <sstream>
+
 #include <iostream>
 #include <string>
-#include <sstream>
 
 // OpenNN includes
 
 #include "config.h"
-#include "convolutional_layer.h"
 #include "layer.h"
-#include "flatten_layer.h"
 
+#include "convolutional_layer.h"
+#include "flatten_layer.h"
 #include "statistics.h"
 
 namespace opennn
@@ -89,7 +90,7 @@ public:
 
     // First order activations
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
+    void forward_propagate(const pair<type*, dimensions>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -97,7 +98,7 @@ public:
 
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+                                LayerBackPropagation*) const final;
 
     // Serialization methods
 
@@ -132,35 +133,8 @@ struct AdditionLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
-    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
-    {
-        AdditionLayer* addition_layer_pointer = static_cast<AdditionLayer*>(layer_pointer);
 
-        const Index inputs_rows_number = addition_layer_pointer->get_inputs_rows_number();
-        const Index inputs_columns_number = addition_layer_pointer->get_inputs_columns_number();
-        const Index inputs_channels_number = addition_layer_pointer->get_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           inputs_rows_number,
-                                           inputs_columns_number,
-                                           inputs_channels_number});
-    }
-
-    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
-    {
-        AdditionLayer* addition_layer_pointer = static_cast<AdditionLayer*>(layer_pointer);
-
-        const Index oututs_columns_number =  addition_layer_pointer->get_outputs_columns_number();
-        const Index oututs_rows_number = addition_layer_pointer->get_outputs_rows_number();
-        const Index outputs_channels_number = addition_layer_pointer->get_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           oututs_rows_number,
-                                           oututs_columns_number,
-                                           outputs_channels_number});
-    }
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         batch_samples_number = new_batch_samples_number;
 
@@ -174,13 +148,10 @@ struct AdditionLayerForwardPropagation : LayerForwardPropagation
 
         const Index channels_number = addition_layer_pointer->get_channels_number();
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(4);
-        output_dimensions.setValues({batch_samples_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number,
-                                     channels_number});
-        outputs(0).set_dimensions(output_dimensions);
+        outputs.resize(batch_samples_number,
+                       outputs_rows_number,
+                       outputs_columns_number,
+                       channels_number);
     }
 
 
@@ -188,13 +159,11 @@ struct AdditionLayerForwardPropagation : LayerForwardPropagation
     {
         cout << "Addition layer forward propagation" << endl;
 
-        cout << "Outputs dimensions:" << endl;
-        cout << outputs[0].get_dimensions() << endl;
-
         cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<4>() << endl;
+        cout << outputs(0) << endl;
      }
+
+    Tensor<type, 4> outputs;
 };
 
 
@@ -216,27 +185,11 @@ struct AdditionLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         batch_samples_number = new_batch_samples_number;
 
         layer_pointer = new_layer_pointer;
-
-
-        const AdditionLayer* pooling_layer_pointer = static_cast<AdditionLayer*>(layer_pointer);
-
-        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
-
-        deltas_dimensions.resize(4);
-/*
-        deltas_dimensions.setValues({batch_samples_number,
-                                     kernels_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number});
-
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
-*/
     }
 
 
@@ -244,12 +197,11 @@ struct AdditionLayerBackPropagation : LayerBackPropagation
     {
         cout << "Deltas:" << endl;
         //cout << deltas << endl;
-
     }
 };
 
 //#ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+//    #include "../../opennn-cuda/opennn-cuda/struct_addition_layer_cuda.h"
 //#endif
 
 

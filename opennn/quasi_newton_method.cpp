@@ -263,7 +263,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0.0))
     {
         ostringstream buffer;
 
@@ -406,7 +406,6 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
             = optimization_data.parameters_difference.contract(optimization_data.gradient_difference, AT_B);
 
-
     optimization_data.old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
             = optimization_data.old_inverse_hessian.contract(optimization_data.gradient_difference, A_B);
 
@@ -414,6 +413,8 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
             = optimization_data.gradient_difference.contract(optimization_data.old_inverse_hessian_dot_gradient_difference, AT_B);
+
+    /// @todo Move to struct
 
     Tensor<type, 1> BFGS(parameters_number);
 
@@ -611,8 +612,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
     {
         input_variables_descriptives = data_set_pointer->scale_input_variables();
 
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
-        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d_pointer = neural_network_pointer->get_scaling_layer_2d_pointer();
+        scaling_layer_2d_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
 
     if(neural_network_pointer->has_unscaling_layer())
@@ -623,14 +624,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    if(neural_network_pointer->has_flatten_layer())
-    {
-        FlattenLayer* flatten_layer_pointer = neural_network_pointer->get_flatten_layer_pointer();
-        //flatten_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
-    }
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
+
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index
@@ -667,7 +666,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
+        neural_network_pointer->forward_propagate(training_batch.get_inputs(), training_forward_propagation, is_training);
 
         // Loss index
 
@@ -683,7 +682,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
+
+            neural_network_pointer->forward_propagate(selection_batch.get_inputs(), selection_forward_propagation, is_training);
 
             // Loss Index
 
@@ -697,7 +697,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display && epoch%display_period == 0)
         {
@@ -775,34 +775,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(stop_training) break;
     }
-/*
-    if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-        type* input_data = inputs.data();
-
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())
@@ -1018,7 +991,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = type(atof(element->GetText()));
 
             try
             {
@@ -1037,7 +1010,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_loss_goal = static_cast<type>(atof(element->GetText()));
+            const type new_loss_goal = type(atof(element->GetText()));
 
             try
             {
@@ -1056,7 +1029,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
 
             try
             {
@@ -1075,7 +1048,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
 
             try
             {
@@ -1094,7 +1067,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_time = type(atof(element->GetText()));
 
             try
             {

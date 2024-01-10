@@ -162,7 +162,7 @@ void NeuralNetworkTest::test_add_layer()
 {
     cout << "test_add_layer\n";
 
-//    ScalingLayer* scaling_layer_pointer = new ScalingLayer;
+//    ScalingLayer2D* scaling_layer_2d_pointer = new ScalingLayer;
 
 //    LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer;
 

@@ -25,47 +25,46 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Application." << endl;
 
-                srand(static_cast<unsigned>(time(nullptr)));
+        srand(static_cast<unsigned>(time(nullptr)));
 
-                // Data set
+        // Data set
 
-                DataSet data_set("../data/breast_cancer.csv", ';', true);
+        DataSet data_set("../data/breast_cancer.csv", ';', true);
 
-                const Index input_variables_number = data_set.get_input_numeric_variables_number();
-                const Index target_variables_number = data_set.get_target_numeric_variables_number();
+        const Index input_variables_number = data_set.get_input_numeric_variables_number();
+        const Index target_variables_number = data_set.get_target_numeric_variables_number();
 
-                // Neural network
+        // Neural network
 
-                const Index neurons_number = 6;
+        const Index neurons_number = 6;
 
-                NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, neurons_number, target_variables_number});
 
-                neural_network.print();
+        neural_network.print();
 
-                // Training strategy
+        // Training strategy
 
-                TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-                training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-                training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
-                training_strategy.perform_training();
+        training_strategy.perform_training();
+/*
+        // Testing analysis
 
-                // Testing analysis
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-                TestingAnalysis testing_analysis(&neural_network, &data_set);
+        testing_analysis.print_binary_classification_tests();
 
-                testing_analysis.print_binary_classification_tests();
+        // Save results
 
-                // Save results
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression_python("../data/breast_cancer.py");
+*/
+        cout << "End breast cancer application" << endl;
 
-                neural_network.save("../data/neural_network.xml");
-                neural_network.save_expression_python("../data/breast_cancer.py");
-
-                cout << "End breast cancer application" << endl;
-
-                return 0;
-       
+        return 0;
     }
     catch(const exception& e)
     {

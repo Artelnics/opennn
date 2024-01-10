@@ -66,7 +66,7 @@ public:
 
         const type y_backward = (t.*f)(x-h);
 
-        const type d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const type d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -90,7 +90,7 @@ public:
 
         const Tensor<type, 1> y = (t.*f)(x);
 
-        const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const Tensor<type, 1> d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -109,7 +109,7 @@ public:
 
         const Tensor<type, 2> y = (t.*f)(x);
 
-        const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const Tensor<type, 2> d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -128,7 +128,7 @@ public:
 
         const Tensor<type, 4> y = (t.*f)(x);
 
-        const Tensor<type, 4> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const Tensor<type, 4> d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -152,7 +152,7 @@ public:
         const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
         const Tensor<type, 1> y_backward = (t.*f)(dummy, x_backward);
 
-        const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const Tensor<type, 1> d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -174,7 +174,7 @@ public:
         Tensor<type, 2> y_backward(rn,cn);
         (t.*f)(x_backward, y_backward);
 
-        const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const Tensor<type, 2> d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -198,7 +198,7 @@ public:
         Tensor<type, 4> y_backward(rn,cn, kn, in);
         (t.*f)(x_backward, y_backward);
 
-        const Tensor<type, 4> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+        const Tensor<type, 4> d = (y_forward - y_backward)/(type(2.0)*h);
 
         return d;
     }
@@ -214,7 +214,7 @@ public:
     {
         const type h = calculate_h(x);
 
-        const type x_forward_2 = x + static_cast<type>(2.0)*h;
+        const type x_forward_2 = x + type(2.0)*h;
 
         const type y_forward_2 = (t.*f)(x_forward_2);
 
@@ -228,7 +228,7 @@ public:
 
         const type y_backward = (t.*f)(x_backward);
 
-        const type x_backward_2 = x - static_cast<type>(2.0)*h;
+        const type x_backward_2 = x - type(2.0)*h;
 
         const type y_backward_2 = (t.*f)(x_backward_2);
 
@@ -249,10 +249,10 @@ public:
         const Tensor<type, 1> h = calculate_h(x);
 
         const Tensor<type, 1> x_forward = x + h;
-        const Tensor<type, 1> x_forward_2 = x + h*static_cast<type>(2.0);
+        const Tensor<type, 1> x_forward_2 = x + h*type(2.0);
 
         const Tensor<type, 1> x_backward = x - h;
-        const Tensor<type, 1> x_backward_2 = x - h*static_cast<type>(2.0);
+        const Tensor<type, 1> x_backward_2 = x - h*type(2.0);
 
         const Tensor<type, 1> y = (t.*f)(x);
 
@@ -281,10 +281,10 @@ public:
         const Tensor<type, 1> h = calculate_h(x);
 
         const Tensor<type, 1> x_forward = x + h;
-        const Tensor<type, 1> x_forward_2 = x + h*static_cast<type>(2.0);
+        const Tensor<type, 1> x_forward_2 = x + h*type(2.0);
 
         const Tensor<type, 1> x_backward = x - h;
-        const Tensor<type, 1> x_backward_2 = x - h*static_cast<type>(2.0);
+        const Tensor<type, 1> x_backward_2 = x - h*type(2.0);
 
         const Tensor<type, 1> y = (t.*f)(dummy, x);
 
@@ -374,7 +374,7 @@ public:
             y_backward = (t.*f)(x_backward);
             x_backward(i) += h;
 
-            g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+            g(i) = (y_forward - y_backward)/(type(2.0)*h);
         }
 
         return g;
@@ -415,7 +415,7 @@ public:
             y_backward = (t.*f)(dummy, x_backward);
             x_backward(i) += h;
 
-            g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+            g(i) = (y_forward - y_backward)/(type(2.0)*h);
         }
 
         return g;
@@ -456,7 +456,7 @@ public:
             y_backward = (t.*f)(dummy, x_backward);
             x_backward(i) += h;
 
-            g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+            g(i) = (y_forward - y_backward)/(type(2.0)*h);
         }
 
         return g;
@@ -498,7 +498,7 @@ public:
             y_backward = (t.*f)(dummy, x_backward);
             x_backward(i) += h;
 
-            g(i) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+            g(i) = (y_forward - y_backward)/(type(2.0)*h);
         }
 
         return g;
@@ -575,7 +575,7 @@ public:
                 y_backward = (t.*f)(integer, x_backward)(i);
                 x_backward(i,j) += h;
 
-                gradient(i,j) = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+                gradient(i,j) = (y_forward - y_backward)/(type(2.0)*h);
             }
         }
 
@@ -629,9 +629,9 @@ public:
         {
             h_i = calculate_h(x(i));
 
-            x_backward_2i(i) -= static_cast<type>(2.0)*h_i;
+            x_backward_2i(i) -= type(2.0)*h_i;
             y_backward_2i = (t.*f)(x_backward_2i);
-            x_backward_2i(i) += static_cast<type>(2.0)*h_i;
+            x_backward_2i(i) += type(2.0)*h_i;
 
             x_backward_i(i) -= h_i;
             y_backward_i = (t.*f)(x_backward_i);
@@ -641,9 +641,9 @@ public:
             y_forward_i = (t.*f)(x_forward_i);
             x_forward_i(i) -= h_i;
 
-            x_forward_2i(i) += static_cast<type>(2.0)*h_i;
+            x_forward_2i(i) += type(2.0)*h_i;
             y_forward_2i = (t.*f)(x_forward_2i);
-            x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
+            x_forward_2i(i) -= type(2.0)*h_i;
 
             H(i,i) = (-y_forward_2i + type(16.0)*y_forward_i - type(30.0)*y + type(16.0)*y_backward_i - y_backward_2i)/(type(12.0)*pow(h_i, type(2)));
 
@@ -739,9 +739,9 @@ public:
         {
             h_i = calculate_h(x(i));
 
-            x_backward_2i(i) -= static_cast<type>(2.0)*h_i;
+            x_backward_2i(i) -= type(2.0)*h_i;
             y_backward_2i = (t.*f)(dummy, x_backward_2i);
-            x_backward_2i(i) += static_cast<type>(2.0)*h_i;
+            x_backward_2i(i) += type(2.0)*h_i;
 
             x_backward_i(i) -= h_i;
             y_backward_i = (t.*f)(dummy, x_backward_i);
@@ -751,9 +751,9 @@ public:
             y_forward_i = (t.*f)(dummy, x_forward_i);
             x_forward_i(i) -= h_i;
 
-            x_forward_2i(i) += static_cast<type>(2.0)*h_i;
+            x_forward_2i(i) += type(2.0)*h_i;
             y_forward_2i = (t.*f)(dummy, x_forward_2i);
-            x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
+            x_forward_2i(i) -= type(2.0)*h_i;
 
             H(i,i) = (-y_forward_2i + type(16.0)*y_forward_i - type(30.0)*y + type(16.0)*y_backward_i - y_backward_2i)/(type(12.0)*pow(h_i, type(2)));
 
@@ -848,9 +848,9 @@ public:
         {
             h_i = calculate_h(x(i));
 
-            x_backward_2i(i) -= static_cast<type>(2.0)*h_i;
+            x_backward_2i(i) -= type(2.0)*h_i;
             y_backward_2i = (t.*f)(dummy, x_backward_2i);
-            x_backward_2i(i) += static_cast<type>(2.0)*h_i;
+            x_backward_2i(i) += type(2.0)*h_i;
 
             x_backward_i(i) -= h_i;
             y_backward_i = (t.*f)(dummy, x_backward_i);
@@ -860,9 +860,9 @@ public:
             y_forward_i = (t.*f)(dummy, x_forward_i);
             x_forward_i(i) -= h_i;
 
-            x_forward_2i(i) += static_cast<type>(2.0)*h_i;
+            x_forward_2i(i) += type(2.0)*h_i;
             y_forward_2i = (t.*f)(dummy, x_forward_2i);
-            x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
+            x_forward_2i(i) -= type(2.0)*h_i;
 
             H(i,i) = (-y_forward_2i + type(16.0)*y_forward_i - type(30.0)*y + type(16.0)*y_backward_i - y_backward_2i)/(type(12.0)*pow(h_i, type(2)));
 
@@ -947,7 +947,7 @@ public:
 
             for(Index i = 0; i < m; i++)
             {
-                J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
+                J(i,j) = (y_forward(i) - y_backward(i))/(type(2.0)*h);
             }
         }
 
@@ -994,7 +994,7 @@ public:
 
             for(Index i = 0; i < m; i++)
             {
-                J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
+                J(i,j) = (y_forward(i) - y_backward(i))/(type(2.0)*h);
             }
         }
 
@@ -1041,7 +1041,7 @@ public:
 
             for(Index i = 0; i < m; i++)
             {
-                J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
+                J(i,j) = (y_forward(i) - y_backward(i))/(type(2.0)*h);
             }
         }
 
@@ -1090,7 +1090,7 @@ public:
 
             for(Index i = 0; i < m; i++)
             {
-                J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
+                J(i,j) = (y_forward(i) - y_backward(i))/(type(2.0)*h);
             }
         }
 
@@ -1139,7 +1139,7 @@ public:
 
             for(Index i = 0; i < m; i++)
             {
-                J(i,j) = (y_forward(i) - y_backward(i))/(static_cast<type>(2.0)*h);
+                J(i,j) = (y_forward(i) - y_backward(i))/(type(2.0)*h);
             }
         }
 
@@ -1197,9 +1197,9 @@ public:
             {
                 h_j = calculate_h(x(j));
 
-                x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) -= type(2.0)*h_j;
                 y_backward_2j = (t.*f)(x_backward_2j);
-                x_backward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) += type(2.0)*h_j;
 
                 x_backward_j(j) -= h_j;
                 y_backward_j = (t.*f)(x_backward_j);
@@ -1209,9 +1209,9 @@ public:
                 y_forward_j = (t.*f)(x_forward_j);
                 x_forward_j(j) -= h_j;
 
-                x_forward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) += type(2.0)*h_j;
                 y_forward_2j = (t.*f)(x_forward_2j);
-                x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) -= type(2.0)*h_j;
 
                 H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
@@ -1315,9 +1315,9 @@ public:
             {
                 h_j = calculate_h(x(j));
 
-                x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) -= type(2.0)*h_j;
                 y_backward_2j = (t.*f)(dummy_vector, x_backward_2j);
-                x_backward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) += type(2.0)*h_j;
 
                 x_backward_j(j) -= h_j;
                 y_backward_j = (t.*f)(dummy_vector, x_backward_j);
@@ -1327,9 +1327,9 @@ public:
                 y_forward_j = (t.*f)(dummy_vector, x_forward_j);
                 x_forward_j(j) -= h_j;
 
-                x_forward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) += type(2.0)*h_j;
                 y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
-                x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) -= type(2.0)*h_j;
 
                 H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
@@ -1430,9 +1430,9 @@ public:
             {
                 h_j = calculate_h(x(j));
 
-                x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) -= type(2.0)*h_j;
                 y_backward_2j = (t.*f)(dummy, x_backward_2j);
-                x_backward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) += type(2.0)*h_j;
 
                 x_backward_j(j) -= h_j;
                 y_backward_j = (t.*f)(dummy, x_backward_j);
@@ -1442,9 +1442,9 @@ public:
                 y_forward_j = (t.*f)(dummy, x_forward_j);
                 x_forward_j(j) -= h_j;
 
-                x_forward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) += type(2.0)*h_j;
                 y_forward_2j = (t.*f)(dummy, x_forward_2j);
-                x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) -= type(2.0)*h_j;
 
                 H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
@@ -1547,9 +1547,9 @@ public:
             {
                 h_j = calculate_h(x(j));
 
-                x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) -= type(2.0)*h_j;
                 y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
-                x_backward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_backward_2j(j) += type(2.0)*h_j;
 
                 x_backward_j(j) -= h_j;
                 y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
@@ -1559,9 +1559,9 @@ public:
                 y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
                 x_forward_j(j) -= h_j;
 
-                x_forward_2j(j) += static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) += type(2.0)*h_j;
                 y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
-                x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
+                x_forward_2j(j) -= type(2.0)*h_j;
 
                 H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
@@ -1668,9 +1668,9 @@ public:
                 {
                     h_j = calculate_h(x(j));
 
-                    x_backward_2j(j) -= static_cast<type>(2.0)*h_j;
+                    x_backward_2j(j) -= type(2.0)*h_j;
                     y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
-                    x_backward_2j(j) += static_cast<type>(2.0)*h_j;
+                    x_backward_2j(j) += type(2.0)*h_j;
 
                     x_backward_j(j) -= h_j;
                     y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
@@ -1680,9 +1680,9 @@ public:
                     y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
                     x_forward_j(j) -= h_j;
 
-                    x_forward_2j(j) += static_cast<type>(2.0)*h_j;
+                    x_forward_2j(j) += type(2.0)*h_j;
                     y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
-                    x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
+                    x_forward_2j(j) -= type(2.0)*h_j;
 
                     H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 

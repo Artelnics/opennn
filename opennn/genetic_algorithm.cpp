@@ -127,7 +127,7 @@ void GeneticAlgorithm::set_default()
 
     maximum_epochs_number = 100;
 
-    mutation_rate = static_cast<type>(0.0010);
+    mutation_rate = type(0.0010);
 
     // Population stuff
 
@@ -149,7 +149,7 @@ void GeneticAlgorithm::set_default()
 
     // Training operators
 
-    elitism_size = static_cast<Index>(ceil(individuals_number / 4));
+    elitism_size = Index(ceil(individuals_number / 4));
 
     set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 }
@@ -480,7 +480,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     const Index random_columns_number = data_set_pointer->get_input_columns_number();
 
-    type percentage = 1;
+    type percentage = type(1);
 
     if(random_columns_number > 10000)
     {
@@ -571,7 +571,7 @@ void GeneticAlgorithm::initialize_population_random()
             }
         }
 
-        population.chip(i,0) = individual_variables;
+        population.chip(i, 0) = individual_variables;
     }
 
     cout << "Initial random population created" << endl;
@@ -604,7 +604,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
 
     for(Index i = 0; i < columns_number ; i++)
     {
-        probabilities_vector[i] = 2 * type(columns_number - fitness_correlations(i) + 1) / (type(columns_number)*type(columns_number+1));
+        probabilities_vector[i] = type(2) * type(columns_number - fitness_correlations(i) + 1) / (type(columns_number)*type(columns_number+1));
     }
 
     inputs_activation_probabilities = probabilities_vector.cumsum(0);
@@ -646,7 +646,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
         while(count(individual_columns.data(), individual_columns.data() + individual_columns.size(), 1) < columns_active)
         {
-            arrow = distribution(gen);
+            arrow = type(distribution(gen));
 
             if(arrow < inputs_activation_probabilities(0) && !individual_columns(0))
             {
@@ -797,11 +797,11 @@ void GeneticAlgorithm::evaluate_population()
 
     // Mean generational selection and training error calculation (primitive way)
 
-    type sum_training_errors = 0;
+    type sum_training_errors = type(0);
 
-    type sum_selection_errors = 0;
+    type sum_selection_errors = type(0);
 
-    type sum_inputs_number = 0;
+    type sum_inputs_number = type(0);
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -809,7 +809,7 @@ void GeneticAlgorithm::evaluate_population()
 
         sum_selection_errors += selection_errors(i);
 
-        sum_inputs_number += inputs_number(i);
+        sum_inputs_number += type(inputs_number(i));
     }
 
     mean_training_error = (type(sum_training_errors) / type(individuals_number));
@@ -896,7 +896,7 @@ void GeneticAlgorithm::perform_selection()
 
     selection.setConstant(false);
 
-    const Index selected_individuals_number = static_cast<Index>(type(individuals_number)/2);
+    const Index selected_individuals_number = Index(type(individuals_number)/type(2));
 
     const Tensor <type, 1> selection_probabilities = calculate_selection_probabilities();
 
@@ -1095,7 +1095,7 @@ void GeneticAlgorithm::perform_mutation()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        individual_variables = population.chip(i,0);
+        individual_variables = population.chip(i, 0);
 
         individual_columns = get_individual_columns(individual_variables);
 
@@ -1137,7 +1137,7 @@ void GeneticAlgorithm::perform_mutation()
             }
         }
 
-        population.chip(i,0) = new_individual_variables;
+        population.chip(i, 0) = new_individual_variables;
 
     }
 }
@@ -1260,7 +1260,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         opennn::time(&current_time);
 
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display)
         {
@@ -1343,7 +1343,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     if(neural_network_pointer->has_scaling_layer())
-        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+        neural_network_pointer->get_scaling_layer_2d_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
     neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
@@ -1727,15 +1727,17 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 {
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<type> dist (0.0, 1.0);
+    uniform_real_distribution<double> dist(0, 1);
 
-    type randomNumber = dist(gen);
-    type sum = 0.0;
+    type randomNumber = type(dist(gen));
+
+    type sum = type(0);
 
     for(Index i = 0; i < weights.size(); i++)
     {
        sum += weights(i);
-       if((randomNumber <= sum) && !selection(i))
+
+       if(randomNumber <= sum && !selection(i))
        {
            selection(i) = true;
            return i;
@@ -1743,20 +1745,6 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
     }
 
     return -1;
-}
-
-///Generate a random boolean
-
-bool GeneticAlgorithm::calculate_random_bool()
-{
-    if(rand() % 2 == 1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 
@@ -1867,7 +1855,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_population_size = static_cast<Index>(atoi(element->GetText()));
+            const Index new_population_size = Index(atoi(element->GetText()));
 
             try
             {
@@ -1886,7 +1874,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_mutation_rate = static_cast<type>(atof(element->GetText()));
+            const type new_mutation_rate = type(atof(element->GetText()));
 
             try
             {
@@ -1905,7 +1893,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_elitism_size = static_cast<Index>(atoi(element->GetText()));
+            const Index new_elitism_size = Index(atoi(element->GetText()));
 
             try
             {
@@ -1943,7 +1931,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
+            const type new_selection_error_goal = type(atof(element->GetText()));
 
             try
             {
@@ -1962,7 +1950,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
 
             try
             {
@@ -1981,7 +1969,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_correlation = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_correlation = type(atof(element->GetText()));
 
             try
             {
@@ -2000,7 +1988,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_correlation = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_correlation = type(atof(element->GetText()));
 
             try
             {

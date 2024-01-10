@@ -53,7 +53,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
 // This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
 
-    const type coefficient = batch_samples_number > 0 ? static_cast<type>(batch_samples_number) : 1;
+    const type coefficient = batch_samples_number > type(0) ? type(batch_samples_number) : type(1);
 
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
@@ -84,7 +84,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
-    const type coefficient = static_cast<type>(batch_samples_number);
+    const type coefficient = type(batch_samples_number);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
 }
@@ -100,36 +100,26 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
+     const Tensor<type, 2>& errors = back_propagation.errors;
+
      const LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      // Check if works for convolutional
 
-     Index outputs_number = neural_network_pointer->get_outputs_number();
+     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
+     const Index batch_samples_number = batch.get_batch_samples_number();
 
 //     This line was written in convolutional. Without it, batch samples number was 0.
 //     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
 
-     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
+     const type coefficient = type(2.0)/type(outputs_number*batch_samples_number);
 
-     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0),
-                                       output_layer_back_propagation->deltas_dimensions(1));
+     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
 
-     deltas.device(*thread_pool_device) = coefficient * back_propagation.errors;
+     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 
-     Tensor<type, 2> output_deltas(deltas);
-
-     if(has_NAN(output_deltas))
-     {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: mean_squared_error class.\n"
-                << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-                << "NAN values found in deltas.";
-
-         throw invalid_argument(buffer.str());
-     }
+     deltas_map.device(*thread_pool_device) = coefficient*errors;
 }
 
 
@@ -178,7 +168,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 
     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-    const type coefficient = type(2)/static_cast<type>(batch_samples_number);
+    const type coefficient = type(2)/type(batch_samples_number);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -199,7 +189,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
 
      const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-     const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
+     const type coefficient = (type(2.0)/type(batch_samples_number));
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
              = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);

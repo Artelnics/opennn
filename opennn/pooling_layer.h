@@ -9,7 +9,7 @@
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
 
-//// System includes
+// System includes
 
 #include <cmath>
 #include <cstdlib>
@@ -35,6 +35,8 @@ class ConvolutionalLayer;
 
 struct PoolingLayerForwardPropagation;
 struct PoolingLayerBackPropagation;
+struct ConvolutionalLayerForwardPropagation;
+struct ConvolutionalLayerBackPropagation;
 
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
 /// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
@@ -120,19 +122,19 @@ public:
 
     // First order activations
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
+    void forward_propagate(const pair<type*, dimensions>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
-    void forward_propagate_no_pooling(const DynamicTensor<type>&,
+    void forward_propagate_no_pooling(const Tensor<type, 4>&,
                            LayerForwardPropagation*,
                            const bool&);
 
-    void forward_propagate_max_pooling(const DynamicTensor<type>&,
+    void forward_propagate_max_pooling(const Tensor<type, 4>&,
                            LayerForwardPropagation*,
                            const bool&);
 
-    void forward_propagate_average_pooling(const DynamicTensor<type>&,
+    void forward_propagate_average_pooling(const Tensor<type, 4>&,
                            LayerForwardPropagation*,
                            const bool&);
 
@@ -140,19 +142,19 @@ public:
 
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+                                LayerBackPropagation*) const final;
 
-    void calculate_hidden_delta_convolutional(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    void calculate_hidden_delta(ConvolutionalLayerForwardPropagation*,
+                                ConvolutionalLayerBackPropagation*,
+                                ConvolutionalLayerBackPropagation*) const;
 
-    void calculate_hidden_delta_pooling(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    void calculate_hidden_delta(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                ConvolutionalLayerBackPropagation*) const;
 
-    void calculate_hidden_delta_flatten(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    void calculate_hidden_delta(FlattenLayerForwardPropagation*,
+                                FlattenLayerBackPropagation*,
+                                ConvolutionalLayerBackPropagation*) const;
 
     // Serialization methods
 
@@ -202,35 +204,16 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
-    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
+
+    pair<type*, dimensions> get_outputs() const final
     {
-        PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+        const Index neurons_number = layer_pointer->get_neurons_number();
 
-        const Index inputs_rows_number = pooling_layer_pointer->get_inputs_rows_number();
-        const Index inputs_columns_number = pooling_layer_pointer->get_inputs_columns_number();
-        const Index inputs_channels_number = pooling_layer_pointer->get_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           inputs_rows_number,
-                                           inputs_columns_number,
-                                           inputs_channels_number});
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number, 1, 1}});
     }
 
-    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
-    {
-        PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
 
-        const Index oututs_columns_number =  pooling_layer_pointer->get_outputs_columns_number();
-        const Index oututs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index outputs_channels_number = pooling_layer_pointer->get_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           oututs_rows_number,
-                                           oututs_columns_number,
-                                           outputs_channels_number});
-    }
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         batch_samples_number = new_batch_samples_number;
 
@@ -238,9 +221,9 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
 
-        Index pool_rows_number = pooling_layer_pointer->get_pool_rows_number();
+        const Index pool_rows_number = pooling_layer_pointer->get_pool_rows_number();
 
-        Index pool_columns_number = pooling_layer_pointer->get_pool_columns_number();
+        const Index pool_columns_number = pooling_layer_pointer->get_pool_columns_number();
 
         const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
 
@@ -248,13 +231,12 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
         const Index channels_number = pooling_layer_pointer->get_channels_number();
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(4);
-        output_dimensions.setValues({batch_samples_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number,
-                                     channels_number});
-        outputs(0).set_dimensions(output_dimensions);
+        outputs.resize(batch_samples_number,
+                          outputs_rows_number,
+                          outputs_columns_number,
+                          channels_number);
+
+        outputs_data = outputs.data();
 
         image_patches.resize(batch_samples_number,
                              pool_rows_number,
@@ -268,16 +250,15 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     {
         cout << "Pooling layer forward propagation" << endl;
 
-        cout << "Outputs dimensions:" << endl;
-        cout << outputs[0].get_dimensions() << endl;
-
         cout << "Outputs:" << endl;
 
-        cout << outputs(0).to_tensor_map<4>() << endl;
+        cout << outputs(0) << endl;
 
         cout << "Image patches" << endl;
         cout << image_patches << endl;
      }
+
+    Tensor<type, 4> outputs;
 
     Tensor<type, 5> image_patches;
 };
@@ -290,9 +271,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    virtual ~PoolingLayerBackPropagation()
-    {
-    }
 
     explicit PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
@@ -301,7 +279,29 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    virtual ~PoolingLayerBackPropagation()
+    {
+    }
+
+
+    pair<type*, dimensions> get_deltas() const final
+    {
+        const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+
+        const Index kernels_number = 0;// = pooling_layer_pointer->get_kernels_number();
+
+        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
+
+        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
+
+        return pair<type*, dimensions>(deltas_data, {{batch_samples_number,
+                                                      kernels_number,
+                                                      outputs_rows_number,
+                                                      outputs_columns_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
     {
         batch_samples_number = new_batch_samples_number;
 
@@ -312,29 +312,25 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
         const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
         const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
 
-        deltas_dimensions.resize(4);
-/*
-        deltas_dimensions.setValues({batch_samples_number,
-                                     kernels_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number});
+        const Index kernels_number = 0;
 
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
+        deltas.resize(batch_samples_number,
+                      kernels_number,
+                      outputs_rows_number,
+                      outputs_columns_number);
 
-        deltas_times_activations_derivatives.resize(batch_samples_number,
-                                                    kernels_number,
-                                                    outputs_rows_number,
-                                                    outputs_columns_number);
-*/
+        deltas_data = deltas.data();
     }
 
 
     void print() const
     {
         cout << "Deltas:" << endl;
-        //cout << deltas << endl;
-
+        cout << deltas << endl;
     }
+
+    Tensor<type, 4> deltas;
+
 };
 
 //#ifdef OPENNN_CUDA

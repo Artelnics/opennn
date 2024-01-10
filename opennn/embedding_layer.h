@@ -110,23 +110,18 @@ public:
 
     // Embedding layer outputs
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+    void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
 
-    /*
-    void forward_propagate(type*,
-                           const Tensor<Index, 1>&,
-                           Tensor<type, 1>&,
-                           LayerForwardPropagation*) final;
-*/
     // Expression methods
 
-    //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     // Serialization methods
+
     /// @todo
 
-    //    void from_XML(const tinyxml2::XMLDocument&) final;
-    //    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -181,7 +176,7 @@ protected:
             set(new_batch_samples_number, new_layer_pointer);
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
         {
             EmbeddingLayer* layer_pointer = static_cast<EmbeddingLayer*>(new_layer_pointer);
 
@@ -189,14 +184,12 @@ protected:
 
             const Index input_length = layer_pointer->get_input_length();
 
-            const Index depth = layer_pointer->get_depth();
-
             // Outputs
 
-            outputs.resize(1);
-            Tensor<Index, 1> output_dimensions(3);
-            output_dimensions.setValues({batch_samples_number, input_length, depth});
-            outputs(0).set_dimensions(output_dimensions);
+//            outputs.resize(1);
+//            Tensor<Index, 1> output_dimensions(3);
+//            output_dimensions.setValues({batch_samples_number, input_length, depth});
+//            outputs(0).set_dimensions(output_dimensions);
 
             // Rest of quantities
 
@@ -217,6 +210,8 @@ protected:
             //            cout << "Attention scores:" << endl;
             //            cout << attention_scores << endl;
         }
+
+        Tensor<type, 3> outputs;
 
     };
 
@@ -266,13 +261,10 @@ protected:
 
             cout << "Squared errors Jacobian: " << endl;
             cout << squared_errors_Jacobian << endl;
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
-        }
-
-        Tensor<type, 2> squared_errors_Jacobian;
-*/
+        PerceptronLayerForwardPropagation perceptron_forward_propagation;
     };
-
 
 
     struct EmbeddingLayerBackPropagation : LayerBackPropagation
@@ -296,8 +288,8 @@ protected:
         }
 
         /// @todo
-        /*
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
         {
             layer_pointer = new_layer_pointer;
 
@@ -306,10 +298,7 @@ protected:
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
-            deltas_dimensions.resize(2);
-            deltas_dimensions.setValues({batch_samples_number, neurons_number});
-
-            deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+            deltas.resize(batch_samples_number, neurons_number);
 
             biases_derivatives.resize(neurons_number);
 
@@ -318,24 +307,11 @@ protected:
             deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
         }
 
-        Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-        {
-            Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
-
-            const Index inputs_number = layer_pointer->get_inputs_number();
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
-            layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
-
-            return layer_gradient;
-        }
-
 
         void print() const
         {
             cout << "Deltas:" << endl;
-            //cout << deltas << endl;
+            cout << deltas << endl;
 
             cout << "Biases derivatives:" << endl;
             cout << biases_derivatives << endl;
@@ -344,11 +320,12 @@ protected:
             cout << synaptic_weights_derivatives << endl;
         }
 
+        Tensor<type, 2> deltas;
+
         Tensor<type, 1> biases_derivatives;
         Tensor<type, 2> synaptic_weights_derivatives;
 
         Tensor<type, 2> deltas_times_activations_derivatives;
-*/
     };
 
 }

@@ -140,7 +140,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_epochs_number < static_cast<type>(0.0))
+    if(new_maximum_epochs_number < type(0.0))
     {
         ostringstream buffer;
 
@@ -193,7 +193,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0.0))
     {
         ostringstream buffer;
 
@@ -370,8 +370,8 @@ TrainingResults GradientDescent::perform_training()
 
     if(neural_network_pointer->has_scaling_layer())
     {
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
-        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d_pointer = neural_network_pointer->get_scaling_layer_2d_pointer();
+        scaling_layer_2d_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
 
     if(neural_network_pointer->has_unscaling_layer())
@@ -426,18 +426,22 @@ TrainingResults GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-        neural_network_pointer->forward_propagate(training_batch.inputs, training_forward_propagation, is_training);
+
+        neural_network_pointer->forward_propagate(training_batch.get_inputs(), training_forward_propagation, is_training);
 
         // Loss index
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
         // Update parameters
+
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch.inputs, selection_forward_propagation, is_training);
+
+            neural_network_pointer->forward_propagate(selection_batch.get_inputs(), selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -450,7 +454,7 @@ TrainingResults GradientDescent::perform_training()
         // Optimization algorithm
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         // Print progress
 
@@ -533,35 +537,7 @@ TrainingResults GradientDescent::perform_training()
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
-/*
-    if(neural_network_pointer->get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-        type* input_data = inputs.data();
-
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-*/
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())
@@ -747,7 +723,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = type(atof(element->GetText()));
 
             try
             {
@@ -766,7 +742,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_loss_goal = static_cast<type>(atof(element->GetText()));
+            const type new_loss_goal = type(atof(element->GetText()));
 
             try
             {
@@ -785,7 +761,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
 
             try
             {
@@ -804,7 +780,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
 
             try
             {
@@ -823,7 +799,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_time = type(atof(element->GetText()));
 
             try
             {

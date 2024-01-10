@@ -91,7 +91,7 @@ namespace opennn
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replac_substring_within_quotes(string&, const string&, const string&);
-    void replace_substring_in_string (Tensor<string, 1>& found_tokens, std::string& outputs_espresion, const std::string& keyword);
+    void replace_substring_in_string (Tensor<string, 1>& found_tokens, string& outputs_espresion, const string& keyword);
 
     bool isNotAlnum(char &c);
     void remove_not_alnum(string &str);
@@ -103,7 +103,7 @@ namespace opennn
     Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2>, const int&);
 
     Tensor<string,1> sort_string_tensor (Tensor<string, 1> tensor);
-    Tensor<string,1> concatenate_string_tensors (Tensor<string, 1> tensor1, Tensor<string, 1> tensor2);
+    Tensor<string,1> concatenate_string_tensors (const Tensor<string, 1>& tensor_1, const Tensor<string, 1>& tensor_2);
 }
 
 #endif // OPENNNSTRINGS_H

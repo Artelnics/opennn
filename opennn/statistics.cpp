@@ -69,7 +69,7 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
         }
     }
 
-    const type mean = sum/static_cast<type>(count);
+    const type mean = type(sum/count);
 
     type standard_deviation;
 
@@ -79,8 +79,8 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
     }
     else
     {
-        const type numerator = type(squared_sum) - (sum * sum) / type(count);
-        const type denominator = type(size) - static_cast<type>(1.0);
+        const type numerator = type(squared_sum - sum*sum/count);
+        const type denominator = type(size - 1);
 
         standard_deviation = numerator / denominator;
     }
@@ -455,7 +455,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
     if(frequencies.size() == 0)
     {
         Tensor<type, 1> nan(1);
-        nan.setValues({static_cast<type>(NAN)});
+        nan.setValues({type(NAN)});
         return nan;
     }
 
@@ -475,7 +475,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
     {
         if(frequencies(i) == minimum_frequency)
         {
-            minimal_centers(index) = static_cast<type>(centers(i));
+            minimal_centers(index) = type(centers(i));
 
             index++;
         }
@@ -496,7 +496,7 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
     if(frequencies.size() == 0)
     {
         Tensor<type, 1> nan(1);
-        nan.setValues({static_cast<type>(NAN)});
+        nan.setValues({type(NAN)});
         return nan;
     }
 
@@ -516,7 +516,7 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
     {
         if(maximum_frequency == frequencies(i))
         {
-            maximal_centers(index) = static_cast<type>(centers(i));
+            maximal_centers(index) = type(centers(i));
 
             index++;
         }
@@ -538,7 +538,7 @@ Index Histogram::calculate_bin(const type& value) const
     const type minimum_center = centers[0];
     const type maximum_center = centers[bins_number - 1];
 
-    const type length = static_cast<type>(maximum_center - minimum_center)/static_cast<type>(bins_number - 1.0);
+    const type length = type(maximum_center - minimum_center)/type(bins_number - 1.0);
 
     type minimum_value = centers[0] - length / type(2);
     type maximum_value = minimum_value + length;
@@ -855,7 +855,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
         sum += vector(i);
     }
 
-    return sum /static_cast<type>(end-begin+1);
+    return type(sum/(end-begin+1));
 }
 
 
@@ -897,7 +897,7 @@ type mean(const Tensor<type, 1>& vector)
         }
     }
 
-    const type mean = sum /static_cast<type>(count);
+    const type mean = type(sum/count);
 
     return mean;
 }
@@ -944,8 +944,8 @@ type variance(const Tensor<type, 1>& vector)
 
     if(count <= 1) return type(0);
 
-    const type variance = squared_sum/static_cast<type>(count - 1)
-            - (sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
+    const type variance
+        = type(squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1));
 
     return variance;
 }
@@ -996,7 +996,8 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     if(count <= 1) return type(0);
 
-    const type variance = squared_sum/static_cast<type>(count - 1) - (sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
+    const type variance
+        = type(squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1));
 
     return variance;
 }
@@ -1052,9 +1053,9 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
 
 #endif
 
-    if(variance(vector, indices) < static_cast<type>(1e-9))
+    if(variance(vector, indices) < type(1e-9))
     {
-        return static_cast<type>(0);
+        return type(0);
     }else
     {
         return sqrt(variance(vector, indices));
@@ -1077,6 +1078,7 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
         const Index begin = i < period ? 0 : i - period + 1;
         const Index end = i;
 
+        sum = type(0);
         mean_value = mean(vector, begin,end);
 
         for(Index j = begin; j < end+1; j++)
@@ -1084,10 +1086,7 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
             sum += (vector(j) - mean_value) *(vector(j) - mean_value);
         }
 
-        std(i) = sqrt(sum / type(period));
-
-        mean_value = type(0);
-        sum = type(0);
+        std(i) = type(sqrt(sum/period));
     }
 
     return std;
@@ -1144,7 +1143,7 @@ type asymmetry(const Tensor<type, 1>& vector)
         }
     }
 
-    const type numerator = sum / type(count);
+    const type numerator = type(sum/count);
     const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
 
     return numerator/denominator;
@@ -1200,7 +1199,7 @@ type kurtosis(const Tensor<type, 1>& vector)
         }
     }
 
-    const type numerator = sum / type(count);
+    const type numerator = type(sum/count);
     const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
 
     return numerator/denominator - type(3);
@@ -1246,13 +1245,13 @@ type median(const Tensor<type, 1>& vector)
 
     if(new_size % 2 == 0)
     {
-        median_index = static_cast<Index>(new_size / 2);
+        median_index = Index(new_size / 2);
 
-        return (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
+        return (sorted_vector(median_index-1) + sorted_vector(median_index)) / type(2.0);
     }
     else
     {
-        median_index = static_cast<Index>(new_size / 2);
+        median_index = Index(new_size / 2);
 
         return sorted_vector(median_index);
     }
@@ -1421,14 +1420,14 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
     }
     else if(new_size % 2 == 0)
     {
-        Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
-        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
+        Index median_index = Index(first_sorted_vector.size() / 2);
+        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / type(2.0);
 
-        median_index = static_cast<Index>(new_size / 2);
-        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
+        median_index = Index(new_size / 2);
+        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / type(2.0);
 
-        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
-        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
+        median_index = Index(last_sorted_vector.size() / 2);
+        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / type(2.0);
     }
     else
     {
@@ -1584,11 +1583,11 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         const type min = minimum(vector);
         const type max = maximum(vector);
 
-        const type length = (max - min) /static_cast<type>(bins_number);
+        const type length = (max - min) /type(bins_number);
 
         minimums(0) = min;
         maximums(0) = min + length;
-        centers(0) = (maximums(0) + minimums(0)) /static_cast<type>(2.0);
+        centers(0) = (maximums(0) + minimums(0)) /type(2.0);
 
         // Calculate bins center
 
@@ -1597,7 +1596,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
             minimums(i) = minimums(i - 1) + length;
             maximums(i) = maximums(i - 1) + length;
 
-            centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
+            centers(i) = (maximums(i) + minimums(i)) /type(2.0);
         }
 
         // Calculate bins frequency
@@ -1669,11 +1668,11 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
     if(bins_number%2 == 0)
     {
-        bin_center = static_cast<Index>(static_cast<type>(bins_number)/static_cast<type>(2.0));
+        bin_center = Index(type(bins_number)/type(2.0));
     }
     else
     {
-        bin_center = static_cast<Index>(static_cast<type>(bins_number)/static_cast<type>(2.0) + static_cast<type>(0.5));
+        bin_center = Index(type(bins_number)/type(2.0) + type(0.5));
     }
 
     Tensor<type, 1> minimums(bins_number);
@@ -1686,7 +1685,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
     const type min = minimum(vector);
     const type max = maximum(vector);
 
-    const type length = (max - min)/static_cast<type>(bins_number);
+    const type length = (max - min)/type(bins_number);
 
     minimums(bin_center-1) = center - length;
     maximums(bin_center-1) = center + length;
@@ -1699,15 +1698,15 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
         minimums(i) = minimums(i - 1) + length;
         maximums(i) = maximums(i - 1) + length;
 
-        centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
+        centers(i) = (maximums(i) + minimums(i)) /type(2.0);
     }
 
-    for(Index i = static_cast<Index>(bin_center)-2; i >= 0; i--) // Lower centers
+    for(Index i = Index(bin_center)-2; i >= 0; i--) // Lower centers
     {
         minimums(i) = minimums(i + 1) - length;
         maximums(i) = maximums(i + 1) - length;
 
-        centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
+        centers(i) = (maximums(i) + minimums(i)) /type(2.0);
     }
 
     // Calculate bins frequency
@@ -1767,7 +1766,7 @@ Histogram histogram(const Tensor<bool, 1>& v)
     {
         for(Index j = 0; j < 2; j++)
         {
-            if(static_cast<Index>(v(i)) == static_cast<Index>(minimums(j)))
+            if(Index(v(i)) == Index(minimums(j)))
             {
                 frequencies(j)++;
             }
@@ -1939,8 +1938,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            const double variance = squared_sums(i)/static_cast<double>(count(i)-1)
-                    - (sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>(count(i)-1);
+            const double variance = squared_sums(i)/double(count(i)-1)
+                    - (sums(i)/double(count(i)))*(sums(i)/double(count(i)))*double(count(i))/double(count(i)-1);
 
             standard_deviation(i) = sqrt(variance);
         }
@@ -1949,7 +1948,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            standard_deviation(i) = 0;
+            standard_deviation(i) = type(0);
         }
     }
 
@@ -2143,8 +2142,8 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < new_size; i++)
     {
-        const type normal_distribution = static_cast<type>(0.5)
-                * type(erfc(double(mean) - double(sorted_vector(i))))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2))));
+        const type normal_distribution = type(0.5)
+                * type(erfc(double(mean) - double(sorted_vector(i))))/type((standard_deviation*type(sqrt(2))));
 
         const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum - minimum);
 
@@ -2162,7 +2161,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         }
         else
         {
-            counter = static_cast<Index>(i + 1);
+            counter = Index(i + 1);
 
             for(Index j = i+1; j < new_size; j++)
             {
@@ -2176,7 +2175,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
                 }
             }
 
-            empirical_distribution = static_cast<type>(counter)/static_cast<type>(new_size);
+            empirical_distribution = type(counter)/type(new_size);
         }
 
 #pragma omp critical
@@ -2229,7 +2228,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
             }
         }
 
-        mean(j) /= static_cast<type>(rows_number);
+        mean(j) /= type(rows_number);
     }
 
     return mean;
@@ -2262,7 +2261,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
             mean(j) += matrix(i, column_index);
         }
 
-        mean(j) /= static_cast<type>(rows_number);
+        mean(j) /= type(rows_number);
     }
 
     return mean;
@@ -2386,7 +2385,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
             }
         }
 
-        mean(j) /= static_cast<type>(count);
+        mean(j) /= type(count);
     }
 
     return mean;
@@ -2446,7 +2445,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
         }
     }
 
-    mean /= static_cast<type>(count);
+    mean /= type(count);
 
     return mean;
 }
@@ -2760,7 +2759,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*static_cast<type>(sqrt(2.0)));
+        normal_distribution = type(0.5) * type(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*type(sqrt(2.0)));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2775,7 +2774,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
+        empirical_distribution = type(counter)/type(n);
 
         normal_distribution_distance += abs(normal_distribution - empirical_distribution);
     }
@@ -2807,7 +2806,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        half_normal_distribution = type(erf(double(sorted_vector(i))))/(standard_deviation * static_cast<type>(sqrt(2)));
+        half_normal_distribution = type(erf(double(sorted_vector(i))))/(standard_deviation * type(sqrt(2)));
 
         counter = 0;
 
@@ -2823,7 +2822,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
+        empirical_distribution = type(counter)/type(n);
 
         half_normal_distribution_distance += abs(half_normal_distribution - empirical_distribution);
     }
@@ -2871,7 +2870,7 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
+        empirical_distribution = type(counter)/type(n);
 
         uniform_distribution_distance += abs(uniform_distribution - empirical_distribution);
     }
@@ -2908,7 +2907,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*static_cast<type>(sqrt(2.0)));
+        normal_distribution = type(0.5) * type(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*type(sqrt(2.0)));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2923,7 +2922,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
             }
         }
 
-        empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
+        empirical_distribution = type(counter)/type(n);
 
         if(i == 0)
         {
@@ -2932,15 +2931,15 @@ type normality_parameter(const Tensor<type, 1>& vector)
         }
         else
         {
-            normal_area += static_cast<type>(0.5)*(sorted_vector(i)-sorted_vector[i-1])*(normal_distribution+previous_normal_distribution);
-            empirical_area += static_cast<type>(0.5)*(sorted_vector(i)-sorted_vector[i-1])*(empirical_distribution+previous_empirical_distribution);
+            normal_area += type(0.5)*(sorted_vector(i)-sorted_vector[i-1])*(normal_distribution+previous_normal_distribution);
+            empirical_area += type(0.5)*(sorted_vector(i)-sorted_vector[i-1])*(empirical_distribution+previous_empirical_distribution);
 
             previous_normal_distribution = normal_distribution;
             previous_empirical_distribution = empirical_distribution;
         }
     }
     */
-    const type uniform_area = (max - min)/static_cast<type>(2.0);
+    const type uniform_area = (max - min)/type(2.0);
 
     return uniform_area;
 }
@@ -2956,7 +2955,7 @@ Tensor<type, 1> variation_percentage(const Tensor<type, 1>& vector)
     {
         if(abs(vector[i-1]) < type(NUMERIC_LIMITS_MIN))
         {
-            new_vector(i) = (vector(i) - vector[i-1])*static_cast<type>(100.0)/vector[i-1];
+            new_vector(i) = (vector(i) - vector[i-1])*type(100.0)/vector[i-1];
         }
     }
 
@@ -3054,7 +3053,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index& ) \n"
+               << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index&) \n"
                << "Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
         throw invalid_argument(buffer.str());
@@ -3102,7 +3101,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index& ) \n"
+               << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index&) \n"
                << "Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
         throw invalid_argument(buffer.str());
@@ -3219,7 +3218,7 @@ Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>& matrix, const In
                 }
             }
 
-            column(maximal_index) = columns_minimums(j)-static_cast<type>(1);
+            column(maximal_index) = columns_minimums(j)-type(1);
             maximal_columns_indices(i,j) = maximal_index;
         }
     }
@@ -3262,7 +3261,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
     if(new_size == 0)
     {
         Tensor<type, 1> nan(1);
-        nan.setValues({static_cast<type>(NAN)});
+        nan.setValues({type(NAN)});
         return nan;
     }
 
@@ -3291,10 +3290,10 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
     for(Index i = 0; i < 9; i++)
     {
         if(new_size * (i + 1) % 10 == 0)
-            percentiles[i] = (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / static_cast<type>(2.0);
+            percentiles[i] = (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / type(2.0);
 
         else
-            percentiles[i] = static_cast<type>(sorted_vector[new_size * (i + 1) / 10]);
+            percentiles[i] = type(sorted_vector[new_size * (i + 1) / 10]);
     }
     percentiles[9] = maximum(new_vector);
 

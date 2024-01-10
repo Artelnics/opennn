@@ -66,7 +66,7 @@ int main()
         const TrainingResults training_results = training_strategy.perform_training();
 
         // Calculate outputs
-
+/*
         Tensor<type, 2> input(4,2);
         Tensor<Index, 1> inputs_dimension = get_dimensions(input);
         input.setValues({{150,146},
@@ -84,7 +84,7 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/neural_network.py");
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

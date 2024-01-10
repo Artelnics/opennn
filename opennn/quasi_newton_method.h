@@ -142,7 +142,7 @@ private:
 
    InverseHessianApproximationMethod inverse_hessian_approximation_method;
 
-   type first_learning_rate = static_cast<type>(0.01);
+   type first_learning_rate = type(0.01);
 
    // Stopping criteria
 

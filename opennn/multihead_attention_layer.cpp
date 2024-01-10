@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "multihead_attention_layer.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -233,40 +234,45 @@ void MultiheadAttentionLayer::set_kernels()
 
 void MultiheadAttentionLayer::set_parameters_random()
 {
-    const type minimum = type(-0.2);
-    const type maximum = type(0.2);
+    query_kernel.setRandom();
 
-#pragma omp parallel for
-    for(Index i = 0; i < query_kernel.size(); i++)
-    {
-        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+    key_kernel.setRandom();
 
-        query_kernel(i) = minimum + (maximum - minimum)*random;
-    }
+    value_kernel.setRandom();
 
-#pragma omp parallel for
-    for(Index i = 0; i < key_kernel.size(); i++)
-    {
-        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+    projection_kernel.setRandom();
 
-        key_kernel(i) = minimum + (maximum - minimum)*random;
-    }
+// #pragma omp parallel for
+//     for(Index i = 0; i < query_kernel.size(); i++)
+//     {
+//         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-#pragma omp parallel for
-    for(Index i = 0; i < value_kernel.size(); i++)
-    {
-        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+//         query_kernel(i) = minimum + (maximum - minimum)*random;
+//     }
 
-        value_kernel(i) = minimum + (maximum - minimum)*random;
-    }
+// #pragma omp parallel for
+//     for(Index i = 0; i < key_kernel.size(); i++)
+//     {
+//         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-#pragma omp parallel for
-    for(Index i = 0; i < projection_kernel.size(); i++)
-    {
-        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+//         key_kernel(i) = minimum + (maximum - minimum)*random;
+//     }
 
-        projection_kernel(i) = minimum + (maximum - minimum)*random;
-    }
+// #pragma omp parallel for
+//     for(Index i = 0; i < value_kernel.size(); i++)
+//     {
+//         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+//         value_kernel(i) = minimum + (maximum - minimum)*random;
+//     }
+
+// #pragma omp parallel for
+//     for(Index i = 0; i < projection_kernel.size(); i++)
+//     {
+//         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+//         projection_kernel(i) = minimum + (maximum - minimum)*random;
+//     }
 }
 
 
@@ -276,20 +282,31 @@ void MultiheadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void MultiheadAttentionLayer::set_causal_mask(const bool& apply_causal_mask)
+
+/// @todo fix, update and explain. Remove all allocations of tensors
+
+void MultiheadAttentionLayer::calculate_query_transformation(const Tensor<type, 3>& query, type* query_transformation_data)
 {
-    if(apply_causal_mask && input_size != context_size)
-    {
-        ostringstream buffer;
+    const Index batch_size = get_dimensions(query)(0);
 
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void set_causal_mask(const bool&) method.\n"
-               << "Causal mask can only be applied to self-attention. In this case, input size (" << input_size << ") should be equal to context size (" << context_size << ").";
 
-        throw invalid_argument(buffer.str());
-    }
 
-    causal_mask = apply_causal_mask;
+    TensorMap<Tensor<type, 4>> transformed_query(query_transformation_data, batch_size, input_size, depth, number_of_heads);
+
+// void MultiheadAttentionLayer::set_causal_mask(const bool& apply_causal_mask)
+// {
+//     if(apply_causal_mask && input_size != context_size)
+//     {
+//         ostringstream buffer;
+
+    //     buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
+    //            << "void set_causal_mask(const bool&) method.\n"
+    //            << "Causal mask can only be applied to self-attention. In this case, input size (" << input_size << ") should be equal to context size (" << context_size << ").";
+
+    //     throw invalid_argument(buffer.str());
+    // }
+
+    // causal_mask = apply_causal_mask;
 }
 
 
@@ -339,7 +356,7 @@ void MultiheadAttentionLayer::calculate_output_projection(DynamicTensor<type>& a
 
 /// Computes the attention scores by comparing (via dot product) query and key.
 /// Attention scores must be computed separately for each batch element and each attention head (batch matrix multiplication).
-
+/*
 void MultiheadAttentionLayer::compute_attention_scores(DynamicTensor<type>& transformed_query,
                                                        DynamicTensor<type>& transformed_key,
                                                        DynamicTensor<type>& attention_scores)
@@ -360,7 +377,9 @@ void MultiheadAttentionLayer::compute_attention_scores(DynamicTensor<type>& tran
     const TensorMap<Tensor<type, 4>>  transformed_query_map = transformed_query.to_tensor_map<4>();
     const TensorMap<Tensor<type, 4>>  transformed_key_map = transformed_key.to_tensor_map<4>();
 
-    const Tensor<type, 4> scaled_query = transformed_query_map / transformed_query_map.constant(sqrt(depth));
+    const Tensor<type, 4> scaled_query = transformed_query / transformed_query.constant(type(sqrt(depth)));
+
+    // const Tensor<type, 4> scaled_query = transformed_query_map / transformed_query_map.constant(sqrt(depth));
 
     TensorMap<Tensor<type, 4>> attention_scores_map = attention_scores.to_tensor_map<4>();
 
@@ -375,9 +394,18 @@ void MultiheadAttentionLayer::compute_attention_scores(DynamicTensor<type>& tran
     {
         for(Index head_index = 0; head_index < number_of_heads ; head_index++)
         {
-            attention_scores_matrix.setZero();
+<<<<<<< HEAD
+            for(Index head_index = 0; head_index < number_of_heads ; head_index++)
+            {
 
-            raw_attention_scores/*.device(thread_pool_device)*/ =
+            raw_attention_scores.chip(batch_index, 0).chip(head_index, 2) = //.device(thread_pool_device)
+                    scaled_query.chip(batch_index, 0).chip(head_index, 2).contract(
+                    transformed_key.chip(batch_index, 0).chip(head_index, 2), A_BT);
+=======
+            attention_scores_matrix.setZero();
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+
+            raw_attention_scores/*.device(thread_pool_device) =
                 scaled_query.chip(batch_index, 0).chip(head_index, 2).contract(
                 transformed_key_map.chip(batch_index, 0).chip(head_index, 2), A_BT);
 
@@ -393,7 +421,11 @@ void MultiheadAttentionLayer::compute_attention_scores(DynamicTensor<type>& tran
                         raw_attention_scores(input_index, context_index) = m_inf;
                     }
                 }
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
             }
 
             softmax(raw_attention_scores.data(),
@@ -405,8 +437,8 @@ void MultiheadAttentionLayer::compute_attention_scores(DynamicTensor<type>& tran
     }
     /// @todo add dropout
 }
-
-
+*/
+/*
 void MultiheadAttentionLayer::compute_attention_output(DynamicTensor<type>& transformed_value,
                                                        DynamicTensor<type>& attention_scores,
                                                        DynamicTensor<type>& attention_outputs)
@@ -429,12 +461,19 @@ void MultiheadAttentionLayer::compute_attention_output(DynamicTensor<type>& tran
             }
         };
 }
+*/
 
-
-void MultiheadAttentionLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
+void MultiheadAttentionLayer::forward_propagate(const pair<type*, dimensions>& inputs,
                                         LayerForwardPropagation* forward_propagation,
                                         const bool& is_training)
 {
+<<<<<<< HEAD
+/*
+    const Index batch_size = inputs(0).get_dimension(0);
+
+    const Tensor<Index, 1> query_dimensions = inputs(0).get_dimensions();
+    const Tensor<Index, 1> key_dimensions = inputs(1).get_dimensions();
+=======
     if(inputs.size() != 2)
     {
         ostringstream buffer;
@@ -479,6 +518,7 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<DynamicTensor<type>
                << "3rd dimension of input and context must be equal to layer depth.\n";
         throw invalid_argument(buffer.str());
     }
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
@@ -509,70 +549,20 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<DynamicTensor<type>
                              attention_outputs);
 
     calculate_output_projection(attention_outputs,
+<<<<<<< HEAD
+                                multihead_attention_layer_forward_propagation->outputs(0).get_data());
+*/
+=======
                                 multihead_attention_layer_forward_propagation->outputs(0));
     */
+>>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 }
 
-
-/*
-void PerceptronLayer::forward_propagate(type* inputs_data,
-                                        const Tensor<Index, 1>& inputs_dimensions,
-                                        Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* forward_propagation)
-{
-#ifdef OPENNN_DEBUG
-    if(inputs_dimensions(1) != get_inputs_number())
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception:" << LOG << endl
-               << "void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    check_size(potential_parameters, get_parameters_number(), LOG);
-#endif
-
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index inputs_number = get_inputs_number();
-
-    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), 1, neurons_number);
-
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
-
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-        = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
-
-    const Tensor<Index, 1> activations_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
-
-    const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-
-    const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
-
-
-    calculate_combinations(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           perceptron_layer_forward_propagation->get_combinations_data());
-
-
-    calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                      combinations_dimensions,
-                                      perceptron_layer_forward_propagation->outputs_data,
-                                      activations_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                      derivatives_dimensions);
-}
-*/
 
 /// @todo
-///// Returns a string with the expression of the inputs-outputs relationship of the layer.
-///// @param inputs_names vector of strings with the name of the layer inputs.
-///// @param outputs_names vector of strings with the name of the layer outputs.
+/// Returns a string with the expression of the inputs-outputs relationship of the layer.
+/// @param inputs_names vector of strings with the name of the layer inputs.
+/// @param outputs_names vector of strings with the name of the layer outputs.
 
 //string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 //{
@@ -651,7 +641,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
 //    if(inputs_number_element->GetText())
 //    {
-//        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
+//        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
 //    }
 
 //    // Neurons number
@@ -669,7 +659,7 @@ void PerceptronLayer::forward_propagate(type* inputs_data,
 
 //    if(neurons_number_element->GetText())
 //    {
-//        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
+//        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
 //    }
 
 //    // Activation function

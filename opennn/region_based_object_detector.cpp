@@ -27,7 +27,7 @@ RegionBasedObjectDetector::RegionBasedObjectDetector(NeuralNetwork* new_neural_n
 }
 
 
-///// Destructor.
+/// Destructor.
 
 RegionBasedObjectDetector::~RegionBasedObjectDetector()
 {

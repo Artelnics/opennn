@@ -255,12 +255,12 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     for(Index i = 0; i < size; i++)
     {
-        const Tensor<type, 0> norm = (targets.chip(i,0) - targets_mean).square().sum();
+        const Tensor<type, 0> norm = (targets.chip(i, 0) - targets_mean).square().sum();
 
         normalization_coefficient += norm(0);
     }
 
-    if(static_cast<type>(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
+    if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
 
     return normalization_coefficient;
 }
@@ -296,21 +296,9 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_used_samples_number();
 
-    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = ((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
-
-    if(is_nan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: normalized_squared_error class.\n"
-               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
-
 }
 
 
@@ -339,7 +327,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = ((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
 }
@@ -363,24 +351,13 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const type coefficient
-            = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
+            = type(2)/(type(batch_samples_number)/type(total_samples_number)*normalization_coefficient);
 
-    TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
 
-    deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 
-    Tensor<type, 2> output_deltas(deltas);
-
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: normalized_squared_error class.\n"
-               << "void calculate_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
-
-        throw invalid_argument(buffer.str());
-    }
+    deltas_map.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 
@@ -422,7 +399,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& bat
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -443,7 +420,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batc
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) =
             loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);

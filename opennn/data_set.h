@@ -280,7 +280,7 @@ public:
     RawVariableType get_column_type(const Index& index) const {return columns[index].type;}
     string get_column_type_string(const RawVariableType&) const;
 
-    VariableUse get_column_use(const Index& ) const;
+    VariableUse get_column_use(const Index&) const;
     Tensor<VariableUse, 1> get_columns_uses() const;
 
     // Variables get methods
@@ -557,13 +557,13 @@ public:
 
     // Splitting methods
 
-    void split_samples_sequential(const type& training_ratio = static_cast<type>(0.6),
-                                  const type& selection_ratio = static_cast<type>(0.2),
-                                  const type& testing_ratio = static_cast<type>(0.2));
+    void split_samples_sequential(const type& training_ratio = type(0.6),
+                                  const type& selection_ratio = type(0.2),
+                                  const type& testing_ratio = type(0.2));
 
-    void split_samples_random(const type& training_ratio = static_cast<type>(0.6),
-                              const type& selection_ratio = static_cast<type>(0.2),
-                              const type& testing_ratio = static_cast<type>(0.2));
+    void split_samples_random(const type& training_ratio = type(0.6),
+                              const type& selection_ratio = type(0.2),
+                              const type& testing_ratio = type(0.2));
 
     // Unusing methods
 

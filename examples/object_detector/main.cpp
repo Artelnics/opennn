@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
         DataSetBatch training_batch(1, &data_set);
 
-        Tensor<Index, 2> training_batches = data_set.get_batches(training_samples_indices, batch_samples_number_training, shuffle);
+        Tensor<Index, 2> training_batches = data_set.get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         training_batch.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         neural_network.add_layer(&non_max_suppression_layer); // 3
 
         Tensor<Index, 1> non_max_suppression_layer_inputs_indices(2);
-        non_max_suppression_layer_inputs_indices(0) = 0;
+        non_max_suppression_layer_inputs_indices(0) = type(0);
         non_max_suppression_layer_inputs_indices(1) = 2;
 
         neural_network.set_layer_inputs_indices(3, non_max_suppression_layer_inputs_indices);

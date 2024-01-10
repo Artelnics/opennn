@@ -64,7 +64,7 @@ public:
    
    // Test case methods
 
-   /// This method runs all the methods contained in the test case. 
+   /// This method runs all the methods contained in the test case.
 
    virtual void run_test_case() = 0;
 
