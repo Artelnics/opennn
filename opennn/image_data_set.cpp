@@ -1685,6 +1685,7 @@ void ImageDataSet::read_bmp()
 
 void ImageDataSet::fill_image_data(const string& new_data_source_path, const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
 {
+    /*
     const fs::path path = new_data_source_path;
 
     if(new_data_source_path.empty())
@@ -1871,6 +1872,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const int
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({height, width, channels});
+    */
 }
 
 
