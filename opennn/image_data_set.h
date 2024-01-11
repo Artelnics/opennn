@@ -24,6 +24,28 @@
 #include "data_set.h"
 #include "bounding_box.h"
 
+#include <filesystem>
+//#include <experimental/filesystem>
+
+// Filesystem namespace
+
+#ifdef __APPLE__
+ #include <Availability.h> // for deployment target to support pre-catalina targets without fs
+#endif
+#if((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
+#if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
+#define GHC_USE_STD_FS
+#include <filesystem>
+namespace fs = filesystem;
+ #endif
+#endif
+ #ifndef GHC_USE_STD_FS
+ #include "filesystem.h"
+ namespace fs = ghc::filesystem;
+#endif
+
+using namespace fs;
+
 namespace opennn
 {
 
@@ -56,6 +78,8 @@ public:
 
     void set(const Index&, const Index&, const Index&, const Index&, const Index&);
 
+    void set_image_data_source_path(const string&);
+
     void set_channels_number(const int&);
     void set_image_width(const int&);
     void set_image_height(const int&);
@@ -78,7 +102,7 @@ public:
 
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
-    void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
+    void fill_image_data(const string&, const int&, const int&, const int&, const Tensor<type, 2>&);
 
     void read_bmp();
 
@@ -98,6 +122,8 @@ public:
     void write_XML(tinyxml2::XMLPrinter&) const;
 
 private:
+
+    string image_data_source_path;
 
     Index images_number = 0;
     Index channels_number = 0;
