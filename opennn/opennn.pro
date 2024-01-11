@@ -54,8 +54,8 @@ HEADERS += \
     addition_layer.h \
     concatenation_layer.h \
     codification.h \
-    embedding_layer.h \
-    multihead_attention_layer.h \
+    # embedding_layer.h \
+    # multihead_attention_layer.h \
     kmeans.h \
     numerical_differentiation.h \
     config.h \
@@ -81,14 +81,10 @@ HEADERS += \
     layer.h \
     layer_forward_propagation.h \
     layer_back_propagation.h \
-<<<<<<< HEAD
     layer_back_propagation_lm.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
-=======
-    scaling_layer.h \
-    transformer.h \
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+    # transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
     probabilistic_layer.h \
@@ -142,15 +138,15 @@ HEADERS += \
 #    region_proposal_layer.h \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
-    multihead_attention_layer.h \
+    # multihead_attention_layer.h \
     bounding_box.h \
     unscaling_layer_forward_propagation.h \
     word_bag.h \
     opennn.h
 
 SOURCES += \
-    embedding_layer.cpp \
-    multihead_attention_layer.cpp \
+    # embedding_layer.cpp \
+    # multihead_attention_layer.cpp \
     addition_layer.cpp \
     concatenation_layer.cpp \
     kmeans.cpp \
@@ -171,13 +167,9 @@ SOURCES += \
     text_data_set.cpp \
     language_data_set.cpp \
     layer.cpp \
-<<<<<<< HEAD
     scaling_layer_2d.cpp \
     scaling_layer_4d.cpp \
-=======
-    scaling_layer.cpp \
-    transformer.cpp \
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+    # transformer.cpp \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
     probabilistic_layer.cpp \
@@ -223,7 +215,7 @@ SOURCES += \
 #    region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \
-    multihead_attention_layer.cpp \
+    # multihead_attention_layer.cpp \
     bounding_box.cpp \
     unit_testing.cpp
 

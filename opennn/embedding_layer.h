@@ -239,7 +239,7 @@ protected:
         }
 
         /// @todo
-        /*
+
         void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
             layer_pointer = new_layer_pointer;
@@ -251,7 +251,7 @@ protected:
 
             deltas.resize(batch_samples_number, neurons_number);
 
-            squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+            // squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
         }
 
         void print() const
@@ -260,8 +260,7 @@ protected:
             cout << deltas << endl;
 
             cout << "Squared errors Jacobian: " << endl;
-            cout << squared_errors_Jacobian << endl;
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+            // cout << squared_errors_Jacobian << endl;
 
         PerceptronLayerForwardPropagation perceptron_forward_propagation;
     };
@@ -328,7 +327,7 @@ protected:
         Tensor<type, 2> deltas_times_activations_derivatives;
     };
 
-}
+    };
 
 #endif // EMBEDDING_LAYER_H
 

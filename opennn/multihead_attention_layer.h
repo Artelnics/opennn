@@ -73,12 +73,10 @@ public:
     Index get_depth() const;
     Index get_number_of_heads() const;
 
-<<<<<<< HEAD
-=======
 //    Tensor<Index, 1> get_inputs_dimensions() const final;
 //    Tensor<Index, 1> get_outputs_dimensions() const final;
 
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+
     Tensor<type, 3> get_query_kernel() const;
     Tensor<type, 3> get_key_kernel() const;
     Tensor<type, 3> get_value_kernel() const;
@@ -225,16 +223,14 @@ protected:
 
             const Index number_of_heads = layer_pointer->get_number_of_heads();
 
-<<<<<<< HEAD
             outputs.resize(batch_samples_number, input_size, depth);
-=======
+
             // Outputs
 
             outputs.resize(1);
             outputs(0).set_dimensions({batch_samples_number, input_size, depth});
 
             // Rest of quantities
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
             transformed_query.set_dimensions({new_batch_samples_number, input_size, depth, number_of_heads});
             transformed_key.set_dimensions({new_batch_samples_number, context_size, depth, number_of_heads});
@@ -282,17 +278,11 @@ protected:
             return attention_outputs;
         }
 
-<<<<<<< HEAD
         Tensor<type, 3> outputs;
 
         Tensor<type, 4> transformed_query;
         Tensor<type, 4> transformed_key;
         Tensor<type, 4> transformed_value;
-=======
-        DynamicTensor<type> transformed_query;
-        DynamicTensor<type> transformed_key;
-        DynamicTensor<type> transformed_value;
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
 
         DynamicTensor<type> attention_scores;
         DynamicTensor<type> attention_outputs;

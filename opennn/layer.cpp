@@ -237,7 +237,7 @@ void Layer::logistic(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
     y.device(*thread_pool_device) = type(1)/(type(1) + (-x).exp());
 
-//    y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+    //    y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
 }
 
 
@@ -251,7 +251,7 @@ void Layer::logistic_derivatives(const Tensor<type, 1>& x, Tensor<type, 1>& y, T
 
 void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-//    x.cwiseMin(type(2.5)).cwiseMax(type(-2.5)).cwiseProduct(type(0.2)) + type(0.5);
+    //    x.cwiseMin(type(2.5)).cwiseMax(type(-2.5)).cwiseProduct(type(0.2)) + type(0.5);
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(-2.5));
     const Tensor<bool, 1> elif_sentence = x > x.constant(type(2.5));
@@ -309,7 +309,7 @@ void Layer::hyperbolic_tangent(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
 
 
 void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 1>& x, Tensor<type, 1>& y, Tensor<type, 1>& dy_dx) const
-{   
+{
     y.device(*thread_pool_device) = x.tanh();
 
     dy_dx.device(*thread_pool_device) = type(1) - y.square();
@@ -470,7 +470,7 @@ void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
     const type alpha = type(1.0);
 
     y.device(*thread_pool_device) = x;
-/*
+    /*
     y.device(*thread_pool_device) = y.select(y < 0, alpha * (y.exp() - type(1)));
 
 
@@ -624,7 +624,7 @@ void Layer::leaky_rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
 void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-/*
+    /*
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -690,7 +690,7 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-/*
+    /*
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -798,7 +798,7 @@ void Layer::leaky_rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<
 
 void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-/*
+    /*
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -827,16 +827,16 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
 void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
     y.device(*thread_pool_device)
-            = (x.constant(type(1)) + x.exp()).log();
+        = (x.constant(type(1)) + x.exp()).log();
 
     dy_dx.device(*thread_pool_device)
-            = type(1.0) / (type(1.0) + x.exp().inverse());
+        = type(1.0) / (type(1.0) + x.exp().inverse());
 }
 
 
 void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-/*
+    /*
     const Tensor<bool, 2> if_sentence = combinations < combinations.constant(type(0));
 
     Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
@@ -870,7 +870,7 @@ void Layer::binary(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 void Layer::exponential_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-/*
+    /*
     const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
@@ -943,7 +943,7 @@ void Layer::leaky_rectified_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y)
 
 void Layer::scaled_exponential_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-/*
+    /*
     const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
@@ -1009,7 +1009,7 @@ void Layer::threshold(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 void Layer::exponential_linear_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, Tensor<type, 4>& dy_dx) const
 {
-/*
+    /*
     const Tensor<bool, 4> if_sentence = combinations < combinations.constant(type(0));
 
     Tensor<type, 4> f_1(combinations.dimension(0), combinations.dimension(1), combinations.dimension(2), combinations.dimension(3));
@@ -1110,69 +1110,13 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 4>& x, Tensor<type, 
 
 void Layer::leaky_rectified_linear_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, Tensor<type, 4>& dy_dx) const
 {
-/*
-    if(rank == 1)
-    {
-        const TensorMap<Tensor<type, 1>> x(x_data, x_dimensions(0));
-        TensorMap<Tensor<type, 1>> y(y_data, y_dimensions(0));
 
-        y.device(*thread_pool_device) = (x - x.maximum()).exp();
-        y.device(*thread_pool_device) = y / y.sum();
-    }
-    else if(rank == 2)
-    {
-        const Eigen::array<int, 1> dimensions({1});
-
-        const Index rows_number = x_dimensions(0);
-        const Index columns_number = x_dimensions(1);
-
-        const TensorMap<Tensor<type, 2>> x(x_data, rows_number, columns_number);
-
-        TensorMap<Tensor<type, 2>> y(y_data, rows_number, columns_number);
-
-        Tensor<type , 0> row_max;
-
-//        for(Index i = 0; i < rows_number; i++)
-//        {
-//            row_max = y.chip(i, 0).abs().maximum();
-//            if(row_max(0) > 88) // Numbers bigger than 88 give inf after .exp()
-//                y.chip(i, 0) = y.chip(i, 0) / row_max(0);
-//        }
-
-        y.device(*thread_pool_device) = x.exp();
-
-        for(Index i = 0; i < y.size(); i++)
-        {
-            if( isinf(y(i)) )
-            {
-                y(i) = std::numeric_limits<type>::max();
-            }
-        }
-
-        Tensor<type, 1> rows_sum(rows_number);
-
-        rows_sum.device(*thread_pool_device) = y.sum(dimensions);
-
-        divide_columns(thread_pool_device, y, rows_sum);
-
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Layer class.\n"
-               << "void Layer::softmax(type* x_data, Tensor<Index, 1>& x_dimensions, type* y_data, Tensor<Index, 1>& y_dimensions) const.\n"
-               << "Softmax function is not implemented for rank " << rank << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
 }
 
 
 void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, Tensor<type, 4>& dy_dx) const
 {
-/*
+    /*
     const Tensor<bool, 4> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
@@ -1194,81 +1138,7 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 4>& x, Tens
     f_2 = x.constant(type(1))*lambda;
 
     dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        // TensorMap<Tensor<type, 2>> combinations(combinations_data, combinations_dimensions(0), combinations_dimensions(1));
-
-        // softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
-
-//        TensorMap<Tensor<type, 2>> activations(activations_data, samples_number, variables_number);
-
-//        TensorMap<Tensor<type, 3>> activations_derivatives(activations_derivatives_data,
-//                                                           samples_number,
-//                                                           variables_number,
-//                                                           variables_number);
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            TensorMap<Tensor<type, 1>> sample_activations(activations_data + i*variables_number,
-                                                          variables_number);
-
-            TensorMap<Tensor<type, 2>> sample_activations_derivatives(activations_derivatives_data + i*variables_number*variables_number,
-                                                                      variables_number,
-                                                                      variables_number);
-
-            kronecker_product_void(sample_activations, sample_activations_derivatives);
-
-            sample_activations_derivatives = -sample_activations_derivatives;
-
-            #pragma omp parallel for
-
-            for(Index j = 0; j < variables_number; j++)
-            {
-                sample_activations_derivatives(j,j) = sample_activations(j) + sample_activations_derivatives(j,j);
-            }
-        }
-
-    }
-    else if(rank == 3)
-    {
-        const Index samples_number = combinations_dimensions(0);
-        const Index variables_number1 = combinations_dimensions(1);
-        const Index variables_number2 = combinations_dimensions(2);
-
-        softmax(combinations_data, combinations_dimensions, activations_data, activations_dimensions);
-
-        const TensorMap<Tensor<type, 3>> combinations(combinations_data, samples_number, variables_number1, variables_number2);
-
-        TensorMap<Tensor<type, 3>> activations(activations_data, samples_number, variables_number1, variables_number2);
-
-        TensorMap<Tensor<type, 4>> activations_derivatives(activations_derivatives_data,
-                                                           samples_number,
-                                                           variables_number1,
-                                                           variables_number2,
-                                                           variables_number2);
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            TensorMap<Tensor<type, 2>> sample_activations(activations_data,
-                                                          i*variables_number1*variables_number2,variables_number2);
-
-            TensorMap<Tensor<type, 3>> sample_activations_derivatives(activations_derivatives_data,
-                                                                      i*variables_number1*variables_number2*variables_number2,
-                                                                      variables_number1,
-                                                                      variables_number2);
-
-            sample_activations_derivatives = -sample_activations_derivatives;
-
-            #pragma omp parallel for collapse(2)
-            for(Index j = 0; j < variables_number1; j++)
-            {
-                for(Index k = 0; k < variables_number2; k++)
-                {
-                    sample_activations_derivatives(j, k, k) = sample_activations(j) + sample_activations_derivatives(j, k, k);
-                }
-            }
-        }
-    }
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
+*/
 }
 
 

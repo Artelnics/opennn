@@ -25,7 +25,7 @@
 
 #include "../../opennn/opennn/opennn.h"
 
-using namespace OpenNN;
+using namespace opennn;
 
 namespace OpenNN
 {

@@ -10320,6 +10320,9 @@ void DataSet::read_csv_3_complete()
 
     if(display) cout << "Reading data..." << endl;
 
+    time_t previous_timestamp = 0;
+    double time_step = 60 * 60 * 24;
+
     while(file.good())
     {
         getline(file, line);
@@ -10336,6 +10339,7 @@ void DataSet::read_csv_3_complete()
 
         variable_index = 0;
         column_index = 0;
+        bool insert_nan_row = false;
 
         for(Index j = 0; j < raw_columns_number; j++)
         {
@@ -10374,17 +10378,58 @@ void DataSet::read_csv_3_complete()
             }
             else if(columns(column_index).type == RawVariableType::DateTime)
             {
-                if(tokens(j) == missing_values_label || tokens(j).empty())
+                time_t current_timestamp = 0;
+
+                if(!(tokens(j) == missing_values_label || tokens(j).empty()))
                 {
-                    data(sample_index, variable_index) = type(NAN);
-                    variable_index++;
+                    current_timestamp = static_cast<time_t>(date_to_timestamp(tokens(j)));
+                }
+
+                while(previous_timestamp != 0 && difftime(current_timestamp, previous_timestamp) > time_step)
+                {
+                    for(Index columns_index = 0; columns_index < columns_number; ++columns_index)
+                    {
+                        data(sample_index, columns_index) = static_cast<type>(NAN);
+                    }
+                    sample_index++;
+
+                    previous_timestamp += time_step;
+                }
+
+                if(tokens(j).empty())
+                {
+                    data(sample_index, variable_index) = static_cast<type>(NAN);
                 }
                 else
                 {
-                    data(sample_index, variable_index) = type(date_to_timestamp(tokens(j), gmt));
-                    variable_index++;
+                    previous_timestamp = current_timestamp;
+                    data(sample_index, variable_index) = static_cast<type>(current_timestamp);
                 }
+
+                variable_index++;
             }
+            // else if(columns(column_index).type == RawVariableType::DateTime)
+            // {
+            //     time_t current_timestamp = 0;
+
+            //     if(!(tokens(j) == missing_values_label || tokens(j).empty()))
+            //     {
+            //         current_timestamp = static_cast<time_t>(date_to_timestamp(tokens(j)));
+            //     }
+
+            //     if(previous_timestamp != 0 && difftime(current_timestamp, previous_timestamp) > time_step)
+            //     {
+            //         insert_nan_row = true;
+            //         previous_timestamp += time_step;
+            //         break;
+            //     }
+            //     else
+            //     {
+            //         previous_timestamp = current_timestamp;
+            //         data(sample_index, variable_index) = tokens(j).empty() ? static_cast<type>(NAN) : current_timestamp;
+            //         variable_index++;
+            //     }
+            // }
             else if(columns(column_index).type == RawVariableType::Categorical)
             {
                 for(Index k = 0; k < columns(column_index).get_categories_number(); k++)
@@ -10441,6 +10486,17 @@ void DataSet::read_csv_3_complete()
             column_index++;
         }
 
+        if(insert_nan_row)
+        {
+            for(Index columns_index = 0; columns_index < columns_number; ++columns_index)
+            {
+                data(sample_index, columns_index) = static_cast<type>(NAN);
+            }
+            sample_index++;
+
+            continue;
+        }
+
         sample_index++;
     }
 
@@ -10459,6 +10515,11 @@ void DataSet::read_csv_3_complete()
     // Check binary
 
     if(display) cout << "Checking binary columns..." << endl;
+
+    ofstream myfile;
+    myfile.open ("/home/artelnics/Escritorio/example.txt");
+    myfile << "data: " << data << endl;
+    myfile.close();
 
     set_binary_simple_columns();
 }

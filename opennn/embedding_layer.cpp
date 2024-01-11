@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "embedding_layer.h"
+// #include "embedding_layer.h"
 #include "tensor_utilities.h"
 
 namespace opennn

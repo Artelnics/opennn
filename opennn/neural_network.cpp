@@ -1675,12 +1675,8 @@ type NeuralNetwork::calculate_parameters_norm() const
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
-<<<<<<< HEAD
 
 void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
-=======
-void NeuralNetwork::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {

@@ -415,6 +415,9 @@ void TimeSeriesDataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
+
+    // steps_ahead = 1;
+
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
     const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
 
@@ -453,6 +456,9 @@ void TimeSeriesDataSet::transform_time_series()
 
     if(lags_number == 0 || steps_ahead == 0) return;
 
+    cout << "STEPS AHEAD TRANSFORM: " << endl;
+    cout << steps_ahead << endl;
+
     transform_time_series_data();
 
     transform_time_series_columns();
@@ -464,7 +470,7 @@ void TimeSeriesDataSet::transform_time_series()
 
 
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
-
+///
 void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -478,7 +484,6 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataFile");
 
-
     // File type
     {
         file_stream.OpenElement("FileType");
@@ -487,7 +492,6 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
 
     // Data file name
     {
@@ -620,10 +624,9 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns items
-
     const Index columns_number = get_columns_number();
 
+    // Columns items
     {
         for(Index i = 0; i < columns_number; i++)
         {
@@ -718,7 +721,6 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Samples uses
-
     {
         file_stream.OpenElement("SamplesUses");
 
@@ -997,8 +999,6 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         set_missing_values_label("NA");
     }
-
-    // alvaros123
 
     // Forecasting
 

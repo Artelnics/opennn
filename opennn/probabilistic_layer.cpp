@@ -713,13 +713,7 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
-<<<<<<< HEAD
     calculate_combinations(inputs_map,
-=======
-    const Tensor<Index, 1> outputs_dimensions = probabilistic_layer_forward_propagation->outputs(0).get_dimensions();
-
-    calculate_combinations(inputs(0),
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
                            biases,
                            synaptic_weights,
                            outputs);
