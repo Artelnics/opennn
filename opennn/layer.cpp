@@ -862,6 +862,59 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, 
 }
 
 
+void Layer::hyperbolic_tangent(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
+{
+    y.device(*thread_pool_device) = x.tanh();
+}
+
+
+void Layer::linear(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
+{
+    y.device(*thread_pool_device) = x;
+}
+
+void Layer::rectified_linear(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
+{
+    const Tensor<bool, 3> if_sentence = x < x.constant(type(0));
+
+    Tensor<type, 3> zeros(x.dimension(0), x.dimension(1), x.dimension(2));
+    zeros.setConstant(type(0));
+
+    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+}
+
+
+void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 3>& dy_dx) const
+{
+    y.device(*thread_pool_device) = x.tanh();
+
+    dy_dx.device(*thread_pool_device) = type(1) - y.square();
+}
+
+
+void Layer::linear_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 3>& dy_dx) const
+{
+    y.device(*thread_pool_device) = x;
+
+    dy_dx.setConstant(type(1));
+}
+
+
+void Layer::rectified_linear_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 3>& dy_dx) const
+{
+    const Tensor<bool, 3> if_sentence = x < x.constant(type(0));
+
+    Tensor<type, 3> zeros(x.dimension(0), x.dimension(1), x.dimension(2));
+    zeros.setZero();
+
+    Tensor<type, 3> ones(x.dimension(0), x.dimension(1), x.dimension(2));
+    ones.setConstant(type(1));
+
+    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+    dy_dx.device(*thread_pool_device) = if_sentence.select(zeros, ones);
+}
+
+
 void Layer::binary(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
 

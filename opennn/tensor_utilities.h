@@ -42,6 +42,7 @@ void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 

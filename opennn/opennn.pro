@@ -87,7 +87,9 @@ HEADERS += \
     # transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
+    perceptron_layer_3d.h \
     probabilistic_layer.h \
+    probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \
     bounding_layer.h \
@@ -172,7 +174,9 @@ SOURCES += \
     # transformer.cpp \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
+    perceptron_layer_3d.cpp \
     probabilistic_layer.cpp \
+    probabilistic_layer_3d.cpp \
     pooling_layer.cpp \
     bounding_layer.cpp \
     convolutional_layer.cpp \

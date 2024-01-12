@@ -49,8 +49,10 @@ public:
                     Scaling4D,
                     Convolutional,
                     Perceptron,
+                    Perceptron3D,
                     Pooling,
                     Probabilistic,
+                    Probabilistic3D,
                     LongShortTermMemory,
                     Recurrent,
                     Unscaling,
@@ -219,6 +221,14 @@ protected:
     void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+
+    void hyperbolic_tangent(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+    void linear(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+    void rectified_linear(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+
+    void hyperbolic_tangent_derivatives(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
+    void linear_derivatives(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
+    void rectified_linear_derivatives(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
 
     void binary(const Tensor<type, 4>&, Tensor<type, 4>&) const;
     void exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;

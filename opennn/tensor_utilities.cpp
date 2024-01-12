@@ -114,6 +114,21 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
 }
 
 
+void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+    for(Index i = 0; i < channels_number; i++)
+    {
+        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*columns_number, rows_number, columns_number);
+
+        matrix.device(*thread_pool_device) = matrix + vector(i);
+    }
+}
+
+
 bool is_zero(const Tensor<type, 1>& tensor)
 {
     const Index size = tensor.size();
