@@ -122,11 +122,16 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs[0].get_dimensions();
 
+    //NANS =================================================================== At this point
     const TensorMap<Tensor<type, 2>> outputs = forward_propagation.layers(last_trainable_layer_index)->outputs(0).to_tensor_map<2>();
+    //NANS =================================================================== At this point
 
     const TensorMap<Tensor<type, 2>> targets = batch.targets.to_tensor_map<2>();
 
     Tensor<type, 0> cross_entropy_error;
+
+    ofstream myfile;
+
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum();
 
     back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
