@@ -125,12 +125,6 @@ public:
     {
         const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
 
-<<<<<<< HEAD
-    }
-
-
-    virtual ~DynamicTensor()
-=======
         if(different_dimensions(0))
         {
             return true;
@@ -151,7 +145,6 @@ public:
 
 
     ostream& operator << (ostream& os)
->>>>>>> f437e115fe9e567c3475cda88f60e74912a668c2
     {
 
     }
