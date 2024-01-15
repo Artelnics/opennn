@@ -54,8 +54,8 @@ HEADERS += \
     addition_layer.h \
     concatenation_layer.h \
     codification.h \
-    # embedding_layer.h \
-    # multihead_attention_layer.h \
+    embedding_layer.h \
+    multihead_attention_layer.h \
     kmeans.h \
     numerical_differentiation.h \
     config.h \
@@ -84,7 +84,7 @@ HEADERS += \
     layer_back_propagation_lm.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
-    # transformer.h \
+    transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
     perceptron_layer_3d.h \
@@ -140,15 +140,14 @@ HEADERS += \
 #    region_proposal_layer.h \
     non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
-    # multihead_attention_layer.h \
     bounding_box.h \
     unscaling_layer_forward_propagation.h \
     word_bag.h \
     opennn.h
 
 SOURCES += \
-    # embedding_layer.cpp \
-    # multihead_attention_layer.cpp \
+    embedding_layer.cpp \
+    multihead_attention_layer.cpp \
     addition_layer.cpp \
     concatenation_layer.cpp \
     kmeans.cpp \
@@ -171,7 +170,7 @@ SOURCES += \
     layer.cpp \
     scaling_layer_2d.cpp \
     scaling_layer_4d.cpp \
-    # transformer.cpp \
+    transformer.cpp \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
     perceptron_layer_3d.cpp \
@@ -219,7 +218,6 @@ SOURCES += \
 #    region_proposal_layer.cpp \
     non_max_suppression_layer.cpp \
     bounding_box_regressor_layer.cpp \
-    # multihead_attention_layer.cpp \
     bounding_box.cpp \
     unit_testing.cpp
 

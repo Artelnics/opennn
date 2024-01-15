@@ -76,7 +76,6 @@ public:
 //    Tensor<Index, 1> get_inputs_dimensions() const final;
 //    Tensor<Index, 1> get_outputs_dimensions() const final;
 
-
     Tensor<type, 3> get_query_kernel() const;
     Tensor<type, 3> get_key_kernel() const;
     Tensor<type, 3> get_value_kernel() const;
@@ -114,17 +113,22 @@ public:
 
     void set_display(const bool&);
 
+    //
+
+    void softmax(Tensor<type, 4>&) const;
+    void apply_causal_mask(Tensor<type, 4>&) const;
+
     // Linear transformation & projection
 
-    void calculate_transformation(const Tensor<type, 3>&, DynamicTensor<type>&, const Tensor<type, 3>&);
+    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&);
 
-    void calculate_output_projection(DynamicTensor<type>&, DynamicTensor<type>&);
+    void calculate_output_projection(const Tensor<type, 4>&, const pair<type*, dimensions>&);
 
     // Attention computation
 
-    void compute_attention_scores(DynamicTensor<type>&, DynamicTensor<type>&, DynamicTensor<type>&);
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
 
-    void compute_attention_output(DynamicTensor<type>&, DynamicTensor<type>&, DynamicTensor<type>&);
+    void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
 
     // Multihead Attention layer outputs
 
@@ -132,15 +136,21 @@ public:
                            LayerForwardPropagation*,
                            const bool&) final;
 
+    void forward_propagate(const pair<type*, dimensions>&,
+                           Tensor<type, 1>&,
+                           LayerForwardPropagation*) final;
+
     // Expression methods
 
-    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+//    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+
+    string write_activation_function_expression() const;
 
     // Serialization methods
     /// @todo
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void write_XML(tinyxml2::XMLPrinter&) const final;
+//    void from_XML(const tinyxml2::XMLDocument&) final;
+//    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -209,6 +219,19 @@ protected:
             set(new_batch_samples_number, new_layer_pointer);
         }
 
+
+        pair<type*, dimensions> get_outputs() const final
+        {
+            MultiheadAttentionLayer* multihead_attention_layer_pointer = static_cast<MultiheadAttentionLayer*>(layer_pointer);
+
+            const Index input_size = multihead_attention_layer_pointer->get_input_size();
+
+            const Index depth = multihead_attention_layer_pointer->get_depth();
+
+            return pair<type*, dimensions>(outputs_data, {{batch_samples_number, input_size, depth}});
+        }
+
+
         void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
         {
             MultiheadAttentionLayer* layer_pointer = static_cast<MultiheadAttentionLayer*>(new_layer_pointer);
@@ -223,21 +246,20 @@ protected:
 
             const Index number_of_heads = layer_pointer->get_number_of_heads();
 
-            outputs.resize(batch_samples_number, input_size, depth);
-
             // Outputs
 
-            outputs.resize(1);
-            outputs(0).set_dimensions({batch_samples_number, input_size, depth});
+            outputs.resize(batch_samples_number, input_size, depth);
+
+            outputs_data = outputs.data();
 
             // Rest of quantities
 
-            transformed_query.set_dimensions({new_batch_samples_number, input_size, depth, number_of_heads});
-            transformed_key.set_dimensions({new_batch_samples_number, context_size, depth, number_of_heads});
-            transformed_value.set_dimensions({new_batch_samples_number, context_size, depth, number_of_heads});
+            transformed_query.resize(new_batch_samples_number, input_size, depth, number_of_heads);
+            transformed_key.resize(new_batch_samples_number, context_size, depth, number_of_heads);
+            transformed_value.resize(new_batch_samples_number, context_size, depth, number_of_heads);
 
-            attention_scores.set_dimensions({new_batch_samples_number, input_size, context_size, number_of_heads});
-            attention_outputs.set_dimensions({new_batch_samples_number, input_size, depth, number_of_heads});
+            attention_scores.resize(new_batch_samples_number, input_size, context_size, number_of_heads);
+            attention_outputs.resize(new_batch_samples_number, input_size, depth, number_of_heads);
         }
 
         void print() const
@@ -246,6 +268,9 @@ protected:
 //            cout << attention_scores.dimensions() << endl;
 
 
+//            cout << "Outputs dimensions:" << endl;
+//            cout << outputs_dimensions << endl;
+
 //            cout << "Outputs:" << endl;
 //            cout << TensorMap<Tensor<type,3>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2)) << endl;
 
@@ -253,39 +278,39 @@ protected:
 //            cout << attention_scores << endl;
         }
 
-        DynamicTensor<type> get_transformed_query()
+        Tensor<type, 4>& get_transformed_query()
         {
             return transformed_query;
         }
 
-        DynamicTensor<type> get_transformed_key()
+        Tensor<type, 4>& get_transformed_key()
         {
             return transformed_key;
         }
 
-        DynamicTensor<type> get_transformed_value()
+        Tensor<type, 4>& get_transformed_value()
         {
             return transformed_value;
         }
 
-        DynamicTensor<type> get_attention_scores()
+        Tensor<type, 4>& get_attention_scores()
         {
             return attention_scores;
         }
 
-        DynamicTensor<type> get_attention_outputs()
+        Tensor<type, 4>& get_attention_outputs()
         {
             return attention_outputs;
         }
-
-        Tensor<type, 3> outputs;
 
         Tensor<type, 4> transformed_query;
         Tensor<type, 4> transformed_key;
         Tensor<type, 4> transformed_value;
 
-        DynamicTensor<type> attention_scores;
-        DynamicTensor<type> attention_outputs;
+        Tensor<type, 4> attention_scores;
+        Tensor<type, 4> attention_outputs;
+
+        Tensor<type, 3> outputs;
     };
 
 
@@ -310,27 +335,40 @@ protected:
         }
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
             layer_pointer = new_layer_pointer;
 
             batch_samples_number = new_batch_samples_number;
-/*
+
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
-
+/*
             deltas_dimensions.resize(2);
             deltas_dimensions.setValues({batch_samples_number, neurons_number});
 
             deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
-
+*/
             biases_derivatives.resize(neurons_number);
 
             synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
             deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
-*/
         }
+
+        Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+        {
+            Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
+
+            const Index inputs_number = layer_pointer->get_inputs_number();
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
+            layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
+
+            return layer_gradient;
+        }
+
 
         void print() const
         {

@@ -162,7 +162,7 @@ public:
                                           Tensor<type, 3>&,
                                           Tensor<type, 3>&) const;
 
-   void forward_propagate(const pair<type*, dimensions>&layer,
+   void forward_propagate(const pair<type*, dimensions>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
@@ -295,24 +295,24 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
     }
 
 
-     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-     {
-         layer_pointer = new_layer_pointer;
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    {
+        layer_pointer = new_layer_pointer;
 
-         PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer_pointer);
+        PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer_pointer);
 
-         batch_samples_number = new_batch_samples_number;
+        batch_samples_number = new_batch_samples_number;
 
-         const Index neurons_number = perceptron_layer_3d_pointer->get_neurons_number();
+        const Index neurons_number = perceptron_layer_3d_pointer->get_neurons_number();
 
-         const Index inputs_size = perceptron_layer_3d_pointer->get_inputs_size();
+        const Index inputs_size = perceptron_layer_3d_pointer->get_inputs_size();
 
-         outputs.resize(batch_samples_number, inputs_size, neurons_number);
+        outputs.resize(batch_samples_number, inputs_size, neurons_number);
 
-         outputs_data = outputs.data();
+        outputs_data = outputs.data();
 
-         activations_derivatives.resize(batch_samples_number, inputs_size, neurons_number);
-     }
+        activations_derivatives.resize(batch_samples_number, inputs_size, neurons_number);
+    }
 
 
      void print() const
