@@ -2500,7 +2500,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
     for(Index i = 0; i < layers_types.size(); i++)
     {
-        if(layers_types(i) == "Scaling2D")
+        if(layers_types(i) == "Scaling")
         {
             ScalingLayer2D* scaling_layer = new ScalingLayer2D();
 
