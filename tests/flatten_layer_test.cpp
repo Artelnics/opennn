@@ -64,10 +64,9 @@ void FlattenLayerTest::test_forward_propagate()
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
 
-    flatten_layer.forward_propagate(inputs_data, inputs_dimensions, &flatten_layer_forward_propagation, is_training);
+    flatten_layer.forward_propagate(inputs_pair, &flatten_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type, 2>>(flatten_layer_forward_propagation.outputs_data(0),
-                                         flatten_layer_forward_propagation.outputs_dimensions);
+    outputs = flatten_layer_forward_propagation.outputs;
 
     // Test
 
@@ -93,7 +92,7 @@ void FlattenLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

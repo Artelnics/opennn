@@ -539,7 +539,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
+        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
                << "set_scalers(const string& new_scaling_methods_string) method.\n";
 
         throw invalid_argument(buffer.str());
@@ -561,7 +561,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
+        buffer << "OpenNN Exception: ScalingLayer2D class.\n"
                << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
@@ -598,7 +598,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
         {
             ostringstream buffer;
 
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
+            buffer << "OpenNN Exception: ScalingLayer2D class.\n"
                    << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_unscaling_methods_string(i) << ".\n";
 
@@ -723,7 +723,7 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
         {
             if(display)
             {
-                cout << "OpenNN Warning: ScalingLayer class.\n"
+                cout << "OpenNN Warning: ScalingLayer2D class.\n"
                      << "void forward_propagate\n"
                      << "Standard deviation of variable " << i << " is zero.\n"
                      << "Those variables won't be scaled.\n";
@@ -764,7 +764,7 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
             {
                 ostringstream buffer;
 
-                buffer << "OpenNN Exception: ScalingLayer class\n"
+                buffer << "OpenNN Exception: ScalingLayer2D class\n"
                        << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                        << "Unknown scaling method.\n";
 

@@ -412,6 +412,11 @@ public:
 
     const bool& get_display() const;
 
+    bool get_augmentation() const
+    {
+        return augmentation;
+    }
+
     // Set methods
 
     void set();
@@ -867,7 +872,9 @@ protected:
 
     Index rows_missing_values_number;
 
-    /// Display messages to screen.
+    bool augmentation = false;
+
+    /// Display messages to screen.        
 
     bool display = true;
 

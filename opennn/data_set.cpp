@@ -2026,23 +2026,6 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_numeric_variables_uses() const
 
 string DataSet::get_numeric_variable_name(const Index& variable_index) const
 {
-#ifdef OPENNN_DEBUG
-/*
-    const Index variables_number = get_variables_number();
-
-    if(variable_index >= variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "string& get_variable_name(const Index) method.\n"
-               << "Index of variable("<<variable_index<<") must be less than number of variables("<<variables_number<<").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index columns_number = get_columns_number();
 
     Index index = 0;
@@ -3378,23 +3361,6 @@ void DataSet::set_column_type(const string& name, const RawVariableType& new_typ
 
 void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
 {
-#ifdef OPENNN_DEBUG
-/*
-    const Index variables_number = get_variables_number();
-
-    if(variable_index >= variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Variables class.\n"
-               << "void set_name(const Index&, const string&) method.\n"
-               << "Index of variable must be less than number of variables.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index columns_number = get_columns_number();
 
     Index index = 0;
@@ -3438,25 +3404,6 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
 
 void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 {
-#ifdef OPENNN_DEBUG
-/*
-    const Index variables_number = get_variables_number();
-
-    const Index size = new_variables_names.size();
-
-    if(size != variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Variables class.\n"
-               << "void set_names(const Tensor<string, 1>&) method.\n"
-               << "Size (" << size << ") must be equal to number of variables (" << variables_number << ").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index columns_number = get_columns_number();
 
     Index index = 0;
@@ -4688,24 +4635,6 @@ Tensor<type, 2> DataSet::get_column_data(const string& column_name) const
 
 Tensor<type, 1> DataSet::get_variable_data(const Index& index) const
 {
-
-#ifdef OPENNN_DEBUG
-/*
-    const Index variables_number = get_variables_number();
-
-    if(index >= variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const Index&) const method.\n"
-               << "Index of variable must be less than number of \n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     return data.chip(index, 1);
 }
 
@@ -4776,24 +4705,6 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 
 Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Tensor<Index, 1>& samples_indices) const
 {
-
-#ifdef OPENNN_DEBUG
-/*
-    const Index variables_number = get_variables_number();
-
-    if(variable_index >= variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 1> get_variable(const Index&, const Tensor<Index, 1>&) const method.\n"
-               << "Index of variable must be less than number of \n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index samples_indices_size = samples_indices.size();
 
     Tensor<type, 1 > column(samples_indices_size);
@@ -6055,24 +5966,6 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples() const
 {
-
-#ifdef OPENNN_DEBUG
-/*
-    const Index targets_number = get_target_variables_number();
-
-    if(targets_number != 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_columns_descriptives_positive_samples() const method.\n"
-               << "Number of targets muste be 1.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index target_index = get_target_numeric_variables_indices()(0);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
@@ -6115,23 +6008,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples() const
 {
-#ifdef OPENNN_DEBUG
-/*
-    const Index targets_number = get_target_variables_number();
-
-    if(targets_number != 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_columns_descriptives_positive_samples() const method.\n"
-               << "Number of targets muste be 1.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index target_index = get_target_numeric_variables_indices()(0);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
@@ -6164,7 +6040,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples
             negative_used_samples_indices(negative_sample_index) = sample_index;
             negative_sample_index++;
         }
-
     }
 
     return descriptives(data, negative_used_samples_indices, input_variables_indices);
@@ -10389,7 +10264,7 @@ void DataSet::read_csv_3_complete()
                 {
                     for(Index columns_index = 0; columns_index < columns_number; ++columns_index)
                     {
-                        data(sample_index, columns_index) = static_cast<type>(NAN);
+                        data(sample_index, columns_index) = type(NAN);
                     }
                     sample_index++;
 
@@ -10398,12 +10273,12 @@ void DataSet::read_csv_3_complete()
 
                 if(tokens(j).empty())
                 {
-                    data(sample_index, variable_index) = static_cast<type>(NAN);
+                    data(sample_index, variable_index) = type(NAN);
                 }
                 else
                 {
                     previous_timestamp = current_timestamp;
-                    data(sample_index, variable_index) = static_cast<type>(current_timestamp);
+                    data(sample_index, variable_index) = type(current_timestamp);
                 }
 
                 variable_index++;
@@ -10426,7 +10301,7 @@ void DataSet::read_csv_3_complete()
             //     else
             //     {
             //         previous_timestamp = current_timestamp;
-            //         data(sample_index, variable_index) = tokens(j).empty() ? static_cast<type>(NAN) : current_timestamp;
+            //         data(sample_index, variable_index) = tokens(j).empty() ? type(NAN) : current_timestamp;
             //         variable_index++;
             //     }
             // }
@@ -10490,7 +10365,7 @@ void DataSet::read_csv_3_complete()
         {
             for(Index columns_index = 0; columns_index < columns_number; ++columns_index)
             {
-                data(sample_index, columns_index) = static_cast<type>(NAN);
+                data(sample_index, columns_index) = type(NAN);
             }
             sample_index++;
 

@@ -408,10 +408,10 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     for(Index i = 0; i < 20; i++)
     {
-        data(i,0) = static_cast<type>(i);
+        data(i,0) = type(i);
         data(i,1) = type(10.0);
         data(i,2) = type(10.0);
-        data(i,3) = static_cast<type>(i);
+        data(i,3) = type(i);
     }
 
     data_set.set(data);

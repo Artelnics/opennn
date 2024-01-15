@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 
 //        flatten_layer.calculate_outputs(inputs.data(), inputs_dimensions, outputs.data(), outputs_dimensions);
 
-//        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+//        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
 //        cout << "inputs: " << endl;
 //        cout << inputs << endl;
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

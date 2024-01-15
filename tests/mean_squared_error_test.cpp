@@ -96,7 +96,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -139,19 +139,19 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
 
     // Test binary classification trivial
@@ -178,14 +178,14 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -195,7 +195,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
+//        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 
     }
 
@@ -225,14 +225,14 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -240,7 +240,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
 
 
@@ -268,7 +268,7 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -309,14 +309,14 @@ void MeanSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -324,7 +324,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= type(0), LOG);
 
-//        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
+//        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
     }
 }
 
@@ -359,7 +359,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -367,12 +367,12 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         // not running in  visual studio
-        /*
+
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+        numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
 
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
@@ -380,9 +380,9 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation_lm.error >= type(0), LOG);
         assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
-        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-1)), LOG);
-        */
+        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);
+
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -411,7 +411,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -423,8 +423,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+        numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
 
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
@@ -432,8 +432,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation_lm.error >= type(0), LOG);
         assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
-        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
         */
     }
 
@@ -463,7 +463,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -475,8 +475,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
-        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+        numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
 
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
@@ -484,8 +484,8 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation_lm.error >= type(0), LOG);
         assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
-        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
         */
     }
 
@@ -534,7 +534,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
 //        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 //        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
 //        assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
@@ -571,19 +571,19 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 
     // Test binary classification trivial
@@ -611,14 +611,14 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -627,7 +627,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -657,14 +657,14 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -672,7 +672,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
 
     // Test forecasting trivial
@@ -700,7 +700,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
@@ -741,14 +741,14 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         forward_propagation.set(samples_number, &neural_network);
         bool is_training = true;
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -756,7 +756,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         assert_true(back_propagation.error >= type(0), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
     }
 
     // Test convolutional
@@ -847,7 +847,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       cout<<neural_network.get_parameters()<<endl;
 
 //       // create Dataset object to load data.
-//       numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
+//       numerical_gradient = mean_squared_error.calculate_numerical_gradient();
    }
 
 }
@@ -921,8 +921,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        back_propagation_lm.set(samples_number, &mean_squared_error);
 //        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
-//        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+//        numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
 
 //        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
 //        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
@@ -930,8 +930,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        assert_true(back_propagation_lm.error >= type(0), LOG);
 //        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-1)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-1)), LOG);
+//        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), LOG);
+//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);
 //    }
 
 //    NeuralNetwork neural_network;
@@ -986,8 +986,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        back_propagation_lm.set(samples_number, &mean_squared_error);
 //        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
-//        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+//        numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
 
 //        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
 //        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
@@ -995,14 +995,14 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        assert_true(back_propagation_lm.error >= type(0), LOG);
 //        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
 //    }
 
-//    gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//    numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
 
-//    cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
+//    cout << "Numerical gradient: " << numerical_gradient << endl;
 
         // Data set
 
@@ -1038,8 +1038,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        back_propagation_lm.set(samples_number, &mean_squared_error);
 //        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        numerical_differentiation_gradient = mean_squared_error.calculate_numerical_differentiation_gradient();
-//        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+//        numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
 
 //        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
 //        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
@@ -1047,8 +1047,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        assert_true(back_propagation_lm.error >= type(0), LOG);
 //        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
+//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
 //    }
 
 //}
@@ -1177,9 +1177,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //        //    cout << "Gradient: " << back_propagation.gradient << endl;
 
-//        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+//        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-//        cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
+//        cout << "Numerical gradient: " << numerical_gradient << endl;
 //    }
 
     // Inputs 3x3x2x2; Filters: 1x1x2; Perceptrons: 2 --> Test ok
@@ -1336,9 +1336,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     //    cout << "Gradient: " << back_propagation.gradient << endl;
 
-        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+        cout << "Numerical gradient: " << endl << numerical_gradient << endl;
 
     }
 
@@ -1465,25 +1465,25 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         Tensor<type, 4> kernels(kernels_rows_number,kernels_columns_number,images_number,kernels_channels_number);
 
-        kernels(0,0,0,0) = static_cast<type>(0.5);
-        kernels(0,1,0,0) = static_cast<type>(0.5);
-        kernels(1,0,0,0) = static_cast<type>(0.5);
-        kernels(1,1,0,0) = static_cast<type>(0.5);
+        kernels(0,0,0,0) = type(0.5);
+        kernels(0,1,0,0) = type(0.5);
+        kernels(1,0,0,0) = type(0.5);
+        kernels(1,1,0,0) = type(0.5);
 
-        kernels(0,0,0,1) = static_cast<type>(0.5);
-        kernels(0,1,0,1) = static_cast<type>(0.5);
-        kernels(1,0,0,1) = static_cast<type>(0.5);
-        kernels(1,1,0,1) = static_cast<type>(0.5);
+        kernels(0,0,0,1) = type(0.5);
+        kernels(0,1,0,1) = type(0.5);
+        kernels(1,0,0,1) = type(0.5);
+        kernels(1,1,0,1) = type(0.5);
 
-        kernels(0,0,1,0) = static_cast<type>(0.7);
-        kernels(0,1,1,0) = static_cast<type>(0.7);
-        kernels(1,0,1,0) = static_cast<type>(0.7);
-        kernels(1,1,1,0) = static_cast<type>(0.7);
+        kernels(0,0,1,0) = type(0.7);
+        kernels(0,1,1,0) = type(0.7);
+        kernels(1,0,1,0) = type(0.7);
+        kernels(1,1,1,0) = type(0.7);
 
-        kernels(0,0,1,1) = static_cast<type>(0.7);
-        kernels(0,1,1,1) = static_cast<type>(0.7);
-        kernels(1,0,1,1) = static_cast<type>(0.7);
-        kernels(1,1,1,1) = static_cast<type>(0.7);
+        kernels(0,0,1,1) = type(0.7);
+        kernels(0,1,1,1) = type(0.7);
+        kernels(1,0,1,1) = type(0.7);
+        kernels(1,1,1,1) = type(0.7);
 
         convolutional_layer->set_synaptic_weights(kernels);
 
@@ -1508,7 +1508,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         {
             for(Index j = 0; j < perceptrons_number; j++)
             {
-                synaptic_weights(i,j) = static_cast<type>(j+1);
+                synaptic_weights(i,j) = type(j+1);
             }
         }
 
@@ -1545,9 +1545,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
+        const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+        cout << "Numerical gradient: " << endl << numerical_gradient << endl;
     }
 */
 
@@ -1686,25 +1686,25 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         Tensor<type, 4> kernels(kernels_rows_number, kernels_columns_number, kernels_channels_number, kernels_number);
 
-        kernels(0,0,0,0) = static_cast<type>(0.5);
-        kernels(0,1,0,0) = static_cast<type>(0.5);
-        kernels(1,0,0,0) = static_cast<type>(0.5);
-        kernels(1,1,0,0) = static_cast<type>(0.5);
+        kernels(0,0,0,0) = type(0.5);
+        kernels(0,1,0,0) = type(0.5);
+        kernels(1,0,0,0) = type(0.5);
+        kernels(1,1,0,0) = type(0.5);
 
-        kernels(0,0,0,1) = static_cast<type>(0.5);
-        kernels(0,1,0,1) = static_cast<type>(0.5);
-        kernels(1,0,0,1) = static_cast<type>(0.5);
-        kernels(1,1,0,1) = static_cast<type>(0.5);
+        kernels(0,0,0,1) = type(0.5);
+        kernels(0,1,0,1) = type(0.5);
+        kernels(1,0,0,1) = type(0.5);
+        kernels(1,1,0,1) = type(0.5);
 
-        kernels(0,0,1,0) = static_cast<type>(0.7);
-        kernels(0,1,1,0) = static_cast<type>(0.7);
-        kernels(1,0,1,0) = static_cast<type>(0.7);
-        kernels(1,1,1,0) = static_cast<type>(0.7);
+        kernels(0,0,1,0) = type(0.7);
+        kernels(0,1,1,0) = type(0.7);
+        kernels(1,0,1,0) = type(0.7);
+        kernels(1,1,1,0) = type(0.7);
 
-        kernels(0,0,1,1) = static_cast<type>(0.7);
-        kernels(0,1,1,1) = static_cast<type>(0.7);
-        kernels(1,0,1,1) = static_cast<type>(0.7);
-        kernels(1,1,1,1) = static_cast<type>(0.7);
+        kernels(0,0,1,1) = type(0.7);
+        kernels(0,1,1,1) = type(0.7);
+        kernels(1,0,1,1) = type(0.7);
+        kernels(1,1,1,1) = type(0.7);
 
 //        convolutional_layer->set_synaptic_weights(kernels);
 
@@ -1731,7 +1731,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         {
             for(Index j = 0; j < perceptrons_number; j++)
             {
-                synaptic_weights(i,j) = static_cast<type>(1);//static_cast<type>(j+1);
+                synaptic_weights(i,j) = type(1);//type(j+1);
             }
         }
 
@@ -1762,7 +1762,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         ForwardPropagation forward_propagation(images_number, &neural_network);
 
-        neural_network.forward_propagate(batch.inputs, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
@@ -1772,16 +1772,16 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         cout << "Gradient: " << endl << back_propagation.gradient << endl;
 
-        const Tensor<type,1> gradient_numerical_differentiation = mean_squared_error.calculate_numerical_differentiation_gradient();
+        const Tensor<type,1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-        cout << "Numerical gradient: " << endl << gradient_numerical_differentiation << endl;
+        cout << "Numerical gradient: " << endl << numerical_gradient << endl;
 
         cout << "Gradient   ;    Numerical gradient  ; Error" << endl;
 
         for(Index i = 0; i < back_propagation.gradient.size(); i++)
         {
-            cout << back_propagation.gradient(i) << " ; " << gradient_numerical_differentiation(i) <<  " ; " <<
-                    abs((back_propagation.gradient(i) - gradient_numerical_differentiation(i))/gradient_numerical_differentiation(i)*100)
+            cout << back_propagation.gradient(i) << " ; " << numerical_gradient(i) <<  " ; " <<
+                    abs((back_propagation.gradient(i) - numerical_gradient(i))/numerical_gradient(i)*100)
                  << "%" << endl;
 
         }
@@ -1811,7 +1811,7 @@ void MeanSquaredErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lemser General Public

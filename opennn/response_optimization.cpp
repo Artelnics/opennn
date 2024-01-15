@@ -649,7 +649,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
+    outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
 

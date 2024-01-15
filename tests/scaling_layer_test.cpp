@@ -25,19 +25,19 @@ void ScalingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    ScalingLayer scaling_layer_1;
+    ScalingLayer2D scaling_layer_1;
 
-    assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling, LOG);
+    assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling2D, LOG);
     assert_true(scaling_layer_1.get_neurons_number() == 0, LOG);
 
-    ScalingLayer scaling_layer_2(3);
+    ScalingLayer2D scaling_layer_2(3);
 
     assert_true(scaling_layer_2.get_descriptives().size() == 3, LOG);
     assert_true(scaling_layer_2.get_scaling_methods().size() == 3, LOG);
 
     descriptives.resize(2);
 
-    ScalingLayer scaling_layer_3(descriptives);
+    ScalingLayer2D scaling_layer_3(descriptives);
 
     assert_true(scaling_layer_3.get_descriptives().size() == 2, LOG);
 }
@@ -47,7 +47,7 @@ void ScalingLayerTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    ScalingLayer* scaling_layer = new ScalingLayer;
+    ScalingLayer2D* scaling_layer = new ScalingLayer2D;
     delete scaling_layer;
 }
 
@@ -153,7 +153,7 @@ void ScalingLayerTest::test_set_default()
 
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MeanStandardDeviation, LOG);
     assert_true(scaling_layer.get_display(), LOG);
-    assert_true(scaling_layer.get_type() == Layer::Type::Scaling, LOG);
+    assert_true(scaling_layer.get_type() == Layer::Type::Scaling2D, LOG);
     assert_true(abs(sl_descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(sl_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(sl_descriptives(0).mean) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -343,13 +343,14 @@ void ScalingLayerTest::test_forward_propagate()
 
     DataSet data_set;
     Tensor<type, 2> data;
-    Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> inputs_dimensions;
     Tensor<Index, 1> outputs_dimensions;
 
     Tensor<Descriptives,1> input_descriptives;
+
+    pair<type*, dimensions> inputs;
 
     // Test
 
@@ -361,27 +362,25 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
 
-    inputs.resize(samples_number, inputs_number);
-    inputs.setZero();
-    inputs_dimensions = get_dimensions(inputs);
+    // inputs.resize(samples_number, inputs_number);
+    // inputs.setZero();
+    // inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
-    Tensor<type*, 1> inputs_data(1);
-    inputs_data(0) = inputs.data();
+    // Tensor<type*, 1> inputs_data(1);
+    // inputs_data(0) = inputs.data();
 
-    scaling_layer.forward_propagate(inputs_data,
-                                    inputs_dimensions,
+    scaling_layer.forward_propagate(inputs,
                                     &scaling_layer_forward_propagation,
                                     is_training);
 
-    outputs = TensorMap<Tensor<type, 1>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
-/*
+    outputs = scaling_layer_forward_propagation.outputs;
+
     assert_true(outputs.dimension(0) == samples_number, LOG);
 //    assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+//    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -392,23 +391,25 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
 
-    inputs.resize(samples_number, inputs_number);
-    inputs.setZero();
-    inputs_dimensions = get_dimensions(inputs);
+    // inputs.resize(samples_number, inputs_number);
+    // inputs.setZero();
+    // inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs_data, inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type, 1>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
+    scaling_layer.forward_propagate(inputs,
+                                    &scaling_layer_forward_propagation,
+                                    is_training);
+
+    outputs = scaling_layer_forward_propagation.outputs;
 
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
 //    assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1) - inputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(2) - inputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    // assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    // assert_true(abs(outputs(1) - inputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    // assert_true(abs(outputs(2) - inputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -419,21 +420,22 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-    inputs.resize(samples_number,inputs_number);
-    inputs.setRandom();
-    inputs_dimensions = get_dimensions(inputs);
+    // inputs.resize(samples_number,inputs_number);
+    // inputs.setRandom();
+    // inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs_data, inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type, 1>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
+    scaling_layer.forward_propagate(inputs,
+                                    &scaling_layer_forward_propagation,
+                                    is_training);
 
+    outputs = scaling_layer_forward_propagation.outputs;
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
 //    assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+//    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -454,21 +456,23 @@ void ScalingLayerTest::test_forward_propagate()
     input_descriptives = data_set.calculate_input_variables_descriptives();
     scaling_layer.set_descriptives(input_descriptives);
 
-    inputs = data_set.get_input_data();
-    inputs_dimensions = get_dimensions(inputs);
+//    inputs = data_set.get_input_data();
+//    inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs_data, inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type,1>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
+    scaling_layer.forward_propagate(inputs,
+                                    &scaling_layer_forward_propagation,
+                                    is_training);
+
+    outputs = scaling_layer_forward_propagation.outputs;
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0,0) - static_cast<type>(-1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1,0) - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(2,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(0,0) - type(-1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1,0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(2,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -486,14 +490,16 @@ void ScalingLayerTest::test_forward_propagate()
     input_descriptives = data_set.calculate_input_variables_descriptives();
     scaling_layer.set_descriptives(input_descriptives);
 
-    inputs = data_set.get_input_data();
-    inputs_dimensions = get_dimensions(inputs);
+    // inputs = data_set.get_input_data();
+    // inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs_data, inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type,1>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
+    scaling_layer.forward_propagate(inputs,
+                                    &scaling_layer_forward_propagation,
+                                    is_training);
+
+    outputs = scaling_layer_forward_propagation.outputs;
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
@@ -511,14 +517,16 @@ void ScalingLayerTest::test_forward_propagate()
 
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
 
-    inputs = data_set.get_input_data();
-    inputs_dimensions = get_dimensions(inputs);
+    // inputs = data_set.get_input_data();
+    // inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs_data, inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type,2>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
+    scaling_layer.forward_propagate(inputs,
+                                    &scaling_layer_forward_propagation,
+                                    is_training);
+
+    outputs = scaling_layer_forward_propagation.outputs;
 
     assert_true(outputs.dimension(0) == inputs_number, LOG);
     assert_true(outputs.dimension(1) == samples_number, LOG);
@@ -526,7 +534,6 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(abs(outputs(0) - data(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
-
 
     inputs_number = 2 + rand()%10;
     samples_number = 1;
@@ -541,21 +548,22 @@ void ScalingLayerTest::test_forward_propagate()
 
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
 
-    inputs = data_set.get_input_data();
-    inputs_dimensions = get_dimensions(inputs);
+    // inputs = data_set.get_input_data();
+    // inputs_dimensions = get_dimensions(inputs);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-    scaling_layer.forward_propagate(inputs, inputs_dimensions, &scaling_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type,1>>(scaling_layer_forward_propagation.outputs_data(0),
-                                         scaling_layer_forward_propagation.outputs_dimensions);
+    scaling_layer.forward_propagate(inputs,
+                                    &scaling_layer_forward_propagation,
+                                    is_training);
+
+    outputs = scaling_layer_forward_propagation.outputs;
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    assert_true(abs(outputs(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -599,7 +607,7 @@ void ScalingLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library sl free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

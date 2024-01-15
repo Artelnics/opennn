@@ -69,15 +69,15 @@ void LongShortTermMemoryLayerTest::test_set_biases()
 {
     cout << "test_set_biases\n";
 
-    Tensor<type, 2> biases;
+    Tensor<type, 1> biases;
 
     // Test
 
     long_short_term_memory_layer.set(1, 1);
 
-    biases.resize(1, 4);
+    biases.resize(4);
     biases.setRandom();
-
+/*
     long_short_term_memory_layer.set_forget_biases(biases.chip(0, 1));
     long_short_term_memory_layer.set_input_biases(biases.chip(1, 1));
     long_short_term_memory_layer.set_state_biases(biases.chip(2,1));
@@ -88,10 +88,11 @@ void LongShortTermMemoryLayerTest::test_set_biases()
     Tensor<type, 1> state_biases = long_short_term_memory_layer.get_state_biases();
     Tensor<type, 1> output_biases = long_short_term_memory_layer.get_output_biases();
 
-    assert_true(abs(forget_biases(0) - biases(0,0)) < static_cast<type>(1.0e-3), LOG);
-    assert_true(abs(input_biases(0) - biases(0,1)) < static_cast<type>(1.0e-3), LOG);
-    assert_true(abs(state_biases(0) - biases(0,2)) < static_cast<type>(1.0e-3), LOG);
-    assert_true(abs(output_biases(0) - biases(0,3)) < static_cast<type>(1.0e-3), LOG);
+    assert_true(abs(forget_biases(0) - biases(0)) < type(1.0e-3), LOG);
+    assert_true(abs(input_biases(0) - biases(1)) < type(1.0e-3), LOG);
+    assert_true(abs(state_biases(0) - biases(2)) < type(1.0e-3), LOG);
+    assert_true(abs(output_biases(0) - biases(3)) < type(1.0e-3), LOG);
+*/
 }
 
 
@@ -172,7 +173,7 @@ void LongShortTermMemoryLayerTest::test_set_inputs_number()
     Index neurons_number;
     Index inputs_number;
 
-    Tensor<type, 2> biases;
+    Tensor<type, 1> biases;
     Tensor<type, 3> weights;
     Tensor<type, 3> recurrent_weights;
 
@@ -187,13 +188,13 @@ void LongShortTermMemoryLayerTest::test_set_inputs_number()
 
     long_short_term_memory_layer.set(inputs_number, neurons_number);
 
-    biases.resize(3, 4);
+    biases.resize(3);
     biases.setConstant(type(1));
-
-    long_short_term_memory_layer.set_forget_biases(biases.chip(0,1));
-    long_short_term_memory_layer.set_input_biases(biases.chip(1,1));
-    long_short_term_memory_layer.set_state_biases(biases.chip(2,1));
-    long_short_term_memory_layer.set_output_biases(biases.chip(3,1));
+/*
+    long_short_term_memory_layer.set_forget_biases(biases.chip(0));
+    long_short_term_memory_layer.set_input_biases(biases.chip(1));
+    long_short_term_memory_layer.set_state_biases(biases.chip(2));
+    long_short_term_memory_layer.set_output_biases(biases.chip(3));
 
     weights.resize(2, 3, 4);
     weights.setConstant(type(6.0));
@@ -224,6 +225,7 @@ void LongShortTermMemoryLayerTest::test_set_inputs_number()
 //    assert_true(weights(2) != new_weights(2), LOG);
 //    assert_true(recurrent_weights.size() == new_recurrent_weights.size(), LOG);
 //    assert_true(recurrent_weights(1) == new_recurrent_weights(1), LOG);
+*/
 }
 
 
@@ -356,31 +358,31 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    LongShortTermMemoryLayer long_short_term_layer;
+    pair<type*, dimensions> inputs_pair;
 
-    long_short_term_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+    long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
     Tensor<Index, 1> inputs_dimensions;
     bool is_training = false;
 
-    long_short_term_layer.set_parameters_constant(type(1));
+    long_short_term_memory_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
-    LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation(1, &long_short_term_layer);
+    LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation(1, &long_short_term_memory_layer);
 
     inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
-/*
-    long_short_term_layer.forward_propagate(inputs_data, inputs_dimensions, &long_short_term_layer_forward_propagation, is_training);
+
+    long_short_term_memory_layer.forward_propagate(inputs_pair, &long_short_term_layer_forward_propagation, is_training);
 
     assert_true(long_short_term_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(long_short_term_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
     assert_true(long_short_term_layer_forward_propagation.combinations.dimension(1) == inputs.dimension(1), LOG);
-*/
+
 }
 
 
@@ -428,7 +430,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

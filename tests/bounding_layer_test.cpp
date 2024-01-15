@@ -44,13 +44,12 @@ void BoundingLayerTest::test_destructor()
 void BoundingLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     BoundingLayer bounding_layer;
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
-    Tensor<Index, 1> inputs_dimensions;
-    Tensor<Index, 1> outputs_dimensions;
+    pair<type*, dimensions> inputs_pair;
 
     BoundingLayerForwardPropagation bounding_layer_forward_propagation;
 
@@ -68,18 +67,13 @@ void BoundingLayerTest::test_forward_propagate()
 
     inputs.resize(1, 1);
     inputs(0) = type(-2.0);
-    inputs_dimensions = get_dimensions(inputs);
-
-    Tensor<type*, 1> inputs_data(1);
-    inputs_data(0) = inputs.data();
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
-    bounding_layer.forward_propagate(inputs_data, inputs_dimensions, &bounding_layer_forward_propagation, is_training);
+    bounding_layer.forward_propagate(inputs_pair, &bounding_layer_forward_propagation, is_training);
 
-    outputs = TensorMap<Tensor<type,1>>(bounding_layer_forward_propagation.outputs_data(0),
-                                         bounding_layer_forward_propagation.outputs_dimensions);
+    outputs = bounding_layer_forward_propagation.outputs;
 
-    assert_true(outputs.rank() == 2, LOG);
+
     assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
@@ -87,14 +81,11 @@ void BoundingLayerTest::test_forward_propagate()
     inputs(0) = type(2.0);
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
-    bounding_layer.forward_propagate(inputs_data, inputs_dimensions, &bounding_layer_forward_propagation, is_training);
+    bounding_layer.forward_propagate(inputs_pair, &bounding_layer_forward_propagation, is_training);
 
-    TensorMap<Tensor<type, 1>> outputs_2(bounding_layer_forward_propagation.outputs_data(0),
-                                       bounding_layer_forward_propagation.outputs_dimensions);
+    outputs = bounding_layer_forward_propagation.outputs;
 
-    assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
 }
 
 
@@ -116,7 +107,7 @@ void BoundingLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
