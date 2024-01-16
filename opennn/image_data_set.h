@@ -102,7 +102,7 @@ public:
 
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
-    void fill_image_data(const string&, const int&, const int&, const int&, const Tensor<type, 2>&);
+    void fill_image_data(const string&, const vector<string>&, const vector<string>&, const vector<int>&, const int&, const int&, const int&, const Tensor<type, 2>&);
 
     void read_bmp();
 

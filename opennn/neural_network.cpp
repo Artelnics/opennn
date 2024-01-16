@@ -555,6 +555,27 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d_pointer() const
 }
 
 
+ScalingLayer4D* NeuralNetwork::get_scaling_layer_4d_pointer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Type::Scaling4D)
+        {
+            return dynamic_cast<ScalingLayer4D*>(layers_pointers[i]);
+        }
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "ScalingLayer* get_scaling_layer_4d_pointer() const method.\n"
+           << "No scaling layer in neural network.\n";
+
+    throw invalid_argument(buffer.str());
+}
+
 /// Returns a pointer to the unscaling layers object composing this neural network object.
 
 UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
@@ -2504,7 +2525,28 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         {
             ScalingLayer2D* scaling_layer = new ScalingLayer2D();
 
-            const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer");
+            const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer2D");
+            start_element = scaling_element;
+
+            if(scaling_element)
+            {
+                tinyxml2::XMLDocument scaling_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = scaling_element->DeepClone(&scaling_document);
+
+                scaling_document.InsertFirstChild(element_clone);
+
+                scaling_layer->from_XML(scaling_document);
+            }
+
+            add_layer(scaling_layer);
+        }
+        else if(layers_types(i) == "Scaling4D")
+        {
+            ScalingLayer4D* scaling_layer = new ScalingLayer4D();
+
+            const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer4D");
             start_element = scaling_element;
 
             if(scaling_element)

@@ -1682,12 +1682,10 @@ void ImageDataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});*/
 }
 
-
-void ImageDataSet::fill_image_data(const string& new_data_source_path, const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
+void ImageDataSet::fill_image_data(const string& new_data_source_path, const vector<string>& classes_folder,
+                                   const vector<string>& images_path, const vector<int>& images_per_folder,
+                                   const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
 {
-    /*
-    const fs::path path = new_data_source_path;
-
     if(new_data_source_path.empty())
     {
         ostringstream buffer;
@@ -1704,60 +1702,26 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const int
 
     separator = Separator::None;
 
-    vector<fs::path> folder_paths;
-    vector<fs::path> image_paths;
-
-    int classes_number = 0;
-    int images_total_number = 0;
-
-    for(const auto & entry_path : fs::directory_iterator(path))
-    {
-        if(entry_path.path().string().find(".DS_Store") != string::npos)
-        {
-            cout << ".DS_Store found in : " << entry_path << endl;
-        }
-        else
-        {
-            fs::path actual_directory = entry_path.path().string();
-
-            folder_paths.emplace_back(actual_directory);
-            classes_number++;
-
-            for(const auto & entry_image : fs::directory_iterator(actual_directory))
-            {
-                if(entry_image.path().string().find(".DS_Store") != string::npos)
-                {
-                    cout << ".DS_Store found in : " << entry_image.path() << endl;
-                }
-                else
-                {
-                    image_paths.emplace_back(entry_image.path().string());
-                    images_total_number++;
-                }
-            }
-        }
-    }
-
-    images_number = images_total_number;
+    images_number = images_path.size();
+    const int classes_number = classes_folder.size();
 
     const int image_size = width * height * channels;
 
-    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
-    imageDataAux = imageData;
+    Tensor<type, 2> imageDataAux(imageData);
 
     if(classes_number == 2)
     {
         Index binary_columns_number = 1;
         data.resize(images_number, image_size + binary_columns_number);
-        imageDataAux.resize(images_number, image_size + binary_columns_number);
+//        imageDataAux.resize(images_number, image_size + binary_columns_number);
     }
     else
     {
         data.resize(images_number, image_size + classes_number);
-        imageDataAux.resize(images_number, image_size + classes_number);
+//        imageDataAux.resize(images_number, image_size + classes_number);
     }
 
-    memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
+    memcpy(data.data(), imageDataAux.data(), images_number * image_size * sizeof(type));
 
     rows_labels.resize(images_number);
 
@@ -1765,23 +1729,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const int
 
     for(Index i = 0; i < classes_number; i++)
     {
-        vector<string> images_paths;
-        Index images_in_folder = 0;
-
-        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
-        {
-            if(entry.path().string().find(".DS_Store") != string::npos)
-            {
-                cout << ".DS_Store found in : " << entry << endl;
-            }
-            else
-            {
-                images_paths.emplace_back(entry.path().string());
-                images_in_folder++;
-            }
-        }
-
-        for(Index j = 0;  j < images_in_folder; j++)
+        for(Index j = 0;  j < images_per_folder[i]; j++)
         {
 
             if(classes_number == 2 && i == 0)
@@ -1797,9 +1745,10 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const int
                 data(row_index, image_size + i) = 1;
             }
 
-            rows_labels(row_index) = images_paths[j];
+            rows_labels(row_index) = images_path[row_index];
 
             row_index++;
+
         }
     }
 
@@ -1845,7 +1794,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const int
 
     for(Index i = 0 ; i < classes_number; i++)
     {
-        categories(i) = folder_paths[i].filename().string();
+        categories(i) = classes_folder[i];
     }
 
     columns(image_size).column_use = VariableUse::Target;
@@ -1872,7 +1821,6 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const int
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({height, width, channels});
-    */
 }
 
 

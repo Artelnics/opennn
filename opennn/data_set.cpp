@@ -1681,8 +1681,9 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     // Get number of samples for training, selection and testing
 
-    const Index selection_samples_number = Index(selection_samples_ratio*type(used_samples_number)/type(total_ratio));
-    const Index testing_samples_number = Index(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
+    const Index selection_samples_number = Index((selection_samples_ratio * used_samples_number)/total_ratio);
+    const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number)/ total_ratio);
+
     const Index training_samples_number = used_samples_number - selection_samples_number - testing_samples_number;
 
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;

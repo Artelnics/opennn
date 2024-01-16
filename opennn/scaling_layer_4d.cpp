@@ -314,12 +314,14 @@ void ScalingLayer4D::set(const Index& new_inputs_number)
 
 void ScalingLayer4D::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
+    inputs_dimensions = new_inputs_dimensions;
+
     const Tensor<Index,0> dimension_product = new_inputs_dimensions.prod();
 
     descriptives.resize(dimension_product(0));
 
     scalers.resize(dimension_product(0));
-    scalers.setConstant(Scaler::MeanStandardDeviation);
+    scalers.setConstant(Scaler::MinimumMaximum);
 
     set_default();
 }
@@ -397,9 +399,9 @@ void ScalingLayer4D::set_default()
 {
     layer_name = "scaling_layer";
 
-    set_scalers(Scaler::MeanStandardDeviation);
+    set_scalers(Scaler::MinimumMaximum);
 
-    set_min_max_range(type(-1), type(1));
+    set_min_max_range(type(0), type(255));
 
     set_display(true);
 
