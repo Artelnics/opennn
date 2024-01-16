@@ -267,8 +267,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
     type* get_activations_derivatives_data();
 
-    Tensor<type, 4> combinations;
-    Tensor<type, 4> outputs;
     Tensor<type, 4> activations_derivatives;
 };
 
@@ -288,9 +286,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
 
     void print() const;
-
-    Tensor<type, 2> delta; // --> delete?
-    Tensor<type, 4> convolutional_delta; // --> delete?
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 4> synaptic_weights_derivatives;

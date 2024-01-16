@@ -154,6 +154,8 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, N>&tensor)
 
 void print_tensor(const float* vector, const int dims[]);
 
+Tensor<type, 4> perform_convolution(const Tensor<type, 4>& input, const Tensor<type, 3>& kernel, const Index row_stride, const Index column_stride, ThreadPoolDevice& thread_pool_device); 
+
 }
 
 #endif

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensor_utilities.h"
+#include "4d_dimensions.h"
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
@@ -1431,6 +1432,43 @@ void print_tensor(const float* vector, const int dims[])
         }
     }
 }
+
+Tensor<type, 4> perform_convolution(const Tensor<type, 4>& input, const Tensor<type, 3>& kernel, const Index row_stride, const Index column_stride, ThreadPoolDevice& thread_pool_device)
+{
+    const Eigen::array<Index, 3> convolution_dimension{
+        Convolutional4dDimensions::channel_index, 
+        Convolutional4dDimensions::row_index,
+        Convolutional4dDimensions::column_index};
+    
+    Eigen::array<Index, 4> strides;
+    strides[Convolutional4dDimensions::sample_index] = 1;
+    strides[Convolutional4dDimensions::channel_index] = 1;
+    strides[Convolutional4dDimensions::row_index] = row_stride;
+    strides[Convolutional4dDimensions::column_index] = column_stride;
+
+    const Index input_samples_number = input.dimension(Convolutional4dDimensions::sample_index);
+    const Index input_columns_number = input.dimension(Convolutional4dDimensions::column_index);
+    const Index input_rows_number = input.dimension(Convolutional4dDimensions::row_index);
+    
+    const Index kernel_rows_number = kernel.dimension(Convolutional4dDimensions::row_index);
+    const Index kernel_columns_number = kernel.dimension(Convolutional4dDimensions::column_index);
+
+    Tensor<Index, 1> output_dimension(4);
+    output_dimension[Convolutional4dDimensions::sample_index] = input_samples_number;
+    output_dimension[Convolutional4dDimensions::channel_index] = 1;
+    output_dimension[Convolutional4dDimensions::row_index] = (input_rows_number - kernel_rows_number) / row_stride + 1;
+    output_dimension[Convolutional4dDimensions::column_index] = (input_columns_number - kernel_columns_number) / column_stride + 1;
+    
+    Tensor<type, 4> output;
+
+    output.resize(output_dimension);
+
+
+    output.device(thread_pool_device) = input.convolve(kernel, convolution_dimension).stride(strides);
+    
+    return output;
+}
+
 
 }
 
