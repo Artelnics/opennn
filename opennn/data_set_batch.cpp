@@ -49,11 +49,11 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
                 }
             }
         }
-/*
+
         const bool augmentation = data_set_pointer->get_augmentation();
 
         if(augmentation) perform_augmentation();
-*/
+
     }
 
     fill_submatrix(data, samples_indices, targets_indices, targets.data());
@@ -120,9 +120,9 @@ void DataSetBatch::perform_augmentation()
             const type rescaling = (random_rescaling_minimum < random_rescaling_maximum)
                     ? random_rescaling_minimum + type(rand())
                     : random_rescaling_maximum;
-/*
+
             rescale_image(image, image, rescaling);
-*/
+
         }
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)

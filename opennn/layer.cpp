@@ -235,7 +235,7 @@ void Layer::linear_derivatives(const Tensor<type, 1>& x, Tensor<type, 1>& y, Ten
 
 void Layer::logistic(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    y.device(*thread_pool_device) = type(1)/(type(1) + (-x).exp());
+    y.device(*thread_pool_device) = type(1)/(type(1) - x.exp());
 
     //    y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
 }
@@ -251,7 +251,7 @@ void Layer::logistic_derivatives(const Tensor<type, 1>& x, Tensor<type, 1>& y, T
 
 void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    //    x.cwiseMin(type(2.5)).cwiseMax(type(-2.5)).cwiseProduct(type(0.2)) + type(0.5);
+    y.device(*thread_pool_device) = x.cwiseMin(type(2.5)).cwiseMax(type(-2.5))*type(0.2) + type(0.5);
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(-2.5));
     const Tensor<bool, 1> elif_sentence = x > x.constant(type(2.5));
@@ -346,13 +346,7 @@ void Layer::symmetric_threshold(const Tensor<type, 1>& x,
 void Layer::rectified_linear(const Tensor<type, 1>& x,
                              Tensor<type, 1>& y) const
 {
-    const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
-
-    Tensor<type, 1> zeros(x.dimension(0));
-    zeros.setConstant(type(0));
-
-    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
-
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 }
 
 
@@ -360,16 +354,9 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 1>& x,
                                          Tensor<type, 1>& y,
                                          Tensor<type, 1>& dy_dx) const
 {
-    const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 
-    Tensor<type, 1> zeros(x.dimension(0));
-    zeros.setZero();
-
-    Tensor<type, 1> ones(x.dimension(0));
-    ones.setConstant(type(1));
-
-    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
-    dy_dx.device(*thread_pool_device) = if_sentence.select(zeros, ones);
+    dy_dx.device(*thread_pool_device) = y.cwiseMax(y > type(0));
 }
 
 
@@ -414,10 +401,9 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 1>& x,
 }
 
 
-void Layer::soft_plus(const Tensor<type, 1>& x,
-                      Tensor<type, 1>& y) const
+void Layer::soft_plus(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    y.device(*thread_pool_device) = (x.constant(type(1)) + x.exp()).log();
+    y.device(*thread_pool_device) = (type(1) + x.exp()).log();
 }
 
 
@@ -472,7 +458,6 @@ void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
     y.device(*thread_pool_device) = x;
     /*
     y.device(*thread_pool_device) = y.select(y < 0, alpha * (y.exp() - type(1)));
-
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
 
@@ -607,12 +592,7 @@ void Layer::logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-    const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
-
-    Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
-    zeros.setConstant(type(0));
-
-    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 }
 
 
@@ -777,16 +757,9 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, T
 
 void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-    const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 
-    Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
-    zeros.setZero();
-
-    Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
-    ones.setConstant(type(1));
-
-    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
-    dy_dx.device(*thread_pool_device) = if_sentence.select(zeros, ones);
+    dy_dx.device(*thread_pool_device) = y.cwiseMax(y > type(0));
 }
 
 
@@ -873,14 +846,10 @@ void Layer::linear(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
     y.device(*thread_pool_device) = x;
 }
 
+
 void Layer::rectified_linear(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
 {
-    const Tensor<bool, 3> if_sentence = x < x.constant(type(0));
-
-    Tensor<type, 3> zeros(x.dimension(0), x.dimension(1), x.dimension(2));
-    zeros.setConstant(type(0));
-
-    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 }
 
 
@@ -902,16 +871,9 @@ void Layer::linear_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Ten
 
 void Layer::rectified_linear_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 3>& dy_dx) const
 {
-    const Tensor<bool, 3> if_sentence = x < x.constant(type(0));
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 
-    Tensor<type, 3> zeros(x.dimension(0), x.dimension(1), x.dimension(2));
-    zeros.setZero();
-
-    Tensor<type, 3> ones(x.dimension(0), x.dimension(1), x.dimension(2));
-    ones.setConstant(type(1));
-
-    y.device(*thread_pool_device) = if_sentence.select(zeros, x);
-    dy_dx.device(*thread_pool_device) = if_sentence.select(zeros, ones);
+    dy_dx.device(*thread_pool_device) = y.cwiseMax(y > type(0));
 }
 
 
@@ -982,9 +944,7 @@ void Layer::logistic(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 void Layer::rectified_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-    y.setZero();
-
-    y.device(*thread_pool_device) = y.cwiseMax(x);
+    y.device(*thread_pool_device) = x.cwiseMax(type(0));
 }
 
 

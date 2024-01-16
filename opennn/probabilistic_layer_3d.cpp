@@ -1080,7 +1080,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(inputs_number_element->GetText())
     {
-        new_inputs_number = static_cast<Index>(stoi(inputs_number_element->GetText()));
+        new_inputs_number = Index(stoi(inputs_number_element->GetText()));
     }
 
     // Neurons number
@@ -1100,7 +1100,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(neurons_number_element->GetText())
     {
-        new_neurons_number = static_cast<Index>(stoi(neurons_number_element->GetText()));
+        new_neurons_number = Index(stoi(neurons_number_element->GetText()));
     }
 
 //    set(new_inputs_number, new_neurons_number);
@@ -1158,7 +1158,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(decision_threshold_element->GetText())
     {
-        set_decision_threshold(static_cast<type>(atof(decision_threshold_element->GetText())));
+        set_decision_threshold(type(atof(decision_threshold_element->GetText())));
     }
 
     // Display

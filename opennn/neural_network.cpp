@@ -548,7 +548,7 @@ ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d_pointer() const
     ostringstream buffer;
 
     buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "ScalingLayer* get_scaling_layer_2d_pointer() const method.\n"
+           << "ScalingLayer2D* get_scaling_layer_2d_pointer() const method.\n"
            << "No scaling layer in neural network.\n";
 
     throw invalid_argument(buffer.str());
@@ -848,7 +848,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
 
         //                add_layer(long_short_term_memory_layer_pointer);
 
-        for(Index i = 0 /* 1 when lstm layer*/; i < size-1 /*size-1 when lstm layer*/; i++)
+        for(Index i = 0 ; i < size-1 ; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -1744,101 +1744,25 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
+Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(Tensor<type, 2>& inputs)
 {
+    const Index layers_number = get_layers_number();
+
+    if(layers_number == 0) return Tensor<type, 2>();
+
+    const Index batch_samples_number = inputs.dimension(0);
+
+    ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 /*
-    const Index inputs_rank = inputs_dimensions.size();
+    forward_propagate(data_set_batch, neural_network_forward_propagation);
 
-    if(inputs_rank == 2)
+    if(neural_network_forward_propagation.layers(layers_number - 1)->layer_pointer->get_type_string() == "Unscaling")
     {
-        DataSetBatch data_set_batch;
+        Tensor<type, 2> outputs = neural_network_forward_propagation.layers(layers_number - 2)->outputs(0);
 
-        data_set_batch.inputs.resize(1);
-        data_set_batch.inputs(0).set_dimensions(inputs_dimensions);
-
-        const Tensor<Index, 0> size = inputs_dimensions.prod();
-
-        memcpy(data_set_batch.inputs(0).data(), inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
-
-        const Index batch_samples_number = inputs_dimensions(0);
-
-        ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
-
-        forward_propagate(data_set_batch.get_inputs(), neural_network_forward_propagation);
-
-        const Index layers_number = get_layers_number();
-
-        if(layers_number == 0) return Tensor<type, 2>();
-
-        //neural_network_forward_propagation.layers(layers_number - 1)->outputs(0).to_tensor_map<2>();
-
-        TensorMap<Tensor<type, 2>> outputs(nullptr, 1, 1);
-
-        return outputs;
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(type* , Tensor<Index, 1>&).\n"
-               << "Inputs rank must be 2.\n";
-
-        throw invalid_argument(buffer.str());
+        return outputs.to_tensor_map<2>();
     }
 */
-    return Tensor<type, 2>();
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(type* inputs_data, Tensor<Index, 1>&inputs_dimensions)
-{
-/*
-    const Index inputs_rank = inputs_dimensions.size();
-
-    if(inputs_rank == 2)
-    {
-        DataSetBatch data_set_batch;
-
-        DynamicTensor<type> inputs(inputs_data, inputs_dimensions);
-
-        data_set_batch.set_inputs(inputs);
-
-        const Index batch_samples_number = inputs_dimensions(0);
-
-        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
-
-        forward_propagate(data_set_batch, neural_network_forward_propagation);
-
-        const Index layers_number = neural_network_forward_propagation.layers.size();
-
-        if(layers_number == 0) return inputs.to_tensor_map<2>();
-
-        if(neural_network_forward_propagation.layers(layers_number - 1)->layer_pointer->get_type_string() == "Unscaling")
-        {
-            DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 2)->outputs(0);
-
-            return outputs.to_tensor_map<2>();
-        }
-        else
-        {
-            DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
-
-            return outputs.to_tensor_map<2>();
-        }
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(type* , Tensor<Index, 1>&).\n"
-               << "Inputs rank must be 2.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-
     return Tensor<type, 2>();
 }
 
@@ -1862,7 +1786,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
-    pair<type*, dimensions> inputs_pair(inputs.data(), {{batch_samples_number, outputs_number}});
+    const pair<type*, dimensions> inputs_pair(inputs.data(), {{batch_samples_number, outputs_number}});
 
     forward_propagate(inputs_pair, neural_network_forward_propagation);
 
@@ -1870,26 +1794,24 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
 
     if(layers_number == 0) return Tensor<type, 2>();
 
-    pair<type*, dimensions> outputs = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs();
+    const pair<type*, dimensions> outputs = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
-    const Tensor<type, 2> outputs_tensor = outputs_map;
-
-    return outputs_tensor;
+    return outputs_map;
 }
 
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 {
-/*
+
     const Index batch_samples_number = inputs.dimension(0);
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
-
+/*
     forward_propagate(data_set_batch, neural_network_forward_propagation);
 
-    DynamicTensor<type> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
+    Tensor<type, 3> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
 
     return outputs.to_tensor_map<2>();
 */
@@ -1897,10 +1819,10 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 4>& inputs)
 }
 
 
-
+/*
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
-/*
+
 #ifdef OPENNN_DEBUG
     if(inputs_dimensions(1) != get_inputs_number())
     {
@@ -1996,10 +1918,10 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         throw invalid_argument(buffer.str());
     }
-*/
+
     return Tensor<type, 2>();
 }
-
+*/
 
 /// Calculates the input data necessary to compute the output data from the neural network in some direction.
 /// @param direction Input index (must be between 0 and number of inputs - 1).
@@ -2339,56 +2261,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-/*
-    if(get_model_type() == NeuralNetwork::ModelType::AutoAssociation)
-    {
-        {
-            const tinyxml2::XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
-
-            if(element)
-            {
-                tinyxml2::XMLDocument box_plot_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = element->DeepClone(&box_plot_document);
-
-                box_plot_document.InsertFirstChild(element_clone);
-
-                box_plot_from_XML(box_plot_document);
-            }
-        }
-
-        {
-            const tinyxml2::XMLElement* element = root_element->FirstChildElement("DistancesDescriptives");
-
-            if(element)
-            {
-                tinyxml2::XMLDocument distances_descriptives_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = element->DeepClone(&distances_descriptives_document);
-
-                distances_descriptives_document.InsertFirstChild(element_clone);
-
-                distances_descriptives_from_XML(distances_descriptives_document);
-            }
-        }
-
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
-
-        if(element)
-        {
-            tinyxml2::XMLDocument multivariate_box_plot_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&multivariate_box_plot_document);
-
-            multivariate_box_plot_document.InsertFirstChild(element_clone);
-
-            multivariate_box_plot_from_XML(multivariate_box_plot_document);
-        }
-    }
-*/
     // Display
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
@@ -2442,7 +2314,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 
     if(inputs_number_element->GetText())
     {
-        new_inputs_number = static_cast<Index>(atoi(inputs_number_element->GetText()));
+        new_inputs_number = Index(atoi(inputs_number_element->GetText()));
 
         set_inputs_number(new_inputs_number);
     }
@@ -2521,11 +2393,12 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
 
     for(Index i = 0; i < layers_types.size(); i++)
     {
-        if(layers_types(i) == "Scaling2D")
+        if(layers_types(i) == "Scaling")
         {
             ScalingLayer2D* scaling_layer = new ScalingLayer2D();
 
             const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer2D");
+
             start_element = scaling_element;
 
             if(scaling_element)
@@ -2547,6 +2420,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             ScalingLayer4D* scaling_layer = new ScalingLayer4D();
 
             const tinyxml2::XMLElement* scaling_element = start_element->NextSiblingElement("ScalingLayer4D");
+
             start_element = scaling_element;
 
             if(scaling_element)
@@ -2767,7 +2641,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
     if(outputs_number_element->GetText())
     {
-        new_outputs_number = static_cast<Index>(atoi(outputs_number_element->GetText()));
+        new_outputs_number = Index(atoi(outputs_number_element->GetText()));
     }
 
     // Outputs names
@@ -3119,7 +2993,7 @@ string NeuralNetwork::write_expression_c() const
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer << "/**" << endl;
+    buffer << "/*" << endl;
     buffer << "Artificial Intelligence Techniques SL\t" << endl;
     buffer << "artelnics@artelnics.com\t" << endl;
     buffer << "" << endl;
@@ -5261,7 +5135,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 {
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
-    Tensor<type, 2> outputs = calculate_outputs(inputs.data(), inputs_dimensions);
+    Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     std::ofstream file(file_name.c_str());
 

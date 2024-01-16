@@ -246,7 +246,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
     /// @todo loss_index.calculate_training_loss not available
 
 //    type loss = sum_squared_error.calculate_training_loss();
-//    Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_differentiation_gradient();
+//    Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_gradient();
 
 //    Tensor<type, 1> training_direction = gradient*(-1.0);
 //    type initial_learning_rate = 0.001;
@@ -281,7 +281,7 @@ void LearningRateAlgorithmTest::run_test_case()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

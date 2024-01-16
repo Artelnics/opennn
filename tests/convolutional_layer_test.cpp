@@ -914,7 +914,7 @@ void ConvolutionalLayerTest::test_forward_propagation()
                      inputs_columns_number,
                      targets_number);
 
-    data_set.set_data_constant(static_cast<type>(1));
+    data_set.set_data_constant(type(1));
 
     Tensor<Index, 1> input_variables_dimensions(3);
     input_variables_dimensions.setValues({inputs_channels_number,
@@ -1192,7 +1192,7 @@ void ConvolutionalLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

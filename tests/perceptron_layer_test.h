@@ -92,15 +92,10 @@ private:
 
     Tensor<type, 2> get_activations(const Tensor<type, 2>&combinations) const
     {
-        Tensor<type, 2> combinations_copy(combinations);
         Tensor<type, 2> activations(combinations);
 
-        Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations);
-        Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
-/*
-        perceptron_layer.calculate_activations(combinations_copy.data(), combinations_dimensions,
-                                               activations.data(), activations_dimensions);
-*/
+        perceptron_layer.calculate_activations(combinations, activations);
+
         return activations;
     }
 };
@@ -110,7 +105,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

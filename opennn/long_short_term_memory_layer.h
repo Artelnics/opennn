@@ -312,9 +312,6 @@ protected:
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
    ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
 
-   Index batch;
-   Index variables;
-
    Tensor<type, 1> hidden_states;
    Tensor<type, 1> cell_states;
 

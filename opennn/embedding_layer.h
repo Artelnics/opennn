@@ -102,26 +102,27 @@ public:
 
 //    Tensor<type, 2> one_hot_encode_row(const Tensor<type, 1>&);
 
-    void lookup_embedding(const Tensor<type, 2>&, EmbeddingLayerForwardPropagation*);
-
-    // Positional encoding
-
-    const Tensor<type, 2> build_positional_encoding_matrix();
+    void lookup_embedding(const Tensor<type, 2>&, TensorMap<Tensor<type, 3>>&);
 
     // Embedding layer outputs
 
-    void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
+    void forward_propagate(const pair<type*, dimensions>&layer,
+                           LayerForwardPropagation*,
+                           const bool&) final;
+
+    void forward_propagate(const pair<type*, dimensions>&,
+                           Tensor<type, 1>&,
+                           LayerForwardPropagation*) final;
 
     // Expression methods
 
-    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+    //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
     // Serialization methods
-
     /// @todo
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void write_XML(tinyxml2::XMLPrinter&) const final;
+    //    void from_XML(const tinyxml2::XMLDocument&) final;
+    //    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -165,18 +166,29 @@ protected:
         {
         }
 
-        virtual ~EmbeddingLayerForwardPropagation()
-        {
-        }
-
-
         explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
             : LayerForwardPropagation()
         {
             set(new_batch_samples_number, new_layer_pointer);
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        virtual ~EmbeddingLayerForwardPropagation()
+        {
+        }
+
+
+        pair<type*, dimensions> get_outputs() const final
+        {
+            EmbeddingLayer* embedding_layer_pointer = static_cast<EmbeddingLayer*>(layer_pointer);
+
+            const Index input_length = embedding_layer_pointer->get_input_length();
+
+            const Index depth = embedding_layer_pointer->get_depth();
+
+            return pair<type*, dimensions>(outputs_data, {{batch_samples_number, input_length, depth}});
+        }
+
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
             EmbeddingLayer* layer_pointer = static_cast<EmbeddingLayer*>(new_layer_pointer);
 
@@ -184,12 +196,13 @@ protected:
 
             const Index input_length = layer_pointer->get_input_length();
 
+            const Index depth = layer_pointer->get_depth();
+
             // Outputs
 
-//            outputs.resize(1);
-//            Tensor<Index, 1> output_dimensions(3);
-//            output_dimensions.setValues({batch_samples_number, input_length, depth});
-//            outputs(0).set_dimensions(output_dimensions);
+            outputs.resize(batch_samples_number, input_length, depth);
+
+            outputs_data = outputs.data();
 
             // Rest of quantities
 
@@ -211,8 +224,54 @@ protected:
             //            cout << attention_scores << endl;
         }
 
-        Tensor<type, 3> outputs;
 
+        void build_positional_encoding_matrix()
+        {
+            EmbeddingLayer* embedding_layer_pointer = static_cast<EmbeddingLayer*>(layer_pointer);
+
+            const Index input_length = embedding_layer_pointer->get_input_length();
+            const Index depth = embedding_layer_pointer->get_depth();
+
+            positional_encoding_matrix.resize(input_length, depth);
+            positional_encoding_matrix.setZero();
+
+            type half_depth = type(depth)/type(2);
+
+        #pragma omp parallel for collapse(2)
+            for(Index i = 0; i < input_length; i++)
+            {
+                for(Index j = 0; j < static_cast<Index>(half_depth - 1); j++)
+                {
+                    positional_encoding_matrix(i, 2*j) = type(sin( (i + 1) / pow(10000, (j + 1) / half_depth) ));
+                    positional_encoding_matrix(i, 2*j+1) = type(cos( (i + 1) / pow(10000, (j + 1) / half_depth) ));
+                }
+            }
+
+            if(depth % 2 == 0)
+            {
+                for(Index i = 0; i < input_length; i++)
+                {
+                    positional_encoding_matrix(i, depth - 2) = type(sin( (i+1) / 10000 ));
+                    positional_encoding_matrix(i, depth - 1) = type(cos( (i+1) / 10000 ));
+                }
+            }
+            else
+            {
+                for(Index i = 0; i < input_length; i++)
+                {
+                    positional_encoding_matrix(i, depth - 1) = type(sin( (i+1) / 10000 ));
+                }
+            }
+
+            built_positional_encoding_matrix = true;
+        }
+
+
+        bool built_positional_encoding_matrix = false;
+
+        Tensor<type, 2> positional_encoding_matrix;
+
+        Tensor<type, 3> outputs;
     };
 
 
@@ -239,7 +298,7 @@ protected:
         }
 
         /// @todo
-
+        /*
         void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
             layer_pointer = new_layer_pointer;
@@ -251,7 +310,7 @@ protected:
 
             deltas.resize(batch_samples_number, neurons_number);
 
-            // squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+            squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
         }
 
         void print() const
@@ -260,10 +319,14 @@ protected:
             cout << deltas << endl;
 
             cout << "Squared errors Jacobian: " << endl;
-            // cout << squared_errors_Jacobian << endl;
+            cout << squared_errors_Jacobian << endl;
 
-        PerceptronLayerForwardPropagation perceptron_forward_propagation;
+        }
+
+        Tensor<type, 2> squared_errors_Jacobian;
+*/
     };
+
 
 
     struct EmbeddingLayerBackPropagation : LayerBackPropagation
@@ -287,8 +350,8 @@ protected:
         }
 
         /// @todo
-
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        /*
+        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
             layer_pointer = new_layer_pointer;
 
@@ -297,7 +360,10 @@ protected:
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
-            deltas.resize(batch_samples_number, neurons_number);
+            deltas_dimensions.resize(2);
+            deltas_dimensions.setValues({batch_samples_number, neurons_number});
+
+            deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
             biases_derivatives.resize(neurons_number);
 
@@ -306,11 +372,24 @@ protected:
             deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
         }
 
+        Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
+        {
+            Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
+
+            const Index inputs_number = layer_pointer->get_inputs_number();
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
+            layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
+
+            return layer_gradient;
+        }
+
 
         void print() const
         {
             cout << "Deltas:" << endl;
-            cout << deltas << endl;
+            //cout << deltas << endl;
 
             cout << "Biases derivatives:" << endl;
             cout << biases_derivatives << endl;
@@ -319,15 +398,14 @@ protected:
             cout << synaptic_weights_derivatives << endl;
         }
 
-        Tensor<type, 2> deltas;
-
         Tensor<type, 1> biases_derivatives;
         Tensor<type, 2> synaptic_weights_derivatives;
 
         Tensor<type, 2> deltas_times_activations_derivatives;
+*/
     };
 
-    };
+}
 
 #endif // EMBEDDING_LAYER_H
 

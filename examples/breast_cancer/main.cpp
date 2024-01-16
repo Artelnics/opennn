@@ -50,7 +50,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
         training_strategy.perform_training();
-/*
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -61,7 +61,7 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/breast_cancer.py");
-*/
+
         cout << "End breast cancer application" << endl;
 
         return 0;

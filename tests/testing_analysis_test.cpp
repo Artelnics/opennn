@@ -487,10 +487,10 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.12);
-    outputs(1,0) = static_cast<type>(0.78);
-    outputs(2,0) = static_cast<type>(0.84);
-    outputs(3,0) = static_cast<type>(0.99);
+    outputs(0,0) = type(0.12);
+    outputs(1,0) = type(0.78);
+    outputs(2,0) = type(0.84);
+    outputs(3,0) = type(0.99);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -571,10 +571,10 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.78);
-    outputs(1,0) = static_cast<type>(0.84);
-    outputs(2,0) = static_cast<type>(0.12);
-    outputs(3,0) = static_cast<type>(0.99);
+    outputs(0,0) = type(0.78);
+    outputs(1,0) = type(0.84);
+    outputs(2,0) = type(0.12);
+    outputs(3,0) = type(0.99);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -670,11 +670,11 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     outputs.resize(5,1);
 
-    outputs(0,0) = static_cast<type>(0.33);
-    outputs(1,0) = static_cast<type>(0.14);
-    outputs(2,0) = static_cast<type>(0.12);
-    outputs(3,0) = static_cast<type>(0.62);
-    outputs(4,0) = static_cast<type>(0.85);
+    outputs(0,0) = type(0.33);
+    outputs(1,0) = type(0.14);
+    outputs(2,0) = type(0.12);
+    outputs(3,0) = type(0.62);
+    outputs(4,0) = type(0.85);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -699,10 +699,10 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.67);
-    outputs(1,0) = static_cast<type>(0.98);
-    outputs(2,0) = static_cast<type>(0.78);
-    outputs(3,0) = static_cast<type>(0.45);
+    outputs(0,0) = type(0.67);
+    outputs(1,0) = type(0.98);
+    outputs(2,0) = type(0.78);
+    outputs(3,0) = type(0.45);
 
     Tensor<type, 2> cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
@@ -734,10 +734,10 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.67);
-    outputs(1,0) = static_cast<type>(0.87);
-    outputs(2,0) = static_cast<type>(0.99);
-    outputs(3,0) = static_cast<type>(0.88);
+    outputs(0,0) = type(0.67);
+    outputs(1,0) = type(0.87);
+    outputs(2,0) = type(0.99);
+    outputs(3,0) = type(0.88);
 
     cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
@@ -771,16 +771,16 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     outputs.resize(10, 1);
 
-    outputs(0, 0) = static_cast<type>(0.09);
-    outputs(1, 0) = static_cast<type>(0.19);
-    outputs(2, 0) = static_cast<type>(0.29);
-    outputs(3, 0) = static_cast<type>(0.39);
-    outputs(4, 0) = static_cast<type>(0.49);
-    outputs(5, 0) = static_cast<type>(0.59);
-    outputs(6, 0) = static_cast<type>(0.58);
-    outputs(7, 0) = static_cast<type>(0.79);
-    outputs(8, 0) = static_cast<type>(0.89);
-    outputs(9, 0) = static_cast<type>(0.99);
+    outputs(0, 0) = type(0.09);
+    outputs(1, 0) = type(0.19);
+    outputs(2, 0) = type(0.29);
+    outputs(3, 0) = type(0.39);
+    outputs(4, 0) = type(0.49);
+    outputs(5, 0) = type(0.59);
+    outputs(6, 0) = type(0.58);
+    outputs(7, 0) = type(0.79);
+    outputs(8, 0) = type(0.89);
+    outputs(9, 0) = type(0.99);
 
     calibration_plot = testing_analysis.calculate_calibration_plot(targets, outputs);
 
@@ -1229,7 +1229,7 @@ void TestingAnalysisTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

@@ -500,12 +500,12 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                 inputs.dimension(0),
                 synaptic_weights.dimension(1),
                 inputs.dimension(1),
-                static_cast<type>(1.0),
+                type(1.0),
                 (float*)inputs.data(),
                 inputs.dimension(0),
                 (float*)synaptic_weights.data(),
                 synaptic_weights.dimension(0),
-                static_cast<type>(1.0),
+                type(1.0),
                 (float*)combinations_data,
                 inputs.dimension(0));
         }
@@ -517,12 +517,12 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                 inputs.dimension(0),
                 synaptic_weights.dimension(1),
                 inputs.dimension(1),
-                static_cast<type>(1.0),
+                type(1.0),
                 (double*)inputs.data(),
                 inputs.dimension(0),
                 (double*)synaptic_weights.data(),
                 synaptic_weights.dimension(0),
-                static_cast<type>(1.0),
+                type(1.0),
                 (double*)combinations_data,
                 inputs.dimension(0));
         }
@@ -808,12 +808,12 @@ void PerceptronLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagati
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.dimension(0),
 //            next_deltas.dimension(1),
-//            static_cast<type>(1.0),
+//            type(1.0),
 //            next_deltas.data(),
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.data(),
 //            next_synaptic_weights.dimension(0),
-//            static_cast<type>(0.0),
+//            type(0.0),
 //            deltas.data(),
 //            next_deltas.dimension(0));
 //    }
@@ -825,12 +825,12 @@ void PerceptronLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagati
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.dimension(0),
 //            next_deltas.dimension(1),
-//            static_cast<type>(1.0),
+//            type(1.0),
 //            (double*)next_deltas.data(),
 //            next_deltas.dimension(0),
 //            (double*)next_synaptic_weights.data(),
 //            next_synaptic_weights.dimension(0),
-//            static_cast<type>(0.0),
+//            type(0.0),
 //            (double*)deltas.data(),
 //            next_deltas.dimension(0));
 //    }
@@ -1012,68 +1012,6 @@ void PerceptronLayer3D::calculate_hidden_delta_lm(ProbabilisticLayer3DForwardPro
     }
 }
 
-/*
-void PerceptronLayer3D::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
-                                                           LayerForwardPropagation* forward_propagation,
-                                                           LayerBackPropagationLM* back_propagation)
-{
-    PerceptronLayer3DForwardPropagation* perceptron_layer_forward_propagation =
-            static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation);
-
-    PerceptronLayer3DBackPropagationLM* perceptron_layer_back_propagation_lm =
-            static_cast<PerceptronLayer3DBackPropagationLM*>(back_propagation);
-
-    const Tensor<type, 3>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
-
-    const Index samples_number = inputs.dimension(0);
-
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    Index parameter_index = 0;
-
-    /// @todo parallelize
-
-    for(Index sample = 0; sample < samples_number; sample++)
-    {
-        Index parameter_index = 0;
-
-        for(Index neuron = 0; neuron < neurons_number; neuron++)
-        {
-            for(Index input = 0; input < inputs_number; input++)
-            {
-                perceptron_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
-                        perceptron_layer_back_propagation_lm->deltas(sample, neuron) *
-                        activations_derivatives(sample, neuron) *
-                        inputs(sample, input);
-
-                parameter_index++;
-            }
-
-            perceptron_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
-                    perceptron_layer_back_propagation_lm->deltas(sample, neuron) *
-                    activations_derivatives(sample, neuron);
-        }
-    }
-}
-
-
-void PerceptronLayer3D::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM * back_propagation ,
-                                                        const Index & index,
-                                                        Tensor<type, 2>& squared_errors_Jacobian) const
-{
-    const Index batch_samples_number = back_propagation->batch_samples_number;
-
-    PerceptronLayer3DBackPropagationLM* perceptron_layer_back_propagation_lm =
-            static_cast<PerceptronLayer3DBackPropagationLM*>(back_propagation);
-
-    const Index layer_parameters_number = get_parameters_number();
-
-    copy(perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data(),
-         perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data()+ layer_parameters_number*batch_samples_number,
-         squared_errors_Jacobian.data() + index);
-}
-*/
 
 void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& inputs,
                                                LayerForwardPropagation* forward_propagation,
@@ -1107,12 +1045,12 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
 //            inputs.dimension(1),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
 //            inputs.dimension(0),
-//            static_cast<type>(1.0),
+//            type(1.0),
 //            inputs.data(),
 //            inputs.dimension(0),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            static_cast<type>(0.0),
+//            type(0.0),
 //            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
@@ -1124,12 +1062,12 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
 //            inputs.dimension(1),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
 //            inputs.dimension(0),
-//            static_cast<type>(1.0),
+//            type(1.0),
 //            (double*)inputs.data(),
 //            inputs.dimension(0),
 //            (double*)perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            static_cast<type>(0.0),
+//            type(0.0),
 //            (double*)perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
@@ -1240,7 +1178,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(inputs_number_element->GetText())
     {
-        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
+        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
     }
 
     // Neurons number
@@ -1258,7 +1196,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(neurons_number_element->GetText())
     {
-        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
+        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
     }
 
     // Activation function

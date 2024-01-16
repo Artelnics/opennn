@@ -149,8 +149,6 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 void PoolingLayerTest::test_forward_propagate_average_pooling()
 {
-
-/*
     const Index batch_samples_number = 1;
 
     const Index inputs_channels_number = 3;
@@ -161,14 +159,14 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     const Index pool_columns_number = 2;
 
     const Index targets_number = 1;
-
+/*
     DataSet data_set(batch_samples_number,
                      inputs_channels_number,
                      inputs_rows_number,
                      inputs_columns_number,
                      targets_number);
 
-    data_set.set_data_constant(static_cast<type>(1));
+    data_set.set_data_constant(type(1));
 
     Tensor<Index, 1> input_variables_dimensions(3);
     input_variables_dimensions.setValues({inputs_channels_number,
@@ -384,7 +382,7 @@ void PoolingLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

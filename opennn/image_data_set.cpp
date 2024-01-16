@@ -506,36 +506,6 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Missing values
-/*
-    file_stream.OpenElement("MissingValues");
-
-    // Missing values method
-
-    {
-        file_stream.OpenElement("MissingValuesMethod");
-
-        if(missing_values_method == MissingValuesMethod::Mean)
-        {
-            file_stream.PushText("Mean");
-        }
-        else if(missing_values_method == MissingValuesMethod::Median)
-        {
-            file_stream.PushText("Median");
-        }
-        else if(missing_values_method == MissingValuesMethod::Unuse)
-        {
-            file_stream.PushText("Unuse");
-        }
-        else if(missing_values_method == MissingValuesMethod::Interpolation)
-        {
-            file_stream.PushText("Interpolation");
-        }
-
-        file_stream.CloseElement();
-    }
-*/
-
     // Close data set
 
     file_stream.CloseElement();
@@ -1826,7 +1796,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 
 BoundingBox ImageDataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {
-/*
+
     const Index channels_number = get_channels_number();
     const Index image_height = get_image_height();
     const Index image_width = get_image_width();
@@ -1858,8 +1828,6 @@ BoundingBox ImageDataSet::propose_random_region(const Tensor<unsigned char, 1>& 
     random_region.data = get_bounding_box(image, x_top_left, y_top_left, x_bottom_right, y_bottom_right);
 
     return random_region;
-*/
-    return BoundingBox();
 }
 
 

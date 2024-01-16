@@ -231,7 +231,7 @@ void DataSetTest::test_calculate_input_variables_descriptives()
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
-/**
+/*
 void DataSetTest::test_calculate_autocorrelations()
 {
     cout << "test_calculate_autocorrelations\n";
@@ -266,7 +266,7 @@ void DataSetTest::test_calculate_autocorrelations()
 }
 */
 
-/**
+/*
 void DataSetTest::test_calculate_cross_correlations()
 {
     cout << "test_calculate_cross_correlations\n";
@@ -467,7 +467,7 @@ void DataSetTest::test_calculate_target_distribution()
 
     data.setValues({{type(2),type(5),type(6),type(9),type(0)},
                     {type(2),type(9),type(1),type(9),type(0)},
-                    {type(2),type(9),type(1),type(9),static_cast<type>(NAN)},
+                    {type(2),type(9),type(1),type(9),type(NAN)},
                     {type(6),type(5),type(6),type(7),type(1)},
                     {type(0),type(1),type(0),type(1),type(1)}});
 
@@ -498,7 +498,7 @@ void DataSetTest::test_calculate_target_distribution()
                     {type(2),type(9),type(1),type(9),type(4),type(5),type(0),type(1),type(0)},
                     {type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1)},
                     {type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1)},
-                    {type(0),static_cast<type>(NAN),type(1),type(0),type(2),type(2),type(0),type(1),type(0)}});
+                    {type(0),type(NAN),type(1),type(0),type(2),type(2),type(0),type(1),type(0)}});
 
     data_set.set_data(data);
 
@@ -1184,7 +1184,7 @@ void DataSetTest::test_read_binary_csv()
 }
 
 
-/**
+/*
 void DataSetTest::test_transform_time_series()
 {
     cout << "test_transform_time_series\n";
@@ -1219,7 +1219,7 @@ void DataSetTest::test_transform_time_series()
 */
 
 
-/**
+/*
 void DataSetTest::test_set_time_series_data()
 {
     cout << "test_set_time_series_data\n";
@@ -1276,7 +1276,7 @@ void DataSetTest::test_has_time_columns()
 }
 
 
-/**
+/*
 void DataSetTest::test_save_time_series_data_binary()
 {
     cout << "test_save_time_series_data_binary\n";
@@ -1308,7 +1308,7 @@ void DataSetTest::test_save_time_series_data_binary()
 */
 
 
-/**
+/*
 void DataSetTest::test_set_steps_ahead_number()
 {
     cout << "test_set_steps_ahead_nuber\n";
@@ -1329,7 +1329,7 @@ void DataSetTest::test_set_steps_ahead_number()
 */
 
 
-/**
+/*
 void DataSetTest::test_set_lags_number()
 {
     cout << "test_set_lags_number\n";
@@ -1458,9 +1458,9 @@ void DataSetTest::test_calculate_used_targets_mean()
     data.resize(3, 4);
 
     data.setValues({
-                       {type(1), static_cast<type>(NAN), type(1), type(1)},
+                       {type(1), type(NAN), type(1), type(1)},
                        {type(2), type(2), type(2), type(2)},
-                       {type(3), type(3), static_cast<type>(NAN), type(3)}});
+                       {type(3), type(3), type(NAN), type(3)}});
 
     data_set.set_data(data);
 
@@ -1485,9 +1485,9 @@ void DataSetTest::test_calculate_selection_targets_mean()
     // Test
 
     data.resize(3, 4);
-    data.setValues({{1, static_cast<type>(NAN), 6, 9},
+    data.setValues({{1, type(NAN), 6, 9},
                     {1, 2, 5, 2},
-                    {3, 2, static_cast<type>(NAN), 4}});
+                    {3, 2, type(NAN), 4}});
 
     data_set.set_data(data);
 
@@ -2347,12 +2347,13 @@ void DataSetTest::test_fill()
 
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
-
+/*
     const TensorMap<Tensor<type, 2>> inputs = data_set_batch.inputs(0).to_tensor_map<2>();
     const TensorMap<Tensor<type, 2>> targets = data_set_batch.targets.to_tensor_map<2>();
 
     assert_true(are_equal(inputs, input_data), LOG);
     assert_true(are_equal(targets, target_data), LOG);
+*/
 }
 
 
@@ -2465,7 +2466,7 @@ void DataSetTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -156,7 +156,7 @@ int main()
 
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+        outputs = neural_network.calculate_outputs(inputs);
 
         cout << "\nInputs:\n" << inputs << endl;
 
@@ -178,7 +178,7 @@ int main()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

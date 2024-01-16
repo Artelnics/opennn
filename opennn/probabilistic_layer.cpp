@@ -647,7 +647,6 @@ void ProbabilisticLayer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<ty
     const Index n = x.dimension(0);
     const Index m = x.dimension(1);
 
-
   /*
 
         softmax(x, y);
@@ -797,26 +796,17 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
     if(neurons_number == 1)
     {
-        cout << "hello" << endl;
-
-        const Eigen::array<Index, 2> reshape_dimensions = {{samples_number, 1}};
+        const Eigen::array<Index, 2> to_2D = {{samples_number, 1}};
 
         // Reshape does not copy the data
 
-        const Tensor<type, 2> activations_derivatives_2d = activations_derivatives.reshape(reshape_dimensions);
+        //const Tensor<type, 2> activations_derivatives_2d = activations_derivatives.reshape(to_2D);
 
         biases_derivatives.device(*thread_pool_device) =
-            (deltas*activations_derivatives_2d).sum(Eigen::array<Index, 1>({0}));
+            (deltas*activations_derivatives.reshape(to_2D)).sum(Eigen::array<Index, 1>({0}));
 
         synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs_map.contract(deltas*activations_derivatives_2d, AT_B);
-/*
-        biases_derivatives.device(*thread_pool_device) =
-            (deltas*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
-
-        synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs_map.contract(deltas*activations_derivatives, AT_B);
-*/
+            inputs_map.contract(deltas*activations_derivatives.reshape(to_2D), AT_B);
     }
     else
     {

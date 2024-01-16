@@ -476,9 +476,8 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-//    type* inputs_data = batch.inputs(0).data();
+//    type* inputs_data = batch.get_inputs()(0).data();
 
-//    const TensorMap<Tensor<type, 2>> inputs(batch.inputs(0).data(), batch.inputs_dimensions(0)(0),  batch.inputs_dimensions(0)(1));
 
     // Layer 0
 
@@ -495,11 +494,14 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
     }
     else
     {
-/*
+        const pair<type*, dimensions> inputs_pair = batch.get_inputs();
+
+        const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0],  inputs_pair.second[0][1]);
+
         layers_pointers(first_trainable_layer_index)->calculate_squared_errors_Jacobian_lm(inputs,
                                                                            forward_propagation.layers(first_trainable_layer_index),
                                                                            loss_index_back_propagation_lm.neural_network.layers(0));
-*/
+
         layers_pointers(first_trainable_layer_index)->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(0),
                                                                         mem_index,
                                                                         loss_index_back_propagation_lm.squared_errors_jacobian);
@@ -957,7 +959,7 @@ LossIndexBackPropagation::~LossIndexBackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
+Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 {
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
@@ -983,8 +985,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
     type error_forward;
     type error_backward;
 
-    Tensor<type, 1> gradient_numerical_differentiation(parameters_number);
-    gradient_numerical_differentiation.setConstant(type(0));
+    Tensor<type, 1> numerical_gradient(parameters_number);
+    numerical_gradient.setConstant(type(0));
 
     for(Index i = 0; i < parameters_number; i++)
     {
@@ -1018,14 +1020,14 @@ Tensor<type, 1> LossIndex::calculate_numerical_differentiation_gradient()
 
        parameters_backward(i) += h;
 
-       gradient_numerical_differentiation(i) = (error_forward - error_backward)/(type(2)*h);
+       numerical_gradient(i) = (error_forward - error_backward)/(type(2)*h);
     }
 
-    return gradient_numerical_differentiation;
+    return numerical_gradient;
 }
 
 
-Tensor<type, 2> LossIndex::calculate_jacobian_numerical_differentiation()
+Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
     LossIndexBackPropagationLM back_propagation_lm;
 

@@ -61,8 +61,8 @@ private:
 
    LossIndexBackPropagation back_propagation;
 
-   Tensor<type, 1> numerical_differentiation_gradient;
-   Tensor<type, 2> jacobian_numerical_differentiation;
+   Tensor<type, 1> numerical_gradient;
+   Tensor<type, 2> numerical_jacobian;
 
 };
 
@@ -70,7 +70,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

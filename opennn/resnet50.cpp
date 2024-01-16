@@ -59,7 +59,6 @@ Resnet50::Resnet50() : NeuralNetwork()
 
     set_layer_inputs_indices("addition_layer_1", addition_layer_inputs);
 
-
 /*
    // Block 2
 

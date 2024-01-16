@@ -57,14 +57,14 @@ int main()
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-/*
+
         testing_analysis.print_goodness_of_fit_analysis();
-/*
+
         // Save results
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_c("../data/airfoil_self_noise.c");
-*/
+
         // Deploy
 
         NeuralNetwork new_neural_network;

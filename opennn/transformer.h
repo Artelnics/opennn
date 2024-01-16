@@ -21,8 +21,6 @@
 
 // OpenNN includes
 
-// #include "embedding_layer.h"
-// #include "multihead_attention_layer.h"
 #include "neural_network.h"
 
 

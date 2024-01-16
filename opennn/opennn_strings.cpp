@@ -1065,7 +1065,7 @@ string replace_non_allowed_programming_expressions(string& s)
         if(s[0] == '$')
             out=s;
 
-        /**
+        /*
         switch(l) {
 
         // C++ reserved words

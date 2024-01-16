@@ -1017,7 +1017,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(lags_number_element->GetText())
     {
-        const Index new_lags_number = static_cast<Index>(atoi(lags_number_element->GetText()));
+        const Index new_lags_number = Index(atoi(lags_number_element->GetText()));
 
         set_lags_number(new_lags_number);
     }
@@ -1037,7 +1037,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(steps_ahead_element->GetText())
     {
-        const Index new_steps_ahead = static_cast<Index>(atoi(steps_ahead_element->GetText()));
+        const Index new_steps_ahead = Index(atoi(steps_ahead_element->GetText()));
 
         set_steps_ahead_number(new_steps_ahead);
     }
@@ -1126,7 +1126,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = static_cast<Index>(atoi(columns_number_element->GetText()));
+        new_columns_number = Index(atoi(columns_number_element->GetText()));
 
         set_columns_number(new_columns_number);
     }
@@ -1297,7 +1297,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(time_series_columns_number_element->GetText())
     {
-        time_series_new_columns_number = static_cast<Index>(atoi(time_series_columns_number_element->GetText()));
+        time_series_new_columns_number = Index(atoi(time_series_columns_number_element->GetText()));
 
         set_time_series_columns_number(time_series_new_columns_number);
     }
@@ -1508,7 +1508,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(samples_number_element->GetText())
     {
-        const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
+        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
 
@@ -1579,7 +1579,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number_element->GetText())
     {
-        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
     }
 
     if(missing_values_number > 0)
@@ -1624,7 +1624,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(rows_missing_values_number_element->GetText())
         {
-            rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
+            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
         }
     }
 
@@ -1658,7 +1658,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(preview_size_element->GetText())
     {
-        new_preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
+        new_preview_size = Index(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
     }

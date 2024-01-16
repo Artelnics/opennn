@@ -34,8 +34,8 @@
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
 #include "non_max_suppression_layer.h"
-// #include "embedding_layer.h"
-// #include "multihead_attention_layer.h"
+#include "embedding_layer.h"
+#include "multihead_attention_layer.h"
 
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
@@ -229,13 +229,10 @@ public:
 
    // Output
 
-   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
    Tensor<type, 2> calculate_outputs(Tensor<type, 4>&);
 
-   Tensor<type, 2> calculate_unscaled_outputs(type*, Tensor<Index, 1>&);
-
-   Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_unscaled_outputs(Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
