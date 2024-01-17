@@ -147,7 +147,7 @@ public:
 
     // Padding
 
-    auto get_padded_input(const Tensor<type, 4>& inputs) const;
+    auto get_padded_input(const Tensor<type, 4>& inputs) const -> TensorPaddingOp<const Eigen::array<pair<int, int>, 4>, const Tensor<type, 4>>;
 
     // Combinations
 

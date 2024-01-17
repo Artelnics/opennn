@@ -81,7 +81,7 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 /// @param input Tensor containing the inputs.
 
 
-auto ConvolutionalLayer::get_padded_input(const Tensor<type, 4>& inputs) const
+auto ConvolutionalLayer::get_padded_input(const Tensor<type, 4>& inputs) const -> TensorPaddingOp<const Eigen::array<pair<int, int>, 4>, const Tensor<type, 4>>
 {
     Eigen::array<pair<int, int>, 4> padding;
     switch(convolution_type)

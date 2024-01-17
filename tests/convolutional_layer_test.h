@@ -66,8 +66,7 @@ public:
   void test_forward_propagate_not_training();
 
   //Back propagate
-
-  void test_calculate_hidden_delta_perceptron_test();
+  
   void test_calculate_hidden_delta();
   void test_calculate_error_gradient();
   void test_calculate_hidden_delta1();
