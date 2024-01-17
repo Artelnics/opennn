@@ -147,7 +147,7 @@ public:
 
     // Padding
 
-    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    auto get_padded_input(const Tensor<type, 4>& inputs) const;
 
     // Combinations
 
@@ -187,11 +187,7 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                               PerceptronLayerBackPropagation*,
-                               ConvolutionalLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_layer_forward_propagation,
+   void calculate_hidden_delta(ConvolutionalLayerForwardPropagation* next_layer_forward_propagation,
                                 ConvolutionalLayerBackPropagation* next_layer_back_propagation,
                                 LayerBackPropagation* layer_back_propagation) const;
 
@@ -218,7 +214,7 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
-
+   Tensor<Index, 1> get_padded_input_dimension() const; 
    /// This tensor containing conection strengths from a layer's inputs to its neurons.
 
    Tensor<type, 4> synaptic_weights;
