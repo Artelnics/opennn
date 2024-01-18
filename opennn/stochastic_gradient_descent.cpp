@@ -130,7 +130,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_learning_rate <= type(0.0))
+    if(new_learning_rate <= type(0))
     {
         ostringstream buffer;
 
@@ -156,7 +156,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_dacay < type(0.0))
+    if(new_dacay < type(0))
     {
         ostringstream buffer;
 
@@ -183,7 +183,7 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_momentum < type(0.0))
+    if(new_momentum < type(0))
     {
         ostringstream buffer;
 
@@ -218,7 +218,7 @@ void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maxim
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_epochs_number < type(0.0))
+    if(new_maximum_epochs_number < type(0))
     {
         ostringstream buffer;
 
@@ -254,7 +254,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < type(0.0))
+    if(new_maximum_time < type(0))
     {
         ostringstream buffer;
 
@@ -682,7 +682,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("ApplyMomentum");
 
     buffer.str("");
-    buffer << (momentum > type(0.0));
+    buffer << (momentum > type(0));
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -787,7 +787,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             }
             else
             {
-                set_momentum(type(0.0));
+                set_momentum(type(0));
             }
         }
         catch(const invalid_argument& e)
@@ -877,7 +877,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

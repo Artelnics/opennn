@@ -488,12 +488,12 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                 inputs.dimension(0),
                 synaptic_weights.dimension(1),
                 inputs.dimension(1),
-                type(1.0),
+                type(1),
                 (float*)inputs.data(),
                 inputs.dimension(0),
                 (float*)synaptic_weights.data(),
                 synaptic_weights.dimension(0),
-                type(1.0),
+                type(1),
                 (float*)combinations_data,
                 inputs.dimension(0));
         }
@@ -505,12 +505,12 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                 inputs.dimension(0),
                 synaptic_weights.dimension(1),
                 inputs.dimension(1),
-                type(1.0),
+                type(1),
                 (double*)inputs.data(),
                 inputs.dimension(0),
                 (double*)synaptic_weights.data(),
                 synaptic_weights.dimension(0),
-                type(1.0),
+                type(1),
                 (double*)combinations_data,
                 inputs.dimension(0));
         }
@@ -795,12 +795,12 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.dimension(0),
 //            next_deltas.dimension(1),
-//            type(1.0),
+//            type(1),
 //            next_deltas.data(),
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.data(),
 //            next_synaptic_weights.dimension(0),
-//            type(0.0),
+//            type(0),
 //            deltas.data(),
 //            next_deltas.dimension(0));
 //    }
@@ -812,12 +812,12 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.dimension(0),
 //            next_deltas.dimension(1),
-//            type(1.0),
+//            type(1),
 //            (double*)next_deltas.data(),
 //            next_deltas.dimension(0),
 //            (double*)next_synaptic_weights.data(),
 //            next_synaptic_weights.dimension(0),
-//            type(0.0),
+//            type(0),
 //            (double*)deltas.data(),
 //            next_deltas.dimension(0));
 //    }
@@ -1094,12 +1094,12 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
 //            inputs.dimension(1),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
 //            inputs.dimension(0),
-//            type(1.0),
+//            type(1),
 //            inputs.data(),
 //            inputs.dimension(0),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            type(0.0),
+//            type(0),
 //            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
@@ -1111,12 +1111,12 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
 //            inputs.dimension(1),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
 //            inputs.dimension(0),
-//            type(1.0),
+//            type(1),
 //            (double*)inputs.data(),
 //            inputs.dimension(0),
 //            (double*)perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            type(0.0),
+//            type(0),
 //            (double*)perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
@@ -1491,7 +1491,7 @@ PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(
 }
 
   // // namespace opennn namespace opennn// n // // namespace opennn namespace // namespace opennn opennnamespace opennn  // // namespace opennn namespace opennn //  // namespace opennnnamespace opennn//  // namespace opennnnamespace opennn// Op // namespace opennnenNN: O // namespace opennnpen Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

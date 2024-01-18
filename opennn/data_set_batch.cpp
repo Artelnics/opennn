@@ -21,7 +21,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples_indices, inputs_indices, inputs_tensor.data());
+        fill_submatrix(data, samples_indices, inputs_indices, inputs_data);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -29,7 +29,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
         const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs_map(inputs_tensor.data(),
+        TensorMap<Tensor<type, 4>> inputs_map(inputs_data,
                                               batch_size,
                                               rows_number,
                                               columns_number,
@@ -58,10 +58,9 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
         const bool augmentation = data_set_pointer->get_augmentation();
 
         if(augmentation) perform_augmentation();
-
     }
 
-    fill_submatrix(data, samples_indices, targets_indices, targets.data());
+    fill_submatrix(data, samples_indices, targets_indices, targets_data);
 }
 
 
@@ -158,6 +157,7 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     const Index target_variables_number = data_set_pointer->get_target_numeric_variables_number();
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+    const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)
     {
@@ -165,6 +165,16 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
         inputs_tensor.resize(1);
         inputs_tensor.resize(batch_size*input_variables_number);
+    }
+    else if(input_variables_dimensions.size() == 2)
+    {
+        const Index rows_number = input_variables_dimensions(0);
+        const Index columns_number = input_variables_dimensions(1);
+
+        inputs_dimensions = {{batch_size, rows_number, columns_number}};
+
+        inputs_tensor.resize(1);
+        inputs_tensor.resize(batch_size*rows_number*columns_number);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -180,7 +190,36 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
 
     inputs_data = inputs_tensor.data();
 
-    targets.resize(batch_size, target_variables_number);
+    if(target_variables_dimensions.size() == 1)
+    {
+        targets_dimensions = {{batch_size, target_variables_number}};
+
+        targets_tensor.resize(1);
+        targets_tensor.resize(batch_size*target_variables_number);
+    }
+    else if(target_variables_dimensions.size() == 2)
+    {
+        const Index rows_number = target_variables_dimensions(0);
+        const Index columns_number = target_variables_dimensions(1);
+
+        targets_dimensions = {{batch_size, rows_number, columns_number}};
+
+        targets_tensor.resize(1);
+        targets_tensor.resize(batch_size*rows_number*columns_number);
+    }
+    else if(target_variables_dimensions.size() == 3)
+    {
+        const Index channels_number = target_variables_dimensions(0);
+        const Index rows_number = target_variables_dimensions(1);
+        const Index columns_number = target_variables_dimensions(2);
+
+        targets_dimensions = {{batch_size, channels_number, rows_number, columns_number}};
+
+        targets_tensor.resize(1);
+        targets_tensor.resize(batch_size*channels_number*rows_number*columns_number);
+    }
+
+    targets_data = targets_tensor.data();
 }
 
 
@@ -205,7 +244,7 @@ void DataSetBatch::print() const
     cout << inputs_tensor << endl;
 
     cout << "Targets:" << endl;
-    cout << targets << endl;
+    cout << targets_tensor << endl;
 }
 
 
@@ -219,12 +258,23 @@ std::pair<type *, dimensions> DataSetBatch::get_inputs_pair() const
     return inputs;
 }
 
+
+std::pair<type *, dimensions> DataSetBatch::get_targets_pair() const
+{
+    pair<type *, dimensions> targets;
+
+    targets.first = targets_data;
+    targets.second = targets_dimensions;
+
+    return targets;
+}
+
 }
 
 // namespace opennn
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

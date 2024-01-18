@@ -1356,12 +1356,104 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
     return buffer.str();
 }
 
-
+ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation()
+    : LayerForwardPropagation()
+{
 
 }
 
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+
+ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
+    const Index& new_batch_samples_number, Layer *new_layer_pointer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer_pointer);
+}
+
+
+ProbabilisticLayerForwardPropagation::~ProbabilisticLayerForwardPropagation()
+{
+
+}
+std::pair<type *, dimensions>
+ProbabilisticLayerForwardPropagation::get_outputs_pair() const {
+    const Index neurons_number = layer_pointer->get_neurons_number();
+
+    return pair<type *, dimensions>(outputs_data,
+                                    {{batch_samples_number, neurons_number}});
+}
+void ProbabilisticLayerForwardPropagation::set(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer) {
+    layer_pointer = new_layer_pointer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = layer_pointer->get_neurons_number();
+
+    outputs.resize(batch_samples_number, neurons_number);
+
+    outputs_data = outputs.data();
+
+    activations_derivatives.resize(batch_samples_number, neurons_number,
+                                   neurons_number);
+}
+void ProbabilisticLayerForwardPropagation::print() const {
+    cout << "Outputs:" << endl;
+    cout << outputs << endl;
+
+    cout << "Activations derivatives:" << endl;
+    cout << activations_derivatives << endl;
+}
+ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation()
+    : LayerBackPropagation() {}
+ProbabilisticLayerBackPropagation::~ProbabilisticLayerBackPropagation() {}
+ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer)
+    : LayerBackPropagation() {
+    set(new_batch_samples_number, new_layer_pointer);
+}
+std::pair<type *, dimensions>
+ProbabilisticLayerBackPropagation::get_deltas_pair() const {
+    const Index neurons_number = layer_pointer->get_neurons_number();
+
+    return pair<type *, dimensions>(deltas_data,
+                                    {{batch_samples_number, neurons_number}});
+}
+void ProbabilisticLayerBackPropagation::set(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer) {
+    layer_pointer = new_layer_pointer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index inputs_number = layer_pointer->get_inputs_number();
+
+    deltas.resize(batch_samples_number, neurons_number);
+
+    deltas_data = deltas.data();
+
+    biases_derivatives.resize(neurons_number);
+
+    synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+    deltas_row.resize(neurons_number);
+
+    error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+}
+void ProbabilisticLayerBackPropagation::print() const {
+    cout << "Deltas:" << endl;
+    cout << deltas << endl;
+
+    cout << "Biases derivatives:" << endl;
+    cout << biases_derivatives << endl;
+
+    cout << "Synaptic weights derivatives:" << endl;
+    cout << synaptic_weights_derivatives << endl;
+}
+} // namespace opennn
+
+ // namespace opennn// / // namespace opennn/ namespace opennn OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

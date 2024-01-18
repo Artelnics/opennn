@@ -28,8 +28,6 @@ namespace opennn
 
 DataSet::DataSet()
 {
-//    set_threads();
-
     set();
 
     set_default();
@@ -72,8 +70,6 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_num
 
 DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number, const Index& new_targets_number)
 {
-//    set_threads();
-
     set(new_samples_number, new_inputs_number, new_targets_number);
 
     set_default();
@@ -98,8 +94,6 @@ DataSet::DataSet(const Tensor<type, 1>& inputs_variables_dimensions, const Index
 
 DataSet::DataSet(const string& data_source_path, const char& separator, const bool& has_columns_names, const Codification& data_codification)
 {
-//    set_threads();
-
     set(data_source_path, separator, has_columns_names, data_codification);
 }
 
@@ -1901,6 +1895,7 @@ void DataSet::set_default_columns_uses()
         }
 
         input_variables_dimensions.resize(1);
+        target_variables_dimensions.resize(1);
     }
 }
 
@@ -2171,6 +2166,12 @@ const Tensor<Index, 1>& DataSet::get_input_variables_dimensions() const
 Index DataSet::get_input_variables_rank() const
 {
     return input_variables_dimensions.rank();
+}
+
+
+const Tensor<Index, 1>& DataSet::get_target_variables_dimensions() const
+{
+    return target_variables_dimensions;
 }
 
 
@@ -3170,6 +3171,9 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 
     input_variables_dimensions.resize(1);
     input_variables_dimensions.setConstant(get_input_numeric_variables_number());
+
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setConstant(get_target_numeric_variables_number());
 }
 
 
@@ -3199,6 +3203,9 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
 
     input_variables_dimensions.resize(1);
     input_variables_dimensions.setConstant(get_input_numeric_variables_number());
+
+    target_variables_dimensions.resize(1);
+    target_variables_dimensions.setConstant(get_target_numeric_variables_number());
 }
 
 
@@ -3799,6 +3806,12 @@ Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type, 1>& column) 
 void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_dimensions)
 {
     input_variables_dimensions = new_inputs_dimensions;
+}
+
+
+void DataSet::set_target_variables_dimensions(const Tensor<Index, 1>& new_targets_dimensions)
+{
+    target_variables_dimensions = new_targets_dimensions;
 }
 
 
@@ -4479,49 +4492,6 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 }
 
 
-map<string, DataSet> DataSet::group_by(const DataSet& original, const string& column_name) const
-{
-    cout << "Grouping by category..." << endl;
-
-    map<string, DataSet> result;
-
-    const Index samples_number = original.get_samples_number();
-
-    bool is_categorical = false;
-    Index column_index = -1;
-    const Index columns_number = original.get_columns_number();
-
-    for(Index i = 0; i < columns_number; ++i)
-    {
-        if(original.columns(i).name == column_name && original.columns(i).type == DataSet::RawVariableType::Categorical)
-        {
-            is_categorical = true;
-            column_index = i;
-            break;
-        }
-    }
-
-    if(!is_categorical)
-    {
-        throw std::runtime_error("The column is not categorical");
-    }
-
-    for(Index sample_index = 0; sample_index < samples_number; ++sample_index)
-    {
-        const string category = original.get_sample_category(sample_index, column_index);
-
-        if(result.find(category) == result.end())
-        {
-            result[category].set_properties_from_parent(original);
-        }
-
-        result[category].add_sample(original.get_sample(sample_index));
-    }
-
-    return result;
-}
-
-
 Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 {
     if(sample_index >= data.dimension(0))
@@ -4942,32 +4912,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
 
 void DataSet::set(const Index& new_samples_number, const Index& new_variables_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_samples_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set(const Index&, const Index&) method.\n"
-               << "Number of samples must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(new_variables_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set(const Index&, const Index&) method.\n"
-               << "Number of variables must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     data.resize(new_samples_number, new_variables_number);
 
     columns.resize(new_variables_number);
@@ -5024,6 +4968,7 @@ void DataSet::set(const Index& new_samples_number,
     }
 
     input_variables_dimensions.resize(1);
+    target_variables_dimensions.resize(1);
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -5074,21 +5019,6 @@ void DataSet::set(const string& file_name)
 }
 
 
-
-void DataSet::set_properties_from_parent(const DataSet& parent)
-{
-    set_columns_number(parent.get_columns_number());
-    set_columns_names(parent.get_columns_names());
-    set_columns_uses(parent.get_columns_uses());
-    set_columns_types(parent.get_columns_types());
-
-    const Tensor<string, 1> variables_names = parent.get_numeric_variables_names();
-    const Tensor<DataSet::RawVariable, 1> old_columns = parent.get_columns();
-
-    set_variables_names_from_columns(variables_names, old_columns);
-}
-
-
 /// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -5128,6 +5058,10 @@ void DataSet::set_default()
     input_variables_dimensions.resize(1);
 
     input_variables_dimensions.setConstant(get_input_numeric_variables_number());
+
+    target_variables_dimensions.resize(1);
+
+    target_variables_dimensions.setConstant(get_target_numeric_variables_number());
 }
 
 
@@ -11200,10 +11134,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     }
 }
 
-}
+bool DataSet::get_augmentation() const { return augmentation; }
+} // namespace opennn
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1086,7 +1086,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
 type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type minkowski_parameter) const
 {
-    Tensor<type, 0> Minkoski_error = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(type(1.0)/minkowski_parameter);
+    Tensor<type, 0> Minkoski_error = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter);
 
     return Minkoski_error();
 }
@@ -1543,7 +1543,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     const type area_under_curve = calculate_area_under_curve(roc_curve);
 
     const type Q_1 = area_under_curve/(type(2.0) - area_under_curve);
-    const type Q_2 = (type(2.0) *area_under_curve*area_under_curve)/(type(1.0) *area_under_curve);
+    const type Q_2 = (type(2.0) *area_under_curve*area_under_curve)/(type(1) *area_under_curve);
 
     const type confidence_limit = type(type(1.64485)*sqrt((area_under_curve*(type(1) - area_under_curve)
                                   + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
@@ -1848,7 +1848,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
         percentage += percentage_increment;
 
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
-                && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0.0))
+                && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0))
         {
             maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
             maximum_gain(0) = percentage;
@@ -2754,17 +2754,17 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     type positive_likelihood;
 
-    if(abs(classification_accuracy - type(1.0)) < type(NUMERIC_LIMITS_MIN))
+    if(abs(classification_accuracy - type(1)) < type(NUMERIC_LIMITS_MIN))
     {
         positive_likelihood = type(1);
     }
-    else if(abs(type(1.0) - specificity) < type(NUMERIC_LIMITS_MIN))
+    else if(abs(type(1) - specificity) < type(NUMERIC_LIMITS_MIN))
     {
         positive_likelihood = type(0);
     }
     else
     {
-        positive_likelihood = sensitivity/(type(1.0) - specificity);
+        positive_likelihood = sensitivity/(type(1) - specificity);
     }
 
     // Negative likelihood
@@ -2781,7 +2781,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     }
     else
     {
-        negative_likelihood = specificity/(type(1.0) - sensitivity);
+        negative_likelihood = specificity/(type(1) - sensitivity);
     }
 
     // F1 score
@@ -2864,7 +2864,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     }
     else
     {
-        markedness = precision + type(true_negative)/type(true_negative + false_positive) - type(1.0);
+        markedness = precision + type(true_negative)/type(true_negative + false_positive) - type(1);
     }
 
     //Arrange vector
@@ -3138,7 +3138,7 @@ void TestingAnalysis::load(const string& file_name)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

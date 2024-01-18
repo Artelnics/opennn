@@ -41,6 +41,7 @@
 #include "weighted_squared_error_test.h"
 #include "minkowski_error_test.h"
 #include "cross_entropy_error_test.h"
+#include "cross_entropy_error_3d_test.h"
 
 #include "learning_rate_algorithm_test.h"
 #include "adaptive_moment_estimation_test.h"

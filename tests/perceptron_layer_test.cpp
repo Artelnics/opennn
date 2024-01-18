@@ -216,7 +216,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
     assert_true(biases(0) - type(-0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(synaptic_weights(0, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(synaptic_weights(0, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     parameters_number = perceptron_layer.get_parameters_number();
 
@@ -225,7 +225,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     parameters = perceptron_layer.get_parameters();
 
     assert_true(parameters(0) - type(-0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(parameters(1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(parameters(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -583,10 +583,11 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     dimensions = get_dimensions(activations_derivatives);
 
     // Test
+
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
     perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-    Tensor<type, 2> numerical_activation_derivative(1,4);
+    Tensor<type, 2> numerical_activation_derivative(1, 4);
 
     numerical_activation_derivative
             = numerical_differentiation.calculate_derivatives(*this, &PerceptronLayerTest::get_activations, combinations);
@@ -594,6 +595,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
     assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < type(1e-3), LOG);
 
     // Test
+
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
     perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 

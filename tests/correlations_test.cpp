@@ -90,17 +90,17 @@ void CorrelationsTest::test_linear_correlation()
 
     correlation = linear_correlation(thread_pool_device, x, y).r;
 
-    assert_true(abs(correlation - type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    assert_true(abs(correlation) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     y = type(-1.0)*x;
 
     correlation = linear_correlation(thread_pool_device, x, y).r;
-    assert_true(abs(correlation + type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -169,7 +169,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(correlation.r <= type(1.0), LOG);
+    assert_true(correlation.r <= type(1), LOG);
 
     for(Index i = 0; i < size; i++)
     {

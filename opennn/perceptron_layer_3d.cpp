@@ -500,12 +500,12 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                 inputs.dimension(0),
                 synaptic_weights.dimension(1),
                 inputs.dimension(1),
-                type(1.0),
+                type(1),
                 (float*)inputs.data(),
                 inputs.dimension(0),
                 (float*)synaptic_weights.data(),
                 synaptic_weights.dimension(0),
-                type(1.0),
+                type(1),
                 (float*)combinations_data,
                 inputs.dimension(0));
         }
@@ -517,12 +517,12 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                 inputs.dimension(0),
                 synaptic_weights.dimension(1),
                 inputs.dimension(1),
-                type(1.0),
+                type(1),
                 (double*)inputs.data(),
                 inputs.dimension(0),
                 (double*)synaptic_weights.data(),
                 synaptic_weights.dimension(0),
-                type(1.0),
+                type(1),
                 (double*)combinations_data,
                 inputs.dimension(0));
         }
@@ -808,12 +808,12 @@ void PerceptronLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagati
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.dimension(0),
 //            next_deltas.dimension(1),
-//            type(1.0),
+//            type(1),
 //            next_deltas.data(),
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.data(),
 //            next_synaptic_weights.dimension(0),
-//            type(0.0),
+//            type(0),
 //            deltas.data(),
 //            next_deltas.dimension(0));
 //    }
@@ -825,12 +825,12 @@ void PerceptronLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagati
 //            next_deltas.dimension(0),
 //            next_synaptic_weights.dimension(0),
 //            next_deltas.dimension(1),
-//            type(1.0),
+//            type(1),
 //            (double*)next_deltas.data(),
 //            next_deltas.dimension(0),
 //            (double*)next_synaptic_weights.data(),
 //            next_synaptic_weights.dimension(0),
-//            type(0.0),
+//            type(0),
 //            (double*)deltas.data(),
 //            next_deltas.dimension(0));
 //    }
@@ -942,12 +942,12 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
 //            inputs.dimension(1),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
 //            inputs.dimension(0),
-//            type(1.0),
+//            type(1),
 //            inputs.data(),
 //            inputs.dimension(0),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            type(0.0),
+//            type(0),
 //            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
@@ -959,12 +959,12 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
 //            inputs.dimension(1),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
 //            inputs.dimension(0),
-//            type(1.0),
+//            type(1),
 //            (double*)inputs.data(),
 //            inputs.dimension(0),
 //            (double*)perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
 //            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            type(0.0),
+//            type(0),
 //            (double*)perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
@@ -1251,7 +1251,7 @@ string PerceptronLayer3D::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

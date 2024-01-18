@@ -58,7 +58,7 @@ public:
     Tensor<type, 4> calculate_h(const Tensor<type, 4>&) const;
 
     template<class T>
-    type calculate_derivatives(const T& t, type(T::*f)(const type&) const , const type& x) const
+    type calculate_derivatives(const T& t, type(T::*f)(const type&) const, const type& x) const
     {
         const type h = calculate_h(x);
 
@@ -78,7 +78,8 @@ public:
     /// @param x: Input vector.
 
     template<class T>
-    Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
+    Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const,
+                                          const Tensor<type, 1>& x) const
     {
         const Tensor<type, 1> h = calculate_h(x);
 
@@ -97,7 +98,8 @@ public:
 
 
     template<class T>
-    Tensor<type, 2> calculate_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
+    Tensor<type, 2> calculate_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const,
+                                          const Tensor<type, 2>& x) const
     {
         const Tensor<type, 2> h = calculate_h(x);
 
@@ -116,7 +118,8 @@ public:
 
 
     template<class T>
-    Tensor<type, 4> calculate_derivatives(const T& t, Tensor<type, 4>(T::*f)(const Tensor<type, 4>&) const, const Tensor<type, 4>& x) const
+    Tensor<type, 4> calculate_derivatives(const T& t, Tensor<type, 4>(T::*f)(const Tensor<type, 4>&) const,
+                                          const Tensor<type, 4>& x) const
     {
         const Tensor<type, 4> h = calculate_h(x);
 
@@ -159,7 +162,9 @@ public:
 
 
     template<class T>
-    Tensor<type, 2> calculate_derivatives(const T& t, void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const, const Index& dummy, const Tensor<type, 2>& x) const
+    Tensor<type, 2> calculate_derivatives(const T& t,
+                                          void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const,
+                                          const Tensor<type, 2>& x) const
     {
         const Index rn = x.dimension(0);
         const Index cn = x.dimension(1);
@@ -181,7 +186,36 @@ public:
 
 
     template<class T>
-    Tensor<type, 4> calculate_derivatives(const T& t, void(T::*f)(const Tensor<type, 4>&, Tensor<type, 4>&) const, const Index& dummy, const Tensor<type, 4>& x) const
+    Tensor<type, 2> calculate_derivatives(const T& t,
+                                          void(T::*f)(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&) const,
+                                          const Index& dummy,
+                                          const Tensor<type, 2>& x) const
+    {
+        const Index rn = x.dimension(0);
+        const Index cn = x.dimension(1);
+
+        const Tensor<type, 2> h = calculate_h(x);
+
+        const Tensor<type, 2> x_forward = x + h;
+        const Tensor<type, 2> x_backward = x - h;
+
+        Tensor<type, 2> y_forward(rn,cn);
+        (t.*f)(x_forward, y_forward);
+        Tensor<type, 2> y_backward(rn,cn);
+        (t.*f)(x_backward, y_backward);
+
+        const Tensor<type, 2> d = (y_forward - y_backward)/(type(2.0)*h);
+
+        return d;
+    }
+
+
+    template<class T>
+    Tensor<type, 4> calculate_derivatives(const T& t,
+                                          void(T::*f)(const Tensor<type, 4>&, Tensor<type, 4>&) const,
+                                          const Index& dummy,
+                                          const Tensor<type, 4>& x) const
     {
         const Index rn = x.dimension(0);
         const Index cn = x.dimension(1);
@@ -1749,7 +1783,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

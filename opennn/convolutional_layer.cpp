@@ -225,10 +225,10 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
     if(is_training)
     {
         moving_means.device(*thread_pool_device)
-            = momentum*moving_means + (type(1.0) - momentum)*means;
+            = momentum*moving_means + (type(1) - momentum)*means;
 
         moving_standard_deviations.device(*thread_pool_device)
-            = momentum*moving_standard_deviations + (type(1.0) - momentum)*standard_deviations;
+            = momentum*moving_standard_deviations + (type(1) - momentum)*standard_deviations;
     }
 }
 
@@ -1635,7 +1635,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

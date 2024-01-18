@@ -25,6 +25,8 @@ struct DataSetBatch
 
     pair<type *, dimensions> get_inputs_pair() const;
 
+    pair<type *, dimensions> get_targets_pair() const;
+
     Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
@@ -45,7 +47,11 @@ struct DataSetBatch
 
     type* inputs_data = nullptr;
 
-    Tensor<type, 2> targets;
+    dimensions targets_dimensions;
+
+    Tensor<type, 1> targets_tensor;
+
+    type* targets_data = nullptr;
 };
 
 }

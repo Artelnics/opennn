@@ -68,21 +68,21 @@ int main()
         cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(1);
-        inputs(0,1) = type(0.0);
+        inputs(0,1) = type(0);
 
         outputs = neural_network.calculate_outputs(inputs);
 
         cout << inputs << " " << outputs << endl;
 
-        inputs(0,0) = type(0.0);
+        inputs(0,0) = type(0);
         inputs(0,1) = type(1);
 
         outputs = neural_network.calculate_outputs(inputs);
 
         cout << inputs << " " << outputs << endl;
 
-        inputs(0,0) = type(0.0);
-        inputs(0,1) = type(0.0);
+        inputs(0,0) = type(0);
+        inputs(0,1) = type(0);
 
         outputs = neural_network.calculate_outputs(inputs);
 

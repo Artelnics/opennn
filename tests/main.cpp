@@ -32,6 +32,7 @@ int main()
    "conjugate_gradient | cg\n"
    "correlations | cr\n"
    "cross_entropy_error | cee\n"
+   "cross_entropy_error_3d | cee3d\n"
    "convulational_layer | cl\n"
    "descriptives | dsc\n"
    "data_set | ds\n"
@@ -293,6 +294,14 @@ int main()
         tests_count += cross_entropy_error_test.get_tests_count();
         tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
         tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
+      }
+      else if(test == "cross_entropy_error_3d" || test == "cee3d")
+      {
+          CrossEntropyError3dTest cross_entropy_error_3d_test;
+          cross_entropy_error_3d_test.run_test_case();
+          tests_count += cross_entropy_error_3d_test.get_tests_count();
+          tests_passed_count += cross_entropy_error_3d_test.get_tests_passed_count();
+          tests_failed_count += cross_entropy_error_3d_test.get_tests_failed_count();
       }
       else if(test == "descriptives" || test == "dsc")
       {

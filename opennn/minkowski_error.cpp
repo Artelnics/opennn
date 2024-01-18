@@ -93,7 +93,7 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     Tensor<type, 0> minkowski_error;
 
     minkowski_error.device(*thread_pool_device)
-            = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(type(1.0)/minkowski_parameter);
+            = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter);
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
@@ -126,7 +126,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 
     const Tensor<type, 0> p_norm_derivative =
-            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(type(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
+            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
     if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
@@ -236,7 +236,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

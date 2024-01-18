@@ -185,11 +185,11 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     // Bound the Fletcher-Reeves parameter between 0 and 1
 
-    if(FR_parameter < type(0.0))
+    if(FR_parameter < type(0))
     {
         FR_parameter = type(0);
     }
-    else if(FR_parameter > type(1.0))
+    else if(FR_parameter > type(1))
     {
         FR_parameter = type(1);
     }
@@ -345,11 +345,11 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     // Bound the Polak-Ribiere parameter between 0 and 1
 
-    if(PR_parameter < type(0.0))
+    if(PR_parameter < type(0))
     {
         PR_parameter = type(0);
     }
-    else if(PR_parameter > type(1.0))
+    else if(PR_parameter > type(1))
     {
         PR_parameter = type(1);
     }
@@ -633,7 +633,7 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < type(0.0))
+    if(new_maximum_time < type(0))
     {
         ostringstream buffer;
 
@@ -1479,7 +1479,7 @@ void ConjugateGradientData::print() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

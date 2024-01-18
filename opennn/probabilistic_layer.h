@@ -234,57 +234,18 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
     // Constructor
 
-    explicit ProbabilisticLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
+    explicit ProbabilisticLayerForwardPropagation();
 
+    explicit ProbabilisticLayerForwardPropagation(const Index&, Layer*);
 
-    // Constructor
+    virtual ~ProbabilisticLayerForwardPropagation();
 
-    explicit ProbabilisticLayerForwardPropagation(const Index new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+    pair<type *, dimensions> get_outputs_pair() const final;
 
+    void set(const Index &new_batch_samples_number,
+             Layer *new_layer_pointer) final;
 
-    virtual ~ProbabilisticLayerForwardPropagation()
-    {
-    }
-    
-    
-    pair<type*, dimensions> get_outputs_pair() const final
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        outputs.resize(batch_samples_number, neurons_number);
-
-        outputs_data = outputs.data();
-
-        activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
-
-        cout << "Activations derivatives:" << endl;
-        cout << activations_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 2> outputs;
     Tensor<type, 3> activations_derivatives;
@@ -293,65 +254,17 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayerBackPropagation() : LayerBackPropagation()
-    {
+    explicit ProbabilisticLayerBackPropagation();
 
-    }
+    virtual ~ProbabilisticLayerBackPropagation();
 
-    virtual ~ProbabilisticLayerBackPropagation()
-    {
-    }
+    explicit ProbabilisticLayerBackPropagation(const Index&, Layer*);
 
+    pair<type *, dimensions> get_deltas_pair() const final;
 
-    explicit ProbabilisticLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-    
-    
-    pair<type*, dimensions> get_deltas_pair() const final
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+    void set(const Index &, Layer *) final;
 
-        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-
-        deltas_data = deltas.data();
-
-        biases_derivatives.resize(neurons_number);
-
-        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-        deltas_row.resize(neurons_number);
-
-        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 2> deltas;
 
@@ -425,7 +338,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

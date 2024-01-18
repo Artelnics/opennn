@@ -177,7 +177,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_damping_parameter_factor <= type(0.0))
+    if(new_damping_parameter_factor <= type(0))
     {
         ostringstream buffer;
 
@@ -201,7 +201,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_minimum_damping_parameter <= type(0.0))
+    if(new_minimum_damping_parameter <= type(0))
     {
         ostringstream buffer;
 
@@ -225,7 +225,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_damping_parameter <= type(0.0))
+    if(new_maximum_damping_parameter <= type(0))
     {
         ostringstream buffer;
 
@@ -288,7 +288,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < type(0.0))
+    if(new_maximum_time < type(0))
     {
         ostringstream buffer;
 
@@ -1006,7 +1006,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

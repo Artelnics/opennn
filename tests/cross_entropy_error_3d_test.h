@@ -1,45 +1,36 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P E R C E P T R O N   L A Y E R   T E S T   C L A S S   H E A D E R   
+//   C R O S S   E N T R O P Y   E R R O R   3 D   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef PERCEPTRONLAYERTEST_H
-#define PERCEPTRONLAYERTEST_H
+#ifndef CROSSENTROPYERROR3DTEST_H
+#define CROSSENTROPYERROR3DTEST_H
 
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/neural_network_forward_propagation.h"
+#include "../opennn/loss_index_back_propagation.h"
 
-class PerceptronLayerTest : public UnitTesting
+class CrossEntropyError3dTest : public UnitTesting
 {
 
 public:
 
-    explicit PerceptronLayerTest();
+    explicit CrossEntropyError3dTest();
 
-    virtual ~PerceptronLayerTest();
-
-    // Constructor and destructor methods
+    virtual ~CrossEntropyError3dTest();
 
     void test_constructor();
 
     void test_destructor();
 
-    // Combination
+    // Back-propagation methods
 
-    void test_calculate_combinations();
-
-    // Activation
-
-    void test_calculate_activations();
-    void test_calculate_activations_derivatives();
-
-    // Forward propagate
-
-    void test_forward_propagate();
+    void test_back_propagate();
 
     // Unit testing methods
 
@@ -47,27 +38,33 @@ public:
 
 private:
 
-    Index inputs_number;
-    Index neurons_number;
     Index samples_number;
+    Index inputs_number;
+    Index outputs_number;
+    Index neurons_number;
 
-    PerceptronLayer perceptron_layer;
+    Tensor<type, 2> data;
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation;
-    PerceptronLayerBackPropagation back_propagation;
+    Tensor<Index, 1> training_samples_indices;
+    Tensor<Index, 1> input_variables_indices;
+    Tensor<Index, 1> target_variables_indices;
 
-    NumericalDifferentiation numerical_differentiation;
+    DataSet data_set;
 
-    Tensor<type, 2> get_activations(const Tensor<type, 2>& combinations) const
-    {
-        Tensor<type, 2> activations(combinations);
+    NeuralNetwork neural_network;
 
-        perceptron_layer.calculate_activations(combinations, activations);
+    CrossEntropyError cross_entropy_error;
 
-        return activations;
-    }
+    DataSetBatch batch;
+
+    ForwardPropagation forward_propagation;
+
+    LossIndexBackPropagation back_propagation;
+
+    Tensor<type, 1> numerical_gradient;
+    Tensor<type, 2> numerical_jacobian;
+
 };
-
 
 #endif
 

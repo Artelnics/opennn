@@ -149,8 +149,8 @@ void DataSetTest::test_calculate_input_variables_descriptives()
     // Test
 
     data.resize(2, 3);
-    data.setValues({{type(1.0), type(2.0), type(3.0)},
-                    {type(1.0), type(2.0), type(3.0)}});
+    data.setValues({{type(1), type(2.0), type(3.0)},
+                    {type(1), type(2.0), type(3.0)}});
 
     data_set.set(data);
 
@@ -160,8 +160,8 @@ void DataSetTest::test_calculate_input_variables_descriptives()
     input_variables_descriptives = data_set.calculate_input_variables_descriptives();
 
     assert_true(input_variables_descriptives[0].mean - type(2.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(input_variables_descriptives[0].standard_deviation - type(1.0)< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(input_variables_descriptives[0].minimum - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(input_variables_descriptives[0].standard_deviation - type(1)< type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(input_variables_descriptives[0].minimum - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
@@ -289,7 +289,7 @@ void DataSetTest::test_filter_data()
     data_set.set_data_constant(type(1));
 
     minimums.resize(2);
-    minimums.setValues({ type(2), type(0.0)});
+    minimums.setValues({ type(2), type(0)});
 
     maximums.resize(2);
     maximums.setValues({ type(2), type(0.5)});
@@ -460,7 +460,7 @@ void DataSetTest::test_read_csv()
     data_set.read_csv();
     data = data_set.get_data();
 
-    assert_true(is_equal(data, type(0.0)), LOG);
+    assert_true(is_equal(data, type(0)), LOG);
 
     // Test
 
@@ -688,15 +688,15 @@ void DataSetTest::test_read_csv()
 
     data = data_set.get_data();
 
-    assert_true(data(0,4) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(0,5) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(0,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(1,4) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(1,5) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(1,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(2,4) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(2,5) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(2,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(0,4) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(0,5) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(0,6) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(1,4) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(1,5) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(1,6) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(2,4) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(2,5) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(2,6) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -738,9 +738,9 @@ void DataSetTest::test_read_csv()
 
     data = data_set.get_data();
 
-    assert_true(data(0,1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(1,1) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data(2,1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(0,1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(1,1) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data(2,1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -2180,7 +2180,10 @@ void DataSetTest::test_fill()
     const pair<type*, dimensions> inputs_pair = data_set_batch.get_inputs_pair();
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
-    const TensorMap<Tensor<type, 2>> targets = data_set_batch.targets;
+
+    const pair<type*, dimensions> targets_pair = data_set_batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
     assert_true(are_equal(inputs, input_data), LOG);
     assert_true(are_equal(targets, target_data), LOG);

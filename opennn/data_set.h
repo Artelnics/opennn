@@ -315,6 +315,8 @@ public:
     const Tensor<Index, 1>& get_input_variables_dimensions() const;
     Index get_input_variables_rank() const;
 
+    const Tensor<Index, 1>& get_target_variables_dimensions() const;
+
     // Scalers get methods
 
     Tensor<Scaler, 1> get_columns_scalers() const;
@@ -361,10 +363,7 @@ public:
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_column_data(const string&) const;
-    Tensor<type, 2> get_drop_column_data(const Index&) const;
 
-    map<string, DataSet> group_by(const DataSet&, const string&) const;
-    Tensor<type, 2> concat();
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
     void add_sample(const Tensor<type, 1>&);
@@ -412,10 +411,7 @@ public:
 
     const bool& get_display() const;
 
-    bool get_augmentation() const
-    {
-        return augmentation;
-    }
+    bool get_augmentation() const;
 
     // Set methods
 
@@ -429,7 +425,6 @@ public:
     void set(const string&, const char&, const bool&);
     void set(const string&, const char&, const bool&, const DataSet::Codification&);
     void set(const Tensor<type, 1>&, const Index&);
-    void set_properties_from_parent(const DataSet&);
     void set_default();
 
     void set_model_type_string(const string&);
@@ -514,6 +509,7 @@ public:
     void set_variables_unused();
 
     void set_input_variables_dimensions(const Tensor<Index, 1>&);
+    void set_target_variables_dimensions(const Tensor<Index, 1>&);
 
     // Data set methods
 
@@ -815,6 +811,8 @@ protected:
 
     Tensor<Index, 1> input_variables_dimensions;
 
+    Tensor<Index, 1> target_variables_dimensions;
+
     // DATA FILE
 
     /// Data file name.
@@ -890,7 +888,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

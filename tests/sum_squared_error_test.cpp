@@ -180,7 +180,6 @@ void SumSquaredErrorTest::test_back_propagate()
 
         numerical_gradient = sum_squared_error.calculate_numerical_gradient();
 
-
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 

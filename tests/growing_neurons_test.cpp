@@ -70,7 +70,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(-0.3),type(0)},
                     {type(-0.2),type(0)},
                     {type(-0.1),type(0)},
-                    {type(0.0),type(0)},
+                    {type(0),type(0)},
                     {type(0.1),type(0)},
                     {type(0.2),type(0)},
                     {type(0.3),type(0)},
@@ -119,7 +119,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(-0.3),type(-0.3)},
                     {type(-0.2),type(-0.2)},
                     {type(-0.1),type(-0.1)},
-                    {type(0.0),type(0.0)},
+                    {type(0),type(0)},
                     {type(0.1),type(0.1)},
                     {type(0.2),type(0.2)},
                     {type(0.3),type(0.3)},
@@ -142,7 +142,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons_number(5);
-    growing_neurons.set_selection_error_goal(type(0.0));
+    growing_neurons.set_selection_error_goal(type(0));
     growing_neurons.set_maximum_selection_failures(1);
     growing_neurons.set_display(false);
 

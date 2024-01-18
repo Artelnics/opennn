@@ -330,9 +330,11 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
-    const Tensor<type, 2>& targets = batch.targets;
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    back_propagation.errors.device(*thread_pool_device) = outputs_map - targets;
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    back_propagation.errors.device(*thread_pool_device) = outputs_map - targets_map;
 }
 
 
@@ -346,9 +348,11 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
-    const Tensor<type, 2>& targets = batch.targets;
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    loss_index_back_propagation.errors.device(*thread_pool_device) = outputs_map - targets;
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    loss_index_back_propagation.errors.device(*thread_pool_device) = outputs_map - targets_map;
 }
 
 
@@ -1118,13 +1122,13 @@ type LossIndex::calculate_h(const type& x) const
 {
     const type eta = calculate_eta();
 
-    return sqrt(eta)*(type(1.0) + abs(x));
+    return sqrt(eta)*(type(1) + abs(x));
 }
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

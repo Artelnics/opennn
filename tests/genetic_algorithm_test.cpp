@@ -445,7 +445,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     {
         data(i,0) = type(i);
         data(i,1) = type(rand());
-        data(i,2) = type(0.0);
+        data(i,2) = type(0);
     }
 
     data_set.set(data);
@@ -453,7 +453,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(4);
-    genetic_algorithm.set_selection_error_goal(type(0.0));
+    genetic_algorithm.set_selection_error_goal(type(0));
     genetic_algorithm.set_maximum_epochs_number(1);
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();

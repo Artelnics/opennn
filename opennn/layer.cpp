@@ -251,22 +251,7 @@ void Layer::logistic_derivatives(const Tensor<type, 1>& x, Tensor<type, 1>& y, T
 
 void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    y.device(*thread_pool_device) = x.cwiseMin(type(2.5)).cwiseMax(type(-2.5))*type(0.2) + type(0.5);
-
-    const Tensor<bool, 1> if_sentence = x < x.constant(type(-2.5));
-    const Tensor<bool, 1> elif_sentence = x > x.constant(type(2.5));
-
-    Tensor<type, 1> f1(x.dimension(0));
-    Tensor<type, 1> f2(x.dimension(0));
-    Tensor<type, 1> f3(x.dimension(0));
-
-    f1.setZero();
-
-    f2.setConstant(type(1));
-
-    f3 = type(0.2) * x + type(0.5);
-
-    y.device(*thread_pool_device) = if_sentence.select(f1,elif_sentence.select(f2, f3));
+    y.device(*thread_pool_device) = (type(0.5) + x*type(0.2)).cwiseMin(type(2.5)).cwiseMax(type(-2.5));
 }
 
 
@@ -274,31 +259,10 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 1>& x,
                                      Tensor<type, 1>& y,
                                      Tensor<type, 1>& dy_dx) const
 {
-    const Tensor<bool, 1> if_sentence = x < x.constant(type(-2.5));
+    y.device(*thread_pool_device) = (x*type(0.2) + type(0.5)).cwiseMin(type(2.5)).cwiseMax(type(-2.5));
 
-    const Tensor<bool, 1> elif_sentence = x > x.constant(type(2.5));
-
-    const Tensor<bool, 1> if_sentence_2 = x < x.constant(type(-2.5)) || x > x.constant(type(2.5));
-
-    // Sentences
-
-    Tensor<type, 1> f1(x.dimension(0));
-    f1.setZero();
-
-    Tensor<type, 1> f2(x.dimension(0));
-    f2.setConstant(type(1));
-
-    Tensor<type, 1> f3 = type(0.2) * x + type(0.5);
-
-    Tensor<type, 1> f4(x.dimension(0));
-    f4.setConstant(type(0));
-
-    Tensor<type, 1> f5(x.dimension(0));
-    f5.setConstant(type(0.2));
-
-    y.device(*thread_pool_device) = if_sentence.select(f1, elif_sentence.select(f2, f3));
-
-    dy_dx.device(*thread_pool_device) = if_sentence_2.select(f4, f5);
+    dy_dx.setConstant(type(0.2));
+    dy_dx.device(*thread_pool_device) = dy_dx.cwiseMax(x < type(-2.5)).cwiseMin(x > type(2.5));
 }
 
 
@@ -369,7 +333,7 @@ void Layer::scaled_exponential_linear(const Tensor<type, 1>& x,
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
 
-    const Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1.0));
+    const Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1));
 
     Tensor<type, 1> f_2 = lambda*x;
 
@@ -387,7 +351,7 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 1>& x,
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
 
-    Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1.0));
+    Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1));
 
     Tensor<type, 1> f_2 = lambda*x;
 
@@ -413,7 +377,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 1>& x,
 {
     y.device(*thread_pool_device) = (x.constant(type(1)) + x.exp()).log();
 
-    dy_dx.device(*thread_pool_device) = type(1.0) / (type(1.0) + x.exp().inverse());
+    dy_dx.device(*thread_pool_device) = type(1) / (type(1) + x.exp().inverse());
 }
 
 
@@ -443,9 +407,9 @@ void Layer::soft_sign_derivatives(const Tensor<type, 1>& x,
 
     // Activations Derivatives
 
-    f_1 = type(1.0) / (type(1.0) - x).pow(type(2));
+    f_1 = type(1) / (type(1) - x).pow(type(2));
 
-    f_2 = type(1.0) / (type(1.0) + x).pow(type(2));
+    f_2 = type(1) / (type(1) + x).pow(type(2));
 
     dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
@@ -453,7 +417,7 @@ void Layer::soft_sign_derivatives(const Tensor<type, 1>& x,
 
 void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    const type alpha = type(1.0);
+    const type alpha = type(1);
 
     y.device(*thread_pool_device) = x;
     /*
@@ -478,7 +442,7 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 1>& x,
                                            Tensor<type, 1>& y,
                                            Tensor<type, 1>& dy_dx) const
 {
-    const type alpha = type(1.0);
+    const type alpha = type(1);
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
 
@@ -532,7 +496,7 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-    const type alpha = type(1.0);
+    const type alpha = type(1);
 
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
@@ -611,7 +575,7 @@ void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>&
 
     Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
 
-    f_1 = lambda*alpha*(x.exp() - type(1.0));
+    f_1 = lambda*alpha*(x.exp() - type(1));
 
     f_2 = lambda*x;
 
@@ -778,7 +742,7 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tens
 
     Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
 
-    f_1 = lambda*alpha*(x.exp()-type(1.0));
+    f_1 = lambda*alpha*(x.exp()-type(1));
 
     f_2 = lambda*x;
 
@@ -803,7 +767,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, 
         = (x.constant(type(1)) + x.exp()).log();
 
     dy_dx.device(*thread_pool_device)
-        = type(1.0) / (type(1.0) + x.exp().inverse());
+        = type(1) / (type(1) + x.exp().inverse());
 }
 
 
@@ -826,9 +790,9 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, 
 
     // Activations Derivatives
 
-    f_1 = type(1.0) / (type(1.0) - combinations).pow(type(2));
+    f_1 = type(1) / (type(1) - combinations).pow(type(2));
 
-    f_2 = type(1.0) / (type(1.0) + combinations).pow(type(2));
+    f_2 = type(1) / (type(1) + combinations).pow(type(2));
 
     activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 */
@@ -963,7 +927,7 @@ void Layer::scaled_exponential_linear(const Tensor<type, 4>& x, Tensor<type, 4>&
 
     Tensor<type, 4> f_2(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
 
-    f_1 = lambda*alpha*(x.exp() - type(1.0));
+    f_1 = lambda*alpha*(x.exp() - type(1));
 
     f_2 = lambda*x;
 
@@ -1136,7 +1100,7 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 4>& x, Tens
 
     Tensor<type, 4> f_2(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
 
-    f_1 = lambda*alpha*(x.exp()-type(1.0));
+    f_1 = lambda*alpha*(x.exp()-type(1));
 
     f_2 = lambda*x;
 
@@ -1159,7 +1123,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, 
 {
     y.device(*thread_pool_device) = (x.constant(type(1)) + x.exp()).log();
 
-    dy_dx.device(*thread_pool_device) = type(1.0) / (type(1.0) + x.exp().inverse());
+    dy_dx.device(*thread_pool_device) = type(1) / (type(1) + x.exp().inverse());
 }
 
 
@@ -1181,9 +1145,9 @@ void Layer::soft_sign_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, 
 
     // Activations Derivatives
 
-    f_1 = type(1.0) / (type(1.0) - x).pow(type(2));
+    f_1 = type(1) / (type(1) - x).pow(type(2));
 
-    f_2 = type(1.0) / (type(1.0) + x).pow(type(2));
+    f_2 = type(1) / (type(1) + x).pow(type(2));
 
     dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
@@ -1192,7 +1156,7 @@ void Layer::soft_sign_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

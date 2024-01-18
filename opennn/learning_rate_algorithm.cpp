@@ -231,7 +231,7 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_learning_rate_tolerance <= type(0.0))
+    if(new_learning_rate_tolerance <= type(0))
     {
         ostringstream buffer;
 
@@ -810,7 +810,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -3318,7 +3318,7 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
 # pragma omp parallel for
 
         for(Index row = 0; row < parameters_number; row++)
-            back_propagation->forget_combinations_biases_derivatives(row, row) += type(1.0);
+            back_propagation->forget_combinations_biases_derivatives(row, row) += type(1);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
@@ -3471,7 +3471,7 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
         }
 
         for(Index row = 0; row < parameters_number; row++)
-            back_propagation->input_combinations_biases_derivatives(row, row) += type(1.0);
+            back_propagation->input_combinations_biases_derivatives(row, row) += type(1);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
@@ -3617,7 +3617,7 @@ void LongShortTermMemoryLayer::calculate_state_biases_error_gradient(const Tenso
                           forward_propagation->current_output_activations_derivatives);
         }
 
-        for(Index row = 0; row < parameters_number; row++) back_propagation->state_combinations_biases_derivatives(row, row) += type(1.0);
+        for(Index row = 0; row < parameters_number; row++) back_propagation->state_combinations_biases_derivatives(row, row) += type(1);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
@@ -3761,7 +3761,7 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
         }
 
         for(Index row = 0; row < parameters_number; row++)
-            back_propagation->output_combinations_biases_derivatives(row, row) += type(1.0);
+            back_propagation->output_combinations_biases_derivatives(row, row) += type(1);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
@@ -4255,7 +4255,7 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

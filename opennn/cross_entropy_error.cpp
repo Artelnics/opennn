@@ -44,23 +44,6 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
                      const ForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {      
-#ifdef OPENNN_DEBUG
-
-    Layer* last_trainable_layer_pointer = forward_propagation.neural_network_pointer->get_last_trainable_layer_pointer();
-
-    if(last_trainable_layer_pointer->get_type() != Layer::Type::Probabilistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: CrossEntropyError class.\n"
-               << "calculate_error() method.\n"
-               << "Last trainable layer is not probabilistic: " << last_trainable_layer_pointer->get_type_string() << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     if(outputs_number == 1)
@@ -88,7 +71,10 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
-    const Tensor<type, 2>& targets = batch.targets;
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
 /*
     /// @todo remove tensor allocation
 
@@ -99,7 +85,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
     Tensor<type, 0> cross_entropy_error;
 
     cross_entropy_error.device(*thread_pool_device)
-        = -(targets*outputs.log()).sum() - ((type(1) - targets)*((type(1) - outputs).log())).sum();
+        = -(targets_map*outputs.log()).sum() - ((type(1) - targets_map)*((type(1) - outputs).log())).sum();
 
     back_propagation.error = cross_entropy_error()/type(batch_samples_number);
 }
@@ -113,14 +99,16 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
 
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
     
-    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs_map(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
-    const Tensor<type, 2>& targets = batch.targets;
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
     Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = -(targets*outputs_map.log()).sum();
+    cross_entropy_error.device(*thread_pool_device) = -(targets_map*outputs_map.log()).sum();
 
     back_propagation.error = cross_entropy_error()/type(batch_samples_number);
 
@@ -141,12 +129,6 @@ void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
                                                ForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef OPENNN_DEBUG
-
-     check();
-
-     #endif
-
      const Index outputs_number = neural_network_pointer->get_outputs_number();
 
      if(outputs_number == 1)
@@ -177,12 +159,14 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const Tensor<type, 2>& targets = batch.targets;
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     deltas.device(*thread_pool_device)
-            = (type(-1)*(targets/outputs) + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
+            = (type(-1)*(targets_map/outputs) + (type(1) - targets_map)/(type(1) - outputs))/type(batch_samples_number);
 }
 
 
@@ -198,15 +182,17 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const Tensor<type, 2>& targets = batch.targets;
-    
-    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][1], outputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs_map(outputs_pair.first, outputs_pair.second[0][1], outputs_pair.second[0][1]);
 
     Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    deltas.device(*thread_pool_device) = (-targets/outputs_map)/type(batch_samples_number);
+    deltas.device(*thread_pool_device) = (-targets_map/outputs_map)/type(batch_samples_number);
 }
 
 
@@ -274,7 +260,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
