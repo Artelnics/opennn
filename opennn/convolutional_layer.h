@@ -147,11 +147,11 @@ public:
 
     // Padding
 
-    auto get_padded_input(const Tensor<type, 4>& inputs) const -> TensorPaddingOp<const Eigen::array<pair<int, int>, 4>, const Tensor<type, 4>>;
+    auto get_padded_input(TensorRef<Tensor<type, 4>>) const -> TensorPaddingOp<const Eigen::array<pair<int, int>, 4>, const TensorRef<Tensor<type, 4>>>;
 
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, type*) const; //change
+    void calculate_convolutions(TensorRef<Tensor<type, 4>>, type*) const; //change
 
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,

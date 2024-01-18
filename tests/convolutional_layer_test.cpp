@@ -239,19 +239,19 @@ void ConvolutionalLayerTest::test_set_parameters()
     //First kernel
     parameters(2) = new_synaptic_weights(0,0,0,0) = type(1);
     parameters(3) = new_synaptic_weights(1,0,0,0) = type(2);
-    parameters(4) = new_synaptic_weights(0,0,1,0) = type(3);
-    parameters(5) = new_synaptic_weights(1,0,1,0) = type(4);
-    parameters(6) = new_synaptic_weights(0,1,0,0) = type(5);
-    parameters(7) = new_synaptic_weights(1,1,0,0) = type(6);
+    parameters(4) = new_synaptic_weights(0,1,0,0) = type(3);
+    parameters(5) = new_synaptic_weights(1,1,0,0) = type(4);
+    parameters(6) = new_synaptic_weights(0,0,1,0) = type(5);
+    parameters(7) = new_synaptic_weights(1,0,1,0) = type(6);
     parameters(8) = new_synaptic_weights(0,1,1,0) = type(7);
     parameters(9) = new_synaptic_weights(1,1,1,0) = type(8);
     //Second kernel
     parameters(10) = new_synaptic_weights(0,0,0,1) = type(9);
     parameters(11) = new_synaptic_weights(1,0,0,1) = type(10);
-    parameters(12) = new_synaptic_weights(0,0,1,1) = type(11);
-    parameters(13) = new_synaptic_weights(1,0,1,1) = type(12);
-    parameters(14) = new_synaptic_weights(0,1,0,1) = type(13);
-    parameters(15) = new_synaptic_weights(1,1,0,1) = type(14);
+    parameters(12) = new_synaptic_weights(0,1,0,1) = type(11);
+    parameters(13) = new_synaptic_weights(1,1,0,1) = type(12);
+    parameters(14) = new_synaptic_weights(0,0,1,1) = type(13);
+    parameters(15) = new_synaptic_weights(1,0,1,1) = type(14);
     parameters(16) = new_synaptic_weights(0,1,1,1) = type(15);
     parameters(17) = new_synaptic_weights(1,1,1,1) = type(16);
 
@@ -383,7 +383,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     Tensor<Index, 1> new_inputs_dimension(4);
     Tensor<Index, 1> new_kernels_dimensions(4);
     copy(input_dimension.data(), input_dimension.data() + input_dimension.size(), new_inputs_dimension.data());
-    copy(new_kernels_dimensions.data(), new_kernels_dimensions.data() + new_kernels_dimensions.size(), new_kernels_dimensions.data());
+    copy(kernel_dimension.data(), kernel_dimension.data() + kernel_dimension.size(), new_kernels_dimensions.data());
 
     ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
 
@@ -399,23 +399,25 @@ void ConvolutionalLayerTest::test_calculate_combinations()
 
     assert_true(is_equal<4>(expected_output, combinations), LOG);
 
-    input_dimension[Convolutional4dDimensions::row_index] = 5;
-    input_dimension[Convolutional4dDimensions::column_index] = 5;
-    input_dimension[Convolutional4dDimensions::channel_index] = 2;
-    input_dimension[Convolutional4dDimensions::sample_index] = 2;
+    new_inputs_dimension[Convolutional4dDimensions::row_index] = 5;
+    new_inputs_dimension[Convolutional4dDimensions::column_index] = 5;
+    new_inputs_dimension[Convolutional4dDimensions::channel_index] = 2;
+    new_inputs_dimension[Convolutional4dDimensions::sample_index] = 2;
 
-    kernel_dimension[Kernel4dDimensions::kernel_index] = 2;
-    kernel_dimension[Kernel4dDimensions::row_index] = 2;
-    kernel_dimension[Kernel4dDimensions::column_index] = 2;
-    kernel_dimension[Kernel4dDimensions::channel_index] = 2;
+    new_kernels_dimensions[Kernel4dDimensions::kernel_index] = 2;
+    new_kernels_dimensions[Kernel4dDimensions::row_index] = 2;
+    new_kernels_dimensions[Kernel4dDimensions::column_index] = 2;
+    new_kernels_dimensions[Kernel4dDimensions::channel_index] = 2;
+
+    convolutional_layer.set(new_inputs_dimension, new_kernels_dimensions);
 
     expected_output_dimension[Convolutional4dDimensions::row_index] = 5 - 2 + 1;
     expected_output_dimension[Convolutional4dDimensions::column_index] = 5 - 2 + 1;
     expected_output_dimension[Convolutional4dDimensions::channel_index] = 2;
     expected_output_dimension[Convolutional4dDimensions::sample_index] = 2;
 
-    inputs.resize(input_dimension);
-    kernels.resize(kernel_dimension);
+    inputs.resize(new_inputs_dimension);
+    kernels.resize(new_kernels_dimensions);
     combinations.resize(expected_output_dimension);
     biases.resize(2);
 
@@ -595,19 +597,19 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,1,0,0) = type(-1.112f);
-    inputs(0,0,0,1) = type(-1.121f);
-    inputs(0,1,0,1) = type(-1.122f);
-    inputs(0,0,1,0) = type(1.211f);
-    inputs(0,1,1,0) = type(1.212f);
+    inputs(0,0,1,0) = type(-1.121f);
+    inputs(0,1,1,0) = type(-1.122f);
+    inputs(0,0,0,1) = type(1.211f);
+    inputs(0,1,0,1) = type(1.212f);
     inputs(0,0,1,1) = type(1.221f);
     inputs(0,1,1,1) = type(1.222f);
 
     inputs(1,0,0,0) = type(-2.111f);
     inputs(1,1,0,0) = type(-2.112f);
-    inputs(1,0,0,1) = type(-2.121f);
-    inputs(1,1,0,1) = type(-2.122f);
-    inputs(1,0,1,0) = type(2.211f);
-    inputs(1,1,1,0) = type(2.212f);
+    inputs(1,0,1,0) = type(-2.121f);
+    inputs(1,1,1,0) = type(-2.122f);
+    inputs(1,0,0,1) = type(2.211f);
+    inputs(1,1,0,1) = type(2.212f);
     inputs(1,0,1,1) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
@@ -672,19 +674,19 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,1,0,0) = type(-1.112f);
-    inputs(0,0,0,1) = type(-1.121f);
-    inputs(0,1,0,1) = type(-1.122f);
-    inputs(0,0,1,0) = type(1.211f);
-    inputs(0,1,1,0) = type(1.212f);
+    inputs(0,0,1,0) = type(-1.121f);
+    inputs(0,1,1,0) = type(-1.122f);
+    inputs(0,0,0,1) = type(1.211f);
+    inputs(0,1,0,1) = type(1.212f);
     inputs(0,0,1,1) = type(1.221f);
     inputs(0,1,1,1) = type(1.222f);
     
     inputs(1,0,0,0) = type(-2.111f);
     inputs(1,1,0,0) = type(-2.112f);
-    inputs(1,0,0,1) = type(-2.121f);
-    inputs(1,1,0,1) = type(-2.122f);
-    inputs(1,0,1,0) = type(2.211f);
-    inputs(1,1,1,0) = type(2.212f);
+    inputs(1,0,1,0) = type(-2.121f);
+    inputs(1,1,1,0) = type(-2.122f);
+    inputs(1,0,0,1) = type(2.211f);
+    inputs(1,1,0,1) = type(2.212f);
     inputs(1,0,1,1) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
@@ -702,19 +704,19 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,1,0,0) = type(-1.112);
-    inputs(0,0,0,1) = type(-1.121);
-    inputs(0,1,0,1) = type(-1.122f);
-    inputs(0,0,1,0) = type(1.211f);
-    inputs(0,1,1,0) = type(1.212f);
+    inputs(0,0,1,0) = type(-1.121);
+    inputs(0,1,1,0) = type(-1.122f);
+    inputs(0,0,0,1) = type(1.211f);
+    inputs(0,1,0,1) = type(1.212f);
     inputs(0,0,1,1) = type(1.221f);
     inputs(0,1,1,1) = type(1.222f);
 
     inputs(1,0,0,0) = type(-2.111f);
     inputs(1,1,0,0) = type(-2.112f);
-    inputs(1,0,0,1) = type(-2.121f);
-    inputs(1,1,0,1) = type(-2.122f);
-    inputs(1,0,1,0) = type(2.211f);
-    inputs(1,1,1,0) = type(2.212f);
+    inputs(1,0,1,0) = type(-2.121f);
+    inputs(1,1,1,0) = type(-2.122f);
+    inputs(1,0,0,1) = type(2.211f);
+    inputs(1,1,0,1) = type(2.212f);
     inputs(1,0,1,1) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
@@ -742,19 +744,19 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     inputs(0,0,0,0) = type(-1.111f);
     inputs(0,1,0,0) = type(-1.112);
-    inputs(0,0,0,1) = type(-1.121);
-    inputs(0,1,0,1) = type(-1.122f);
-    inputs(0,0,1,0) = type(1.211f);
-    inputs(0,1,1,0) = type(1.212f);
+    inputs(0,0,1,0) = type(-1.121);
+    inputs(0,1,1,0) = type(-1.122f);
+    inputs(0,0,0,1) = type(1.211f);
+    inputs(0,1,0,1) = type(1.212f);
     inputs(0,0,1,1) = type(1.221f);
     inputs(0,1,1,1) = type(1.222f);
 
     inputs(1,0,0,0) = type(-2.111f);
     inputs(1,1,0,0) = type(-2.112f);
-    inputs(1,0,0,1) = type(-2.121f);
-    inputs(1,1,0,1) = type(-2.122f);
-    inputs(1,0,1,0) = type(2.211f);
-    inputs(1,1,1,0) = type(2.212f);
+    inputs(1,0,1,0) = type(-2.121f);
+    inputs(1,1,1,0) = type(-2.122f);
+    inputs(1,0,0,1) = type(2.211f);
+    inputs(1,1,0,1) = type(2.212f);
     inputs(1,0,1,1) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
@@ -1010,7 +1012,7 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     Tensor<type,4> inputs(input_dimension);
     Tensor<type,4> kernels(kernel_dimension);
-    Tensor<type,4> padded(input_dimension);
+    Tensor<type,4> padded;
 
     inputs.setConstant(type(1));
 
@@ -1061,7 +1063,6 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta()
     kernel_dimension_a[Kernel4dDimensions::channel_index] = 1;
     
     Tensor<Index, 1> kernel_dimension(4);
-    kernel_dimension.setValues({2, 2, 1, 1});
     copy(kernel_dimension_a.data(), kernel_dimension_a.data() + kernel_dimension_a.size(), kernel_dimension.data());
 
     Tensor<type, 4> kernel(kernel_dimension_a);
@@ -1098,8 +1099,8 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta()
                                               
     TensorMap<Tensor<type, 4>> next_layer_delta(next_layer_back_propagation.deltas_data, t1d2array<4>(next_layer_back_propagation.deltas_dimensions));
     next_layer_delta(0, 0, 0, 0) = type(0.25);
-    next_layer_delta(0, 0, 0, 1) = type(-0.1);
-    next_layer_delta(0, 0, 1, 0) = type(0.6);
+    next_layer_delta(0, 0, 1, 0) = type(-0.1);
+    next_layer_delta(0, 0, 0, 1) = type(0.6);
     next_layer_delta(0, 0, 1, 1) = type(1.1);
 
     ConvolutionalLayerBackPropagation back_propagation(1, &convolutional_layer);
@@ -1110,13 +1111,13 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta()
 
     Tensor<type, 4> expected_delta(t1d2array<4>(next_input_dimension));
     expected_delta(0, 0, 0, 0) = type(0.001355);
-    expected_delta(0, 0, 0, 1) = type(0.000813);
-    expected_delta(0, 0, 0, 2) = type(-0.000542);
-    expected_delta(0, 0, 1, 0) = type(0.004611018);
+    expected_delta(0, 0, 1, 0) = type(0.000813);
+    expected_delta(0, 0, 2, 0) = type(-0.000542);
+    expected_delta(0, 0, 0, 1) = type(0.004611018);
     expected_delta(0, 0, 1, 1) = type(0.010038385);
-    expected_delta(0, 0, 1, 2) = type(0.005427367);
-    expected_delta(0, 0, 2, 0) = type(0.003256018);
-    expected_delta(0, 0, 2, 1) = type(0.009225385);
+    expected_delta(0, 0, 2, 1) = type(0.005427367);
+    expected_delta(0, 0, 0, 2) = type(0.003256018);
+    expected_delta(0, 0, 1, 2) = type(0.009225385);
     expected_delta(0, 0, 2, 2) = type(0.005969367);
    
     TensorMap<Tensor<type, 4>> output_delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
@@ -1158,13 +1159,13 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
     TensorMap<Tensor<type, 4>> delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
     delta(0, 0, 0, 0) = type(0.001355);
-    delta(0, 0, 0, 1) = type(0.000813);
-    delta(0, 0, 0, 2) = type(-0.000542);
-    delta(0, 0, 1, 0) = type(0.004611018);
+    delta(0, 0, 1, 0) = type(0.000813);
+    delta(0, 0, 2, 0) = type(-0.000542);
+    delta(0, 0, 0, 1) = type(0.004611018);
     delta(0, 0, 1, 1) = type(0.010038385);
-    delta(0, 0, 1, 2) = type(0.005427367);
-    delta(0, 0, 2, 0) = type(0.003256018);
-    delta(0, 0, 2, 1) = type(0.009225385);
+    delta(0, 0, 2, 1) = type(0.005427367);
+    delta(0, 0, 0, 2) = type(0.003256018);
+    delta(0, 0, 1, 2) = type(0.009225385);
     delta(0, 0, 2, 2) = type(0.005969367);
     
     ConvolutionalLayerForwardPropagation forward_propagation(1, &convolutional_layer);
@@ -1189,9 +1190,9 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
     Tensor<type, 4> expected_weight_gradient(t1d2array<4>(kernel_dimension));
     expected_weight_gradient(0, 0, 0, 0) = type(-0.04015354);
-    expected_weight_gradient(0, 0, 0, 1) = type(-0.04015354);
+    expected_weight_gradient(0, 1, 0, 0) = type(-0.04015354);
     expected_weight_gradient(0, 0, 1, 0) = type(0.06023031);
-    expected_weight_gradient(0, 0, 1, 1) = type(0.06023031);
+    expected_weight_gradient(0, 1, 1, 0) = type(0.06023031);
 
     Tensor<type, 1> expected_bias_gradient(1);
     expected_bias_gradient(0) = type(0.02007677);
@@ -1341,42 +1342,42 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta1()
 
     TensorMap<Tensor<type, 4>> delta_res(backward_propagation.deltas_data, t1d2array<4>(backward_propagation.deltas_dimensions));
 
-    Tensor<type, 4> expected_result(t1d2array<4>(next_layer_kernel_dimension));
+    Tensor<type, 4> expected_result(t1d2array<4>(next_layer_inputs_dimension));
     expected_result(0, 0, 0, 0) = type(5) / type(4);
     expected_result(0, 1, 0, 0) = type(5) / type(8);
-    expected_result(0, 0, 0, 1) = type(5) / type(2);
-    expected_result(0, 1, 0, 1) = type(5) / type(4);
-    expected_result(0, 0, 0, 2) = type(5) / type(4);
-    expected_result(0, 1, 0, 2) = type(5) / type(8);
     expected_result(0, 0, 1, 0) = type(5) / type(2);
     expected_result(0, 1, 1, 0) = type(5) / type(4);
-    expected_result(0, 0, 1, 1) = type(5);
-    expected_result(0, 1, 1, 1) = type(5) / type(2);
-    expected_result(0, 0, 1, 2) = type(5) / type(2);
-    expected_result(0, 1, 1, 2) = type(5) / type(4);
     expected_result(0, 0, 2, 0) = type(5) / type(4);
     expected_result(0, 1, 2, 0) = type(5) / type(8);
+    expected_result(0, 0, 0, 1) = type(5) / type(2);
+    expected_result(0, 1, 0, 1) = type(5) / type(4);
+    expected_result(0, 0, 1, 1) = type(5);
+    expected_result(0, 1, 1, 1) = type(5) / type(2);
     expected_result(0, 0, 2, 1) = type(5) / type(2);
     expected_result(0, 1, 2, 1) = type(5) / type(4);
+    expected_result(0, 0, 0, 2) = type(5) / type(4);
+    expected_result(0, 1, 0, 2) = type(5) / type(8);
+    expected_result(0, 0, 1, 2) = type(5) / type(2);
+    expected_result(0, 1, 1, 2) = type(5) / type(4);
     expected_result(0, 0, 2, 2) = type(5) / type(4);
     expected_result(0, 1, 2, 2) = type(5) / type(8);
 
     expected_result(1, 0, 0, 0) = type(3);
     expected_result(1, 1, 0, 0) = type(3) / type(2);
-    expected_result(1, 0, 0, 1) = type(6);
-    expected_result(1, 1, 0, 1) = type(3);
-    expected_result(1, 0, 0, 2) = type(3);
-    expected_result(1, 1, 0, 2) = type(3) / type(2);
     expected_result(1, 0, 1, 0) = type(6);
     expected_result(1, 1, 1, 0) = type(3);
-    expected_result(1, 0, 1, 1) = type(12);
-    expected_result(1, 1, 1, 1) = type(6);
-    expected_result(1, 0, 1, 2) = type(6);
-    expected_result(1, 1, 1, 2) = type(3);
     expected_result(1, 0, 2, 0) = type(3);
     expected_result(1, 1, 2, 0) = type(3) / type(2);
+    expected_result(1, 0, 0, 1) = type(6);
+    expected_result(1, 1, 0, 1) = type(3);
+    expected_result(1, 0, 1, 1) = type(12);
+    expected_result(1, 1, 1, 1) = type(6);
     expected_result(1, 0, 2, 1) = type(6);
     expected_result(1, 1, 2, 1) = type(3);
+    expected_result(1, 0, 0, 2) = type(3);
+    expected_result(1, 1, 0, 2) = type(3) / type(2);
+    expected_result(1, 0, 1, 2) = type(6);
+    expected_result(1, 1, 1, 2) = type(3);
     expected_result(1, 0, 2, 2) = type(3);
     expected_result(1, 1, 2, 2) = type(3) / type(2);
 
