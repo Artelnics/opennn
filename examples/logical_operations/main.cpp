@@ -58,8 +58,6 @@ int main()
         Tensor<type, 2> inputs(1,2);
         Tensor<type, 2> outputs;
 
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
         cout << "\nX Y\tAND\tOR\tNAND\tNOR\tXOR\tXNOR\n" << endl;
 
         inputs(0,0) = type(1);

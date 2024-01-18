@@ -24,7 +24,6 @@ public:
 
     virtual ~CorrelationsTest();
 
-
     // Correlation methods
 
     void test_linear_correlation();

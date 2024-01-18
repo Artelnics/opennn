@@ -110,7 +110,7 @@ protected:
     Tensor<Index, 1> inputs_dimensions;
 
 //#ifdef OPENNN_CUDA
-//#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+//#include "../../opennn-cuda/opennn-cuda/addition_layer_cuda.h"
 //#endif
 
 };

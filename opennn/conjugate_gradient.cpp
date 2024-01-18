@@ -797,8 +797,8 @@ TrainingResults ConjugateGradient::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        neural_network_pointer->forward_propagate(training_batch.get_inputs(), training_forward_propagation, is_training);
+        
+        neural_network_pointer->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
 
         // Loss index
 
@@ -811,8 +811,8 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-
-            neural_network_pointer->forward_propagate(selection_batch.get_inputs(), selection_forward_propagation, is_training);
+            
+            neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
@@ -1015,7 +1015,7 @@ void ConjugateGradient::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+    pair<type, type> directional_point = learning_rate_algorithm.calculate_directional_point(
          batch,
          forward_propagation,
          back_propagation,

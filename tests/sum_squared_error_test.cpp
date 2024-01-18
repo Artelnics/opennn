@@ -87,7 +87,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -131,7 +131,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -171,7 +171,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -218,7 +218,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -260,7 +260,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -302,7 +302,7 @@ void SumSquaredErrorTest::test_back_propagate()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -353,7 +353,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -362,21 +362,20 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         // visual studio not running
 
-//        back_propagation_lm.set(samples_number, &sum_squared_error);
-//        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+        back_propagation_lm.set(samples_number, &sum_squared_error);
+        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        numerical_gradient = sum_squared_error.calculate_numerical_gradient();
-//        numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
+        numerical_gradient = sum_squared_error.calculate_numerical_gradient();
+        numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
 
-//        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 
-//        assert_true(back_propagation_lm.error >= type(0), LOG);
-//        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-1), LOG);
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-1), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);
-
+        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -406,7 +405,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -415,21 +414,20 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         // visual studio not running
 
-//        back_propagation_lm.set(samples_number, &sum_squared_error);
-//        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+        back_propagation_lm.set(samples_number, &sum_squared_error);
+        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        numerical_gradient = sum_squared_error.calculate_numerical_gradient();
-//        numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
+        numerical_gradient = sum_squared_error.calculate_numerical_gradient();
+        numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
 
-//        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 
-//        assert_true(back_propagation_lm.error >= type(0), LOG);
-//        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
-
+        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
     }
 
     // Test multiple classification random samples, inputs, outputs, neurons
@@ -459,7 +457,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -468,25 +466,23 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         // visual studio not running
 
-//        back_propagation_lm.set(samples_number, &sum_squared_error);
-//        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+        back_propagation_lm.set(samples_number, &sum_squared_error);
+        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-//        numerical_gradient = sum_squared_error.calculate_numerical_gradient();
-//        numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
+        numerical_gradient = sum_squared_error.calculate_numerical_gradient();
+        numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
 
-//        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-//        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 
-//        assert_true(back_propagation_lm.error >= type(0), LOG);
-//        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
-//        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
-//        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
 
     }
 
-
-    // Forecasting incompatible with LM
 }
 
 

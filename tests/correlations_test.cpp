@@ -21,14 +21,11 @@ void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_spearman_linear_correlation\n";
 
-    cout << "test_linear_correlation\n";
-
     Index size;
 
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
-    type correlation;
     type solution;
 
     size = 10;
@@ -43,6 +40,7 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
 }
+
 
 void CorrelationsTest::test_linear_correlation()
 {
@@ -78,7 +76,7 @@ void CorrelationsTest::test_linear_correlation()
 
     y.setValues({type(10), type(9), type(8),type( 7),type( 6),type( 5),type( 4),type( 3),type( 2),type( 1)});
 
-    assert_true(linear_correlation(thread_pool_device, x, y ).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(linear_correlation(thread_pool_device, x, y).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -90,7 +88,7 @@ void CorrelationsTest::test_linear_correlation()
     y.resize(size);
     y = type(2)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y ).r;
+    correlation = linear_correlation(thread_pool_device, x, y).r;
 
     assert_true(abs(correlation - type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -100,7 +98,7 @@ void CorrelationsTest::test_linear_correlation()
 
     y = type(-1.0)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y ).r;
+    correlation = linear_correlation(thread_pool_device, x, y).r;
     assert_true(abs(correlation + type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
@@ -179,7 +177,9 @@ void CorrelationsTest::test_logistic_correlation()
     }
 
     const int n = omp_get_max_threads();
+
     ThreadPool* thread_pool = new ThreadPool(n);
+
     ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
     // Test

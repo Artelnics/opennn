@@ -325,8 +325,8 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
     const LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
-
-    const pair<type*, dimensions> outputs = output_layer_forward_propagation->get_outputs();
+    
+    const pair<type*, dimensions> outputs = output_layer_forward_propagation->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
@@ -341,8 +341,8 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
                                     LossIndexBackPropagationLM & loss_index_back_propagation) const
 {
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
-
-    const pair<type*, dimensions> outputs = neural_network_forward_propagation.layers(last_trainable_layer_index)->get_outputs();
+    
+    const pair<type*, dimensions> outputs = neural_network_forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
@@ -494,7 +494,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
     }
     else
     {
-        const pair<type*, dimensions> inputs_pair = batch.get_inputs();
+        const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
 
         const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0],  inputs_pair.second[0][1]);
 
@@ -747,16 +747,16 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
-
-    trainable_layers_pointers(0)->calculate_error_gradient(batch.get_inputs(),
+    
+    trainable_layers_pointers(0)->calculate_error_gradient(batch.get_inputs_pair(),
                                                            forward_propagation.layers(first_trainable_layers_index),
                                                            back_propagation.neural_network.layers(0));
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
         const LayerForwardPropagation* layer_forward_propagation = forward_propagation.layers(first_trainable_layers_index+i-1);
-
-        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->get_outputs(),
+        
+        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->get_outputs_pair(),
                                                                forward_propagation.layers(first_trainable_layers_index+i),
                                                                back_propagation.neural_network.layers(i));
     }
@@ -993,8 +993,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
-
-       neural_network_pointer->forward_propagate(batch.get_inputs(),
+       
+       neural_network_pointer->forward_propagate(batch.get_inputs_pair(),
                                                  parameters_forward,
                                                  forward_propagation);
 
@@ -1007,8 +1007,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        parameters_forward(i) -= h;
 
        parameters_backward(i) -= h;
-
-       neural_network_pointer->forward_propagate(batch.get_inputs(),
+       
+       neural_network_pointer->forward_propagate(batch.get_inputs_pair(),
                                                  parameters_backward,
                                                  forward_propagation);
 
@@ -1051,8 +1051,8 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
     const Index parameters_number = parameters.size();
 
     back_propagation_lm.set(samples_number, this);
-
-    neural_network_pointer->forward_propagate(batch.get_inputs(),
+    
+    neural_network_pointer->forward_propagate(batch.get_inputs_pair(),
                                               parameters,
                                               forward_propagation);
 
@@ -1075,7 +1075,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
         h = calculate_h(parameters(j));
 
         parameters_backward(j) -= h;
-        neural_network_pointer->forward_propagate(batch.get_inputs(),
+        neural_network_pointer->forward_propagate(batch.get_inputs_pair(),
                                                   parameters_backward,
                                                   forward_propagation);
 
@@ -1085,7 +1085,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
         parameters_backward(j) += h;
 
         parameters_forward(j) += h;
-        neural_network_pointer->forward_propagate(batch.get_inputs(),
+        neural_network_pointer->forward_propagate(batch.get_inputs_pair(),
                                                   parameters_forward,
                                                   forward_propagation);
         calculate_errors_lm(batch, forward_propagation, back_propagation_lm);

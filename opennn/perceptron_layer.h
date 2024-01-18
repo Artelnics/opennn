@@ -267,61 +267,21 @@ protected:
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+    explicit PerceptronLayerForwardPropagation();
 
-     explicit PerceptronLayerForwardPropagation() : LayerForwardPropagation()
-     {
-     }
+    explicit PerceptronLayerForwardPropagation(const Index&, Layer*);
 
+    virtual ~PerceptronLayerForwardPropagation();
 
-     explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-         : LayerForwardPropagation()
-     {
-         set(new_batch_samples_number, new_layer_pointer);
-     }
+    pair<type *, dimensions> get_outputs_pair() const final;
 
+    void set(const Index&, Layer*) final;
 
-    virtual ~PerceptronLayerForwardPropagation()
-    {
-    }
+    void print() const;
 
+    Tensor<type, 2> outputs;
 
-    pair<type*, dimensions> get_outputs() const final
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
-    }
-
-
-     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-     {
-         layer_pointer = new_layer_pointer;
-
-         batch_samples_number = new_batch_samples_number;
-
-         const Index neurons_number = layer_pointer->get_neurons_number();
-
-         outputs.resize(batch_samples_number, neurons_number);                  
-
-         outputs_data = outputs.data();
-
-         activations_derivatives.resize(batch_samples_number, neurons_number);
-     }
-
-
-     void print() const
-     {
-         cout << "Outputs:" << endl;
-         cout << outputs << endl;
-
-         cout << "Activations derivatives:" << endl;
-         cout << activations_derivatives << endl;
-     }
-
-     Tensor<type, 2> outputs;
-
-     Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> activations_derivatives;
 };
 
 
@@ -329,64 +289,17 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
     // Default constructor
 
-    explicit PerceptronLayerBackPropagation() : LayerBackPropagation()
-    {
+    explicit PerceptronLayerBackPropagation();
 
-    }
+    explicit PerceptronLayerBackPropagation(const Index&, Layer*);
 
+    virtual ~PerceptronLayerBackPropagation();
 
-    explicit PerceptronLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+    pair<type *, dimensions> get_deltas_pair() const final;
 
+    void set(const Index&, Layer*) final;
 
-    virtual ~PerceptronLayerBackPropagation()
-    {
-    }
-
-
-    pair<type*, dimensions> get_deltas() const final
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-
-        deltas_data = deltas.data();
-
-        biases_derivatives.resize(neurons_number);
-
-        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-        deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
-    }
+    void print() const;
 
     Tensor<type, 2> deltas;
 
@@ -401,18 +314,9 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
     // Default constructor
 
-    explicit PerceptronLayerBackPropagationLM() : LayerBackPropagationLM()
-    {
+    explicit PerceptronLayerBackPropagationLM();
 
-    }
-
-
-    explicit PerceptronLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagationLM()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
+    explicit PerceptronLayerBackPropagationLM(const Index&new_batch_samples_number, Layer *new_layer_pointer);
 
     virtual ~PerceptronLayerBackPropagationLM()
     {

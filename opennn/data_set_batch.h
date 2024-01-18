@@ -21,20 +21,9 @@ struct DataSetBatch
 
     /// Destructor.
 
-    virtual ~DataSetBatch()
-    {
-    }
+    virtual ~DataSetBatch();
 
-
-    pair<type*, dimensions> get_inputs() const
-    {
-        pair<type*, dimensions> inputs;
-
-        inputs.first = inputs_data;
-        inputs.second = inputs_dimensions;
-
-        return inputs;
-    }
+    pair<type *, dimensions> get_inputs_pair() const;
 
     Index get_batch_samples_number() const;
 

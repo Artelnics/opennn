@@ -65,9 +65,9 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     {
         set(new_batch_samples_number, new_layer_pointer);
     }
-
-
-    pair<type*, dimensions> get_outputs() const final
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
     {
         return pair<type*, dimensions>();
     }

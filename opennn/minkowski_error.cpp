@@ -120,8 +120,8 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
-    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
+    
+    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
 
     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 

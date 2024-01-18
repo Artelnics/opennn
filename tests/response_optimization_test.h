@@ -26,22 +26,6 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set();
-
-    void test_set_evaluations_number();
-
-    void test_set_input_condition();
-    void test_set_output_condition();
-    void test_set_inputs_outputs_conditions();
-
-    //
-
-    void test_get_conditions();
-
-    void test_get_values_conditions();
-
     // Performance methods
 
     void test_calculate_inputs();

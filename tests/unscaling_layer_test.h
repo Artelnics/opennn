@@ -28,26 +28,6 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set();
-    void test_set_inputs_number();
-    void test_set_neurons_number();
-    void test_set_default();
-
-    // Output variables descriptives
-
-    void test_set_descriptives();
-    void test_set_item_descriptives();
-
-    // Variables scaling and unscaling
-
-    void test_set_unscaling_method();
-
-    // Check methods
-
-    void test_is_empty();
-
     // Outputs unscaling
 
     void test_calculate_minimum_maximum_outputs();

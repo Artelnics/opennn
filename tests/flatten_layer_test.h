@@ -35,6 +35,7 @@ public:
 private:
 
    FlattenLayer flatten_layer;
+
    FlattenLayerForwardPropagation flatten_layer_forward_propagation;
 
 };

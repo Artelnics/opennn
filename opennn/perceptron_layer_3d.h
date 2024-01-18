@@ -30,7 +30,6 @@ namespace opennn
 
 struct PerceptronLayer3DForwardPropagation;
 struct PerceptronLayer3DBackPropagation;
-struct PerceptronLayer3DBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
@@ -184,30 +183,6 @@ public:
                                ProbabilisticLayer3DBackPropagation*,
                                PerceptronLayer3DBackPropagation*) const;
 
-   // Delta LM
-
-   void calculate_hidden_delta_lm(LayerForwardPropagation*,
-                                  LayerBackPropagationLM*,
-                                  LayerBackPropagationLM*) const final;
-
-   void calculate_hidden_delta_lm(PerceptronLayer3DForwardPropagation*,
-                                  PerceptronLayer3DBackPropagationLM*,
-                                  PerceptronLayer3DBackPropagationLM*) const;
-
-   void calculate_hidden_delta_lm(ProbabilisticLayer3DForwardPropagation*,
-                                  ProbabilisticLayer3DBackPropagationLM*,
-                                  PerceptronLayer3DBackPropagationLM*) const;
-
-   // Squared errors methods
-
-//   void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-//                                             LayerForwardPropagation*,
-//                                             LayerBackPropagationLM*) final;
-
-//   void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
-//                                          const Index&,
-//                                          Tensor<type, 2>&) const final;
-
    // Gradient methods
 
    void calculate_error_gradient(const pair<type*, dimensions>&,
@@ -232,7 +207,6 @@ public:
 protected:
 
    // MEMBERS
-
 
    Index inputs_size;
 
@@ -281,9 +255,9 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
     virtual ~PerceptronLayer3DForwardPropagation()
     {
     }
-
-
-    pair<type*, dimensions> get_outputs() const final
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
     {
         PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer_pointer);
 
@@ -350,9 +324,9 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     virtual ~PerceptronLayer3DBackPropagation()
     {
     }
-
-
-    pair<type*, dimensions> get_deltas() const final
+    
+    
+    pair<type*, dimensions> get_deltas_pair() const final
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
@@ -399,56 +373,6 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 2> synaptic_weights_derivatives;
 
     Tensor<type, 2> deltas_times_activations_derivatives;
-};
-
-
-struct PerceptronLayer3DBackPropagationLM : LayerBackPropagationLM
-{
-    // Default constructor
-
-    explicit PerceptronLayer3DBackPropagationLM() : LayerBackPropagationLM()
-    {
-
-    }
-
-
-    explicit PerceptronLayer3DBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagationLM()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    virtual ~PerceptronLayer3DBackPropagationLM()
-    {
-
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-    }
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Squared errors Jacobian: " << endl;
-        cout << squared_errors_Jacobian << endl;
-    }
-
-    Tensor<type, 2> squared_errors_Jacobian;
 };
 
 }

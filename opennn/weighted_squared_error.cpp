@@ -205,11 +205,11 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Tensor<type, 2>& targets = batch.targets;
 
-    const pair<type*, dimensions> outputs = probabilistic_layer_forward_propagation->get_outputs();
+    const pair<type*, dimensions> outputs = probabilistic_layer_forward_propagation->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
-    /// @todo remove allocation
+    /// @todo remove allocation using a better select
 
     const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
     const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
@@ -277,7 +277,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
     f_3 = targets.constant(type(0));
 
-    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
+    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
 
     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 
@@ -290,12 +290,6 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
                                                        LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
@@ -513,7 +507,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-    const pair<type*, dimensions> outputs = probabilistic_layer_forward_propagation->get_outputs();
+    const pair<type*, dimensions> outputs = probabilistic_layer_forward_propagation->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 

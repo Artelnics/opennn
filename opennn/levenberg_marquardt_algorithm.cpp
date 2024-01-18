@@ -474,8 +474,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        neural_network_pointer->forward_propagate(training_batch.get_inputs(),
+        
+        neural_network_pointer->forward_propagate(training_batch.get_inputs_pair(),
                                                   training_forward_propagation,
                                                   is_training);
 
@@ -489,8 +489,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(has_selection)
         {
-
-            neural_network_pointer->forward_propagate(selection_batch.get_inputs(),
+            
+            neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(),
                                                       selection_forward_propagation,
                                                       is_training);
 
@@ -638,8 +638,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation_lm.parameters + optimization_data.parameters_increment;
-
-        neural_network_pointer->forward_propagate(batch.get_inputs(),
+        
+        neural_network_pointer->forward_propagate(batch.get_inputs_pair(),
                                                   optimization_data.potential_parameters,
                                                   forward_propagation);
 

@@ -324,8 +324,6 @@ public:
 
    // Serialization methods
 
-   void print() const;
-
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;

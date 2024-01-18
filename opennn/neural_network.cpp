@@ -1714,7 +1714,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
-        outputs = forward_propagation.layers(i-1)->get_outputs();
+        outputs = forward_propagation.layers(i-1)->get_outputs_pair();
 
         layers_pointers(i)->forward_propagate(outputs,
                                               forward_propagation.layers(i),
@@ -1793,8 +1793,8 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(Tensor<type, 2>& inputs)
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();
-
-    const pair<type*, dimensions> outputs = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs();
+    
+    const pair<type*, dimensions> outputs = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
@@ -5133,8 +5133,6 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
 
 void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
 {
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     std::ofstream file(file_name.c_str());

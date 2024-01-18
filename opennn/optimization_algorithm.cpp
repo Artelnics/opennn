@@ -236,6 +236,7 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
     neural_network_file_name = new_neural_network_file_name;
 }
 
+
 BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& inputs_dimensions,
                                                             type* & new_outputs_data, Tensor<Index,1>& outputs_dimensions)
 {

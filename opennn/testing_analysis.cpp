@@ -50,21 +50,6 @@ TestingAnalysis::~TestingAnalysis()
 
 NeuralNetwork* TestingAnalysis::get_neural_network_pointer() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "NeuralNetwork* get_neural_network_pointer() const method.\n"
-               << "Neural network pointer is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     return neural_network_pointer;
 }
 
@@ -73,21 +58,6 @@ NeuralNetwork* TestingAnalysis::get_neural_network_pointer() const
 
 DataSet* TestingAnalysis::get_data_set_pointer() const
 {
-#ifdef OPENNN_DEBUG
-
-    if(!data_set_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "DataSet* get_data_set_pointer() const method.\n"
-               << "Data set pointer is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     return data_set_pointer;
 }
 
@@ -319,34 +289,9 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 
 Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
-    // Data set
-
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(testing_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<Tensor<type, 2>, 1> calculate_error_data() const.\n"
-               << "Number of testing samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
@@ -359,19 +304,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-
-#ifdef OPENNN_DEBUG
-
-    if(!unscaling_layer_pointer)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<Tensor<type, 2>, 1> calculate_error_data() const.\n"
-               << "Unscaling layer is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
 
@@ -409,32 +341,9 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(testing_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<Tensor<type, 2>, 1> calculate_error_data() const.\n"
-               << "Number of testing samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
@@ -442,24 +351,9 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-
-#ifdef OPENNN_DEBUG
-
-    if(!unscaling_layer_pointer)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<Tensor<type, 1>, 1> calculate_percentage_error_data() const.\n"
-               << "Unscaling layer is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
@@ -487,8 +381,6 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
     // Data set
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
@@ -519,15 +411,11 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     // Error descriptives
 
@@ -762,40 +650,15 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(training_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_training_errors() const.\n"
-               << "Number of training samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -816,40 +679,15 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(training_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_binary_classification_training_errors() const.\n"
-               << "Number of training samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(6);
 
@@ -881,40 +719,15 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(training_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_multiple_classification_training_errors() const.\n"
-               << "Number of training samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(5);
 
@@ -935,40 +748,15 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(selection_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_selection_errors() const.\n"
-               << "Number of selection samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -989,40 +777,15 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(selection_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_binary_classification_selection_errors() const.\n"
-               << "Number of selection samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(6);
 
@@ -1045,40 +808,15 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(selection_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_multiple_classification_selection_errors() const.\n"
-               << "Number of selection samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_selection_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(5);
 
@@ -1109,40 +847,15 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(testing_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<Tensor<type, 2>, 1> calculate_testing_errors() const.\n"
-               << "Number of testing samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -1174,40 +887,15 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(testing_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_binary_classification_testing_errors() const.\n"
-               << "Number of testing samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(6);
 
@@ -1240,40 +928,15 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 {
     // Data set
 
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(testing_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_multiple_classification_testing_errors() const.\n"
-               << "Number of testing samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     Tensor<type, 1> errors(4);
 
@@ -1370,23 +1033,6 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
                                                        const Tensor<type, 2>& outputs,
                                                        const Tensor<type, 1>& weights) const
 {
-#ifdef OPENNN_DEBUG
-
-    const Index outputs_number = outputs.dimension(1);
-
-    ostringstream buffer;
-
-    if(outputs_number != 1)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "type calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&) const.\n"
-               << "Number of outputs must be one.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     type negatives_weight;
     type positives_weight;
 
@@ -1448,23 +1094,6 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, 
 
 type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& outputs, const Tensor<type,1>& targets) const
 {
-#ifdef OPENNN_DEBUG
-
-    const Index outputs_number = outputs.dimension(0);
-
-    ostringstream buffer;
-
-    if(targets.size() != outputs_number)
-    {
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "type calculate_determination_coefficient(const Tensor<type, 1>&, const Tensor<type, 1>&) const.\n"
-               << "Outputs and targets dimensions must be equal.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     const Tensor<type, 0> targets_mean = targets.mean();
     const Tensor<type, 0> outputs_mean = outputs.mean();
 
@@ -1477,7 +1106,7 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 
     return determination_coefficient;
 
-};
+}
 
 
 /// Returns the confusion matrix for a binary classification problem.
@@ -1633,15 +1262,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     if(outputs_number == 1)
     {
@@ -1677,13 +1302,9 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 {
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     RocAnalysisResults roc_analysis_results;
 
@@ -2138,13 +1759,9 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 {
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
     const Tensor<type, 2> lift_chart = calculate_lift_chart(cumulative_gain);
@@ -2246,64 +1863,15 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
 
 Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 2> perform_calibration_plot_analysis() const method.\n"
-               << "Pointer to neural network in neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-/*
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 2> perform_calibration_plot_analysis() const method." << endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number != data_set_pointer->get_target_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 2> perform_calibration_plot_analysis() const method." << endl
-               << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<type, 2> calibration_plot = calculate_calibration_plot(targets, outputs);
 
     return calibration_plot;
-
 }
 
 
@@ -2421,60 +1989,11 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<ty
 
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates() const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "BinaryClassificationRates calculate_binary_classification_rates() const method.\n"
-               << "Pointer to neural network in neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-/*
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-    // Control sentence
-
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number != data_set_pointer->get_target_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
-               << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<Index, 1> testing_indices = data_set_pointer->get_testing_samples_indices();
 
@@ -2647,13 +2166,9 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() c
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<Index, 2> confusion_matrix = calculate_confusion_multiple_classification(targets, outputs);
 
@@ -2737,60 +2252,11 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
-#ifdef OPENNN_DEBUG
-/*
-    check();
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "BinaryClassificationRates calculate_binary_classification_rates() const method.\n"
-               << "Pointer to neural network in neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-    // Control sentence
-
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number != data_set_pointer->get_target_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
-               << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<Index, 1> testing_indices = data_set_pointer->get_testing_samples_indices();
 
@@ -3124,60 +2590,11 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(const Index& maximum_lags_number) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_error_autocorrelation() const method.\n"
-               << "Pointer to neural network in neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-/*
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-    // Control sentence
-
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_error_autocorrelation() const method." << endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number != data_set_pointer->get_target_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_error_autocorrelation() const method." << endl
-               << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
@@ -3202,60 +2619,13 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method.\n"
-               << "Pointer to neural network in neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-/*
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number != data_set_pointer->get_target_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
-               << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Tensor<type, 2> errors = targets - outputs;
 
@@ -3293,60 +2663,6 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 {
-#ifdef OPENNN_DEBUG
-/*
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-    if(!data_set_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
-               << "Data set is nullptr." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index targets_number = data_set_pointer->get_target_variables_number();
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    // Control sentence
-
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
-               << "Number of inputs in neural network is not equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-    else if(outputs_number != 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
-               << "Number of outputs in neural network must be one." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-    else if(targets_number != 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
-               << "Number of targets in data set must be one." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     // Confusion matrix
 
     const Tensor<Index, 2> confusion = calculate_confusion();
@@ -3695,60 +3011,11 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
 type TestingAnalysis::calculate_logloss() const
 {
-#ifdef OPENNN_DEBUG
-/*
-    check();
-
-    if(!neural_network_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method.\n"
-               << "Pointer to neural network in neural network is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-
-    // Control sentence
-
-    if(inputs_number != data_set_pointer->get_input_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number != data_set_pointer->get_target_variables_number())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class." << endl
-               << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
-               << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-*/
-#endif
-
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
@@ -3760,13 +3027,6 @@ type TestingAnalysis::calculate_logloss() const
     }
 
     return -logloss/type(testing_samples_number);
-}
-
-
-/// Prints to the standard output the string representation of this testing analysis object.
-
-void TestingAnalysis::print() const
-{
 }
 
 

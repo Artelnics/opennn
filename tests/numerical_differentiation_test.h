@@ -28,8 +28,6 @@ public:
 
     void test_destructor();
 
-    void test_set_get_methods();
-
     void test_calculate_methods();
 
     // Derivative methods

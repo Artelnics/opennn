@@ -68,8 +68,8 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      const type coefficient = type(2.0);
-
-     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
+     
+     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
 
      TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 

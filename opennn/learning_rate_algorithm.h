@@ -102,7 +102,7 @@ public:
        }
 
 
-       inline pair<type,type> minimum() const
+       inline pair<type, type> minimum() const
        {
            Tensor<type, 1> losses(3);
 

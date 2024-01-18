@@ -18,8 +18,8 @@ struct LayerBackPropagation
     explicit LayerBackPropagation() {}
 
     virtual ~LayerBackPropagation() {}
-
-    virtual pair<type*, dimensions> get_deltas() const
+    
+    virtual pair<type*, dimensions> get_deltas_pair() const
     {
         return pair<type*, dimensions>();
     }

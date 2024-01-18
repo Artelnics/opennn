@@ -42,6 +42,7 @@ void GeneticAlgorithmTest::test_destructor()
     cout << "test_destructor\n";
 
     GeneticAlgorithm* genetic_algorithm_pointer = new GeneticAlgorithm;
+
     delete genetic_algorithm_pointer;
 }
 
@@ -113,7 +114,6 @@ void GeneticAlgorithmTest::test_initialize_population()
     assert_true(gene.size() == individuals_number, LOG);
     assert_true(individual.size() == inputs_number, LOG);
 }
-
 
 
 void GeneticAlgorithmTest::test_perform_fitness_assignment()
@@ -279,50 +279,50 @@ void GeneticAlgorithmTest::test_perform_selection()
 
 void GeneticAlgorithmTest::test_perform_crossover()
 {
-        cout << "test_perform_crossover\n";
+    cout << "test_perform_crossover\n";
 
-        Tensor<type, 2> data(10,5);
-        data.setRandom();
-        data_set.set(data);
+    Tensor<type, 2> data(10,5);
+    data.setRandom();
+    data_set.set(data);
 
-        Tensor<bool, 2> population;
-        Tensor<bool, 2> crossover_population;
-        Tensor<bool, 1> individual;
+    Tensor<bool, 2> population;
+    Tensor<bool, 2> crossover_population;
+    Tensor<bool, 1> individual;
 
-        Tensor<type, 1> fitness(4);
+    Tensor<type, 1> fitness(4);
 
-        Tensor<type, 1> selection_errors(4);
+    Tensor<type, 1> selection_errors(4);
 
-        // Test
+    // Test
 
-        genetic_algorithm.set_individuals_number(4);
+    genetic_algorithm.set_individuals_number(4);
 
-        population.resize(4, 4);
+    population.resize(4, 4);
 
-        population.setValues({{true,false,false,false},
-                              {true,false,false,true},
-                              {true,false,true,false},
-                              {true,false,true,true}});
+    population.setValues({{true,false,false,false},
+                          {true,false,false,true},
+                          {true,false,true,false},
+                          {true,false,true,true}});
 
-        genetic_algorithm.set_population(population);
+    genetic_algorithm.set_population(population);
 
-        selection_errors.setValues({0.4,0.3,0.2,0.1});
+    selection_errors.setValues({0.4,0.3,0.2,0.1});
 
-        genetic_algorithm.set_selection_errors(selection_errors);
+    genetic_algorithm.set_selection_errors(selection_errors);
 
-        genetic_algorithm.perform_fitness_assignment();
+    genetic_algorithm.perform_fitness_assignment();
 
-        genetic_algorithm.perform_selection();
+    genetic_algorithm.perform_selection();
 
-        genetic_algorithm.perform_crossover();
+    genetic_algorithm.perform_crossover();
 
-        crossover_population = genetic_algorithm.get_population();
+    crossover_population = genetic_algorithm.get_population();
 
-        for(Index i = 0; i<4; i++)
-        {
-           assert_true(crossover_population(i,0) == 1, LOG);
-           assert_true(crossover_population(i,1) == 0, LOG);
-        }
+    for(Index i = 0; i<4; i++)
+    {
+       assert_true(crossover_population(i,0) == 1, LOG);
+       assert_true(crossover_population(i,1) == 0, LOG);
+    }
 
 }
 

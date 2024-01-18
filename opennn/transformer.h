@@ -45,8 +45,8 @@ public:
     explicit Transformer(const initializer_list<Index>&);
 
 
-    void set(const Index& input_length, const Index& context_length, const Index& input_dim, const Index& context_dim,
-             const Index& embedding_depth, const Index& perceptron_depth, const Index& number_of_heads, const Index& number_of_layers);
+    void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimensions, const Index& context_dim,
+             const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers);
 
 
 protected:
@@ -55,7 +55,7 @@ protected:
 
     /// Length of input entries
 
-    Index input_length;
+    Index inputs_length;
 
     /// Length of context entries
 
@@ -63,7 +63,7 @@ protected:
 
     /// Maximum value in input
 
-    Index input_dim;
+    Index inputs_dimensions;
 
     /// Maximum value in context
 
@@ -79,7 +79,7 @@ protected:
 
     /// Number of attention heads per MultiheadAttentionLayer
 
-    Index number_of_heads;
+    Index heads_number;
 
     /// Number of encoder and decoder layers
 

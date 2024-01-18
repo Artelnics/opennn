@@ -25,14 +25,12 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
 
 struct ProbabilisticLayer3DForwardPropagation;
 struct ProbabilisticLayer3DBackPropagation;
-struct ProbabilisticLayer3DBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
@@ -148,12 +146,6 @@ public:
                             Tensor<type, 3>&,
                             Tensor<type, 4>&) const;
 
-//   void logistic_derivatives(const Tensor<type, 2>&,
-//                            Tensor<type, 2>&,
-//                            Tensor<type, 3>&) const;
-
-//   void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-
    // Outputs
 
    void forward_propagate(const pair<type*, dimensions>&,
@@ -171,16 +163,6 @@ public:
                                  LayerBackPropagation*) const final;
 
    void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const final;
-
-   // Squared errors methods
-
-//   void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-//                                             LayerForwardPropagation*,
-//                                             LayerBackPropagationLM*) final;
-
-//   void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
-//                                          const Index&,
-//                                          Tensor<type, 2>&) const final;
 
    // Expression methods
 
@@ -252,9 +234,9 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     virtual ~ProbabilisticLayer3DForwardPropagation()
     {
     }
-
-
-    pair<type*, dimensions> get_outputs() const final
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
     {
         ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
 
@@ -317,9 +299,9 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     {
         set(new_batch_samples_number, new_layer_pointer);
     }
-
-
-    pair<type*, dimensions> get_deltas() const final
+    
+    
+    pair<type*, dimensions> get_deltas_pair() const final
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
@@ -376,62 +358,6 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
-};
-
-
-struct ProbabilisticLayer3DBackPropagationLM : LayerBackPropagationLM
-{
-    explicit ProbabilisticLayer3DBackPropagationLM() : LayerBackPropagationLM()
-    {
-
-    }
-
-
-    explicit ProbabilisticLayer3DBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagationLM()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    virtual ~ProbabilisticLayer3DBackPropagationLM()
-    {
-
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-        deltas_row.resize(neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-
-        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Squared errors Jacobian: " << endl;
-        cout << squared_errors_Jacobian << endl;
-    }
-
-    Tensor<type, 1> deltas_row;
-
-    Tensor<type, 2> error_combinations_derivatives;
-
-    Tensor<type, 2> squared_errors_Jacobian;
 };
 
 }

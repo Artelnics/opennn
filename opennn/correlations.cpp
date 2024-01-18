@@ -802,7 +802,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.perform_training();
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
@@ -819,7 +818,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     cout << "correlation.r: " << correlation.r << endl;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
+/*
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
@@ -835,7 +834,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     // no r correlation here
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
-
+*/
     return correlation;
 }
 
@@ -886,7 +885,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     training_strategy.perform_training();
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
@@ -901,7 +899,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
+/*
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
@@ -916,7 +914,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.b = coefficients(1);
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
-
+*/
     return correlation;
 }
 
@@ -990,7 +988,6 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     // Logistic correlation
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set.get_target_data();
 
@@ -1003,7 +1000,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
+/*
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
@@ -1011,7 +1008,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
     correlation.form = Correlation::Form::Logistic;
-
+*/
     return correlation;
 }
 
@@ -1116,7 +1113,6 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     // Logistic correlation
 
     Tensor<type, 2> inputs = data_set.get_input_data();
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     Tensor<type, 2> targets = data_set.get_target_data();
 
@@ -1129,7 +1125,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
+/*
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
 
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
@@ -1137,7 +1133,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
     correlation.form = Correlation::Form::Logistic;
-
+*/
     return correlation;
 }
 

@@ -557,8 +557,8 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
     const int image_size = width * height * channels;
 
-    Tensor<type, 2> imageDataAux(imageData.dimension(0), imageData.dimension(1));
-    imageDataAux = imageData;
+    Tensor<type, 2> imageDataAux(image_data.dimension(0), image_data.dimension(1));
+    imageDataAux = image_data;
 
     if(classes_number == 2)
     {
@@ -572,7 +572,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         imageDataAux.resize(images_number, image_size + classes_number);
     }
 
-    memcpy(data.data(), imageData.data(), images_number * image_size * sizeof(type));
+    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
 
     rows_labels.resize(images_number);
 

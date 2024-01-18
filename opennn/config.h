@@ -1,8 +1,9 @@
-
 #ifndef OPENNN_CONFIG_H
 #define OPENNN_CONFIG_H
 
 #define NUMERIC_LIMITS_MIN type(0.000001)
+
+//#define OPENNN_CUDA
 
 //#define OPENNN_MKL
 

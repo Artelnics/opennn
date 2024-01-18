@@ -33,8 +33,8 @@ struct LayerForwardPropagation
     Layer* layer_pointer = nullptr;
 
     type* outputs_data = nullptr;
-
-    virtual pair<type*, dimensions> get_outputs() const = 0;
+    
+    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
 };
 
 

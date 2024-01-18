@@ -28,38 +28,6 @@ public:
 
     void test_destructor();
 
-    // Inputs and neurons
-
-    void test_is_empty();
-
-    // Set methods
-
-    void test_set();
-    void test_set_default();
-
-    // Parameters
-
-    void test_set_biases();
-    void test_set_synaptic_weights();
-    void test_set_parameters();
-
-    // Inputs
-
-    void test_set_inputs_number();
-
-    //Perceptrons
-
-    void test_set_perceptrons_number();
-
-    // Activation functions
-
-    void test_set_activation_function();
-
-    // Parameters initialization methods
-
-    void test_set_parameters_constant();
-    void test_set_parameters_random();
-
     // Combination
 
     void test_calculate_combinations();

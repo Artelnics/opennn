@@ -114,8 +114,8 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 //     const Index batch_samples_number = batch.inputs_2d.dimension(0) == 0 ? batch.inputs_4d.dimension(0) : batch.inputs_2d.dimension(0);
 
      const type coefficient = type(2.0)/type(outputs_number*batch_samples_number);
-
-     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
+     
+     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
 
      TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 

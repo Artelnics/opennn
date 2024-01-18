@@ -31,33 +31,6 @@ public:
     // Appending layers
 
     void test_add_layer();
-    void check_layer_type();
-
-    // Get methods
-
-    void test_has_methods();
-
-    // Set methods
-
-    void test_set();
-
-    void test_set_names();
-    void test_set_inputs_number();
-
-    void test_set_pointers();
-
-    void test_set_default();
-
-    // Architecture
-
-    void test_set_network();
-
-    void test_set_parameters();
-
-    // Parameters initialization methods
-
-    void test_set_parameters_constant();
-    void test_set_parameters_random();
 
     // Parameters norm / descriptives / histogram
 

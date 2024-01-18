@@ -1400,9 +1400,97 @@ string PerceptronLayer::write_activation_function_expression() const
     }
 }
 
+void PerceptronLayerForwardPropagation::set(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer) {
+    layer_pointer = new_layer_pointer;
+    
+    batch_samples_number = new_batch_samples_number;
+    
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    
+    outputs.resize(batch_samples_number, neurons_number);
+    
+    outputs_data = outputs.data();
+    
+    activations_derivatives.resize(batch_samples_number, neurons_number);
+}
+std::pair<type *, dimensions>
+PerceptronLayerForwardPropagation::get_outputs_pair() const {
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    
+    return pair<type *, dimensions>(outputs_data,
+                                    {{batch_samples_number, neurons_number}});
+}
+PerceptronLayerForwardPropagation::~PerceptronLayerForwardPropagation() {}
+PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer)
+    : LayerForwardPropagation() {
+    set(new_batch_samples_number, new_layer_pointer);
+}
+PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation()
+    : LayerForwardPropagation() {}
+void PerceptronLayerForwardPropagation::print() const {
+    cout << "Outputs:" << endl;
+    cout << outputs << endl;
+    
+    cout << "Activations derivatives:" << endl;
+    cout << activations_derivatives << endl;
+}
+PerceptronLayerBackPropagation::PerceptronLayerBackPropagation()
+    : LayerBackPropagation() {}
+PerceptronLayerBackPropagation::PerceptronLayerBackPropagation(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer)
+    : LayerBackPropagation() {
+    set(new_batch_samples_number, new_layer_pointer);
+}
+PerceptronLayerBackPropagation::~PerceptronLayerBackPropagation() {}
+std::pair<type *, dimensions>
+PerceptronLayerBackPropagation::get_deltas_pair() const {
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    
+    return pair<type *, dimensions>(deltas_data,
+                                    {{batch_samples_number, neurons_number}});
+}
+void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
+                                         Layer *new_layer_pointer) {
+    layer_pointer = new_layer_pointer;
+    
+    batch_samples_number = new_batch_samples_number;
+    
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index inputs_number = layer_pointer->get_inputs_number();
+    
+    deltas.resize(batch_samples_number, neurons_number);
+    
+    deltas_data = deltas.data();
+    
+    biases_derivatives.resize(neurons_number);
+    
+    synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+    
+    deltas_times_activations_derivatives.resize(batch_samples_number,
+                                                neurons_number);
+}
+void PerceptronLayerBackPropagation::print() const {
+    cout << "Deltas:" << endl;
+    cout << deltas << endl;
+    
+    cout << "Biases derivatives:" << endl;
+    cout << biases_derivatives << endl;
+    
+    cout << "Synaptic weights derivatives:" << endl;
+    cout << synaptic_weights_derivatives << endl;
+}
+PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM()
+    : LayerBackPropagationLM() {}
+PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(
+    const Index &new_batch_samples_number, Layer *new_layer_pointer)
+    : LayerBackPropagationLM() {
+    set(new_batch_samples_number, new_layer_pointer);
+}
 }
 
-// OpenNN: Open Neural Networks Library.
+  // // namespace opennn namespace opennn// n // // namespace opennn namespace // namespace opennn opennnamespace opennn  // // namespace opennn namespace opennn //  // namespace opennnnamespace opennn//  // namespace opennnnamespace opennn// Op // namespace opennnenNN: O // namespace opennnpen Neural Networks Library.
 // Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or

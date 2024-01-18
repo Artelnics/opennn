@@ -61,7 +61,7 @@ namespace opennn
     void reflect_image_x(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&);
     void reflect_image_y(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&);
     void rotate_image(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const type&);
-    void rescale_image(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const type&);
+    //void rescale_image(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const type&);
     void translate_image(TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Index&);
 }
 

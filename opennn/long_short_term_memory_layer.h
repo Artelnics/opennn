@@ -337,9 +337,9 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     {
         set(new_batch_samples_number, new_layer_pointer);
     }
-
-
-    pair<type*, dimensions> get_outputs() const final
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
     {
         return pair<type*, dimensions>();
     }
@@ -393,13 +393,10 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         cell_states_activations_derivatives.resize(batch_samples_number, neurons_number);
         hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
 
-        combinations.resize(batch_samples_number, neurons_number);
     }
 
     void print() const
     {
-        cout << "Combinations: " << endl;
-        cout << combinations << endl;
 
         cout << "Current inputs: " << endl;
         cout << current_inputs << endl;
@@ -415,8 +412,6 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
      }
 
     Tensor<type, 2> outputs;
-
-    Tensor<type, 2> combinations;
 
     Tensor<type, 1> previous_hidden_state_activations;
     Tensor<type, 1> previous_cell_state_activations;

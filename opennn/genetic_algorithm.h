@@ -59,21 +59,17 @@ public:
 
     const Tensor <bool, 2>& get_population() const;
 
-
     const Tensor <type, 1>& get_training_errors() const;
 
     const Tensor <type, 1>& get_selection_errors() const;
-
 
     const Tensor <type, 1>& get_fitness() const;
 
     const Tensor <bool, 1>& get_selection() const;
 
-
     Index get_individuals_number() const;
 
     Index get_genes_number() const;
-
 
     const type& get_mutation_rate() const;
 

@@ -28,24 +28,11 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set();
-    void test_set_default();
-    void test_set_biases();
-    void test_set_synaptic_weights();
-    void test_set_parameters();
-    void test_set_decision_threshold();
-
-    // Activation function
-
-    void test_set_activation_function();
+    // Forward propagate
 
     void test_calculate_combinations();
     void test_calculate_activations();
     void test_calculate_activations_derivatives();
-
-    // Forward propagate
 
     void test_forward_propagate();
 

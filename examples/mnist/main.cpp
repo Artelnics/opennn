@@ -151,9 +151,6 @@ int main()
         Tensor<type, 2> inputs(2, zero.size());
         Tensor<type, 2> outputs(2, neural_network.get_outputs_number());
 
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         outputs = neural_network.calculate_outputs(inputs);

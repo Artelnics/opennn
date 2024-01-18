@@ -20,6 +20,7 @@ AdditionLayer::AdditionLayer() : Layer()
     set_default();
 }
 
+
 /// Input size setter constructor.
 /// After setting new dimensions for the input, it creates an empty AdditionLayer object.
 /// @param new_input_variables_dimensions A vector containing the new number of channels, rows and columns for the input.
@@ -195,8 +196,6 @@ void AdditionLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Pooling layer
 
     file_stream.OpenElement("AdditionLayer");
-
-//_______________________________________________________
 
     // Layer name
 

@@ -37,6 +37,7 @@ void GradientDescentTest::test_constructor()
     assert_true(gradient_descent_2.has_loss_index(), LOG);
 }
 
+
 void GradientDescentTest::test_destructor()
 {
     cout << "test_destructor\n";

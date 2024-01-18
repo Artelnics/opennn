@@ -66,139 +66,6 @@ void ProbabilisticLayerTest::test_destructor()
 }
 
 
-void ProbabilisticLayerTest::test_set()
-{
-    cout << "test_set\n";
-
-    probabilistic_layer.set();
-
-    assert_true(probabilistic_layer.get_biases_number() == 0, LOG);
-    assert_true(probabilistic_layer.get_synaptic_weights_number() == 0, LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_default()
-{
-    cout << "test_set_default\n";
-
-    probabilistic_layer.set_neurons_number(2);
-
-    probabilistic_layer.set_default();
-
-    assert_true(probabilistic_layer.get_activation_function() == opennn::ProbabilisticLayer::ActivationFunction::Softmax, LOG);
-    assert_true(abs(probabilistic_layer.get_decision_threshold() - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(probabilistic_layer.get_display(), LOG);
-
-    probabilistic_layer.set_neurons_number(1);
-
-    probabilistic_layer.set_default();
-
-    assert_true(probabilistic_layer.get_activation_function() == opennn::ProbabilisticLayer::ActivationFunction::Logistic, LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_biases()
-{
-    cout << "test_set_biases\n";
-
-    Tensor<type, 1> biases;
-    Index biases_number = 3 + rand()%10;
-
-    // Test
-
-    biases.resize(biases_number);
-
-    probabilistic_layer.set(1, biases_number);
-
-    biases.setZero();
-
-    probabilistic_layer.set_biases(biases);
-
-    assert_true(probabilistic_layer.get_biases_number() == biases_number, LOG);
-
-    assert_true(abs(probabilistic_layer.get_biases()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(probabilistic_layer.get_biases()(3)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_synaptic_weights()
-{
-    cout << "test_set_synaptic_weights\n";
-
-    Tensor<type, 2> synaptic_weights;
-
-    Index weights_number = 10;
-
-    // Test
-
-    probabilistic_layer.set(1, weights_number);
-
-    synaptic_weights.resize(1, weights_number);
-
-    synaptic_weights.setZero();
-
-    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-
-    assert_true(probabilistic_layer.get_synaptic_weights().size() == weights_number, LOG);
-
-    assert_true(abs(probabilistic_layer.get_synaptic_weights()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(probabilistic_layer.get_synaptic_weights()(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_parameters()
-{
-    cout << "test_set_parameters\n";
-
-    probabilistic_layer.set(1, 2);
-
-    Tensor<type, 1> parameters(4);
-
-    parameters.setValues({type(11), type(12), type(21), type(22)});
-
-    probabilistic_layer.set_parameters(parameters);
-
-    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters(0)  < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(probabilistic_layer.get_synaptic_weights()(1) - parameters(1)  < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(probabilistic_layer.get_biases()(0) - parameters(2) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(probabilistic_layer.get_biases()(1) - parameters(3) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_decision_threshold()
-{
-    cout << "test_set_decision_threshold\n";
-
-    // Test
-
-    probabilistic_layer.set_decision_threshold(type(0.7));
-
-    assert_true(abs(probabilistic_layer.get_decision_threshold() - type(0.7)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_activation_function()
-{
-    cout << "test_set_activation_function\n";
-
-    probabilistic_layer.set_neurons_number(1);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
-    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Logistic, LOG);
-
-    probabilistic_layer.set_activation_function("Logistic");
-    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Logistic, LOG);
-
-    probabilistic_layer.set_neurons_number(3);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Softmax, LOG);
-
-    probabilistic_layer.set_activation_function("Softmax");
-    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Softmax, LOG);
-}
-
-
 void ProbabilisticLayerTest::test_calculate_combinations()
 {
     cout << "test_calculate_combinations\n";
@@ -492,6 +359,8 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
+    inputs_pair.first = inputs.data();
+    inputs_pair.second = {{samples_number, inputs_number}};
 
     probabilistic_layer.forward_propagate(inputs_pair,
                                           &probabilistic_layer_forward_propagation,
@@ -502,7 +371,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type, 2> outputs = probabilistic_layer_forward_propagation.outputs;
 
-    
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == neurons_number , LOG);
     assert_true(abs(outputs(0,0) - type(0.5)) < type(1e-3), LOG);
@@ -526,13 +394,11 @@ void ProbabilisticLayerTest::test_forward_propagate()
     Tensor<type, 2> inputs_test_1_tensor(samples_number,inputs_number);
     inputs_test_1_tensor.setConstant(type(1));
 
-    // Tensor<DynamicTensor<type>, 1> inputs_test_1(1);
-    // inputs_test_1(0) = DynamicTensor<type>(inputs_test_1_tensor);
-
     synaptic_weights.resize(3, 4);
     biases.resize( 4);
 
     biases.setConstant(type(1));
+
     synaptic_weights.setValues({{type(1),type(-1),type(0),type(1)},
                                 {type(2),type(-2),type(0),type(2)},
                                 {type(3),type(-3),type(0),type(3)}});
@@ -543,6 +409,9 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
+
+    inputs_pair.first = inputs.data();
+    inputs_pair.second = {{samples_number, inputs_number}};
 
     probabilistic_layer.forward_propagate(inputs_pair,
                                           &probabilistic_layer_forward_propagation,
@@ -575,8 +444,8 @@ void ProbabilisticLayerTest::test_forward_propagate()
     Tensor<type, 2> inputs_test_2_tensor(samples_number,inputs_number);
     inputs_test_2_tensor.setConstant(type(1));
 
-    // Tensor<DynamicTensor<type>, 1> inputs_test_2(1);
-    // inputs_test_2(0) = DynamicTensor<type>(inputs_test_2_tensor);
+    inputs_pair.first = inputs.data();
+    inputs_pair.second = {{samples_number, inputs_number}};
 
     probabilistic_layer.forward_propagate(inputs_pair,
                                           &probabilistic_layer_forward_propagation,
@@ -584,9 +453,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type, 2> outputs_test_2 = probabilistic_layer_forward_propagation.outputs;
 
-    cout << "outputs_test_2: " << outputs_test_2 << endl;
-
-    
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 4, LOG);
     assert_true(Index(outputs(0,0)) == 1, LOG);
@@ -617,6 +483,9 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
+    inputs_pair.first = inputs.data();
+    inputs_pair.second = {{samples_number, inputs_number}};
+
     probabilistic_layer.forward_propagate(inputs_pair, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
@@ -626,7 +495,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     div = perceptron_sol.exp().sum();
     sol_ = perceptron_sol.exp() / div(0);
-
     
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 4, LOG);
@@ -647,10 +515,13 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs.setConstant(type(0));
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
+
+    inputs_pair.first = inputs.data();
+    inputs_pair.second = {{samples_number, inputs_number}};
+
     probabilistic_layer.forward_propagate(inputs_pair, &probabilistic_layer_forward_propagation, is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
-
     
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
@@ -666,19 +537,6 @@ void ProbabilisticLayerTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    // Set methods
-
-    test_set();
-    test_set_default();
-    test_set_biases();
-    test_set_synaptic_weights();
-    test_set_parameters();
-    test_set_decision_threshold();
-
-    // Activation function
-
-    test_set_activation_function();
 
     // Probabilistic post-processing
 

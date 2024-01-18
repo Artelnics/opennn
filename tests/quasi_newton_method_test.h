@@ -28,10 +28,6 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set_inverse_hessian_approximation_method();
-
     // Training methods
 
     void test_calculate_DFP_inverse_hessian_approximation();

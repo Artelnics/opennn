@@ -31,11 +31,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Set methods
-
-   void test_set();
-
-   void test_set_parameters();
 
    // Combinations
 

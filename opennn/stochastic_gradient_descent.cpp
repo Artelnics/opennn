@@ -360,8 +360,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     DataSetBatch training_batch(training_batch_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_batch_samples_number, data_set_pointer);
-
-    const pair<type*, dimensions> training_inputs = training_batch.get_inputs();
+    
+    const pair<type*, dimensions> training_inputs = training_batch.get_inputs_pair();
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -501,8 +501,8 @@ TrainingResults StochasticGradientDescent::perform_training()
                                      target_variables_indices);
 
                 // Neural network
-
-                neural_network_pointer->forward_propagate(selection_batch.get_inputs(),
+                
+                neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(),
                                                           selection_forward_propagation,
                                                           is_training);
 

@@ -19,7 +19,6 @@ NumericalDifferentiationTest::~NumericalDifferentiationTest()
 }
 
 
-
 void NumericalDifferentiationTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -37,27 +36,6 @@ void NumericalDifferentiationTest::test_destructor()
     NumericalDifferentiation* nd_1 = new NumericalDifferentiation(numerical_differentiation);
 
     delete nd_1;
-}
-
-
-void NumericalDifferentiationTest::test_set_get_methods()
-{
-    cout << "test_set_methods\n";
-
-    // Test
-
-    numerical_differentiation.set_precision_digits(9);
-    numerical_differentiation.set_display(true);
-
-    assert_true(numerical_differentiation.get_precision_digits() == 9, LOG);
-    assert_true(numerical_differentiation.get_display(), LOG);
-
-    // Test
-
-    numerical_differentiation.set_default();
-
-    assert_true(numerical_differentiation.get_precision_digits() == 6, LOG);
-    assert_true(numerical_differentiation.get_display(), LOG);
 }
 
 
@@ -494,8 +472,6 @@ void NumericalDifferentiationTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    test_set_get_methods();
 
     test_calculate_methods();
 

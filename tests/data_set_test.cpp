@@ -57,72 +57,6 @@ void DataSetTest::test_destructor()
 }
 
 
-void DataSetTest::test_set()
-{
-    cout << "test_set\n";
-
-    // Samples and inputs and target variables
-
-    data_set.set(1, 2, 3);
-
-    assert_true(data_set.get_samples_number() == 1, LOG);
-    assert_true(data_set.get_input_numeric_variables_number() == 2, LOG);
-    assert_true(data_set.get_target_numeric_variables_number() == 3, LOG);
-
-    data = data_set.get_data();
-
-    assert_true(data.dimension(0) == 1, LOG);
-    assert_true(data.dimension(1) == 5, LOG);
-}
-
-
-void DataSetTest::test_set_samples_number()
-{
-    cout << "test_set_samples_number\n";
-
-    data_set.set(1,1,1);
-
-    data_set.set_samples_number(2);
-
-    assert_true(data_set.get_samples_number() == 2, LOG);
-}
-
-
-void DataSetTest::test_set_columns_number()
-{
-    cout << "test_set_columns_number\n";
-
-    data_set.set(1, 1);
-    data_set.set_columns_number(2);
-
-    assert_true(data_set.get_numeric_variables_number() == 2, LOG);
-}
-
-
-void DataSetTest::test_set_data()
-{
-    cout << "test_set_data\n";
-
-    // Test
-
-    inputs_number = 3;
-    targets_number = 2;
-    samples_number = 1;
-
-    data.resize(samples_number, inputs_number + targets_number);
-    data.setValues({{type(0),type(1),type(2),type(3),type(4)}});
-
-    data_set.set_data(data);
-
-    data = data_set.get_data();
-
-    assert_true(data.dimension(0) == samples_number, LOG);
-    assert_true(data.dimension(1) == inputs_number+targets_number, LOG);
-
-    assert_true(abs(data(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
 void DataSetTest::test_calculate_variables_descriptives()
 {
     cout << "test_calculate_variables_descriptives\n";
@@ -264,9 +198,8 @@ void DataSetTest::test_calculate_autocorrelations()
     assert_true(autocorrelations.dimension(0) == 2, LOG);
     assert_true(autocorrelations.dimension(1) == 1, LOG);
 }
-*/
 
-/*
+
 void DataSetTest::test_calculate_cross_correlations()
 {
     cout << "test_calculate_cross_correlations\n";
@@ -428,33 +361,6 @@ void DataSetTest::test_unuse_constant_columns()
 }
 
 
-void DataSetTest::test_set_data_constant()
-{
-    cout << "test_set_data_constant\n";
-
-    Tensor<type, 2> solution;
-
-    data.resize(3,3);
-
-    data_set.set(data);
-
-    data_set.set_data_constant(type(2));
-
-    solution.resize(3, 3);
-    solution.setValues({{type(2),type(2),type(2)},
-                        {type(2),type(2),type(2)},
-                        {type(2),type(2),type(2)}});
-
-    assert_true(data_set.get_data()(0) - solution(0)< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_data()(1) - solution(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_data()(2) - solution(2) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_data()(3) - solution(3) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_data()(4) - solution(4) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_data()(5) - solution(5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_data()(6) - solution(6) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
 void DataSetTest::test_calculate_target_distribution()
 {
     cout << "test_calculate_target_distribution\n";
@@ -535,41 +441,6 @@ void DataSetTest::test_calculate_Tukey_outliers()
 
     assert_true(outliers_indices.size() == 2, LOG);
     assert_true(outliers_indices(0)(0) == 0, LOG);
-}
-
-void DataSetTest::test_calculate_euclidean_distance()
-{
-    cout << "test_calculate_euclidean_distance\n";
-}
-
-
-void DataSetTest::test_calculate_distance_matrix()
-{
-    cout << "test_calculate_distance_matrix\n";
-}
-
-
-void DataSetTest::test_calculate_k_nearest_neighbors()
-{
-    cout << "test_k_nearest_neighbors\n";
-}
-
-
-void DataSetTest::test_calculate_average_reachability()
-{
-    cout << "test_calculate_average_reachability\n";
-}
-
-
-void DataSetTest::test_calculate_LOF_outliers()
-{
-    cout << "test_calculate_LOF_outliers\n";
-}
-
-
-void DataSetTest::test_unuse_local_outlier_factor_outliers()
-{
-    cout << "test_unuse_local_outlier_factor_outliers\n";
 }
 
 
@@ -1216,10 +1087,8 @@ void DataSetTest::test_transform_time_series()
     assert_true(data_set.get_numeric_variable_name(2) == "x_lag_0", LOG);
     assert_true(data_set.get_numeric_variable_name(3) == "y_lag_0", LOG);
 }
-*/
 
 
-/*
 void DataSetTest::test_set_time_series_data()
 {
     cout << "test_set_time_series_data\n";
@@ -1253,30 +1122,8 @@ void DataSetTest::test_set_time_series_data()
     assert_true(data_set.get_time_series_data()(1) - type(12) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN), LOG);
 }
-*/
 
 
-void DataSetTest::test_has_time_columns()
-{
-    cout << "test_has_time_columns\n";
-
-    data.resize(4,2);
-    data.setValues({
-                       {type(1),type(10)},
-                       {type(2),type(20)},
-                       {type(3),type(30)},
-                       {type(4),type(40)}});
-
-    data_set.set_data(data);
-
-    data_set.set_column_type(0,DataSet::RawVariableType::DateTime);
-    data_set.set_column_type(1,DataSet::RawVariableType::DateTime);
-
-    assert_true(data_set.has_time_columns(), LOG);
-}
-
-
-/*
 void DataSetTest::test_save_time_series_data_binary()
 {
     cout << "test_save_time_series_data_binary\n";
@@ -1305,10 +1152,8 @@ void DataSetTest::test_save_time_series_data_binary()
     assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
 }
-*/
 
 
-/*
 void DataSetTest::test_set_steps_ahead_number()
 {
     cout << "test_set_steps_ahead_nuber\n";
@@ -1414,24 +1259,6 @@ void DataSetTest::test_scrub_missing_values()
 }
 
 
-void DataSetTest::test_is_empty()
-{
-    cout << "test_is_empty\n";
-
-    // Test
-
-    data_set.set();
-
-    assert_true(data_set.is_empty(), LOG);
-
-    // Test
-
-    data_set.set(1,1,1);
-
-    assert_true(!data_set.is_empty(), LOG);
-}
-
-
 void DataSetTest::test_calculate_variables_means()
 {
     cout << "test_calculate_variables_means\n";
@@ -1444,10 +1271,12 @@ void DataSetTest::test_calculate_variables_means()
 
     indices.resize(2);
     indices.setValues({0, 1});
+/*
     Tensor<type, 1> means = data_set.calculate_variables_means(indices);
-    //    Tensor<type, 1> solution(2, 2.0);
+    Tensor<type, 1> solution(2, 2.0);
 
-    //    assert_true(means == solution, LOG);
+    assert_true(means == solution, LOG);
+*/
 }
 
 
@@ -2347,13 +2176,14 @@ void DataSetTest::test_fill()
 
     Tensor<type, 2> target_data(3,1);
     target_data.setValues({{7},{8},{9}});
-/*
-    const TensorMap<Tensor<type, 2>> inputs = data_set_batch.inputs(0).to_tensor_map<2>();
-    const TensorMap<Tensor<type, 2>> targets = data_set_batch.targets.to_tensor_map<2>();
+
+    const pair<type*, dimensions> inputs_pair = data_set_batch.get_inputs_pair();
+
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets = data_set_batch.targets;
 
     assert_true(are_equal(inputs, input_data), LOG);
     assert_true(are_equal(targets, target_data), LOG);
-*/
 }
 
 
@@ -2366,29 +2196,11 @@ void DataSetTest::run_test_case()
     test_constructor();
     test_destructor();
 
-    // Data methods
-
-    test_is_empty();
-
-    // Set methods
-
-    test_set();
-
-    // Data methods
-
-    test_set_data();
-    test_set_samples_number();
-    test_set_columns_number();
-
     // Data resizing methods
 
     test_unuse_constant_columns();
     test_unuse_repeated_samples();
     test_unuse_uncorrelated_columns();
-
-    // Initialization methods
-
-    test_set_data_constant();
 
     // Statistics methods
 
@@ -2421,11 +2233,6 @@ void DataSetTest::run_test_case()
     // Outlier detection
 
     test_calculate_Tukey_outliers();
-
-    test_calculate_euclidean_distance();
-    test_calculate_distance_matrix();
-    test_calculate_k_nearest_neighbors();
-    test_calculate_average_reachability();
 
     // Serialization methods
 

@@ -27,8 +27,6 @@ public:
 
     // Constructor and destructor methods
 
-    // Constructor and destructor methods
-
     void test_constructor();
 
     void test_destructor();
@@ -53,8 +51,6 @@ private:
     NeuralNetwork neural_network;
 
     SumSquaredError sum_squared_error;
-
-    QuasiNewtonMethod quasi_newton_method;
 
     AdaptiveMomentEstimation adaptive_moment_estimation;
 

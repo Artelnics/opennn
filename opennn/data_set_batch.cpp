@@ -6,6 +6,11 @@
 namespace opennn
 {
 
+DataSetBatch::~DataSetBatch()
+{
+
+}
+
 
 void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
                         const Tensor<Index, 1>& inputs_indices,
@@ -121,7 +126,7 @@ void DataSetBatch::perform_augmentation()
                     ? random_rescaling_minimum + type(rand())
                     : random_rescaling_maximum;
 
-            rescale_image(image, image, rescaling);
+            //rescale_image(image, image, rescaling);
 
         }
 
@@ -203,7 +208,20 @@ void DataSetBatch::print() const
     cout << targets << endl;
 }
 
+
+std::pair<type *, dimensions> DataSetBatch::get_inputs_pair() const
+{
+    pair<type *, dimensions> inputs;
+
+    inputs.first = inputs_data;
+    inputs.second = inputs_dimensions;
+
+    return inputs;
 }
+
+}
+
+// namespace opennn
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.

@@ -9961,6 +9961,7 @@ void DataSet::read_csv_3_language_model()
     check_constant_columns();
 }
 
+
 void DataSet::read_csv_2_complete()
 {
     regex accent_regex("[\\xC0-\\xFF]");

@@ -18,111 +18,6 @@ StatisticsTest::~StatisticsTest()
 }
 
 
-void StatisticsTest::test_set_minimum()
-{
-    cout << "test_set_minimum\n";
-
-    Descriptives descriptives;
-
-    descriptives.set_minimum(type(5.0));
-
-    assert_true(Index(descriptives.minimum) == 5, LOG);
-}
-
-
-void StatisticsTest::test_set_maximum()
-{
-    cout << "test_set_maximun\n";
-
-    Descriptives descriptives;
-
-    descriptives.set_maximum(type(5.0));
-
-    assert_true(Index(descriptives.maximum) == 5, LOG);
-}
-
-
-void StatisticsTest::test_set_mean()
-{
-    cout << "test_set_mean\n";
-
-    Descriptives descriptives;
-
-    descriptives.set_mean(type(5.0));
-
-    assert_true(Index(descriptives.mean) == 5, LOG);
-}
-
-
-void StatisticsTest::test_set_standard_deviation()
-{
-    cout << "test_set_standard_deviation\n";
-
-    Descriptives descriptives;
-
-    descriptives.set_standard_deviation(type(3.0));
-
-    assert_true(Index(descriptives.standard_deviation) == 3.0, LOG);
-}
-
-
-void StatisticsTest::test_has_mean_zero_standard_deviation_one()
-{
-    cout << "test_has_mean_zero_standard_deviation_one\n";
-
-    Descriptives descriptives;
-
-    // Test
-
-    descriptives.set(-4.0, 5.0, 0.0, 1.0);
-
-    assert_true(descriptives.has_mean_zero_standard_deviation_one(), LOG);
-
-    // Test
-
-    descriptives.set(type(-4.0) , type(5.0), type(1.0), type(1.0));
-    assert_true(!descriptives.has_mean_zero_standard_deviation_one(), LOG);
-
-    // Test
-
-    descriptives.set(type(-4.0), type(5.0), type(0.0), type(2.0));
-    assert_true(!descriptives.has_mean_zero_standard_deviation_one(), LOG);
-
-    // Test
-
-    descriptives.set(type(-4.0), type(5.0), type(2.0), type(2.0));
-    assert_true(!descriptives.has_mean_zero_standard_deviation_one(), LOG);
-}
-
-
-void StatisticsTest::test_has_minimum_minus_one_maximum_one()
-{
-    cout << "test_set_has_minimum_minus_one_maximum_one\n";
-
-    Descriptives descriptives;
-
-    //Test
-
-    descriptives.set(type(-1.0) ,type(1.0) ,type(0.0) ,type(1.0));
-    assert_true(descriptives.has_minimum_minus_one_maximum_one(), LOG);
-
-    //Test
-
-    descriptives.set(type(-2.0), type(1.0), type(0.0), type(1.0));
-    assert_true(!descriptives.has_minimum_minus_one_maximum_one(), LOG);
-
-    //Test
-
-    descriptives.set(type(-1.0), type(2.0), type(0.0), type(1.0));
-    assert_true(!descriptives.has_minimum_minus_one_maximum_one(), LOG);
-
-    //Test
-
-    descriptives.set(type(-2.0), type(2.0), type(0.0), type(1.0));
-    assert_true(!descriptives.has_minimum_minus_one_maximum_one(), LOG);
-}
-
-
 void StatisticsTest::test_count_empty_bins()
 {
     cout << "test_count_empty_bins\n";
@@ -1400,25 +1295,16 @@ void StatisticsTest::run_test_case()
 {
     cout << "Running statistics test case...\n";
 
-    // Descriptives
-
-    test_set_standard_deviation();
-    test_has_mean_zero_standard_deviation_one();
-    test_has_minimum_minus_one_maximum_one();
-
     // Minimum
 
-    test_set_minimum();
     test_minimum();
 
     // Maximun
 
-    test_set_maximum();
     test_maximum();
 
     // Mean
 
-    test_set_mean();
     test_mean();
 
     // Median

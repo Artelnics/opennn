@@ -146,9 +146,9 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
     virtual ~BoundingLayerForwardPropagation()
     {
     }
-
-
-    pair<type*, dimensions> get_outputs() const final
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 

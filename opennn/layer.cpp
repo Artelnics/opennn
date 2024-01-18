@@ -604,7 +604,7 @@ void Layer::leaky_rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 
 void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-    /*
+/*
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -670,7 +670,7 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-    /*
+/*
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -771,7 +771,7 @@ void Layer::leaky_rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<
 
 void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-    /*
+/*
     const Tensor<bool, 2> if_sentence = x < x.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -809,7 +809,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, 
 
 void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 2>& dy_dx) const
 {
-    /*
+/*
     const Tensor<bool, 2> if_sentence = combinations < combinations.constant(type(0));
 
     Tensor<type, 2> f_1(combinations.dimension(0), combinations.dimension(1));
@@ -1187,6 +1187,7 @@ void Layer::soft_sign_derivatives(const Tensor<type, 4>& x, Tensor<type, 4>& y, 
 
     dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
+
 
 }
 

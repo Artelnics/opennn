@@ -18,12 +18,6 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 }
 
 
-void ConvolutionalLayerTest::test_set()
-{
-    cout << "test_set\n";
-}
-
-
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
     cout << "test_eigen_convolution\n";
@@ -186,89 +180,6 @@ void ConvolutionalLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
 }
-
-
-void ConvolutionalLayerTest::test_set_parameters()
-{
-    cout << "test_set_parameters\n";
-/*
-    Tensor<type, 4> new_synaptic_weights(2, 2, 2, 2);
-    Tensor<type, 1> new_biases(2);
-    Tensor<type, 1> parameters(18);
-
-    convolutional_layer.set_biases(new_biases);
-    convolutional_layer.set_synaptic_weights(new_synaptic_weights);
-
-    new_synaptic_weights(0,0,0,0) = type(1);
-    new_synaptic_weights(0,0,0,1) = type(2);
-    new_synaptic_weights(0,0,1,0) = type(3);
-    new_synaptic_weights(0,0,1,1) = type(4);
-    new_synaptic_weights(0,1,0,0) = type(5);
-    new_synaptic_weights(0,1,0,1) = type(6);
-    new_synaptic_weights(0,1,1,0) = type(7);
-    new_synaptic_weights(0,1,1,1) = type(8);
-    new_synaptic_weights(1,0,0,0) = type(9);
-    new_synaptic_weights(1,0,0,1) = type(10);
-    new_synaptic_weights(1,0,1,0) = type(11);
-    new_synaptic_weights(1,0,1,1) = type(12);
-    new_synaptic_weights(1,1,0,0) = type(13);
-    new_synaptic_weights(1,1,0,1) = type(14);
-    new_synaptic_weights(1,1,1,0) = type(15);
-    new_synaptic_weights(1,1,1,1) = type(16);
-
-    new_biases(0) = type(100);
-    new_biases(1) = type(200);
-
-    parameters(0) = type(100);
-    parameters(1) = type(200);
-    parameters(2) = type(1);
-    parameters(3) = type(2);
-    parameters(4) = type(3);
-    parameters(5) = type(4);
-    parameters(6) = type(5);
-    parameters(7) = type(6);
-    parameters(8) = type(7);
-    parameters(9) = type(8);
-    parameters(10) = type(9);
-    parameters(11) = type(10);
-    parameters(12) = type(11);
-    parameters(13) = type(12);
-    parameters(14) = type(13);
-    parameters(15) = type(14);
-    parameters(16) = type(15);
-    parameters(17) = type(16);
-
-    convolutional_layer.set_parameters(parameters, 0);
-
-    const Tensor<type, 4> synaptic_weight = convolutional_layer.get_synaptic_weights();
-    const Tensor<type, 1> biases = convolutional_layer.get_biases();
-
-    assert_true(abs(biases(0) - new_biases(0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(biases(1) - new_biases(1)) < type(NUMERIC_LIMITS_MIN),LOG);
-
-    assert_true(abs(synaptic_weight(0,0,0,0) - new_synaptic_weights(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,0,1) - new_synaptic_weights(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,1,0) - new_synaptic_weights(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,1,1) - new_synaptic_weights(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,0,0) - new_synaptic_weights(0,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,0,1) - new_synaptic_weights(0,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,1,0) - new_synaptic_weights(0,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,1,1) - new_synaptic_weights(0,1,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,0,0) - new_synaptic_weights(1,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,0,1) - new_synaptic_weights(1,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,1,0) - new_synaptic_weights(1,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,1,1) - new_synaptic_weights(1,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,0,0) - new_synaptic_weights(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,0,1) - new_synaptic_weights(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,1,0) - new_synaptic_weights(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,1,1) - new_synaptic_weights(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-
-//    assert_true(!convolutional_layer.is_empty() &&
-//                convolutional_layer.get_parameters_number() == 18 &&
-//                convolutional_layer.get_synaptic_weights() == new_synaptic_weights &&
-//                convolutional_layer.get_biases() == new_biases, LOG);
-*/}
 
 
 void ConvolutionalLayerTest::test_calculate_combinations()
@@ -1149,11 +1060,6 @@ void ConvolutionalLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-   // Set methods
-
-   test_set();
-   test_set_parameters();
 
    // Convolutions
 

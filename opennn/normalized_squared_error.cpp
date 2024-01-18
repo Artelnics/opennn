@@ -352,8 +352,8 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     const type coefficient
             = type(2)/(type(batch_samples_number)/type(total_samples_number)*normalization_coefficient);
-
-    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas();
+    
+    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
 
     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
 

@@ -58,7 +58,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     InputsSelectionResults inputs_selection_results;
 
-//    Test
+    // Test
 
     data_set.generate_random_data(30, 3);
 
@@ -75,7 +75,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     assert_true(inputs_selection_results.optimal_input_columns_indices[0] < 2, LOG);
 
-//    Test
+    // Test
 
     data_set.generate_sum_data(20,3);
 

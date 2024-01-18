@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   G R A D I E N T   D E S C E N T   T E S T   C L A S S
+//   A D A P T I V E   M O M E N T   E S T I M A T I O N      T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -28,20 +28,21 @@ void AdaptiveMomentEstimationTest::test_constructor()
 
     // Default constructor
 
-    GradientDescent adaptive_moment_estimation_1;
+    AdaptiveMomentEstimation adaptive_moment_estimation_1;
     assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
 
     // Loss index constructor
 
-    GradientDescent adaptive_moment_estimation_2(&sum_squared_error);
+    AdaptiveMomentEstimation adaptive_moment_estimation_2(&sum_squared_error);
     assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
 }
+
 
 void AdaptiveMomentEstimationTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GradientDescent* adaptive_moment_estimation = new GradientDescent;
+    AdaptiveMomentEstimation* adaptive_moment_estimation = new AdaptiveMomentEstimation;
 
     delete adaptive_moment_estimation;
 }

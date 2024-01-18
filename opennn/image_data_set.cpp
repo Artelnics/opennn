@@ -1652,9 +1652,18 @@ void ImageDataSet::read_bmp()
     input_variables_dimensions.setValues({channels, paddingWidth, height});*/
 }
 
+<<<<<<< Updated upstream
 void ImageDataSet::fill_image_data(const string& new_data_source_path, const vector<string>& classes_folder,
                                    const vector<string>& images_path, const vector<int>& images_per_folder,
                                    const int& width, const int& height, const int& channels, const Tensor<type, 2>& imageData)
+=======
+
+void ImageDataSet::fill_image_data(const string& new_data_source_path,
+                                   const int& width,
+                                   const int& height,
+                                   const int& channels,
+                                   const Tensor<type, 2>& image_data)
+>>>>>>> Stashed changes
 {
     if(new_data_source_path.empty())
     {
@@ -1677,7 +1686,12 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 
     const int image_size = width * height * channels;
 
+<<<<<<< Updated upstream
     Tensor<type, 2> imageDataAux(imageData);
+=======
+    Tensor<type, 2> imageDataAux(image_data.dimension(0), image_data.dimension(1));
+    imageDataAux = image_data;
+>>>>>>> Stashed changes
 
     if(classes_number == 2)
     {
@@ -1691,7 +1705,11 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 //        imageDataAux.resize(images_number, image_size + classes_number);
     }
 
+<<<<<<< Updated upstream
     memcpy(data.data(), imageDataAux.data(), images_number * image_size * sizeof(type));
+=======
+    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
+>>>>>>> Stashed changes
 
     rows_labels.resize(images_number);
 

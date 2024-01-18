@@ -8,7 +8,6 @@
 
 #include "inputs_selection_test.h"
 
-
 InputsSelectionTest::InputsSelectionTest() : UnitTesting()
 {
     training_strategy.set(&neural_network, &data_set);
@@ -44,6 +43,7 @@ void InputsSelectionTest::test_destructor()
     cout << "test_destructor\n";
 
     GrowingInputs* growing_inputs_pointer = new GrowingInputs;
+
     delete growing_inputs_pointer;
 }
 

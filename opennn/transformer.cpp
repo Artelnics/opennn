@@ -11,11 +11,11 @@ Transformer::Transformer() : NeuralNetwork()
 
 Transformer::Transformer(const Tensor<Index, 1>& architecture)
 {
-    Index input_length = architecture(0);
+    Index inputs_length = architecture(0);
 
     Index context_length = architecture(1);
 
-    Index input_dim = architecture(2);
+    Index inputs_dimensions = architecture(2);
 
     Index context_dim = architecture(3);
 
@@ -23,11 +23,11 @@ Transformer::Transformer(const Tensor<Index, 1>& architecture)
 
     Index perceptron_depth = architecture(5);
 
-    Index number_of_heads = architecture(6);
+    Index heads_number = architecture(6);
 
     Index number_of_layers = architecture(7);
 
-    set(input_length, context_length, input_dim, context_dim, embedding_depth, perceptron_depth, number_of_heads, number_of_layers);
+    set(inputs_length, context_length, inputs_dimensions, context_dim, embedding_depth, perceptron_depth, heads_number, number_of_layers);
 }
 
 
@@ -36,11 +36,11 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
     Tensor<Index, 1> architecture(architecture_list.size());
     architecture.setValues(architecture_list);
 
-    Index input_length = architecture(0);
+    Index inputs_length = architecture(0);
 
     Index context_length = architecture(1);
 
-    Index input_dim = architecture(2);
+    Index inputs_dimensions = architecture(2);
 
     Index context_dim = architecture(3);
 
@@ -48,22 +48,22 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
 
     Index perceptron_depth = architecture(5);
 
-    Index number_of_heads = architecture(6);
+    Index heads_number = architecture(6);
 
     Index number_of_layers = architecture(7);
 
-    set(input_length, context_length, input_dim, context_dim, embedding_depth, perceptron_depth, number_of_heads, number_of_layers);
+    set(inputs_length, context_length, inputs_dimensions, context_dim, embedding_depth, perceptron_depth, heads_number, number_of_layers);
 }
 
 
 /// @todo set_layer_inputs_indices(name, {names}) for each layer
 /// maybe add if names = Dataset, something
-void Transformer::set(const Index& input_length, const Index& context_length, const Index& input_dim, const Index& context_dim,
-                      const Index& embedding_depth, const Index& perceptron_depth, const Index& number_of_heads, const Index& number_of_layers)
+void Transformer::set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimensions, const Index& context_dim,
+                      const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers)
 {
     delete_layers();
 
-    inputs_names.resize(input_length + context_length);
+    inputs_names.resize(inputs_length + context_length);
 
 
     EmbeddingLayer* context_embedding_layer_pointer = new EmbeddingLayer(context_dim, context_length, embedding_depth, true);
@@ -73,7 +73,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     set_layer_inputs_indices("context_embedding", "dataset");
 
 
-    EmbeddingLayer* input_embedding_layer_pointer = new EmbeddingLayer(input_dim, input_length, embedding_depth, true);
+    EmbeddingLayer* input_embedding_layer_pointer = new EmbeddingLayer(inputs_dimensions, inputs_length, embedding_depth, true);
 
     input_embedding_layer_pointer->set_name("input_embedding");
     add_layer(input_embedding_layer_pointer);
@@ -83,7 +83,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     for(Index i = 0; i < number_of_layers; i++)
     {
         MultiheadAttentionLayer* context_self_attention_layer_pointer =
-                new MultiheadAttentionLayer(context_length, context_length, embedding_depth, number_of_heads);
+                new MultiheadAttentionLayer(context_length, context_length, embedding_depth, heads_number);
 
         context_self_attention_layer_pointer->set_name("context_self_attention_" + to_string(i+1));
         add_layer(context_self_attention_layer_pointer);
@@ -116,7 +116,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     for(Index i = 0; i < number_of_layers; i++)
     {
         MultiheadAttentionLayer* input_self_attention_layer_pointer =
-                new MultiheadAttentionLayer(input_length, input_length, embedding_depth, number_of_heads, true);
+                new MultiheadAttentionLayer(inputs_length, inputs_length, embedding_depth, heads_number, true);
 
         input_self_attention_layer_pointer->set_name("input_self_attention_" + to_string(i+1));
         add_layer(input_self_attention_layer_pointer);
@@ -131,7 +131,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
 
 
         MultiheadAttentionLayer* cross_attention_layer_pointer =
-                new MultiheadAttentionLayer(input_length, context_length, embedding_depth, number_of_heads);
+                new MultiheadAttentionLayer(inputs_length, context_length, embedding_depth, heads_number);
 
         cross_attention_layer_pointer->set_name("cross_attention_" + to_string(i+1));
         add_layer(cross_attention_layer_pointer);
@@ -154,7 +154,7 @@ void Transformer::set(const Index& input_length, const Index& context_length, co
     }
 
 /*
-    ProbabilisticLayer* final_layer_pointer = new ProbabilisticLayer(embedding_depth, input_dim);
+    ProbabilisticLayer* final_layer_pointer = new ProbabilisticLayer(embedding_depth, inputs_dimensions);
     final_layer_pointer->set_name("probabilistic");
     add_layer(final_layer_pointer);
     set_layer_inputs_indices("probabilistic", "decoder_external_perceptron_" + to_string(number_of_layers));

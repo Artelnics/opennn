@@ -35,10 +35,10 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 }
 
 
-// \brief CrossEntropyError::calculate_error.
-// \param batch
-// \param forward_propagation
-// \param back_propagation
+/// \brief CrossEntropyError::calculate_error.
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
 
 void CrossEntropyError::calculate_error(const DataSetBatch& batch,
                      const ForwardPropagation& forward_propagation,
@@ -74,6 +74,8 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 }
 
 
+/// @todo Add epsilon to avoid NaN
+
 void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
@@ -81,22 +83,23 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const Index last_trainable_layers_number = neural_network_pointer->get_last_trainable_layer_index();
+    
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layers_number)->get_outputs_pair();
 
-    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layers_number)->get_outputs();
-
-    const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
     const Tensor<type, 2>& targets = batch.targets;
-
+/*
     /// @todo remove tensor allocation
 
-    Tensor<type, 2> binary_cross_entropy = - (type(1) - targets)*((type(1) - outputs_map).log());
+    Tensor<type, 2> binary_cross_entropy = - (type(1) - targets)*((type(1) - outputs).log());
 
     replace_if(binary_cross_entropy.data(), binary_cross_entropy.data()+binary_cross_entropy.size(), [](type x){return isnan(x);}, type(0));
-
+*/
     Tensor<type, 0> cross_entropy_error;
 
-    cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs_map.log())).sum() + binary_cross_entropy.sum();
+    cross_entropy_error.device(*thread_pool_device)
+        = -(targets*outputs.log()).sum() - ((type(1) - targets)*((type(1) - outputs).log())).sum();
 
     back_propagation.error = cross_entropy_error()/type(batch_samples_number);
 }
@@ -109,15 +112,15 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
-
-    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layer_index)->get_outputs();
+    
+    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
 
     const Tensor<type, 2>& targets = batch.targets;
 
     Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs_map.log())).sum();
+    cross_entropy_error.device(*thread_pool_device) = -(targets*outputs_map.log()).sum();
 
     back_propagation.error = cross_entropy_error()/type(batch_samples_number);
 
@@ -179,8 +182,7 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     deltas.device(*thread_pool_device)
-            = type(1)/type(batch_samples_number) *
-            (type(-1)*(targets/outputs) + (type(1) - targets)/(type(1) - outputs));
+            = (type(-1)*(targets/outputs) + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
 }
 
 
@@ -197,14 +199,14 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const Tensor<type, 2>& targets = batch.targets;
-
-    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layer_index)->get_outputs();
+    
+    const pair<type*, dimensions> outputs = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][1], outputs.second[0][1]);
 
     Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    deltas.device(*thread_pool_device) = type(1)/type(batch_samples_number) *(-targets/outputs_map);
+    deltas.device(*thread_pool_device) = (-targets/outputs_map)/type(batch_samples_number);
 }
 
 

@@ -38,12 +38,12 @@ void FlattenLayerTest::test_destructor()
 void FlattenLayerTest::test_forward_propagate()
 {    
     cout << "test_forward_propagate\n";
-/*
+
     const Index image_height = 6;
     const Index image_width = 6;
     const Index image_channels_number= 3;
     const Index images_number = 2;
-    const Index pixels_number = image_height * image_width * image_channels_number;
+
     bool is_training = true;
 
     Tensor<type, 4> inputs(image_height, image_width, image_channels_number, images_number);
@@ -64,6 +64,8 @@ void FlattenLayerTest::test_forward_propagate()
     Tensor<type*, 1> inputs_data(1);
     inputs_data(0) = inputs.data();
 
+    pair<type*, dimensions> inputs_pair(inputs.data(), {{image_height, image_width, image_channels_number, images_number}});
+
     flatten_layer.forward_propagate(inputs_pair, &flatten_layer_forward_propagation, is_training);
 
     outputs = flatten_layer_forward_propagation.outputs;
@@ -71,8 +73,8 @@ void FlattenLayerTest::test_forward_propagate()
     // Test
 
    assert_true(inputs.size() == outputs.size(), LOG);
-*/
 }
+
 
 void FlattenLayerTest::run_test_case()
 {

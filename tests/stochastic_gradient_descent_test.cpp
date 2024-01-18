@@ -8,6 +8,7 @@
 
 #include "stochastic_gradient_descent_test.h"
 
+
 StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);

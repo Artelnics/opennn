@@ -27,24 +27,6 @@ public:
    void test_constructor();
    void test_destructor();  
 
-   void test_has_time_columns();
-
-   // Set methods
-
-   void test_set();
-   void test_set_samples_number();
-   void test_set_columns_number();
-   
-   void test_set_lags_number();
-   void test_set_steps_ahead_number();
-   void test_set_time_series_data();
-   void test_save_time_series_data_binary();
-
-   // Data methods
-
-   void test_set_data();
-   void test_is_empty();
-
    // Data resizing methods
 
    void test_add_sample();
@@ -53,10 +35,6 @@ public:
    void test_unuse_constant_columns();
    void test_unuse_repeated_samples();
    void test_unuse_uncorrelated_columns();
-
-   // Initialization methods
-
-   void test_set_data_constant();
 
    // Statistics methods
 
@@ -94,14 +72,6 @@ public:
    void test_calculate_target_distribution();
 
    void test_calculate_Tukey_outliers();
-
-   void test_calculate_euclidean_distance();
-   void test_calculate_distance_matrix();
-   void test_calculate_k_nearest_neighbors();
-   void test_calculate_average_reachability();
-
-   void test_calculate_LOF_outliers();
-   void test_unuse_local_outlier_factor_outliers();
 
    // Data generation
 

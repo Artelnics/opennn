@@ -59,17 +59,12 @@ int main()
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         Tensor<type, 2> inputs(3, neural_network.get_inputs_number());
-        Tensor<type, 2> outputs(3, neural_network.get_outputs_number());
-
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
         inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
                           {type(6.4),type(3.2),type(4.5),type(1.5)},
                           {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
-
-        outputs = neural_network.calculate_outputs(inputs);
+        const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
         cout << "\nInputs:\n" << inputs << endl;
 

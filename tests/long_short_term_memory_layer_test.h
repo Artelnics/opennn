@@ -28,28 +28,6 @@ public:
 
     void test_destructor();
 
-    // lstm layer parameters
-
-    void test_set_biases();
-    void test_set_weights();
-    void test_set_recurrent_weights();
-
-    // Inputs
-
-    void test_set_inputs_number();
-
-    // Parameters methods
-
-    void test_set_parameters();
-
-    // Parameters initialization methods
-
-    void test_set_parameters_constant();
-    void test_set_biases_constant();
-    void test_initialize_recurrent_weights();
-
-    void test_set_parameters_random();
-
     // Forward propagate
 
     void test_forward_propagate();
@@ -61,6 +39,8 @@ public:
 private:
 
     LongShortTermMemoryLayer long_short_term_memory_layer;
+
+    LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation;
 };
 
 
