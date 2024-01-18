@@ -861,7 +861,7 @@ void PerceptronLayer3D::calculate_hidden_delta(ProbabilisticLayer3DForwardPropag
 
     // Next back propagation
 
-    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
+    const Tensor<type, 3>& next_deltas = next_back_propagation->deltas;
 
     const Index samples_number = next_deltas.dimension(0);
 
@@ -886,7 +886,7 @@ void PerceptronLayer3D::calculate_hidden_delta(ProbabilisticLayer3DForwardPropag
 
         Tensor<type, 1>& next_deltas_row = next_back_propagation->deltas_row;
 
-        Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
+        Tensor<type, 3>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
 
         /// @todo check if we can simplify all this.
 
@@ -898,7 +898,7 @@ void PerceptronLayer3D::calculate_hidden_delta(ProbabilisticLayer3DForwardPropag
                                                                             next_layer_neurons_number,
                                                                             next_layer_neurons_number);
 
-            next_deltas_row = next_deltas.chip(i, 0);
+//            next_deltas_row = next_deltas.chip(i, 0);
 
             next_error_combinations_derivatives.chip(i, 0) =
                     next_deltas_row.contract(activations_derivatives_matrix, AT_B);
@@ -1017,10 +1017,10 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const PerceptronLayer3DForwardPropagation* perceptron_layer_forward_propagation =
+    const PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
             static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation);
 
-    const Tensor<type, 3>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
 
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayer3DBackPropagation*>(back_propagation);

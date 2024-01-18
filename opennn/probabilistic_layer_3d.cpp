@@ -26,9 +26,9 @@ ProbabilisticLayer3D::ProbabilisticLayer3D()
 /// It creates a probabilistic layer with a given size.
 /// @param new_neurons_number Number of neurons in the layer.
 
-ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_size, const Index& new_neurons_number)
+ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
-    set(new_inputs_number, new_inputs_size, new_neurons_number);
+    set(new_inputs_number, new_inputs_depth, new_neurons_number);
 
     if(new_neurons_number > 1)
     {
@@ -43,9 +43,9 @@ Index ProbabilisticLayer3D::get_inputs_number() const
 }
 
 
-Index ProbabilisticLayer3D::get_inputs_size() const
+Index ProbabilisticLayer3D::get_inputs_depth() const
 {
-    return inputs_size;
+    return inputs_depth;
 }
 
 
@@ -197,11 +197,11 @@ Tensor<type, 1> ProbabilisticLayer3D::get_biases(Tensor<type, 1>& parameters) co
 
 Tensor<type, 2> ProbabilisticLayer3D::get_synaptic_weights(Tensor<type, 1>& parameters) const
 {
-    const Index inputs_number = get_inputs_number();
+    const Index inputs_depth = get_inputs_depth();
     const Index neurons_number = get_neurons_number();
     const Index biases_number = get_biases_number();
 
-    const TensorMap< Tensor<type, 2> > synaptic_weights_tensor(parameters.data()+biases_number, inputs_number, neurons_number);
+    const TensorMap< Tensor<type, 2> > synaptic_weights_tensor(parameters.data()+biases_number, inputs_depth, neurons_number);
 
     return  synaptic_weights_tensor;
 }
@@ -250,13 +250,13 @@ void ProbabilisticLayer3D::set()
 /// It also sets the rest of the class members to their default values.
 /// @param new_neurons_number New size for the probabilistic layer.
 
-void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_size, const Index& new_neurons_number)
+void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
-    inputs_size = new_inputs_size;
+    inputs_depth = new_inputs_depth;
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(new_inputs_number, new_neurons_number);
+    synaptic_weights.resize(new_inputs_depth, new_neurons_number);
 
     set_parameters_random();
 
@@ -629,7 +629,9 @@ void ProbabilisticLayer3D::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y)
     const Index rows_number = x.dimension(0);
     const Index columns_number = x.dimension(1);
 
-    y = x.exp();
+//    y = x - x.maximum(2);
+
+    y = y.exp();
 
     y /= y.sum(Eigen::array<int, 1>{{2}}).reshape(Eigen::array<Index, 3>{{rows_number, columns_number, 1}});
 
@@ -777,7 +779,6 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs.second[0][0];
     const Index neurons_number = get_neurons_number();
 
     const TensorMap<Tensor<type, 3>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1], inputs.second[0][2]);
@@ -789,20 +790,20 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
 
     const Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
 
-    type* activations_derivatives_data = probabilistic_layer_3d_forward_propagation->activations_derivatives.data();
-
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
-    const Tensor<type,2>& deltas = probabilistic_layer_3d_back_propagation->deltas;
+    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // MeanSquaredError::calculate_output_delta
 
     Tensor<type,1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
+    Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
 
     if(neurons_number == 1)
     {
+/*
         cout << "hello" << endl;
 
         const Eigen::array<Index, 2> reshape_dimensions = {{samples_number, 1}};
@@ -816,7 +817,7 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
 
         synaptic_weights_derivatives.device(*thread_pool_device) =
             inputs_map.contract(deltas*activations_derivatives_2d, AT_B);
-/*
+
         biases_derivatives.device(*thread_pool_device) =
             (deltas*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
@@ -828,20 +829,21 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
     {
         /// @todo contraction tensors 3D and 2D
 
-        Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
+        Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
         const Index step = neurons_number * neurons_number;
 
         for(Index i = 0; i < batch_samples_number; i++)
         {
-            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i*step,
-                                                                            neurons_number,
-                                                                            neurons_number);
+            for(Index j = 0; j < get_inputs_number(); j++)
+            {
+                activations_derivatives_matrix = activations_derivatives.chip(i, 0).chip(j, 0);
 
-            deltas_row = deltas.chip(i, 0);
+                deltas_row = deltas.chip(i, 0).chip(j, 0);
 
-            error_combinations_derivatives.chip(i,0) =
-                    deltas_row.contract(activations_derivatives_matrix, AT_B);
+                error_combinations_derivatives.chip(i,0) =
+                        deltas_row.contract(activations_derivatives_matrix, AT_B);
+            }
         }
 
         biases_derivatives.device(*thread_pool_device) =
@@ -860,11 +862,11 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    const ProbabilisticLayer3DBackPropagation* probabilistic_layer_back_propagation =
+    const ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
-    const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weights_derivatives.data();
-    const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
+    const type* synaptic_weights_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives.data();
+    const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->biases_derivatives.data();
 
     copy(synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,

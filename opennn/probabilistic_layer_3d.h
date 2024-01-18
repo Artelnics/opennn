@@ -66,7 +66,7 @@ public:
    // Get methods
 
    Index get_inputs_number() const override;
-   Index get_inputs_size() const;
+   Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
    Index get_biases_number() const;
@@ -203,7 +203,7 @@ public:
 
 protected:
 
-   Index inputs_size;
+   Index inputs_depth;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
@@ -260,9 +260,9 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
         const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
 
-        const Index inputs_size = probabilistic_layer_3d_pointer->get_inputs_size();
+        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
 
-        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_size, neurons_number}});
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_number, neurons_number}});
     }
 
 
@@ -276,13 +276,13 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
         const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
 
-        const Index inputs_size = probabilistic_layer_3d_pointer->get_inputs_size();
+        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
 
-        outputs.resize(batch_samples_number, inputs_size, neurons_number);
+        outputs.resize(batch_samples_number, inputs_number, neurons_number);
 
         outputs_data = outputs.data();
 
-        activations_derivatives.resize(batch_samples_number, inputs_size, neurons_number, neurons_number);
+        activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number, neurons_number);
     }
 
 
@@ -331,22 +331,27 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     {
         layer_pointer = new_layer_pointer;
 
+        ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
+
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
+        const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
+        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
+        const Index inputs_depth = probabilistic_layer_3d_pointer->get_inputs_depth();
 
-        deltas.resize(batch_samples_number, neurons_number);
+        deltas.resize(batch_samples_number, inputs_number, neurons_number);
 
         deltas_data = deltas.data();
 
         biases_derivatives.resize(neurons_number);
 
-        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+        synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
 
         deltas_row.resize(neurons_number);
 
-        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+        activations_derivatives_matrix.resize(neurons_number, neurons_number);
+
+        error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
     }
 
 
@@ -362,11 +367,12 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 2> deltas;
+    Tensor<type, 3> deltas;
 
     Tensor<type, 1> deltas_row;
+    Tensor<type, 2> activations_derivatives_matrix;
 
-    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 3> error_combinations_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;

@@ -33,20 +33,6 @@ int main()
    {
         cout << "Blank\n";
 
-        Tensor<type, 1> x(5);
-        x.setValues({type(-0.2), -0.1, 0.0, 0.1, 0.2});
-
-        Tensor<type, 1> y = x.cwiseMax(type(0.0));
-
-        // Tensor<type, 1> dy_dx = x.cwiseMax(type(0)) / x.cwiseMin(type(1));
-        Tensor<type, 1> dy_dx = y.cwiseMax(y > 0);
-
-        cout << x << endl;
-        cout << endl;
-        cout << y << endl;
-        cout << endl;
-        cout << dy_dx << endl;
-
         cout << "Bye!" << endl;
 
         return 0;
