@@ -481,7 +481,13 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
 
         current_delta.slice(start_for_slicing, size_of_slicing).device(*thread_pool_device) = perform_convolution(
                 next_delta_with_zeros_padded, 
-                first_and_other_kernel_combined);
+                first_and_other_kernel_combined, 
+                1,
+                1,
+                Eigen::array{
+                    Convolutional4dDimensions::channel_index,
+                    Convolutional4dDimensions::column_index, 
+                    Convolutional4dDimensions::row_index});
     }
 }
 
