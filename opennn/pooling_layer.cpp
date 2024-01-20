@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "pooling_layer.h"
+#include "4d_dimensions.h"
 
 namespace opennn
 {
@@ -86,39 +87,37 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
-    const Index images_number = inputs.dimension(3);
+    const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
 
-    const Index channels_number = inputs.dimension(2);
+    const Index channels_number = inputs.dimension(Convolutional4dDimensions::channel_index);
 
-    const Index inputs_rows_number = inputs.dimension(0);
+    const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
 
-    const Index inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
 
-    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
+    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number) / row_stride + 1;
 
-    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
+    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number) / column_stride + 1;
 
-    Tensor<type, 4> outputs(outputs_rows_number, outputs_columns_number, channels_number, images_number);
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < images_number; image_index++)
-    {
-        const Tensor<type, 3>& image = inputs.chip(image_index, 3);
-        for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
-        {
-            for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
-            {
-                const Eigen::array<Index, 3> offsets = {row_index * row_stride, column_index * column_stride, 0};
-                const Eigen::array<Index, 3> extents = {pool_rows_number, pool_columns_number, channels_number};
-                
-                const Eigen::array<Index, 2> reduce_dimensions({0, 1});
-                
-                outputs.chip(image_index, 3).chip(row_index, 0).chip(column_index, 0) = image.slice(
-                    offsets, extents).mean(
-                        reduce_dimensions);
-            }
-        }
+    DSizes<Index, 4> outputs_dimension{};
+    outputs_dimension[Convolutional4dDimensions::sample_index] = images_number;
+    outputs_dimension[Convolutional4dDimensions::channel_index] = channels_number;
+    outputs_dimension[Convolutional4dDimensions::row_index] = outputs_rows_number;
+    outputs_dimension[Convolutional4dDimensions::column_index] = outputs_columns_number;
 
-    }
+    Tensor<type, 4> outputs(outputs_dimension);
+
+
+    Tensor<type, 2> kernel(pool_columns_number, pool_rows_number);
+    kernel.setConstant(static_cast<type>(1));
+
+    const Eigen::array<Index, 2> conv_dim{
+        Convolutional4dDimensions::column_index, 
+        Convolutional4dDimensions::row_index};
+
+    outputs.device(*thread_pool_device) = 
+        perform_convolution(inputs, kernel, row_stride, column_stride, conv_dim) / 
+        static_cast<type>(pool_rows_number * pool_columns_number);
 
     return outputs;
 }
@@ -138,39 +137,47 @@ Tensor<type, 4> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 4>
 
 Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
-    const Index images_number = inputs.dimension(3);
+    const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
 
-    const Index channels_number = inputs.dimension(2);
+    const Index channels_number = inputs.dimension(Convolutional4dDimensions::channel_index);
 
-    const Index inputs_rows_number = inputs.dimension(0);
+    const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
 
-    const Index inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
 
     const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
     const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-    Tensor<type, 4> outputs(outputs_rows_number, outputs_columns_number, channels_number, images_number);
+    Tensor<type, 4> outputs([&](){
+        DSizes<Index, 4> dim{};
+        dim[Convolutional4dDimensions::sample_index] = images_number;
+        dim[Convolutional4dDimensions::channel_index] = channels_number;
+        dim[Convolutional4dDimensions::row_index] = outputs_rows_number;
+        dim[Convolutional4dDimensions::column_index] = outputs_columns_number;
+        return dim;
+    }());
 
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < images_number; image_index++)
+    outputs.setConstant(numeric_limits<type>::min());
+
+    for(Index row_index = 0; row_index < inputs_rows_number; row_index++)
     {
-        const Tensor<type, 3>& image = inputs.chip(image_index, 3);
-        for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
+        Index output_row_index = (row_index / pool_rows_number);
+        for(Index column_index = 0; column_index < inputs_columns_number; column_index++)
         {
-            for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
+            Index output_column_index = (column_index / pool_columns_number);
+            for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
-                const Eigen::array<Index, 3> offsets = {row_index * row_stride, column_index * column_stride, 0};
-                const Eigen::array<Index, 3> extents = {pool_rows_number, pool_columns_number, channels_number};
-                
-                const Eigen::array<Index, 2> reduce_dimensions({0, 1});
-                
-                outputs.chip(image_index, 3).chip(row_index, 0).chip(column_index, 0) = image.slice(
-                    offsets, extents).maximum(
-                        reduce_dimensions);
+                #pragma omp parallel for
+                for(Index image_index = 0; image_index < images_number; image_index++)
+                {
+                    outputs(image_index, channel_index, output_column_index, output_row_index) = max(
+                        outputs(image_index, channel_index, output_column_index, output_row_index),
+                        inputs(image_index, channel_index, column_index, row_index)
+                        );
+                }
             }
         }
-
     }
 
     return outputs;
@@ -178,66 +185,55 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
 
 /// Returns the result of applying max pooling to a batch of images and saves the indexes of the max elements in switches.
 /// @param inputs The batch of images.
-/// @param switches Saves index of the max values. Memory needs to be preallocated. The first element of the tuple is the row index, followed by column index of the input.
+/// @param switches Saves index of the max values. Memory needs to be preallocated. 
 
 Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs, Tensor<tuple<Index, Index>, 4>& switches) const
 {
-    const Index images_number = inputs.dimension(3);
+    const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
 
-    const Index channels_number = inputs.dimension(2);
+    const Index channels_number = inputs.dimension(Convolutional4dDimensions::channel_index);
 
-    const Index inputs_rows_number = inputs.dimension(0);
+    const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
 
-    const Index inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
 
     const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
     const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-    Tensor<type, 4> outputs(outputs_rows_number, outputs_columns_number, channels_number, images_number);
+    Tensor<type, 4> outputs([&](){
+        DSizes<Index, 4> dim{};
+        dim[Convolutional4dDimensions::sample_index] = images_number;
+        dim[Convolutional4dDimensions::channel_index] = channels_number;
+        dim[Convolutional4dDimensions::row_index] = outputs_rows_number;
+        dim[Convolutional4dDimensions::column_index] = outputs_columns_number;
+        return dim;
+    }());
 
     outputs.setConstant(numeric_limits<type>::min());
 
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < images_number; image_index++)
+    for(Index row_index = 0; row_index < inputs_rows_number; row_index++)
     {
-        const Tensor<type, 3>& image = inputs.chip(image_index, 3);
-        for(Index row_index = 0; row_index < outputs_rows_number; row_index++)
+        Index output_row_index = (row_index / pool_rows_number);
+        for(Index column_index = 0; column_index < inputs_columns_number; column_index++)
         {
-            for(Index column_index = 0; column_index < outputs_columns_number; column_index++)
+            Index output_column_index = (column_index / pool_columns_number);
+            for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
-                const Eigen::array<Index, 3> offsets = {row_index * row_stride, column_index * column_stride, 0};
-                const Eigen::array<Index, 3> extents = {pool_rows_number, pool_columns_number, channels_number};
-                
-                const Eigen::array<Index, 2> reduce_dimensions({0, 1});
-                
-                const Tensor<type, 3>& image_sliced = image.slice(offsets, extents);
-
-                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+                #pragma omp parallel for
+                for(Index image_index = 0; image_index < images_number; image_index++)
                 {
-                    for(Index window_pos_y = 0; window_pos_y < pool_rows_number; window_pos_y++)
+                    if( inputs(image_index, channel_index, column_index, row_index) > 
+                        outputs(image_index, channel_index, output_column_index, output_row_index))
                     {
-                        for(Index window_pos_x = 0; window_pos_x < pool_columns_number; window_pos_x++)
-                        {
-                            type& output_val = outputs(row_index, column_index, channel_index, image_index);
-                            const type& input_val = image_sliced(window_pos_y, window_pos_x, channel_index);
-                            if(output_val < input_val) 
-                            {
-                                const Index image_row_index = row_index * row_stride + window_pos_y;
-                                const Index image_column_index = column_index * column_stride + window_pos_x;
-
-                                switches(row_index, column_index, channel_index, image_index) = make_tuple(image_row_index, image_column_index);
-
-                                output_val = input_val;
-                            }
-                        }
-                    } 
+                        outputs(image_index, channel_index, output_column_index, output_row_index) = inputs(image_index, channel_index, column_index, row_index);
+                        switches(image_index, channel_index, output_column_index, output_row_index) = make_tuple(column_index, row_index);
+                    }   
                 }
             }
         }
-
     }
-
+   
     return outputs;
 }
 
@@ -247,22 +243,31 @@ void PoolingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 {
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation = static_cast<PoolingLayerForwardPropagation*>(forward_propagation);
 
-    const Index image_number = inputs_dimension(3);
-    const Index channels_number = inputs_dimension(2);
+    const Index image_number = inputs_dimension(Convolutional4dDimensions::sample_index);
+    const Index channels_number = inputs_dimension(Convolutional4dDimensions::channel_index);
 
-    const Index inputs_columns_number = inputs_dimension(1);
-    const Index inputs_rows_number = inputs_dimension(0);
+    const Index inputs_columns_number = inputs_dimension(Convolutional4dDimensions::column_index);
+    const Index inputs_rows_number = inputs_dimension(Convolutional4dDimensions::row_index);
+
+    DSizes<Index, 4> input_dimension{};
+    input_dimension[Convolutional4dDimensions::sample_index] = image_number;
+    input_dimension[Convolutional4dDimensions::channel_index] = channels_number;
+    input_dimension[Convolutional4dDimensions::column_index] = inputs_columns_number;
+    input_dimension[Convolutional4dDimensions::row_index] = inputs_rows_number;
 
     TensorMap<Tensor<type, 4>> inputs(inputs_data, 
-        inputs_rows_number, 
-        inputs_columns_number, 
-        channels_number, 
-        image_number); 
+        input_dimension); 
     
-    const Index outputs_columns_number = pooling_layer_forward_propagation->outputs_dimensions(1);
-    const Index outputs_rows_number = pooling_layer_forward_propagation->outputs_dimensions(0);
+    const Index outputs_columns_number = pooling_layer_forward_propagation->outputs_dimensions(Convolutional4dDimensions::column_index);
+    const Index outputs_rows_number = pooling_layer_forward_propagation->outputs_dimensions(Convolutional4dDimensions::row_index);
 
-    TensorMap<Tensor<type, 4>> outputs(pooling_layer_forward_propagation->outputs_data, outputs_rows_number, outputs_columns_number, channels_number, image_number); 
+    DSizes<Index, 4> output_dimension{};
+    output_dimension[Convolutional4dDimensions::sample_index] = image_number;
+    output_dimension[Convolutional4dDimensions::channel_index] = channels_number;
+    output_dimension[Convolutional4dDimensions::column_index] = outputs_columns_number;
+    output_dimension[Convolutional4dDimensions::row_index] = outputs_rows_number;
+
+    TensorMap<Tensor<type, 4>> outputs(pooling_layer_forward_propagation->outputs_data, output_dimension); 
 
     switch (pooling_method)
     {
@@ -280,7 +285,6 @@ void PoolingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     {
         if(switch_train)
         {
-            pooling_layer_forward_propagation->switches.resize(outputs_rows_number, outputs_columns_number, channels_number, image_number);
             outputs = calculate_max_pooling_outputs(inputs, pooling_layer_forward_propagation->switches);
         }
         else
@@ -325,41 +329,6 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
     }
         break;
     }
-    /*
-    if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;
-
-    else
-    {
-        const Type layer_type = next_layer_pointer->get_type();
-
-        if(layer_type == Type::Convolutional)
-        {
-            ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
-        }
-        else if(layer_type == Type::Pooling)
-        {
-            PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
-        }
-        else if(layer_type == Type::Perceptron)
-        {
-            PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
-        }
-        else if(layer_type == Type::Probabilistic)
-        {
-            ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-            return calculate_hidden_delta_probabilistic(probabilistic_layer, activations, activations_derivatives, next_layer_delta);
-        }
-    }
-
-    return Tensor<type, 4>();
-    */
 }
 
 
@@ -400,32 +369,29 @@ void PoolingLayer::calculate_hidden_delta_no_pooling(
     PoolingLayerBackPropagation*  next_layer_back_propagation,
     LayerBackPropagation* back_propagation) const
 {
-    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);
 
-    const Index next_delta_rows_number = next_layer_back_propagation->deltas_dimensions(0);
-    const Index next_delta_columns_number = next_layer_back_propagation->deltas_dimensions(1);
-
-    const Index channels_number = next_layer_back_propagation->deltas_dimensions(2);
-    const Index images_number = next_layer_back_propagation->deltas_dimensions(3);
+    DSizes<Index, 4> next_delta_dim{};
+    copy(
+        next_layer_back_propagation->deltas_dimensions.data(),
+        next_layer_back_propagation->deltas_dimensions.data() + next_layer_back_propagation->deltas_dimensions.size(),
+        next_delta_dim.data()
+    );
 
     TensorMap<Tensor<type, 4>> next_delta(
         next_layer_back_propagation->deltas_data, 
-        next_delta_rows_number,
-        next_delta_columns_number,
-        channels_number,
-        images_number);
-    
-    const Index current_delta_rows_number = back_propagation->deltas_dimensions(0);
-    const Index current_delta_columns_number = back_propagation->deltas_dimensions(1);
+        next_delta_dim);
+
+    DSizes<Index, 4> current_delta_dim{};
+    copy(
+        back_propagation->deltas_dimensions.data(),
+        back_propagation->deltas_dimensions.data() + back_propagation->deltas_dimensions.size(),
+        current_delta_dim.data()
+    );
 
     TensorMap<Tensor<type, 4>> current_delta(
         back_propagation->deltas_data,
-        current_delta_rows_number,
-        current_delta_columns_number,
-        channels_number,
-        images_number);
-
-    PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
+        current_delta_dim);
 
     current_delta.device(*thread_pool_device) = next_delta;
 }
@@ -435,67 +401,91 @@ void PoolingLayer::calculate_hidden_delta_average_pooling(
     PoolingLayerBackPropagation*  next_layer_back_propagation,
     LayerBackPropagation* back_propagation) const
 {
-    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);  
 
-    const Index next_delta_rows_number = next_layer_back_propagation->deltas_dimensions(0);
-    const Index next_delta_columns_number = next_layer_back_propagation->deltas_dimensions(1);
-
-    const Index channels_number = next_layer_back_propagation->deltas_dimensions(2);
-    const Index images_number = next_layer_back_propagation->deltas_dimensions(3);
+    DSizes<Index, 4> next_delta_dim{};
+    copy(
+        next_layer_back_propagation->deltas_dimensions.data(),
+        next_layer_back_propagation->deltas_dimensions.data() + next_layer_back_propagation->deltas_dimensions.size(),
+        next_delta_dim.data()
+    ); 
 
     TensorMap<Tensor<type, 4>> next_delta(
         next_layer_back_propagation->deltas_data, 
-        next_delta_rows_number,
-        next_delta_columns_number,
-        channels_number,
-        images_number);
+        next_delta_dim);
     
-    const Index current_delta_rows_number = back_propagation->deltas_dimensions(0);
-    const Index current_delta_columns_number = back_propagation->deltas_dimensions(1);
+    DSizes<Index, 4> current_delta_dim{};
+    copy(
+        back_propagation->deltas_dimensions.data(),
+        back_propagation->deltas_dimensions.data() + back_propagation->deltas_dimensions.size(),
+        current_delta_dim.data()
+    );
 
     TensorMap<Tensor<type, 4>> current_delta(
         back_propagation->deltas_data,
-        current_delta_rows_number,
-        current_delta_columns_number,
-        channels_number,
-        images_number);
+        current_delta_dim);
 
     PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
 
-    current_delta.setZero();
+    const Index images_number = current_delta_dim[Convolutional4dDimensions::sample_index];
+    const Index channels_number = current_delta_dim[Convolutional4dDimensions::channel_index];
 
-    const Index next_row_stride = next_pooling_layer->get_row_stride();
-    const Index next_column_stride = next_pooling_layer->get_column_stride();
+    const Index current_delta_rows_number = current_delta_dim[Convolutional4dDimensions::row_index];
+    const Index current_delta_cols_number = current_delta_dim[Convolutional4dDimensions::column_index];
 
-    const Index next_pooling_rows_number =      
-        next_pooling_layer->get_pool_rows_number();
-    const Index next_pooling_columns_number =      
-        next_pooling_layer->get_pool_columns_number();
+    const Index next_delta_rows_number = next_delta_dim[Convolutional4dDimensions::row_index];
+    const Index next_delta_cols_number = next_delta_dim[Convolutional4dDimensions::column_index];
 
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < images_number; image_index++)
-    {
-        const Tensor<type, 3>& next_image_delta = next_delta.chip(image_index, 3);
-        for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
-        {
-            for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
-            {
-                const Eigen::array<Index, 3> offsets = {row_index * next_row_stride, column_index * next_column_stride, 0};
-                const Eigen::array<Index, 3> extents = {next_pooling_rows_number, next_pooling_columns_number, channels_number};
-                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-                {
-                    const type next_image_channel_delta_value = next_image_delta(row_index, column_index, channel_index);  
-                    const type numb_of_elements = static_cast<const type>(next_pooling_rows_number * next_pooling_columns_number);
-                    
-                    auto current_delta_channels = current_delta.chip(image_index, 3).slice(offsets, extents).chip(channel_index, 2); 
+    const Index next_pool_cols_number = next_pooling_layer->get_pool_columns_number();
+    const Index next_pool_rows_number = next_pooling_layer->get_pool_rows_number();
 
-                    current_delta_channels = current_delta_channels + next_image_channel_delta_value / numb_of_elements;
-                }
-            }
-        }
+    const Index rows_padding = (current_delta_rows_number - next_delta_rows_number + next_pool_rows_number - 1) / 2;
+    const Index cols_padding = (current_delta_cols_number - next_delta_cols_number + next_pool_cols_number - 1) / 2;
 
-    }
+    const Index next_delta_with_zeros_padded_rows_number = current_delta_rows_number + next_pool_rows_number - 1;
+    const Index next_delta_with_zeros_padded_cols_number = current_delta_cols_number + next_pool_cols_number - 1;
 
+    
+    Eigen::array<Index, 4> padded_next_delta_dimension{};
+    padded_next_delta_dimension[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number;
+    padded_next_delta_dimension[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number;
+    padded_next_delta_dimension[Convolutional4dDimensions::sample_index] = images_number;
+    padded_next_delta_dimension[Convolutional4dDimensions::channel_index] = channels_number;
+
+    Tensor<type, 4> next_delta_with_zeros_padded(padded_next_delta_dimension);
+    next_delta_with_zeros_padded.setZero();
+
+    Eigen::array<Index, 4> offsets{};
+    offsets.fill(0);
+    offsets[Convolutional4dDimensions::row_index] = rows_padding;
+    offsets[Convolutional4dDimensions::column_index] = cols_padding;
+
+    Eigen::array<Index, 4> extends{};
+    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - 2 * rows_padding;
+    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - 2 * cols_padding;
+    extends[Convolutional4dDimensions::channel_index] = channels_number;
+    extends[Convolutional4dDimensions::sample_index] = images_number;
+
+    const Index row_stride = next_pooling_layer->get_row_stride();
+    const Index column_stride = next_pooling_layer->get_column_stride();
+    Eigen::array<Index, 4> strides{};
+    strides.fill(1);
+    strides[Convolutional4dDimensions::row_index] = row_stride;
+    strides[Convolutional4dDimensions::column_index] = column_stride;
+
+    next_delta_with_zeros_padded.
+        slice(offsets, extends).
+        stride(strides).
+        device(*thread_pool_device) = next_delta; 
+
+    Tensor<type, 2> kernel(next_pool_cols_number, next_pool_rows_number);
+    kernel.setConstant(static_cast<type>(1));
+
+    const Eigen::array<Index, 2> conv_dim{Convolutional4dDimensions::column_index, Convolutional4dDimensions::row_index};
+
+    current_delta.device(*thread_pool_device) =  
+        perform_convolution(next_delta_with_zeros_padded, kernel, 1, 1, conv_dim) / 
+        static_cast<type>(next_pool_cols_number * next_pool_rows_number);
 }
 
 
@@ -504,54 +494,57 @@ void PoolingLayer::calculate_hidden_delta_max_pooling(
     PoolingLayerBackPropagation*  next_layer_back_propagation,
     LayerBackPropagation* back_propagation) const
 {
-    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);    
+    const PoolingLayer* next_pooling_layer = static_cast<PoolingLayer*>(next_layer_forward_propagation->layer_pointer);   
 
-    const Index next_delta_rows_number = next_layer_back_propagation->deltas_dimensions(0);
-    const Index next_delta_columns_number = next_layer_back_propagation->deltas_dimensions(1);
-
-    const Index channels_number = next_layer_back_propagation->deltas_dimensions(2);
-    const Index images_number = next_layer_back_propagation->deltas_dimensions(3);
+    DSizes<Index, 4> next_delta_dim{};
+    copy(
+        next_layer_back_propagation->deltas_dimensions.data(),
+        next_layer_back_propagation->deltas_dimensions.data() + next_layer_back_propagation->deltas_dimensions.size(),
+        next_delta_dim.data()
+    ); 
 
     TensorMap<Tensor<type, 4>> next_delta(
         next_layer_back_propagation->deltas_data, 
-        next_delta_rows_number,
-        next_delta_columns_number,
-        channels_number,
-        images_number);
+        next_delta_dim);
     
-    const Index current_delta_rows_number = back_propagation->deltas_dimensions(0);
-    const Index current_delta_columns_number = back_propagation->deltas_dimensions(1);
+    DSizes<Index, 4> current_delta_dim{};
+    copy(
+        back_propagation->deltas_dimensions.data(),
+        back_propagation->deltas_dimensions.data() + back_propagation->deltas_dimensions.size(),
+        current_delta_dim.data()
+    );
 
     TensorMap<Tensor<type, 4>> current_delta(
         back_propagation->deltas_data,
-        current_delta_rows_number,
-        current_delta_columns_number,
-        channels_number,
-        images_number);
+        current_delta_dim);
 
     PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
 
+    
+    const Index next_delta_rows_number = next_delta.dimension(Convolutional4dDimensions::row_index);
+    const Index next_delta_columns_number = next_delta.dimension(Convolutional4dDimensions::column_index);
+    const Index images_number = next_delta.dimension(Convolutional4dDimensions::sample_index);
+    const Index channels_number = next_delta.dimension(Convolutional4dDimensions::channel_index);
+
+    const auto& switches = next_layer_forward_propagation->switches;
+
     current_delta.setZero();
 
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < images_number; image_index++)
+    for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
     {
-        const Tensor<type, 3>& next_image_delta = next_delta.chip(image_index, 3);
-        for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
+        for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
         {
-            for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
+            for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
-                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+                #pragma omp parallel for
+                for(Index image_index = 0; image_index < images_number; image_index++)
                 {
-                    auto [current_delta_row_index, current_delta_column_index] = 
-                        next_layer_forward_propagation->switches(row_index, column_index, channel_index, image_index);
-                    
-                    current_delta(current_delta_row_index, current_delta_column_index, channel_index, image_index) = 
-                        next_image_delta(row_index, column_index, channel_index);
+                   const auto [current_delta_column_index, current_delta_row_index] = switches(image_index, channel_index, column_index, row_index);
+                   current_delta(image_index, channel_index, current_delta_column_index, current_delta_row_index) = next_delta(image_index, channel_index, column_index, row_index); 
                 }
             }
         }
-    } 
+    }
 }
 /*
 Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
@@ -899,13 +892,11 @@ Index PoolingLayer::get_neurons_number() const
 Tensor<Index, 1> PoolingLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(4);
-    outputs_dimensions.setValues({
-        get_outputs_rows_number(),
-        get_outputs_columns_number(),
-        get_inputs_channels_number(),
-        get_inputs_images_number()
-        });
-
+    outputs_dimensions[Convolutional4dDimensions::row_index] = get_outputs_rows_number();
+    outputs_dimensions[Convolutional4dDimensions::column_index] = get_outputs_columns_number();
+    outputs_dimensions[Convolutional4dDimensions::channel_index] = get_inputs_channels_number();
+    outputs_dimensions[Convolutional4dDimensions::sample_index] = get_inputs_images_number();
+    
     return outputs_dimensions;
 }
 
@@ -921,14 +912,14 @@ Index PoolingLayer::get_inputs_number() const
 
 Index PoolingLayer::get_inputs_images_number() const
 {
-    return input_variables_dimensions[3];
+    return input_variables_dimensions[Convolutional4dDimensions::sample_index];
 }
 
 /// Returns the number of channels of the layers' input.
 
 Index PoolingLayer::get_inputs_channels_number() const
 {
-   return input_variables_dimensions[2];
+   return input_variables_dimensions[Convolutional4dDimensions::channel_index];
 }
 
 
@@ -936,7 +927,7 @@ Index PoolingLayer::get_inputs_channels_number() const
 
 Index PoolingLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions[0];
+    return input_variables_dimensions[Convolutional4dDimensions::row_index];
 }
 
 
@@ -944,7 +935,7 @@ Index PoolingLayer::get_inputs_rows_number() const
 
 Index PoolingLayer::get_inputs_columns_number() const
 {
-    return input_variables_dimensions[1];
+    return input_variables_dimensions[Convolutional4dDimensions::column_index];
 }
 
 
@@ -1111,6 +1102,25 @@ void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
 
 void PoolingLayer::set_pooling_method(const PoolingMethod& new_pooling_method)
 {
+    if(new_pooling_method == PoolingMethod::MaxPooling)
+    {
+        if( row_stride != pool_rows_number || 
+            column_stride != pool_columns_number ||
+            (get_inputs_rows_number() % pool_rows_number) != 0 ||
+            (get_inputs_columns_number() % pool_columns_number) != 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: PoolingLayer class.\n"
+                << "void set_pooling_method(const PoolingMethod&) method.\n"
+                << "MaxPooling needs to satisfy following condition: row_stride == pool_rows_number && \n" 
+                "column_stride == pool_columns_number && \n"
+                "(get_inputs_rows_number() % pool_rows_number) == 0 \n"
+                "(get_inputs_columns_number() % pool_columns_number) == 0.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+    }
     pooling_method = new_pooling_method;
 }
 
@@ -1119,15 +1129,15 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
 {
     if(new_pooling_method == "NoPooling")
     {
-        pooling_method = PoolingMethod::NoPooling;
+        set_pooling_method(PoolingMethod::NoPooling);
     }
     else if(new_pooling_method == "MaxPooling")
     {
-        pooling_method = PoolingMethod::MaxPooling;
+        set_pooling_method(PoolingMethod::MaxPooling);
     }
     else if(new_pooling_method == "AveragePooling")
     {
-        pooling_method = PoolingMethod::AveragePooling;
+        set_pooling_method(PoolingMethod::AveragePooling);
     }
     else
     {
@@ -1409,7 +1419,12 @@ void PoolingLayerForwardPropagation::set(const Index& numb_of_batches, Layer* la
     const Index numb_of_channels = static_cast<PoolingLayer*>(layer_pointer)->get_inputs_channels_number();
 
     outputs_dimensions.resize(4);
-    outputs_dimensions.setValues({numb_of_output_rows, numb_of_output_columns, numb_of_channels, batch_samples_number});
+    outputs_dimensions[Convolutional4dDimensions::sample_index] = batch_samples_number;
+    outputs_dimensions[Convolutional4dDimensions::row_index] = numb_of_output_rows;
+    outputs_dimensions[Convolutional4dDimensions::column_index] = numb_of_output_columns;
+    outputs_dimensions[Convolutional4dDimensions::channel_index] = numb_of_channels;
+
+    switches.resize(outputs_dimensions);
 
     outputs_data = static_cast<type*>(malloc(numb_of_output_rows * 
                                             numb_of_output_columns * 
@@ -1450,7 +1465,11 @@ void PoolingLayerBackPropagation::set(const Index& numb_of_batches, Layer* layer
     const Index numb_of_channels = static_cast<PoolingLayer*>(layer_pointer)->get_inputs_channels_number();
 
     deltas_dimensions.resize(4);
-    deltas_dimensions.setValues({numb_of_output_rows, numb_of_output_columns, numb_of_channels, batch_samples_number});
+    deltas_dimensions[Convolutional4dDimensions::sample_index] = batch_samples_number;
+    deltas_dimensions[Convolutional4dDimensions::row_index] = numb_of_output_rows;
+    deltas_dimensions[Convolutional4dDimensions::column_index] = numb_of_output_columns;
+    deltas_dimensions[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    
 
     deltas_data = static_cast<type*>(malloc(numb_of_output_rows * 
                                             numb_of_output_columns * 

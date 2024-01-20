@@ -51,7 +51,10 @@ void PoolingLayerTest::test_constructor()
     const Index numb_of_cols = 3;
     const Index numb_of_channels = 3;
     const Index numb_of_images = 1;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     PoolingLayer pooling_layer(inputs_dimension);
 
@@ -72,7 +75,11 @@ void PoolingLayerTest::test_constructor1()
     const Index numb_of_cols = 3;
     const Index numb_of_channels = 3;
     const Index numb_of_images = 1;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 2;
     const Index numb_of_pooling_cols = 3;
@@ -130,7 +137,18 @@ void PoolingLayerTest::test_set_pooling_method()
 {
     cout << "test_set_pooling_method\n";
 
-    PoolingLayer pooling_layer;
+    Tensor<Index, 1> input_dim(4);
+    input_dim[Convolutional4dDimensions::sample_index] = 1;
+    input_dim[Convolutional4dDimensions::row_index] = 4;
+    input_dim[Convolutional4dDimensions::column_index] = 4;
+    input_dim[Convolutional4dDimensions::channel_index] = 2;
+
+    PoolingLayer pooling_layer(input_dim);
+
+    pooling_layer.set_column_stride(2);
+    pooling_layer.set_row_stride(2);
+
+    pooling_layer.set_pool_size(2, 2);
 
     PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
 
@@ -148,7 +166,11 @@ void PoolingLayerTest::test_output_dimension()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 3;
     const Index numb_of_images = 1;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 2;
     const Index numb_of_pooling_cols = 2;
@@ -158,9 +180,6 @@ void PoolingLayerTest::test_output_dimension()
 
     PoolingLayer pooling_layer(inputs_dimension, pooling_dimension);
 
-    PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
-
-    pooling_layer.set_pooling_method(pooling_method);
 
     const Index row_stride = 2;
     const Index column_stride = 2;
@@ -168,16 +187,20 @@ void PoolingLayerTest::test_output_dimension()
     pooling_layer.set_row_stride(row_stride);
     pooling_layer.set_column_stride(column_stride);
 
+    PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
+
+    pooling_layer.set_pooling_method(pooling_method);
+
     const Index expected_output_rows_number = (numb_of_rows - numb_of_pooling_rows + row_stride) / row_stride;
     const Index expected_output_columns_number = (numb_of_rows - numb_of_pooling_cols + column_stride) / column_stride;
 
     assert_true(pooling_layer.get_outputs_rows_number() == expected_output_rows_number &&
                 pooling_layer.get_outputs_columns_number() == expected_output_columns_number, LOG);
 
-    assert_true(pooling_layer.get_outputs_dimensions()(0) == expected_output_rows_number &&
-                pooling_layer.get_outputs_dimensions()(1) == expected_output_columns_number &&
-                pooling_layer.get_outputs_dimensions()(2) == numb_of_channels &&
-                pooling_layer.get_outputs_dimensions()(3) == numb_of_images, LOG);
+    assert_true(pooling_layer.get_outputs_dimensions()(Convolutional4dDimensions::row_index) == expected_output_rows_number &&
+                pooling_layer.get_outputs_dimensions()(Convolutional4dDimensions::column_index) == expected_output_columns_number &&
+                pooling_layer.get_outputs_dimensions()(Convolutional4dDimensions::channel_index) == numb_of_channels &&
+                pooling_layer.get_outputs_dimensions()(Convolutional4dDimensions::sample_index) == numb_of_images, LOG);
 }
 
 void PoolingLayerTest::test_calculate_no_pooling_outputs()
@@ -189,7 +212,11 @@ void PoolingLayerTest::test_calculate_no_pooling_outputs()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 2;
     const Index numb_of_images = 2;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 2;
     const Index numb_of_pooling_cols = 2;
@@ -201,10 +228,10 @@ void PoolingLayerTest::test_calculate_no_pooling_outputs()
 
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 1).setConstant(type(1));
-    inputs.chip(1, 1).setConstant(type(2));
-    inputs.chip(2, 1).setConstant(type(3));
-    inputs.chip(3, 1).setConstant(type(4));
+    inputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(1));
+    inputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(2));
+    inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
+    inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
     Tensor<type, 4> output = pooling_layer.calculate_no_pooling_outputs(inputs);
 
@@ -220,7 +247,10 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 2;
     const Index numb_of_images = 2;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 2;
     const Index numb_of_pooling_cols = 2;
@@ -238,10 +268,10 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 0).setConstant(type(1));
-    inputs.chip(1, 0).setConstant(type(2));
-    inputs.chip(2, 0).setConstant(type(3));
-    inputs.chip(3, 0).setConstant(type(4));
+    inputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(1));
+    inputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(2));
+    inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
+    inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
     Tensor<type, 4> outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
     assert_true(outputs.dimension(0) == 2 && 
@@ -251,8 +281,8 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
     Tensor<type, 4> expected_outputs(2, 2, 2, 2);
 
-    expected_outputs.chip(0, 0).setConstant(type(3) / type(2));
-    expected_outputs.chip(1, 0).setConstant(type(7) / type(2));
+    expected_outputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(3) / type(2));
+    expected_outputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(7) / type(2));
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
 
@@ -377,7 +407,11 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 2;
     const Index numb_of_images = 2;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 2;
     const Index numb_of_pooling_cols = 2;
@@ -395,10 +429,10 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 0).setConstant(type(1));
-    inputs.chip(1, 0).setConstant(type(2));
-    inputs.chip(2, 0).setConstant(type(3));
-    inputs.chip(3, 0).setConstant(type(4));
+    inputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(1));
+    inputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(2));
+    inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
+    inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
     Tensor<type, 4> outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -409,28 +443,30 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
     Tensor<type, 4> expected_outputs(2, 2, 2, 2);
 
-    expected_outputs.chip(0, 0).setConstant(2);
-    expected_outputs.chip(1, 0).setConstant(4);
+    expected_outputs.chip(0, Convolutional4dDimensions::row_index).setConstant(2);
+    expected_outputs.chip(1, Convolutional4dDimensions::row_index).setConstant(4);
  
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
     
-    Tensor<tuple<Index, Index>, 4> switches(pooling_layer.get_outputs_rows_number(), pooling_layer.get_outputs_columns_number(), numb_of_channels, numb_of_images);
+    Tensor<tuple<Index,Index>, 4> switches(expected_outputs.dimensions());
 
     outputs = pooling_layer.calculate_max_pooling_outputs(inputs, switches);
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
 
-    Tensor<tuple<Index, Index>, 4> expected_switches(2, 2, numb_of_channels, numb_of_images);
-    expected_switches(0, 0, 0, 0) = make_tuple(1, 0);
-    expected_switches(0, 0, 1, 0) = make_tuple(1, 0);
-    expected_switches(0, 1, 0, 0) = make_tuple(1, 2);
-    expected_switches(0, 1, 1, 0) = make_tuple(1, 2);
-    expected_switches(1, 0, 0, 0) = make_tuple(3, 0);
-    expected_switches(1, 0, 1, 0) = make_tuple(3, 0);
-    expected_switches(1, 1, 0, 0) = make_tuple(3, 2);
-    expected_switches(1, 1, 1, 0) = make_tuple(3, 2);
+    Tensor<tuple<Index, Index>, 4> expected_switches(expected_outputs.dimensions());
+    expected_switches(0, 0, 0, 0) = make_tuple(0, 1);
+    expected_switches(0, 1, 0, 0) = make_tuple(0, 1);
+    expected_switches(0, 0, 1, 0) = make_tuple(2, 1);
+    expected_switches(0, 1, 1, 0) = make_tuple(2, 1);
+    expected_switches(0, 0, 0, 1) = make_tuple(0, 3);
+    expected_switches(0, 1, 0, 1) = make_tuple(0, 3);
+    expected_switches(0, 0, 1, 1) = make_tuple(2, 3);
+    expected_switches(0, 1, 1, 1) = make_tuple(2, 3);
+    
 
-    expected_switches.chip(1, 3) = expected_switches.chip(0, 3);
+    expected_switches.chip(1, Convolutional4dDimensions::sample_index) = 
+        expected_switches.chip(0, Convolutional4dDimensions::sample_index);
 
     Tensor<bool, 0> is_switches_same = (switches == expected_switches).all();
     assert_true(is_switches_same(), LOG);
@@ -555,7 +591,11 @@ void PoolingLayerTest::test_forward_propagate()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 2;
     const Index numb_of_images = 2;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 2;
     const Index numb_of_pooling_cols = 2;
@@ -573,10 +613,10 @@ void PoolingLayerTest::test_forward_propagate()
 
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 0).setConstant(type(1));
-    inputs.chip(1, 0).setConstant(type(2));
-    inputs.chip(2, 0).setConstant(type(3));
-    inputs.chip(3, 0).setConstant(type(4));
+    inputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(1));
+    inputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(2));
+    inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
+    inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
     PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
@@ -589,8 +629,8 @@ void PoolingLayerTest::test_forward_propagate()
 
     Tensor<type, 4> expected_outputs(2, 2, 2, 2);
 
-    expected_outputs.chip(0, 0).setConstant(type(3) / type(2));
-    expected_outputs.chip(1, 0).setConstant(type(7) / type(2));
+    expected_outputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(3) / type(2));
+    expected_outputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(7) / type(2));
 
     TensorMap<Tensor<type, 4>> outputs(layer_forward_propagation.outputs_data, 
                                         t1d2array<4>(layer_forward_propagation.outputs_dimensions));
@@ -601,22 +641,23 @@ void PoolingLayerTest::test_forward_propagate()
 
     pooling_layer.forward_propagate(inputs.data(), inputs_dimension, &layer_forward_propagation, switch_train);
 
-    expected_outputs.chip(0,0).setConstant(type(2));
-    expected_outputs.chip(1,0).setConstant(type(4));
+    expected_outputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(2));
+    expected_outputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(4));
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
 
-    Tensor<tuple<Index, Index>, 4> expected_switches(2, 2, numb_of_channels, numb_of_images);
-    expected_switches(0, 0, 0, 0) = make_tuple(1, 0);
-    expected_switches(0, 0, 1, 0) = make_tuple(1, 0);
-    expected_switches(0, 1, 0, 0) = make_tuple(1, 2);
-    expected_switches(0, 1, 1, 0) = make_tuple(1, 2);
-    expected_switches(1, 0, 0, 0) = make_tuple(3, 0);
-    expected_switches(1, 0, 1, 0) = make_tuple(3, 0);
-    expected_switches(1, 1, 0, 0) = make_tuple(3, 2);
-    expected_switches(1, 1, 1, 0) = make_tuple(3, 2);
+    Tensor<tuple<Index, Index>, 4> expected_switches(expected_outputs.dimensions());
+    expected_switches(0, 0, 0, 0) = make_tuple(0, 1);
+    expected_switches(0, 1, 0, 0) = make_tuple(0, 1);
+    expected_switches(0, 0, 1, 0) = make_tuple(2, 1);
+    expected_switches(0, 1, 1, 0) = make_tuple(2, 1);
+    expected_switches(0, 0, 0, 1) = make_tuple(0, 3);
+    expected_switches(0, 1, 0, 1) = make_tuple(0, 3);
+    expected_switches(0, 0, 1, 1) = make_tuple(2, 3);
+    expected_switches(0, 1, 1, 1) = make_tuple(2, 3);
+    
 
-    expected_switches.chip(1, 3) = expected_switches.chip(0, 3);
+    expected_switches.chip(1, Convolutional4dDimensions::sample_index) = expected_switches.chip(0, Convolutional4dDimensions::sample_index);
 
     Tensor<bool, 0> is_switches_same = (layer_forward_propagation.switches == expected_switches).all();
     assert_true(is_switches_same(), LOG);
@@ -632,7 +673,11 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 2;
     const Index numb_of_images = 2;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 1;
     const Index numb_of_pooling_cols = 1;
@@ -650,10 +695,10 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
 
     Tensor<type, 4> inputs(t1d2array<4>(inputs_dimension));
 
-    inputs.chip(0, 0).setConstant(type(1));
-    inputs.chip(1, 0).setConstant(type(2));
-    inputs.chip(2, 0).setConstant(type(3));
-    inputs.chip(3, 0).setConstant(type(4));
+    inputs.chip(0, Convolutional4dDimensions::row_index).setConstant(type(1));
+    inputs.chip(1, Convolutional4dDimensions::row_index).setConstant(type(2));
+    inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
+    inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
     PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::NoPooling;
 
@@ -670,21 +715,21 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
     TensorMap<Tensor<type, 4>> next_delta(next_back_propagation.deltas_data, t1d2array<4>(next_back_propagation.deltas_dimensions));
 
     next_delta(0, 0, 0, 0) = type(3);
-    next_delta(0, 0, 1, 0) = type(4);
-    next_delta(0, 1, 0, 0) = type(-2);
+    next_delta(0, 1, 0, 0) = type(4);
+    next_delta(0, 0, 1, 0) = type(-2);
     next_delta(0, 1, 1, 0) = type(2);
-    next_delta(1, 0, 0, 0) = type(5);
-    next_delta(1, 0, 1, 0) = type(2);
-    next_delta(1, 1, 0, 0) = type(1);
-    next_delta(1, 1, 1, 0) = type(3);
-
     next_delta(0, 0, 0, 1) = type(5);
-    next_delta(0, 0, 1, 1) = type(2);
-    next_delta(0, 1, 0, 1) = type(1);
+    next_delta(0, 1, 0, 1) = type(2);
+    next_delta(0, 0, 1, 1) = type(1);
     next_delta(0, 1, 1, 1) = type(3);
+
+    next_delta(1, 0, 0, 0) = type(5);
+    next_delta(1, 1, 0, 0) = type(2);
+    next_delta(1, 0, 1, 0) = type(1);
+    next_delta(1, 1, 1, 0) = type(3);
     next_delta(1, 0, 0, 1) = type(3);
-    next_delta(1, 0, 1, 1) = type(4);
-    next_delta(1, 1, 0, 1) = type(-2);
+    next_delta(1, 1, 0, 1) = type(4);
+    next_delta(1, 0, 1, 1) = type(-2);
     next_delta(1, 1, 1, 1) = type(2);
 
     PoolingLayerBackPropagation back_propagation(
@@ -698,49 +743,54 @@ void PoolingLayerTest::test_calculate_hidden_delta_average_pooling()
     //Test
     TensorMap<Tensor<type, 4>> delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
 
-    Tensor<type, 4> expected_delta(4, 4, 2, 2);
+    Tensor<type, 4> expected_delta(t1d2array<4>(inputs_dimension));
 
     expected_delta(0, 0, 0, 0) = type(0.75);
-    expected_delta(0, 0, 1, 0) = type(1);
-    expected_delta(0, 1, 0, 0) = type(0.75);
+    expected_delta(0, 1, 0, 0) = type(1);
+    expected_delta(0, 0, 1, 0) = type(0.75);
     expected_delta(0, 1, 1, 0) = type(1);
-    expected_delta(1, 0, 0, 0) = type(0.75);
-    expected_delta(1, 0, 1, 0) = type(1);
-    expected_delta(1, 1, 0, 0) = type(0.75);
-    expected_delta(1, 1, 1, 0) = type(1);
+    expected_delta(0, 0, 0, 1) = type(0.75);
+    expected_delta(0, 1, 0, 1) = type(1);
+    expected_delta(0, 0, 1, 1) = type(0.75);
+    expected_delta(0, 1, 1, 1) = type(1);
 
-    expected_delta(0, 2, 0, 0) = type(-0.5);
-    expected_delta(0, 2, 1, 0) = type(0.5);
-    expected_delta(0, 3, 0, 0) = type(-0.5);
-    expected_delta(0, 3, 1, 0) = type(0.5);
-    expected_delta(1, 2, 0, 0) = type(-0.5);
-    expected_delta(1, 2, 1, 0) = type(0.5);
-    expected_delta(1, 3, 0, 0) = type(-0.5);
-    expected_delta(1, 3, 1, 0) = type(0.5);
+    expected_delta(0, 0, 2, 0) = type(-0.5);
+    expected_delta(0, 1, 2, 0) = type(0.5);
+    expected_delta(0, 0, 3, 0) = type(-0.5);
+    expected_delta(0, 1, 3, 0) = type(0.5);
+    expected_delta(0, 0, 2, 1) = type(-0.5);
+    expected_delta(0, 1, 2, 1) = type(0.5);
+    expected_delta(0, 0, 3, 1) = type(-0.5);
+    expected_delta(0, 1, 3, 1) = type(0.5);
 
-    expected_delta(2, 0, 0, 0) = type(1.25);
-    expected_delta(2, 0, 1, 0) = type(0.5);
-    expected_delta(2, 1, 0, 0) = type(1.25);
-    expected_delta(2, 1, 1, 0) = type(0.5);
-    expected_delta(3, 0, 0, 0) = type(1.25);
-    expected_delta(3, 0, 1, 0) = type(0.5);
-    expected_delta(3, 1, 0, 0) = type(1.25);
-    expected_delta(3, 1, 1, 0) = type(0.5);
+    expected_delta(0, 0, 0, 2) = type(1.25);
+    expected_delta(0, 1, 0, 2) = type(0.5);
+    expected_delta(0, 0, 1, 2) = type(1.25);
+    expected_delta(0, 1, 1, 2) = type(0.5);
+    expected_delta(0, 0, 0, 3) = type(1.25);
+    expected_delta(0, 1, 0, 3) = type(0.5);
+    expected_delta(0, 0, 1, 3) = type(1.25);
+    expected_delta(0, 1, 1, 3) = type(0.5);
     
-    expected_delta(2, 2, 0, 0) = type(0.25);
-    expected_delta(2, 2, 1, 0) = type(0.75);
-    expected_delta(2, 3, 0, 0) = type(0.25);
-    expected_delta(2, 3, 1, 0) = type(0.75);
-    expected_delta(3, 2, 0, 0) = type(0.25);
-    expected_delta(3, 2, 1, 0) = type(0.75);
-    expected_delta(3, 3, 0, 0) = type(0.25);
-    expected_delta(3, 3, 1, 0) = type(0.75);
+    expected_delta(0, 0, 2, 2) = type(0.25);
+    expected_delta(0, 1, 2, 2) = type(0.75);
+    expected_delta(0, 0, 3, 2) = type(0.25);
+    expected_delta(0, 1, 3, 2) = type(0.75);
+    expected_delta(0, 0, 2, 3) = type(0.25);
+    expected_delta(0, 1, 2, 3) = type(0.75);
+    expected_delta(0, 0, 3, 3) = type(0.25);
+    expected_delta(0, 1, 3, 3) = type(0.75);
 
-    expected_delta.chip(1, 3).chip(0, 0) = expected_delta.chip(0, 3).chip(2, 0);
-    expected_delta.chip(1, 3).chip(1, 0) = expected_delta.chip(0, 3).chip(2, 0);
+    expected_delta.chip(1, Convolutional4dDimensions::sample_index).chip(0, Convolutional4dDimensions::row_index - 1) = 
+        expected_delta.chip(0, Convolutional4dDimensions::sample_index).chip(2, Convolutional4dDimensions::row_index - 1);
+    expected_delta.chip(1, Convolutional4dDimensions::sample_index).chip(1, Convolutional4dDimensions::row_index - 1) = 
+        expected_delta.chip(0, Convolutional4dDimensions::sample_index).chip(2, Convolutional4dDimensions::row_index - 1);
 
-    expected_delta.chip(1, 3).chip(2,0) = expected_delta.chip(0, 3).chip(0, 0);
-    expected_delta.chip(1, 3).chip(3,0) = expected_delta.chip(0, 3).chip(0, 0);
+    expected_delta.chip(1, Convolutional4dDimensions::sample_index).chip(2, Convolutional4dDimensions::row_index - 1) = 
+        expected_delta.chip(0, Convolutional4dDimensions::sample_index).chip(0, Convolutional4dDimensions::row_index - 1);
+    expected_delta.chip(1, Convolutional4dDimensions::sample_index).chip(3,Convolutional4dDimensions::row_index - 1) = 
+        expected_delta.chip(0, Convolutional4dDimensions::sample_index).chip(0, Convolutional4dDimensions::row_index - 1);
+
 
     assert_true(is_equal<4>(expected_delta, delta), LOG);
 }
@@ -755,7 +805,11 @@ void PoolingLayerTest::test_calculate_hidden_delta_max_pooling()
     const Index numb_of_cols = 4;
     const Index numb_of_channels = 2;
     const Index numb_of_images = 2;
-    inputs_dimension.setValues({numb_of_rows, numb_of_cols, numb_of_channels, numb_of_images});
+
+    inputs_dimension[Convolutional4dDimensions::sample_index] = numb_of_images;
+    inputs_dimension[Convolutional4dDimensions::row_index] = numb_of_rows;
+    inputs_dimension[Convolutional4dDimensions::channel_index] = numb_of_channels;
+    inputs_dimension[Convolutional4dDimensions::column_index] = numb_of_cols;
 
     const Index numb_of_pooling_rows = 1;
     const Index numb_of_pooling_cols = 1;
@@ -777,44 +831,46 @@ void PoolingLayerTest::test_calculate_hidden_delta_max_pooling()
 
     PoolingLayer next_pooling_layer(pooling_layer.get_outputs_dimensions(), next_pooling_dimension);
 
-    next_pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
 
     const Index next_layer_row_stride = 2;
     const Index next_layer_column_stride = 2;
     next_pooling_layer.set_column_stride(next_layer_row_stride);
     next_pooling_layer.set_row_stride(next_layer_column_stride);
+
+    next_pooling_layer.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
     
     PoolingLayerBackPropagation next_back_propagation(numb_of_images, &next_pooling_layer);
     PoolingLayerForwardPropagation next_forward_propagation(numb_of_images, &next_pooling_layer);
-    next_forward_propagation.switches.resize(2, 2, 2, 2);
-    next_forward_propagation.switches(0, 0, 0, 0) = make_tuple(1, 0);
-    next_forward_propagation.switches(0, 0, 1, 0) = make_tuple(1, 0);
-    next_forward_propagation.switches(0, 1, 0, 0) = make_tuple(1, 2);
-    next_forward_propagation.switches(0, 1, 1, 0) = make_tuple(1, 2);
-    next_forward_propagation.switches(1, 0, 0, 0) = make_tuple(3, 0);
-    next_forward_propagation.switches(1, 0, 1, 0) = make_tuple(3, 0);
-    next_forward_propagation.switches(1, 1, 0, 0) = make_tuple(3, 2);
-    next_forward_propagation.switches(1, 1, 1, 0) = make_tuple(3, 2);
-    next_forward_propagation.switches.chip(1, 3) = next_forward_propagation.switches.chip(0, 3);
+    next_forward_propagation.switches(0, 0, 0, 0) = make_tuple(0, 1);
+    next_forward_propagation.switches(0, 1, 0, 0) = make_tuple(0, 1);
+    next_forward_propagation.switches(0, 0, 1, 0) = make_tuple(2, 1);
+    next_forward_propagation.switches(0, 1, 1, 0) = make_tuple(2, 1);
+    next_forward_propagation.switches(0, 0, 0, 1) = make_tuple(0, 3);
+    next_forward_propagation.switches(0, 1, 0, 1) = make_tuple(0, 3);
+    next_forward_propagation.switches(0, 0, 1, 1) = make_tuple(2, 3);
+    next_forward_propagation.switches(0, 1, 1, 1) = make_tuple(2, 3);
+
+    next_forward_propagation.switches.chip(1, Convolutional4dDimensions::sample_index) = 
+        next_forward_propagation.switches.chip(0, Convolutional4dDimensions::sample_index);
 
     TensorMap<Tensor<type, 4>> next_delta(next_back_propagation.deltas_data, t1d2array<4>(next_back_propagation.deltas_dimensions));
 
     next_delta(0, 0, 0, 0) = type(3);
-    next_delta(0, 0, 1, 0) = type(4);
-    next_delta(0, 1, 0, 0) = type(-2);
+    next_delta(0, 1, 0, 0) = type(4);
+    next_delta(0, 0, 1, 0) = type(-2);
     next_delta(0, 1, 1, 0) = type(2);
-    next_delta(1, 0, 0, 0) = type(5);
-    next_delta(1, 0, 1, 0) = type(2);
-    next_delta(1, 1, 0, 0) = type(1);
-    next_delta(1, 1, 1, 0) = type(3);
-
     next_delta(0, 0, 0, 1) = type(5);
-    next_delta(0, 0, 1, 1) = type(2);
-    next_delta(0, 1, 0, 1) = type(1);
+    next_delta(0, 1, 0, 1) = type(2);
+    next_delta(0, 0, 1, 1) = type(1);
     next_delta(0, 1, 1, 1) = type(3);
+
+    next_delta(1, 0, 0, 0) = type(5);
+    next_delta(1, 1, 0, 0) = type(2);
+    next_delta(1, 0, 1, 0) = type(1);
+    next_delta(1, 1, 1, 0) = type(3);
     next_delta(1, 0, 0, 1) = type(3);
-    next_delta(1, 0, 1, 1) = type(4);
-    next_delta(1, 1, 0, 1) = type(-2);
+    next_delta(1, 1, 0, 1) = type(4);
+    next_delta(1, 0, 1, 1) = type(-2);
     next_delta(1, 1, 1, 1) = type(2);
 
     PoolingLayerBackPropagation back_propagation(
@@ -827,27 +883,27 @@ void PoolingLayerTest::test_calculate_hidden_delta_max_pooling()
 
     TensorMap<Tensor<type, 4>> delta(back_propagation.deltas_data, t1d2array<4>(back_propagation.deltas_dimensions));
 
-    Tensor<type, 4> expected_delta(4, 4, 2, 2);
+    Tensor<type, 4> expected_delta(t1d2array<4>(inputs_dimension));
 
     expected_delta.setZero();
 
-    expected_delta(1, 0, 0, 0) = type(3);
-    expected_delta(1, 0, 1, 0) = type(4);
-    expected_delta(1, 2, 0, 0) = type(-2);
-    expected_delta(1, 2, 1, 0) = type(2);
-    expected_delta(3, 0, 0, 0) = type(5);
-    expected_delta(3, 0, 1, 0) = type(2);
-    expected_delta(3, 2, 0, 0) = type(1);
-    expected_delta(3, 2, 1, 0) = type(3);
+    expected_delta(0, 0, 0, 1) = type(3);
+    expected_delta(0, 1, 0, 1) = type(4);
+    expected_delta(0, 0, 2, 1) = type(-2);
+    expected_delta(0, 1, 2, 1) = type(2);
+    expected_delta(0, 0, 0, 3) = type(5);
+    expected_delta(0, 1, 0, 3) = type(2);
+    expected_delta(0, 0, 2, 3) = type(1);
+    expected_delta(0, 1, 2, 3) = type(3);
 
     expected_delta(1, 0, 0, 1) = type(5);
-    expected_delta(1, 0, 1, 1) = type(2);
-    expected_delta(1, 2, 0, 1) = type(1);
-    expected_delta(1, 2, 1, 1) = type(3);
-    expected_delta(3, 0, 0, 1) = type(3);
-    expected_delta(3, 0, 1, 1) = type(4);
-    expected_delta(3, 2, 0, 1) = type(-2);
-    expected_delta(3, 2, 1, 1) = type(2);
+    expected_delta(1, 1, 0, 1) = type(2);
+    expected_delta(1, 0, 2, 1) = type(1);
+    expected_delta(1, 1, 2, 1) = type(3);
+    expected_delta(1, 0, 0, 3) = type(3);
+    expected_delta(1, 1, 0, 3) = type(4);
+    expected_delta(1, 0, 2, 3) = type(-2);
+    expected_delta(1, 1, 2, 3) = type(2);
 
     assert_true(is_equal<4>(expected_delta, delta), LOG);
 }
