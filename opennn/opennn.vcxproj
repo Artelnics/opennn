@@ -1,92 +1,174 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="adaptive_moment_estimation.h" />
-    <ClInclude Include="bounding_layer.h" />
-    <ClInclude Include="codification.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="conjugate_gradient.h" />
-    <ClInclude Include="convolutional_layer.h" />
-    <ClInclude Include="correlations.h" />
-    <ClInclude Include="cross_entropy_error.h" />
-    <ClInclude Include="data_set.h" />
-    <ClInclude Include="flatten_layer.h" />
-    <ClInclude Include="genetic_algorithm.h" />
-    <ClInclude Include="gradient_descent.h" />
-    <ClInclude Include="growing_inputs.h" />
-    <ClInclude Include="growing_neurons.h" />
-    <ClInclude Include="half.hpp" />
-    <ClInclude Include="inputs_selection.h" />
-    <ClInclude Include="layer.h" />
-    <ClInclude Include="learning_rate_algorithm.h" />
-    <ClInclude Include="levenberg_marquardt_algorithm.h" />
-    <ClInclude Include="long_short_term_memory_layer.h" />
-    <ClInclude Include="loss_index.h" />
-    <ClInclude Include="mean_squared_error.h" />
-    <ClInclude Include="minkowski_error.h" />
-    <ClInclude Include="model_selection.h" />
-    <ClInclude Include="neural_network.h" />
-    <ClInclude Include="neurons_selection.h" />
-    <ClInclude Include="normalized_squared_error.h" />
-    <ClInclude Include="numerical_differentiation.h" />
-    <ClInclude Include="opennn.h" />
-    <ClInclude Include="opennn_images.h" />
-    <ClInclude Include="opennn_strings.h" />
-    <ClInclude Include="optimization_algorithm.h" />
-    <ClInclude Include="perceptron_layer.h" />
-    <ClInclude Include="pooling_layer.h" />
-    <ClInclude Include="probabilistic_layer.h" />
-    <ClInclude Include="pruning_inputs.h" />
-    <ClInclude Include="quasi_newton_method.h" />
-    <ClInclude Include="recurrent_layer.h" />
-    <ClInclude Include="response_optimization.h" />
-    <ClInclude Include="scaling.h" />
-    <ClInclude Include="scaling_layer.h" />
-    <ClInclude Include="statistics.h" />
-    <ClInclude Include="stochastic_gradient_descent.h" />
-    <ClInclude Include="sum_squared_error.h" />
-    <ClInclude Include="tensor_utilities.h" />
-    <ClInclude Include="testing_analysis.h" />
-    <ClInclude Include="text_analytics.h" />
-    <ClInclude Include="tinyxml2.h" />
-    <ClInclude Include="training_strategy.h" />
-    <ClInclude Include="unit_testing.h" />
-    <ClInclude Include="unscaling_layer.h" />
-    <ClInclude Include="weighted_squared_error.h" />
-  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DA639EE0-37F5-380A-840F-12D54763415D}</ProjectGuid>
+    <RootNamespace>opennn</RootNamespace>
+    <Keyword>QtVS_v304</Keyword>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.22000.0</WindowsTargetPlatformMinVersion>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <PlatformToolset>v143</PlatformToolset>
+    <OutputDirectory>release\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <IntermediateDirectory>release\</IntermediateDirectory>
+    <PrimaryOutput>opennn</PrimaryOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <PlatformToolset>v143</PlatformToolset>
+    <OutputDirectory>debug\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <IntermediateDirectory>debug\</IntermediateDirectory>
+    <PrimaryOutput>opennn</PrimaryOutput>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(QtMsBuild)\qt_defaults.props" Condition="Exists('$(QtMsBuild)\qt_defaults.props')" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <QtInstall>6.5.0_msvc2019_64</QtInstall>
+    <QtModules>
+    </QtModules>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <QtInstall>6.5.0_msvc2019_64</QtInstall>
+    <QtModules>
+    </QtModules>
+  </PropertyGroup>
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') OR !Exists('$(QtMsBuild)\Qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">opennn</TargetName>
+    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</IgnoreImportLibrary>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">opennn</TargetName>
+    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</IgnoreImportLibrary>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -bigobj -utf-8 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>release\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>release\</ObjectFileName>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;NDEBUG;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ProgramDataBaseFileName>
+      </ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)\opennn.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;NDEBUG;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -bigobj -utf-8 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>debug\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4577;4467;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ObjectFileName>debug\</ObjectFileName>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;OPENNN_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)\opennn.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;OPENNN_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="adaptive_moment_estimation.cpp" />
+    <ClCompile Include="addition_layer.cpp" />
+    <ClCompile Include="auto_association_data_set.cpp" />
+    <ClCompile Include="auto_associative_neural_network.cpp" />
+    <ClCompile Include="bounding_box.cpp" />
+    <ClCompile Include="bounding_box_regressor_layer.cpp" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClCompile Include="codification.cpp" />
+    <ClCompile Include="concatenation_layer.cpp" />
     <ClCompile Include="conjugate_gradient.cpp" />
     <ClCompile Include="convolutional_layer.cpp" />
     <ClCompile Include="correlations.cpp" />
     <ClCompile Include="cross_entropy_error.cpp" />
+    <ClCompile Include="cross_entropy_error_3d.cpp" />
     <ClCompile Include="data_set.cpp" />
+    <ClCompile Include="data_set_batch.cpp" />
+    <ClCompile Include="embedding_layer.cpp" />
     <ClCompile Include="flatten_layer.cpp" />
     <ClCompile Include="genetic_algorithm.cpp" />
     <ClCompile Include="gradient_descent.cpp" />
     <ClCompile Include="growing_inputs.cpp" />
     <ClCompile Include="growing_neurons.cpp" />
+    <ClCompile Include="image_data_set.cpp" />
     <ClCompile Include="inputs_selection.cpp" />
+    <ClCompile Include="kmeans.cpp" />
+    <ClCompile Include="language_data_set.cpp" />
     <ClCompile Include="layer.cpp" />
     <ClCompile Include="learning_rate_algorithm.cpp" />
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
@@ -95,191 +177,134 @@
     <ClCompile Include="mean_squared_error.cpp" />
     <ClCompile Include="minkowski_error.cpp" />
     <ClCompile Include="model_selection.cpp" />
+    <ClCompile Include="multihead_attention_layer.cpp" />
     <ClCompile Include="neural_network.cpp" />
     <ClCompile Include="neurons_selection.cpp" />
+    <ClCompile Include="non_max_suppression_layer.cpp" />
     <ClCompile Include="normalized_squared_error.cpp" />
     <ClCompile Include="numerical_differentiation.cpp" />
     <ClCompile Include="opennn_images.cpp" />
     <ClCompile Include="opennn_strings.cpp" />
     <ClCompile Include="optimization_algorithm.cpp" />
     <ClCompile Include="perceptron_layer.cpp" />
+    <ClCompile Include="perceptron_layer_3d.cpp" />
     <ClCompile Include="pooling_layer.cpp" />
     <ClCompile Include="probabilistic_layer.cpp" />
-    <ClCompile Include="pruning_inputs.cpp" />
+    <ClCompile Include="probabilistic_layer_3d.cpp" />
     <ClCompile Include="quasi_newton_method.cpp" />
     <ClCompile Include="recurrent_layer.cpp" />
+    <ClCompile Include="region_based_object_detector.cpp" />
+    <ClCompile Include="resnet50.cpp" />
     <ClCompile Include="response_optimization.cpp" />
     <ClCompile Include="scaling.cpp" />
-    <ClCompile Include="scaling_layer.cpp" />
+    <ClCompile Include="scaling_layer_2d.cpp" />
+    <ClCompile Include="scaling_layer_4d.cpp" />
     <ClCompile Include="statistics.cpp" />
     <ClCompile Include="stochastic_gradient_descent.cpp" />
     <ClCompile Include="sum_squared_error.cpp" />
     <ClCompile Include="tensor_utilities.cpp" />
     <ClCompile Include="testing_analysis.cpp" />
     <ClCompile Include="text_analytics.cpp" />
+    <ClCompile Include="text_data_set.cpp" />
+    <ClCompile Include="time_series_data_set.cpp" />
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="training_strategy.cpp" />
+    <ClCompile Include="transformer.cpp" />
     <ClCompile Include="unit_testing.cpp" />
     <ClCompile Include="unscaling_layer.cpp" />
+    <ClCompile Include="vgg16.cpp" />
     <ClCompile Include="weighted_squared_error.cpp" />
   </ItemGroup>
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{A3901B9A-AA4C-439F-932F-962D71B4A6D9}</ProjectGuid>
-    <RootNamespace>AirfoilSelfNoise</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v143</PlatformToolset>
-    <UseInteloneMKL>Parallel</UseInteloneMKL>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
-    <UseInteloneMKL>Parallel</UseInteloneMKL>
-  </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>D:\opennn-build\Win32\Release;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>D:\opennn-build\Win32\Release;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <MinimalRebuild>true</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
-    </Lib>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <OpenMP>GenerateParallelCode</OpenMP>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <Lib />
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OptimizeReferences>true</OptimizeReferences>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
-    </Link>
-    <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
-    </Lib>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <OpenMP>GenerateParallelCode</OpenMP>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OptimizeReferences>true</OptimizeReferences>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
-    </Link>
-    <Lib />
-  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="adaptive_moment_estimation.h" />
+    <ClInclude Include="addition_layer.h" />
+    <ClInclude Include="auto_association_data_set.h" />
+    <ClInclude Include="auto_associative_neural_network.h" />
+    <ClInclude Include="bounding_box.h" />
+    <ClInclude Include="bounding_box_regressor_layer.h" />
+    <ClInclude Include="bounding_layer.h" />
+    <ClInclude Include="box_plot.h" />
+    <ClInclude Include="codification.h" />
+    <ClInclude Include="concatenation_layer.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="conjugate_gradient.h" />
+    <ClInclude Include="convolutional_layer.h" />
+    <ClInclude Include="correlation.h" />
+    <ClInclude Include="correlations.h" />
+    <ClInclude Include="cross_entropy_error.h" />
+    <ClInclude Include="cross_entropy_error_3d.h" />
+    <ClInclude Include="data_set.h" />
+    <ClInclude Include="data_set_batch.h" />
+    <ClInclude Include="descriptives.h" />
+    <ClInclude Include="embedding_layer.h" />
+    <ClInclude Include="flatten_layer.h" />
+    <ClInclude Include="genetic_algorithm.h" />
+    <ClInclude Include="gradient_descent.h" />
+    <ClInclude Include="growing_inputs.h" />
+    <ClInclude Include="growing_neurons.h" />
+    <ClInclude Include="histogram.h" />
+    <ClInclude Include="image_data_set.h" />
+    <ClInclude Include="inputs_selection.h" />
+    <ClInclude Include="kmeans.h" />
+    <ClInclude Include="language_data_set.h" />
+    <ClInclude Include="layer.h" />
+    <ClInclude Include="layer_back_propagation.h" />
+    <ClInclude Include="layer_back_propagation_lm.h" />
+    <ClInclude Include="layer_forward_propagation.h" />
+    <ClInclude Include="learning_rate_algorithm.h" />
+    <ClInclude Include="levenberg_marquardt_algorithm.h" />
+    <ClInclude Include="long_short_term_memory_layer.h" />
+    <ClInclude Include="loss_index.h" />
+    <ClInclude Include="loss_index_back_propagation.h" />
+    <ClInclude Include="loss_index_forward_propagation.h" />
+    <ClInclude Include="mean_squared_error.h" />
+    <ClInclude Include="minkowski_error.h" />
+    <ClInclude Include="model_selection.h" />
+    <ClInclude Include="multihead_attention_layer.h" />
+    <ClInclude Include="neural_network.h" />
+    <ClInclude Include="neural_network_back_propagation.h" />
+    <ClInclude Include="neural_network_back_propagation_lm.h" />
+    <ClInclude Include="neural_network_forward_propagation.h" />
+    <ClInclude Include="neurons_selection.h" />
+    <ClInclude Include="non_max_suppression_layer.h" />
+    <ClInclude Include="normalized_squared_error.h" />
+    <ClInclude Include="numerical_differentiation.h" />
+    <ClInclude Include="opennn.h" />
+    <ClInclude Include="opennn_images.h" />
+    <ClInclude Include="opennn_strings.h" />
+    <ClInclude Include="optimization_algorithm.h" />
+    <ClInclude Include="perceptron_layer.h" />
+    <ClInclude Include="perceptron_layer_3d.h" />
+    <ClInclude Include="pooling_layer.h" />
+    <ClInclude Include="probabilistic_layer.h" />
+    <ClInclude Include="probabilistic_layer_3d.h" />
+    <ClInclude Include="quasi_newton_method.h" />
+    <ClInclude Include="recurrent_layer.h" />
+    <ClInclude Include="region_based_object_detector.h" />
+    <ClInclude Include="resnet50.h" />
+    <ClInclude Include="response_optimization.h" />
+    <ClInclude Include="scaling.h" />
+    <ClInclude Include="scaling_layer_2d.h" />
+    <ClInclude Include="scaling_layer_4d.h" />
+    <ClInclude Include="statistics.h" />
+    <ClInclude Include="stochastic_gradient_descent.h" />
+    <ClInclude Include="sum_squared_error.h" />
+    <ClInclude Include="tensor_utilities.h" />
+    <ClInclude Include="testing_analysis.h" />
+    <ClInclude Include="text_analytics.h" />
+    <ClInclude Include="text_data_set.h" />
+    <ClInclude Include="time_series_data_set.h" />
+    <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="training_strategy.h" />
+    <ClInclude Include="transformer.h" />
+    <ClInclude Include="unit_testing.h" />
+    <ClInclude Include="unscaling_layer.h" />
+    <ClInclude Include="unscaling_layer_forward_propagation.h" />
+    <ClInclude Include="vgg16.h" />
+    <ClInclude Include="weighted_squared_error.h" />
+    <ClInclude Include="word_bag.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <Import Project="$(QtMsBuild)\qt.targets" Condition="Exists('$(QtMsBuild)\qt.targets')" />
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -188,7 +188,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     Tensor<string,1> original_input_columns_names = data_set_pointer->get_input_columns_names();
 
-    const Tensor<type, 2> correlations = get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations());
+    const Tensor<type, 2> correlations = Tensor<type, 2>()/*get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations())*/;
 
     const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
 
@@ -422,7 +422,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     if(neural_network_pointer->has_scaling_layer())
-        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+        neural_network_pointer->get_scaling_layer_2d_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
     neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
