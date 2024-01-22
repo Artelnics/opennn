@@ -409,9 +409,6 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     const Index next_kernel_cols_number = next_layer->get_kernels_columns_number();
     const Index next_kernel_channels_numer = next_layer->get_kernels_channels_number();
 
-    const Index rows_padding = (current_delta_rows_number - next_delta_rows_number + next_kernel_rows_number - 1) / 2;
-    const Index cols_padding = (current_delta_cols_number - next_delta_cols_number + next_kernel_cols_number - 1) / 2;
-
     const Index next_delta_with_zeros_padded_rows_number = current_delta_rows_number + next_kernel_rows_number - 1;
     const Index next_delta_with_zeros_padded_cols_number = current_delta_cols_number + next_kernel_cols_number - 1;
 
@@ -427,12 +424,12 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     
     Eigen::array<Index, 4> offsets{};
     offsets.fill(0);
-    offsets[Convolutional4dDimensions::row_index] = rows_padding;
-    offsets[Convolutional4dDimensions::column_index] = cols_padding;
+    offsets[Convolutional4dDimensions::row_index] = next_kernel_rows_number - 1;
+    offsets[Convolutional4dDimensions::column_index] = next_kernel_cols_number - 1;
 
     Eigen::array<Index, 4> extends{};
-    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - 2 * rows_padding;
-    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - 2 * cols_padding;
+    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - next_kernel_rows_number;
+    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - next_kernel_cols_number;
     extends[Convolutional4dDimensions::channel_index] = next_delta_channels_number;
     extends[Convolutional4dDimensions::sample_index] = images_number;
 
@@ -477,6 +474,10 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
         size_of_slicing[Convolutional4dDimensions::row_index] = current_delta_rows_number;
         size_of_slicing[Convolutional4dDimensions::column_index] = current_delta_cols_number;
         size_of_slicing[Convolutional4dDimensions::sample_index] = images_number;
+
+        const Eigen::array<Index, 3> conv_dim{Convolutional4dDimensions::channel_index,
+                    Convolutional4dDimensions::column_index, 
+                    Convolutional4dDimensions::row_index};
         
 
         current_delta.slice(start_for_slicing, size_of_slicing).device(*thread_pool_device) = perform_convolution(
@@ -484,10 +485,7 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
                 first_and_other_kernel_combined, 
                 1,
                 1,
-                Eigen::array{
-                    Convolutional4dDimensions::channel_index,
-                    Convolutional4dDimensions::column_index, 
-                    Convolutional4dDimensions::row_index});
+                conv_dim);
     }
 }
 

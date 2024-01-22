@@ -439,9 +439,6 @@ void PoolingLayer::calculate_hidden_delta_average_pooling(
     const Index next_pool_cols_number = next_pooling_layer->get_pool_columns_number();
     const Index next_pool_rows_number = next_pooling_layer->get_pool_rows_number();
 
-    const Index rows_padding = (current_delta_rows_number - next_delta_rows_number + next_pool_rows_number - 1) / 2;
-    const Index cols_padding = (current_delta_cols_number - next_delta_cols_number + next_pool_cols_number - 1) / 2;
-
     const Index next_delta_with_zeros_padded_rows_number = current_delta_rows_number + next_pool_rows_number - 1;
     const Index next_delta_with_zeros_padded_cols_number = current_delta_cols_number + next_pool_cols_number - 1;
 
@@ -457,12 +454,12 @@ void PoolingLayer::calculate_hidden_delta_average_pooling(
 
     Eigen::array<Index, 4> offsets{};
     offsets.fill(0);
-    offsets[Convolutional4dDimensions::row_index] = rows_padding;
-    offsets[Convolutional4dDimensions::column_index] = cols_padding;
+    offsets[Convolutional4dDimensions::row_index] = next_pool_rows_number - 1;
+    offsets[Convolutional4dDimensions::column_index] = next_pool_cols_number - 1;
 
     Eigen::array<Index, 4> extends{};
-    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - 2 * rows_padding;
-    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - 2 * cols_padding;
+    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - next_pool_rows_number;
+    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - next_pool_cols_number;
     extends[Convolutional4dDimensions::channel_index] = channels_number;
     extends[Convolutional4dDimensions::sample_index] = images_number;
 
