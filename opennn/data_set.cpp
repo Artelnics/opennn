@@ -14722,63 +14722,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
-    const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-
-    if(input_variables_dimensions.size() == 1)
-    {
-        fill_submatrix(data, samples, inputs, inputs_data.get());
-    }
-    else if(input_variables_dimensions.size() == 3)
-    {
-        const Index rows_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index channels_number = input_variables_dimensions(2);
-//        const Index columns_number = input_variables_dimensions(1);
-//        const Index rows_number = input_variables_dimensions(2);
-
-
-        TensorMap<Tensor<type, 4>> inputs(inputs_data.get(), rows_number, columns_number, channels_number, batch_size);
-
-        Index index = 0;
-
-        /*for(Index image = 0; image < batch_size; image++)
-        {
-            index = 0;
-
-            for(Index row = 0; row < rows_number; row++)
-            {
-                for(Index col = 0; col < columns_number; col++)
-                {
-                    for(Index channel = 0; channel < channels_number; channel++)
-                    {
-                        inputs(row, col, channel, image) = data(image, index);
-                        index++;
-                    }
-                }
-            }
-        }*/
-        const Eigen::array<Index, 1> offset{0};
-        const Eigen::array<Index, 1> extend{rows_number * columns_number * channels_number};
-        
-        #pragma omp parallel for
-        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            const Tensor<type, 1> image = data.chip(samples(sample_index), 0).slice(offset, extend);
-            index = 0;
-
-            for (Index row = 0; row < rows_number; row++)
-            {
-                for(Index col = 0; col < columns_number; col++)
-                {
-                    for (Index channel = 0; channel < channels_number; channel++)
-                    {
-                        inputs(row, col, channel, sample_index) = image(index);
-                        index++;
-                    }
-                }
-            }
-        }
-    }
+    fill_submatrix(data, samples, inputs, inputs_data.get());
 
     fill_submatrix(data, samples, targets, targets_data);
 
@@ -14816,12 +14760,15 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     }
     else if(input_variables_dimensions.size() == 3)
     {
-        const Index rows_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index channels_number = input_variables_dimensions(2);
+        const Index rows_number = input_variables_dimensions[Convolutional4dDimensions::row_index - 1];
+        const Index columns_number = input_variables_dimensions[Convolutional4dDimensions::column_index - 1];
+        const Index channels_number = input_variables_dimensions[Convolutional4dDimensions::channel_index - 1];
 
         inputs_dimensions.resize(4);
-        inputs_dimensions.setValues({rows_number, columns_number, channels_number,batch_size});
+        inputs_dimensions[Convolutional4dDimensions::channel_index] = channels_number;
+        inputs_dimensions[Convolutional4dDimensions::row_index] = rows_number;
+        inputs_dimensions[Convolutional4dDimensions::column_index] = columns_number;
+        inputs_dimensions[Convolutional4dDimensions::sample_index] = batch_size;
 
         //delete inputs_data;
 //        inputs_data = (type*)malloc(static_cast<size_t>(rows_number*columns_number*channels_number*batch_size*sizeof(type)));

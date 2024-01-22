@@ -1892,27 +1892,31 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(type* inputs_data, Tensor<Index
 {
     const Index inputs_rank = inputs_dimensions.size();
     DataSetBatch data_set_batch;
-    const Index batch_size = inputs_rank == 2 ? inputs_dimensions(0) : inputs_dimensions(3);
+    const Index batch_size = inputs_dimensions[0];
 
     if(inputs_rank == 2)
     {
-
         Tensor<type, 2> inputs = TensorMap<Tensor<type, 2>>(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+
 
         data_set_batch.set_inputs(inputs);
     }
     else if(inputs_rank == 4)
     {
-        const Index row_numbers = inputs_dimensions(0);
-        const Index column_numbers = inputs_dimensions(1);
-        const Index channels_numbers = inputs_dimensions(2);
+        const Index row_numbers = inputs_dimensions[Convolutional4dDimensions::row_index];
+        const Index column_numbers = inputs_dimensions[Convolutional4dDimensions::column_index];
+        const Index channels_numbers = inputs_dimensions[Convolutional4dDimensions::channel_index];
 
         Tensor<type, 4> inputs = TensorMap<Tensor<type, 4>>(
             inputs_data, 
-            row_numbers, 
-            column_numbers, 
-            channels_numbers, 
-            batch_size);
+            [&](){
+                DSizes<Index, 4> dim{};
+                dim[Convolutional4dDimensions::row_index] = row_numbers;
+                dim[Convolutional4dDimensions::column_index] = column_numbers;
+                dim[Convolutional4dDimensions::channel_index] = channels_numbers;
+                dim[Convolutional4dDimensions::sample_index] = batch_size;
+                return dim;
+            }());
         
         data_set_batch.set_inputs(inputs);
     }

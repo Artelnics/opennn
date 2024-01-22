@@ -1301,60 +1301,12 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
 #endif
 
-    Tensor<type, 2> inputs_2d = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> testing_inputs_data = data_set_pointer->get_testing_input_data();
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> inputs_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
     const Index inputs_variables_dimensions_rank = inputs_variables_dimensions.size();
-
-    if(inputs_variables_dimensions_rank == 1)
-    {
-        Tensor<Index, 1> inputs_dimensions(2);
-        inputs_dimensions.setValues({
-            testing_samples_number,
-            inputs_variables_dimensions(0)
-        });
-        outputs = neural_network_pointer->calculate_outputs(inputs_2d.data(), inputs_dimensions);
-
-    }
-    else if(inputs_variables_dimensions_rank == 3)
-    {
-        const Index rows_number = inputs_variables_dimensions(0);
-        const Index columns_number = inputs_variables_dimensions(1);
-        const Index channels_number = inputs_variables_dimensions(2);
-        Tensor<Index, 1> inputs_dimensions(4);
-        inputs_dimensions.setValues({
-            rows_number,
-            columns_number,
-            channels_number,
-            testing_samples_number
-        });
-        Tensor<type, 4> inputs_4d(
-            rows_number,
-            columns_number,
-            channels_number,
-            testing_samples_number);
-
-        #pragma omp parallel for
-        for(Index image_index = 0; image_index < testing_samples_number; image_index++)
-        {
-            Tensor<type, 1> input_1d = inputs_2d.chip(image_index, 0);
-            auto input_3d = inputs_4d.chip(image_index, 3);
-            Index variable_counter = 0;
-            for(Index row_index = 0; row_index < rows_number; row_index++)
-            {
-                for(Index column_index = 0; column_index < columns_number; column_index++)
-                {
-                    for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-                    {
-                        inputs_4d(row_index, column_index, channel_index, image_index) = input_1d(variable_counter++);
-                    }
-                }
-            }
-        }
-        outputs = neural_network_pointer->calculate_outputs(inputs_4d.data(), inputs_dimensions);
-    }
-    else 
+    if(inputs_variables_dimensions_rank != 1 && inputs_variables_dimensions_rank != 3)
     {
         ostringstream buffer;
 
@@ -1364,6 +1316,17 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
         throw invalid_argument(buffer.str());
     }
+    Tensor<Index, 1> inputs_dimensions([&](){
+        Tensor<Index, 1> inputs_dimensions(inputs_variables_dimensions_rank + 1);
+        inputs_dimensions[Convolutional4dDimensions::sample_index] = testing_samples_number;
+        copy(
+            inputs_variables_dimensions.data(), 
+            inputs_variables_dimensions.data() + inputs_variables_dimensions_rank, 
+            inputs_dimensions.data() + 1);
+        return inputs_dimensions;
+    }());
+    outputs = neural_network_pointer->calculate_outputs(testing_inputs_data.data(), inputs_dimensions);
+    
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
@@ -1766,71 +1729,33 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     }
 
 #endif
-    Tensor<type, 2> inputs_2d = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> testing_inputs_data = data_set_pointer->get_testing_input_data();
     Tensor<type, 2> outputs;
 
     Tensor<Index, 1> inputs_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
     const Index inputs_variables_dimensions_rank = inputs_variables_dimensions.size();
-
-    if(inputs_variables_dimensions_rank == 1)
-    {
-        Tensor<Index, 1> inputs_dimensions(2);
-        inputs_dimensions.setValues({
-            testing_samples_number,
-            inputs_variables_dimensions(0)
-        });
-        outputs = neural_network_pointer->calculate_outputs(inputs_2d.data(), inputs_dimensions);
-
-    }
-    else if(inputs_variables_dimensions_rank == 3)
-    {
-        const Index rows_number = inputs_variables_dimensions(0);
-        const Index columns_number = inputs_variables_dimensions(1);
-        const Index channels_number = inputs_variables_dimensions(2);
-        Tensor<Index, 1> inputs_dimensions(4);
-        inputs_dimensions.setValues({
-            rows_number,
-            columns_number,
-            channels_number,
-            testing_samples_number
-        });
-        Tensor<type, 4> inputs_4d(
-            rows_number,
-            columns_number,
-            channels_number,
-            testing_samples_number);
-
-        #pragma omp parallel for
-        for(Index image_index = 0; image_index < testing_samples_number; image_index++)
-        {
-            Tensor<type, 1> input_1d = inputs_2d.chip(image_index, 0);
-            auto input_3d = inputs_4d.chip(image_index, 3);
-            Index variable_counter = 0;
-            for(Index row_index = 0; row_index < rows_number; row_index++)
-            {
-                for(Index column_index = 0; column_index < columns_number; column_index++)
-                {
-                    for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-                    {
-                        inputs_4d(row_index, column_index, channel_index, image_index) = input_1d(variable_counter++);
-                    }
-                }
-            }
-        }
-        outputs = neural_network_pointer->calculate_outputs(inputs_4d.data(), inputs_dimensions);
-    }
-    else 
+    if(inputs_variables_dimensions_rank != 1 && inputs_variables_dimensions_rank != 3)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<type, 1> calculate_confusion() const.\n"
+               << "Tensor<type, 1> calculate_multiple_classification_testing_errors() const.\n"
                << "Input variable dimension has to be 1 or 3.\n";
 
         throw invalid_argument(buffer.str());
     }
+    Tensor<Index, 1> inputs_dimensions([&](){
+        Tensor<Index, 1> inputs_dimensions(inputs_variables_dimensions_rank + 1);
+        inputs_dimensions[Convolutional4dDimensions::sample_index] = testing_samples_number;
+        copy(
+            inputs_variables_dimensions.data(), 
+            inputs_variables_dimensions.data() + inputs_variables_dimensions_rank, 
+            inputs_dimensions.data() + 1);
+        return inputs_dimensions;
+    }());
 
-
+    outputs = neural_network_pointer->calculate_outputs(testing_inputs_data.data(), inputs_dimensions);
+    
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     if(outputs_number == 1)
