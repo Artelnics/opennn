@@ -52,12 +52,11 @@ void FlattenPerceptronLayerTest::test_flatten_perceptron_forward_propagate()
     const Index numb_of_input_images = 2;
 
     Tensor<Index, 1> flatten_input_dimension(4);
-    flatten_input_dimension.setValues({
-        numb_of_input_rows,
-        numb_of_input_cols,
-        numb_of_input_chs,
-        numb_of_input_images
-    });
+
+    flatten_input_dimension[Convolutional4dDimensions::row_index] = numb_of_input_rows;
+    flatten_input_dimension[Convolutional4dDimensions::column_index] = numb_of_input_cols;
+    flatten_input_dimension[Convolutional4dDimensions::channel_index] = numb_of_input_chs;
+    flatten_input_dimension[Convolutional4dDimensions::sample_index] = numb_of_input_images;
 
     FlattenLayer flatten_layer(flatten_input_dimension);
 
@@ -75,13 +74,20 @@ void FlattenPerceptronLayerTest::test_flatten_perceptron_forward_propagate()
     Tensor<type, 4> flatten_layer_input(t1d2array<4>(flatten_input_dimension));
     //image 1
     flatten_layer_input(0, 0, 0, 0) = type(1);
-    flatten_layer_input(0, 0, 1, 0) = type(2);
-    flatten_layer_input(0, 1, 0, 0) = type(3);
+    flatten_layer_input(0, 1, 0, 0) = type(2);
+    flatten_layer_input(0, 0, 1, 0) = type(3);
     flatten_layer_input(0, 1, 1, 0) = type(4);
-    flatten_layer_input.chip(0, 3).chip(1, 0) = flatten_layer_input.chip(0, 3).chip(0, 0) + type(4);
+    flatten_layer_input.chip(0, Convolutional4dDimensions::sample_index).
+        chip(1, Convolutional4dDimensions::row_index - 1) = 
+        flatten_layer_input.chip(0, Convolutional4dDimensions::sample_index).
+        chip(0, Convolutional4dDimensions::row_index - 1) + type(4);
     //image 2
-    flatten_layer_input.chip(1, 3).chip(0, 0) = flatten_layer_input.chip(0, 3).chip(1, 0) + type(4);
-    flatten_layer_input.chip(1, 3).chip(1, 0) = flatten_layer_input.chip(1, 3).chip(0, 0) + type(4);
+    flatten_layer_input.chip(1, Convolutional4dDimensions::sample_index).
+        chip(0, Convolutional4dDimensions::row_index - 1) = 
+        flatten_layer_input.chip(0, Convolutional4dDimensions::sample_index).chip(1, Convolutional4dDimensions::row_index - 1) + type(4);
+    flatten_layer_input.chip(1, Convolutional4dDimensions::sample_index).
+        chip(1, Convolutional4dDimensions::row_index - 1) = 
+        flatten_layer_input.chip(1, Convolutional4dDimensions::sample_index).chip(0, Convolutional4dDimensions::row_index - 1) + type(4);
 
     FlattenLayerForwardPropagation flatten_layer_forward_propagation(numb_of_input_images, &flatten_layer);
     flatten_layer.forward_propagate(
@@ -131,12 +137,11 @@ void FlattenPerceptronLayerTest::test_flatten_perceptron_backward_pass()
     const Index numb_of_input_images = 3;
 
     Tensor<Index, 1> flatten_input_dimension(4);
-    flatten_input_dimension.setValues({
-        numb_of_input_rows,
-        numb_of_input_cols,
-        numb_of_input_chs,
-        numb_of_input_images
-    });
+    flatten_input_dimension[Convolutional4dDimensions::row_index] = numb_of_input_rows;
+    flatten_input_dimension[Convolutional4dDimensions::column_index] = numb_of_input_cols;
+    flatten_input_dimension[Convolutional4dDimensions::channel_index] = numb_of_input_chs;
+    flatten_input_dimension[Convolutional4dDimensions::sample_index] = numb_of_input_images;
+
 
     
     FlattenLayer flatten_layer(flatten_input_dimension);

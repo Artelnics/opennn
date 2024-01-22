@@ -54,7 +54,9 @@ void FlattenLayer::set_name(const string& new_layer_name)
 //Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 Index FlattenLayer::get_outputs_number() const
 {
-    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+    return  input_variables_dimensions(Convolutional4dDimensions::channel_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::column_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::row_index);
 }
 
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
@@ -79,25 +81,25 @@ Index FlattenLayer::get_inputs_number() const
 
 Index FlattenLayer::get_input_height() const
 {
-    return input_variables_dimensions(0);
+    return input_variables_dimensions(Convolutional4dDimensions::row_index);
 }
 
 
 Index FlattenLayer::get_input_width() const
 {
-    return input_variables_dimensions(1);
+    return input_variables_dimensions(Convolutional4dDimensions::column_index);
 }
 
 
 Index FlattenLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions(2);
+    return input_variables_dimensions(Convolutional4dDimensions::channel_index);
 }
 
 
 Index FlattenLayer::get_inputs_batch_number() const
 {
-    return input_variables_dimensions(3);
+    return input_variables_dimensions(Convolutional4dDimensions::sample_index);
 }
 
 
@@ -105,7 +107,9 @@ Index FlattenLayer::get_inputs_batch_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+    return  input_variables_dimensions(Convolutional4dDimensions::row_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::channel_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::column_index);
 }
 
 
@@ -151,33 +155,28 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    const Index rows_number = inputs_dimensions(0);
-    const Index columns_number = inputs_dimensions(1);
-    const Index channels_number = inputs_dimensions(2);
-    const Index batch_size = inputs_dimensions(3);
+    const Index rows_number = inputs_dimensions[Convolutional4dDimensions::row_index];
+    const Index columns_number = inputs_dimensions[Convolutional4dDimensions::column_index];
+    const Index channels_number = inputs_dimensions[Convolutional4dDimensions::channel_index];
+    const Index batch_size = inputs_dimensions[Convolutional4dDimensions::sample_index];
     const Index variable_size = rows_number * columns_number * channels_number;
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_data, rows_number,columns_number, channels_number, batch_size);
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, [&](){
+        DSizes<Index, 4> dim{};
+        dim[Convolutional4dDimensions::channel_index] = channels_number;
+        dim[Convolutional4dDimensions::row_index] = rows_number;
+        dim[Convolutional4dDimensions::column_index] = columns_number;
+        dim[Convolutional4dDimensions::sample_index] = batch_size;
+        return dim;
+    }());
+
 
     const Index output_batch_numbers = outputs_dimensions(0);
     const Index variable_size_numbers = outputs_dimensions(1);
     TensorMap<Tensor<type, 2>> outputs(outputs_data, output_batch_numbers, variable_size_numbers);
 
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < batch_size; image_index++)
-    {
-        Index variable_counter = 0;
-        for(Index row_index = 0; row_index < rows_number; row_index++)
-        {
-            for(Index column_index = 0; column_index < columns_number; column_index++)
-            {
-                for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-                {
-                    outputs(image_index, variable_counter++) = inputs(row_index, column_index, channel_index, image_index);
-                }
-            }
-        }
-    }
+    outputs.device(*thread_pool_device) = inputs.reshape(outputs.dimensions());
 }
 
 
@@ -240,33 +239,22 @@ void FlattenLayer::calculate_hidden_delta(
         images_number, 
         next_delta_pixel_numbers);
 
-    const Index delta_row_numbers = back_propagation->deltas_dimensions(0);
-    const Index delta_column_numbers = back_propagation->deltas_dimensions(1);
-    const Index delta_channel_numbers = back_propagation->deltas_dimensions(2);
+    const Index delta_row_numbers = back_propagation->deltas_dimensions(Convolutional4dDimensions::row_index);
+    const Index delta_column_numbers = back_propagation->deltas_dimensions(Convolutional4dDimensions::column_index);
+    const Index delta_channel_numbers = back_propagation->deltas_dimensions(Convolutional4dDimensions::channel_index);
 
     TensorMap<Tensor<type, 4>> delta(
         back_propagation->deltas_data,
-        delta_row_numbers,
-        delta_column_numbers,
-        delta_channel_numbers,
-        images_number);
+        [&](){
+            DSizes<Index, 4> dim{};
+            dim[Convolutional4dDimensions::row_index] = delta_row_numbers;
+            dim[Convolutional4dDimensions::column_index] = delta_column_numbers;
+            dim[Convolutional4dDimensions::channel_index] = delta_channel_numbers;
+            dim[Convolutional4dDimensions::sample_index] = images_number;
+            return dim;
+        }());
 
-    #pragma omp parallel for
-    for(Index image_index = 0; image_index < images_number; image_index++)
-    {
-        Tensor<type, 1> next_delta_1d = next_delta.chip(image_index, 0);
-        Index variable_counter = 0;
-        for(Index row_index = 0; row_index < delta_row_numbers; row_index++)
-        {
-            for(Index column_index = 0; column_index < delta_column_numbers; column_index++)
-            {
-                for(Index channel_index = 0; channel_index < delta_channel_numbers; channel_index++)
-                {
-                    delta(row_index, column_index, channel_index, image_index) = next_delta_1d(variable_counter++);
-                }
-            }
-        }
-    }
+    delta.device(*thread_pool_device) = next_delta.reshape(delta.dimensions());
 }
 void FlattenLayer::calculate_hidden_delta(
     LayerForwardPropagation* next_layer_forwardpropagation,

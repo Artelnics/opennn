@@ -49,13 +49,12 @@ void FlattenLayerTest::test_constructor()
     const Index channel_inputs_number = 2;
     const Index image_inputs_number = 2;
 
+
     Tensor<Index, 1> input_dimension(4);
-    input_dimension.setValues({
-        row_inputs_number,
-        column_inputs_number,
-        channel_inputs_number,
-        image_inputs_number
-    });
+    input_dimension[Convolutional4dDimensions::channel_index] = channel_inputs_number;
+    input_dimension[Convolutional4dDimensions::row_index] = row_inputs_number;
+    input_dimension[Convolutional4dDimensions::column_index] = column_inputs_number;
+    input_dimension[Convolutional4dDimensions::sample_index] = image_inputs_number;
 
     FlattenLayer flatten_layer(input_dimension);
 
@@ -86,12 +85,10 @@ void FlattenLayerTest::test_output_dimension()
     const Index image_inputs_number = 2;
 
     Tensor<Index, 1> input_dimension(4);
-    input_dimension.setValues({
-        row_inputs_number,
-        column_inputs_number,
-        channel_inputs_number,
-        image_inputs_number
-    });
+    input_dimension[Convolutional4dDimensions::channel_index] = channel_inputs_number;
+    input_dimension[Convolutional4dDimensions::row_index] = row_inputs_number;
+    input_dimension[Convolutional4dDimensions::column_index] = column_inputs_number;
+    input_dimension[Convolutional4dDimensions::sample_index] = image_inputs_number;
 
     FlattenLayer flatten_layer(input_dimension);
     const Tensor<Index, 1> output_dimension = flatten_layer.get_outputs_dimensions();
@@ -113,32 +110,30 @@ void FlattenLayerTest::test_calculate_outputs()
     const Index image_inputs_number = 2;
 
     Tensor<Index, 1> input_dimension(4);
-    input_dimension.setValues({
-        row_inputs_number,
-        column_inputs_number,
-        channel_inputs_number,
-        image_inputs_number
-    });
+    input_dimension[Convolutional4dDimensions::channel_index] = channel_inputs_number;
+    input_dimension[Convolutional4dDimensions::row_index] = row_inputs_number;
+    input_dimension[Convolutional4dDimensions::column_index] = column_inputs_number;
+    input_dimension[Convolutional4dDimensions::sample_index] = image_inputs_number;
 
     FlattenLayer flatten_layer(input_dimension);
 
     Tensor<type, 4> inputs(t1d2array<4>(input_dimension));
     inputs(0, 0, 0, 0) = type(1);
-    inputs(0, 0, 1, 0) = type(2);
-    inputs(0, 1, 0, 0) = type(3);
+    inputs(0, 1, 0, 0) = type(2);
+    inputs(0, 0, 1, 0) = type(3);
     inputs(0, 1, 1, 0) = type(4);
-    inputs(1, 0, 0, 0) = type(5);
-    inputs(1, 0, 1, 0) = type(6);
-    inputs(1, 1, 0, 0) = type(7);
-    inputs(1, 1, 1, 0) = type(8);
+    inputs(0, 0, 0, 1) = type(5);
+    inputs(0, 1, 0, 1) = type(6);
+    inputs(0, 0, 1, 1) = type(7);
+    inputs(0, 1, 1, 1) = type(8);
     
-    inputs(0, 0, 0, 1) = type(9);
-    inputs(0, 0, 1, 1) = type(10);
-    inputs(0, 1, 0, 1) = type(11);
-    inputs(0, 1, 1, 1) = type(12);
+    inputs(1, 0, 0, 0) = type(9);
+    inputs(1, 1, 0, 0) = type(10);
+    inputs(1, 0, 1, 0) = type(11);
+    inputs(1, 1, 1, 0) = type(12);
     inputs(1, 0, 0, 1) = type(13);
-    inputs(1, 0, 1, 1) = type(14);
-    inputs(1, 1, 0, 1) = type(15);
+    inputs(1, 1, 0, 1) = type(14);
+    inputs(1, 0, 1, 1) = type(15);
     inputs(1, 1, 1, 1) = type(16);
 
     Tensor<Index, 1> output_dimension(2);
@@ -190,38 +185,39 @@ void FlattenLayerTest::test_forward_propagate()
     const Index pixels_number = image_height * image_width * image_channels_number;
     bool switch_train = true;
 
-    Tensor<type, 4> inputs(image_height, image_width, image_channels_number, images_number);
-    inputs(0, 0, 0, 0) = type(1);
-    inputs(0, 0, 1, 0) = type(2);
-    inputs(0, 1, 0, 0) = type(3);
-    inputs(0, 1, 1, 0) = type(4);
-    inputs(1, 0, 0, 0) = type(5);
-    inputs(1, 0, 1, 0) = type(6);
-    inputs(1, 1, 0, 0) = type(7);
-    inputs(1, 1, 1, 0) = type(8);
+    Tensor<Index, 1> input_dimension(4);
+    input_dimension[Convolutional4dDimensions::channel_index] = image_channels_number;
+    input_dimension[Convolutional4dDimensions::row_index] = image_height;
+    input_dimension[Convolutional4dDimensions::column_index] = image_width;
+    input_dimension[Convolutional4dDimensions::sample_index] = images_number;
+    
 
-    inputs(0, 0, 0, 1) = type(9);
-    inputs(0, 0, 1, 1) = type(10);
-    inputs(0, 1, 0, 1) = type(11);
-    inputs(0, 1, 1, 1) = type(12);
+    Tensor<type, 4> inputs(t1d2array<4>(input_dimension));
+    inputs(0, 0, 0, 0) = type(1);
+    inputs(0, 1, 0, 0) = type(2);
+    inputs(0, 0, 1, 0) = type(3);
+    inputs(0, 1, 1, 0) = type(4);
+    inputs(0, 0, 0, 1) = type(5);
+    inputs(0, 1, 0, 1) = type(6);
+    inputs(0, 0, 1, 1) = type(7);
+    inputs(0, 1, 1, 1) = type(8);
+    
+    inputs(1, 0, 0, 0) = type(9);
+    inputs(1, 1, 0, 0) = type(10);
+    inputs(1, 0, 1, 0) = type(11);
+    inputs(1, 1, 1, 0) = type(12);
     inputs(1, 0, 0, 1) = type(13);
-    inputs(1, 0, 1, 1) = type(14);
-    inputs(1, 1, 0, 1) = type(15);
+    inputs(1, 1, 0, 1) = type(14);
+    inputs(1, 0, 1, 1) = type(15);
     inputs(1, 1, 1, 1) = type(16);
 
-    Tensor<Index, 1> inputs_dimensions(4);
-    inputs_dimensions(0) = image_height;
-    inputs_dimensions(1) = image_width;
-    inputs_dimensions(2) = image_channels_number;
-    inputs_dimensions(3) = images_number;
-
-    FlattenLayer flatten_layer(inputs_dimensions);
+    FlattenLayer flatten_layer(input_dimension);
 
     Tensor<type, 2> outputs;
 
     FlattenLayerForwardPropagation flatten_layer_forward_propagation(images_number, &flatten_layer);
 
-    flatten_layer.forward_propagate(inputs.data(), inputs_dimensions, &flatten_layer_forward_propagation, switch_train);
+    flatten_layer.forward_propagate(inputs.data(), input_dimension, &flatten_layer_forward_propagation, switch_train);
 
     outputs = TensorMap<Tensor<type, 2>>(flatten_layer_forward_propagation.outputs_data,
                                          flatten_layer_forward_propagation.outputs_dimensions(0),
@@ -266,22 +262,20 @@ void FlattenLayerTest::test_calculate_hidden_delta()
         channel_inputs_number;
 
     Tensor<Index, 1> input_dimension(4);
-    input_dimension.setValues({
-        row_inputs_number,
-        column_inputs_number,
-        channel_inputs_number,
-        image_inputs_number
-    });
+    input_dimension[Convolutional4dDimensions::channel_index] = channel_inputs_number;
+    input_dimension[Convolutional4dDimensions::row_index] = row_inputs_number;
+    input_dimension[Convolutional4dDimensions::column_index] = column_inputs_number;
+    input_dimension[Convolutional4dDimensions::sample_index] = image_inputs_number;
 
     FlattenLayer flatten_layer(input_dimension);
 
     LayerBackPropagation back_propagation;
     back_propagation.deltas_dimensions.resize(4);
-    back_propagation.deltas_dimensions.setValues({
-        row_inputs_number,
-        column_inputs_number,
-        channel_inputs_number,
-        image_inputs_number});
+    back_propagation.deltas_dimensions[Convolutional4dDimensions::channel_index] = channel_inputs_number;
+    back_propagation.deltas_dimensions[Convolutional4dDimensions::row_index] = row_inputs_number;
+    back_propagation.deltas_dimensions[Convolutional4dDimensions::column_index] = column_inputs_number;
+    back_propagation.deltas_dimensions[Convolutional4dDimensions::sample_index] = image_inputs_number;
+
     back_propagation.deltas_data = static_cast<type*>(malloc(
         row_inputs_number *
         column_inputs_number *
@@ -321,28 +315,25 @@ void FlattenLayerTest::test_calculate_hidden_delta()
         &back_propagation);
 
     Tensor<type, 4> expected_delta(
-        row_inputs_number,
-        column_inputs_number,
-        channel_inputs_number,
-        image_inputs_number
+        t1d2array<4>(input_dimension)
     );
 
     expected_delta(0, 0, 0, 0) = type(1);
-    expected_delta(0, 0, 1, 0) = type(2);
-    expected_delta(0, 1, 0, 0) = type(3);
+    expected_delta(0, 1, 0, 0) = type(2);
+    expected_delta(0, 0, 1, 0) = type(3);
     expected_delta(0, 1, 1, 0) = type(4);
-    expected_delta(1, 0, 0, 0) = type(5);
-    expected_delta(1, 0, 1, 0) = type(6);
-    expected_delta(1, 1, 0, 0) = type(7);
-    expected_delta(1, 1, 1, 0) = type(8);
+    expected_delta(0, 0, 0, 1) = type(5);
+    expected_delta(0, 1, 0, 1) = type(6);
+    expected_delta(0, 0, 1, 1) = type(7);
+    expected_delta(0, 1, 1, 1) = type(8);
     
-    expected_delta(0, 0, 0, 1) = type(9);
-    expected_delta(0, 0, 1, 1) = type(10);
-    expected_delta(0, 1, 0, 1) = type(11);
-    expected_delta(0, 1, 1, 1) = type(12);
+    expected_delta(1, 0, 0, 0) = type(9);
+    expected_delta(1, 1, 0, 0) = type(10);
+    expected_delta(1, 0, 1, 0) = type(11);
+    expected_delta(1, 1, 1, 0) = type(12);
     expected_delta(1, 0, 0, 1) = type(13);
-    expected_delta(1, 0, 1, 1) = type(14);
-    expected_delta(1, 1, 0, 1) = type(15);
+    expected_delta(1, 1, 0, 1) = type(14);
+    expected_delta(1, 0, 1, 1) = type(15);
     expected_delta(1, 1, 1, 1) = type(16);
 
     TensorMap<Tensor<type, 4>> delta(
@@ -351,10 +342,10 @@ void FlattenLayerTest::test_calculate_hidden_delta()
 
     //test
     assert_true(
-        back_propagation.deltas_dimensions(0) == row_inputs_number &&
-        back_propagation.deltas_dimensions(1) == column_inputs_number &&
-        back_propagation.deltas_dimensions(2) == channel_inputs_number &&
-        back_propagation.deltas_dimensions(3) == image_inputs_number, LOG);
+        back_propagation.deltas_dimensions(Convolutional4dDimensions::row_index) == row_inputs_number &&
+        back_propagation.deltas_dimensions(Convolutional4dDimensions::column_index) == column_inputs_number &&
+        back_propagation.deltas_dimensions(Convolutional4dDimensions::channel_index) == channel_inputs_number &&
+        back_propagation.deltas_dimensions(Convolutional4dDimensions::sample_index) == image_inputs_number, LOG);
 
     assert_true(is_equal<4>(expected_delta, delta), LOG);
 }

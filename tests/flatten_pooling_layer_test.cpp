@@ -52,12 +52,10 @@ void FlattenPoolingLayerTest::test_pooling_flatten_forward_propagate()
     const Index numb_of_input_images = 2;
 
     Tensor<Index, 1> pooling_input_dimension(4);
-    pooling_input_dimension.setValues({
-        numb_of_input_rows,
-        numb_of_input_cols,
-        numb_of_input_chs,
-        numb_of_input_images
-    });
+    pooling_input_dimension[Convolutional4dDimensions::sample_index] = numb_of_input_images;
+    pooling_input_dimension[Convolutional4dDimensions::channel_index] = numb_of_input_chs;
+    pooling_input_dimension[Convolutional4dDimensions::row_index] = numb_of_input_rows;
+    pooling_input_dimension[Convolutional4dDimensions::column_index] = numb_of_input_cols;
 
     const Index pool_row_size = 2;
     const Index pool_col_size = 2;
@@ -81,18 +79,23 @@ void FlattenPoolingLayerTest::test_pooling_flatten_forward_propagate()
     Tensor<type, 4> input(t1d2array<4>(pooling_input_dimension));
     //image 1
     input(0, 0, 0, 0) = type(1);
-    input(0, 0, 1, 0) = type(2);
-    input(0, 1, 0, 0) = type(1);
+    input(0, 1, 0, 0) = type(2);
+    input(0, 0, 1, 0) = type(1);
     input(0, 1, 1, 0) = type(2);
-    input(0, 2, 0, 0) = type(3);
-    input(0, 2, 1, 0) = type(4);
-    input(0, 3, 0, 0) = type(3);
-    input(0, 3, 1, 0) = type(4);
-    input.chip(0, 3).chip(1, 0) = input.chip(0, 3).chip(0, 0);
-    input.chip(0, 3).chip(2, 0) = input.chip(0, 3).chip(1, 0) + type(4);
-    input.chip(0, 3).chip(3, 0) = input.chip(0, 3).chip(2, 0);
+    input(0, 0, 2, 0) = type(3);
+    input(0, 1, 2, 0) = type(4);
+    input(0, 0, 3, 0) = type(3);
+    input(0, 1, 3, 0) = type(4);
+    input.chip(0, Convolutional4dDimensions::sample_index).
+        chip(1, Convolutional4dDimensions::row_index - 1) = 
+        input.chip(0, Convolutional4dDimensions::sample_index).chip(0, Convolutional4dDimensions::row_index - 1);
+    input.chip(0, Convolutional4dDimensions::sample_index).chip(2, Convolutional4dDimensions::row_index - 1) = 
+        input.chip(0, Convolutional4dDimensions::sample_index).chip(1, Convolutional4dDimensions::row_index - 1) + type(4);
+    input.chip(0, Convolutional4dDimensions::sample_index).
+        chip(3, Convolutional4dDimensions::row_index - 1) = 
+        input.chip(0, Convolutional4dDimensions::sample_index).chip(2, Convolutional4dDimensions::row_index - 1);
     //image 2
-    input.chip(1, 3) = input.chip(0, 3) + type(8);
+    input.chip(1, Convolutional4dDimensions::sample_index) = input.chip(0, Convolutional4dDimensions::sample_index) + type(8);
 
     FlattenLayerForwardPropagation flatten_layer_forward_propagation(
         numb_of_input_images, &flatten_layer);
@@ -142,12 +145,10 @@ void FlattenPoolingLayerTest::test_pooling_flatten_backward_pass()
     const Index numb_of_input_images = 2;
 
     Tensor<Index, 1> pooling_input_dimension(4);
-    pooling_input_dimension.setValues({
-        numb_of_input_rows,
-        numb_of_input_cols,
-        numb_of_input_chs,
-        numb_of_input_images
-    });
+    pooling_input_dimension[Convolutional4dDimensions::sample_index] = numb_of_input_images;
+    pooling_input_dimension[Convolutional4dDimensions::channel_index] = numb_of_input_chs;
+    pooling_input_dimension[Convolutional4dDimensions::row_index] = numb_of_input_rows;
+    pooling_input_dimension[Convolutional4dDimensions::column_index] = numb_of_input_cols;
 
     const Index pool_row_size = 2;
     const Index pool_col_size = 2;
@@ -170,7 +171,7 @@ void FlattenPoolingLayerTest::test_pooling_flatten_backward_pass()
 
     FlattenLayerForwardPropagation flatten_layer_forward_propagation(numb_of_input_images, &flatten_layer);
 
-    FlattenLayerBackPropagation flatten_layer_back_propagation(numb_of_input_images, &pooling_layer);
+    FlattenLayerBackPropagation flatten_layer_back_propagation(numb_of_input_images, &flatten_layer);
     TensorMap<Tensor<type, 2>> flatten_delta(
         flatten_layer_back_propagation.deltas_data,
         t1d2array<2>(flatten_layer_back_propagation.deltas_dimensions));
@@ -197,15 +198,15 @@ void FlattenPoolingLayerTest::test_pooling_flatten_backward_pass()
     Tensor<type, 4> expected_output(2, 2, 2, 2);
     //image 1
     expected_output(0, 0, 0, 0) = type(1);
-    expected_output(0, 0, 1, 0) = type(2);
-    expected_output(0, 1, 0, 0) = type(3);
+    expected_output(0, 1, 0, 0) = type(2);
+    expected_output(0, 0, 1, 0) = type(3);
     expected_output(0, 1, 1, 0) = type(4);
-    expected_output(1, 0, 0, 0) = type(5);
-    expected_output(1, 0, 1, 0) = type(6);
-    expected_output(1, 1, 0, 0) = type(7);
-    expected_output(1, 1, 1, 0) = type(8);
+    expected_output(0, 0, 0, 1) = type(5);
+    expected_output(0, 1, 0, 1) = type(6);
+    expected_output(0, 0, 1, 1) = type(7);
+    expected_output(0, 1, 1, 1) = type(8);
     //image 2
-    expected_output.chip(1, 3) = expected_output.chip(0, 3) + type(8);
+    expected_output.chip(1, Convolutional4dDimensions::sample_index) = expected_output.chip(0, Convolutional4dDimensions::sample_index) + type(8);
 
     TensorMap<Tensor<type, 4>> output(
         pooling_layer_back_propagation.deltas_data,
