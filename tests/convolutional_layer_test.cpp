@@ -1013,7 +1013,7 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
     const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
 
-    float* ptr_result = (float*) malloc(static_cast<size_t>(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
+    float* ptr_result = (float*) malloc(size_t(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
 
     input.setConstant(1.0);
 

@@ -17,6 +17,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
                         const Tensor<Index, 1>& targets_indices)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
+
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)
@@ -34,6 +35,8 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
                                               rows_number,
                                               columns_number,
                                               channels_number);
+
+        /// @todo index will not work. Since it is for images, it will contain all rows in the matrix.
 
         #pragma omp parallel for
 
@@ -59,6 +62,8 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
 
         if(augmentation) perform_augmentation();
     }
+
+    /// todo dimensions
 
     fill_submatrix(data, samples_indices, targets_indices, targets_data);
 }

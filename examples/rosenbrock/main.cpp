@@ -27,7 +27,7 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
         
-        srand(static_cast<unsigned>(time(nullptr)));
+//        srand(static_cast<unsigned>(time(nullptr)));
      
         // Data Set
         

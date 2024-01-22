@@ -85,9 +85,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
     Tensor<type, 0> cross_entropy_error;
 
     cross_entropy_error.device(*thread_pool_device)
-        = -(targets_map*outputs.log()).sum() - ((type(1) - targets_map)*((type(1) - outputs).log())).sum();
-
-    back_propagation.error = cross_entropy_error()/type(batch_samples_number);
+        = -(targets_map*outputs.log()).sum() - ((type(1) - targets_map)*((type(1) - outputs).log())).sum()/type(batch_samples_number);
 }
 
 

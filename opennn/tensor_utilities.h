@@ -184,7 +184,7 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 {
     Tensor<Index, 1> dimensions(n);
 
-    memcpy(dimensions.data(), tensor.dimensions().data(), static_cast<size_t>(n)*sizeof(Index));
+    memcpy(dimensions.data(), tensor.dimensions().data(), size_t(n)*sizeof(Index));
 
     return dimensions;
 }

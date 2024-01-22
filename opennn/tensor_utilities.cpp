@@ -1032,7 +1032,9 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
         type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
 
         const type* value_pointer = nullptr;
+
         const Index* rows_indices_pointer = rows_indices.data();
+
         for(Index i = 0; i < rows_number; i++)
         {
             value_pointer = matrix_column_pointer + *rows_indices_pointer;
@@ -1043,18 +1045,19 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     }
 }
 
-//void fill_submatrix(const Tensor<type, 2>& matrix,
-//    const Tensor<Index, 1>& rows_indices,
-//    const Tensor<Index, 1>& columns_indices,
-//    Tensor<type, 2>& submatrix)
-//{
-//    Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+/*
+void fill_submatrix(const Tensor<type, 2>& matrix,
+    const Tensor<Index, 1>& rows_indices,
+    const Tensor<Index, 1>& columns_indices,
+    Tensor<type, 2>& submatrix)
+{
+    const Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
 
-//    Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
+    Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
 
-//    submatrix_map = matrix_map(rows_indices, columns_indices);
-//}
-
+    submatrix_map = matrix_map(rows_indices, columns_indices);
+}
+*/
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
@@ -1110,6 +1113,7 @@ bool has_NAN(Tensor<type, 2>& x)
 
     return false;
 }
+
 
 Index count_empty_values(const Tensor<string, 1>& vector)
 {

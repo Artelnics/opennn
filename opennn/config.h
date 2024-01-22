@@ -29,6 +29,9 @@
 #include "tinyxml2.h"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
+#include <algorithm>
+#include <execution>
+
 //#pragma warning(pop)
 
 #ifdef OPENNN_CUDA
@@ -56,7 +59,10 @@ namespace opennn
 
     using type = float; //Eigen::half;
 
-    typedef vector<vector<Index>> dimensions;
+    using dimensions = vector<vector<Index>>;
+
+//    using execution_policy = execution::par;
+
 }
 
 

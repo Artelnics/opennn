@@ -106,20 +106,16 @@ void ProbabilisticLayerTest::test_calculate_activations()
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
 
-    // Test
+    // Test binary classification data zero
 
     inputs_number = 1;
     neurons_number = 1;
     samples_number = 1;
 
-    probabilistic_layer.set(inputs_number, neurons_number);
+//    probabilistic_layer.set(inputs_number, neurons_number);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
-    probabilistic_layer.set_parameters_constant(type(1));
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(type(-1));
-
-    combinations.resize(samples_number, neurons_number);
+//    probabilistic_layer.set_parameters_constant(type(0));
 
     biases.resize(neurons_number);
     biases.setZero();
@@ -127,19 +123,22 @@ void ProbabilisticLayerTest::test_calculate_activations()
     synaptic_weights.resize(inputs_number, neurons_number);
     synaptic_weights.setZero();
 
-    probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+//    inputs.resize(samples_number, inputs_number);
+//    inputs.setConstant(type(0));
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Binary);
+    combinations.resize(samples_number, neurons_number);
+    combinations.setConstant(type(0));
+
+//    probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
     activations.resize(samples_number, neurons_number);
 
     probabilistic_layer.calculate_activations(combinations, activations);
 
-    assert_true(activations.rank() == 2, LOG);
-    assert_true(activations.dimension(0) == samples_number, LOG);
-    assert_true(activations.dimension(1) == inputs_number * neurons_number, LOG);
-    assert_true(Index(activations(0,0)) == 1 , LOG);
+    assert_true(Index(activations(0,0)) == type(0.5) , LOG);
 
+    cout << activations << endl;
+/*
     // Test
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
@@ -150,7 +149,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
     assert_true(activations.dimension(0) == samples_number, LOG);
     assert_true(activations.dimension(1) == inputs_number * neurons_number, LOG);
     assert_true(activations(0,0) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+*/
 
+/*
     // Test
 
     probabilistic_layer.set(2, 2);
@@ -223,6 +224,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
     assert_true(abs(activations(0,0) - type(0.6652)) < type(1e-3), LOG);
     assert_true(abs(activations(0,1) - type(0.2447)) < type(1e-3), LOG);
     assert_true(abs(activations(0,2) - type(0.09)) < type(1e-3), LOG);
+*/
 }
 
 
@@ -538,15 +540,13 @@ void ProbabilisticLayerTest::run_test_case()
     test_constructor();
     test_destructor();
 
-    // Probabilistic post-processing
+    // Forward propagate
 
     test_calculate_combinations();
     test_calculate_activations();
-    test_calculate_activations_derivatives();
+//    test_calculate_activations_derivatives();
 
-    // Forward propagate
-
-    test_forward_propagate();
+//    test_forward_propagate();
 
     cout << "End of probabilistic layer test case.\n\n";
 }

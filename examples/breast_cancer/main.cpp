@@ -38,7 +38,8 @@ int main()
 
         const Index neurons_number = 6;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                     {input_variables_number, /*neurons_number,*/ target_variables_number});
 
         neural_network.print();
 
@@ -46,11 +47,11 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
 
         training_strategy.perform_training();
-
+/*
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -61,7 +62,7 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/breast_cancer.py");
-
+*/
         cout << "End breast cancer application" << endl;
 
         return 0;

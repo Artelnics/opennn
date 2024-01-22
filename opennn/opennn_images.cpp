@@ -105,17 +105,17 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 {
     unsigned char* aux_row = nullptr;
 
-    aux_row = (unsigned char*)malloc(static_cast<size_t>(columns_number*sizeof(unsigned char)));
+    aux_row = (unsigned char*)malloc(size_t(columns_number*sizeof(unsigned char)));
 
     const int rows_number = static_cast<int>(original.size()/columns_number);
 
     for(int i = 0; i <rows_number; i++)
     {
-        memcpy(aux_row, original.data() + columns_number*rows_number - (i+1)*columns_number , static_cast<size_t>(columns_number)*sizeof(unsigned char));
+        memcpy(aux_row, original.data() + columns_number*rows_number - (i+1)*columns_number , size_t(columns_number)*sizeof(unsigned char));
 
         //        reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
-        memcpy(sorted.data() + columns_number*i , aux_row, static_cast<size_t>(columns_number)*sizeof(unsigned char));
+        memcpy(sorted.data() + columns_number*i , aux_row, size_t(columns_number)*sizeof(unsigned char));
     }
 }
 
@@ -254,7 +254,7 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
 
     if(rows_number % 4 == 0)
     {
-        memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(columns_number*channels*rows_number)*sizeof(unsigned char));
+        memcpy(data_without_padding.data(), img.data(), size_t(columns_number*channels*rows_number)*sizeof(unsigned char));
     }
     else
     {
@@ -262,11 +262,11 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
         {
             if(i == 0)
             {
-                memcpy(data_without_padding.data(), img.data(), static_cast<size_t>(columns_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data(), img.data(), size_t(columns_number*channels)*sizeof(unsigned char));
             }
             else
             {
-                memcpy(data_without_padding.data() + channels*columns_number*i, img.data() + channels*columns_number*i + padding*i, static_cast<size_t>(columns_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data() + channels*columns_number*i, img.data() + channels*columns_number*i + padding*i, size_t(columns_number*channels)*sizeof(unsigned char));
             }
         }
     }

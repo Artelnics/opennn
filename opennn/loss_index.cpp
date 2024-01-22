@@ -472,7 +472,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    Index mem_index = 0;
+    Index memory_index = 0;
 
     Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
@@ -480,13 +480,12 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-//    type* inputs_data = batch.get_inputs()(0).data();
-
-
     // Layer 0
 
-    if(layers_pointers(first_trainable_layer_index)->get_type() != Layer::Type::Perceptron
-    && layers_pointers(first_trainable_layer_index)->get_type() != Layer::Type::Probabilistic)
+    const Layer::Type first_trainable_layer_type = layers_pointers(first_trainable_layer_index)->get_type();
+
+    if(first_trainable_layer_type != Layer::Type::Perceptron
+    && first_trainable_layer_type != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
@@ -500,17 +499,19 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
     {
         const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0],  inputs_pair.second[0][1]);
+        const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
-        layers_pointers(first_trainable_layer_index)->calculate_squared_errors_Jacobian_lm(inputs,
-                                                                           forward_propagation.layers(first_trainable_layer_index),
-                                                                           loss_index_back_propagation_lm.neural_network.layers(0));
+        layers_pointers(first_trainable_layer_index)
+            ->calculate_squared_errors_Jacobian_lm(inputs,
+                                                   forward_propagation.layers(first_trainable_layer_index),
+                                                   loss_index_back_propagation_lm.neural_network.layers(0));
 
-        layers_pointers(first_trainable_layer_index)->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(0),
-                                                                        mem_index,
-                                                                        loss_index_back_propagation_lm.squared_errors_jacobian);
+        layers_pointers(first_trainable_layer_index)
+            ->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(0),
+                                                memory_index,
+                                                loss_index_back_propagation_lm.squared_errors_jacobian);
 
-        mem_index += trainable_layers_parameters_number(0)*batch_samples_number;
+        memory_index += trainable_layers_parameters_number(0)*batch_samples_number;
     }
 
     // Rest of the layers
@@ -531,23 +532,12 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                                    loss_index_back_propagation_lm.neural_network.layers(i));
 
             trainable_layers_pointers(i)->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(i),
-                                                                            mem_index,
+                                                                            memory_index,
                                                                             loss_index_back_propagation_lm.squared_errors_jacobian);
 
-            mem_index += trainable_layers_parameters_number(i)*batch_samples_number;
+            memory_index += trainable_layers_parameters_number(i)*batch_samples_number;
         }
             break;
-
-        case Layer::Type::Probabilistic:
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: LossIndex class.\n"
-                   << "void calculate_squared_errors_jacobian_lm(const DataSetBatch&, NeuralNetworkForwardPropagation&, LossIndexBackPropagationLM&) const method "
-                   << "Probabilistic layer can only occupy the last position in the neural network. Please, check network structure.\n";
-
-            throw invalid_argument(buffer.str());
-        }
 
         default:
         {
@@ -687,6 +677,7 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
     if(trainable_layers_number == 0) return;
 
     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
     const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
 
     const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
@@ -1125,9 +1116,76 @@ type LossIndex::calculate_h(const type& x) const
     return sqrt(eta)*(type(1) + abs(x));
 }
 
+void LossIndexBackPropagationLM::print() const {
+    cout << "Loss index back-propagation LM" << endl;
+    
+    cout << "Errors:" << endl;
+    cout << errors << endl;
+    
+    cout << "Squared errors:" << endl;
+    cout << squared_errors << endl;
+    
+    cout << "Squared errors Jacobian:" << endl;
+    cout << squared_errors_jacobian << endl;
+    
+    cout << "Error:" << endl;
+    cout << error << endl;
+    
+    cout << "Loss:" << endl;
+    cout << loss << endl;
+    
+    cout << "Gradient:" << endl;
+    cout << gradient << endl;
+    
+    cout << "Hessian:" << endl;
+    cout << hessian << endl;
 }
-
-// OpenNN: Open Neural Networks Library.
+void LossIndexBackPropagationLM::set(const Index &new_batch_samples_number,
+                                     LossIndex *new_loss_index_pointer) {
+    loss_index_pointer = new_loss_index_pointer;
+    
+    batch_samples_number = new_batch_samples_number;
+    
+    NeuralNetwork *neural_network_pointer =
+        loss_index_pointer->get_neural_network_pointer();
+    
+    const Index parameters_number =
+        neural_network_pointer->get_parameters_number();
+    
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    
+    neural_network.set(batch_samples_number, neural_network_pointer);
+    
+    parameters = neural_network_pointer->get_parameters();
+    
+    error = type(0);
+    
+    loss = type(0);
+    
+    gradient.resize(parameters_number);
+    
+    regularization_gradient.resize(parameters_number);
+    regularization_gradient.setZero();
+    
+    squared_errors_jacobian.resize(batch_samples_number, parameters_number);
+    
+    hessian.resize(parameters_number, parameters_number);
+    
+    regularization_hessian.resize(parameters_number, parameters_number);
+    regularization_hessian.setZero();
+    
+    errors.resize(batch_samples_number, outputs_number);
+    
+    squared_errors.resize(batch_samples_number);
+}
+LossIndexBackPropagationLM::LossIndexBackPropagationLM(
+    const Index &new_batch_samples_number, LossIndex *new_loss_index_pointer) {
+    set(new_batch_samples_number, new_loss_index_pointer);
+}
+LossIndexBackPropagationLM::LossIndexBackPropagationLM() {}
+}
+ // namespace opennn
+//  // namespace opennnOpenNN: Open Neural // namespace  // namespace opennnopennn Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or

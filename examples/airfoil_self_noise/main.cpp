@@ -49,13 +49,13 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
         training_strategy.set_maximum_epochs_number(100);
 
         training_strategy.perform_training();
 
         // Testing analysis
-
+/*
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_goodness_of_fit_analysis();
@@ -77,7 +77,7 @@ int main()
 //      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-
+*/
         cout << "Good bye!" << endl;       
 
         return 0;

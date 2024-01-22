@@ -14,13 +14,13 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++17
+CONFIG += c++17
 
 CONFIG(debug, debug|release) {
     DEFINES += OPENNN_DEBUG
 }
 
-DEFINES += __Cpp17__
+#DEFINES += __Cpp17__
 
 QMAKE_CXXFLAGS += -bigobj
 

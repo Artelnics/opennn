@@ -311,7 +311,7 @@ protected:
             deltas_dimensions.resize(2);
             deltas_dimensions.setValues({batch_samples_number, neurons_number});
 
-            deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+            deltas_data = (type*)malloc( size_t(batch_samples_number*neurons_number*sizeof(type)));
 
             biases_derivatives.resize(neurons_number);
 

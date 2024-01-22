@@ -14,6 +14,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <algorithm>
+#include <execution>
 
 // OpenNN includes
 
@@ -91,7 +93,7 @@ public:
    const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
+   Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
    Index get_biases_number() const;
@@ -316,36 +318,13 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
     explicit PerceptronLayerBackPropagationLM();
 
-    explicit PerceptronLayerBackPropagationLM(const Index&new_batch_samples_number, Layer *new_layer_pointer);
+    explicit PerceptronLayerBackPropagationLM(const Index&, Layer*);
 
-    virtual ~PerceptronLayerBackPropagationLM()
-    {
+    virtual ~PerceptronLayerBackPropagationLM();
 
-    }
+    void set(const Index&, Layer*) final;
 
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-    }
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Squared errors Jacobian: " << endl;
-        cout << squared_errors_Jacobian << endl;
-    }
+    void print() const;
 
     Tensor<type, 2> squared_errors_Jacobian;
 };

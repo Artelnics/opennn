@@ -301,76 +301,13 @@ struct LossIndexBackPropagationLM
 {
     /// Default constructor.
 
-    LossIndexBackPropagationLM() {}
+    LossIndexBackPropagationLM();
 
-    explicit LossIndexBackPropagationLM(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
-    {
-        set(new_batch_samples_number, new_loss_index_pointer);
-    }
+    explicit LossIndexBackPropagationLM(const Index&, LossIndex*);
 
-    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
-    {
-        loss_index_pointer = new_loss_index_pointer;
+    void set(const Index&, LossIndex*);
 
-        batch_samples_number = new_batch_samples_number;
-
-        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-        const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-        neural_network.set(batch_samples_number, neural_network_pointer);
-
-        parameters = neural_network_pointer->get_parameters();
-
-        error = type(0);
-
-        loss = type(0);
-
-        gradient.resize(parameters_number);
-
-        regularization_gradient.resize(parameters_number);
-        regularization_gradient.setZero();
-
-        squared_errors_jacobian.resize(batch_samples_number, parameters_number);
-
-        hessian.resize(parameters_number, parameters_number);
-
-        regularization_hessian.resize(parameters_number, parameters_number);
-        regularization_hessian.setZero();
-
-        errors.resize(batch_samples_number, outputs_number);
-
-        squared_errors.resize(batch_samples_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Loss index back-propagation LM" << endl;
-
-        cout << "Errors:" << endl;
-        cout << errors << endl;
-
-        cout << "Squared errors:" << endl;
-        cout << squared_errors << endl;
-
-        cout << "Squared errors Jacobian:" << endl;
-        cout << squared_errors_jacobian << endl;
-
-        cout << "Error:" << endl;
-        cout << error << endl;
-
-        cout << "Loss:" << endl;
-        cout << loss << endl;
-
-        cout << "Gradient:" << endl;
-        cout << gradient << endl;
-
-        cout << "Hessian:" << endl;
-        cout << hessian << endl;
-    }
+    void print() const;
 
     Index batch_samples_number = 0;
 
@@ -394,7 +331,6 @@ struct LossIndexBackPropagationLM
     Tensor<type, 1> regularization_gradient;
     Tensor<type, 2> regularization_hessian;
 };
-
 
 }
 

@@ -162,10 +162,10 @@ Tensor<type, 1> PerceptronLayer3D::get_parameters() const
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
     memcpy(parameters.data(),
-           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+           synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
-           biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
+           biases.data(), size_t(biases.size())*sizeof(type));
 
     return parameters;
 }
@@ -349,11 +349,11 @@ void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, co
 
     memcpy(synaptic_weights.data(),
            new_parameters.data() + index,
-           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+           size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(biases.data(),
            new_parameters.data() + index + synaptic_weights.size(),
-           static_cast<size_t>(biases.size())*sizeof(type));
+           size_t(biases.size())*sizeof(type));
 }
 /// This class sets a new activation(or transfer) function in a single layer.
 /// @param new_activation_function Activation function for the layer.

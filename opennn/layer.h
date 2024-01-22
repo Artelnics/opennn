@@ -172,88 +172,298 @@ protected:
 
     /// Activation functions
 
-    void binary(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void exponential_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void hard_sigmoid(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void hyperbolic_tangent(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void logistic(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void rectified_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void leaky_rectified_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void scaled_exponential_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void soft_plus(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void soft_sign(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void symmetric_threshold(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void threshold(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    template <int rank>
+    void linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        y.device(*thread_pool_device) = x;
+    }
 
-    void exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void logistic_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void leaky_rectified_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void scaled_exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void soft_plus_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void soft_sign_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-    void binary(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void linear(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void logistic(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void leaky_rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void threshold(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    template <int rank>
+    void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        /*
+        const Tensor<bool, 1> if_sentence = x < x.constant(type(0.5));
 
-    void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void leaky_rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+        const Tensor<type, 1> f_1 = x.constant(type(false));
 
-    void hyperbolic_tangent(const Tensor<type, 3>&, Tensor<type, 3>&) const;
-    void linear(const Tensor<type, 3>&, Tensor<type, 3>&) const;
-    void rectified_linear(const Tensor<type, 3>&, Tensor<type, 3>&) const;
+        const Tensor<type, 1> f_2 = x.constant(type(true));
 
-    void hyperbolic_tangent_derivatives(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
-    void linear_derivatives(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
+        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+*/
+    }
 
-    void binary(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hard_sigmoid(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hyperbolic_tangent(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void logistic(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void rectified_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void leaky_rectified_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void scaled_exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_plus(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_sign(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void symmetric_threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hard_sigmoid_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hyperbolic_tangent_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void logistic_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void leaky_rectified_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void scaled_exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_plus_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_sign_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    template <int rank>
+    void exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        const type alpha = type(1);
+
+        y.device(*thread_pool_device) = x;
+        /*
+    y.device(*thread_pool_device) = y.select(y < 0, alpha * (y.exp() - type(1)));
+
+    const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+
+    Tensor<type, 1> f_1(x.dimension(0));
+
+    Tensor<type, 1> f_2(x.dimension(0));
+
+    f_1.device(*thread_pool_device) = alpha*(x.exp() - type(1));
+
+    f_2 = x;
+
+    y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+    */
+
+    }
+
+
+    template <int rank>
+    void hard_sigmoid(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        y.device(*thread_pool_device) = (type(0.5) + x*type(0.2)).cwiseMin(type(2.5)).cwiseMax(type(-2.5));
+    }
+
+
+    template <int rank>
+    void hyperbolic_tangent(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        y.device(*thread_pool_device) = x.tanh();
+    }
+
+
+    template <int rank>
+    void logistic(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        y.device(*thread_pool_device) = type(1)/(type(1) - x.exp());
+    }
+
+
+    template <int rank>
+    void rectified_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        y.device(*thread_pool_device) = x.cwiseMax(type(0));
+    }
+
+
+    template <int rank>
+    void leaky_rectified_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+
+    }
+
+
+    template <int rank>
+    void scaled_exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        /*
+        const type lambda = type(1.0507);
+
+        const type alpha = type(1.67326);
+
+        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+
+        const Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1));
+
+        Tensor<type, 1> f_2 = lambda*x;
+
+        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+*/
+    }
+
+
+    template <int rank>
+    void soft_plus(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        y.device(*thread_pool_device) = (type(1) + x.exp()).log();
+    }
+
+
+    template <int rank>
+    void soft_sign(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        /*
+        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+
+        const Tensor<type, 1> f_1 = x / (type(1) - x);
+
+        const Tensor<type, 1> f_2 = x / (type(1) + x);
+
+        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+*/
+    }
+
+
+    template <int rank>
+    void symmetric_threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        /*
+        const Tensor<bool, 1> if_sentence = x > x.constant(type(0));
+
+        Tensor<type, 1> ones(x.dimension(0));
+        ones.setConstant(type(1));
+
+        y.device(*thread_pool_device) = if_sentence.select(ones, -ones);
+*/
+    }
+
+
+    template <int rank>
+    void threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
+    {
+        /*
+        const Tensor<bool, 1> if_sentence = x >= x.constant(type(0));
+
+        Tensor<type, 1> ones(x.dimension(0));
+        ones.setConstant(type(1));
+
+        Tensor<type, 1> zeros(x.dimension(0));
+        zeros.setConstant(type(0));
+
+        y.device(*thread_pool_device) = if_sentence.select(ones, zeros);
+*/
+    }
+
+
+    template <int rank>
+    void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = x;
+
+        dy_dx.setConstant(type(1));
+    }
+
+
+    template <int rank>
+    void exponential_linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        /*
+        const type alpha = type(1);
+
+        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+
+        Tensor<type, 1> f_1(x.dimension(0));
+        f_1 = alpha*(x.exp() - type(1));
+
+        Tensor<type, 1> f_2(x.dimension(0));
+        f_2 = x;
+
+        // Activations
+
+        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
+        // Activations Derivatives
+
+        f_1 = alpha * x.exp();
+
+        f_2 = x.constant(type(1));
+
+        dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+*/
+    }
+
+
+    template <int rank>
+    void hard_sigmoid_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = (x*type(0.2) + type(0.5)).cwiseMin(type(2.5)).cwiseMax(type(-2.5));
+
+        dy_dx.setConstant(type(0.2));
+        dy_dx.device(*thread_pool_device) = dy_dx.cwiseMax(x < type(-2.5)).cwiseMin(x > type(2.5));
+    }
+
+
+    template <int rank>
+    void hyperbolic_tangent_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = x.tanh();
+
+        dy_dx.device(*thread_pool_device) = type(1) - y.square();
+    }
+
+
+    template <int rank>
+    void logistic_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        logistic(x, y);
+
+        dy_dx.device(*thread_pool_device) = y*(type(1) - y);
+    }
+
+
+    template <int rank>
+    void rectified_linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = x.cwiseMax(type(0));
+
+        dy_dx.device(*thread_pool_device) = y.cwiseMax(y > type(0));
+    }
+
+
+    template <int rank>
+    void leaky_rectified_linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+
+    }
+
+
+    template <int rank>
+    void scaled_exponential_linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        /*
+        const type lambda = type(1.0507);
+
+        const type alpha = type(1.67326);
+
+        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+
+        Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1));
+
+        Tensor<type, 1> f_2 = lambda*x;
+
+        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
+        f_1 = lambda*alpha*x.exp();
+
+        f_2 = x.constant(type(1))*lambda;
+
+        dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+*/
+    }
+
+
+    template <int rank>
+    void soft_plus_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = (x.constant(type(1)) + x.exp()).log();
+
+        dy_dx.device(*thread_pool_device) = type(1) / (type(1) + x.exp().inverse());
+
+    }
+
+
+    template <int rank>
+    void soft_sign_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+/*
+        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
+
+        Tensor<type, 1> f_1 = x / (type(1) - x);
+
+        Tensor<type, 1> f_2 = x / (type(1) + x);
+
+        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+
+        // Activations Derivatives
+
+        f_1 = type(1) / (type(1) - x).pow(type(2));
+
+        f_2 = type(1) / (type(1) + x).pow(type(2));
+
+        dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
+*/
+    }
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};

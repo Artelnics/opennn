@@ -78,7 +78,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
@@ -137,7 +137,9 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
-    if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
+    const Layer::Type output_layer_type = output_layer_pointer->get_type();
+
+    if(output_layer_type != Layer::Type::Perceptron && output_layer_type != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
@@ -147,11 +149,14 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
         throw invalid_argument(buffer.str());
     }
 
-    copy(loss_index_back_propagation.errors.data(),
+    copy(execution::par,
+         loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
 
-    divide_columns(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
+    divide_columns(thread_pool_device,
+                   output_layer_back_propagation->deltas,
+                   loss_index_back_propagation.squared_errors);
 }
 
 
@@ -164,17 +169,19 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 
 #endif
 
-    Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
     const type coefficient = type(2)/type(batch_samples_number);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+    Tensor<type, 1>& gradient = loss_index_back_propagation_lm.gradient;
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = coefficient * loss_index_back_propagation_lm.gradient;
+    const Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
+
+    gradient.device(*thread_pool_device)
+        = (squared_errors_jacobian.contract(squared_errors, AT_B))*coefficient;
 }
 
 
@@ -185,17 +192,18 @@ void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
      check();
      #endif
 
-     Index outputs_number = neural_network_pointer->get_outputs_number();
+     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
      const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-     const type coefficient = (type(2.0)/type(batch_samples_number));
+     const type coefficient = type(2.0)/type(batch_samples_number);
 
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
+     Tensor<type, 2>& hessian = loss_index_back_propagation_lm.hessian;
 
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = coefficient*loss_index_back_propagation_lm.hessian;
+     const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
+
+     hessian.device(*thread_pool_device)
+         = (squared_errors_jacobian.contract(squared_errors_jacobian, AT_B))*coefficient;
 }
 
 

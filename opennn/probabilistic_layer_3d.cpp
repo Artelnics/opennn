@@ -224,10 +224,10 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
     memcpy(parameters.data(),
-           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+           synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
-           biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
+           biases.data(), size_t(biases.size())*sizeof(type));
 
     return parameters;
 }
@@ -318,11 +318,11 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
 
     memcpy(synaptic_weights.data(),
            new_parameters.data() + index,
-           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+           size_t(synaptic_weights_number)*sizeof(type));
 
     memcpy(biases.data(),
            new_parameters.data() + index + synaptic_weights_number,
-           static_cast<size_t>(biases_number)*sizeof(type));
+           size_t(biases_number)*sizeof(type));
 }
 
 
@@ -877,95 +877,6 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
          gradient.data() + index + synaptic_weights_number);
 }
 
-/*
-void ProbabilisticLayer3D::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
-                                                              LayerForwardPropagation* forward_propagation,
-                                                              LayerBackPropagationLM* back_propagation)
-{
-    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation =
-            static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
-
-    ProbabilisticLayer3DBackPropagationLM* probabilistic_layer_back_propagation_lm =
-            static_cast<ProbabilisticLayer3DBackPropagationLM*>(back_propagation);
-
-    const Tensor<type, 3>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
-
-    const Index samples_number = inputs.dimension(0);
-
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.setZero();
-
-    if(neurons_number == 1)
-    {
-        Index parameter_index = 0;
-
-        for(Index sample = 0; sample < samples_number; sample++)
-        {
-            parameter_index = 0;
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                for(Index input = 0; input <  inputs_number; input++)
-                {
-                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
-                        probabilistic_layer_back_propagation_lm->deltas(sample, neuron) *
-                        activations_derivatives(sample, neuron, 0) *
-                        inputs(sample, input);
-
-                    parameter_index++;
-                }
-
-                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
-                    probabilistic_layer_back_propagation_lm->deltas(sample, neuron) *
-                    activations_derivatives(sample, neuron, 0);
-            }
-        }
-    }
-    else
-    {
-        Index parameter_index = 0;
-
-        for(Index sample = 0; sample < samples_number; sample++)
-        {
-            parameter_index = 0;
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                for(Index input = 0; input <  inputs_number; input++)
-                {
-                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
-                            probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron) *
-                            inputs(sample, input);
-
-                    parameter_index++;
-                }
-
-                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
-                        probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron);
-            }
-        }
-    }
-}
-
-
-void ProbabilisticLayer3D::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
-                                                           const Index& index,
-                                                           Tensor<type, 2>& squared_errors_Jacobian) const
-{
-    ProbabilisticLayer3DBackPropagationLM* probabilistic_layer_back_propagation_lm =
-            static_cast<ProbabilisticLayer3DBackPropagationLM*>(back_propagation);
-
-    const Index batch_samples_number = back_propagation->batch_samples_number;
-
-    const Index layer_parameters_number = get_parameters_number();
-
-    copy(probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
-         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data()+ layer_parameters_number*batch_samples_number,
-         squared_errors_Jacobian.data() + index);
-}
-*/
 
 /// Serializes the probabilistic layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.

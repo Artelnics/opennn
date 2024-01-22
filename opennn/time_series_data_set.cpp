@@ -439,7 +439,7 @@ void TimeSeriesDataSet::transform_time_series_data()
         {
             memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
                    time_series_data.data() + i + j*old_samples_number,
-                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+                   size_t(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
         }
     }
 

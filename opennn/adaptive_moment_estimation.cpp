@@ -312,6 +312,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network_pointer);
 
+    pair<type*, dimensions> inputs_pair;
+
     // Loss index
 
     loss_index_pointer->set_normalization_coefficient();
@@ -371,7 +373,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
             
-            neural_network_pointer->forward_propagate(training_batch.get_inputs_pair(),
+            inputs_pair = training_batch.get_inputs_pair();
+
+            neural_network_pointer->forward_propagate(inputs_pair,
                                                       training_forward_propagation,
                                                       is_training);
 
@@ -410,8 +414,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      target_variables_indices);
 
                 // Neural network
-                
-                neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(),
+
+                inputs_pair = training_batch.get_inputs_pair();
+
+                neural_network_pointer->forward_propagate(inputs_pair,
                                                           selection_forward_propagation,
                                                           is_training);
 
@@ -585,6 +591,8 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
             sqrt(type(1) - pow(beta_2, type(optimization_data.iteration))) /
             (type(1) - pow(beta_1, type(optimization_data.iteration))));
 
+    const Tensor<type, 1>& gradient = back_propagation.gradient;
+
 #ifdef OPENNN_MKL
 
     int parameters_number = back_propagation.gradient.size();
@@ -599,24 +607,28 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
 
 #else
 
-    optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-        = back_propagation.gradient * (type(1) - beta_1)
-        + optimization_data.gradient_exponential_decay * beta_1;
+    Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
+
+    gradient_exponential_decay.device(*thread_pool_device)
+        = gradient * (type(1) - beta_1) + gradient_exponential_decay * beta_1;
 
 #endif
 
-    optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-        = back_propagation.gradient * back_propagation.gradient * (type(1) - beta_2)
-        + optimization_data.square_gradient_exponential_decay * beta_2;
+    Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
-    back_propagation.parameters.device(*thread_pool_device)
-        -= learning_rate * optimization_data.gradient_exponential_decay / (optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+    square_gradient_exponential_decay.device(*thread_pool_device)
+        = gradient*gradient * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
+
+    Tensor<type, 1>& parameters = back_propagation.parameters;
+
+    parameters.device(*thread_pool_device)
+        -= learning_rate * gradient_exponential_decay/(square_gradient_exponential_decay.sqrt() + epsilon);
         
     optimization_data.iteration++;
 
     // Update parameters
 
-    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
+    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(parameters);
 }
 
 

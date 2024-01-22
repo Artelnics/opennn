@@ -590,7 +590,7 @@ void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,
                kernel_synaptic_weights_derivatives.data(),
-               static_cast<size_t>(kernel_synaptic_weights_number)*sizeof(type));
+               size_t(kernel_synaptic_weights_number)*sizeof(type));
     }
 }
 
@@ -874,10 +874,10 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
     Tensor<type, 1> parameters(get_parameters_number());
 
     memcpy(parameters.data(),
-           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+           synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
-           biases.data(), static_cast<size_t>(biases.size())*sizeof(type));
+           biases.data(), size_t(biases.size())*sizeof(type));
 
 /// @todo add scales and offsets
 
@@ -1152,11 +1152,11 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
     memcpy(synaptic_weights.data(),
            new_parameters.data() + index,
-           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+           size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(biases.data(),
            new_parameters.data() + index + synaptic_weights.size(),
-           static_cast<size_t>(biases.size())*sizeof(type));
+           size_t(biases.size())*sizeof(type));
 }
 
 

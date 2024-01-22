@@ -385,7 +385,8 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
         throw invalid_argument(buffer.str());
     }
 
-    copy(loss_index_back_propagation.errors.data(),
+    copy(execution::par,
+         loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
 

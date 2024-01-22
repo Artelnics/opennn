@@ -874,8 +874,7 @@ protected:
 
     /// Display messages to screen.        
 
-    bool display = true;
-
+    bool display = true;     
 };
 
 

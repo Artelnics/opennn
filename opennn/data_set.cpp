@@ -1172,8 +1172,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         for(Index i = 0; i > batch_size; i++)
         {
-            batches(0,i) = samples_copy(i);
-
+            batches(0, i) = samples_copy(i);
         }
 
         return batches;
@@ -10688,7 +10687,7 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     {
         for(Index j = 0; j < batch_size;++j)
         {
-            batches(i,j) = samples_indices(count);
+            batches(i, j) = samples_indices(count);
 
             count++;
         }
