@@ -628,26 +628,18 @@ void ProbabilisticLayer3D::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y)
 {
     const Index rows_number = x.dimension(0);
     const Index columns_number = x.dimension(1);
+    const Index channels_number = x.dimension(2);
 
-//    y = x - x.maximum(2);
+    y = x - x.maximum(Eigen::array<Index, 1>{{2}})
+             .reshape(Eigen::array<Index, 3>{{rows_number, columns_number, 1}})
+             .broadcast(Eigen::array<Index, 3>{{1, 1, channels_number}});
 
     y = y.exp();
 
-    y /= y.sum(Eigen::array<int, 1>{{2}}).reshape(Eigen::array<Index, 3>{{rows_number, columns_number, 1}});
+    y /= y.sum(Eigen::array<int, 1>{{2}})
+          .reshape(Eigen::array<Index, 3>{{rows_number, columns_number, 1}})
+          .broadcast(Eigen::array<Index, 3>{{1, 1, channels_number}});
 
-/*
-    const Eigen::array<int, 1> dimensions({1});
-
-    const Index rows_number = x.dimension(0);
-
-    y.device(*thread_pool_device) = x.exp();
-
-    Tensor<type, 1> rows_sum(rows_number);
-
-    rows_sum.device(*thread_pool_device) = y.sum(dimensions);
-
-    divide_columns(thread_pool_device, y, rows_sum);
-*/
 }
 
 
@@ -793,7 +785,7 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
-    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // MeanSquaredError::calculate_output_delta
+    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // CrossEntropyError::calculate_output_delta
 
     Tensor<type,1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
     Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
@@ -827,11 +819,8 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
     }
     else
     {
-        /// @todo contraction tensors 3D and 2D
 
         Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
-
-        const Index step = neurons_number * neurons_number;
 
         for(Index i = 0; i < batch_samples_number; i++)
         {
@@ -841,7 +830,7 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
 
                 deltas_row = deltas.chip(i, 0).chip(j, 0);
 
-                error_combinations_derivatives.chip(i,0) =
+                error_combinations_derivatives.chip(i,0).chip(j, 0).device(*thread_pool_device) =
                         deltas_row.contract(activations_derivatives_matrix, AT_B);
             }
         }

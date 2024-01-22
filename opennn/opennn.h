@@ -53,6 +53,7 @@
 #include "loss_index.h"
 
 #include "cross_entropy_error.h"
+#include "cross_entropy_error_3d.h"
 #include "mean_squared_error.h"
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"

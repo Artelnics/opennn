@@ -8,132 +8,48 @@
 
 #include "cross_entropy_error_3d_test.h"
 
-CrossEntropyError3dTest::CrossEntropyError3dTest() : UnitTesting()
+CrossEntropyError3DTest::CrossEntropyError3DTest() : UnitTesting()
 {
     cross_entropy_error.set(&neural_network, &data_set);
     cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 }
 
 
-CrossEntropyError3dTest::~CrossEntropyError3dTest()
+CrossEntropyError3DTest::~CrossEntropyError3DTest()
 {
 }
 
 
-void CrossEntropyError3dTest::test_constructor()
+void CrossEntropyError3DTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    CrossEntropyError cross_entropy_error;
+    CrossEntropyError3D cross_entropy_error_3d;
 }
 
 
-void CrossEntropyError3dTest::test_destructor()
+void CrossEntropyError3DTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    CrossEntropyError* cross_entropy_error = new CrossEntropyError;
+    CrossEntropyError3D* cross_entropy_error_3d = new CrossEntropyError3D;
 
-    delete cross_entropy_error;
+    delete cross_entropy_error_3d;
 }
 
 
-void CrossEntropyError3dTest::test_back_propagate()
+void CrossEntropyError3DTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
     // Empty test does not work
     // cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    // Test binary classification trivial
-    {
-        inputs_number = 1;
-        outputs_number = 1;
-        samples_number = 1;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(type(0));
-
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
-        neural_network.set_parameters_constant(type(0));
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
-
-        // Loss index
-
-        back_propagation.set(samples_number, &cross_entropy_error);
-        cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
-
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-        assert_true(back_propagation.error >= 0, LOG);
-
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
-    }
-
-    // Test binary classification random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1;
-        neurons_number = 1 + rand()%10;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_binary_random();
-        data_set.set_training();
-
-        training_samples_indices = data_set.get_training_samples_indices();
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
-
-        // Loss index
-
-        back_propagation.set(samples_number, &cross_entropy_error);
-        cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
-
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-        assert_true(back_propagation.error >= 0, LOG);
-
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
-    }
+    /// @todo
 }
 
 
-void CrossEntropyError3dTest::run_test_case()
+void CrossEntropyError3DTest::run_test_case()
 {
     cout << "Running cross-entropy error test case...\n";
 

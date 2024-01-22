@@ -54,6 +54,7 @@ HEADERS += \
     addition_layer.h \
     concatenation_layer.h \
     codification.h \
+    cross_entropy_error_3d.h \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
@@ -146,6 +147,7 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    cross_entropy_error_3d.cpp \
     embedding_layer.cpp \
     multihead_attention_layer.cpp \
     addition_layer.cpp \

@@ -297,7 +297,7 @@ int main()
       }
       else if(test == "cross_entropy_error_3d" || test == "cee3d")
       {
-          CrossEntropyError3dTest cross_entropy_error_3d_test;
+          CrossEntropyError3DTest cross_entropy_error_3d_test;
           cross_entropy_error_3d_test.run_test_case();
           tests_count += cross_entropy_error_3d_test.get_tests_count();
           tests_passed_count += cross_entropy_error_3d_test.get_tests_passed_count();

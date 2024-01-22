@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef CROSSENTROPYERROR3DTEST_H
-#define CROSSENTROPYERROR3DTEST_H
+#ifndef CrossEntropyError3DTest_H
+#define CrossEntropyError3DTest_H
 
 // Unit testing includes
 
@@ -15,14 +15,14 @@
 #include "../opennn/neural_network_forward_propagation.h"
 #include "../opennn/loss_index_back_propagation.h"
 
-class CrossEntropyError3dTest : public UnitTesting
+class CrossEntropyError3DTest : public UnitTesting
 {
 
 public:
 
-    explicit CrossEntropyError3dTest();
+    explicit CrossEntropyError3DTest();
 
-    virtual ~CrossEntropyError3dTest();
+    virtual ~CrossEntropyError3DTest();
 
     void test_constructor();
 
@@ -43,7 +43,7 @@ private:
     Index outputs_number;
     Index neurons_number;
 
-    Tensor<type, 2> data;
+    Tensor<type, 3> data;
 
     Tensor<Index, 1> training_samples_indices;
     Tensor<Index, 1> input_variables_indices;
@@ -53,7 +53,7 @@ private:
 
     NeuralNetwork neural_network;
 
-    CrossEntropyError cross_entropy_error;
+    CrossEntropyError3D cross_entropy_error;
 
     DataSetBatch batch;
 
