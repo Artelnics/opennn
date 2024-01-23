@@ -14,7 +14,7 @@
     <ProjectGuid>{90003CD8-8914-3C69-B469-8C5B488088C7}</ProjectGuid>
     <RootNamespace>logical_operations</RootNamespace>
     <Keyword>QtVS_v304</Keyword>
-    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.22000.0</WindowsTargetPlatformMinVersion>
     <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
   </PropertyGroup>

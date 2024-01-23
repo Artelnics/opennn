@@ -1,0 +1,2 @@
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project opennn.vcxproj for configuration Release/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
