@@ -439,10 +439,16 @@ void PoolingLayer::calculate_hidden_delta_average_pooling(
     const Index next_pool_cols_number = next_pooling_layer->get_pool_columns_number();
     const Index next_pool_rows_number = next_pooling_layer->get_pool_rows_number();
 
-    const Index next_delta_with_zeros_padded_rows_number = current_delta_rows_number + next_pool_rows_number - 1;
-    const Index next_delta_with_zeros_padded_cols_number = current_delta_cols_number + next_pool_cols_number - 1;
+    const Index rows_padding = (current_delta_rows_number - next_delta_rows_number + next_pool_rows_number - 1) / 2;
+    const Index row_remainder = (current_delta_rows_number - next_delta_rows_number + next_pool_rows_number - 1) % 2;
+    const Index cols_padding = (current_delta_cols_number - next_delta_cols_number + next_pool_cols_number - 1) / 2;
+    const Index col_remainder = (current_delta_cols_number - next_delta_cols_number + next_pool_cols_number - 1) % 2;
 
-    
+    const Index next_delta_with_zeros_padded_rows_number = 
+       next_delta_rows_number + 2 * rows_padding + row_remainder; 
+    const Index next_delta_with_zeros_padded_cols_number = 
+        next_delta_cols_number + 2 * cols_padding + col_remainder;
+
     Eigen::array<Index, 4> padded_next_delta_dimension{};
     padded_next_delta_dimension[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number;
     padded_next_delta_dimension[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number;
@@ -457,14 +463,16 @@ void PoolingLayer::calculate_hidden_delta_average_pooling(
     offsets[Convolutional4dDimensions::row_index] = next_pool_rows_number - 1;
     offsets[Convolutional4dDimensions::column_index] = next_pool_cols_number - 1;
 
+    const Index row_stride = next_pooling_layer->get_row_stride();
+    const Index column_stride = next_pooling_layer->get_column_stride();
+
     Eigen::array<Index, 4> extends{};
-    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - next_pool_rows_number;
-    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - next_pool_cols_number;
+    extends[Convolutional4dDimensions::row_index] = next_delta_rows_number + (next_delta_rows_number - 1) * (row_stride - 1);
+    extends[Convolutional4dDimensions::column_index] = next_delta_cols_number + (next_delta_cols_number - 1) * (column_stride - 1);
     extends[Convolutional4dDimensions::channel_index] = channels_number;
     extends[Convolutional4dDimensions::sample_index] = images_number;
 
-    const Index row_stride = next_pooling_layer->get_row_stride();
-    const Index column_stride = next_pooling_layer->get_column_stride();
+    
     Eigen::array<Index, 4> strides{};
     strides.fill(1);
     strides[Convolutional4dDimensions::row_index] = row_stride;

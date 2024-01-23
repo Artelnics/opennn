@@ -409,10 +409,17 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     const Index next_kernel_cols_number = next_layer->get_kernels_columns_number();
     const Index next_kernel_channels_numer = next_layer->get_kernels_channels_number();
 
-    const Index next_delta_with_zeros_padded_rows_number = current_delta_rows_number + next_kernel_rows_number - 1;
-    const Index next_delta_with_zeros_padded_cols_number = current_delta_cols_number + next_kernel_cols_number - 1;
+    const Index rows_padding = (current_delta_rows_number - next_delta_rows_number + next_kernel_rows_number - 1) / 2;
+    const Index row_remainder = (current_delta_rows_number - next_delta_rows_number + next_kernel_rows_number - 1) % 2;
+    const Index cols_padding = (current_delta_cols_number - next_delta_cols_number + next_kernel_cols_number - 1) / 2;
+    const Index col_remainder = (current_delta_cols_number - next_delta_cols_number + next_kernel_cols_number - 1) % 2;
 
-    
+    const Index next_delta_with_zeros_padded_rows_number = 
+        next_delta_rows_number + 2 * rows_padding + row_remainder;
+    const Index next_delta_with_zeros_padded_cols_number = 
+        next_delta_cols_number + 2 * cols_padding + col_remainder;
+
+
     Eigen::array<Index, 4> padded_next_delta_dimension{};
     padded_next_delta_dimension[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number;
     padded_next_delta_dimension[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number;
@@ -427,14 +434,16 @@ void ConvolutionalLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropaga
     offsets[Convolutional4dDimensions::row_index] = next_kernel_rows_number - 1;
     offsets[Convolutional4dDimensions::column_index] = next_kernel_cols_number - 1;
 
+    const Index row_stride = next_layer->get_row_stride();
+    const Index column_stride = next_layer->get_column_stride();
+
     Eigen::array<Index, 4> extends{};
-    extends[Convolutional4dDimensions::row_index] = next_delta_with_zeros_padded_rows_number - next_kernel_rows_number;
-    extends[Convolutional4dDimensions::column_index] = next_delta_with_zeros_padded_cols_number - next_kernel_cols_number;
+    extends[Convolutional4dDimensions::row_index] = next_delta_rows_number + (next_delta_rows_number - 1) * (row_stride - 1);
+    extends[Convolutional4dDimensions::column_index] = next_delta_cols_number + (next_delta_cols_number - 1) * (column_stride - 1);
     extends[Convolutional4dDimensions::channel_index] = next_delta_channels_number;
     extends[Convolutional4dDimensions::sample_index] = images_number;
 
-    const Index row_stride = next_layer->get_row_stride();
-    const Index column_stride = next_layer->get_column_stride();
+    
     Eigen::array<Index, 4> strides{};
     strides.fill(1);
     strides[Convolutional4dDimensions::row_index] = row_stride;
@@ -964,10 +973,10 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
     const Index kernels_rows_number = new_kernels_dimensions[Kernel4dDimensions::row_index];
 
     biases.resize(kernels_number);
-    biases.setRandom();
 
     synaptic_weights.resize(new_kernels_dimensions);
-    synaptic_weights.setRandom();
+    
+    set_parameters_random();
 
     input_variables_dimensions = new_inputs_dimensions;
 }
@@ -1050,9 +1059,12 @@ void ConvolutionalLayer::set_parameters_constant(const type& value)
 
 void ConvolutionalLayer::set_parameters_random()
 {
-    biases.setRandom();
+    const type new_maximum = static_cast<type>(1);
+    const type new_minimum = -static_cast<type>(1);
 
-    synaptic_weights.setRandom();
+    biases = biases.setRandom() * static_cast<type>(2) * new_maximum + new_minimum;
+
+    synaptic_weights = synaptic_weights.setRandom() * static_cast<type>(2) * new_maximum + new_minimum;
 }
 
 
