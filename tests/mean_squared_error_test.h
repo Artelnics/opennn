@@ -34,8 +34,6 @@ public:
 
     void test_calculate_gradient_convolutional_network();
 
-    void test_calculate_gradient_transformer();
-
     void test_back_propagate();
 
     void test_back_propagate_lm();

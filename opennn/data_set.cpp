@@ -7025,6 +7025,20 @@ void DataSet::set_data_binary_random()
 }
 
 
+/// Initializes the data matrix with random integer values.
+
+void DataSet::set_data_random_integers(const Index& maximum)
+{
+    /// @todo in Tensor form
+
+#pragma omp parallel for
+    for (Index i = 0; i < data.size(); i++)
+    {
+        data(i) = rand()%maximum;
+    }
+}
+
+
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const

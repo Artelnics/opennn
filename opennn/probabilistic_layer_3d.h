@@ -303,9 +303,12 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     
     pair<type*, dimensions> get_deltas_pair() const final
     {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
 
-        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
+        const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
+        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
+
+        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, inputs_number, neurons_number}});
     }
 
 

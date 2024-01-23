@@ -1792,36 +1792,6 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 }
 
 
-void MeanSquaredErrorTest::test_calculate_gradient_transformer()
-{
-    cout << "Running calculate gradient transformer test case...\n";
-
-    Tensor<type, 1> numerical_gradient;
-
-    // Test
-
-    data_set.set();
-    neural_network.set();
-
-    numerical_gradient = mean_squared_error.calculate_numerical_gradient();
-
-    assert_true(numerical_gradient.size() == 0, LOG);
-
-    // Test
-
-    data_set.set(); // Can't set a range 3 dataset
-
-    ProbabilisticLayer3D probabilistic_layer_3d(1,1,1);
-    neural_network.add_layer(&probabilistic_layer_3d);
-
-    numerical_gradient = mean_squared_error.calculate_numerical_gradient(); // calculate_errors() assumes outputs and targets of range 2
-
-    cout << numerical_gradient << endl;
-
-    cout << "End of calculate gradient transformer test case...\n";
-}
-
-
 
 void MeanSquaredErrorTest::run_test_case()
 {

@@ -49,6 +49,52 @@ void CrossEntropyError3DTest::test_back_propagate()
 }
 
 
+void CrossEntropyError3DTest::test_calculate_gradient_transformer()
+{
+    cout << "Running calculate gradient transformer test case...\n";
+
+    CrossEntropyError3D cross_entropy_error_3d;
+
+    Tensor<type, 1> numerical_gradient;
+
+    // Test
+    {
+        data_set.set();
+        neural_network.set();
+
+        numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
+
+        assert_true(numerical_gradient.size() == 0, LOG);
+    }
+
+    // Test
+    {
+        Index samples_number = 1;
+        Index inputs_number = 1;
+        Index targets_number = 1;
+
+        data_set.set(samples_number, inputs_number, targets_number);
+
+        Index inputs_dim = 1;
+
+        data_set.set_data_random_integers(inputs_dim);
+
+        Index depth = 1;
+
+        EmbeddingLayer embedding_layer(inputs_dim, inputs_number, depth);
+        ProbabilisticLayer3D probabilistic_layer_3d(inputs_number, depth, inputs_dim);
+        neural_network.add_layer(&embedding_layer);
+        neural_network.add_layer(&probabilistic_layer_3d);
+
+        numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient(); // calculate_errors() assumes outputs and targets of range 2
+
+        cout << numerical_gradient << endl;
+    }
+
+    cout << "End of calculate gradient transformer test case...\n";
+}
+
+
 void CrossEntropyError3DTest::run_test_case()
 {
     cout << "Running cross-entropy error test case...\n";
@@ -57,6 +103,10 @@ void CrossEntropyError3DTest::run_test_case()
 
     test_constructor();
     test_destructor();
+
+    // Transformer test
+
+    test_calculate_gradient_transformer();
 
     // Back-propagation methods
 

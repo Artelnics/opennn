@@ -586,6 +586,7 @@ public:
 
     void set_data_random();
     void set_data_binary_random();
+    void set_data_random_integers(const Index&);
 
     // Descriptives methods
 

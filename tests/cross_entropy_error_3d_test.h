@@ -32,6 +32,10 @@ public:
 
     void test_back_propagate();
 
+    // Transformer gradient method
+
+    void test_calculate_gradient_transformer();
+
     // Unit testing methods
 
     void run_test_case();

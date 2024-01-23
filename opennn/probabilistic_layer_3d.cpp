@@ -785,7 +785,7 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
             static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation);
 
-    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // CrossEntropyError::calculate_output_delta
+    const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // CrossEntropyError3D::calculate_output_delta
 
     Tensor<type,1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
     Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
