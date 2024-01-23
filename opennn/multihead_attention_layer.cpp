@@ -326,7 +326,7 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 {
     const Index batch_size = attention_scores.dimension(0);
 
-    const type m_inf = type(-1)*numeric_limits<type>::infinity();
+    const type m_inf = -numeric_limits<type>::infinity();
 
     for(Index head_index = 0; head_index < heads_number ; head_index++)
     {
@@ -346,7 +346,7 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 
 void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& data,
                                                        Tensor<type, 4>& transformed_data,
-                                                       const Tensor<type, 3>& kernel)
+                                                       const Tensor<type, 3>& kernel) const
 {
     const Index batch_size = data.dimension(0);
 
@@ -359,7 +359,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& da
 
 
 void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>& attention_outputs,
-                                                          Tensor<type, 3>& outputs)
+                                                          Tensor<type, 3>& outputs) const 
 {
     const Index batch_size = outputs.dimension(0);
 
@@ -374,11 +374,12 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 
 
 /// Computes the attention scores by comparing (via dot product) query and key.
-/// Attention scores must be computed separately for each batch element and each attention head (batch matrix multiplication).
+/// Attention scores must be computed separately for each batch element and each attention head 
+/// (batch matrix multiplication).
 
 void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& transformed_query,
                                                        const Tensor<type, 4>& transformed_key,
-                                                       Tensor<type, 4>& attention_scores)
+                                                       Tensor<type, 4>& attention_scores) const
 {
     const Index batch_size = transformed_query.dimension(0);
 
@@ -409,7 +410,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& tr
 
 void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& transformed_value,
                                                        const Tensor<type, 4>& attention_scores,
-                                                       Tensor<type, 4>& attention_outputs)
+                                                       Tensor<type, 4>& attention_outputs) const 
 {    
     const Index batch_size = transformed_value.dimension(0);
 

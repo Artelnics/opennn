@@ -15,7 +15,7 @@ namespace opennn
 
 TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
 {
-    time_series_data.resize(0,0);
+    time_series_data.resize(0, 0);
 
     lags_number = 0;
 

@@ -44,15 +44,15 @@ struct BoundingBox
 
     Tensor<type, 1> data;
 
-    Index x_center;
-    Index y_center;
-    Index width;
-    Index height;
+    Index x_center = 0;
+    Index y_center = 0;
+    Index width = 0;
+    Index height = 0;
 
-    Index x_top_left;
-    Index y_top_left;
-    Index x_bottom_right;
-    Index y_bottom_right;
+    Index x_top_left = 0;
+    Index y_top_left = 0;
+    Index x_bottom_right = 0;
+    Index y_bottom_right = 0;
 };
 
 

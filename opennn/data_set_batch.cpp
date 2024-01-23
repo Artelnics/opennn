@@ -240,7 +240,9 @@ void DataSetBatch::print() const
 
     cout << "Inputs dimensions:" << endl;
 
-    for(Index i = 0; i < inputs_dimensions.size(); i++)
+    const Index inputs_rank = inputs_dimensions.size();
+
+    for(Index i = 0; i < inputs_rank; i++)
     {
 //        cout << inputs_dimensions[i] << endl;
     }

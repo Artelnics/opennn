@@ -1,4 +1,4 @@
-/**
+/*
 Artificial Intelligence Techniques SL	
 artelnics@artelnics.com	
 
@@ -23,7 +23,7 @@ int main(){
 
 
 Inputs Names:
-/**
+/*
 Artificial Intelligence Techniques SL	
 artelnics@artelnics.com	
 
@@ -76,13 +76,13 @@ vector<float> calculate_outputs(const vector<float>& inputs)
 	double scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
 	double scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 
-	double perceptron_layer_1_output_0 = tanh( 1.4765 + (scaled_sepal_lenght*0.0946495) + (scaled_sepal_width*0.261579) + (scaled_petal_lenght*-0.124456) + (scaled_petal_width*-0.926874) );
-	double perceptron_layer_1_output_1 = tanh( 0.6445 + (scaled_sepal_lenght*0.110657) + (scaled_sepal_width*-0.898096) + (scaled_petal_lenght*0.485323) + (scaled_petal_width*0.821016) );
-	double perceptron_layer_1_output_2 = tanh( 1.64926 + (scaled_sepal_lenght*-0.56336) + (scaled_sepal_width*-0.216393) + (scaled_petal_lenght*-0.241243) + (scaled_petal_width*-0.885878) );
+	double perceptron_layer_1_output_0 = tanh( 0.705909 + (scaled_sepal_lenght*0.144892) + (scaled_sepal_width*0.289479) + (scaled_petal_lenght*0.45477) + (scaled_petal_width*0.916351) );
+	double perceptron_layer_1_output_1 = tanh( 0.478104 + (scaled_sepal_lenght*0.739366) + (scaled_sepal_width*0.0899907) + (scaled_petal_lenght*0.327944) + (scaled_petal_width*0.639982) );
+	double perceptron_layer_1_output_2 = tanh( 0.66575 + (scaled_sepal_lenght*0.299121) + (scaled_sepal_width*0.460243) + (scaled_petal_lenght*0.205209) + (scaled_petal_width*0.525338) );
 
-	double probabilistic_layer_combinations_0 = -0.504096 +3.34401*perceptron_layer_1_output_0 -4.21733*perceptron_layer_1_output_1 +2.15817*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_1 = 1.02967 +0.766028*perceptron_layer_1_output_0 +1.5728*perceptron_layer_1_output_1 +0.48875*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_2 = -0.721184 -4.00392*perceptron_layer_1_output_0 +2.97112*perceptron_layer_1_output_1 -2.37397*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_0 = 0.766181 +0.488712*perceptron_layer_1_output_0 +0.869745*perceptron_layer_1_output_1 +0.0212694*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_1 = 0.955649 +0.254349*perceptron_layer_1_output_0 +0.544686*perceptron_layer_1_output_1 +0.785985*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_2 = 0.454777 +0.749801*perceptron_layer_1_output_0 +0.105201*perceptron_layer_1_output_1 +0.960574*perceptron_layer_1_output_2 ;
 
 	double sum = exp(probabilistic_layer_combinations_0) + exp(probabilistic_layer_combinations_1) + exp(probabilistic_layer_combinations_2);
 

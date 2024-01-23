@@ -236,7 +236,7 @@ protected:
 
             const type half_depth = type(depth)/type(2);
 
-            #pragma omp parallel for collapse(2)
+            #pragma omp parallel /*for collapse(2)*/
 
             for(Index i = 0; i < inputs_length; i++)
             {

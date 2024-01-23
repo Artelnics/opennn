@@ -148,7 +148,7 @@ private:
 
    /// Minimum loss improvement between two successive epochs. It is a stopping criterion.
 
-   type minimum_loss_decrease;
+   type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
 
    /// Goal value for the loss. It is a stopping criterion.
 

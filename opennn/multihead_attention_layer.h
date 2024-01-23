@@ -115,15 +115,15 @@ public:
 
     // Linear transformation & projection
 
-    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&);
+    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&) const;
 
-    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 3>&);
+    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 3>&) const;
 
     // Attention computation
 
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
+    void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     // Multihead Attention layer outputs
 
@@ -304,13 +304,14 @@ protected:
 
         void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
         {
+/*
             layer_pointer = new_layer_pointer;
 
             batch_samples_number = new_batch_samples_number;
 
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
-/*
+
             deltas_dimensions.resize(2);
             deltas_dimensions.setValues({batch_samples_number, neurons_number});
 

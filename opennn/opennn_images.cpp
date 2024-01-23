@@ -101,6 +101,8 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
 }
 
 
+// @todo bad variables names
+
 void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& columns_number)
 {
     unsigned char* aux_row = nullptr;
@@ -111,9 +113,11 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 
     for(int i = 0; i <rows_number; i++)
     {
-        memcpy(aux_row, original.data() + columns_number*rows_number - (i+1)*columns_number , size_t(columns_number)*sizeof(unsigned char));
+        memcpy(aux_row, 
+               original.data() + columns_number*rows_number - (i+1)*columns_number , 
+               size_t(columns_number)*sizeof(unsigned char));
 
-        //        reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
+        // reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
         memcpy(sorted.data() + columns_number*i , aux_row, size_t(columns_number)*sizeof(unsigned char));
     }

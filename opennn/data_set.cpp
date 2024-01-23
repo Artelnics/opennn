@@ -333,8 +333,7 @@ void DataSet::RawVariable::set_categories_uses(const Tensor<string, 1>& new_cate
         {
             categories_uses(i) = VariableUse::Time;
         }
-        else if(new_categories_uses(i) == "Unused"
-                || new_categories_uses(i) == "Unused")
+        else if(new_categories_uses(i) == "Unused")
         {
             categories_uses(i) = VariableUse::Unused;
         }
@@ -1170,7 +1169,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-        for(Index i = 0; i > batch_size; i++)
+        for(Index i = 0; i < batch_size; i++)
         {
             batches(0, i) = samples_copy(i);
         }
@@ -2560,6 +2559,9 @@ Index DataSet::get_variables_less_target() const
 
     return columns_number;
 }
+
+
+// @todo to hello_world format.
 
 Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Index& bins_number) const
 {
@@ -4547,12 +4549,12 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
         }
     }
 
-//    throw logic_error("Sample does not have a valid one-hot encoded category.");
+    throw logic_error("Sample does not have a valid one-hot encoded category.");
 }
 
 
 /// Returns the data from the data set column with a given index,
-/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not, respectively.
 /// @param column_index Index of the column.
 
 Tensor<type, 2> DataSet::get_columns_data(const Tensor<Index, 1>& selected_column_indices) const

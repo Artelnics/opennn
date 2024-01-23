@@ -307,7 +307,7 @@ struct TrainingResults
 
     string elapsed_time;
 
-    type loss;
+    type loss = NAN;
 
     Index selection_failures;
 

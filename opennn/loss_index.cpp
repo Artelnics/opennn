@@ -658,10 +658,15 @@ void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Te
     case RegularizationMethod::L1:
         l1_norm_hessian(thread_pool_device, parameters, regularization_hessian);
 
+        return;
+
     case RegularizationMethod::L2:
         l2_norm_hessian(thread_pool_device, parameters, regularization_hessian);
 
+        return;
+
     default:
+        
         return;
     }
 }

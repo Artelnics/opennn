@@ -13,6 +13,7 @@
 namespace opennn
 {
 
+
 ImageDataSet::ImageDataSet() : DataSet()
 {
 

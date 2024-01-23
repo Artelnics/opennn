@@ -33,7 +33,7 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/iris_plant_original.csv", ';', true);
+        DataSet data_set("data/iris_plant_original.csv", ';', true);
 
         const Index input_variables_number = data_set.get_input_numeric_variables_number();
         const Index target_variables_number = data_set.get_target_numeric_variables_number();
@@ -75,8 +75,8 @@ int main()
         // Save results
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_c("../data/neural_network.c");
-        neural_network.save_expression_python("../data/neural_network.py");
+        neural_network.save_expression_c("data/neural_network.c");
+        neural_network.save_expression_python("data/neural_network.py");
 
         return 0;
     }
