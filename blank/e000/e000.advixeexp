@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+ <rdmgr>
+  <timestamp type="u64_t">1705935488</timestamp>
+  <hostname>MSIPULSEGL66</hostname>
+  <os>windows</os>
+  <product>Intel® Advisor 2024.0.0</product>
+  <buildNumber type="s32_t">614680</buildNumber>
+  <logicalCPUCount type="s32_t">20</logicalCPUCount>
+  <physicalCoreCount type="s32_t">14</physicalCoreCount>
+  <processorPackageCount type="s32_t">1</processorPackageCount>
+  <CPUFrequency type="s64_t">2688000000</CPUFrequency>
+  <CPUFamily type="s32_t">6</CPUFamily>
+  <CPUModel type="s32_t">154</CPUModel>
+  <CPUStepping type="s32_t">3</CPUStepping>
+  <CPUBrandName>12th Gen Intel(R) Core(TM) i7-12700H</CPUBrandName>
+  <isa>avx2</isa>
+ </rdmgr>
+</root>

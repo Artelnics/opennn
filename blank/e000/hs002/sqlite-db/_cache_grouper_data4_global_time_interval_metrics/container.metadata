@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<bag xmlns:int="http://www.w3.org/2001/XMLSchema#int" xmlns:unsignedLong="http://www.w3.org/2001/XMLSchema#unsignedLong">
+ <entry path="grouper" unsignedLong:size="0">
+  <indexFields>
+   <field path="cpu_data_scale"/>
+   <emptyField path="cpu_data_scale" int:defaultValue="1"/>
+  </indexFields>
+  <int64Fields>
+   <field path="cpu_data_duration"/>
+   <field path="cpu_data_count"/>
+   <field path="cpu_data_inst_count"/>
+   <emptyField path="cpu_data_duration" int:defaultValue="0"/>
+   <emptyField path="cpu_data_count" int:defaultValue="0"/>
+   <emptyField path="cpu_data_inst_count" int:defaultValue="0"/>
+  </int64Fields>
+  <doubleFields/>
+ </entry>
+</bag>

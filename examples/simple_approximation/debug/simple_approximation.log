@@ -1,0 +1,16 @@
+﻿LINK : : warning LNK4044: unrecognized option '/openmp'; ignored
+opennn.lib(recurrent_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(pooling_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(probabilistic_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(scaling_layer_4d.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(flatten_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(long_short_term_memory_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(scaling_layer_2d.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(perceptron_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(unscaling_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(bounding_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(data_set.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(optimization_algorithm.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(learning_rate_algorithm.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+opennn.lib(loss_index.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
+bin\\simple_approximation.exe : : error LNK1120: 1 unresolved externals

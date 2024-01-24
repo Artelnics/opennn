@@ -1,0 +1,38 @@
+﻿  Reading Qt configuration (C:/Qt/6.5.0/msvc2019_64/bin/qmake)
+  Generate moc_predefs.h
+icx-cl: : warning : unknown argument ignored in clang-cl '-std=c++17'; did you mean '-Qstd=c++17'? [-Wunknown-argument]
+icx-cl: : warning : unknown argument ignored in clang-cl: '-pthread' [-Wunknown-argument]
+icx-cl: : warning : argument unused during compilation: '-Zc:throwingNew' [-Wunused-command-line-argument]
+icx-cl: : warning : argument unused during compilation: '-Zc:externConstexpr' [-Wunused-command-line-argument]
+icx-cl: : warning : argument unused during compilation: '-d2ReducedOptimizeHugeFunctions' [-Wunused-command-line-argument]
+  In file included from C:\Users\sanch\Desktop\refactor\opennn\blank\main.cpp:24:
+  In file included from C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.h:25:
+C:\Users\sanch\Desktop\refactor\opennn\opennn\layer.h(200,20): : warning : unused variable 'alpha' [-Wunused-variable]
+    200 |         const type alpha = type(1);
+        |                    ^~~~~
+  In file included from C:\Users\sanch\Desktop\refactor\opennn\blank\main.cpp:24:
+  In file included from C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.h:40:
+C:\Users\sanch\Desktop\refactor\opennn\opennn\multihead_attention_layer.h(311,25): : warning : unused variable 'neurons_number' [-Wunused-variable]
+    311 |             const Index neurons_number = layer_pointer->get_neurons_number();
+        |                         ^~~~~~~~~~~~~~
+C:\Users\sanch\Desktop\refactor\opennn\opennn\multihead_attention_layer.h(312,25): : warning : unused variable 'inputs_number' [-Wunused-variable]
+    312 |             const Index inputs_number = layer_pointer->get_inputs_number();
+        |                         ^~~~~~~~~~~~~
+  In file included from C:\Users\sanch\Desktop\refactor\opennn\blank\main.cpp:24:
+  In file included from C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.h:42:
+C:\Users\sanch\Desktop\refactor\opennn\opennn\non_max_suppression_layer.h(40,9): : warning : 'opennn::NonMaxSuppressionLayer::forward_propagate' hides overloaded virtual functions [-Woverloaded-virtual]
+     40 |    void forward_propagate(Tensor<type*, 1>,
+        |         ^
+  C:\Users\sanch\Desktop\refactor\opennn\opennn\layer.h(116,18): note: hidden overloaded virtual function 'opennn::Layer::forward_propagate' declared here: different number of parameters (3 vs 4)
+    116 |     virtual void forward_propagate(const pair<type*, dimensions>&,
+        |                  ^
+  C:\Users\sanch\Desktop\refactor\opennn\opennn\layer.h(120,18): note: hidden overloaded virtual function 'opennn::Layer::forward_propagate' declared here: different number of parameters (3 vs 4)
+    120 |     virtual void forward_propagate(const pair<type*, dimensions>&,
+        |                  ^
+  4 warnings generated.
+LINK : : warning LNK4044: unrecognized option '/fopenmp'; ignored
+LINK : : warning LNK4044: unrecognized option '/pthread'; ignored
+LINK : : warning LNK4044: unrecognized option '/fopenmp'; ignored
+LINK : : warning LNK4044: unrecognized option '/pthread'; ignored
+LINK : : warning LNK4044: unrecognized option '/openmp'; ignored
+  blank.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\blank\bin\blank.exe

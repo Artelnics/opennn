@@ -1,0 +1,38 @@
+QMAKE_CXX.QT_COMPILER_STDCXX = 199711L
+QMAKE_CXX.QMAKE_MSC_VER = 1938
+QMAKE_CXX.QMAKE_MSC_FULL_VER = 193833134
+QMAKE_CXX.COMPILER_MACROS = \
+    QT_COMPILER_STDCXX \
+    QMAKE_MSC_VER \
+    QMAKE_MSC_FULL_VER
+QMAKE_CXX.INCDIRS = \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\latest\\env\\..\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\mkl\\latest\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\ippcp\\latest\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\ipp\\latest\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\dpcpp-ct\\latest\\env\\..\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\dnnl\\latest\\env\\..\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\dev-utilities\\latest\\include" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\dal\\latest\\include\\dal" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\include" \
+    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\include" \
+    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\ATLMFC\\include" \
+    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\VS\\include" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22000.0\\ucrt" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\\\include\\10.0.22000.0\\\\um" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\\\include\\10.0.22000.0\\\\shared" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\\\include\\10.0.22000.0\\\\winrt" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\\\include\\10.0.22000.0\\\\cppwinrt"
+QMAKE_CXX.LIBDIRS = \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\latest\\env\\..\\lib\\\\" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\mkl\\latest\\lib" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\ippcp\\latest\\lib" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\ipp\\latest\\lib" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\dnnl\\latest\\env\\..\\lib" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\dal\\latest\\lib" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\opt\\compiler\\lib" \
+    "C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\lib" \
+    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\ATLMFC\\lib\\x64" \
+    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\lib\\x64" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.22000.0\\ucrt\\x64" \
+    "C:\\Program Files (x86)\\Windows Kits\\10\\\\lib\\10.0.22000.0\\\\um\\x64"

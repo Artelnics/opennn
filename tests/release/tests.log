@@ -1,0 +1,450 @@
+﻿  Generate moc_predefs.h
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+  adaptive_moment_estimation_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+  bounding_layer_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  conjugate_gradient_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  convolutional_layer_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+  correlations_test.cpp
+  cross_entropy_error_3d_test.cpp
+  cross_entropy_error_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  data_set_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  flatten_layer_test.cpp
+  genetic_algorithm_test.cpp
+  gradient_descent_test.cpp
+  growing_inputs_test.cpp
+  growing_neurons_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  inputs_selection_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  learning_rate_algorithm_test.cpp
+  levenberg_marquardt_algorithm_test.cpp
+  long_short_term_memory_layer_test.cpp
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  main.cpp
+  mean_squared_error_test.cpp
+  minkowski_error_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'bounding_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'correlations_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'growing_inputs_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'conjugate_gradient_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'long_short_term_memory_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'convolutional_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'mean_squared_error_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'data_set_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'main.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'levenberg_marquardt_algorithm_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'learning_rate_algorithm_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'adaptive_moment_estimation_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'genetic_algorithm_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\tests\convolutional_layer_test.cpp(1030,10): warning C4189: 'elapsed_time': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\convolutional_layer_test.cpp(1016,12): warning C4189: 'ptr_result': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'cross_entropy_error_3d_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'flatten_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'cross_entropy_error_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'gradient_descent_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'minkowski_error_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'growing_neurons_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'inputs_selection_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  model_selection_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(196,33): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(196,37): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(196,41): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(196,45): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(229,33): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(229,37): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(229,41): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(229,45): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(309,33): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(309,37): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(309,41): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(309,45): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(117,29): warning C4305: '=': truncation from 'double' to 'opennn::type'
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(130,29): warning C4305: '=': truncation from 'double' to 'opennn::type'
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(150,29): warning C4305: '=': truncation from 'double' to 'opennn::type'
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(167,29): warning C4305: '=': truncation from 'double' to 'opennn::type'
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(99,10): warning C4189: 'loss': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(237,32): warning C4305: 'initializing': truncation from 'double' to 'opennn::type'
+C:\Users\sanch\Desktop\refactor\opennn\tests\learning_rate_algorithm_test.cpp(237,10): warning C4189: 'initial_learning_rate': local variable is initialized but not referenced
+  neural_network_test.cpp
+  neurons_selection_test.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5995,29): warning C4805: '==': unsafe mix of type 'bool' and type 'const _Ty' in operation
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5995,29): warning C4805:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5995,29): warning C4805:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5995,29): warning C4805:             _Ty=int
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5995,29): warning C4805:         ]
+  (compiling source file 'genetic_algorithm_test.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5995,29):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(215,18):
+  	see reference to function template instantiation '__int64 std::count<bool*,int>(const _InIt,const _InIt,const _Ty &)' being compiled
+          with
+          [
+              _InIt=bool *,
+              _Ty=int
+          ]
+  
+  normalized_squared_error_test.cpp
+  numerical_differentiation_test.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5747,28): warning C4805: '==': unsafe mix of type 'const _Ty' and type 'bool' in operation
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5747,28): warning C4805:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5747,28): warning C4805:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5747,28): warning C4805:             _Ty=int
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5747,28): warning C4805:         ]
+  (compiling source file 'genetic_algorithm_test.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5747,28):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\tests\genetic_algorithm_test.cpp(215,18):
+  	see reference to function template instantiation '__int64 std::count<bool*,int>(const _InIt,const _InIt,const _Ty &)' being compiled
+          with
+          [
+              _InIt=bool *,
+              _Ty=int
+          ]
+  	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\xutility(5982,27):
+  	see reference to function template instantiation 'bool std::_Could_compare_equal_to_value_type<_InIt,_Ty>(const _Ty &)' being compiled
+          with
+          [
+              _InIt=bool *,
+              _Ty=int
+          ]
+  
+  perceptron_layer_test.cpp
+  pooling_layer_test.cpp
+  probabilistic_layer_test.cpp
+  quasi_newton_method_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'model_selection_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  recurrent_layer_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'normalized_squared_error_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'neurons_selection_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  response_optimization_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'neural_network_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  scaling_layer_test.cpp
+  scaling_test.cpp
+  statistics_test.cpp
+  stochastic_gradient_descent_test.cpp
+  sum_squared_error_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'perceptron_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  tensor_utilities_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'numerical_differentiation_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  testing_analysis_test.cpp
+  training_strategy_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'pooling_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\tests\neural_network_test.cpp(657,10): warning C4189: 'is_training': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'probabilistic_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'quasi_newton_method_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  unscaling_layer_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(158,17): warning C4189: 'pool_rows_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(152,17): warning C4189: 'batch_samples_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(156,17): warning C4189: 'inputs_columns_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(159,17): warning C4189: 'pool_columns_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(155,17): warning C4189: 'inputs_rows_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(154,17): warning C4189: 'inputs_channels_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\tests\pooling_layer_test.cpp(161,17): warning C4189: 'targets_number': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'scaling_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'response_optimization_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'recurrent_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'stochastic_gradient_descent_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'scaling_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'statistics_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+  weighted_squared_error_test.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'sum_squared_error_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'tensor_utilities_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'testing_analysis_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\tests\response_optimization_test.cpp(112,19): warning C4804: '<=': unsafe use of type 'bool' in operation
+C:\Users\sanch\Desktop\refactor\opennn\tests\response_optimization_test.cpp(126,19): warning C4804: '<=': unsafe use of type 'bool' in operation
+C:\Users\sanch\Desktop\refactor\opennn\tests\response_optimization_test.cpp(127,20): warning C4804: '<=': unsafe use of type 'bool' in operation
+C:\Users\sanch\Desktop\refactor\opennn\tests\response_optimization_test.cpp(146,19): warning C4804: '<=': unsafe use of type 'bool' in operation
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'training_strategy_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\tests\statistics_test.cpp(726,10): warning C4189: 'kurtosis': local variable is initialized but not referenced
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'unscaling_layer_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'weighted_squared_error_test.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
+LINK : warning LNK4044: unrecognized option '/pthread'; ignored
+LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
+LINK : warning LNK4044: unrecognized option '/pthread'; ignored
+LINK : warning LNK4044: unrecognized option '/openmp'; ignored
+  tests.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\tests\bin\tests.exe

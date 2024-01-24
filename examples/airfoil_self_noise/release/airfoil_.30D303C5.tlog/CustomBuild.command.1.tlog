@@ -1,0 +1,2 @@
+^C:\USERS\SANCH\DESKTOP\REFACTOR\OPENNN\EXAMPLES\AIRFOIL_SELF_NOISE\RELEASE\MOC_PREDEFS.H.CBT
+cl -Bx"C:\Qt\6.5.0\msvc2019_64\bin\qmake.exe" -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -permissive- -Zc:__cplusplus -Zc:externConstexpr -std=c++17 -fopenmp -pthread -O2 -MD -std:c++17 -utf-8 -W3 -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 -wd4577 -wd4467 -E C:\Qt\6.5.0\msvc2019_64\mkspecs\features\data\dummy.cpp 2>NUL >release\moc_predefs.h

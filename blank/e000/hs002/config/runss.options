@@ -1,0 +1,128 @@
+-r
+C:\Users\sanch\Desktop\refactor\opennn\blank\e000\hs002
+--mrte-mode=auto
+--follow-child
+--return-app-exitcode
+--strategy=ld-linux.so.2:notrace:notrace,ld-linux-x86-64.so.2:notrace:notrace
+--interval=10
+--data-limit-mb=500
+--stack-stitching
+--itt-config=frame,task,event,counter,model
+--stackwalk=offline
+--stack-unwind-limit=8388608
+--mrte-type=java,dotnet,python
+--type=cpu:stack
+--opencl-trace-mode=default
+--search-dir
+sym:r=C:\\Users\\sanch\\Desktop\\refactor\\opennn
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\bin\\HostX64\\x64
+--search-dir
+bin=C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64
+--search-dir
+bin=C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x86
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\tools
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\ide
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\amd64
+--search-dir
+bin=C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319
+--search-dir
+bin=C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\tbb\\latest\\env\\..\\bin\
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\mkl\\latest\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\ippcp\\latest\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\ipp\\latest\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\dpcpp-ct\\latest\\env\\..\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\dnnl\\latest\\env\\..\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\dev-utilities\\latest\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\debugger\\latest\\env\\\\..\\opt\\debugger\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\dal\\latest\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\opt\\oclfpga\\host\\windows64\\bin
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\opt\\oclfpga\\bin
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VC\\VCPackages
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\bin\\Roslyn
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Team Tools\\Performance Tools\\x64
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Team Tools\\Performance Tools
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Team Tools\\DiagnosticsHub\\Collector
+--search-dir
+bin=C:\\Program Files (x86)\\Windows Kits\\10\\bin\\\\x64
+--search-dir
+bin=C:\\Program Files\\Common Files\\Oracle\\Java\\javapath
+--search-dir
+bin=C:\\Windows\\system32
+--search-dir
+bin=C:\\Windows
+--search-dir
+bin=C:\\Windows\\System32\\Wbem
+--search-dir
+bin=C:\\Windows\\System32\\WindowsPowerShell\\v1.0
+--search-dir
+bin=C:\\Windows\\System32\\OpenSSH
+--search-dir
+bin=C:\\Program Files\\Git\\cmd
+--search-dir
+bin=C:\\Program Files\\AutoFirma\\AutoFirma
+--search-dir
+bin=C:\\Program Files (x86)\\Pulse Secure\\VC142.CRT\\X64
+--search-dir
+bin=C:\\Program Files (x86)\\Pulse Secure\\VC142.CRT\\X86
+--search-dir
+bin=C:\\Program Files (x86)\\Common Files\\Pulse Secure\\TNC Client Plugin
+--search-dir
+bin=C:\\Program Files\\Java\\jdk-20\\bin
+--search-dir
+bin=C:\\Program Files\\spark\\bin
+--search-dir
+bin=C:\\Program Files\\Docker\\Docker\\resources\\bin
+--search-dir
+bin=C:\\Program Files\\Amazon\\AWSCLIV2
+--search-dir
+bin=C:\\Program Files\\MATLAB\\R2023a\\bin
+--search-dir
+bin=C:\\Users\\sanch\\AppData\\Local\\Microsoft\\WindowsApps
+--search-dir
+bin=C:\\Users\\sanch\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja
+--search-dir
+bin=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VC\\Linux\\bin\\ConnectionManagerExe
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\advisor\\2024.0\\bin64
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\compiler\\latest\\lib\\ocloc
+--search-dir
+bin=C:\\Program Files (x86)\\Intel\\oneAPI\\vtune\\2024.0\\bin64
+--search-dir
+bin=C:\\Users\\sanch\\Desktop\\refactor\\opennn
+--app-working-dir=C:\\Users\\sanch\\Desktop\\refactor\\opennn\\blank\
+--
+C:\\Users\\sanch\\Desktop\\refactor\\opennn\\blank\\bin\\blank.exe

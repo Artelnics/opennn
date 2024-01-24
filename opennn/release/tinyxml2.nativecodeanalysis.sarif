@@ -1,0 +1,329 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "ruleId": "C26819",
+          "message": {
+            "text": "Unannotated fallthrough between switch labels (es.78)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.cpp"
+                },
+                "region": {
+                  "startLine": 475,
+                  "startColumn": 10
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::XMLUtil::ConvertUTF32ToUTF8",
+                  "decoratedName": "?ConvertUTF32ToUTF8@XMLUtil@tinyxml2@@SAXKPEADPEAH@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26819",
+          "message": {
+            "text": "Unannotated fallthrough between switch labels (es.78)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.cpp"
+                },
+                "region": {
+                  "startLine": 480,
+                  "startColumn": 10
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::XMLUtil::ConvertUTF32ToUTF8",
+                  "decoratedName": "?ConvertUTF32ToUTF8@XMLUtil@tinyxml2@@SAXKPEADPEAH@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26819",
+          "message": {
+            "text": "Unannotated fallthrough between switch labels (es.78)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.cpp"
+                },
+                "region": {
+                  "startLine": 485,
+                  "startColumn": 10
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::XMLUtil::ConvertUTF32ToUTF8",
+                  "decoratedName": "?ConvertUTF32ToUTF8@XMLUtil@tinyxml2@@SAXKPEADPEAH@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<char,20>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<char,20>::{ctor}",
+                  "decoratedName": "??0?$DynArray@D$0BE@@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<char,20>::_pool"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<char const *,10>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<char const *,10>::{ctor}",
+                  "decoratedName": "??0?$DynArray@PEBD$09@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<char const *,10>::_pool"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<tinyxml2::XMLNode *,10>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<tinyxml2::XMLNode *,10>::{ctor}",
+                  "decoratedName": "??0?$DynArray@PEAVXMLNode@tinyxml2@@$09@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<tinyxml2::XMLNode *,10>::_pool"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<tinyxml2::MemPoolT<104>::Block *,10>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<tinyxml2::MemPoolT<104>::Block *,10>::{ctor}",
+                  "decoratedName": "??0?$DynArray@PEAUBlock@?$MemPoolT@$0GI@@tinyxml2@@$09@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<tinyxml2::MemPoolT<104>::Block *,10>::_pool"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<tinyxml2::MemPoolT<112>::Block *,10>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<tinyxml2::MemPoolT<112>::Block *,10>::{ctor}",
+                  "decoratedName": "??0?$DynArray@PEAUBlock@?$MemPoolT@$0HA@@tinyxml2@@$09@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<tinyxml2::MemPoolT<112>::Block *,10>::_pool"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<tinyxml2::MemPoolT<80>::Block *,10>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<tinyxml2::MemPoolT<80>::Block *,10>::{ctor}",
+                  "decoratedName": "??0?$DynArray@PEAUBlock@?$MemPoolT@$0FA@@tinyxml2@@$09@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<tinyxml2::MemPoolT<80>::Block *,10>::_pool"
+          }
+        },
+        {
+          "ruleId": "C26495",
+          "message": {
+            "text": "Variable 'tinyxml2::DynArray<tinyxml2::MemPoolT<120>::Block *,10>::_pool' is uninitialized. Always initialize a member variable (type.6)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+                },
+                "region": {
+                  "startLine": 201,
+                  "startColumn": 5
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "tinyxml2::DynArray<tinyxml2::MemPoolT<120>::Block *,10>::{ctor}",
+                  "decoratedName": "??0?$DynArray@PEAUBlock@?$MemPoolT@$0HI@@tinyxml2@@$09@tinyxml2@@QEAA@XZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "targetSymbol": "tinyxml2::DynArray<tinyxml2::MemPoolT<120>::Block *,10>::_pool"
+          }
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "PREfast",
+          "fullName": "PREfast Code Analysis",
+          "version": "14.38.33134.0",
+          "informationUri": "https://aka.ms/cpp/ca"
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "artifacts": [
+        {
+          "location": {
+            "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.cpp"
+          },
+          "roles": [
+            "analysisTarget",
+            "resultFile"
+          ],
+          "hashes": {
+            "sha-256": "b73af9f4414c9649efdc97f722520949e064447031c3cc8895f100414bf26dc9"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///C:/Users/sanch/Desktop/refactor/opennn/opennn/tinyxml2.h"
+          },
+          "roles": [
+            "resultFile"
+          ],
+          "hashes": {
+            "sha-256": "7294bf5206a0d295b18563e39329710b9c2be7a6a927cd2c4b0a45c9cf55bd94"
+          }
+        }
+      ]
+    }
+  ]
+}

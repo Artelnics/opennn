@@ -1,0 +1,16 @@
+﻿  Generate moc_predefs.h
+cl : command line  warning D9002: ignoring unknown option '-std=c++17'
+cl : command line  warning D9002: ignoring unknown option '-pthread'
+  main.cpp
+C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  (compiling source file 'main.cpp')
+  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
+  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
+  
+LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
+LINK : warning LNK4044: unrecognized option '/pthread'; ignored
+LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
+LINK : warning LNK4044: unrecognized option '/pthread'; ignored
+  airline_passengers.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\examples\airline_passengers\bin\airline_passengers.exe
