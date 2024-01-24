@@ -248,5 +248,6 @@ tests/data/*.xml
 #VS build
 *.log
 *.lastbuildstate
+*.props
 
 # Created by .ignore support plugin (hsz.mobi)
