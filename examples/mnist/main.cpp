@@ -199,30 +199,31 @@ TrainingResults do_example2(DataSet& ds)
     ts.set_display(false);
 
     Tensor<Index, 1> input_variable_dimension(3);
-    input_variable_dimension.setValues({NUMB_OF_ROWS_PER_IMAGE, NUMB_OF_COLUMNS_PER_IMAGE, 1});
+    input_variable_dimension.setValues({1, NUMB_OF_COLUMNS_PER_IMAGE, NUMB_OF_ROWS_PER_IMAGE});
     ds.set_input_variables_dimensions(input_variable_dimension);
 
     const Index batch_samples = 100U;
     Tensor<Index, 1> conv_input_dimension(4);
-    conv_input_dimension.setValues({
-        NUMB_OF_ROWS_PER_IMAGE,
-        NUMB_OF_COLUMNS_PER_IMAGE,
-        1,
-        batch_samples
-    });
-    Tensor<Index, 1> conv_kernel_dimension(4);
-    conv_kernel_dimension.setValues({
-        5,
-        5,
-        1,
-        6
-    });
+    conv_input_dimension[Convolutional4dDimensions::sample_index] = batch_samples;
+    conv_input_dimension[Convolutional4dDimensions::row_index] = NUMB_OF_ROWS_PER_IMAGE;
+    conv_input_dimension[Convolutional4dDimensions::column_index] = NUMB_OF_COLUMNS_PER_IMAGE;
+    conv_input_dimension[Convolutional4dDimensions::channel_index] = 1;
 
+    Tensor<Index, 1> conv_kernel_dimension(4);
+    conv_kernel_dimension[Kernel4dDimensions::row_index] = 5;
+    conv_kernel_dimension[Kernel4dDimensions::column_index] = 5;
+    conv_kernel_dimension[Kernel4dDimensions::channel_index] = 1;
+    conv_kernel_dimension[Kernel4dDimensions::kernel_index] = 6;
+
+    Tensor<Index, 1> conv_kernel_dimension0(4);
+    conv_kernel_dimension0[Kernel4dDimensions::row_index] = 4;
+    conv_kernel_dimension0[Kernel4dDimensions::column_index] = 4;
+    conv_kernel_dimension0[Kernel4dDimensions::channel_index] = 6;
+    conv_kernel_dimension0[Kernel4dDimensions::kernel_index] = 12;
     Tensor<Index, 1> pooling_dimension(2);
     pooling_dimension.setValues({
         2,
         2,
-
     });
     ConvolutionalLayer* conv_layer = new ConvolutionalLayer(conv_input_dimension, conv_kernel_dimension);
     conv_layer->set_convolution_type(ConvolutionalLayer::ConvolutionType::Same);
@@ -233,7 +234,12 @@ TrainingResults do_example2(DataSet& ds)
     pooling_layer->set_row_stride(2);
     pooling_layer->set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
 
-    FlattenLayer* fl = new FlattenLayer(pooling_layer->get_outputs_dimensions());
+    ConvolutionalLayer* conv_layer0 = new ConvolutionalLayer(pooling_layer->get_outputs_dimensions(), conv_kernel_dimension0);
+    conv_layer0->set_convolution_type(ConvolutionalLayer::ConvolutionType::Valid);
+    conv_layer0->set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+
+
+    FlattenLayer* fl = new FlattenLayer(conv_layer0->get_outputs_dimensions());
 
     PerceptronLayer* pcl = new PerceptronLayer(fl->get_outputs_number(), 32U, PerceptronLayer::ActivationFunction::RectifiedLinear);
 
@@ -242,6 +248,7 @@ TrainingResults do_example2(DataSet& ds)
 
     nn.add_layer(conv_layer);
     nn.add_layer(pooling_layer);
+    nn.add_layer(conv_layer0);
     nn.add_layer(fl);
     nn.add_layer(pcl);
     nn.add_layer(pll);
@@ -266,31 +273,28 @@ TrainingResults do_example3(DataSet& ds)
     ts.set_display(false);
 
     Tensor<Index, 1> input_variable_dimension(3);
-    input_variable_dimension.setValues({NUMB_OF_ROWS_PER_IMAGE, NUMB_OF_COLUMNS_PER_IMAGE, 1});
+    input_variable_dimension.setValues({1, NUMB_OF_COLUMNS_PER_IMAGE, NUMB_OF_ROWS_PER_IMAGE});
     ds.set_input_variables_dimensions(input_variable_dimension);
 
     const Index batch_samples = 100U;
     Tensor<Index, 1> conv_input_dimension(4);
-    conv_input_dimension.setValues({
-        NUMB_OF_ROWS_PER_IMAGE,
-        NUMB_OF_COLUMNS_PER_IMAGE,
-        1,
-        batch_samples
-    });
+    conv_input_dimension[Convolutional4dDimensions::sample_index] = batch_samples;
+    conv_input_dimension[Convolutional4dDimensions::row_index] = NUMB_OF_ROWS_PER_IMAGE;
+    conv_input_dimension[Convolutional4dDimensions::column_index] = NUMB_OF_COLUMNS_PER_IMAGE;
+    conv_input_dimension[Convolutional4dDimensions::channel_index] = 1;
+
     Tensor<Index, 1> conv_kernel_dimension0(4);
-    conv_kernel_dimension0.setValues({
-        5,
-        5,
-        1,
-        6
-    });
+    conv_kernel_dimension0[Kernel4dDimensions::row_index] = 5;
+    conv_kernel_dimension0[Kernel4dDimensions::column_index] = 5;
+    conv_kernel_dimension0[Kernel4dDimensions::channel_index] = 1;
+    conv_kernel_dimension0[Kernel4dDimensions::kernel_index] = 6;
+    
     Tensor<Index, 1> conv_kernel_dimension1(4);
-    conv_kernel_dimension1.setValues({
-        5,
-        5,
-        6,
-        16
-    });
+    conv_kernel_dimension1[Kernel4dDimensions::row_index] = 5;
+    conv_kernel_dimension1[Kernel4dDimensions::column_index] = 5;
+    conv_kernel_dimension1[Kernel4dDimensions::channel_index] = 6;
+    conv_kernel_dimension1[Kernel4dDimensions::kernel_index] = 16;
+    
     Tensor<Index, 1> pooling_dimension(2);
     pooling_dimension.setValues({
         2,
@@ -298,7 +302,7 @@ TrainingResults do_example3(DataSet& ds)
     });
     ConvolutionalLayer* conv_layer0 = new ConvolutionalLayer(conv_input_dimension, conv_kernel_dimension0);
     conv_layer0->set_convolution_type(ConvolutionalLayer::ConvolutionType::Same);
-    conv_layer0->set_activation_function(ConvolutionalLayer::ActivationFunction::Logistic);
+    conv_layer0->set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
     PoolingLayer* pooling_layer0 = new PoolingLayer(conv_layer0->get_outputs_dimensions(), pooling_dimension);
     pooling_layer0->set_column_stride(2);
@@ -307,7 +311,7 @@ TrainingResults do_example3(DataSet& ds)
 
     ConvolutionalLayer* conv_layer1 = new ConvolutionalLayer(pooling_layer0->get_outputs_dimensions(), conv_kernel_dimension1);
     conv_layer1->set_convolution_type(ConvolutionalLayer::ConvolutionType::Valid);
-    conv_layer1->set_activation_function(ConvolutionalLayer::ActivationFunction::Logistic);
+    conv_layer1->set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
     PoolingLayer* pooling_layer1 = new PoolingLayer(conv_layer1->get_outputs_dimensions(), pooling_dimension);
     pooling_layer1->set_column_stride(2);
@@ -316,8 +320,8 @@ TrainingResults do_example3(DataSet& ds)
 
     FlattenLayer* fl = new FlattenLayer(pooling_layer1->get_outputs_dimensions());
 
-    PerceptronLayer* pcl0 = new PerceptronLayer(fl->get_outputs_number(), 120U, PerceptronLayer::ActivationFunction::Logistic);
-    PerceptronLayer* pcl1 = new PerceptronLayer(pcl0->get_neurons_number(), 84U, PerceptronLayer::ActivationFunction::Logistic);
+    PerceptronLayer* pcl0 = new PerceptronLayer(fl->get_outputs_number(), 120U, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+    PerceptronLayer* pcl1 = new PerceptronLayer(pcl0->get_neurons_number(), 84U, PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
     ProbabilisticLayer* pll = new ProbabilisticLayer(pcl1->get_neurons_number(), 10);
     pll->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
