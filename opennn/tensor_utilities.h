@@ -156,7 +156,7 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, N>&tensor)
 void print_tensor(const float* vector, const int dims[]);
 
 template<typename InputTensorType, typename KernelTensorType, typename ConvolutionalDimensionType = Eigen::array<Index, 3>>
-auto perform_convolution(const InputTensorType& input, const KernelTensorType& kernel, const Index row_stride = 1, const Index column_stride = 1, const ConvolutionalDimensionType convolution_dimension = Eigen::array{Convolutional4dDimensions::channel_index, Convolutional4dDimensions::row_index, Convolutional4dDimensions::column_index})
+auto perform_convolution(const InputTensorType& input, const KernelTensorType& kernel, const Index row_stride = 1, const Index column_stride = 1, const ConvolutionalDimensionType convolution_dimension = Eigen::array{Convolutional4dDimensions::channel_index, Convolutional4dDimensions::column_index, Convolutional4dDimensions::row_index})
 {
     Eigen::array<Index, 4> strides;
     strides[Convolutional4dDimensions::sample_index] = 1;
