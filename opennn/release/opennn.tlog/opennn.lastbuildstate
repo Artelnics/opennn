@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 PlatformToolSet=Intel C++ Compiler 2024:VCToolArchitecture=Native64Bit:VCToolsVersion=14.38.33130:TargetPlatformVersion=10.0.22000.0:
 Release|x64|C:\Users\sanch\Desktop\refactor\opennn\|
+=======
+PlatformToolSet=v143:VCToolArchitecture=Native64Bit:VCToolsVersion=14.38.33130:TargetPlatformVersion=10.0.22621.0:
+Release|x64|C:\Users\Roberto Lopez\Documents\GitLab\opennn\|
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

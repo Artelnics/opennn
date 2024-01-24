@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿  Reading Qt configuration (C:/Qt/6.5.0/msvc2019_64/bin/qmake)
   Generate moc_predefs.h
 icx-cl: : warning : unknown argument ignored in clang-cl '-std=c++17'; did you mean '-Qstd=c++17'? [-Wunknown-argument]
@@ -36,3 +37,7 @@ LINK : : warning LNK4044: unrecognized option '/fopenmp'; ignored
 LINK : : warning LNK4044: unrecognized option '/pthread'; ignored
 LINK : : warning LNK4044: unrecognized option '/openmp'; ignored
   blank.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\blank\bin\blank.exe
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project blank.vcxproj for configuration Debug/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

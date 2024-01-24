@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿LINK : : warning LNK4044: unrecognized option '/fopenmp'; ignored
 LINK : : warning LNK4044: unrecognized option '/pthread'; ignored
 LINK : : warning LNK4044: unrecognized option '/fopenmp'; ignored
@@ -19,3 +20,7 @@ opennn.lib(scaling_layer_4d.obj) : : error LNK2001: unresolved external symbol o
 opennn.lib(convolutional_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
 opennn.lib(flatten_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
 bin\\mnist.exe : : error LNK1120: 1 unresolved externals
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project mnist.vcxproj for configuration Debug/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

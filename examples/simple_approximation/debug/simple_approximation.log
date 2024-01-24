@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿LINK : : warning LNK4044: unrecognized option '/openmp'; ignored
 opennn.lib(recurrent_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
 opennn.lib(pooling_layer.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
@@ -14,3 +15,7 @@ opennn.lib(optimization_algorithm.obj) : : error LNK2001: unresolved external sy
 opennn.lib(learning_rate_algorithm.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
 opennn.lib(loss_index.obj) : : error LNK2001: unresolved external symbol omp_get_max_threads
 bin\\simple_approximation.exe : : error LNK1120: 1 unresolved externals
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project simple_approximation.vcxproj for configuration Debug/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

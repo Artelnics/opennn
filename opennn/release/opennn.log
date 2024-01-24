@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿icx-cl : warning : argument unused during compilation: '-Zc:throwingNew' [-Wunused-command-line-argument]
 icx-cl : warning : argument unused during compilation: '-Zc:externConstexpr' [-Wunused-command-line-argument]
 icx-cl : warning : argument unused during compilation: '-Zc:throwingNew' [-Wunused-command-line-argument]
@@ -1347,3 +1348,7 @@ C:\Users\sanch\Desktop\refactor\opennn\opennn\non_max_suppression_layer.h(40,9):
   1 warning generated.
   1 warning generated.
   opennn.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\opennn\release\opennn.lib
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project opennn.vcxproj for configuration Release/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

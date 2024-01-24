@@ -245,4 +245,8 @@ build-wrapper-dump.json
 #Tests tools
 tests/data/*.xml
 
+#VS build
+*.log
+*.lastbuildstate
+
 # Created by .ignore support plugin (hsz.mobi)

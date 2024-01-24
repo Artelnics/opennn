@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿  Generate moc_predefs.h
 cl : command line  warning D9002: ignoring unknown option '-std=c++17'
 cl : command line  warning D9002: ignoring unknown option '-pthread'
@@ -448,3 +449,7 @@ LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
 LINK : warning LNK4044: unrecognized option '/pthread'; ignored
 LINK : warning LNK4044: unrecognized option '/openmp'; ignored
   tests.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\tests\bin\tests.exe
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project tests.vcxproj for configuration Release/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

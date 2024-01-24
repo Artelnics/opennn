@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿  Generate moc_predefs.h
   main.cpp
 C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
@@ -9,3 +10,7 @@ C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\
   
 LINK : warning LNK4044: unrecognized option '/openmp'; ignored
   simple_approximation.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\examples\simple_approximation\bin\simple_approximation.exe
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project simple_approximation.vcxproj for configuration Release/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f

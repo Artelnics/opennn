@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿  Reading Qt configuration (C:/Qt/6.5.0/msvc2019_64/bin/qmake)
 icx-cl : warning : argument unused during compilation: '-Zc:throwingNew' [-Wunused-command-line-argument]
 icx-cl : warning : argument unused during compilation: '-Zc:externConstexpr' [-Wunused-command-line-argument]
@@ -1673,3 +1674,7 @@ C:\Users\sanch\Desktop\refactor\opennn\opennn\multihead_attention_layer.h(312,25
   1 warning generated.
   2 warnings generated.
   opennn.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\opennn\debug\opennn.lib
+=======
+﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project opennn.vcxproj for configuration Debug/x64.
+C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
+>>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f
