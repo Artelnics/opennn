@@ -160,6 +160,7 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
 
     outputs.setConstant(numeric_limits<type>::min());
 
+    #pragma omp parallel for
     for(Index row_index = 0; row_index < inputs_rows_number; row_index++)
     {
         Index output_row_index = (row_index / pool_rows_number);
@@ -168,7 +169,6 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
             Index output_column_index = (column_index / pool_columns_number);
             for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
-                #pragma omp parallel for
                 for(Index image_index = 0; image_index < images_number; image_index++)
                 {
                     outputs(image_index, channel_index, output_column_index, output_row_index) = max(
@@ -212,6 +212,7 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
 
     outputs.setConstant(numeric_limits<type>::min());
 
+    #pragma omp parallel for
     for(Index row_index = 0; row_index < inputs_rows_number; row_index++)
     {
         Index output_row_index = (row_index / pool_rows_number);
@@ -220,7 +221,6 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
             Index output_column_index = (column_index / pool_columns_number);
             for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
-                #pragma omp parallel for
                 for(Index image_index = 0; image_index < images_number; image_index++)
                 {
                     if( inputs(image_index, channel_index, column_index, row_index) > 
@@ -535,13 +535,13 @@ void PoolingLayer::calculate_hidden_delta_max_pooling(
 
     current_delta.setZero();
 
+    #pragma omp parallel for
     for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
     {
         for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
         {
             for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
-                #pragma omp parallel for
                 for(Index image_index = 0; image_index < images_number; image_index++)
                 {
                    const auto [current_delta_column_index, current_delta_row_index] = switches(image_index, channel_index, column_index, row_index);
