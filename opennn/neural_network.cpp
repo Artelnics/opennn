@@ -1709,13 +1709,13 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
     layers_pointers(first_trainable_layer_index)->forward_propagate(inputs,
                                                                     forward_propagation.layers(first_trainable_layer_index),
                                                                     is_training);
-
+    
     pair<type*, dimensions> outputs_pair;
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
     {
         outputs_pair = forward_propagation.layers(i-1)->get_outputs_pair();
-
+        
         layers_pointers(i)->forward_propagate(outputs_pair,
                                               forward_propagation.layers(i),
                                               is_training);

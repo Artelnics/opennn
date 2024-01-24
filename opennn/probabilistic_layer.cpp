@@ -621,10 +621,23 @@ void ProbabilisticLayer::logistic_derivatives(const Tensor<type, 2>& x,
 
 
 void ProbabilisticLayer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{  
-    y = x.exp();
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
 
-    y /= y.sum(Eigen::array<int, 1>{{1}}).reshape(Eigen::array<Index, 2>{{x.dimension(0), 1}});
+    const Eigen::array<Index, 1> last_dim{ {2} };
+    const Eigen::array<Index, 2> range_2{ {rows_number, 1} };
+    const Eigen::array<Index, 2> expand_last_dim{ {1, columns_number} };
+
+    y.device(*thread_pool_device) = x - x.maximum(last_dim)
+                                         .reshape(range_2)
+                                         .broadcast(expand_last_dim);
+
+    y.device(*thread_pool_device) = y.exp();
+
+    y.device(*thread_pool_device) = y / y.sum(last_dim)
+                                         .reshape(range_2)
+                                         .broadcast(expand_last_dim);
 
 /*
     const Eigen::array<int, 1> dimensions({1});
@@ -644,9 +657,6 @@ void ProbabilisticLayer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
 
 void ProbabilisticLayer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
 {
-    const Index n = x.dimension(0);
-    const Index m = x.dimension(1);
-
   /*
 
         softmax(x, y);
@@ -657,30 +667,29 @@ void ProbabilisticLayer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<ty
                (Tensor<type, 3>::Identity(m, m).reshape(Eigen::array<int, 3>{columns_number, columns_number, 1}) -
                 soft.reshape(Eigen::array<int, 3>{1, m, x.dimension(0)}));
 */
-
-
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+    
     softmax(x, y);
 
-    dy_dx.setRandom();
+    dy_dx.setZero();
 
-    for(Index i = 0; i < n; i++)
+    Tensor<type, 1> y_row(columns_number);
+    Tensor<type, 2> dy_dx_matrix(columns_number, columns_number);
+
+    for (Index i = 0; i < rows_number; i++)
     {
-        TensorMap<Tensor<type, 1>> y_row(y.data() + i*m, m);
+        y_row = y.chip(i, 0);
 
-        TensorMap<Tensor<type, 2>> dy_dx_row(dy_dx.data() + i*m*m, m, m);
+        dy_dx_matrix = -kronecker_product(y_row, y_row);
 
-        kronecker_product_void(y_row, dy_dx_row);
-
-        dy_dx_row = -dy_dx_row;
-
-        #pragma omp parallel for
-
-        for(Index j = 0; j < m; j++)
+        for (Index j = 0; j < columns_number; j++)
         {
-            dy_dx_row(j, j) += y_row(j);
+            dy_dx_matrix(j, j) += y_row(j);
         }
-    }
 
+        dy_dx.chip(i, 0) = dy_dx_matrix;
+    }
 }
 
 
@@ -720,11 +729,11 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
     if(is_training)
     {
         Tensor<type, 3>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
-
+        
         calculate_activations_derivatives(outputs,
                                           outputs,
                                           activations_derivatives);
-
+        
     }
     else
     {
@@ -790,6 +799,7 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
     const Tensor<type,2>& deltas = probabilistic_layer_back_propagation->deltas;
 
     Tensor<type,1>& deltas_row = probabilistic_layer_back_propagation->deltas_row;
+    Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_back_propagation->activations_derivatives_matrix;
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_back_propagation->synaptic_weights_derivatives;
@@ -818,9 +828,10 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
         for(Index i = 0; i < batch_samples_number; i++)
         {
-            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i*step,
+            /*const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
                                                                             neurons_number,
-                                                                            neurons_number);
+                                                                            neurons_number);*/
+            activations_derivatives_matrix = activations_derivatives.chip(i, 0);
 
             deltas_row = deltas.chip(i, 0);
 
@@ -1448,6 +1459,7 @@ void ProbabilisticLayerBackPropagation::set(
     synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
     deltas_row.resize(neurons_number);
+    activations_derivatives_matrix.resize(neurons_number, neurons_number);
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
 }

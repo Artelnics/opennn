@@ -667,7 +667,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         // Neural network
         
         neural_network_pointer->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
-
+        
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);

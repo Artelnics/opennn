@@ -16,7 +16,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mnist", "C:/Users/sanch/Des
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "object_detection", "C:/Users/sanch/Desktop/refactor/opennn/examples/object_detector\object_detection.vcxproj", "{F23A7197-C571-3962-BD3F-2025A82EE1D1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "airfoil_self_noise", "C:/Users/sanch/Desktop/refactor/opennn/examples/rosenbrock\airfoil_self_noise.vcxproj", "{B6AC46E2-90D7-305E-880B-2244F6B808DD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rosenbrock", "C:/Users/sanch/Desktop/refactor/opennn/examples/rosenbrock\rosenbrock.vcxproj", "{14606040-27FA-36D7-A03D-6564BB11C068}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_approximation", "C:/Users/sanch/Desktop/refactor/opennn/examples/simple_approximation\simple_approximation.vcxproj", "{D4F26367-C16B-305C-A744-E8371AB4BD87}"
 EndProject
@@ -60,10 +60,10 @@ Global
 		{F23A7197-C571-3962-BD3F-2025A82EE1D1}.Debug|x64.Build.0 = Debug|x64
 		{F23A7197-C571-3962-BD3F-2025A82EE1D1}.Release|x64.ActiveCfg = Release|x64
 		{F23A7197-C571-3962-BD3F-2025A82EE1D1}.Release|x64.Build.0 = Release|x64
-		{B6AC46E2-90D7-305E-880B-2244F6B808DD}.Debug|x64.ActiveCfg = Debug|x64
-		{B6AC46E2-90D7-305E-880B-2244F6B808DD}.Debug|x64.Build.0 = Debug|x64
-		{B6AC46E2-90D7-305E-880B-2244F6B808DD}.Release|x64.ActiveCfg = Release|x64
-		{B6AC46E2-90D7-305E-880B-2244F6B808DD}.Release|x64.Build.0 = Release|x64
+		{14606040-27FA-36D7-A03D-6564BB11C068}.Debug|x64.ActiveCfg = Debug|x64
+		{14606040-27FA-36D7-A03D-6564BB11C068}.Debug|x64.Build.0 = Debug|x64
+		{14606040-27FA-36D7-A03D-6564BB11C068}.Release|x64.ActiveCfg = Release|x64
+		{14606040-27FA-36D7-A03D-6564BB11C068}.Release|x64.Build.0 = Release|x64
 		{D4F26367-C16B-305C-A744-E8371AB4BD87}.Debug|x64.ActiveCfg = Debug|x64
 		{D4F26367-C16B-305C-A744-E8371AB4BD87}.Debug|x64.Build.0 = Debug|x64
 		{D4F26367-C16B-305C-A744-E8371AB4BD87}.Release|x64.ActiveCfg = Release|x64

@@ -44,7 +44,7 @@ private:
 
     Index samples_number;
     Index inputs_number;
-    Index outputs_number;
+    Index targets_number;
     Index neurons_number;
 
     Tensor<type, 3> data;
@@ -57,7 +57,7 @@ private:
 
     NeuralNetwork neural_network;
 
-    CrossEntropyError3D cross_entropy_error;
+    CrossEntropyError3D cross_entropy_error_3d;
 
     DataSetBatch batch;
 

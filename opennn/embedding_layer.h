@@ -107,11 +107,11 @@ public:
     void forward_propagate(const pair<type*, dimensions>&layer,
                            LayerForwardPropagation*,
                            const bool&) final;
-
+/*
     void forward_propagate(const pair<type*, dimensions>&,
                            Tensor<type, 1>&,
                            LayerForwardPropagation*) final;
-
+*/
     // Expression methods
 
     //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;

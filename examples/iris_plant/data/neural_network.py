@@ -50,13 +50,13 @@ class NeuralNetwork:
 		scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247
 		scaled_petal_width = (petal_width-1.19933331)/0.762237668
 		
-		perceptron_layer_1_output_0 = np.tanh( 0.705909 + (scaled_sepal_lenght*0.144892) + (scaled_sepal_width*0.289479) + (scaled_petal_lenght*0.45477) + (scaled_petal_width*0.916351) )
-		perceptron_layer_1_output_1 = np.tanh( 0.478104 + (scaled_sepal_lenght*0.739366) + (scaled_sepal_width*0.0899907) + (scaled_petal_lenght*0.327944) + (scaled_petal_width*0.639982) )
-		perceptron_layer_1_output_2 = np.tanh( 0.66575 + (scaled_sepal_lenght*0.299121) + (scaled_sepal_width*0.460243) + (scaled_petal_lenght*0.205209) + (scaled_petal_width*0.525338) )
+		perceptron_layer_1_output_0 = np.tanh( 1.1407 + (scaled_sepal_lenght*0.547602) + (scaled_sepal_width*-0.71951) + (scaled_petal_lenght*0.891633) + (scaled_petal_width*0.478886) )
+		perceptron_layer_1_output_1 = np.tanh( 0.136618 + (scaled_sepal_lenght*1.11376) + (scaled_sepal_width*1.19431) + (scaled_petal_lenght*0.76173) + (scaled_petal_width*0.426649) )
+		perceptron_layer_1_output_2 = np.tanh( 0.306789 + (scaled_sepal_lenght*1.37411) + (scaled_sepal_width*0.413789) + (scaled_petal_lenght*1.01009) + (scaled_petal_width*0.556113) )
 		
-		probabilistic_layer_combinations_0 = 0.766181 +0.488712*perceptron_layer_1_output_0 +0.869745*perceptron_layer_1_output_1 +0.0212694*perceptron_layer_1_output_2 
-		probabilistic_layer_combinations_1 = 0.955649 +0.254349*perceptron_layer_1_output_0 +0.544686*perceptron_layer_1_output_1 +0.785985*perceptron_layer_1_output_2 
-		probabilistic_layer_combinations_2 = 0.454777 +0.749801*perceptron_layer_1_output_0 +0.105201*perceptron_layer_1_output_1 +0.960574*perceptron_layer_1_output_2 
+		probabilistic_layer_combinations_0 = 5.66473 -6.98139*perceptron_layer_1_output_0 -3.29726*perceptron_layer_1_output_1 -7.74189*perceptron_layer_1_output_2 
+		probabilistic_layer_combinations_1 = 3.84758 +6.59763*perceptron_layer_1_output_0 -1.56912*perceptron_layer_1_output_1 +2.24853*perceptron_layer_1_output_2 
+		probabilistic_layer_combinations_2 = -4.43556 +2.45928*perceptron_layer_1_output_0 +6.60359*perceptron_layer_1_output_1 +7.06642*perceptron_layer_1_output_2 
 			
 		sum = np.exp(probabilistic_layer_combinations_0) + np.exp(probabilistic_layer_combinations_1) + np.exp(probabilistic_layer_combinations_2)
 		

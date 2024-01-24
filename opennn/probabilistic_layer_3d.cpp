@@ -630,16 +630,19 @@ void ProbabilisticLayer3D::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y)
     const Index columns_number = x.dimension(1);
     const Index channels_number = x.dimension(2);
 
-    y = x - x.maximum(Eigen::array<Index, 1>{{2}})
-             .reshape(Eigen::array<Index, 3>{{rows_number, columns_number, 1}})
-             .broadcast(Eigen::array<Index, 3>{{1, 1, channels_number}});
+    const Eigen::array<Index, 1> last_dim{ {2} };
+    const Eigen::array<Index, 3> range_3{ {rows_number, columns_number, 1} };
+    const Eigen::array<Index, 3> expand_last_dim{ {1, 1, channels_number} };
 
-    y = y.exp();
+    y.device(*thread_pool_device) = x - x.maximum(last_dim)
+                                         .reshape(range_3)
+                                         .broadcast(expand_last_dim);
 
-    y /= y.sum(Eigen::array<int, 1>{{2}})
-          .reshape(Eigen::array<Index, 3>{{rows_number, columns_number, 1}})
-          .broadcast(Eigen::array<Index, 3>{{1, 1, channels_number}});
+    y.device(*thread_pool_device) = y.exp();
 
+    y.device(*thread_pool_device) = y / y.sum(last_dim)
+                                         .reshape(range_3)
+                                         .broadcast(expand_last_dim);
 }
 
 

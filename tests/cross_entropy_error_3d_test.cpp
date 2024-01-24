@@ -10,8 +10,8 @@
 
 CrossEntropyError3DTest::CrossEntropyError3DTest() : UnitTesting()
 {
-    cross_entropy_error.set(&neural_network, &data_set);
-    cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    cross_entropy_error_3d.set(&neural_network, &data_set);
+    cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 }
 
 
@@ -53,8 +53,6 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 {
     cout << "Running calculate gradient transformer test case...\n";
 
-    CrossEntropyError3D cross_entropy_error_3d;
-
     Tensor<type, 1> numerical_gradient;
 
     // Test
@@ -69,9 +67,9 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
     // Test
     {
-        Index samples_number = 1;
-        Index inputs_number = 1;
-        Index targets_number = 1;
+        samples_number = 1;
+        inputs_number = 1;
+        targets_number = 1;
 
         data_set.set(samples_number, inputs_number, targets_number);
 
