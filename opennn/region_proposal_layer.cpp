@@ -12,7 +12,7 @@
 
 namespace opennn
 {
-
+    /*
 /// Default constructor.
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
@@ -243,7 +243,7 @@ void RegionProposalLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 */
 }
 
-}
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.

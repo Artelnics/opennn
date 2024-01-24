@@ -30,7 +30,7 @@ namespace opennn
 class RegionProposalLayer : public Layer
 
 {
-
+/*
 public:
     // Constructors
 
@@ -166,7 +166,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     }
 
     Tensor<Index, 2> regions;
-
+    */
 };
 
 

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 c:\users\sanch\desktop\refactor\opennn\tests\release\flatten_layer_test.obj
 c:\users\sanch\desktop\refactor\opennn\tests\release\scaling_layer_test.obj
@@ -94,3 +95,5 @@ c:\users\roberto lopez\documents\gitlab\opennn\tests\release\training_strategy_t
 c:\users\roberto lopez\documents\gitlab\opennn\tests\release\unscaling_layer_test.obj
 c:\users\roberto lopez\documents\gitlab\opennn\tests\release\weighted_squared_error_test.obj
 >>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f
+=======
+>>>>>>> Stashed changes

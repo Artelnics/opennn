@@ -1,4 +1,4 @@
-
+/*
 Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1>& outlier_ranks,
                                                             const type& contamination,
                                                             bool higher) const
@@ -274,7 +274,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
 
             k_nearest_neighbors(bounding_box(j)) = move(box_nearest_neighbors(j));
         }
-*/
+
     }
 
     return k_nearest_neighbors;
@@ -688,4 +688,4 @@ Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_n
     }
     return forest;
 }
-
+*/
