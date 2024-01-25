@@ -139,15 +139,18 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    copy(biases.data(),
+    copy(execution::par, 
+        biases.data(),
          biases.data() + biases.size(),
          parameters.data());
 
-    copy(input_weights.data(),
+    copy(execution::par, 
+        input_weights.data(),
          input_weights.data() + input_weights.size(),
          parameters.data() + biases.size());
 
-    copy(recurrent_weights.data(),
+    copy(execution::par, 
+        recurrent_weights.data(),
          recurrent_weights.data() + recurrent_weights.size(),
          parameters.data() + biases.size() + input_weights.size());
 
@@ -404,15 +407,18 @@ check_size(new_parameters, get_parameters_number(), LOG);
     const Index inputs_weights_number = get_input_weights_number();
     const Index recurrent_weights_number = get_recurrent_weights_number();
 
-    copy(new_parameters.data() + index,
+    copy(execution::par, 
+        new_parameters.data() + index,
          new_parameters.data() + index + biases_number,
          biases.data());
 
-    copy(new_parameters.data() + index + biases_number,
+    copy(execution::par, 
+        new_parameters.data() + index + biases_number,
          new_parameters.data() + index + biases_number + inputs_weights_number,
          input_weights.data());
 
-    copy(new_parameters.data() + biases_number + inputs_weights_number + index,
+    copy(execution::par, 
+        new_parameters.data() + biases_number + inputs_weights_number + index,
          new_parameters.data() + biases_number + inputs_weights_number + index + recurrent_weights_number,
          recurrent_weights.data());
 }
@@ -690,7 +696,7 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs,
     const Index samples_number = inputs.second[0][0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, samples_number, neurons_number);
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
             = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -917,19 +923,22 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Biases
 
-    copy(recurrent_layer_back_propagation->biases_derivatives.data(),
+    copy(execution::par, 
+        recurrent_layer_back_propagation->biases_derivatives.data(),
          recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
          gradient.data() + index);
 
     // Input weights
 
-    copy(recurrent_layer_back_propagation->input_weights_derivatives.data(),
+    copy(execution::par, 
+        recurrent_layer_back_propagation->input_weights_derivatives.data(),
          recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number*neurons_number,
          gradient.data() + index + neurons_number);
 
     // Recurrent weights
 
-    copy(recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
+    copy(execution::par, 
+         recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
          recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number*neurons_number,
          gradient.data() + index + neurons_number + inputs_number*neurons_number);
 }

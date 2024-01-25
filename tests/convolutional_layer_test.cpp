@@ -1001,17 +1001,19 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     const int kernel_cols = 2;
 
     Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
+
     Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
-    Tensor<type, 4> result((rows_input-kernel_rows)+1,
-                           (cols_input-kernel_cols)+1,
-                            kernel_number,
-                            images_number);
+
+    Tensor<type, 4> result(rows_input-kernel_rows+1,
+                           cols_input-kernel_cols+1,
+                           kernel_number,
+                           images_number);
 
     Tensor<type, 3> tmp_result((rows_input-kernel_rows)+1,
                                (cols_input-kernel_cols)+1,
                                1);
 
-    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
+    const Index output_size_rows_cols = (rows_input-kernel_rows+1)*(cols_input-kernel_cols+1);
 
     float* ptr_result = (float*) malloc(size_t(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
 
@@ -1025,14 +1027,14 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     kernel.chip(1,3).setConstant(type(1./6.));
 
     time_t beginning_time;
-    time_t current_time;
+    time_t current_time = 0;
     time(&beginning_time);
     type elapsed_time = type(0);
 
     const Eigen::array<ptrdiff_t, 3> dimensions = {0, 1, 2};
 
     #pragma omp parallel for
-    for(int i =0; i<images_number ;i++)
+    for(int i = 0; i < images_number ;i++)
     {
         const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
 
@@ -1045,11 +1047,18 @@ void ConvolutionalLayerTest::test_memcpy_approach()
             const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
 
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dimensions);
-
+/*
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
                    tmp_result.data(), output_size_rows_cols*sizeof(type));
+*/
+            copy(execution::par, 
+                tmp_result.data(),
+                tmp_result.data() + output_size_rows_cols,
+                result.data() + j * output_size_rows_cols + i * output_size_rows_cols * kernel_number);
          }
     }
+
+    delete ptr_result;
 }
 
 void ConvolutionalLayerTest::run_test_case()

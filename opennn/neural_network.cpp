@@ -2865,7 +2865,7 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 
     Tensor<type, 1> new_parameters(parameters_number);
 
-    type value;
+    type value = 0;
 
     for(Index i = 0; i < parameters_number; i++)
     {
@@ -4586,7 +4586,7 @@ string NeuralNetwork::write_expression_python() const
     Tensor<string, 1> original_inputs =  get_inputs_names();
     Tensor<string, 1> outputs = get_outputs_names();
 
-    const Index layers_number = get_layers_number();
+//    const Index layers_number = get_layers_number();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
     int cell_state_counter = 0;

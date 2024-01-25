@@ -150,26 +150,33 @@ Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
-    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
+    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index biases_number = biases.size();
+
+    Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
+
+    const type* synaptic_weights_data = synaptic_weights.data();
+    const type* biases_data = biases.data();
+    type* parameters_data = parameters.data();
+
+    copy(execution::par,
+         synaptic_weights_data,
+         synaptic_weights_data + synaptic_weights_number,
+         parameters_data);
+
+    copy(execution::par,
+         biases_data,
+         biases_data + biases_number,
+         parameters_data + synaptic_weights_number);
+
 /*
-    copy(execution::par,
-         synaptic_weights.data(),
-         synaptic_weights.data() + synaptic_weights.size(),
-         parameters.data());
-
-    copy(execution::par,
-         biases.data(),
-         biases.data() + biases.size(),
-         parameters.data() + synaptic_weights.size());
-*/
-
     memcpy(parameters.data(),
            synaptic_weights.data(),
            size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
            biases.data(), size_t(biases.size())*sizeof(type));
-
+*/
     return parameters;
 }
 
@@ -348,17 +355,6 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
 //    const Index biases_number = get_biases_number();
 //    const Index synaptic_weights_number = get_synaptic_weights_number();
 /*
-    copy(execution::par,
-         new_parameters.data() + index,
-         new_parameters.data() + index + new_parameters.size(),
-         synaptic_weights.data());
-
-    copy(execution::par,
-         new_parameters.data() + index + synaptic_weights.size(),
-         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
-         biases.data());
-*/
-
     memcpy(synaptic_weights.data(),
            new_parameters.data() + index,
            size_t(synaptic_weights.size())*sizeof(type));
@@ -366,6 +362,17 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     memcpy(biases.data(),
            new_parameters.data() + index + synaptic_weights.size(),
            size_t(biases.size())*sizeof(type));
+*/
+    copy(execution::par, 
+        new_parameters.data() + index,
+        new_parameters.data() + index + synaptic_weights.size(),
+        synaptic_weights.data());
+
+    copy(execution::par, 
+        new_parameters.data() + index + synaptic_weights.size(),
+        new_parameters.data() + index + synaptic_weights.size() + biases.size(),
+        biases.data());
+
 }
 
 
@@ -546,7 +553,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 
 
-void PerceptronLayer::dropout(Tensor<type, 2>& outputs)
+void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 {
     type* outputs_data = outputs.data();
 
@@ -1195,12 +1202,12 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    copy(execution::par_unseq,
+    copy(execution::par,
          synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(execution::par_unseq,
+    copy(execution::par,
          biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);

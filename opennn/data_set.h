@@ -12,34 +12,32 @@
 
 // System includes
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <codecvt>
 #include <cstdlib>
-#include <stdexcept>
 #include <ctime>
 #include <exception>
-#include <random>
-#include <regex>
-#include <map>
-#include <stdlib.h>
-#include <stdio.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <limits.h>
 #include <list>
-#include <filesystem>
-//#include <experimental/filesystem>
-
+#include <map>
+#include <random>
 #include <regex>
-#include <codecvt>
+#include <regex>
+#include <sstream>
+#include <stdexcept>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 
 // OpenNN includes
 
 #include "config.h"
-#include "scaling.h"
 #include "correlation.h"
+#include "scaling.h"
 
 using namespace std;
 using namespace Eigen;

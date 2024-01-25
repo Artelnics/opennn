@@ -255,7 +255,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
 
     for(Index i = 0; i < leaves_number; i++) // Each bounding box
     {
-/*
+
         const Index first = leaves_indices(i);
         const Index last = leaves_indices(i+1);
         bounding_box = Tensor<type, 1>(last-first);

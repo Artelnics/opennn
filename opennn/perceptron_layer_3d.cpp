@@ -160,12 +160,22 @@ Tensor<type, 2> PerceptronLayer3D::get_biases(const Tensor<type, 1>& parameters)
 Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
-
+/*
     memcpy(parameters.data(),
            synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
            biases.data(), size_t(biases.size())*sizeof(type));
+*/
+    copy(execution::par, 
+        synaptic_weights.data(),
+        synaptic_weights.data() + synaptic_weights.size(),
+        parameters.data());
+
+    copy(execution::par, 
+        biases.data(),
+        biases.data() + biases.size(),
+        parameters.data() + synaptic_weights.size());
 
     return parameters;
 }
@@ -346,7 +356,7 @@ void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, co
 {
 //    const Index biases_number = get_biases_number();
 //    const Index synaptic_weights_number = get_synaptic_weights_number();
-
+/*
     memcpy(synaptic_weights.data(),
            new_parameters.data() + index,
            size_t(synaptic_weights.size())*sizeof(type));
@@ -354,7 +364,20 @@ void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, co
     memcpy(biases.data(),
            new_parameters.data() + index + synaptic_weights.size(),
            size_t(biases.size())*sizeof(type));
+*/
+    copy(execution::par, 
+        new_parameters.data() + index,
+        new_parameters.data() + index + synaptic_weights.size(),
+        synaptic_weights.data());
+
+    copy(execution::par, 
+        new_parameters.data() + index + synaptic_weights.size(),
+        new_parameters.data() + index + synaptic_weights.size() + biases.size(),
+        biases.data());
+
 }
+
+
 /// This class sets a new activation(or transfer) function in a single layer.
 /// @param new_activation_function Activation function for the layer.
 
@@ -529,12 +552,10 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 
     #else
     */
-
 }
 
 
-
-void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs)
+void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const 
 {
     type* outputs_data = outputs.data();
 
@@ -988,11 +1009,13 @@ void PerceptronLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
     const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
     type* gradient_data = gradient.data();
 
-    copy(synaptic_weights_derivatives_data,
+    copy(execution::par, 
+        synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(biases_derivatives_data,
+    copy(execution::par, 
+        biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
 }

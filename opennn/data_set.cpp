@@ -1698,14 +1698,14 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     initialize_sequential(indices, 0, 1, samples_number-1);
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
-
+/*
     Index count = 0;
 
     for(Index i = 0; i < samples_uses.size(); i++)
     {
         if(samples_uses(i) == SampleUse::Unused) count++;
     }
-
+*/
     Index i = 0;
     Index index;
 
@@ -2573,7 +2573,7 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
 
     // Assuming you have the bin centers and relative frequencies in the following arrays:
 
-    Tensor<type, 1> binCenters = histogram.centers;
+    Tensor<type, 1> bin_centers = histogram.centers;
     Tensor<type, 1> binFrequencies = relative_frequencies;
 
     // Calculate the cumulative frequency distribution
@@ -2597,42 +2597,52 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
 
     // Find quartile bin numbers
     int Q1Bin = 0, Q2Bin = 0, Q3Bin = 0;
-    for(int i = 0; i < 1000; i++) {
-        if(cumulativeFrequencies[i] >= Q1Position) {
+
+    for(int i = 0; i < 1000; i++) 
+    {
+        if(cumulativeFrequencies[i] >= Q1Position) 
+        {
             Q1Bin = i;
             break;
         }
     }
-    for(int i = 0; i < 1000; i++) {
-        if(cumulativeFrequencies[i] >= Q2Position) {
+
+    for(int i = 0; i < 1000; i++) 
+    {
+        if(cumulativeFrequencies[i] >= Q2Position) 
+        {
             Q2Bin = i;
             break;
         }
     }
-    for(int i = 0; i < 1000; i++) {
-        if(cumulativeFrequencies[i] >= Q3Position) {
+
+    for(int i = 0; i < 1000; i++) 
+    {
+        if(cumulativeFrequencies[i] >= Q3Position) 
+        {
             Q3Bin = i;
             break;
         }
     }
 
     // Calculate quartile values
-    type binWidth = binCenters[1] - binCenters[0];
-    type Q1Value = binCenters[Q1Bin] + ((Q1Position - cumulativeFrequencies[Q1Bin-1]) / binFrequencies[Q1Bin]) * binWidth;
-    type Q2Value = binCenters[Q2Bin] + ((Q2Position - cumulativeFrequencies[Q2Bin-1]) / binFrequencies[Q2Bin]) * binWidth;
-    type Q3Value = binCenters[Q3Bin] + ((Q3Position - cumulativeFrequencies[Q3Bin-1]) / binFrequencies[Q3Bin]) * binWidth;
+
+    const type bin_width = bin_centers[1] - bin_centers[0];
+    const type q1 = bin_centers[Q1Bin] + ((Q1Position - cumulativeFrequencies[Q1Bin-1]) / binFrequencies[Q1Bin]) * bin_width;
+    const type q2 = bin_centers[Q2Bin] + ((Q2Position - cumulativeFrequencies[Q2Bin-1]) / binFrequencies[Q2Bin]) * bin_width;
+    const type q3 = bin_centers[Q3Bin] + ((Q3Position - cumulativeFrequencies[Q3Bin-1]) / binFrequencies[Q3Bin]) * bin_width;
 
     // Calculate the maximum and minimum values
-    type minValue = binCenters[0] - binWidth / type(2);
-    type maxValue = binCenters[999] + binWidth / type(2);
+    const type minimum = bin_centers[0] - bin_width / type(2);
+    const type maximum = bin_centers[999] + bin_width / type(2);
 
     // Create a Tensor object with the necessary values for the box plot
     Tensor<type, 1> iqr_values(5);
-    iqr_values(0) = minValue;
-    iqr_values(1) = Q1Value;
-    iqr_values(2) = Q2Value;
-    iqr_values(3) = Q3Value;
-    iqr_values(4) = maxValue;
+    iqr_values(0) = minimum;
+    iqr_values(1) = q1;
+    iqr_values(2) = q2;
+    iqr_values(3) = q3;
+    iqr_values(4) = maximum;
 
     return iqr_values;
 }
@@ -8471,11 +8481,12 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 
 /// This method loads the data from a binary data file.
+/// @todo Can load block of data instead of element by element?
 
 void DataSet::load_data_binary()
 {
-    regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    const regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
@@ -8506,15 +8517,15 @@ void DataSet::load_data_binary()
 
     streamsize size = sizeof(Index);
 
-    Index columns_number;
-    Index rows_number;
+    Index columns_number = 0;
+    Index rows_number = 0;
 
     file.read(reinterpret_cast<char*>(&columns_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
-    type value;
+    type value = type(0);
 
     data.resize(rows_number, columns_number);
 
@@ -8579,7 +8590,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
             {
                 for(Index j = 0; j < targets_number; j++)
                 {
-                    if(data(i,target_variables_indices(j)) == type(NAN)) continue;
+                    if(isnan(data(i,target_variables_indices(j)))) continue;
 
                     if(data(i,target_variables_indices(j)) > type(0.5)) class_distribution(j)++;
                 }
@@ -9654,15 +9665,15 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    const regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 
     if(std::regex_search(data_source_path, accent_regex))
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_source_path);
+        wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        wstring file_name_wide = conv.from_bytes(data_source_path);
         file.open(file_name_wide);
     }else
     {
@@ -9781,7 +9792,6 @@ void DataSet::read_csv_3_simple()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
 }
 
 
@@ -10076,8 +10086,8 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
-    regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    const regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
     #ifdef _WIN32
 

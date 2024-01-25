@@ -139,11 +139,16 @@ void FlattenLayer::forward_propagate(const pair<type*, dimensions>& inputs,
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation);
 
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
-
+    /*
     memcpy(outputs_data,
            inputs.first,
            batch_samples_number*neurons_number*sizeof(type));
-
+           */
+    
+    copy(execution::par, 
+         inputs.first, 
+         inputs.first + batch_samples_number * neurons_number, 
+         outputs_data);
 }
 
 

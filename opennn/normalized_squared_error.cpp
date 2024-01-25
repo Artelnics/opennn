@@ -104,14 +104,16 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 
     for(Index i = 0; i < columns; i++)
     {
-        copy(targets.data() + targets.dimension(0) * i,
+        copy(execution::par, 
+            targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
     }
 
     for(Index i = 0; i < columns; i++)
     {
-        copy(targets.data() + targets.dimension(0) * i + 1,
+        copy(execution::par, 
+            targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
              targets_t.data() + targets_t.dimension(0) * i);
     }

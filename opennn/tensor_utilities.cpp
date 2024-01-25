@@ -1206,8 +1206,11 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    copy(x.data(), x.data() + x.size(), data.data());
-    copy(y.data(), y.data() + y.size(), data.data() + x.size());
+    copy(execution::par, 
+         x.data(), x.data() + x.size(), data.data());
+
+    copy(execution::par, 
+         y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;
 }
@@ -1591,7 +1594,9 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>& data)
     if(data.size() <= 1) return Tensor<type, 1>();
 
     #pragma omp parallel for
-    for(int i = 1; i < data.size(); i++) difference_data(i) = data(i) - data(i - 1);
+
+    for(int i = 1; i < data.size(); i++) 
+        difference_data(i) = data(i) - data(i - 1);
 
     return difference_data;
 }

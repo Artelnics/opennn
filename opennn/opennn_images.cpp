@@ -113,13 +113,22 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 
     for(int i = 0; i <rows_number; i++)
     {
+/*
         memcpy(aux_row, 
                original.data() + columns_number*rows_number - (i+1)*columns_number , 
                size_t(columns_number)*sizeof(unsigned char));
+*/
+        copy(execution::par, 
+            original.data() + columns_number * rows_number - (i + 1) * columns_number,
+            original.data() + columns_number * rows_number - i * columns_number,
+            aux_row);
 
         // reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
-
+/*
         memcpy(sorted.data() + columns_number*i , aux_row, size_t(columns_number)*sizeof(unsigned char));
+*/
+        copy(execution::par, 
+            aux_row, aux_row + columns_number, sorted.data() + columns_number * i);
     }
 }
 
@@ -258,7 +267,12 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
 
     if(rows_number % 4 == 0)
     {
+        /*
         memcpy(data_without_padding.data(), img.data(), size_t(columns_number*channels*rows_number)*sizeof(unsigned char));
+        */
+        copy(execution::par, 
+            img.data(), img.data() + columns_number * channels * rows_number, data_without_padding.data());
+
     }
     else
     {
@@ -266,11 +280,24 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
         {
             if(i == 0)
             {
+                /*
                 memcpy(data_without_padding.data(), img.data(), size_t(columns_number*channels)*sizeof(unsigned char));
+                */
+                copy(execution::par, 
+                    img.data(), img.data() + columns_number * channels, data_without_padding.data());
+
             }
             else
             {
+                /*
                 memcpy(data_without_padding.data() + channels*columns_number*i, img.data() + channels*columns_number*i + padding*i, size_t(columns_number*channels)*sizeof(unsigned char));
+                */
+
+                copy(execution::par, 
+                    img.data() + channels * columns_number * i + padding * i,
+                    img.data() + channels * columns_number * (i + 1) + padding * i,
+                    data_without_padding.data() + channels * columns_number * i);
+
             }
         }
     }
@@ -472,21 +499,21 @@ Tensor<type, 1> resize_proposed_region(const Tensor<type, 1> region_data,
 {
     Tensor<type, 1> new_resized_region_data(channels_number * new_width * new_height);
 
-    const type scaleWidth =  (type)new_width / (type)region_width;
-    const type scaleHeight = (type)new_height / (type)region_height;
+    const type scaleWidth =  type(new_width) / type(region_width);
+    const type scaleHeight = type(new_height) / type(region_height);
 
     for(Index i = 0; i < new_height; i++)
     {
         for(Index j = 0; j < new_width; j++)
         {
-            const int pixel = (i * (new_width * channels_number)) + (j * channels_number);
-            const int nearest_match =  (((int)(i / scaleHeight) * (region_width * channels_number)) + ((int)(j / scaleWidth) * channels_number));
+            const int pixel = i * new_width * channels_number + j * channels_number;
+            const int nearest_match =  (int)(i / scaleHeight) * (region_width * channels_number) + (int)(j / scaleWidth)*channels_number;
 
             if(channels_number == 3)
             {
-                new_resized_region_data[pixel] =  region_data[nearest_match];
-                new_resized_region_data[pixel + 1] =  region_data[nearest_match + 1];
-                new_resized_region_data[pixel + 2] =  region_data[nearest_match + 2];
+                new_resized_region_data[pixel] = region_data[nearest_match];
+                new_resized_region_data[pixel + 1] = region_data[nearest_match + 1];
+                new_resized_region_data[pixel + 2] = region_data[nearest_match + 2];
             }
             else
             {
@@ -576,7 +603,10 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         imageDataAux.resize(images_number, image_size + classes_number);
     }
 
-    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
+//    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
+
+    copy(execution::par,
+    image_data.data(), image_data.data() + images_number * image_size, data.data());
 
     rows_labels.resize(images_number);
 
@@ -628,20 +658,20 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
     Index column_index = 0;
 
-        for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < channels; i++)
+    {
+        for(Index j = 0; j < width; j++)
         {
-            for(Index j = 0; j < width; j++)
+            for(Index k = 0; k < height ; k++)
             {
-                for(Index k = 0; k < height ; k++)
-                {
-                    columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                    columns(column_index).type = ColumnType::Numeric;
-                    columns(column_index).column_use = VariableUse::Input;
-                    columns(column_index).scaler = Scaler::MinimumMaximum;
-                    column_index++;
-                }
+                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                columns(column_index).type = ColumnType::Numeric;
+                columns(column_index).column_use = VariableUse::Input;
+                columns(column_index).scaler = Scaler::MinimumMaximum;
+                column_index++;
             }
         }
+    }
 
     // Target columns
 
@@ -656,8 +686,6 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                << "Invalid number of categories. The minimum is 2 and you have 1.\n";
 
         throw invalid_argument(buffer.str());
-
-
     }
 
     Tensor<string, 1> categories(classes_number);
@@ -691,7 +719,6 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({channels, width, height});
-
     */
 
     return Tensor<unsigned char, 1>();

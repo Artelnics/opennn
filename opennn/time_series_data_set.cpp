@@ -437,9 +437,16 @@ void TimeSeriesDataSet::transform_time_series_data()
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
+/*
             memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
                    time_series_data.data() + i + j*old_samples_number,
                    size_t(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+*/
+            copy(execution::par, 
+                time_series_data.data() + i + j * old_samples_number,
+                time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
+                data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
+
         }
     }
 
@@ -2128,15 +2135,15 @@ void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_d
 
     streamsize size = sizeof(Index);
 
-    Index columns_number;
-    Index rows_number;
+    Index columns_number = 0;
+    Index rows_number = 0;
 
     file.read(reinterpret_cast<char*>(&columns_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
-    type value;
+    type value = type(0);
 
     time_series_data.resize(rows_number, columns_number);
 

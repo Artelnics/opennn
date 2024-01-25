@@ -650,6 +650,8 @@ Tensor<type,1> confidence_interval_z_correlation(const type& z_correlation, cons
 }
 
 
+/// @todo Improve this method to be more similar to the other code. 
+
 Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 {
     const int n = x.size();
@@ -677,7 +679,9 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
         {
             x_rank_vector[v_sort[i + k].second] = rank + type(repeated - 1) / type(2);
         }
+
         i += repeated - 1;
+
         rank += type(repeated);
     }
 

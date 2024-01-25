@@ -152,7 +152,7 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 3>&) const;
 
-   void dropout(Tensor<type, 3>&);
+   void dropout(Tensor<type, 3>&) const;
 
    void calculate_activations(const Tensor<type, 3>&,
                               Tensor<type, 3>&) const;

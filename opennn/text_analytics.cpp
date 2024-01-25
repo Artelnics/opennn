@@ -2370,7 +2370,7 @@ Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tens
     return Tensor<string,2>();
 }
 
-/*
+
 /// Returns the correlations of words that appear a minimum percentage of times
 /// with the targets in descending order.
 /// @param minimum_percentage Minimum percentage of frequency that the word must have.
@@ -2413,7 +2413,6 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 
     return(top_words_correlations);
 }
-
 */
 
 
@@ -2538,8 +2537,15 @@ void TextAnalytics::load_documents(const string& path)
     Tensor<string,1> document_copy(lines_count);
     Tensor<string,1> document_target_copy(lines_count);
 
-    copy(document.data(), document.data() + lines_count, document_copy.data());
-    copy(document_target.data(), document_target.data() + lines_count, document_target_copy.data());
+    copy(execution::par, 
+        document.data(), 
+        document.data() + lines_count, 
+        document_copy.data());
+
+    copy(execution::par, 
+        document_target.data(), 
+        document_target.data() + lines_count, 
+        document_target_copy.data());
 
     documents(original_size) = document_copy;
     targets(original_size) = document_target_copy;
@@ -2767,7 +2773,10 @@ void TextGenerationAlphabet::create_alphabet()
 
     alphabet.resize(text_copy.length());
 
-    copy(text_copy.begin(), text_copy.end(), alphabet.data());
+    copy(execution::par, 
+        text_copy.begin(), 
+        text_copy.end(), 
+        alphabet.data());
 }
 
 
@@ -2919,7 +2928,10 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
     Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    copy(input_data.data(), input_data.data() + input_data.size(), flatten_input_data.data());
+    copy(execution::par, 
+        input_data.data(), 
+        input_data.data() + input_data.size(), 
+        flatten_input_data.data());
 
     return flatten_input_data;
 }
@@ -2933,7 +2945,9 @@ string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_outpu
 
     Tensor<type, 2> output_data(tensor_size, alphabet_length);
 
-    copy(flatten_output_data.data(), flatten_output_data.data() + tensor_size, output_data.data());
+    copy(execution::par, 
+        flatten_output_data.data(), 
+        flatten_output_data.data() + tensor_size, output_data.data());
 
     return multiple_one_hot_decode(output_data);
 }

@@ -11,11 +11,11 @@
 
 // System includes
 
+#include <algorithm>
 #include <cstdlib>
+#include <execution>
 #include <iostream>
 #include <string>
-#include <algorithm>
-#include <execution>
 
 // OpenNN includes
 
@@ -160,7 +160,7 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
-   void dropout(Tensor<type, 2>&);
+   void dropout(Tensor<type, 2>&) const;
 
    void calculate_activations(const Tensor<type, 2>&,
                               Tensor<type, 2>&) const;

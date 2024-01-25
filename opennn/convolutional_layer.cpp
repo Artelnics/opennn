@@ -477,10 +477,18 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
 
     const Index next_flatten_layer_neurons_number  =
             next_flatten_layer_pointer->get_neurons_number();
-
+    
+/*
     memcpy(convolutional_layer_back_propagation->deltas.data(),
            next_flatten_layer_back_propagation->deltas.data(),
            Index(batch_samples_number*next_flatten_layer_neurons_number*sizeof(type)));
+*/
+
+    copy(execution::par, 
+         next_flatten_layer_back_propagation->deltas.data(),
+         next_flatten_layer_back_propagation->deltas.data() +
+         batch_samples_number * next_flatten_layer_neurons_number,
+         convolutional_layer_back_propagation->deltas.data());
 }
 
 
@@ -587,10 +595,15 @@ void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>&
             kernel_synaptic_weights_derivatives.device(*thread_pool_device)
                 += image.convolve(delta_reshape, convolutions_dimensions);
         }
-
+/*
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,
                kernel_synaptic_weights_derivatives.data(),
                size_t(kernel_synaptic_weights_number)*sizeof(type));
+*/
+        copy(execution::par,
+             kernel_synaptic_weights_derivatives.data(),
+             kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
+             synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
     }
 }
 
@@ -617,11 +630,13 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Copy from back propagation to gradient
 
-    copy(synaptic_weights_derivatives_data,
+    copy(execution::par, 
+         synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(biases_derivatives_data,
+    copy(execution::par, 
+         biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
 }
@@ -872,12 +887,22 @@ Index ConvolutionalLayer::get_neurons_number() const
 Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
-
+/*
     memcpy(parameters.data(),
            synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
-
+*/
+    copy(execution::par, 
+         synaptic_weights.data(),
+         synaptic_weights.data() + synaptic_weights.size(),
+         parameters.data());
+    /*
     memcpy(parameters.data() + synaptic_weights.size(),
            biases.data(), size_t(biases.size())*sizeof(type));
+*/
+    copy(execution::par, 
+         biases.data(),
+         biases.data() + biases.size(),
+         parameters.data() + synaptic_weights.size());
 
 /// @todo add scales and offsets
 
@@ -1149,14 +1174,25 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
                             kernels_number);
 
     biases.resize(kernels_number);
-
+/*
     memcpy(synaptic_weights.data(),
            new_parameters.data() + index,
            size_t(synaptic_weights.size())*sizeof(type));
+*/
+    copy(execution::par, 
+         new_parameters.data() + index, 
+         new_parameters.data() + index + synaptic_weights.size(), 
+         synaptic_weights.data());
 
+/*
     memcpy(biases.data(),
            new_parameters.data() + index + synaptic_weights.size(),
            size_t(biases.size())*sizeof(type));
+*/
+    copy(execution::par, 
+         new_parameters.data() + index + synaptic_weights.size(),
+         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
+         biases.data());
 }
 
 
