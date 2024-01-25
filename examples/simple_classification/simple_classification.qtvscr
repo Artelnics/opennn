@@ -2,7 +2,7 @@
   <FlowDocument.Tag><![CDATA[{
   "timestamp": "2024-01-24 10:53:30",
   "files": {
-    "C:\\Users\\sanch\\Desktop\\refactor\\opennn\\examples\\simple_classification\\simple_classification.vcxproj": {
+    "C:\\Users\\sanch\\Desktop\\refactor\opennn\\examples\\simple_classification.vcxproj": {
       "before": "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",
       "after": "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"
     }
@@ -25,17 +25,17 @@
       <Span>Files</Span>
     </Paragraph>
     <Paragraph Margin="24,12,0,0">
-      <Span FontFamily="Consolas" FontSize="14" Background="WhiteSmoke"><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+      <Span FontFamily="Consolas" FontSize="14" Background="WhiteSmoke"><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
       <LineBreak />
-      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj?before">[Before]</Hyperlink>
-      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj?after">[After]</Hyperlink>
-      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj?diff&amp;before&amp;after">
+      <Hyperlink NavigateUri="file://..\..\examplessimple_classification.vcxproj?before">[Before]</Hyperlink>
+      <Hyperlink NavigateUri="file://..\..\examplessimple_classification.vcxproj?after">[After]</Hyperlink>
+      <Hyperlink NavigateUri="file://..\..\examplessimple_classification.vcxproj?diff&amp;before&amp;after">
                         [Diff before/after]
                     </Hyperlink>
-      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj?diff&amp;before&amp;current">
+      <Hyperlink NavigateUri="file://..\..\examplessimple_classification.vcxproj?diff&amp;before&amp;current">
                         [Diff before/current]
                     </Hyperlink>
-      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj?diff&amp;after&amp;current">
+      <Hyperlink NavigateUri="file://..\..\examplessimple_classification.vcxproj?diff&amp;after&amp;current">
                         [Diff after/current]
                     </Hyperlink>
       <LineBreak />
@@ -57,7 +57,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -82,12 +82,12 @@
         <TableRow>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Gui]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Core]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Gui]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Core]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Gui]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Core]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Gui]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Core]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -112,12 +112,12 @@
         <TableRow>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Guid]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Cored]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Guid]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\lib\Qt6Cored]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Guid]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Cored]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Guid]]></Span><Span><![CDATA[.lib;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\lib\Qt6Cored]]></Span><Span><![CDATA[.lib;%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -189,7 +189,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -237,7 +237,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -281,7 +281,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -314,7 +314,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -345,7 +345,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -376,7 +376,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -417,7 +417,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -468,7 +468,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -512,7 +512,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -543,7 +543,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -628,7 +628,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -676,7 +676,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -724,7 +724,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -734,12 +734,12 @@
         <TableRow>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[$(QTDIR)\lib\Qt6Gui.lib;$(QTDIR)\lib\Qt6Core.lib;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[$(QTDIR)\lib\Qt6Gui.lib;$(QTDIR)\lib\Qt6Core.lib;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\release\opennn.lib;-fopenmp;-pthread;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -749,12 +749,12 @@
         <TableRow>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[$(QTDIR)\lib\Qt6Guid.lib;$(QTDIR)\lib\Qt6Cored.lib;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span Background="LightCoral"><![CDATA[$(QTDIR)\lib\Qt6Guid.lib;$(QTDIR)\lib\Qt6Cored.lib;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      <AdditionalDependencies>C:\Users\sanch\Desktop\refactor\opennn\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
+              <Span><![CDATA[      <AdditionalDependencies>..\..\opennn\debug\opennn.lib;-fopenmp;-pthread;]]></Span><Span><![CDATA[%(AdditionalDependencies)</AdditionalDependencies>]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -772,7 +772,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -782,12 +782,12 @@
         <TableRow>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      ]]></Span><Span Background="LightCoral"><![CDATA[<AdditionalLibraryDirectories>$(QTDIR)\lib;C:\Users\sanch\Desktop\refactor\opennn\opennn\release]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
+              <Span><![CDATA[      ]]></Span><Span Background="LightCoral"><![CDATA[<AdditionalLibraryDirectories>$(QTDIR)\lib;..\..\opennn\release]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
             </Paragraph>
           </TableCell>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      ]]></Span><Span Background="LightGreen"><![CDATA[<AdditionalLibraryDirectories>C:\Users\sanch\Desktop\refactor\opennn\opennn\release]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
+              <Span><![CDATA[      ]]></Span><Span Background="LightGreen"><![CDATA[<AdditionalLibraryDirectories>..\..\opennn\release]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -797,12 +797,12 @@
         <TableRow>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      ]]></Span><Span Background="LightCoral"><![CDATA[<AdditionalLibraryDirectories>$(QTDIR)\lib;C:\Users\sanch\Desktop\refactor\opennn\opennn\debug]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
+              <Span><![CDATA[      ]]></Span><Span Background="LightCoral"><![CDATA[<AdditionalLibraryDirectories>$(QTDIR)\lib;..\..\opennn\debug]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
             </Paragraph>
           </TableCell>
           <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
             <Paragraph FontFamily="Consolas" Margin="4, 0">
-              <Span><![CDATA[      ]]></Span><Span Background="LightGreen"><![CDATA[<AdditionalLibraryDirectories>C:\Users\sanch\Desktop\refactor\opennn\opennn\debug]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
+              <Span><![CDATA[      ]]></Span><Span Background="LightGreen"><![CDATA[<AdditionalLibraryDirectories>..\..\opennn\debug]]></Span><Span><![CDATA[;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -820,7 +820,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>
@@ -868,7 +868,7 @@
         <TableRow Background="Orange">
           <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
             <Paragraph Margin="10,5" FontWeight="Bold">
-              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\simple_classification.vcxproj]]></Span>
+              <Span><![CDATA[..\..\examplessimple_classification.vcxproj]]></Span>
             </Paragraph>
           </TableCell>
         </TableRow>

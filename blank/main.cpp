@@ -25,8 +25,8 @@
 #include <iostream>
 
 using namespace std;
-using namespace OpenNN;
-using namespace Eigen;
+using namespace opennn;
+//using namespace Eigen;
 
 
 int main()
@@ -34,6 +34,12 @@ int main()
    try
    {
         cout << "Blank\n";
+
+        Tensor<type, 2> data(10,10);
+
+        data.setRandom();
+
+        DataSet data_set(data);
 
         cout << "Bye!" << endl;
 

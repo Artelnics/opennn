@@ -1,21 +1,19 @@
-<<<<<<< HEAD
-﻿  Generate moc_predefs.h
-cl : command line  warning D9002: ignoring unknown option '-std=c++17'
-cl : command line  warning D9002: ignoring unknown option '-pthread'
-  main.cpp
-C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
-  (compiling source file 'main.cpp')
-  C:\Users\sanch\Desktop\refactor\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\Tensor.h(76,1):
-  the template instantiation context (the oldest one first) is
-  	C:\Users\sanch\Desktop\refactor\opennn\opennn\histogram.h(74,19):
-  	see reference to class template instantiation 'Eigen::Tensor<opennn::type,1,0,Eigen::DenseIndex>' being compiled
-  
-LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
-LINK : warning LNK4044: unrecognized option '/pthread'; ignored
-LINK : warning LNK4044: unrecognized option '/fopenmp'; ignored
-LINK : warning LNK4044: unrecognized option '/pthread'; ignored
-  simple_classification.vcxproj -> C:\Users\sanch\Desktop\refactor\opennn\examples\simple_classification\bin\simple_classification.exe
-=======
-﻿C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : There's no Qt version assigned to project simple_classification.vcxproj for configuration Release/x64.
-C:\Users\Roberto Lopez\AppData\Local\QtMsBuild\qt_vars.targets(45,5): error : Please set a Qt installation in 'Project|Properties|Configuration Properties|Qt Project Settings|Qt Installation'.
->>>>>>> 78876f561288654302b260fb115cf8e07f1a3e6f
+﻿  main.cpp
+main.obj : error LNK2019: unresolved external symbol "public: __cdecl opennn::DataSet::DataSet(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,char const &,bool const &,enum opennn::DataSet::Codification const &)" (??0DataSet@opennn@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEBDAEB_NAEBW4Codification@01@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: virtual __cdecl opennn::DataSet::~DataSet(void)" (??1DataSet@opennn@@UEAA@XZ) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: __cdecl opennn::NeuralNetwork::NeuralNetwork(enum opennn::NeuralNetwork::ModelType const &,class std::initializer_list<__int64> const &)" (??0NeuralNetwork@opennn@@QEAA@AEBW4ModelType@01@AEBV?$initializer_list@_J@std@@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: virtual __cdecl opennn::NeuralNetwork::~NeuralNetwork(void)" (??1NeuralNetwork@opennn@@UEAA@XZ) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: void __cdecl opennn::NeuralNetwork::save(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)const " (?save@NeuralNetwork@opennn@@QEBAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: void __cdecl opennn::NeuralNetwork::save_expression_python(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)const " (?save_expression_python@NeuralNetwork@opennn@@QEBAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: virtual __cdecl opennn::LossIndex::~LossIndex(void)" (??1LossIndex@opennn@@UEAA@XZ) referenced in function "public: __cdecl opennn::TrainingStrategy::~TrainingStrategy(void)" (??1TrainingStrategy@opennn@@QEAA@XZ)
+main.obj : error LNK2019: unresolved external symbol "public: virtual __cdecl opennn::OptimizationAlgorithm::~OptimizationAlgorithm(void)" (??1OptimizationAlgorithm@opennn@@UEAA@XZ) referenced in function "public: __cdecl opennn::TrainingStrategy::~TrainingStrategy(void)" (??1TrainingStrategy@opennn@@QEAA@XZ)
+main.obj : error LNK2019: unresolved external symbol "public: virtual __cdecl opennn::LearningRateAlgorithm::~LearningRateAlgorithm(void)" (??1LearningRateAlgorithm@opennn@@UEAA@XZ) referenced in function "public: __cdecl opennn::TrainingStrategy::~TrainingStrategy(void)" (??1TrainingStrategy@opennn@@QEAA@XZ)
+main.obj : error LNK2019: unresolved external symbol "public: __cdecl opennn::TrainingStrategy::TrainingStrategy(class opennn::NeuralNetwork *,class opennn::DataSet *)" (??0TrainingStrategy@opennn@@QEAA@PEAVNeuralNetwork@1@PEAVDataSet@1@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: void __cdecl opennn::TrainingStrategy::set_loss_method(enum opennn::TrainingStrategy::LossMethod const &)" (?set_loss_method@TrainingStrategy@opennn@@QEAAXAEBW4LossMethod@12@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: void __cdecl opennn::TrainingStrategy::set_optimization_method(enum opennn::TrainingStrategy::OptimizationMethod const &)" (?set_optimization_method@TrainingStrategy@opennn@@QEAAXAEBW4OptimizationMethod@12@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: struct opennn::TrainingResults __cdecl opennn::TrainingStrategy::perform_training(void)" (?perform_training@TrainingStrategy@opennn@@QEAA?AUTrainingResults@2@XZ) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: __cdecl opennn::TestingAnalysis::TestingAnalysis(class opennn::NeuralNetwork *,class opennn::DataSet *)" (??0TestingAnalysis@opennn@@QEAA@PEAVNeuralNetwork@1@PEAVDataSet@1@@Z) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: virtual __cdecl opennn::TestingAnalysis::~TestingAnalysis(void)" (??1TestingAnalysis@opennn@@UEAA@XZ) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: class Eigen::Tensor<float,1,0,__int64> __cdecl opennn::TestingAnalysis::calculate_binary_classification_tests(void)const " (?calculate_binary_classification_tests@TestingAnalysis@opennn@@QEBA?AV?$Tensor@M$00$0A@_J@Eigen@@XZ) referenced in function main
+main.obj : error LNK2019: unresolved external symbol "public: class Eigen::Tensor<__int64,2,0,__int64> __cdecl opennn::TestingAnalysis::calculate_confusion(void)const " (?calculate_confusion@TestingAnalysis@opennn@@QEBA?AV?$Tensor@_J$01$0A@_J@Eigen@@XZ) referenced in function main
+bin\simple_classification.exe : fatal error LNK1120: 17 unresolved externals

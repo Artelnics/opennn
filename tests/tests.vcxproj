@@ -24,7 +24,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3E0ED611-D9C0-3B7B-AEDD-A7EF21D1B752}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
     <ProjectName>tests</ProjectName>
     <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
@@ -33,22 +33,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -59,25 +59,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tests.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tests.dir\Release\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">bin\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">tests.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">tests.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -104,10 +104,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;__Cpp11__;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -120,8 +120,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/Debug/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/Debug/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>Debug/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>Debug/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -130,10 +130,9 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <ExceptionHandling>
-      </ExceptionHandling>
+      <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
@@ -148,10 +147,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -164,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/Release/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/Release/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>Release/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>Release/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -174,7 +173,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -192,10 +191,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -208,8 +207,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/MinSizeRel/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/MinSizeRel/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>MinSizeRel/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>MinSizeRel/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -218,7 +217,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>
@@ -235,10 +234,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -251,8 +250,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/RelWithDebInfo/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/Roberto Lopez/Documents/GitLab/opennn/tests/RelWithDebInfo/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>RelWithDebInfo/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>RelWithDebInfo/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -260,50 +259,92 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\adaptive_moment_estimation_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\bounding_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\conjugate_gradient_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\convolutional_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\correlations_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\cross_entropy_error_3d_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\cross_entropy_error_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\data_set_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\flatten_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\genetic_algorithm_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\gradient_descent_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\growing_inputs_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\growing_neurons_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\inputs_selection_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\learning_rate_algorithm_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\levenberg_marquardt_algorithm_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\long_short_term_memory_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\main.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\mean_squared_error_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\minkowski_error_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\model_selection_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\neural_network_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\neurons_selection_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\normalized_squared_error_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\numerical_differentiation_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\perceptron_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\pooling_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\probabilistic_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\quasi_newton_method_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\recurrent_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\response_optimization_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\scaling_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\scaling_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\statistics_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\stochastic_gradient_descent_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\sum_squared_error_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\tensor_utilities_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\testing_analysis_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\training_strategy_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\unscaling_layer_test.cpp" />
-    <ClCompile Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\tests\weighted_squared_error_test.cpp" />
+    <ClCompile Include="adaptive_moment_estimation_test.cpp" />
+    <ClCompile Include="bounding_layer_test.cpp" />
+    <ClCompile Include="conjugate_gradient_test.cpp" />
+    <ClCompile Include="convolutional_layer_test.cpp" />
+    <ClCompile Include="correlations_test.cpp" />
+    <ClCompile Include="cross_entropy_error_3d_test.cpp" />
+    <ClCompile Include="cross_entropy_error_test.cpp" />
+    <ClCompile Include="data_set_test.cpp" />
+    <ClCompile Include="flatten_layer_test.cpp" />
+    <ClCompile Include="genetic_algorithm_test.cpp" />
+    <ClCompile Include="gradient_descent_test.cpp" />
+    <ClCompile Include="growing_inputs_test.cpp" />
+    <ClCompile Include="growing_neurons_test.cpp" />
+    <ClCompile Include="inputs_selection_test.cpp" />
+    <ClCompile Include="learning_rate_algorithm_test.cpp" />
+    <ClCompile Include="levenberg_marquardt_algorithm_test.cpp" />
+    <ClCompile Include="long_short_term_memory_layer_test.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mean_squared_error_test.cpp" />
+    <ClCompile Include="minkowski_error_test.cpp" />
+    <ClCompile Include="model_selection_test.cpp" />
+    <ClCompile Include="neural_network_test.cpp" />
+    <ClCompile Include="neurons_selection_test.cpp" />
+    <ClCompile Include="normalized_squared_error_test.cpp" />
+    <ClCompile Include="numerical_differentiation_test.cpp" />
+    <ClCompile Include="perceptron_layer_test.cpp" />
+    <ClCompile Include="pooling_layer_test.cpp" />
+    <ClCompile Include="probabilistic_layer_test.cpp" />
+    <ClCompile Include="quasi_newton_method_test.cpp" />
+    <ClCompile Include="recurrent_layer_test.cpp" />
+    <ClCompile Include="response_optimization_test.cpp" />
+    <ClCompile Include="scaling_layer_test.cpp" />
+    <ClCompile Include="scaling_test.cpp" />
+    <ClCompile Include="statistics_test.cpp" />
+    <ClCompile Include="stochastic_gradient_descent_test.cpp" />
+    <ClCompile Include="sum_squared_error_test.cpp" />
+    <ClCompile Include="tensor_utilities_test.cpp" />
+    <ClCompile Include="testing_analysis_test.cpp" />
+    <ClCompile Include="training_strategy_test.cpp" />
+    <ClCompile Include="unscaling_layer_test.cpp" />
+    <ClCompile Include="weighted_squared_error_test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\Roberto Lopez\Documents\GitLab\opennn\opennn\opennn.vcxproj">
+    <ClCompile Include="adaptive_moment_estimation_test.h" />
+    <ClCompile Include="bounding_layer_test.h" />
+    <ClCompile Include="conjugate_gradient_test.h" />
+    <ClCompile Include="convolutional_layer_test.h" />
+    <ClCompile Include="correlations_test.h" />
+    <ClCompile Include="cross_entropy_error_3d_test.h" />
+    <ClCompile Include="cross_entropy_error_test.h" />
+    <ClCompile Include="data_set_test.h" />
+    <ClCompile Include="flatten_layer_test.h" />
+    <ClCompile Include="genetic_algorithm_test.h" />
+    <ClCompile Include="gradient_descent_test.h" />
+    <ClCompile Include="growing_inputs_test.h" />
+    <ClCompile Include="growing_neurons_test.h" />
+    <ClCompile Include="inputs_selection_test.h" />
+    <ClCompile Include="learning_rate_algorithm_test.h" />
+    <ClCompile Include="levenberg_marquardt_algorithm_test.h" />
+    <ClCompile Include="long_short_term_memory_layer_test.h" />
+    <ClCompile Include="mean_squared_error_test.h" />
+    <ClCompile Include="minkowski_error_test.h" />
+    <ClCompile Include="model_selection_test.h" />
+    <ClCompile Include="neural_network_test.h" />
+    <ClCompile Include="neurons_selection_test.h" />
+    <ClCompile Include="normalized_squared_error_test.h" />
+    <ClCompile Include="numerical_differentiation_test.h" />
+    <ClCompile Include="perceptron_layer_test.h" />
+    <ClCompile Include="pooling_layer_test.h" />
+    <ClCompile Include="probabilistic_layer_test.h" />
+    <ClCompile Include="quasi_newton_method_test.h" />
+    <ClCompile Include="recurrent_layer_test.h" />
+    <ClCompile Include="response_optimization_test.h" />
+    <ClCompile Include="scaling_layer_test.h" />
+    <ClCompile Include="scaling_test.h" />
+    <ClCompile Include="statistics_test.h" />
+    <ClCompile Include="stochastic_gradient_descent_test.h" />
+    <ClCompile Include="sum_squared_error_test.h" />
+    <ClCompile Include="tensor_utilities_test.h" />
+    <ClCompile Include="testing_analysis_test.h" />
+    <ClCompile Include="training_strategy_test.h" />
+    <ClCompile Include="unscaling_layer_test.h" />
+    <ClCompile Include="weighted_squared_error_test.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\opennn\opennn.vcxproj">
       <Project>{D2F8B8A4-FD55-3AA3-B597-C6BCD3D1344B}</Project>
       <Name>opennn</Name>
     </ProjectReference>

@@ -247,6 +247,7 @@ tests/data/*.xml
 
 #VS build
 *.log
+*.tlog
 *.lastbuildstate
 *.props
 

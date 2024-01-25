@@ -1,4 +1,5 @@
-    Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type& = type(2.0), bool = true) const;
+/*
+Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type& = type(2.0), bool = true) const;
 
     Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type& = type(0.05), bool = true) const;
 
@@ -50,3 +51,4 @@
 
     void unuse_isolation_forest_outliers(const Index& = 20, const type& = type(1.5));
 
+    */
