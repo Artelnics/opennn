@@ -171,7 +171,7 @@ void RegionProposalLayer::forward_propagate(Tensor<type*, 1> inputs_data,
 
     RegionProposalLayerForwardPropagation* region_proposal_layer_forward_propagation
             = static_cast<RegionProposalLayerForwardPropagation*>(forward_propagation);
-/*
+
     TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
 
     // Propose random region for each image

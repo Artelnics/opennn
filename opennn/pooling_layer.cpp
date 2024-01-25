@@ -363,7 +363,7 @@ void PoolingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
 
 void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
                        LayerForwardPropagation* layer_forward_propagation,
-                       const bool& is_training)
+                       const bool& is_training) const
 {
     const type kernel_size = type(pool_rows_number * pool_columns_number);
 
@@ -390,9 +390,9 @@ void PoolingLayer::forward_propagate_no_pooling(const Tensor<type, 4>& inputs,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
 {
-    const Index neurons_number = get_neurons_number();
+//    const Index neurons_number = get_neurons_number();
 
-    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
+//    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
@@ -410,7 +410,7 @@ void PoolingLayer::forward_propagate_no_pooling(const Tensor<type, 4>& inputs,
 
 void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  LayerForwardPropagation* layer_forward_propagation,
-                                                 const bool& is_training)
+                                                 const bool& is_training) const
 {
     const Index oututs_columns_number = get_outputs_columns_number();
     const Index oututs_rows_number = get_outputs_rows_number();

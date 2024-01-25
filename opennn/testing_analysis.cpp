@@ -2413,7 +2413,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
                                                     const Tensor<string, 1>& labels,
-                                                    const string& well_classified_samples_file_name)
+                                                    const string& well_classified_samples_file_name) const
 {
     const Tensor<string,2> well_classified_samples = calculate_well_classified_samples(targets,
                                                                                            outputs,
@@ -2435,7 +2435,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
 void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
                                                     const Tensor<string, 1>& labels,
-                                                    const string& misclassified_samples_file_name)
+                                                    const string& misclassified_samples_file_name) const
 {
     const Tensor<string,2> misclassified_samples = calculate_misclassified_samples(targets,
                                                                                          outputs,
@@ -2457,7 +2457,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
 void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type, 2>& targets,
                                                                 const Tensor<type, 2>& outputs,
                                                                 const Tensor<string, 1>& labels,
-                                                                const string& statistics_file_name)
+                                                                const string& statistics_file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
                                                                                             outputs,
@@ -2485,7 +2485,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
 void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2>& targets,
                                                                const Tensor<type, 2>& outputs,
                                                                const Tensor<string, 1>& labels,
-                                                               const string& statistics_file_name)
+                                                               const string& statistics_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
                                                                                         outputs,
@@ -2548,7 +2548,7 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
 void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                           const Tensor<type, 2>& outputs,
                                                                           const Tensor<string, 1>& labels,
-                                                                          const string& histogram_file_name)
+                                                                          const string& histogram_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
                                                                                           outputs,
@@ -2567,7 +2567,7 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 
 
 void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<string, 2>& misclassified_samples,
-                                                                          const string& histogram_file_name)
+                                                                          const string& histogram_file_name) const
 {
 
     Tensor<type, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
@@ -2915,18 +2915,18 @@ void TestingAnalysis::print_binary_classification_tests() const
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 {
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
+    //const Index inputs_number = neural_network_pointer->get_inputs_number();
 
     const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    //const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     Tensor<type,2> multiple_classification_tests(targets_number + 2, 3);
 
     const Tensor<Index, 2> confusion = calculate_confusion();
 
     Index true_positives = 0;
-    Index true_negatives = 0;
+    //Index true_negatives = 0;
     Index false_positives = 0;
     Index false_negatives = 0;
 

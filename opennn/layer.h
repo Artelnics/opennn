@@ -197,10 +197,12 @@ protected:
     template <int rank>
     void exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        const type alpha = type(1);
-
         y.device(*thread_pool_device) = x;
+
         /*
+         
+                 const type alpha = type(1);
+
     y.device(*thread_pool_device) = y.select(y < 0, alpha * (y.exp() - type(1)));
 
     const Tensor<bool, 1> if_sentence = x < x.constant(type(0));

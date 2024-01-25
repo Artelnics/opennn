@@ -228,29 +228,15 @@ struct TrainingResults
         return training_error_history(size-1);
     }
 
-    type get_selection_error()
+    type get_selection_error() const
     {
         const Index size = selection_error_history.size();
 
         return selection_error_history(size-1);
     }
 
-    type get_loss()
-    {
-        return loss;
-    }
 
-    type get_loss_decrease()
-    {
-        return loss_decrease;
-    }
-
-    Index get_selection_failures()
-    {
-        return selection_failures;
-    }
-
-    Index get_epochs_number()
+    Index get_epochs_number() const
     {
         return training_error_history.size() - 1;
     }
@@ -309,9 +295,9 @@ struct TrainingResults
 
     type loss = NAN;
 
-    Index selection_failures;
+    Index selection_failures = 0;
 
-    type loss_decrease;
+    type loss_decrease = type(0);
 };
 
 }

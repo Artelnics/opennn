@@ -132,11 +132,11 @@ public:
 
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
                            LayerForwardPropagation*,
-                           const bool&);
+                           const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
                            LayerForwardPropagation*,
-                           const bool&);
+                           const bool&) const;
 
     // Delta methods
 

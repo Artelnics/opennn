@@ -1600,6 +1600,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor <bool, 1>& ind
     return individual_columns_to_variables_returned;
 }
 
+
 Tensor <bool, 1> GeneticAlgorithm::get_individual_variables_to_indexes(Tensor <bool, 1>& individual)
 {
     DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
@@ -1722,6 +1723,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     return string_matrix;
 
 }
+
 
 Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void?
 {
@@ -1849,7 +1851,6 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Population size
-
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("PopulationSize");
 

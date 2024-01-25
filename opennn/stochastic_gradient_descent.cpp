@@ -403,7 +403,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     LossIndexBackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
 
-    type training_loss = type(0);
+    //type training_loss = type(0);
     type training_error = type(0);
     type selection_error = type(0);
 
@@ -437,7 +437,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         const Index batches_number = training_batches.dimension(0);
 
-        training_loss = type(0);
+        //training_loss = type(0);
         training_error = type(0);
 
         optimization_data.iteration = 0;
@@ -470,7 +470,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             results.training_error_history(epoch) = training_back_propagation.error;
 
             training_error += training_back_propagation.error;
-            training_loss += training_back_propagation.loss;
+            //training_loss += training_back_propagation.loss;
 
             // Gradient
 
@@ -479,7 +479,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         // Loss
 
-        training_loss /= type(batches_number);
+        //training_loss /= type(batches_number);
         training_error /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
