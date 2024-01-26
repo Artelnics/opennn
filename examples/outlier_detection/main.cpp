@@ -105,7 +105,7 @@ int main(void)
         {
             if(true_outlier(i) == 1 && outliers(i) == 1) truePositives++;
             else if(true_outlier(i) == 1 && outliers(i) == 0) falseNegatives++;
-            else if(true_outlier(i) == 0 && outliers(i) == 0) trueNegatives++;
+            else if(true_outlier(i) == 0 && outliers(i) == 0) //trueNegatives++;
             else falsePositives++;
         }
 
