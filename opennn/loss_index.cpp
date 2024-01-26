@@ -1102,6 +1102,16 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
     return jacobian;
 }
 
+void LossIndex::calculate_errors(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets, Tensor<type, 2>& errors) const
+{
+    errors.device(*thread_pool_device) = outputs - targets;
+}
+
+void LossIndex::calculate_errors(const Tensor<type, 3>& outputs, const Tensor<type, 3>& targets, Tensor<type, 3>& errors) const
+{
+    errors.device(*thread_pool_device) = outputs - targets;
+}
+
 
 type LossIndex::calculate_eta() const
 {

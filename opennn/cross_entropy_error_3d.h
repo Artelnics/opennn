@@ -46,6 +46,8 @@ public:
                         const ForwardPropagation&,
                         LossIndexBackPropagation&) const final;
 
+   void calculate_error(const Tensor<type, 3>&, type&) const;
+
    // Gradient methods
 
    void calculate_output_delta(const DataSetBatch&,

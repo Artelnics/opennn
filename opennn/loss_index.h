@@ -161,6 +161,14 @@ public:
 
    // Back propagation
 
+   void calculate_errors(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+
+   void calculate_errors(const Tensor<type, 3>&, const Tensor<type, 3>&, Tensor<type, 3>&) const;
+
+   //virtual void calculate_error(const Tensor<type, 2>&, type&) const;
+
+   //virtual void calculate_error(const Tensor<type, 3>&, type&) const;
+
    void calculate_errors(const DataSetBatch&,
                          const ForwardPropagation&,
                          LossIndexBackPropagation&) const;

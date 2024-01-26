@@ -84,7 +84,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         neural_network.add_layer(&embedding_layer);
         neural_network.add_layer(&probabilistic_layer_3d);
 
-        //numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient(); // calculate_errors() assumes outputs and targets of range 2
+        numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient(); // calculate_errors() assumes outputs and targets of range 2
 
         cout << numerical_gradient << endl;
     }

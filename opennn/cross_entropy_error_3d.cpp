@@ -77,6 +77,16 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
     }
 }
 
+void CrossEntropyError3D::calculate_error(const Tensor<type, 3>& errors, type& error) const
+{/*
+    Index batch_samples_number = errors.dimension(0);
+
+    Tensor<type, 0> cross_entropy_error;
+    cross_entropy_error.device(*thread_pool_device) = -(targets_map * outputs_map.log()).sum();
+
+    back_propagation.error = cross_entropy_error() / type(batch_samples_number);
+*/}
+
 
 void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
                                                ForwardPropagation& forward_propagation,
