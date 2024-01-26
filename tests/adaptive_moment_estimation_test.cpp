@@ -112,7 +112,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     training_results = adaptive_moment_estimation.perform_training();
 
-    //assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    assert_true(training_results.loss <= training_loss_goal, LOG);
 }
 
 

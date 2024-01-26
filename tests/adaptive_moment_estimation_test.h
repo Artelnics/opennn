@@ -41,10 +41,10 @@ public:
 
 private:
 
-    Index samples_number;
-    Index inputs_number;
-    Index outputs_number;
-    Index neurons_number;
+    Index samples_number = 0;
+    Index inputs_number = 0;
+    Index outputs_number = 0;
+    Index neurons_number = 0;
 
     DataSet data_set;
 

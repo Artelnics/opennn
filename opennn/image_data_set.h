@@ -145,7 +145,7 @@ private:
 
     Tensor<string, 1> labels_tokens;
 
-    Index width_no_padding;
+    Index width_no_padding = 0;
 
     Index regions_number = 1000; // Number of region proposals per image
     Index region_rows = 6; // Final region width to warp

@@ -844,7 +844,7 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
         Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives;
 
-        const Index step = neurons_number * neurons_number;
+        //const Index step = neurons_number * neurons_number;
 
         for(Index i = 0; i < batch_samples_number; i++)
         {

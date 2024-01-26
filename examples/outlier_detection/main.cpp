@@ -61,7 +61,7 @@ int main(void)
 
         DataSet data_set("../data/"+name+".csv", ',', true);
         Index K = 20;
-        type contamination = type(0);
+//        type contamination = type(0);
 
 
         Tensor<type, 2> true_outlier = data_set.get_column_data("outlier");
@@ -78,14 +78,14 @@ int main(void)
 
         type truePositives = type(0);
         type falseNegatives = type(0);
-        type trueNegatives = type(0);
+//        type trueNegatives = type(0);
         type falsePositives = type(0);
 
         Index count = 0;
 
         for(Index i = 0; i < outliers.size(); i++)
         {
-            if(outliers(i)==1)
+            if(outliers(i) == 1)
             {
                 count++;
             }

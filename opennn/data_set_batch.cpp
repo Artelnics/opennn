@@ -69,7 +69,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
 }
 
 
-void DataSetBatch::perform_augmentation()
+void DataSetBatch::perform_augmentation() const
 {
     ImageDataSet* image_data_set
             = static_cast<ImageDataSet*>(data_set_pointer);
@@ -100,6 +100,7 @@ void DataSetBatch::perform_augmentation()
 
     for(Index batch = 0; batch < batch_size; batch++)
     {
+/*
         TensorMap<Tensor<type, 3>> image(inputs_tensor.data() + batch*input_size,
                                          rows_number,
                                          columns_number,
@@ -142,7 +143,9 @@ void DataSetBatch::perform_augmentation()
 
             translate_image(image, image, translation);
         }
+        */
     }
+    
 }
 
 

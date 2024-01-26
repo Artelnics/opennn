@@ -5704,7 +5704,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     Tensor<BoxPlot, 1> box_plots(columns_number);
 
-    Index used_column_index = 0;
+//    Index used_column_index = 0;
     Index variable_index = 0;
 
     for(Index i = 0; i < columns_number; i++)
@@ -5715,7 +5715,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
             {
                 box_plots(i) = box_plot(data.chip(variable_index, 1), used_samples_indices);
 
-                used_column_index++;
+//                used_column_index++;
             }
             else
             {
@@ -5756,7 +5756,7 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
     {
         const Index training_index = used_indices(i);
 
-        if(data(training_index, target_index) != type(NAN))
+        if(!isnan(data(training_index, target_index)))
         {
             if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
             {

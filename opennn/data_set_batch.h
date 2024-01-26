@@ -33,7 +33,7 @@ struct DataSetBatch
 
     void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
-    void perform_augmentation();
+    void perform_augmentation() const;
 
     void print() const;
 

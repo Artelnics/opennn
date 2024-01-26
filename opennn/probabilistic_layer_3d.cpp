@@ -1023,7 +1023,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
         throw invalid_argument(buffer.str());
     }
-
+/*
     Index new_neurons_number;
 
     if(neurons_number_element->GetText())
@@ -1031,8 +1031,8 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         new_neurons_number = Index(stoi(neurons_number_element->GetText()));
     }
 
-//    set(new_inputs_number, new_neurons_number);
-
+    set(new_inputs_number, new_neurons_number);
+*/
     // Activation function
 
     const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
