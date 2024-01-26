@@ -35,12 +35,6 @@ int main()
    {
         cout << "Blank\n";
 
-        Tensor<type, 2> data(10,10);
-
-        data.setRandom();
-
-        DataSet data_set(data);
-
         cout << "Bye!" << endl;
 
         return 0;

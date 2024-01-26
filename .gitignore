@@ -250,5 +250,7 @@ tests/data/*.xml
 *.tlog
 *.lastbuildstate
 *.props
+*.recipe
+\release
 
 # Created by .ignore support plugin (hsz.mobi)
