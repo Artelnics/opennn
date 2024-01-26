@@ -253,4 +253,7 @@ tests/data/*.xml
 *.recipe
 \release
 
+#Python tests
+\.ipynb_checkpoints
+
 # Created by .ignore support plugin (hsz.mobi)
