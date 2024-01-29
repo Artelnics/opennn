@@ -44,8 +44,8 @@ private:
 
     Index samples_number;
     Index inputs_number;
-    Index targets_number;
-    Index neurons_number;
+    Index inputs_dim;
+    Index outputs_dim;
 
     Tensor<type, 3> data;
 

@@ -1709,7 +1709,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
     layers_pointers(first_trainable_layer_index)->forward_propagate(inputs,
                                                                     forward_propagation.layers(first_trainable_layer_index),
                                                                     is_training);
-    
+    cout << "After forward propagate first layer" << endl;
     pair<type*, dimensions> outputs_pair;
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
@@ -1738,7 +1738,9 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 
     const bool is_training = true;
 
+    cout << "Parameters updated. Forward propagate:" << endl;
     forward_propagate(inputs, forward_propagation, is_training);
+    cout << "After forward propagate" << endl;
 
     set_parameters(original_parameters);
 }

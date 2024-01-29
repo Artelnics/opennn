@@ -192,6 +192,19 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 
 void print_tensor(const float* vector, const int dimensions[]);
 
+template<int rank>
+pair<type*, dimensions> get_pair(const Tensor<type, rank>& tensor)
+{
+    type* tensor_data = const_cast<type*>(tensor.data());
+    
+    dimensions tensor_dimensions(1);
+
+    for (int i = 0; i < rank; i++)
+        tensor_dimensions[0].push_back(tensor.dimension(i));
+
+    return pair<type*, dimensions>(tensor_data, tensor_dimensions);
+}
+
 }
 
 #endif

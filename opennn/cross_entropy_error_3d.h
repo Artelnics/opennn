@@ -46,7 +46,10 @@ public:
                         const ForwardPropagation&,
                         LossIndexBackPropagation&) const final;
 
-   void calculate_error(const Tensor<type, 3>&, type&) const;
+   void calculate_error(pair<type*, dimensions>&, const Tensor<type, 3>&, type&) const;
+
+   using LossIndex::calculate_numerical_gradient;
+   Tensor<type, 1> calculate_numerical_gradient(const Tensor<type, 3>&, const Tensor<type, 3>&);
 
    // Gradient methods
 

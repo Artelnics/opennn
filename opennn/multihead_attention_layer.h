@@ -51,7 +51,7 @@ struct MultiheadAttentionLayerBackPropagationLM;
 
 class MultiheadAttentionLayer : public Layer
 {
-
+/// @todo get_parameters() and set_parameters()
 public:
 
     // Constructors

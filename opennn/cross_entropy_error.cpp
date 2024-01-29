@@ -164,7 +164,7 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
     deltas.device(*thread_pool_device)
-            = (type(-1)*(targets_map/outputs) + (type(1) - targets_map)/(type(1) - outputs))/type(batch_samples_number);
+            = (-targets_map/outputs + (type(1) - targets_map)/(type(1) - outputs))/type(batch_samples_number);
 }
 
 

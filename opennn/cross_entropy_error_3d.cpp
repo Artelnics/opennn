@@ -77,15 +77,82 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
     }
 }
 
-void CrossEntropyError3D::calculate_error(const Tensor<type, 3>& errors, type& error) const
-{/*
-    Index batch_samples_number = errors.dimension(0);
+void CrossEntropyError3D::calculate_error(pair<type*, dimensions>& outputs_pair, const Tensor<type, 3>& targets, type& error) const
+{
+    TensorMap<Tensor<type, 3>> outputs_map(outputs_pair.first, outputs_pair.second[0][0],
+                                                               outputs_pair.second[0][1],
+                                                               outputs_pair.second[0][2]);
+
+    Index batch_samples_number = outputs_map.dimension(0);
 
     Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = -(targets_map * outputs_map.log()).sum();
+    cross_entropy_error.device(*thread_pool_device) = -(targets * outputs_map.log()).sum();
 
-    back_propagation.error = cross_entropy_error() / type(batch_samples_number);
-*/}
+    error = cross_entropy_error() / type(batch_samples_number);
+}
+
+Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<type, 3>& inputs, const Tensor<type, 3>& targets)
+{
+    Index samples_number = inputs.dimension(0);
+
+    pair<type*, dimensions> inputs_pair = get_pair(inputs);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+
+    pair<type*, dimensions> outputs_pair;
+
+    const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    const Index parameters_number = parameters.size();
+
+    type h;
+    Tensor<type, 1> parameters_forward(parameters);
+    Tensor<type, 1> parameters_backward(parameters);
+
+    type error_forward;
+    type error_backward;
+
+    Tensor<type, 1> numerical_gradient(parameters_number);
+    numerical_gradient.setConstant(type(0));
+
+    cout << "Before loop" << endl;
+    for (Index i = 0; i < parameters_number; i++)
+    {
+        h = calculate_h(parameters(i));
+
+        parameters_forward(i) += h;
+
+        cout << "Before first forward_propagate" << endl;
+        neural_network_pointer->forward_propagate(inputs_pair,
+            parameters_forward,
+            forward_propagation);
+        cout << "After first forward_propagate" << endl;
+
+        outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+
+        calculate_error(outputs_pair, targets, error_forward);
+
+        parameters_forward(i) -= h;
+
+        parameters_backward(i) -= h;
+
+        cout << "Before second forward_propagate" << endl;
+        neural_network_pointer->forward_propagate(inputs_pair,
+                                                  parameters_backward,
+                                                  forward_propagation);
+
+        outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+
+        calculate_error(outputs_pair, targets, error_backward);
+
+        parameters_backward(i) += h;
+
+        numerical_gradient(i) = (error_forward - error_backward) / (type(2) * h);
+    }
+
+    return numerical_gradient;
+}
 
 
 void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
