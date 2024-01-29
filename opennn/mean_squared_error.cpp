@@ -51,7 +51,8 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
     // Check if works for convolutional
     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
 
-// This line was needed in convolutional branch: const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
+    // This line was needed in convolutional branch: 
+    // const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
 
     const type coefficient = batch_samples_number > type(0) ? type(batch_samples_number) : type(1);
 

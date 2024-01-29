@@ -252,6 +252,8 @@ tests/data/*.xml
 *.props
 *.recipe
 \release
+*.bak
+*.TMP
 
 #Python tests
 \.ipynb_checkpoints

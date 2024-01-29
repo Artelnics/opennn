@@ -1746,9 +1746,11 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(Tensor<type, 2>& inputs)
+Tensor<type, 2> NeuralNetwork::calculate_unscaled_outputs(Tensor<type, 2>& inputs) 
 {
-    const Index layers_number = get_layers_number();
+    const Index layers_number = 
+        
+        get_layers_number();
 
     if(layers_number == 0) return Tensor<type, 2>();
 

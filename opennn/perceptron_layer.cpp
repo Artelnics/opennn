@@ -503,51 +503,51 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              const Tensor<type, 2>& synaptic_weights,
                                              Tensor<type, 2>& combinations) const
 {
+
+#ifdef OPENNN_MKL
+
+    if(typeid(type) == typeid(float))
+    {
+        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            inputs.dimension(0),
+            synaptic_weights.dimension(1),
+            inputs.dimension(1),
+            type(1),
+            (float*)inputs.data(),
+            inputs.dimension(0),
+            (float*)synaptic_weights.data(),
+            synaptic_weights.dimension(0),
+            type(1),
+            (float*)combinations.data(),
+            inputs.dimension(0));
+    }
+    else if(typeid(type) == typeid(double))
+    {
+        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            inputs.dimension(0),
+            synaptic_weights.dimension(1),
+            inputs.dimension(1),
+            type(1),
+            (double*)inputs.data(),
+            inputs.dimension(0),
+            (double*)synaptic_weights.data(),
+            synaptic_weights.dimension(0),
+            type(1),
+            (double*)combinations.data(),
+            inputs.dimension(0));
+    }
+
+#else
+
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
+#endif
+    
     sum_columns(thread_pool_device, biases, combinations);
-
-    /* @todo MKL implementation
-
-    #ifdef OPENNN_MKL
-
-       if(typeid(type) == typeid(float))
-        {
-            cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                inputs.dimension(0),
-                synaptic_weights.dimension(1),
-                inputs.dimension(1),
-                type(1),
-                (float*)inputs.data(),
-                inputs.dimension(0),
-                (float*)synaptic_weights.data(),
-                synaptic_weights.dimension(0),
-                type(1),
-                (float*)combinations_data,
-                inputs.dimension(0));
-        }
-        else if(typeid(type) == typeid(double))
-        {
-            cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                inputs.dimension(0),
-                synaptic_weights.dimension(1),
-                inputs.dimension(1),
-                type(1),
-                (double*)inputs.data(),
-                inputs.dimension(0),
-                (double*)synaptic_weights.data(),
-                synaptic_weights.dimension(0),
-                type(1),
-                (double*)combinations_data,
-                inputs.dimension(0));
-        }
-
-    #else
-    */
 
 }
 
@@ -803,59 +803,60 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 
     // Next forward propagation
 
-    const Tensor<type, 2>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
+//    const Tensor<type, 2>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
 
     // Next back-propagation
 
     const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
+    const Tensor<type, 2>& next_deltas_times_activations_derivatives = next_back_propagation->deltas_times_activations_derivatives;
+
     // This back propagation
 
     Tensor<type, 2>& deltas = back_propagation->deltas;
 
-    deltas.device(*thread_pool_device)
-        = (next_deltas*next_activations_derivatives).contract(next_synaptic_weights, A_BT);
+#ifdef OPENNN_MKL
 
-//#ifdef OPENNN_MKL
-
-//   if(typeid(type) == typeid(float))
-//    {
-//        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-//            CBLAS_TRANSPOSE::CblasNoTrans,
-//            CBLAS_TRANSPOSE::CblasTrans,
-//            next_deltas.dimension(0),
-//            next_synaptic_weights.dimension(0),
-//            next_deltas.dimension(1),
-//            type(1),
-//            next_deltas.data(),
-//            next_deltas.dimension(0),
-//            next_synaptic_weights.data(),
-//            next_synaptic_weights.dimension(0),
-//            type(0),
-//            deltas.data(),
-//            next_deltas.dimension(0));
-//    }
-//    else if(typeid(type) == typeid(double))
-//    {
-//        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-//            CBLAS_TRANSPOSE::CblasNoTrans,
-//            CBLAS_TRANSPOSE::CblasTrans,
-//            next_deltas.dimension(0),
-//            next_synaptic_weights.dimension(0),
-//            next_deltas.dimension(1),
-//            type(1),
-//            (double*)next_deltas.data(),
-//            next_deltas.dimension(0),
-//            (double*)next_synaptic_weights.data(),
-//            next_synaptic_weights.dimension(0),
-//            type(0),
-//            (double*)deltas.data(),
-//            next_deltas.dimension(0));
-//    }
+   if(typeid(type) == typeid(float))
+    {
+        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            CBLAS_TRANSPOSE::CblasTrans,
+            next_deltas.dimension(0),
+            next_synaptic_weights.dimension(0),
+            next_deltas.dimension(1),
+            type(1),
+            next_deltas.data(),
+            next_deltas.dimension(0),
+            next_synaptic_weights.data(),
+            next_synaptic_weights.dimension(0),
+            type(0),
+            deltas.data(),
+            next_deltas.dimension(0));
+    }
+    else if(typeid(type) == typeid(double))
+    {
+        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            CBLAS_TRANSPOSE::CblasTrans,
+            next_deltas.dimension(0),
+            next_synaptic_weights.dimension(0),
+            next_deltas.dimension(1),
+            type(1),
+            (double*)next_deltas.data(),
+            next_deltas.dimension(0),
+            (double*)next_synaptic_weights.data(),
+            next_synaptic_weights.dimension(0),
+            type(0),
+            (double*)deltas.data(),
+            next_deltas.dimension(0));
+    }
     
-//#else
+#else
 
-//#endif
+    deltas.device(*thread_pool_device) = next_deltas_times_activations_derivatives.contract(next_synaptic_weights, A_BT);
+
+#endif
 }
 
 
@@ -986,10 +987,14 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
 
     const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
-    Eigen::array<Index,2> reshape_dimensions = {{next_activations_derivatives.dimension(0),next_activations_derivatives.dimension(1)}};
+    const Eigen::array<Index,2> reshape_dimensions = {{next_activations_derivatives.dimension(0),next_activations_derivatives.dimension(1)}};
 
-    back_propagation->deltas.device(*thread_pool_device)
-        = (next_deltas*next_activations_derivatives.reshape(reshape_dimensions)).contract(next_synaptic_weights, A_BT);
+    const Tensor<type, 2>& next_deltas_times_activations_derivatives = next_back_propagation->deltas_times_activations_derivatives;
+
+    Tensor<type, 2>& deltas = back_propagation->deltas;
+
+    deltas.device(*thread_pool_device)
+        = (next_deltas_times_activations_derivatives.reshape(reshape_dimensions)).contract(next_synaptic_weights, A_BT);
 }
 
 
@@ -1007,8 +1012,10 @@ void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropaga
     type* next_activations_derivatives_data = next_forward_propagation->activations_derivatives.data();
 
     const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
+
     Tensor<type, 2>& deltas = back_propagation->deltas;
 
+    //const Tensor<type, 2>& next_deltas_times_activations_derivatives = next_back_propagation->deltas_times_activations_derivatives;
 
     if(next_neurons_number == 1)
     {
@@ -1118,7 +1125,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM *
 }
 
 
-void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
@@ -1130,55 +1137,61 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
+    Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
+
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     const Tensor<type, 2>& deltas = perceptron_layer_back_propagation->deltas;
 
-    perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-            (deltas*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
+    Tensor<type, 2>& deltas_times_activations_derivatives = perceptron_layer_back_propagation->deltas_times_activations_derivatives;
 
-    perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-        inputs_map.contract(deltas*activations_derivatives, AT_B);
+    deltas_times_activations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;     
 
-//#ifdef OPENNN_MKL
+    biases_derivatives.device(*thread_pool_device) = deltas_times_activations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
-//    if(typeid(type) == typeid(float))
-//    {
-//        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-//            CBLAS_TRANSPOSE::CblasTrans,
-//            CBLAS_TRANSPOSE::CblasNoTrans,
-//            inputs.dimension(1),
-//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
-//            inputs.dimension(0),
-//            type(1),
-//            inputs.data(),
-//            inputs.dimension(0),
-//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
-//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            type(0),
-//            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
-//            inputs.dimension(1));
-//    }
-//    else if  (typeid(type) == typeid(double))
-//      {
-//        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-//            CBLAS_TRANSPOSE::CblasTrans,
-//            CBLAS_TRANSPOSE::CblasNoTrans,
-//            inputs.dimension(1),
-//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(1),
-//            inputs.dimension(0),
-//            type(1),
-//            (double*)inputs.data(),
-//            inputs.dimension(0),
-//            (double*)perceptron_layer_back_propagation->deltas_times_activations_derivatives.data(),
-//            perceptron_layer_back_propagation->deltas_times_activations_derivatives.dimension(0),
-//            type(0),
-//            (double*)perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
-//            inputs.dimension(1));
-//    }
-//#else
+#ifdef OPENNN_MKL
 
-//#endif
+    if(typeid(type) == typeid(float))
+    {
+        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
+            CBLAS_TRANSPOSE::CblasTrans,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            inputs.dimension(1),
+            deltas_times_activations_derivatives.dimension(1),
+            inputs.dimension(0),
+            type(1),
+            inputs.data(),
+            inputs.dimension(0),
+            deltas_times_activations_derivatives.data(),
+            deltas_times_activations_derivatives.dimension(0),
+            type(0),
+            synaptic_weights_derivatives.data(),
+            inputs.dimension(1));
+    }
+    else if(typeid(type) == typeid(double))
+    {
+        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
+            CBLAS_TRANSPOSE::CblasTrans,
+            CBLAS_TRANSPOSE::CblasNoTrans,
+            inputs.dimension(1),
+            deltas_times_activations_derivatives.dimension(1),
+            inputs.dimension(0),
+            type(1),
+            (double*)inputs.data(),
+            inputs.dimension(0),
+            (double*)deltas_times_activations_derivatives.data(),
+            deltas_times_activations_derivatives.dimension(0),
+            type(0),
+            (double*)synaptic_weights_derivatives.data(),
+            inputs.dimension(1));
+    }
+
+#else
+
+    synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(deltas_times_activations_derivatives, AT_B);
+
+#endif
 }
 
 
@@ -1566,8 +1579,7 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     
     synaptic_weights_derivatives.resize(inputs_number, neurons_number);
     
-    deltas_times_activations_derivatives.resize(batch_samples_number,
-                                                neurons_number);
+    deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
 }
 
 
@@ -1617,6 +1629,8 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number
     deltas.resize(batch_samples_number, neurons_number);
 
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+
+    deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
 }
 
 

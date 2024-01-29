@@ -87,7 +87,7 @@ const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activa
 
 
 /// Returns a string with the probabilistic method for the outputs
-///("Competitive", "Softmax" or "NoProbabilistic").
+/// ("Competitive", "Softmax" or "NoProbabilistic").
 
 string ProbabilisticLayer3D::write_activation_function() const
 {
@@ -121,7 +121,7 @@ string ProbabilisticLayer3D::write_activation_function() const
 
 
 /// Returns a string with the probabilistic method for the outputs to be included in some text
-///("competitive", "softmax" or "no probabilistic").
+/// ("competitive", "softmax" or "no probabilistic").
 
 string ProbabilisticLayer3D::write_activation_function_text() const
 {

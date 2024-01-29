@@ -327,6 +327,9 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     void print() const;
 
     Tensor<type, 2> squared_errors_Jacobian;
+
+    Tensor<type, 2> deltas_times_activations_derivatives;
+
 };
 
 }

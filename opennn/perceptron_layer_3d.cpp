@@ -972,7 +972,7 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
 //            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
 //            inputs.dimension(1));
 //    }
-//    else if  (typeid(type) == typeid(double))
+//    else if(typeid(type) == typeid(double))
 //      {
 //        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
 //            CBLAS_TRANSPOSE::CblasTrans,

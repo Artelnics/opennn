@@ -262,8 +262,8 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 
 
 /// Returns a vector with two elements:
-///(i) the learning rate calculated by means of the corresponding algorithm, and
-///(ii) the loss for that learning rate.
+/// (i) the learning rate calculated by means of the corresponding algorithm, and
+/// (ii) the loss for that learning rate.
 
 pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     const DataSetBatch& batch,

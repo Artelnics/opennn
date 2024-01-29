@@ -777,34 +777,12 @@ void LossIndex::assemble_layers_error_gradient(LossIndexBackPropagation& back_pr
 
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
-// Convolutional --------------------------------------------------------------------------------------------------------------------------------------------
-//    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
-//      /*  ||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten*/)
-//    {
-//        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
-//                                                               forward_propagation.layers(0),
-//                                                               back_propagation.neural_network.layers(0));
-
-//    }
-//    else if( trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
-//    {
-//       // do nothing
-//    }
-//    else
-//    {
-//        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
-//                                                               forward_propagation.layers(0),
-//                                                               back_propagation.neural_network.layers(0));
-//    }
-// End convolutional, check if needed --------------------------------------------------------------------------------------------------------------------------------------------
 
     Index index = 0;
 
-// dev-fwd_refactoring---------------------------------------------------------------------------
     trainable_layers_pointers(0)->insert_gradient(back_propagation.neural_network.layers(0),
                                                   index,
                                                   back_propagation.gradient);
-//  end dev-fwd_refactoring---------------------------------------------------------------------------
 
     index += trainable_layers_parameters_number(0);
 

@@ -61,7 +61,7 @@ namespace opennn
 
     using dimensions = vector<vector<Index>>;
 
-//    using execution_policy = execution::par;
+//    using execution_policy = std::execution::par;
 
 }
 

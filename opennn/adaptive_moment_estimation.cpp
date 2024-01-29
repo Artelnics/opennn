@@ -595,28 +595,35 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
 
     const Tensor<type, 1>& gradient = back_propagation.gradient;
 
+    Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
+
+    Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
+
 #ifdef OPENNN_MKL
 
-    int parameters_number = back_propagation.gradient.size();
+    const int parameters_number = gradient.size();
 
-    int incx = 1;
-    int incy = 1;
+    const int incx = 1;
+    const int incy = 1;
 
-    type a = (type(1) - beta_1);
-    type b = beta_1;
+    const type a = type(1) - beta_1;
+    const type b = beta_1;
 
-    saxpby(&parameters_number, &a, back_propagation.gradient.data(), &incx, &b, optimization_data.gradient_exponential_decay.data(), &incy);
+    saxpby(&parameters_number, 
+           &a, 
+           gradient.data(), 
+           &incx, 
+           &b, 
+           gradient_exponential_decay.data(), 
+           &incy);
 
 #else
-
-    Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
 
     gradient_exponential_decay.device(*thread_pool_device)
         = gradient * (type(1) - beta_1) + gradient_exponential_decay * beta_1;
 
-#endif
 
-    Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
+#endif
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient*gradient * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;

@@ -846,10 +846,11 @@ void RecurrentLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* n
 
     const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
+    const Tensor<type, 2>& next_deltas_times_activations_derivatives = next_back_propagation->deltas_times_activations_derivatives;
+
     Tensor<type, 2>& deltas = back_propagation->deltas;
 
-    deltas.device(*thread_pool_device) =
-            (next_deltas*next_activations_derivatives).contract(next_synaptic_weights, A_BT);
+    deltas.device(*thread_pool_device) = next_deltas_times_activations_derivatives.contract(next_synaptic_weights, A_BT);
 }
 
 

@@ -87,7 +87,7 @@ const ProbabilisticLayer::ActivationFunction& ProbabilisticLayer::get_activation
 
 
 /// Returns a string with the probabilistic method for the outputs
-///("Competitive", "Softmax" or "NoProbabilistic").
+/// ("Competitive", "Softmax" or "NoProbabilistic").
 
 string ProbabilisticLayer::write_activation_function() const
 {
@@ -121,7 +121,7 @@ string ProbabilisticLayer::write_activation_function() const
 
 
 /// Returns a string with the probabilistic method for the outputs to be included in some text
-///("competitive", "softmax" or "no probabilistic").
+/// ("competitive", "softmax" or "no probabilistic").
 
 string ProbabilisticLayer::write_activation_function_text() const
 {
@@ -679,8 +679,7 @@ void ProbabilisticLayer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
 
 void ProbabilisticLayer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
 {
-  /*
-
+/*
         softmax(x, y);
 
         int N = x.dimension(1);
@@ -850,7 +849,9 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
         {
             /*const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
                                                                             neurons_number,
-                                                                            neurons_number);*/
+                                                                            neurons_number);
+            */
+
             activations_derivatives_matrix = activations_derivatives.chip(i, 0);
 
             deltas_row = deltas.chip(i, 0);
@@ -988,7 +989,7 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
     const Index layer_parameters_number = get_parameters_number();
 
     copy(execution::par, 
-        probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
          probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data()+ layer_parameters_number*batch_samples_number,
          squared_errors_Jacobian.data() + index);
 }
@@ -1420,15 +1421,18 @@ ProbabilisticLayerForwardPropagation::~ProbabilisticLayerForwardPropagation()
 {
 
 }
-std::pair<type *, dimensions>
-ProbabilisticLayerForwardPropagation::get_outputs_pair() const {
+
+
+std::pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const 
+{
     const Index neurons_number = layer_pointer->get_neurons_number();
 
-    return pair<type *, dimensions>(outputs_data,
-                                    {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
 }
-void ProbabilisticLayerForwardPropagation::set(
-    const Index &new_batch_samples_number, Layer *new_layer_pointer) {
+
+
+void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_number, Layer *new_layer_pointer) 
+{
     layer_pointer = new_layer_pointer;
 
     batch_samples_number = new_batch_samples_number;
@@ -1439,33 +1443,48 @@ void ProbabilisticLayerForwardPropagation::set(
 
     outputs_data = outputs.data();
 
-    activations_derivatives.resize(batch_samples_number, neurons_number,
-                                   neurons_number);
+    activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
 }
-void ProbabilisticLayerForwardPropagation::print() const {
+
+
+void ProbabilisticLayerForwardPropagation::print() const 
+{
     cout << "Outputs:" << endl;
     cout << outputs << endl;
 
     cout << "Activations derivatives:" << endl;
     cout << activations_derivatives << endl;
 }
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation()
-    : LayerBackPropagation() {}
-ProbabilisticLayerBackPropagation::~ProbabilisticLayerBackPropagation() {}
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(
-    const Index &new_batch_samples_number, Layer *new_layer_pointer)
-    : LayerBackPropagation() {
+
+
+ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation() : LayerBackPropagation() 
+{
+}
+
+
+ProbabilisticLayerBackPropagation::~ProbabilisticLayerBackPropagation() 
+{
+
+}
+
+
+ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index &new_batch_samples_number, Layer *new_layer_pointer)
+    : LayerBackPropagation() 
+{
     set(new_batch_samples_number, new_layer_pointer);
 }
-std::pair<type *, dimensions>
-ProbabilisticLayerBackPropagation::get_deltas_pair() const {
+
+
+std::pair<type *, dimensions> ProbabilisticLayerBackPropagation::get_deltas_pair() const 
+{
     const Index neurons_number = layer_pointer->get_neurons_number();
 
-    return pair<type *, dimensions>(deltas_data,
-                                    {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
 }
-void ProbabilisticLayerBackPropagation::set(
-    const Index &new_batch_samples_number, Layer *new_layer_pointer) {
+
+
+void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_number, Layer *new_layer_pointer) 
+{
     layer_pointer = new_layer_pointer;
 
     batch_samples_number = new_batch_samples_number;
@@ -1485,8 +1504,13 @@ void ProbabilisticLayerBackPropagation::set(
     activations_derivatives_matrix.resize(neurons_number, neurons_number);
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+
+    deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
 }
-void ProbabilisticLayerBackPropagation::print() const {
+
+
+void ProbabilisticLayerBackPropagation::print() const 
+{
     cout << "Deltas:" << endl;
     cout << deltas << endl;
 
@@ -1498,7 +1522,7 @@ void ProbabilisticLayerBackPropagation::print() const {
 }
 } // namespace opennn
 
- // namespace opennn// / // namespace opennn/ namespace opennn OpenNN: Open Neural Networks Library.
+// OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or

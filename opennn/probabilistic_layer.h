@@ -262,7 +262,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     pair<type *, dimensions> get_deltas_pair() const final;
 
-    void set(const Index &, Layer *) final;
+    void set(const Index&, Layer*) final;
 
     void print() const;
 
@@ -275,6 +275,9 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
+
+    Tensor<type, 2> deltas_times_activations_derivatives;
+
 };
 
 
