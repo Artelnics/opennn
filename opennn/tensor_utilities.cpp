@@ -700,7 +700,7 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
 #ifdef __OPENNN_DEBUG__
 
-    if(row_index >= rows_number)
+    if(row_index >= matrix.dimension(0))
     {
         ostringstream buffer;
 
@@ -710,7 +710,7 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
         throw logic_error(buffer.str());
     }
-    if(columns_number != matrix.dimension(0))
+    if(columns_number != matrix.dimension(1))
     {
         ostringstream buffer;
 
