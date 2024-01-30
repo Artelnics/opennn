@@ -145,6 +145,7 @@
       </DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
@@ -263,7 +264,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../opennn\opennn.vcxproj">
+    <ProjectReference Include="..\opennn\opennn.vcxproj">
       <Project>{D2F8B8A4-FD55-3AA3-B597-C6BCD3D1344B}</Project>
       <Name>opennn</Name>
     </ProjectReference>
