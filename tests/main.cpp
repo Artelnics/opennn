@@ -247,6 +247,7 @@ int main()
         tests_passed_count += neural_network_test.get_tests_passed_count();
         tests_failed_count += neural_network_test.get_tests_failed_count();
       }
+
       else if(test == "sum_squared_error" || test == "sse")
       {
         SumSquaredErrorTest sum_squared_error_test;
@@ -255,6 +256,7 @@ int main()
         tests_passed_count += sum_squared_error_test.get_tests_passed_count();
         tests_failed_count += sum_squared_error_test.get_tests_failed_count();
       }
+
       else if(test == "mean_squared_error" || test == "mse")
       {
         MeanSquaredErrorTest mean_squared_error_test;
@@ -263,6 +265,7 @@ int main()
         tests_passed_count += mean_squared_error_test.get_tests_passed_count();
         tests_failed_count += mean_squared_error_test.get_tests_failed_count();
       }
+
       else if(test == "normalized_squared_error" || test == "nse")
       {
         NormalizedSquaredErrorTest normalized_squared_error_test;
@@ -271,6 +274,7 @@ int main()
         tests_passed_count += normalized_squared_error_test.get_tests_passed_count();
         tests_failed_count += normalized_squared_error_test.get_tests_failed_count();
       }
+
       else if(test == "weighted_squared_error" || test == "wse")
       {
         WeightedSquaredErrorTest weighted_squared_error_test;
@@ -279,6 +283,7 @@ int main()
         tests_passed_count += weighted_squared_error_test.get_tests_passed_count();
         tests_failed_count += weighted_squared_error_test.get_tests_failed_count();
       }
+
       else if(test == "minkowski_error" || test == "me")
       {
         MinkowskiErrorTest Minkowski_error_test;
@@ -287,6 +292,7 @@ int main()
         tests_passed_count += Minkowski_error_test.get_tests_passed_count();
         tests_failed_count += Minkowski_error_test.get_tests_failed_count();
       }
+
       else if(test == "cross_entropy_error" || test == "cee")
       {
         CrossEntropyErrorTest cross_entropy_error_test;
@@ -295,6 +301,7 @@ int main()
         tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
         tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
       }
+
       else if(test == "cross_entropy_error_3d" || test == "cee3d")
       {
           CrossEntropyError3DTest cross_entropy_error_3d_test;
@@ -303,6 +310,7 @@ int main()
           tests_passed_count += cross_entropy_error_3d_test.get_tests_passed_count();
           tests_failed_count += cross_entropy_error_3d_test.get_tests_failed_count();
       }
+
       else if(test == "descriptives" || test == "dsc")
       {
         StatisticsTest statistics_test;
@@ -785,7 +793,7 @@ int main()
 
          return 1;
       }
-
+      
       cout << message << "\n"
                 << "OpenNN test suite results:\n"
                 << "Tests run: " << tests_count << "\n"

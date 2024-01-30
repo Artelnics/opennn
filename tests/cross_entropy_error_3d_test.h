@@ -42,10 +42,10 @@ public:
 
 private:
 
-    Index samples_number;
-    Index inputs_number;
-    Index inputs_dim;
-    Index outputs_dim;
+    Index samples_number = 0;
+    Index inputs_number = 0;
+    Index inputs_dim = 0;
+    Index outputs_dim = 0;
 
     Tensor<type, 3> data;
 

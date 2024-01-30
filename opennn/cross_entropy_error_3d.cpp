@@ -96,9 +96,9 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
     Index samples_number = inputs.dimension(0);
 
     pair<type*, dimensions> inputs_pair = get_pair(inputs);
-
+    
     ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
-
+    
     pair<type*, dimensions> outputs_pair;
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
@@ -116,18 +116,15 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
     Tensor<type, 1> numerical_gradient(parameters_number);
     numerical_gradient.setConstant(type(0));
 
-    cout << "Before loop" << endl;
     for (Index i = 0; i < parameters_number; i++)
     {
         h = calculate_h(parameters(i));
 
         parameters_forward(i) += h;
-
-        cout << "Before first forward_propagate" << endl;
+        
         neural_network_pointer->forward_propagate(inputs_pair,
             parameters_forward,
             forward_propagation);
-        cout << "After first forward_propagate" << endl;
 
         outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
@@ -137,7 +134,6 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
 
         parameters_backward(i) -= h;
 
-        cout << "Before second forward_propagate" << endl;
         neural_network_pointer->forward_propagate(inputs_pair,
                                                   parameters_backward,
                                                   forward_propagation);

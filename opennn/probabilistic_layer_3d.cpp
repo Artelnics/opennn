@@ -39,13 +39,13 @@ ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const
 
 Index ProbabilisticLayer3D::get_inputs_number() const
 {
-    return synaptic_weights.dimension(0);
+    return inputs_number;
 }
 
 
 Index ProbabilisticLayer3D::get_inputs_depth() const
 {
-    return inputs_depth;
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -261,7 +261,7 @@ void ProbabilisticLayer3D::set()
 
 void ProbabilisticLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
-    inputs_depth = new_inputs_depth;
+    inputs_number = new_inputs_number;
 
     biases.resize(new_neurons_number);
 
@@ -387,9 +387,9 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
 
 void ProbabilisticLayer3D::set_default()
 {
-    layer_name = "probabilistic_layer";
+    layer_name = "probabilistic_layer_3d";
 
-    layer_type = Layer::Type::Probabilistic;
+    layer_type = Layer::Type::Probabilistic3D;
 
     const Index neurons_number = get_neurons_number();
 
@@ -749,7 +749,6 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
         calculate_activations_derivatives(outputs,
                                           outputs,
                                           activations_derivatives);
-
     }
     else
     {

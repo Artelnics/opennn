@@ -58,9 +58,24 @@ struct ForwardPropagation
 
             }
             break;
+
+            case Layer::Type::Perceptron3D:
+            {
+                layers(i) = new PerceptronLayer3DForwardPropagation(batch_samples_number, layers_pointers(i));
+
+            }
+            break;
+
             case Layer::Type::Probabilistic:
             {
                 layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+
+            }
+            break;
+
+            case Layer::Type::Probabilistic3D:
+            {
+                layers(i) = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, layers_pointers(i));
 
             }
             break;
@@ -122,6 +137,20 @@ struct ForwardPropagation
             case Layer::Type::NonMaxSuppression:
             {
                 layers(i) = new NonMaxSuppressionLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+            }
+            break;
+
+            case Layer::Type::Embedding:
+            {
+                layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+
+            }
+            break;
+
+            case Layer::Type::MultiheadAttention:
+            {
+                layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+
             }
             break;
 

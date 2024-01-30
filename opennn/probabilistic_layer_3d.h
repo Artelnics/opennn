@@ -185,7 +185,7 @@ public:
 
 protected:
 
-   Index inputs_depth;
+   Index inputs_number;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.

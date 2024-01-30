@@ -130,7 +130,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw invalid_argument(buffer.str());
     }
-
+    
     const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))
@@ -138,15 +138,15 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
         const Index old_layers_number = get_layers_number();
 
         // Layers pointers
-
+        
         Tensor<Layer*, 1> old_layers_pointers = get_layers_pointers();
-
-        layers_pointers.resize(old_layers_number+1);
+        
+        layers_pointers.resize(old_layers_number + 1);
 
         for(Index i = 0; i < old_layers_number; i++) layers_pointers(i) = old_layers_pointers(i);
 
         layers_pointers(old_layers_number) = layer_pointer;
-
+        
 
         // Layers inputs indices
 
@@ -163,6 +163,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
             layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
 //        }
+            
     }
     else
     {
@@ -175,6 +176,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw invalid_argument(buffer.str());
     }
+    
 }
 
 
@@ -1709,7 +1711,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
     layers_pointers(first_trainable_layer_index)->forward_propagate(inputs,
                                                                     forward_propagation.layers(first_trainable_layer_index),
                                                                     is_training);
-    cout << "After forward propagate first layer" << endl;
+
     pair<type*, dimensions> outputs_pair;
 
     for(Index i = first_trainable_layer_index + 1; i <= last_trainable_layer_index; i++)
@@ -1738,9 +1740,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 
     const bool is_training = true;
 
-    cout << "Parameters updated. Forward propagate:" << endl;
     forward_propagate(inputs, forward_propagation, is_training);
-    cout << "After forward propagate" << endl;
 
     set_parameters(original_parameters);
 }
