@@ -77,18 +77,17 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         outputs_dim = 1;
 
         Tensor<type, 3> inputs(samples_number, inputs_number, inputs_dim);
-        inputs.setConstant(0);
+        inputs.setConstant(2);
 
         Tensor<type, 3> targets(samples_number, inputs_number, outputs_dim);
-        targets.setConstant(0);
+        targets.setConstant(1);
         
-        ProbabilisticLayer3D probabilistic_layer_3d(inputs_number, inputs_dim, outputs_dim);
-        //neural_network.add_layer(&probabilistic_layer_3d);
-
+        ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, inputs_dim, outputs_dim);
+        neural_network.add_layer(probabilistic_layer_3d);
         
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient(inputs, targets);
         
-        //cout << numerical_gradient << endl;
+        cout << numerical_gradient << endl;
         
     }
 
