@@ -77,27 +77,44 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
     }
 }
 
-void CrossEntropyError3D::calculate_error(pair<type*, dimensions>& outputs_pair, const Tensor<type, 3>& targets, type& error) const
+void CrossEntropyError3D::calculate_error(const pair<type*, dimensions>& targets_pair,
+                                          const ForwardPropagation& forward_propagation,
+                                          LossIndexBackPropagation& back_propagation) const
 {
-    TensorMap<Tensor<type, 3>> outputs_map(outputs_pair.first, outputs_pair.second[0][0],
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    const LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+
+    const pair<type*, dimensions> outputs_pair = output_layer_forward_propagation->get_outputs_pair();
+
+    const TensorMap<Tensor<type, 3>> outputs_map(outputs_pair.first, outputs_pair.second[0][0],
                                                                outputs_pair.second[0][1],
                                                                outputs_pair.second[0][2]);
 
-    Index batch_samples_number = outputs_map.dimension(0);
+    const Index batch_samples_number = outputs_map.dimension(0);
+
+    const TensorMap<Tensor<type, 3>> targets_map(targets_pair.first, targets_pair.second[0][0],
+                                                                     targets_pair.second[0][1],
+                                                                     targets_pair.second[0][2]);
 
     Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = -(targets * outputs_map.log()).sum();
 
-    error = cross_entropy_error() / type(batch_samples_number);
+    cross_entropy_error.device(*thread_pool_device) = -(targets_map * (outputs_map/* + epsilon*/).log()).sum();
+
+    back_propagation.error = cross_entropy_error() / type(batch_samples_number);
 }
+
 
 Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<type, 3>& inputs, const Tensor<type, 3>& targets)
 {
-    Index samples_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
 
-    pair<type*, dimensions> inputs_pair = get_pair(inputs);
+    const pair<type*, dimensions> inputs_pair = get_pair(inputs);
+
+    const pair<type*, dimensions> targets_pair = get_pair(targets);
     
     ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+    LossIndexBackPropagation back_propagation(samples_number, this);
     
     pair<type*, dimensions> outputs_pair;
 
@@ -115,7 +132,7 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
 
     Tensor<type, 1> numerical_gradient(parameters_number);
     numerical_gradient.setConstant(type(0));
-
+    
     for (Index i = 0; i < parameters_number; i++)
     {
         h = calculate_h(parameters(i));
@@ -123,30 +140,34 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
         parameters_forward(i) += h;
         
         neural_network_pointer->forward_propagate(inputs_pair,
-            parameters_forward,
-            forward_propagation);
+                                                  parameters_forward,
+                                                  forward_propagation);
 
         outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
-
-        calculate_error(outputs_pair, targets, error_forward);
-
+        
+        calculate_error(targets_pair, forward_propagation, back_propagation);
+        
+        error_forward = back_propagation.error;
+        
         parameters_forward(i) -= h;
-
+        
         parameters_backward(i) -= h;
-
+        
         neural_network_pointer->forward_propagate(inputs_pair,
                                                   parameters_backward,
                                                   forward_propagation);
 
         outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-        calculate_error(outputs_pair, targets, error_backward);
+        calculate_error(targets_pair, forward_propagation, back_propagation);
+
+        error_backward = back_propagation.error;
 
         parameters_backward(i) += h;
-
+        
         numerical_gradient(i) = (error_forward - error_backward) / (type(2) * h);
     }
-
+    
     return numerical_gradient;
 }
 
@@ -178,6 +199,34 @@ void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
     Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
 
     deltas.device(*thread_pool_device) = (-targets_map/outputs_map)/type(batch_samples_number);
+}
+
+
+void CrossEntropyError3D::calculate_output_delta(const pair<type*, dimensions>& targets_pair,
+                                                 ForwardPropagation& forward_propagation,
+                                                 LossIndexBackPropagation& back_propagation) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    ProbabilisticLayer3DBackPropagation* probabilistic_layer_back_propagation
+        = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number - 1));
+
+    const Index batch_samples_number = targets_pair.second[0][0];
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
+
+    const TensorMap<Tensor<type, 3>> outputs_map(outputs_pair.first, outputs_pair.second[0][0],
+                                                                     outputs_pair.second[0][1],
+                                                                     outputs_pair.second[0][2]);
+
+    const TensorMap<Tensor<type, 3>> targets_map(targets_pair.first, targets_pair.second[0][0],
+                                                                     targets_pair.second[0][1],
+                                                                     targets_pair.second[0][2]);
+
+    Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
+
+    deltas.device(*thread_pool_device) = (-targets_map / outputs_map) / type(batch_samples_number);
 }
 
 

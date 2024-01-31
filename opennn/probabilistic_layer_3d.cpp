@@ -645,69 +645,6 @@ void ProbabilisticLayer3D::logistic_derivatives(const Tensor<type, 2>& x,
 }
 */
 
-void ProbabilisticLayer3D::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
-{
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-    const Index channels_number = x.dimension(2);
-
-    const Eigen::array<Index, 1> last_dim{ {2} };
-    const Eigen::array<Index, 3> range_3{ {rows_number, columns_number, 1} };
-    const Eigen::array<Index, 3> expand_last_dim{ {1, 1, channels_number} };
-
-    y.device(*thread_pool_device) = x - x.maximum(last_dim)
-                                         .reshape(range_3)
-                                         .broadcast(expand_last_dim);
-
-    y.device(*thread_pool_device) = y.exp();
-
-    y.device(*thread_pool_device) = y / y.sum(last_dim)
-                                         .reshape(range_3)
-                                         .broadcast(expand_last_dim);
-}
-
-
-void ProbabilisticLayer3D::softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
-{
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-    const Index channels_number = x.dimension(2);
-
-
-    softmax(x, y);
-
-    dy_dx.setZero();
-
-    Tensor<type, 2> y_row(columns_number, channels_number);
-    Tensor<type, 1> y_element(channels_number);
-    Tensor<type, 2> dy_dx_element(channels_number, channels_number);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        y_row = y.chip(i, 0);
-
-        for(Index j = 0; j < columns_number; j++)
-        {
-            y_element = y_row.chip(j, 0);
-
-            dy_dx_element = -kronecker_product(y_element, y_element);
-
-            for(Index k = 0; k < channels_number; k++)
-            {
-                dy_dx_element(k, k) += y_element(k);
-            }
-
-            dy_dx.chip(i, 0).chip(j, 0) = dy_dx_element;
-        }
-    }
-/*
-    dy_dx = y.reshape(Eigen::array<int, 3>{columns_number, 1, rows_number}) *
-           (Tensor<Scalar, 3>::Identity(columns_number, columns_number).reshape(Eigen::array<int, 3>{columns_number, columns_number, 1}) -
-            y.reshape(Eigen::array<int, 3>{1, columns_number, rows_number}));
-
-*/
-}
-
 /*
 void ProbabilisticLayer3D::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
@@ -868,8 +805,8 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
 
 
 void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagation,
-                                         const Index& index,
-                                         Tensor<type, 1>& gradient) const
+                                           const Index& index,
+                                           Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
@@ -881,12 +818,12 @@ void ProbabilisticLayer3D::insert_gradient(LayerBackPropagation* back_propagatio
     const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->biases_derivatives.data();
 
     copy(execution::par, 
-        synaptic_weights_derivatives_data,
+         synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient.data() + index);
 
     copy(execution::par, 
-        biases_derivatives_data,
+         biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient.data() + index + synaptic_weights_number);
 }

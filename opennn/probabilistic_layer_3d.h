@@ -139,13 +139,6 @@ public:
                                           Tensor<type, 3>&,
                                           Tensor<type, 4>&) const;
 
-   void softmax(const Tensor<type, 3>&,
-                Tensor<type, 3>&) const;
-
-   void softmax_derivatives(const Tensor<type, 3>&,
-                            Tensor<type, 3>&,
-                            Tensor<type, 4>&) const;
-
    // Outputs
 
    void forward_propagate(const pair<type*, dimensions>&,

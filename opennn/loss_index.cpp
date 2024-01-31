@@ -338,6 +338,28 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 }
 
 
+void LossIndex::calculate_errors(const pair<type*, dimensions>& targets_pair,
+                                 const ForwardPropagation& forward_propagation,
+                                 LossIndexBackPropagation& back_propagation) const
+{
+    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+
+    const LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
+
+    const pair<type*, dimensions> outputs = output_layer_forward_propagation->get_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs_map(outputs.first, outputs.second[0][0], outputs.second[0][1]);
+
+    const TensorMap<Tensor<type, 2>> targets_map(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    back_propagation.errors.device(*thread_pool_device) = outputs_map - targets_map;
+}
+
+void LossIndex::calculate_error(const pair<type*, dimensions>&, const ForwardPropagation&, LossIndexBackPropagation&) const
+{
+}
+
+
 void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
                                     const ForwardPropagation & neural_network_forward_propagation,
                                     LossIndexBackPropagationLM & loss_index_back_propagation) const
@@ -386,6 +408,47 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
+    {
+        const type regularization = calculate_regularization(back_propagation.parameters);
+
+        back_propagation.regularization = regularization;
+
+        back_propagation.loss += regularization_weight * regularization;
+
+        calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
+
+        back_propagation.gradient.device(*thread_pool_device) += regularization_weight * back_propagation.regularization_gradient;
+    }
+
+    // Assemble gradient
+
+    assemble_layers_error_gradient(back_propagation);
+
+}
+
+
+void LossIndex::back_propagate(const pair<type*, dimensions>& inputs_pair,
+                               const pair<type*, dimensions>& targets_pair,
+                               ForwardPropagation& forward_propagation,
+                               LossIndexBackPropagation& back_propagation) const
+{
+    // Loss index
+
+    calculate_errors(targets_pair, forward_propagation, back_propagation);
+
+    calculate_error(targets_pair, forward_propagation, back_propagation);
+
+    calculate_layers_delta(targets_pair, forward_propagation, back_propagation);
+
+    calculate_layers_error_gradient(inputs_pair, forward_propagation, back_propagation);
+
+    // Loss
+
+    back_propagation.loss = back_propagation.error;
+
+    // Regularization
+
+    if (regularization_method != RegularizationMethod::NoRegularization)
     {
         const type regularization = calculate_regularization(back_propagation.parameters);
 
@@ -672,6 +735,10 @@ void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Te
 }
 
 
+void LossIndex::calculate_output_delta(const pair<type*, dimensions>&, ForwardPropagation&, LossIndexBackPropagation&) const
+{
+}
+
 void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                                        ForwardPropagation& forward_propagation,
                                        LossIndexBackPropagation& back_propagation) const
@@ -701,6 +768,39 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                 ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
                                          back_propagation.neural_network.layers(i+1),
                                          back_propagation.neural_network.layers(i));
+    }
+}
+
+
+void LossIndex::calculate_layers_delta(const pair<type*, dimensions>& targets_pair,
+                                       ForwardPropagation& forward_propagation,
+                                       LossIndexBackPropagation& back_propagation) const
+{
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    if (trainable_layers_number == 0) return;
+
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+    const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
+
+    const Index first_trainable_layer_index = neural_network_pointer->get_first_trainable_layer_index();
+
+    // Output layer
+
+    calculate_output_delta(targets_pair,
+                           forward_propagation,
+                           back_propagation);
+
+    // Hidden layers
+
+    for (Index i = Index(trainable_layers_number) - 2; i >= 0; i--)
+    {
+        trainable_layers_pointers(i)
+            ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index + i + 1),
+                back_propagation.neural_network.layers(i + 1),
+                back_propagation.neural_network.layers(i));
     }
 }
 
@@ -759,6 +859,34 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
         trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->get_outputs_pair(),
                                                                forward_propagation.layers(first_trainable_layers_index+i),
                                                                back_propagation.neural_network.layers(i));
+    }
+}
+
+
+void LossIndex::calculate_layers_error_gradient(const pair<type*, dimensions>& inputs_pair,
+                                                const ForwardPropagation& forward_propagation,
+                                                LossIndexBackPropagation& back_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+    const Index first_trainable_layers_index = neural_network_pointer->get_first_trainable_layer_index();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    const Tensor<Index, 1> trainable_layers_parameters_number
+        = neural_network_pointer->get_trainable_layers_parameters_numbers();
+
+    trainable_layers_pointers(0)->calculate_error_gradient(inputs_pair,
+        forward_propagation.layers(first_trainable_layers_index),
+        back_propagation.neural_network.layers(0));
+
+    for (Index i = 1; i < trainable_layers_number; i++)
+    {
+        const LayerForwardPropagation* layer_forward_propagation = forward_propagation.layers(first_trainable_layers_index + i - 1);
+
+        trainable_layers_pointers(i)->calculate_error_gradient(layer_forward_propagation->get_outputs_pair(),
+            forward_propagation.layers(first_trainable_layers_index + i),
+            back_propagation.neural_network.layers(i));
     }
 }
 

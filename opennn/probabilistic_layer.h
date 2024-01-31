@@ -142,13 +142,6 @@ public:
                                           Tensor<type, 2>&,
                                           Tensor<type, 3>&) const;
 
-   void softmax(const Tensor<type, 2>&,
-                Tensor<type, 2>&) const;
-
-   void softmax_derivatives(const Tensor<type, 2>&,
-                            Tensor<type, 2>&,
-                            Tensor<type, 3>&) const;
-
    void logistic_derivatives(const Tensor<type, 2>&,
                             Tensor<type, 2>&,
                             Tensor<type, 3>&) const;

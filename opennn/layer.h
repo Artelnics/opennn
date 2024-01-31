@@ -19,6 +19,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 
 
 namespace opennn {
@@ -328,6 +329,49 @@ protected:
     }
 
 
+    void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
+    {
+        const Index rows_number = x.dimension(0);
+        const Index columns_number = x.dimension(1);
+
+        const Eigen::array<Index, 1> last_dimension{ {2} };
+        const Eigen::array<Index, 2> range_2{ {rows_number, 1} };
+        const Eigen::array<Index, 2> expand_last_dim{ {1, columns_number} };
+
+        y.device(*thread_pool_device) = x - x.maximum(last_dimension)
+                                             .reshape(range_2)
+                                             .broadcast(expand_last_dim);
+
+        y.device(*thread_pool_device) = y.exp();
+
+        y.device(*thread_pool_device) = y / y.sum(last_dimension)
+                                             .reshape(range_2)
+                                             .broadcast(expand_last_dim);
+    }
+
+
+    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
+    {
+        const Index rows_number = x.dimension(0);
+        const Index columns_number = x.dimension(1);
+        const Index channels_number = x.dimension(2);
+
+        const Eigen::array<Index, 1> last_dimension{ {2} };
+        const Eigen::array<Index, 3> range_3{ {rows_number, columns_number, 1} };
+        const Eigen::array<Index, 3> expand_last_dim{ {1, 1, channels_number} };
+
+        y.device(*thread_pool_device) = x - x.maximum(last_dimension)
+                                             .reshape(range_3)
+                                             .broadcast(expand_last_dim);
+
+        y.device(*thread_pool_device) = y.exp();
+
+        y.device(*thread_pool_device) = y / y.sum(last_dimension)
+                                             .reshape(range_3)
+                                             .broadcast(expand_last_dim);
+    }
+
+
     template <int rank>
     void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
@@ -465,6 +509,63 @@ protected:
 
         dy_dx.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 */
+    }
+
+
+    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
+    {
+        const Index rows_number = x.dimension(0);
+        const Index columns_number = x.dimension(1);
+
+        softmax(x, y);
+
+        dy_dx.setZero();
+
+        Tensor<type, 1> y_row(columns_number);
+        Tensor<type, 2> dy_dx_matrix(columns_number, columns_number);
+
+        for (Index i = 0; i < rows_number; i++)
+        {
+            y_row = y.chip(i, 0);
+
+            dy_dx_matrix = -kronecker_product(y_row, y_row);
+
+            sum_diagonal(dy_dx_matrix, y_row);
+
+            dy_dx.chip(i, 0) = dy_dx_matrix;
+        }
+    }
+
+
+    void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
+    {
+        const Index rows_number = x.dimension(0);
+        const Index columns_number = x.dimension(1);
+        const Index channels_number = x.dimension(2);
+
+        softmax(x, y);
+
+        dy_dx.setZero();
+
+        Tensor<type, 2> y_row(columns_number, channels_number);
+        Tensor<type, 1> y_element(channels_number);
+        Tensor<type, 2> dy_dx_element(channels_number, channels_number);
+
+        for (Index i = 0; i < rows_number; i++)
+        {
+            y_row = y.chip(i, 0);
+
+            for (Index j = 0; j < columns_number; j++)
+            {
+                y_element = y_row.chip(j, 0);
+
+                dy_dx_element = -kronecker_product(y_element, y_element);
+
+                sum_diagonal(dy_dx_element, y_element);
+
+                dy_dx.chip(i, 0).chip(j, 0) = dy_dx_element;
+            }
+        }
     }
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};

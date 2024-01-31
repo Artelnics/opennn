@@ -121,6 +121,7 @@ type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
+void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
