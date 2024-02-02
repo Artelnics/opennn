@@ -181,7 +181,7 @@ const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
 
 /// Returns the biases from a given vector of paramters for the layer.
 /// @param parameters Parameters of the layer.
-
+/*
 Tensor<type, 1> ProbabilisticLayer::get_biases(Tensor<type, 1>& parameters) const
 {
     const Index neurons_number = get_neurons_number();
@@ -190,6 +190,7 @@ Tensor<type, 1> ProbabilisticLayer::get_biases(Tensor<type, 1>& parameters) cons
 
     return bias_tensor;
 }
+
 
 
 /// Returns the synaptic weights from a given vector of paramters for the layer.
@@ -205,7 +206,7 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(Tensor<type, 1>& parame
 
     return  synaptic_weights_tensor;
 }
-
+*/
 
 /// Returns the number of parameters (biases and synaptic weights) of the layer.
 
@@ -731,14 +732,16 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
     const Index samples_number = inputs.second[0][0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, samples_number, neurons_number);
 
-    const Index batch_samples_number = forward_propagation->batch_samples_number;
+    // Forward propagation
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
     const Tensor<type, 3>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+
+    // Back propagation
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
@@ -748,52 +751,16 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
     Tensor<type,1>& deltas_row = probabilistic_layer_back_propagation->deltas_row;
     Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_back_propagation->activations_derivatives_matrix;
 
+    Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives;
+
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_back_propagation->synaptic_weights_derivatives;
 
-    if(neurons_number == 1)
-    {
-        const Eigen::array<Index, 2> to_2D = {{samples_number, 1}};
+    const Eigen::array<Index, 1> sum_dimensions({0});
 
-        // Reshape does not copy the data
+    synaptic_weights_derivatives.device(*thread_pool_device) = inputs_map.contract(error_combinations_derivatives, AT_B);
 
-        //const Tensor<type, 2> activations_derivatives_2d = activations_derivatives.reshape(to_2D);
-
-        biases_derivatives.device(*thread_pool_device) =
-            (deltas*activations_derivatives.reshape(to_2D)).sum(Eigen::array<Index, 1>({0}));
-
-        synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs_map.contract(deltas*activations_derivatives.reshape(to_2D), AT_B);
-    }
-    else
-    {
-        /// @todo contraction tensors 3D and 2D
-
-        Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives;
-
-        //const Index step = neurons_number * neurons_number;
-
-        for(Index i = 0; i < batch_samples_number; i++)
-        {
-            /*const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
-                                                                            neurons_number,
-                                                                            neurons_number);
-            */
-
-            activations_derivatives_matrix = activations_derivatives.chip(i, 0);
-
-            deltas_row = deltas.chip(i, 0);
-
-            error_combinations_derivatives.chip(i,0) =
-                    deltas_row.contract(activations_derivatives_matrix, AT_B);
-        }
-
-        biases_derivatives.device(*thread_pool_device) =
-                error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
-
-        synaptic_weights_derivatives.device(*thread_pool_device) =
-                inputs_map.contract(error_combinations_derivatives, AT_B);
-    }
+    biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(sum_dimensions);
 }
 
 
@@ -811,14 +778,50 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->biases_derivatives.data();
 
     copy(execution::par, 
-        synaptic_weights_derivatives_data,
+         synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient.data() + index);
 
     copy(execution::par, 
-        biases_derivatives_data,
+         biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient.data() + index + synaptic_weights_number);
+}
+
+
+void ProbabilisticLayer::calculate_error_combinations_derivatives(const Tensor<type, 2>& deltas,
+                                                                  const Tensor<type, 3>& activations_derivatives,
+                                                                  Tensor<type, 2>& error_combinations_derivatives) const
+{
+    const Index samples_number = deltas.dimension(0);
+
+    const Index neurons_number = get_neurons_number();
+
+    type* activations_derivatives_data = (type*)activations_derivatives.data();
+
+    if (neurons_number == 1)
+    {
+        const Eigen::array<Index, 2> to_2D = { {samples_number, 1} };
+
+        error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives.reshape(to_2D);
+    }
+    else
+    {
+        const Index step = neurons_number * neurons_number;
+
+        for (Index i = 0; i < samples_number; i++)
+        {
+            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
+                                                                            neurons_number,
+                                                                            neurons_number);
+            
+
+            const Tensor<type, 2> deltas_row = deltas.chip(i, 0);
+
+            error_combinations_derivatives.chip(i, 0).device(*thread_pool_device)
+                = deltas_row.contract(activations_derivatives_matrix, AT_B);
+        }
+    }
 }
 
 
@@ -826,55 +829,64 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
                                                               LayerForwardPropagation* forward_propagation,
                                                               LayerBackPropagationLM* back_propagation)
 {
+    const Index samples_number = inputs.dimension(0);
+
     const Index inputs_number = get_inputs_number();
 
     const Index neurons_number = get_neurons_number();
 
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
+    // Forward propagation
+
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+
+    const Tensor<type, 3>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+
+    // Back propagation
 
     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
             static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
 
-    const Tensor<type, 3>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 2>& deltas = probabilistic_layer_back_propagation_lm->deltas;
 
-    const Index samples_number = inputs.dimension(0);
+    Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
+
+    error_combinations_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
 
     Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
 
+    /// @todo Fix things with errors combinations derivatives. 
+    /// Derivatives are not rigth Multiple classification
+
+#pragma omp parallel for
+
+    for (Index sample = 0; sample < samples_number; sample++)
+    {
+        Index synaptic_weight_index = 0;
+
+        for (Index neuron = 0; neuron < neurons_number; neuron++)
+        {
+            for (Index input = 0; input < inputs_number; input++)
+            {
+                squared_errors_Jacobian(sample, synaptic_weight_index)
+                    = error_combinations_derivatives(sample, neuron) * inputs(sample, input);
+
+                synaptic_weight_index++;
+            }
+
+            squared_errors_Jacobian(sample, synaptic_weights_number + neuron)
+                = error_combinations_derivatives(sample, neuron);
+        }
+    }
+/*
     if(neurons_number == 1)
     {
-        const Tensor<type, 2>& deltas = probabilistic_layer_back_propagation_lm->deltas;
 
-        #pragma omp parallel for
-
-        for(Index sample = 0; sample < samples_number; sample++)
-        {
-            Index synaptic_weight_index = 0;
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                for(Index input = 0; input <  inputs_number; input++)
-                {
-                    squared_errors_Jacobian(sample, synaptic_weight_index)
-                        = deltas(sample, neuron)*activations_derivatives(sample, neuron, 0)*inputs(sample, input);
-
-                    synaptic_weight_index++;
-                }
-            }
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                squared_errors_Jacobian(sample, synaptic_weights_number + neuron)
-                    = deltas(sample, neuron)*activations_derivatives(sample, neuron, 0);
-            }
-        }
     }
     else
     {
-
         const Tensor<type, 2>& error_combinations_derivatives
             = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
 
@@ -902,6 +914,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
             }
         }
     }
+*/
 }
 
 
@@ -1433,7 +1446,7 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
 
-    deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+    error_combinations_derivatives.resize(batch_samples_number, neurons_number);
 }
 
 

@@ -173,7 +173,7 @@ const Tensor<type, 2>& ProbabilisticLayer3D::get_synaptic_weights() const
     return synaptic_weights;
 }
 
-
+/*
 /// Returns the biases from a given vector of paramters for the layer.
 /// @param parameters Parameters of the layer.
 
@@ -200,7 +200,7 @@ Tensor<type, 2> ProbabilisticLayer3D::get_synaptic_weights(Tensor<type, 1>& para
 
     return  synaptic_weights_tensor;
 }
-
+*/
 
 /// Returns the number of parameters (biases and synaptic weights) of the layer.
 

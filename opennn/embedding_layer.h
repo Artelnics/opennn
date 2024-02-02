@@ -316,7 +316,7 @@ protected:
 
             synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-            deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+            error_combinations_derivatives.resize(batch_samples_number, neurons_number);
         */
         }
 

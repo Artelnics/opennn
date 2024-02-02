@@ -795,7 +795,7 @@ void LossIndex::calculate_layers_delta(const pair<type*, dimensions>& targets_pa
 
     // Hidden layers
 
-    for (Index i = Index(trainable_layers_number) - 2; i >= 0; i--)
+    for (Index i = trainable_layers_number - 2; i >= 0; i--)
     {
         trainable_layers_pointers(i)
             ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index + i + 1),

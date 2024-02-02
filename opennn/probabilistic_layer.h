@@ -106,8 +106,8 @@ public:
    const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;   
+//   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
+//   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;   
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
@@ -159,6 +159,10 @@ public:
                           LayerForwardPropagation*) final;
 
    // Gradient methods
+
+   void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
+                                                 const Tensor<type, 3>&,
+                                                 Tensor<type, 2>&) const;
 
    void calculate_error_gradient(const pair<type*, dimensions>&,
                                  LayerForwardPropagation*,
@@ -268,9 +272,6 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
-
-    Tensor<type, 2> deltas_times_activations_derivatives;
-
 };
 
 

@@ -529,10 +529,10 @@ void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
     const Tensor<type, 4>& deltas = convolutional_layer_back_propagation->deltas;
 
-    Tensor<type, 4>& deltas_times_activations_derivatives =
-        convolutional_layer_back_propagation->deltas_times_activations_derivatives;
+    Tensor<type, 4>& error_combinations_derivatives =
+        convolutional_layer_back_propagation->error_combinations_derivatives;
 
-    deltas_times_activations_derivatives.device(*thread_pool_device)
+    error_combinations_derivatives.device(*thread_pool_device)
             = deltas * convolutional_layer_forward_propagation->activations_derivatives;
 
     Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
@@ -570,7 +570,7 @@ void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>&
             extents = {1, outputs_rows_number, outputs_columns_number, 1};
 
             delta_slice.device(*thread_pool_device)
-                = deltas_times_activations_derivatives.slice(offsets, extents);
+                = error_combinations_derivatives.slice(offsets, extents);
 
             offsets = {image_index, 0, 0, 0};
             extents = {1, inputs_rows_number, inputs_columns_number, inputs_channels_number};

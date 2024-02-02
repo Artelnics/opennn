@@ -104,8 +104,8 @@ public:
    const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;
+//   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
+//   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;

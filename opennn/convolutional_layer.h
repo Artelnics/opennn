@@ -388,7 +388,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
        deltas_data = deltas.data();
 
-       deltas_times_activations_derivatives.resize(batch_samples_number,
+       error_combinations_derivatives.resize(batch_samples_number,
                                                    outputs_rows_number,
                                                    outputs_columns_number,
                                                    kernels_number);
@@ -416,7 +416,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    Tensor<type, 4> deltas;
 
-   Tensor<type, 4> deltas_times_activations_derivatives;
+   Tensor<type, 4> error_combinations_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;

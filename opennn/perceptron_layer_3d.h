@@ -351,7 +351,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-        deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
 
@@ -372,7 +372,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
-    Tensor<type, 2> deltas_times_activations_derivatives;
+    Tensor<type, 2> error_combinations_derivatives;
 };
 
 }

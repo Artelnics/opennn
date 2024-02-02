@@ -217,6 +217,10 @@ public:
 
    // Gradient methods
 
+   void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
+       const Tensor<type, 2>&,
+       Tensor<type, 2>&) const;
+
    void calculate_error_gradient(const pair<type*, dimensions>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
@@ -308,7 +312,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
-    Tensor<type, 2> deltas_times_activations_derivatives;
+    Tensor<type, 2> error_combinations_derivatives;
 };
 
 
@@ -328,7 +332,7 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
     Tensor<type, 2> squared_errors_Jacobian;
 
-    Tensor<type, 2> deltas_times_activations_derivatives;
+    Tensor<type, 2> error_combinations_derivatives;
 
 };
 
