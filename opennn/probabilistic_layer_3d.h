@@ -85,6 +85,7 @@ public:
    void set(const ProbabilisticLayer3D&);
 
    void set_inputs_number(const Index&) final;
+   void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&) final;
 
    void set_biases(const Tensor<type, 1>&);

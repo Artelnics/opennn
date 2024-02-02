@@ -344,6 +344,10 @@ protected:
 
         y.device(*thread_pool_device) = y.exp();
 
+        Tensor<type, 2> y_sum = y.sum(last_dimension)
+                                 .reshape(range_2)
+                                 .broadcast(expand_last_dim);
+
         y.device(*thread_pool_device) = y / y.sum(last_dimension)
                                              .reshape(range_2)
                                              .broadcast(expand_last_dim);
@@ -366,9 +370,11 @@ protected:
 
         y.device(*thread_pool_device) = y.exp();
 
-        y.device(*thread_pool_device) = y / y.sum(last_dimension)
-                                             .reshape(range_3)
-                                             .broadcast(expand_last_dim);
+        Tensor<type, 3> y_sum = y.sum(last_dimension)
+                                 .reshape(range_3)
+                                 .broadcast(expand_last_dim);
+
+        y.device(*thread_pool_device) = y / y_sum;
     }
 
 

@@ -31,6 +31,7 @@
 #include "unscaling_layer_test.h"
 #include "bounding_layer_test.h"
 #include "probabilistic_layer_test.h"
+#include "probabilistic_layer_3d_test.h"
 #include "long_short_term_memory_layer_test.h"
 #include "recurrent_layer_test.h"
 #include "neural_network_test.h"

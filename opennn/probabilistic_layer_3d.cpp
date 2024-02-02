@@ -29,11 +29,6 @@ ProbabilisticLayer3D::ProbabilisticLayer3D()
 ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, const Index& new_inputs_depth, const Index& new_neurons_number)
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
-
-    if(new_neurons_number > 1)
-    {
-        activation_function = ActivationFunction::Softmax;
-    }
 }
 
 
@@ -247,6 +242,8 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 
 void ProbabilisticLayer3D::set()
 {
+    inputs_number = 0;
+    
     biases.resize(0);
 
     synaptic_weights.resize(0,0);
@@ -290,21 +287,27 @@ void ProbabilisticLayer3D::set(const ProbabilisticLayer3D& other_probabilistic_l
 
 void ProbabilisticLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
+    inputs_number = new_inputs_number;
+}
+
+
+void ProbabilisticLayer3D::set_inputs_depth(const Index& new_inputs_depth)
+{
     const Index neurons_number = get_neurons_number();
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(new_inputs_number, neurons_number);
+    synaptic_weights.resize(new_inputs_depth, neurons_number);
 }
 
 
 void ProbabilisticLayer3D::set_neurons_number(const Index& new_neurons_number)
 {
-    const Index inputs_number = get_inputs_number();
+    const Index inputs_depth = get_inputs_depth();
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(inputs_number, new_neurons_number);
+    synaptic_weights.resize(inputs_depth, new_neurons_number);
 }
 
 
@@ -393,14 +396,7 @@ void ProbabilisticLayer3D::set_default()
 
     const Index neurons_number = get_neurons_number();
 
-    if(neurons_number == 1)
-    {
-        activation_function = ActivationFunction::Logistic;
-    }
-    else
-    {
-        activation_function = ActivationFunction::Softmax;
-    }
+    activation_function = ActivationFunction::Softmax;
 
     decision_threshold = type(0.5);
 

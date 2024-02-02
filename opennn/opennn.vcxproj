@@ -236,6 +236,7 @@
     <ClCompile Include="column.cpp" />
     <ClInclude Include="concatenation_layer.h" />
     <ClCompile Include="concatenation_layer.cpp" />
+    <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
     <ClCompile Include="conjugate_gradient.cpp" />
     <ClInclude Include="convolutional_layer.h" />

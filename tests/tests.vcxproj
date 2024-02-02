@@ -321,12 +321,14 @@
     <ClCompile Include="normalized_squared_error_test.cpp" />
     <ClInclude Include="numerical_differentiation_test.h" />
     <ClCompile Include="numerical_differentiation_test.cpp" />
-	<ClInclude Include="opennn_tests.h" />
+    <ClInclude Include="opennn_tests.h" />
     <ClInclude Include="perceptron_layer_test.h" />
     <ClCompile Include="perceptron_layer_test.cpp" />
     <ClInclude Include="pooling_layer_test.h" />
     <ClCompile Include="pooling_layer_test.cpp" />
+    <ClInclude Include="probabilistic_layer_3d_test.h" />
     <ClInclude Include="probabilistic_layer_test.h" />
+    <ClCompile Include="probabilistic_layer_3d_test.cpp" />
     <ClCompile Include="probabilistic_layer_test.cpp" />
     <ClInclude Include="quasi_newton_method_test.h" />
     <ClCompile Include="quasi_newton_method_test.cpp" />

@@ -55,6 +55,7 @@ int main()
    "perceptron_layer | pl\n"
    "pooling_layer | pll\n"
    "probabilistic_layer | pbl\n"
+   "probabilistic_layer_3d | pbl3d\n"
    "quasi_newton_method | qnm\n"
    "recurrent_layer | rl\n"
    "response_optimization | ro\n"
@@ -211,6 +212,15 @@ int main()
          tests_passed_count += probabilistic_layer_test.get_tests_passed_count();
          tests_failed_count += probabilistic_layer_test.get_tests_failed_count();
       }
+
+      else if (test == "probabilistic_layer_3d" || test == "pbl3d")
+      {
+          ProbabilisticLayer3DTest probabilistic_layer_3d_test;
+          probabilistic_layer_3d_test.run_test_case();
+          tests_count += probabilistic_layer_3d_test.get_tests_count();
+          tests_passed_count += probabilistic_layer_3d_test.get_tests_passed_count();
+          tests_failed_count += probabilistic_layer_3d_test.get_tests_failed_count();
+          }
 
       else if(test == "convolutional_layer" || test == "cl")
       {
