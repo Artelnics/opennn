@@ -307,26 +307,11 @@ void MultiheadAttentionLayer::set_display(const bool& new_display)
 }
 
 
-void MultiheadAttentionLayer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
-{
-    const Index batch_size = x.dimension(0);
-
-    const Eigen::array<int, 1> sum_dimensions({{2}});
-
-    const Eigen::array<Index, 4> reshape_dimensions({{batch_size, input_size, 1, heads_number}});
-
-    y.device(*thread_pool_device) = x.exp();
-
-    y.device(*thread_pool_device) = y/y.sum(sum_dimensions).reshape(reshape_dimensions);
-
-}
-
-
 void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
     const Index batch_size = attention_scores.dimension(0);
 
-    const type m_inf = -numeric_limits<type>::infinity();
+    constexpr type m_inf = -numeric_limits<type>::infinity();
 
     for(Index head_index = 0; head_index < heads_number ; head_index++)
     {

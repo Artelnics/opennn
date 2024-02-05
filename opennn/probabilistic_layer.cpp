@@ -781,17 +781,10 @@ void ProbabilisticLayer::calculate_error_combinations_derivatives(const Tensor<t
 
         for (Index i = 0; i < samples_number; i++)
         {
-            /// @todo 
+            const Tensor<type, 1> deltas_row = deltas.chip(i, 0);
 
-//            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
-//                                                                            neurons_number,
-//                                                                            neurons_number);
-            
-
-//            const Tensor<type, 2> deltas_row = deltas.chip(i, 0);
-
-//            error_combinations_derivatives.chip(i, 0).device(*thread_pool_device)
-//                = deltas_row.contract(activations_derivatives_matrix, AT_B);
+            error_combinations_derivatives.chip(i, 0).device(*thread_pool_device)
+                = deltas_row.contract(activations_derivatives.chip(i, 0), AT_B);
         }
     }
 }
@@ -825,7 +818,14 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
 
-    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
+    for (Index i = 0; i < samples_number; i++)
+    {
+        const Tensor<type, 1> deltas_row = deltas.chip(i, 0);
+
+        error_combinations_derivatives.chip(i, 0).device(*thread_pool_device)
+            = deltas_row.contract(activations_derivatives.chip(i, 0), AT_B);
+    }
+    //error_combinations_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
 
     Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
 

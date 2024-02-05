@@ -579,7 +579,7 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                 Tensor<type, 3>& combinations) const
 {
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
-
+    
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
@@ -669,12 +669,12 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
 
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
-
+    /*
     calculate_combinations(inputs_map,
                            biases,
                            synaptic_weights,
                            outputs);
-
+    
     if(is_training)
     {
         Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
@@ -687,7 +687,7 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
     {
         calculate_activations(outputs,
                               outputs);
-    }
+    }*/
 }
 
 

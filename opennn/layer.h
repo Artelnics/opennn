@@ -378,6 +378,31 @@ protected:
     }
 
 
+    void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
+    {
+        const Index rows_number = x.dimension(0);
+        const Index columns_number = x.dimension(1);
+        const Index channels_number = x.dimension(2);
+        const Index blocks_number = x.dimension(3);
+
+        const Eigen::array<Index, 1> last_dimension{ {3} };
+        const Eigen::array<Index, 4> range_3{ {rows_number, columns_number, channels_number, 1} };
+        const Eigen::array<Index, 4> expand_last_dim{ {1, 1, 1, blocks_number} };
+
+        y.device(*thread_pool_device) = x - x.maximum(last_dimension)
+            .reshape(range_3)
+            .broadcast(expand_last_dim);
+
+        y.device(*thread_pool_device) = y.exp();
+
+        Tensor<type, 3> y_sum = y.sum(last_dimension)
+            .reshape(range_3)
+            .broadcast(expand_last_dim);
+
+        y.device(*thread_pool_device) = y / y_sum;
+    }
+
+
     template <int rank>
     void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
