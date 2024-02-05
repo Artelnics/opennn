@@ -385,18 +385,18 @@ protected:
         const Index channels_number = x.dimension(2);
         const Index blocks_number = x.dimension(3);
 
-        const Eigen::array<Index, 1> last_dimension{ {3} };
-        const Eigen::array<Index, 4> range_3{ {rows_number, columns_number, channels_number, 1} };
-        const Eigen::array<Index, 4> expand_last_dim{ {1, 1, 1, blocks_number} };
+        const Eigen::array<Index, 1> last_dimension{ {2} };
+        const Eigen::array<Index, 4> range_4{ {rows_number, columns_number, 1, blocks_number} };
+        const Eigen::array<Index, 4> expand_last_dim{ {1, 1, channels_number, 1} };
 
         y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-            .reshape(range_3)
+            .reshape(range_4)
             .broadcast(expand_last_dim);
 
         y.device(*thread_pool_device) = y.exp();
 
-        Tensor<type, 3> y_sum = y.sum(last_dimension)
-            .reshape(range_3)
+        Tensor<type, 4> y_sum = y.sum(last_dimension)
+            .reshape(range_4)
             .broadcast(expand_last_dim);
 
         y.device(*thread_pool_device) = y / y_sum;

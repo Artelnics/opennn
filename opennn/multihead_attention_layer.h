@@ -110,7 +110,6 @@ public:
 
     void set_display(const bool&);
 
-    void softmax(const Tensor<type, 4>&, Tensor<type, 4>&) const;
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     // Linear transformation & projection
