@@ -87,9 +87,9 @@ public:
 
     Index get_pool_columns_number() const;
 
-    Index get_parameters_number() const;
+    Index get_parameters_number() const final;
 
-    Tensor<type, 1> get_parameters() const;
+    Tensor<type, 1> get_parameters() const final;
 
     PoolingMethod get_pooling_method() const;
 

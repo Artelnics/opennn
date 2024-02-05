@@ -121,32 +121,28 @@ void SumSquaredError::calculate_error_gradient_lm(const DataSetBatch& ,
 
 #endif
 
+    const Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
+
+    Tensor<type, 1>& gradient = loss_index_back_propagation_lm.gradient;
+       
     const type coefficient = (type(2.0));
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
-
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = coefficient*loss_index_back_propagation_lm.gradient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
 }
 
 
 void SumSquaredError::calculate_error_hessian_lm(const DataSetBatch&,
                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-     #ifdef OPENNN_DEBUG
+    const Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
 
-     check();
+    Tensor<type, 2>& hessian = loss_index_back_propagation_lm.hessian;
 
-     #endif
+    const type coefficient = type(2.0);
 
-     const type coefficient = type(2.0);
-
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
-
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = coefficient*loss_index_back_propagation_lm.hessian;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
 }
 
 

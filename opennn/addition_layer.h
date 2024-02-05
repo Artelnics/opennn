@@ -70,9 +70,9 @@ public:
 
     Index get_outputs_columns_number() const;
 
-    Index get_parameters_number() const;
+    Index get_parameters_number() const final;
 
-    Tensor<type, 1> get_parameters() const;
+    Tensor<type, 1> get_parameters() const final;
 
     // Set methods
 

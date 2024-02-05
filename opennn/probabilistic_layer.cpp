@@ -179,35 +179,6 @@ const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
 }
 
 
-/// Returns the biases from a given vector of paramters for the layer.
-/// @param parameters Parameters of the layer.
-/*
-Tensor<type, 1> ProbabilisticLayer::get_biases(Tensor<type, 1>& parameters) const
-{
-    const Index neurons_number = get_neurons_number();
-
-    const TensorMap<Tensor<type, 1>> bias_tensor(parameters.data(), neurons_number);
-
-    return bias_tensor;
-}
-
-
-
-/// Returns the synaptic weights from a given vector of paramters for the layer.
-/// @param parameters Parameters of the layer.
-
-Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(Tensor<type, 1>& parameters) const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-    const Index biases_number = get_biases_number();
-
-    const TensorMap< Tensor<type, 2> > synaptic_weights_tensor(parameters.data()+biases_number, inputs_number, neurons_number);
-
-    return  synaptic_weights_tensor;
-}
-*/
-
 /// Returns the number of parameters (biases and synaptic weights) of the layer.
 
 Index ProbabilisticLayer::get_parameters_number() const
@@ -748,10 +719,9 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
     const Tensor<type,2>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    Tensor<type,1>& deltas_row = probabilistic_layer_back_propagation->deltas_row;
-    Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_back_propagation->activations_derivatives_matrix;
-
     Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives;
+
+    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_back_propagation->synaptic_weights_derivatives;
@@ -811,15 +781,17 @@ void ProbabilisticLayer::calculate_error_combinations_derivatives(const Tensor<t
 
         for (Index i = 0; i < samples_number; i++)
         {
-            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
-                                                                            neurons_number,
-                                                                            neurons_number);
+            /// @todo 
+
+//            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(activations_derivatives_data + i * step,
+//                                                                            neurons_number,
+//                                                                            neurons_number);
             
 
-            const Tensor<type, 2> deltas_row = deltas.chip(i, 0);
+//            const Tensor<type, 2> deltas_row = deltas.chip(i, 0);
 
-            error_combinations_derivatives.chip(i, 0).device(*thread_pool_device)
-                = deltas_row.contract(activations_derivatives_matrix, AT_B);
+//            error_combinations_derivatives.chip(i, 0).device(*thread_pool_device)
+//                = deltas_row.contract(activations_derivatives_matrix, AT_B);
         }
     }
 }
@@ -853,12 +825,9 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     Tensor<type, 2>& error_combinations_derivatives = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
 
-    error_combinations_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
+    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
 
     Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
-
-    /// @todo Fix things with errors combinations derivatives. 
-    /// Derivatives are not rigth Multiple classification
 
 #pragma omp parallel for
 
@@ -880,41 +849,6 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
                 = error_combinations_derivatives(sample, neuron);
         }
     }
-/*
-    if(neurons_number == 1)
-    {
-
-    }
-    else
-    {
-        const Tensor<type, 2>& error_combinations_derivatives
-            = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
-
-        #pragma omp parallel for
-
-        for(Index sample = 0; sample < samples_number; sample++)
-        {
-            Index synaptic_weight_index = 0;
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                for(Index input = 0; input <  inputs_number; input++)
-                {
-                    squared_errors_Jacobian(sample, synaptic_weight_index)
-                        = error_combinations_derivatives(sample, neuron)*inputs(sample, input);
-
-                    synaptic_weight_index++;
-                }
-            }
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                squared_errors_Jacobian(sample, synaptic_weights_number + neuron)
-                    = error_combinations_derivatives(sample, neuron);
-            }
-        }
-    }
-*/
 }
 
 

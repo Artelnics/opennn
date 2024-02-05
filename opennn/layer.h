@@ -286,7 +286,7 @@ protected:
     template <int rank>
     void soft_sign(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        /*
+/*
         const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
 
         const Tensor<type, 1> f_1 = x / (type(1) - x);
@@ -301,7 +301,7 @@ protected:
     template <int rank>
     void symmetric_threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        /*
+/*
         const Tensor<bool, 1> if_sentence = x > x.constant(type(0));
 
         Tensor<type, 1> ones(x.dimension(0));

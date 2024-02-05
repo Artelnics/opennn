@@ -94,7 +94,7 @@ struct ForwardPropagation
 
             case Layer::Type::Convolutional:
             {
-            //    layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
+                layers(i) = new ConvolutionalLayerForwardPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
@@ -159,6 +159,24 @@ struct ForwardPropagation
         }
     }
 
+    LayerForwardPropagation* get_first_layer_forward_propagation() const
+    {
+        const Index layers_number = layers.size();
+
+        if(layers_number == 0) return nullptr;
+
+        return layers(0);
+    }
+
+
+    LayerForwardPropagation* get_last_layer_forward_propagation() const
+    {
+        const Index layers_number = layers.size();
+
+        if (layers_number == 0) return nullptr;
+
+        return layers(layers_number - 1);
+    }
 
     void print() const
     {

@@ -161,9 +161,13 @@ public:
 
    // Back propagation
 
-   void calculate_errors(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_errors(const Tensor<type, 2>&, 
+                         const Tensor<type, 2>&, 
+                         Tensor<type, 2>&) const;
 
-   void calculate_errors(const Tensor<type, 3>&, const Tensor<type, 3>&, Tensor<type, 3>&) const;
+   void calculate_errors(const Tensor<type, 3>&, 
+                         const Tensor<type, 3>&, 
+                         Tensor<type, 3>&) const;
 
    void calculate_errors(const DataSetBatch&,
                          const ForwardPropagation&,
@@ -177,42 +181,17 @@ public:
                                 const ForwardPropagation&,
                                 LossIndexBackPropagation&) const = 0;
 
-   virtual void calculate_error(const pair<type*, dimensions>&,
-                                const ForwardPropagation&,
-                                LossIndexBackPropagation&) const;
-
    virtual void calculate_output_delta(const DataSetBatch&,
                                        ForwardPropagation&,
                                        LossIndexBackPropagation&) const = 0;
 
-   virtual void calculate_output_delta(const pair<type*, dimensions>&,
-                                       ForwardPropagation&,
-                                       LossIndexBackPropagation&) const;
-
-   void calculate_layers_delta(const DataSetBatch&,
-                               ForwardPropagation&,
-                               LossIndexBackPropagation&) const;
-
-   void calculate_layers_delta(const pair<type*, dimensions>&,
-                               ForwardPropagation&,
-                               LossIndexBackPropagation&) const;
-
-   void calculate_layers_error_gradient(const DataSetBatch&,
-                                 const ForwardPropagation&,
-                                 LossIndexBackPropagation&) const;
-
-   void calculate_layers_error_gradient(const pair<type*, dimensions>&,
-                                        const ForwardPropagation&,
-                                        LossIndexBackPropagation&) const;
+   void calculate_layers_error_gradient(const DataSetBatch& ,
+                                        const ForwardPropagation& ,
+                                        LossIndexBackPropagation& ) const;
 
    void assemble_layers_error_gradient(LossIndexBackPropagation&) const;
 
    void back_propagate(const DataSetBatch&,
-                       ForwardPropagation&,
-                       LossIndexBackPropagation&) const;
-
-   void back_propagate(const pair<type*, dimensions>&,
-                       const pair<type*, dimensions>&,
                        ForwardPropagation&,
                        LossIndexBackPropagation&) const;
 

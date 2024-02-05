@@ -113,38 +113,6 @@ const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
     return synaptic_weights;
 }
 
-/*
-Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
-{
-    const Index inputs_number = get_inputs_number();
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index synaptic_weights_number = get_synaptic_weights_number();
-
-    const Index parameters_size = parameters.size();
-
-    const Index start_synaptic_weights_number = (parameters_size - synaptic_weights_number);
-
-    const Tensor<type, 1> new_synaptic_weights 
-        = parameters.slice(Eigen::array<Eigen::Index, 1>({start_synaptic_weights_number}), Eigen::array<Eigen::Index, 1>({synaptic_weights_number}));
-
-    const Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
-
-    return new_synaptic_weights.reshape(two_dim);
-}
-
-
-Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) const
-{
-    const Index biases_number = biases.size();
-
-    const Tensor<type, 1> new_biases
-        = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({biases_number}));
-
-    return new_biases;
-}
-*/
 
 /// Returns a single vector with all the layer parameters.
 /// The format is a vector of real values.
@@ -171,14 +139,14 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
          biases_data + biases_number,
          parameters_data + synaptic_weights_number);
 
-/*
+
     memcpy(parameters.data(),
            synaptic_weights.data(),
            size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
            biases.data(), size_t(biases.size())*sizeof(type));
-*/
+
     return parameters;
 }
 
@@ -873,64 +841,19 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
 
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
-    const Index next_neurons_number = probabilistic_layer_pointer->get_neurons_number();
-
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
-
-    // Next forward propagation
-
-    const Tensor<type, 3>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
-
-    type* next_activations_derivatives_data = next_forward_propagation->activations_derivatives.data();
 
     // Next back propagation
 
-    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
+    const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
 
-    const Index samples_number = next_deltas.dimension(0);
+    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     // This back propagation
 
     Tensor<type, 2>& deltas = back_propagation->deltas;
 
-    if(next_neurons_number == 1)
-    {
-        const Eigen::array<Index, 2> reshape_dimensions = {{samples_number, 1}};
-
-        // Reshape does not copy the data
-
-        const Tensor<type, 2> next_activations_derivatives_matrix = next_activations_derivatives.reshape(reshape_dimensions);
-
-        deltas.device(*thread_pool_device) =
-            (next_deltas*next_activations_derivatives_matrix).contract(next_synaptic_weights, A_BT);
-    }
-    else
-    {
-        const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
-
-        Tensor<type, 1>& next_deltas_row = next_back_propagation->deltas_row;
-
-        Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-        /// @todo check if we can simplify all this.
-
-        const Index step = next_layer_neurons_number*next_layer_neurons_number;
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            const TensorMap<Tensor<type, 2>> activations_derivatives_matrix(next_activations_derivatives_data + i*step,
-                                                                            next_layer_neurons_number,
-                                                                            next_layer_neurons_number);
-
-            next_deltas_row = next_deltas.chip(i, 0);
-
-            next_error_combinations_derivatives.chip(i, 0) =
-                    next_deltas_row.contract(activations_derivatives_matrix, AT_B);
-        }
-
-        deltas.device(*thread_pool_device) =
-                next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-    }
+    deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
 }
 
 
@@ -989,13 +912,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
-    // Next forward propagation
-
-//    const Tensor<type, 2>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
-
     // Next back propagation
-
-//    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
 
@@ -1004,12 +921,6 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
     Tensor<type, 2>& deltas = back_propagation->deltas;
 
     deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-
-//    const Eigen::array<Index,2> reshape_dimensions = {{next_activations_derivatives.dimension(0), next_activations_derivatives.dimension(1)}};
-
-//    deltas.device(*thread_pool_device)
-//        = (next_error_combinations_derivatives.reshape(reshape_dimensions)).contract(next_synaptic_weights, A_BT);
-
 }
 
 
@@ -1019,55 +930,15 @@ void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropaga
 {
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
-//    const Index next_neurons_number = probabilistic_layer_pointer->get_neurons_number();
-
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
-
-    // Next forward propagation
-
-//    const Tensor<type, 3>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
-
-//    type* next_activations_derivatives_data = next_forward_propagation->activations_derivatives.data();
-
-//    const Index samples_number = next_activations_derivatives.dimension(0);
 
     // Next back propagation
 
     const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
 
-    // Next back propagation
-
-//    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
-
     // Back propagation
 
     Tensor<type, 2>& deltas = back_propagation->deltas;
-/*
-    if(next_neurons_number == 1)
-    {
-//        const Eigen::array<Index,2> reshape_dimensions = {{samples_number, 1}};
-
-        deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-    }
-    else
-    {
-        Tensor<type, 1>& next_deltas_row = next_back_propagation->deltas_row;
-
-        const Index step = next_neurons_number*next_neurons_number;
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            next_deltas_row = next_deltas.chip(i, 0);
-
-            const TensorMap<Tensor<type, 2>> next_activations_derivatives_matrix(next_activations_derivatives_data + i*step,
-                                                                                 next_neurons_number,
-                                                                                 next_neurons_number);
-
-            next_error_combinations_derivatives.chip(i, 0) =
-                    next_deltas_row.contract(next_activations_derivatives_matrix, AT_B);
-        }
-    }
-*/
 
     deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
 }
@@ -1107,7 +978,6 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
     /// @todo to tensor
 
     #pragma omp parallel for
-
 
     for(Index sample = 0; sample < samples_number; sample++)
     {
@@ -1171,14 +1041,14 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
-    Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
-
     const Tensor<type, 2>& deltas = perceptron_layer_back_propagation->deltas;
 
     Tensor<type, 2>& error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives;
 
-    error_combinations_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;     
+    calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
+
+    Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
+    Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
 
     biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
 

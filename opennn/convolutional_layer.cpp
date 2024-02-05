@@ -1646,7 +1646,6 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     cout << "Convolution Type == 3: " << convolution_type_string << endl;
     cout << "Stride == 4: " << stride_string << endl;
 
-
     // Parameters
 
     const tinyxml2::XMLElement* parameters_element = convolutional_layer_element->FirstChildElement("Parameters");

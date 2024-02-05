@@ -62,8 +62,8 @@ public:
                            LossIndexBackPropagationLM&) const final;
 
    void calculate_output_delta_lm(const DataSetBatch&,
-                               ForwardPropagation&,
-                               LossIndexBackPropagationLM&) const final;
+                                  ForwardPropagation&,
+                                  LossIndexBackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
                               LossIndexBackPropagationLM&) const final;

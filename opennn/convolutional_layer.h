@@ -119,8 +119,8 @@ public:
     Index get_inputs_number() const;
     Index get_neurons_number() const;
 
-    Tensor<type, 1> get_parameters() const;
-    Index get_parameters_number() const;    
+    Tensor<type, 1> get_parameters() const final;
+    Index get_parameters_number() const final;
 
     // Set methods
 
