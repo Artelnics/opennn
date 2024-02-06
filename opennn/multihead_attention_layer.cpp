@@ -411,86 +411,34 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& t
 }
 
 
-void MultiheadAttentionLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void MultiheadAttentionLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
 {
-    if(inputs.second.size() != 2)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index,1>, 1>&, LayerForwardPropagation*, const bool&)\n"
-               << "Number of input tensors (" << inputs.second.size() << ") must be 2 (input and context).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(inputs.second[0][0] != inputs.second[1][0])
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index,1>, 1>&, LayerForwardPropagation*, const bool&)\n"
-               << "Batch sizes of input and context must be equal.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(inputs.second[0][1] != input_size)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index,1>, 1>&, LayerForwardPropagation*, const bool&)\n"
-               << "2nd dimension of input must be equal to layer input_size.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(inputs.second[1][1] != context_size)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index,1>, 1>&, LayerForwardPropagation*, const bool&)\n"
-               << "2nd dimension of context must be equal to layer context_size.\n";
-        throw invalid_argument(buffer.str());
-    }
-
-    if(inputs.second[0][2] != depth || inputs.second[1][2] != depth)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: MultiheadAttentionLayer class.\n"
-               << "void MultiheadAttentionLayer::forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index,1>, 1>&, LayerForwardPropagation*, const bool&)\n"
-               << "3rd dimension of input and context must be equal to layer depth.\n";
-        throw invalid_argument(buffer.str());
-    }
-
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> query_map(inputs.first,
-                                               inputs.second[0][0],
-                                               inputs.second[0][1],
-                                               inputs.second[0][2]);
+    const TensorMap<Tensor<type, 3>> query(inputs_pair.first,
+                                           inputs_pair.second[0][0],
+                                           inputs_pair.second[0][1],
+                                           inputs_pair.second[0][2]);
 
-    const TensorMap<Tensor<type, 3>> key_map(inputs.first + inputs.second[0][0] + inputs.second[0][1] + inputs.second[0][2],
-                                             inputs.second[1][0],
-                                             inputs.second[1][1],
-                                             inputs.second[1][2]);
+    const TensorMap<Tensor<type, 3>> key(inputs_pair.first + inputs_pair.second[0][0] + inputs_pair.second[0][1] + inputs_pair.second[0][2],
+                                         inputs_pair.second[1][0],
+                                         inputs_pair.second[1][1],
+                                         inputs_pair.second[1][2]);
 
-    const TensorMap<Tensor<type, 3>> value_map = key_map;
+    const TensorMap<Tensor<type, 3>> value = key;
 
     Tensor<type, 4>& transformed_query = multihead_attention_layer_forward_propagation->transformed_query;
     Tensor<type, 4>& transformed_key = multihead_attention_layer_forward_propagation->transformed_key;
     Tensor<type, 4>& transformed_value = multihead_attention_layer_forward_propagation->transformed_value;
 
-    calculate_transformation(query_map, transformed_query, query_kernel);
+    calculate_transformation(query, transformed_query, query_kernel);
 
-    calculate_transformation(key_map, transformed_key, key_kernel);
+    calculate_transformation(key, transformed_key, key_kernel);
 
-    calculate_transformation(value_map, transformed_value, value_kernel);
+    calculate_transformation(value, transformed_value, value_kernel);
 
     Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
 

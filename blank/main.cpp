@@ -26,6 +26,7 @@
 
 // OneDNN
 #include "oneapi/dnnl/dnnl.hpp"
+#include "../mkl/mkl.h"
 
 using namespace std;
 using namespace opennn;
@@ -90,8 +91,8 @@ int main()
         //MKL
         auto start_time_mkl = high_resolution_clock::now();
         
-        //for(Index i = 0; i < 10; i++)
-            //cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0f, t_A.data(), K, t_B.data(), N, 0.0f, AB.data(), N); //MKL
+        for(Index i = 0; i < 10; i++)
+            cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0f, t_A.data(), K, t_B.data(), N, 0.0f, AB.data(), N); //MKL
 
         auto end_time_mkl = high_resolution_clock::now();
         auto duration_mkl = duration_cast<milliseconds>(end_time_mkl - start_time_mkl);

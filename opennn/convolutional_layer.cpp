@@ -353,15 +353,15 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 }
 
 
-void ConvolutionalLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void ConvolutionalLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs_map(inputs.first,
-                                                inputs.second[0][0],
-                                                inputs.second[0][1],
-                                                inputs.second[0][2],
-                                                inputs.second[0][3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
+                                            inputs_pair.second[0][0],
+                                            inputs_pair.second[0][1],
+                                            inputs_pair.second[0][2],
+                                            inputs_pair.second[0][3]);
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
@@ -372,11 +372,9 @@ void ConvolutionalLayer::forward_propagate(const pair<type*, dimensions>& inputs
 
     Tensor<type, 4>& activations_derivatives = convolutional_layer_forward_propagation->activations_derivatives;
 
-    preprocess_inputs(inputs_map,
-                      outputs);
+    preprocess_inputs(inputs, outputs);
 
-    calculate_convolutions(preprocessed_inputs,
-                           outputs);
+    calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
     {
@@ -478,12 +476,6 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
     const Index next_flatten_layer_neurons_number  =
             next_flatten_layer_pointer->get_neurons_number();
     
-/*
-    memcpy(convolutional_layer_back_propagation->deltas.data(),
-           next_flatten_layer_back_propagation->deltas.data(),
-           Index(batch_samples_number*next_flatten_layer_neurons_number*sizeof(type)));
-*/
-
     copy(execution::par, 
          next_flatten_layer_back_propagation->deltas.data(),
          next_flatten_layer_back_propagation->deltas.data() +
@@ -492,15 +484,15 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
 }
 
 
-void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 4>> inputs_map(inputs.first,
-                                                inputs.second[0][0],
-                                                inputs.second[0][1],
-                                                inputs.second[0][2],
-                                                inputs.second[0][3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
+                                            inputs_pair.second[0][0],
+                                            inputs_pair.second[0][1],
+                                            inputs_pair.second[0][2],
+                                            inputs_pair.second[0][3]);
 
     // Convolutional layer
 
@@ -575,8 +567,7 @@ void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>&
             offsets = {image_index, 0, 0, 0};
             extents = {1, inputs_rows_number, inputs_columns_number, inputs_channels_number};
 
-            image_slice.device(*thread_pool_device)
-                = inputs_map.slice(offsets, extents);
+            image_slice.device(*thread_pool_device) = inputs.slice(offsets, extents);
 
             const TensorMap<Tensor<type, 3>> image(image_slice.data(),
                                                    inputs_rows_number,
@@ -595,11 +586,7 @@ void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>&
             kernel_synaptic_weights_derivatives.device(*thread_pool_device)
                 += image.convolve(delta_reshape, convolutions_dimensions);
         }
-/*
-        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number*kernel_index,
-               kernel_synaptic_weights_derivatives.data(),
-               size_t(kernel_synaptic_weights_number)*sizeof(type));
-*/
+
         copy(execution::par,
              kernel_synaptic_weights_derivatives.data(),
              kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
@@ -887,18 +874,12 @@ Index ConvolutionalLayer::get_neurons_number() const
 Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
-/*
-    memcpy(parameters.data(),
-           synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
-*/
+
     copy(execution::par, 
          synaptic_weights.data(),
          synaptic_weights.data() + synaptic_weights.size(),
          parameters.data());
-    /*
-    memcpy(parameters.data() + synaptic_weights.size(),
-           biases.data(), size_t(biases.size())*sizeof(type));
-*/
+
     copy(execution::par, 
          biases.data(),
          biases.data() + biases.size(),
@@ -1174,21 +1155,12 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
                             kernels_number);
 
     biases.resize(kernels_number);
-/*
-    memcpy(synaptic_weights.data(),
-           new_parameters.data() + index,
-           size_t(synaptic_weights.size())*sizeof(type));
-*/
+
     copy(execution::par, 
          new_parameters.data() + index, 
          new_parameters.data() + index + synaptic_weights.size(), 
          synaptic_weights.data());
 
-/*
-    memcpy(biases.data(),
-           new_parameters.data() + index + synaptic_weights.size(),
-           size_t(biases.size())*sizeof(type));
-*/
     copy(execution::par, 
          new_parameters.data() + index + synaptic_weights.size(),
          new_parameters.data() + index + synaptic_weights.size() + biases.size(),

@@ -325,32 +325,32 @@ void PoolingLayer::set_default()
 }
 
 
-void PoolingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void PoolingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs_map(inputs.first,
-                                                inputs.second[0][0],
-                                                inputs.second[0][1],
-                                                inputs.second[0][2],
-                                                inputs.second[0][3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
+                                            inputs_pair.second[0][0],
+                                            inputs_pair.second[0][1],
+                                            inputs_pair.second[0][2],
+                                            inputs_pair.second[0][3]);
 
     switch(pooling_method)
     {
         case PoolingMethod::MaxPooling:
-            forward_propagate_max_pooling(inputs_map,
+            forward_propagate_max_pooling(inputs,
                                           layer_forward_propagation,
                                           is_training);
             break;
 
         case PoolingMethod::AveragePooling:
-            forward_propagate_average_pooling(inputs_map,
+            forward_propagate_average_pooling(inputs,
                                               layer_forward_propagation,
                                               is_training);
             break;
 
         case PoolingMethod::NoPooling:
-            forward_propagate_no_pooling(inputs_map,
+            forward_propagate_no_pooling(inputs,
                                          layer_forward_propagation,
                                          is_training);
             break;

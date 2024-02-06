@@ -155,22 +155,8 @@ bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 }
 
 
-bool is_nan(const Tensor<type,1>& tensor)
-{
-    const Index size = tensor.size();
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(!isnan(tensor[i])) return false;
-    }
-
-    return true;
-}
-
-
 bool is_nan(const type& value)
 {
-
     if(!isnan(value)) return false;
 
     return true;
@@ -189,7 +175,8 @@ bool is_false(const Tensor<bool, 1>& tensor)
     return true;
 }
 
-Index true_count(const Tensor<bool, 1>& tensor)
+
+Index count_true(const Tensor<bool, 1>& tensor)
 {
     Index trueCount = 0;
 
@@ -485,7 +472,7 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
 
 
 
-Index count_elements_less_than(const Tensor<Index,1>& vector, const Index& bound)
+Index count_less_than(const Tensor<Index,1>& vector, const Index& bound)
 {
     Index count = 0;
 
@@ -502,7 +489,7 @@ Index count_elements_less_than(const Tensor<Index,1>& vector, const Index& bound
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Index& bound)
 {
-    const Index indices_size = count_elements_less_than(vector, bound);
+    const Index indices_size = count_less_than(vector, bound);
 
     Tensor<Index, 1> indices(indices_size);
 
@@ -522,7 +509,7 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Inde
 
 
 
-Index count_elements_less_than(const Tensor<double,1>& vector, const double& bound)
+Index count_less_than(const Tensor<double,1>& vector, const double& bound)
 {
     Index count = 0;
 
@@ -539,7 +526,7 @@ Index count_elements_less_than(const Tensor<double,1>& vector, const double& bou
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const double& bound)
 {
-    const Index indices_size = count_elements_less_than(vector, bound);
+    const Index indices_size = count_less_than(vector, bound);
 
     Tensor<Index, 1> indices(indices_size);
 
@@ -558,7 +545,7 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
 };
 
 
-Index count_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
 {
     Index count = 0;
 
@@ -574,7 +561,7 @@ Index count_elements_greater_than(const Tensor<Index,1>& vector, const Index& bo
 
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
 {
-    const Index indices_size = count_elements_greater_than(vector, bound);
+    const Index indices_size = count_greater_than(vector, bound);
 
     Tensor<Index, 1> indices(indices_size);
 
@@ -1126,19 +1113,19 @@ bool has_NAN(Tensor<type, 2>& x)
 }
 
 
-Index count_empty_values(const Tensor<string, 1>& vector)
+Index count_empty(const Tensor<string, 1>& vector)
 {
     const Index words_number = vector.size();
 
     Index count = 0;
 
-    string empty_string;
-
     for( Index i = 0; i < words_number; i++)
     {
         string str = vector(i);
+
         trim(str);
-        if(str == empty_string) count++;
+        
+        if(str.empty()) count++;
     }
 
     return count;

@@ -559,7 +559,7 @@ void TextAnalytics::delete_blanks(Tensor<string, 1>& vector) const
 {
     const Index words_number = vector.size();
 
-    const Index empty_number = count_empty_values(vector);
+    const Index empty_number = count_empty(vector);
 
     Tensor<string, 1> vector_copy(vector);
 

@@ -266,27 +266,18 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 }
 
 
-void EmbeddingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void EmbeddingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                        LayerForwardPropagation* layer_forward_propagation,
                                        const bool& is_training)
 {
-    if(inputs.second[0][1] != inputs_length)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-               << "void EmbeddingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << inputs_length << ", (" << inputs.second[0][1] << ").\n";
-        throw invalid_argument(buffer.str());
-    }
-
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
         = static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation);
 
     Tensor<type, 3>& outputs = embedding_layer_forward_propagation->outputs;
 
-    lookup_embedding(inputs_map, outputs);
+    lookup_embedding(inputs, outputs);
 
     if(positional_encoding)
     {

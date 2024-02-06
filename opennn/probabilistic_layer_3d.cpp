@@ -659,18 +659,18 @@ void ProbabilisticLayer3D::competitive(const Tensor<type, 2>& x, Tensor<type, 2>
 }
 */
 
-void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs,
+void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                            LayerForwardPropagation* forward_propagation,
                                            const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1], inputs.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
 
     ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
 
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
     /*
-    calculate_combinations(inputs_map,
+    calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
                            outputs);
@@ -691,11 +691,11 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
 }
 
 
-void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs,
+void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                            Tensor<type, 1>& potential_parameters,
                                            LayerForwardPropagation* forward_propagation)
 {
-    const TensorMap<Tensor<type, 3>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1], inputs.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -710,7 +710,7 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
 
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
 
-    calculate_combinations(inputs_map,
+    calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
                            outputs);
@@ -723,13 +723,13 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
 }
 
 
-void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 3>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1], inputs.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
 
     const Index batch_samples_number = forward_propagation->batch_samples_number;
 
@@ -764,13 +764,13 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
             (deltas*activations_derivatives_2d).sum(Eigen::array<Index, 1>({0}));
 
         synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs_map.contract(deltas*activations_derivatives_2d, AT_B);
+            inputs.contract(deltas*activations_derivatives_2d, AT_B);
 
         biases_derivatives.device(*thread_pool_device) =
             (deltas*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
         synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs_map.contract(deltas*activations_derivatives, AT_B);
+            inputs.contract(deltas*activations_derivatives, AT_B);
 */
     }
     else
@@ -795,7 +795,7 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
                 error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
         synaptic_weights_derivatives.device(*thread_pool_device) =
-                inputs_map.contract(error_combinations_derivatives, AT_B);
+                inputs.contract(error_combinations_derivatives, AT_B);
     }
 }
 

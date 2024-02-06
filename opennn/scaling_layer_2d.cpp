@@ -735,9 +735,9 @@ void ScalingLayer2D::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs,
-                                     LayerForwardPropagation* forward_propagation,
-                                     const bool& is_training)
+void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+                                       LayerForwardPropagation* forward_propagation,
+                                       const bool& is_training)
 {
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation);
@@ -746,7 +746,7 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs,
 
     const Tensor<Index, 0> input_size = inputs_dimensions.prod();
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
@@ -756,7 +756,7 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs,
 
         /// @todo to inputs map
 
-        Tensor<type, 1> column = inputs_map.chip(i, 1);
+        Tensor<type, 1> column = inputs.chip(i, 1);
 
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
@@ -783,7 +783,7 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs,
                 const type intercept =
                         (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
 
-                column = intercept + slope*inputs_map.chip(i, 1);
+                column = intercept + slope*inputs.chip(i, 1);
             }
             else if(scaler == Scaler::MeanStandardDeviation)
             {
@@ -791,16 +791,16 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs,
 
                 const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
 
-                column = intercept + slope*inputs_map.chip(i, 1);
+                column = intercept + slope*inputs.chip(i, 1);
             }
             else if(scaler == Scaler::StandardDeviation)
             {
-                column = type(1/descriptives(i).standard_deviation) * inputs_map.chip(i, 1);
+                column = type(1/descriptives(i).standard_deviation)*inputs.chip(i, 1);
                 //column/type(descriptives(i).standard_deviation);
             }
             else if(scaler == Scaler::Logarithm)
             {
-                column = inputs_map.chip(i,1).log();
+                column = inputs.chip(i,1).log();
             }
             else
             {

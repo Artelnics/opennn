@@ -138,15 +138,14 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
          biases_data,
          biases_data + biases_number,
          parameters_data + synaptic_weights_number);
-
-
+/*
     memcpy(parameters.data(),
            synaptic_weights.data(),
            size_t(synaptic_weights.size())*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(),
            biases.data(), size_t(biases.size())*sizeof(type));
-
+*/
     return parameters;
 }
 
@@ -637,18 +636,18 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 }
 
 
-void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
-    calculate_combinations(inputs_map,
+    calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
                            outputs);
@@ -674,11 +673,11 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs,
 }
 
 
-void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                         Tensor<type, 1>& potential_parameters,
                                         LayerForwardPropagation* layer_forward_propagation)
 {
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -698,7 +697,7 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs,
 
     Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
 
-    calculate_combinations(inputs_map,
+    calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
                            outputs);

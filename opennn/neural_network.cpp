@@ -1699,7 +1699,7 @@ type NeuralNetwork::calculate_parameters_norm() const
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
+void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {
@@ -1708,7 +1708,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
-    layers_pointers(first_trainable_layer_index)->forward_propagate(inputs,
+    layers_pointers(first_trainable_layer_index)->forward_propagate(inputs_pair,
                                                                     forward_propagation.layers(first_trainable_layer_index),
                                                                     is_training);
 
@@ -1730,7 +1730,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 /// @param parameters Parameters of neural network.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
+void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                       Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation) const
 {
@@ -1740,7 +1740,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs,
 
     const bool is_training = true;
 
-    forward_propagate(inputs, forward_propagation, is_training);
+    forward_propagate(inputs_pair, forward_propagation, is_training);
 
     set_parameters(original_parameters);
 }
@@ -2983,7 +2983,7 @@ string NeuralNetwork::write_expression_c() const
     Tensor<string, 1> outputs = get_outputs_names();
     Tensor<string, 1> found_tokens;
 
-    int cell_state_counter = 0;
+    int cell_states_counter = 0;
     int hidden_state_counter = 0;
     int LSTM_number = get_long_short_term_memory_layers_number();
 
@@ -3251,7 +3251,7 @@ string NeuralNetwork::write_expression_c() const
 
             if(token.find("cell_state") == 0)
             {
-                cell_state_counter += 1;
+                cell_states_counter += 1;
             }
 
             if(token.find("hidden_state") == 0)
@@ -3270,9 +3270,9 @@ string NeuralNetwork::write_expression_c() const
             buffer << "\t" << "float hidden_state_" << to_string(i) << " = type(0);" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "\t" << "float cell_state_" << to_string(i) << " = type(0);" << endl;
+            buffer << "\t" << "float cell_states_" << to_string(i) << " = type(0);" << endl;
         }
 
         buffer << "} lstm; \n\n" << endl;
@@ -3307,9 +3307,9 @@ string NeuralNetwork::write_expression_c() const
             buffer << "\t\t" << "lstm.hidden_state_" << to_string(i) << " = type(0);" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "\t\t" << "lstm.cell_state_" << to_string(i) << " = type(0);" << endl;
+            buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
         }
 
         buffer << "\t}" << endl;
@@ -3442,7 +3442,7 @@ string NeuralNetwork::write_expression_api() const
     Tensor<string, 1> outputs = get_outputs_names();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
-    int cell_state_counter = 0;
+    int cell_states_counter = 0;
     int hidden_state_counter = 0;
 
     bool logistic     = false;
@@ -3585,7 +3585,7 @@ string NeuralNetwork::write_expression_api() const
 
             if(token.find("cell_state") == 0)
             {
-                cell_state_counter += 1;
+                cell_states_counter += 1;
             }
 
             if(token.find("hidden_state") == 0)
@@ -3603,9 +3603,9 @@ string NeuralNetwork::write_expression_api() const
             buffer << "public $" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "public $" << "cell_state_" << to_string(i) << " = type(0);" << endl;
+            buffer << "public $" << "cell_states_" << to_string(i) << " = type(0);" << endl;
         }
 
         buffer << "}" << endl;
@@ -3674,9 +3674,9 @@ string NeuralNetwork::write_expression_api() const
             buffer << "$nn->" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "$nn->" << "cell_state_" << to_string(i) << " = type(0);" << endl;
+            buffer << "$nn->" << "cell_states_" << to_string(i) << " = type(0);" << endl;
         }
         buffer << "}" << endl;
     }
@@ -3971,7 +3971,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     stringstream ss(expression);
 
-    int cell_state_counter = 0;
+    int cell_states_counter = 0;
     int hidden_state_counter = 0;
     int LSTM_number = get_long_short_term_memory_layers_number();
 
@@ -4322,7 +4322,7 @@ string NeuralNetwork::write_expression_javascript() const
 
             if(token.find("cell_state") == 0)
             {
-                cell_state_counter += 1;
+                cell_states_counter += 1;
             }
 
             if(token.find("hidden_state") == 0)
@@ -4339,9 +4339,9 @@ string NeuralNetwork::write_expression_javascript() const
             buffer << "\t\t" << "hidden_state_" << to_string(i) << " = 0" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "\t\t" << "cell_state_" << to_string(i) << " = 0" << endl;
+            buffer << "\t\t" << "cell_states_" << to_string(i) << " = 0" << endl;
         }
 
         buffer << "\t}\n" << endl;
@@ -4440,9 +4440,9 @@ string NeuralNetwork::write_expression_javascript() const
             buffer << "\t" << "var " << "var hidden_state_" << to_string(i) << " = 0" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "\t" << "var " << "var cell_state_" << to_string(i) << " = 0" << endl;
+            buffer << "\t" << "var " << "var cell_states_" << to_string(i) << " = 0" << endl;
         }
 
         buffer << "\n" << endl;
@@ -4593,7 +4593,7 @@ string NeuralNetwork::write_expression_python() const
 //    const Index layers_number = get_layers_number();
 
     int LSTM_number = get_long_short_term_memory_layers_number();
-    int cell_state_counter = 0;
+    int cell_states_counter = 0;
     int hidden_state_counter = 0;
 
     bool logistic     = false;
@@ -4710,7 +4710,7 @@ string NeuralNetwork::write_expression_python() const
 
         if(token.find("cell_state") == 0)
         {
-            cell_state_counter += 1;
+            cell_states_counter += 1;
         }
         if(token.find("hidden_state") == 0)
         {
@@ -4763,9 +4763,9 @@ string NeuralNetwork::write_expression_python() const
             buffer << "\t\t" << "self.hidden_state_" << to_string(i) << " = 0" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "\t\t" << "self.cell_state_" << to_string(i) << " = 0" << endl;
+            buffer << "\t\t" << "self.cell_states_" << to_string(i) << " = 0" << endl;
         }
 
         buffer << "\t\t" << "self.time_step_counter = 1" << endl;
@@ -4896,9 +4896,9 @@ string NeuralNetwork::write_expression_python() const
             buffer << "\t\t\t" << "self.hidden_state_" << to_string(i) << " = 0" << endl;
         }
 
-        for(int i = 0; i < cell_state_counter; i++)
+        for(int i = 0; i < cell_states_counter; i++)
         {
-            buffer << "\t\t\t" << "self.cell_state_" << to_string(i) << " = 0" << endl;
+            buffer << "\t\t\t" << "self.cell_states_" << to_string(i) << " = 0" << endl;
         }
     }
 

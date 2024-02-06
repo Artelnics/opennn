@@ -197,8 +197,6 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate_forget_gate() const;
-
    void forward_propagate(const pair<type*, dimensions>&,
                           Tensor<type, 1>&,
                           LayerForwardPropagation*) final;
@@ -357,7 +355,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         outputs.resize(batch_samples_number, neurons_number);
 
         previous_hidden_state_activations.resize(neurons_number);
-        previous_cell_state_activations.resize(neurons_number);
+        previous_cell_states.resize(neurons_number);
 
         current_inputs.resize(inputs_number);
 
@@ -371,7 +369,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         current_state_activations.resize(neurons_number);
         current_output_activations.resize(neurons_number);
 
-        current_cell_state_activations.resize(neurons_number);
+        current_cell_states.resize(neurons_number);
 
         current_forget_activations_derivatives.resize(neurons_number);
         current_input_activations_derivatives.resize(neurons_number);
@@ -383,15 +381,15 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
         input_activations.resize(batch_samples_number, neurons_number);
         state_activations.resize(batch_samples_number, neurons_number);
         output_activations.resize(batch_samples_number, neurons_number);
-        cell_states_activations.resize(batch_samples_number, neurons_number);
-        hidden_states_activations.resize(batch_samples_number, neurons_number);
+        cell_states.resize(batch_samples_number, neurons_number);
+        hidden_states.resize(batch_samples_number, neurons_number);
 
         forget_activations_derivatives.resize(batch_samples_number, neurons_number);
         input_activations_derivatives.resize(batch_samples_number, neurons_number);
         state_activations_derivatives.resize(batch_samples_number, neurons_number);
         output_activations_derivatives.resize(batch_samples_number, neurons_number);
-        cell_states_activations_derivatives.resize(batch_samples_number, neurons_number);
-        hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+        cell_states_derivatives.resize(batch_samples_number, neurons_number);
+        hidden_states_derivatives.resize(batch_samples_number, neurons_number);
 
     }
 
@@ -414,7 +412,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> outputs;
 
     Tensor<type, 1> previous_hidden_state_activations;
-    Tensor<type, 1> previous_cell_state_activations;
+    Tensor<type, 1> previous_cell_states;
 
     Tensor<type, 1> current_inputs;
 
@@ -435,21 +433,21 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 1> current_hidden_states_derivatives;
 
-    Tensor<type, 1> current_cell_state_activations;
+    Tensor<type, 1> current_cell_states;
 
     Tensor<type, 2, RowMajor> forget_activations;
     Tensor<type, 2, RowMajor> input_activations;
     Tensor<type, 2, RowMajor> state_activations;
     Tensor<type, 2, RowMajor> output_activations;
-    Tensor<type, 2, RowMajor> cell_states_activations;
-    Tensor<type, 2, RowMajor> hidden_states_activations;
+    Tensor<type, 2, RowMajor> cell_states;
+    Tensor<type, 2, RowMajor> hidden_states;
 
     Tensor<type, 2, RowMajor> forget_activations_derivatives;
     Tensor<type, 2, RowMajor> input_activations_derivatives;
     Tensor<type, 2, RowMajor> state_activations_derivatives;
     Tensor<type, 2, RowMajor> output_activations_derivatives;
-    Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
-    Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
+    Tensor<type, 2, RowMajor> cell_states_derivatives;
+    Tensor<type, 2, RowMajor> hidden_states_derivatives;
 };
 
 
@@ -505,7 +503,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
         output_combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
         hidden_states_biases_derivatives.resize(neurons_number, neurons_number);
-        cell_state_biases_derivatives.resize(neurons_number, neurons_number);
+        cell_states_biases_derivatives.resize(neurons_number, neurons_number);
 
         input_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
         forget_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
@@ -513,7 +511,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
         output_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
 
         hidden_states_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
-        cell_state_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        cell_states_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
 
         input_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
         forget_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
@@ -521,7 +519,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
         output_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
 
         hidden_states_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
-        cell_state_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+        cell_states_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
     }
 
 
@@ -554,7 +552,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> output_combinations_biases_derivatives;
 
     Tensor<type, 2> hidden_states_biases_derivatives;
-    Tensor<type, 2> cell_state_biases_derivatives;
+    Tensor<type, 2> cell_states_biases_derivatives;
 
     Tensor<type, 2> input_combinations_weights_derivatives;
     Tensor<type, 2> forget_combinations_weights_derivatives;
@@ -562,7 +560,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> output_combinations_weights_derivatives;
 
     Tensor<type, 2> hidden_states_weights_derivatives;
-    Tensor<type, 2> cell_state_weights_derivatives;
+    Tensor<type, 2> cell_states_weights_derivatives;
 
     Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
     Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
@@ -570,7 +568,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
 
     Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2> cell_state_recurrent_weights_derivatives;
+    Tensor<type, 2> cell_states_recurrent_weights_derivatives;
 };
 
 

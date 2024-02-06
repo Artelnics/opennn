@@ -700,14 +700,14 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type,2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type,2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
 
@@ -717,7 +717,7 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
     {
         const Scaler scaler = scalers(i);
 
-        Tensor<type, 1> column = inputs_map.chip(i, 1);
+        Tensor<type, 1> column = inputs.chip(i, 1);
 
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
@@ -740,7 +740,7 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
 
                 const type intercept = -(min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(max_range-min_range);
 
-                column = intercept + slope*inputs_map.chip(i, 1);
+                column = intercept + slope*inputs.chip(i, 1);
             }
             else if(scaler == Scaler::MeanStandardDeviation)
             {
@@ -748,17 +748,17 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
 
                 const type intercept = descriptives(i).mean;
 
-                column = intercept + slope*inputs_map.chip(i, 1);
+                column = intercept + slope*inputs.chip(i, 1);
             }
             else if(scaler == Scaler::StandardDeviation)
             {
                 const type standard_deviation = descriptives(i).standard_deviation;
 
-                column = standard_deviation * inputs_map.chip(i, 1);
+                column = standard_deviation * inputs.chip(i, 1);
             }
             else if(scaler == Scaler::Logarithm)
             {
-                column = inputs_map.chip(i,1).exp();
+                column = inputs.chip(i,1).exp();
             }
             else
             {

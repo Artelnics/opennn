@@ -21,7 +21,7 @@ BoundingBoxRegressorLayer::BoundingBoxRegressorLayer() : Layer()
 }
 
 
-void BoundingBoxRegressorLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void BoundingBoxRegressorLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   const bool& is_training)
 {

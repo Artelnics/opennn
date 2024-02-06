@@ -30,11 +30,11 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
         const Index columns_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
 
-        TensorMap<Tensor<type, 4>> inputs_map(inputs_data,
-                                              batch_size,
-                                              rows_number,
-                                              columns_number,
-                                              channels_number);
+        TensorMap<Tensor<type, 4>> inputs(inputs_data,
+                                          batch_size,
+                                          rows_number,
+                                          columns_number,
+                                          channels_number);
 
         /// @todo index will not work. Since it is for images, it will contain all rows in the matrix.
 
@@ -50,7 +50,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
                 {
                     for(Index channel = 0; channel < channels_number ; channel++)
                     {
-                        inputs_map(image, row, column, channel) = data(image, index);
+                        inputs(image, row, column, channel) = data(image, index);
 
                         index++;
                     }

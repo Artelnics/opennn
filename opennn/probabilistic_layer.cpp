@@ -631,18 +631,18 @@ void ProbabilisticLayer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& 
 }
 
 
-void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                            LayerForwardPropagation* forward_propagation,
                                            const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
-    calculate_combinations(inputs_map,
+    calculate_combinations(inputs,
                            biases,
                            synaptic_weights,
                            outputs);
@@ -664,11 +664,11 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
 }
 
 
-void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                            Tensor<type, 1>& potential_parameters,
                                            LayerForwardPropagation* forward_propagation)
 {
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -683,7 +683,7 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
-    calculate_combinations(inputs_map,
+    calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
                            outputs);
@@ -696,14 +696,14 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
 }
 
 
-void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs.second[0][0];
+    const Index samples_number = inputs_pair.second[0][0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, samples_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
 
     // Forward propagation
 
@@ -728,7 +728,7 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
 
     const Eigen::array<Index, 1> sum_dimensions({0});
 
-    synaptic_weights_derivatives.device(*thread_pool_device) = inputs_map.contract(error_combinations_derivatives, AT_B);
+    synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
 
     biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(sum_dimensions);
 }

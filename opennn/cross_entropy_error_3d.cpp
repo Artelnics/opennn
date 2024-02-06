@@ -186,19 +186,21 @@ void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 3>> outputs_map(outputs_pair.first, outputs_pair.second[0][0],
-                                                                     outputs_pair.second[0][1],
-                                                                     outputs_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
+                                              outputs_pair.second[0][0],
+                                              outputs_pair.second[0][1],
+                                              outputs_pair.second[0][2]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 3>> targets_map(targets_pair.first, targets_pair.second[0][0],
-                                                                     targets_pair.second[0][1],
-                                                                     targets_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> targets(targets_pair.first, 
+                                             targets_pair.second[0][0],
+                                             targets_pair.second[0][1],
+                                             targets_pair.second[0][2]);
 
     Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    deltas.device(*thread_pool_device) = (-targets_map/outputs_map)/type(batch_samples_number);
+    deltas.device(*thread_pool_device) = (-targets/outputs)/type(batch_samples_number);
 }
 
 

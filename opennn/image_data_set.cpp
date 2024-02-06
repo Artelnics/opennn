@@ -1695,7 +1695,6 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 
     memcpy(data.data(), imageDataAux.data(), images_number * image_size * sizeof(type));
 
-
     rows_labels.resize(images_number);
 
     Index row_index = 0;

@@ -113,20 +113,13 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 
     for(int i = 0; i <rows_number; i++)
     {
-/*
-        memcpy(aux_row, 
-               original.data() + columns_number*rows_number - (i+1)*columns_number , 
-               size_t(columns_number)*sizeof(unsigned char));
-*/
         copy(execution::par, 
             original.data() + columns_number * rows_number - (i + 1) * columns_number,
             original.data() + columns_number * rows_number - i * columns_number,
             aux_row);
 
         // reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
-/*
-        memcpy(sorted.data() + columns_number*i , aux_row, size_t(columns_number)*sizeof(unsigned char));
-*/
+
         copy(execution::par, 
             aux_row, aux_row + columns_number, sorted.data() + columns_number * i);
     }

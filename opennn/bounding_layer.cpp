@@ -391,11 +391,11 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type,2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    const TensorMap<Tensor<type,2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
@@ -404,8 +404,8 @@ void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const Index rows_number = inputs_map.dimension(0);
-        const Index columns_number = inputs_map.dimension(1);
+        const Index rows_number = inputs.dimension(0);
+        const Index columns_number = inputs.dimension(1);
 
         #pragma omp parallel for
 
@@ -413,24 +413,24 @@ void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs,
         {
             for(Index j = 0; j < columns_number; j++)
             {
-                if(inputs_map(i,j) < lower_bounds(j))
+                if(inputs(i,j) < lower_bounds(j))
                 {
                     outputs(i,j) = lower_bounds(j);
                 }
-                else if(inputs_map(i,j) > upper_bounds(j))
+                else if(inputs(i,j) > upper_bounds(j))
                 {
                     outputs(i,j) = upper_bounds(j);
                 }
                 else
                 {
-                    outputs(i,j) = inputs_map(i,j);
+                    outputs(i,j) = inputs(i,j);
                 }
             }
         }
     }
     else
     {
-        outputs = inputs_map;
+        outputs = inputs;
     }
 }
 

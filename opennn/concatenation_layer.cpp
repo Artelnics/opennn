@@ -168,7 +168,7 @@ void ConcatenationLayer::set_default()
 }
 
 
-void ConcatenationLayer::forward_propagate(const pair<type*, dimensions>& inputs,
+void ConcatenationLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
