@@ -4047,6 +4047,7 @@ string NeuralNetwork::write_expression_c() const
 
     bool logistic     = false;
     bool ReLU         = false;
+    bool SELU         = false;
     bool Threshold    = false;
     bool SymThreshold = false;
     bool ExpLinear    = false;
@@ -4173,6 +4174,7 @@ string NeuralNetwork::write_expression_c() const
     string target_string6("HardSigmoid");
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
+    string target_string9("SELU");
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
@@ -4187,6 +4189,7 @@ string NeuralNetwork::write_expression_c() const
         size_t substring_length6 = t.find(target_string6);
         size_t substring_length7 = t.find(target_string7);
         size_t substring_length8 = t.find(target_string8);
+        size_t substring_length9 = t.find(target_string9);
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
@@ -4197,6 +4200,7 @@ string NeuralNetwork::write_expression_c() const
         if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid = true; }
         if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus = true; }
         if(substring_length8 < t.size() && substring_length8!=0){ SoftSign = true; }
+        if(substring_length9 < t.size() && substring_length9!=0){ SELU = true; }
     }
 
     if(logistic)
@@ -4215,6 +4219,19 @@ string NeuralNetwork::write_expression_c() const
         buffer << "return z;" << endl;
         buffer << "}" << endl;
         buffer << "\n" << endl;
+    }
+
+    if(SELU)
+    {
+        buffer << "float alpha = 1.67326;" << endl;
+        buffer << "float lambda = 1.05070;" << endl;
+        buffer << "float z;" << endl;
+        buffer << "if (x > 0) {" << endl;
+        buffer << "\tz = lambda * x;" << endl;
+        buffer << "} else {" << endl;
+        buffer << "\tz = lambda * alpha * (exp(x) - 1);" << endl;
+        buffer << "}" << endl;
+        buffer << "return z;" << endl;
     }
 
     if(Threshold)
@@ -4507,6 +4524,7 @@ string NeuralNetwork::write_expression_api() const
 
     bool logistic     = false;
     bool ReLU         = false;
+    bool SELU         = false;
     bool Threshold    = false;
     bool SymThreshold = false;
     bool ExpLinear    = false;
@@ -4752,6 +4770,7 @@ string NeuralNetwork::write_expression_api() const
     string target_string6("HardSigmoid");
     string target_string7("SoftPlus");
     string target_string8("SoftSign");
+    string target_string9("SELU");
 
     size_t substring_length0;
     size_t substring_length1;
@@ -4762,6 +4781,7 @@ string NeuralNetwork::write_expression_api() const
     size_t substring_length6;
     size_t substring_length7;
     size_t substring_length8;
+    size_t substring_length9;
 
     string new_word;
 
@@ -4781,9 +4801,11 @@ string NeuralNetwork::write_expression_api() const
         substring_length6 = t.find(target_string6);
         substring_length7 = t.find(target_string7);
         substring_length8 = t.find(target_string8);
+        substring_length9 = t.find(target_string9);
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
+        if(substring_length9 < t.size() && substring_length9!=0){ SELU         = true; }
         if(substring_length2 < t.size() && substring_length2!=0){ Threshold    = true; }
         if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
@@ -4867,6 +4889,23 @@ string NeuralNetwork::write_expression_api() const
         buffer << "<?php" << endl;
         buffer << "function ReLU(int $x) {" << endl;
         buffer << "$z = max(0, $x);" << endl;
+        buffer << "return $z;" << endl;
+        buffer << "}" << endl;
+        buffer << "?>" << endl;
+        buffer << "\n" << endl;
+    }
+
+    if(SELU)
+    {
+        buffer << "<?php" << endl;
+        buffer << "function SELU($x) {" << endl;
+        buffer << "$alpha = 1.67326;" << endl;
+        buffer << "$lambda = 1.05070;" << endl;
+        buffer << "if($x > 0) {" << endl;
+        buffer << "$z = $lambda * $x;" << endl;
+        buffer << "} else {" << endl;
+        buffer << "$z = $lambda * $alpha * (exp($x) - 1);" << endl;
+        buffer << "}" << endl;
         buffer << "return $z;" << endl;
         buffer << "}" << endl;
         buffer << "?>" << endl;
@@ -5037,6 +5076,7 @@ string NeuralNetwork::write_expression_javascript() const
 
     bool logistic     = false;
     bool ReLU         = false;
+    bool SELU         = false;
     bool Threshold    = false;
     bool SymThreshold = false;
     bool ExpLinear    = false;
@@ -5412,6 +5452,7 @@ string NeuralNetwork::write_expression_javascript() const
     string target_string_6("HardSigmoid");
     string target_string_7("SoftPlus");
     string target_string_8("SoftSign");
+    string target_string_9("SELU");
 
     string sufix = "Math.";
 
@@ -5433,8 +5474,11 @@ string NeuralNetwork::write_expression_javascript() const
         const size_t substring_length_6 = t.find(target_string_6);
         const size_t substring_length_7 = t.find(target_string_7);
         const size_t substring_length_8 = t.find(target_string_8);
+        const size_t substring_length_9 = t.find(target_string_9);
+
 
         if(substring_length_1 < t.size() && substring_length_1!=0){ ReLU = true; }
+        if(substring_length_9 < t.size() && substring_length_9!=0){ SELU = true; }
         if(substring_length_0 < t.size() && substring_length_0!=0){ logistic = true; }
         if(substring_length_6 < t.size() && substring_length_6!=0){ HSigmoid = true; }
         if(substring_length_7 < t.size() && substring_length_7!=0){ SoftPlus = true; }
@@ -5520,6 +5564,24 @@ string NeuralNetwork::write_expression_javascript() const
         buffer << "\treturn z;" << endl;
         buffer << "}" << endl;
         buffer << "\n" << endl;
+    }
+
+    if(SELU)
+    {
+        buffer << "function SELU(x)" << endl;
+        buffer << "{" << endl;
+        buffer << "\tvar alpha = 1.67326;" << endl;
+        buffer << "\tvar lambda = 1.05070;" << endl;
+        buffer << "\tif(x>0)" << endl;
+        buffer << "\t{" << endl;
+        buffer << "\t\tz = lambda*x;" << endl;
+        buffer << "\t}" << endl;
+        buffer << "\telse" << endl;
+        buffer << "\t{" << endl;
+        buffer << "\t\tz = lambda*alpha*(Math.exp(x)-1);" << endl;
+        buffer << "\t}" << endl;
+        buffer << "\treturn z;" << endl;
+        buffer << "}" << endl;
     }
 
     if(Threshold)
@@ -5654,6 +5716,7 @@ string NeuralNetwork::write_expression_python() const
     int hidden_state_counter = 0;
 
     bool logistic     = false;
+    bool SELU         = false;
     bool ReLU         = false;
     bool Threshold    = false;
     bool SymThreshold = false;
@@ -5727,6 +5790,7 @@ string NeuralNetwork::write_expression_python() const
     const string target_string6("HardSigmoid");
     const string target_string7("SoftPlus");
     const string target_string8("SoftSign");
+    const string target_string9("SELU");
 
     for(int i = 0; i < tokens.dimension(0); i++)
     {
@@ -5742,9 +5806,11 @@ string NeuralNetwork::write_expression_python() const
         const size_t substring_length6 = t.find(target_string6);
         const size_t substring_length7 = t.find(target_string7);
         const size_t substring_length8 = t.find(target_string8);
+        const size_t substring_length9 = t.find(target_string9);
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU = true; }
+        if(substring_length9 < t.size() && substring_length9!=0){ SELU = true; }
         if(substring_length2 < t.size() && substring_length2!=0){ Threshold = true; }
         if(substring_length3 < t.size() && substring_length3!=0){ SymThreshold = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear = true; }
@@ -5863,6 +5929,20 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\t\t" << "z = max(0, x)" << endl;
         buffer << "\t\t" << "return z" << endl;
         buffer << "\n" << endl;
+    }
+
+    if(SELU)
+    {
+        buffer << "\tdef SELU(x) {" << endl;
+        buffer << "\t\talpha = 1.67326" << endl;
+        buffer << "\t\tlambda = 1.05070" << endl;
+        buffer << "\t\tif(x > 0)" << endl;
+        buffer << "\t\t\tz = lambda * x" << endl;
+        buffer << "\t\telse" << endl;
+        buffer << "\t\t\tz = lambda * alpha * (exp($x) - 1)" << endl;
+        buffer << "\t\treturn z" << endl;
+        buffer << "\n" << endl;
+
     }
 
     if(Threshold)

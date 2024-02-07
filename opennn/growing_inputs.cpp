@@ -206,6 +206,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
          correlations_indexes.data() + correlations_indexes.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
+
     Tensor<Index, 1> input_columns_indices = data_set_pointer->get_input_columns_indices();
 
     Tensor<Index, 1> correlations_rank_descending(input_columns_indices.size());
@@ -230,8 +231,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Model selection
 
-    time_t beginning_time;
+    list<Index> unused;
     time_t current_time;
+    time_t beginning_time;
     type elapsed_time = type(0);
 
     time(&beginning_time);
@@ -313,18 +315,18 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 cout << "Selection failure" << endl;
 
                 selection_failures++;
+                unused.push_back(column_index);
 
-                data_set_pointer->set_column_use(correlations_rank_descending[column_index], DataSet::VariableUse::Unused);
-
-                input_columns_number += -1;
+                //input_columns_number += -1;
+                //data_set_pointer->set_column_use(correlations_rank_descending[column_index], DataSet::VariableUse::Unused);
             }
             else
             {
                 previus_training_error = minimum_training_error;
                 previus_selection_error = minimum_selection_error;
 
-                inputs_selection_results.training_error_history(input_columns_number) = minimum_training_error;
-                inputs_selection_results.selection_error_history(input_columns_number) = minimum_selection_error;
+                inputs_selection_results.training_error_history(input_columns_number -1) = minimum_training_error;
+                inputs_selection_results.selection_error_history(input_columns_number-1) = minimum_selection_error;
             }
 
             time(&current_time);
@@ -393,8 +395,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         }
 
         column_index++;
-
     }
+
+    for (Index i: unused) data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Unused);
 
     // Set data set stuff
 
@@ -421,7 +424,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     return inputs_selection_results;
 }
-
 
 /// This method writes a matrix of strings the most representative atributes.
 

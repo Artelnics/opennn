@@ -891,6 +891,73 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
                                                               LayerForwardPropagation* forward_propagation,
                                                               LayerBackPropagationLM* back_propagation)
 {
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+    const Tensor<type, 3>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+    const Index samples_number = inputs.dimension(0);
+    Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
+    if(neurons_number == 1)
+    {
+        const Tensor<type, 2>& deltas = probabilistic_layer_back_propagation_lm->deltas;
+
+#pragma omp parallel for
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            Index synaptic_weight_index = 0;
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    squared_errors_Jacobian(sample, synaptic_weight_index)
+                        = deltas(sample, neuron)*activations_derivatives(sample, neuron, 0)*inputs(sample, input);
+                    synaptic_weight_index++;
+                }
+            }
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                squared_errors_Jacobian(sample, synaptic_weights_number + neuron)
+                    = deltas(sample, neuron)*activations_derivatives(sample, neuron, 0);
+            }
+        }
+    }
+    else
+    {
+        const Tensor<type, 2>& error_combinations_derivatives
+            = probabilistic_layer_back_propagation_lm->error_combinations_derivatives;
+
+#pragma omp parallel for
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            Index synaptic_weight_index = 0;
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    squared_errors_Jacobian(sample, synaptic_weight_index)
+                        = error_combinations_derivatives(sample, neuron)*inputs(sample, input);
+                    synaptic_weight_index++;
+                }
+            }
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                squared_errors_Jacobian(sample, synaptic_weights_number + neuron)
+                    = error_combinations_derivatives(sample, neuron);
+            }
+        }
+    }
+}
+
+
+/**
+void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
+                                                              LayerForwardPropagation* forward_propagation,
+                                                              LayerBackPropagationLM* back_propagation)
+{
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
@@ -955,7 +1022,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
         }
     }
 }
-
+*/
 
 void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
                                                            const Index& index,

@@ -143,6 +143,8 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 
     if(x_columns == 1 && y_columns == 1)
     {
+        cout << "aqui1" << endl;
+
         if(!x_binary && !y_binary)
         {
             return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
@@ -162,18 +164,26 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     }
     else if(x_columns != 1 && y_columns == 1)
     {
+        cout << "aqui2" << endl;
+
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
     else if(x_columns == 1 && y_columns != 1)
     {
+        cout << "aqui3" << endl;
+
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
     else if(x_columns != 1 && y_columns != 1)
     {
+        cout << "aqui4" << endl;
+
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
     else
     {
+        cout << "aqui5" << endl;
+
         throw invalid_argument("Correlations Exception: Unknown case.");
     }
 
@@ -773,22 +783,25 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
-    cout << "logistic_correlation_vector_vector" << endl;
-
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(data);
+
     data_set.set_training();
 
     data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {1,1});
+
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
+
     training_strategy.set_display(false);
+
+    training_strategy.set_maximum_epochs_number(1000);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
@@ -799,6 +812,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.perform_training();
 
     Tensor<type, 2> inputs = data_set.get_input_data();
+
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     const Tensor<type, 2> targets = data_set.get_target_data();
@@ -813,8 +827,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    cout << "correlation.r: " << correlation.r << endl;
-
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs_dimensions(0));
@@ -827,11 +839,14 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
-    correlation.a = coefficients(0);
-    correlation.b = coefficients(1);
-    // no r correlation here
+    //correlation.a = coefficients(0);
+    //correlation.b = coefficients(1);
+    //if(correlation.b < type(0)) correlation.r *= type(-1);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    correlation.a = coefficients(1);
+    correlation.b = coefficients(0);
+
+    if(correlation.a < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }
@@ -862,16 +877,19 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_rank, y_filtered);
 
     DataSet data_set(data);
+
     data_set.set_training();
 
     data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {1,1});
+
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
+
     training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
@@ -883,6 +901,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     training_strategy.perform_training();
 
     Tensor<type, 2> inputs = data_set.get_input_data();
+
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
 
     const Tensor<type, 2> targets = data_set.get_target_data();
@@ -909,16 +928,21 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
-    correlation.a = coefficients(0);
-    correlation.b = coefficients(1);
+    //correlation.a = coefficients(0);
+    //correlation.b = coefficients(1);
+    //if(correlation.b < type(0)) correlation.r *= type(-1);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    correlation.a = coefficients(1);
+    correlation.b = coefficients(0);
+
+    if(correlation.a < type(0)) correlation.r *= type(-1);
+
 
     return correlation;
 }
 
 
-Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
+Correlation  logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 2>& y)
 {
@@ -929,7 +953,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     Tensor<type,1> x_filtered = filtered_elements.first;
     Tensor<type,2> y_filtered = filtered_elements.second;
 
-    if( y_filtered.dimension(1) > 50)
+    if(y_filtered.dimension(1) > 50)
     {
         cout << "Warning: Y variable has too many categories." << endl;
 
@@ -971,28 +995,19 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
-
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
     training_strategy.set_display(false);
-
     training_strategy.set_display_period(1000);
-
     training_strategy.perform_training();
 
     // Logistic correlation
 
     Tensor<type, 2> inputs = data_set.get_input_data();
     Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
     Tensor<type, 2> targets = data_set.get_target_data();
-
     Tensor<type, 2> outputs;
-
     outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
@@ -1008,6 +1023,17 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
     correlation.correlation_type = CorrelationType::Logistic;
+
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
+
+    //correlation.a = coefficients(0);
+    //correlation.b = coefficients(1);
+    //if(correlation.b < type(0)) correlation.r *= type(-1);
+
+    correlation.a = coefficients(1);
+    correlation.b = coefficients(0);
+
+    if(correlation.a < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }
@@ -1134,6 +1160,17 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
     correlation.correlation_type = CorrelationType::Logistic;
+
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
+
+    //correlation.a = coefficients(0);
+    //correlation.b = coefficients(1);
+    //if(correlation.b < type(0)) correlation.r *= type(-1);
+
+    correlation.a = coefficients(1);
+    correlation.b = coefficients(0);
+
+    if(correlation.a < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }

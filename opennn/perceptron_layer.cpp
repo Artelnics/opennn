@@ -1179,6 +1179,50 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
                                                            LayerForwardPropagation* forward_propagation,
                                                            LayerBackPropagationLM* back_propagation)
 {
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm = static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
+    const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
+
+    Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
+    const Tensor<type, 2>& deltas = perceptron_layer_back_propagation_lm->deltas;
+    const Index samples_number = inputs.dimension(0);
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
+
+    /// @todo to tensor
+
+#pragma omp parallel for
+    for(Index sample = 0; sample < samples_number; sample++)
+    {
+        Index synaptic_weight_index = 0;
+
+        // synaptic weights
+        for(Index neuron = 0; neuron < neurons_number; neuron++)
+        {
+            for(Index input = 0; input < inputs_number; input++)
+            {
+                squared_errors_Jacobian(sample, synaptic_weight_index) =
+                    deltas(sample, neuron)*activations_derivatives(sample, neuron)*inputs(sample, input);
+                synaptic_weight_index++;
+            }
+        }
+
+        // bias
+        for(Index neuron = 0; neuron < neurons_number; neuron++)
+        {
+            squared_errors_Jacobian(sample, synaptic_weights_number + neuron) =
+                deltas(sample, neuron)*activations_derivatives(sample, neuron);
+        }
+    }
+}
+
+
+/**
+void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
+                                                           LayerForwardPropagation* forward_propagation,
+                                                           LayerBackPropagationLM* back_propagation)
+{
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
@@ -1214,7 +1258,7 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
         }
     }
 }
-
+*/
 
 void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM * back_propagation ,
                                                         const Index & index,
