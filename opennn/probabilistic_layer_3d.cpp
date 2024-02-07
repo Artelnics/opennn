@@ -660,8 +660,8 @@ void ProbabilisticLayer3D::competitive(const Tensor<type, 2>& x, Tensor<type, 2>
 */
 
 void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
-                                           LayerForwardPropagation* forward_propagation,
-                                           const bool& is_training)
+                                             LayerForwardPropagation* forward_propagation,
+                                             const bool& is_training)
 {
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
 
@@ -692,10 +692,13 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
 
 
 void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
-                                           Tensor<type, 1>& potential_parameters,
-                                           LayerForwardPropagation* forward_propagation)
+                                             Tensor<type, 1>& potential_parameters,
+                                             LayerForwardPropagation* forward_propagation)
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, 
+                                            inputs_pair.second[0][0], 
+                                            inputs_pair.second[0][1], 
+                                            inputs_pair.second[0][2]);
 
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -710,12 +713,12 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
 
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
 
+    Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
+
     calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
                            outputs);
-
-    Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
 
     calculate_activations_derivatives(outputs,
                                       outputs,
@@ -724,8 +727,8 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
 
 
 void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
-                                                  LayerForwardPropagation* forward_propagation,
-                                                  LayerBackPropagation* back_propagation) const
+                                                    LayerForwardPropagation* forward_propagation,
+                                                    LayerBackPropagation* back_propagation) const
 {
     const Index neurons_number = get_neurons_number();
 

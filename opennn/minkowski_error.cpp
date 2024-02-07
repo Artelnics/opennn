@@ -87,24 +87,26 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 /// \param back_propagation
 
 void MinkowskiError::calculate_error(const DataSetBatch& batch,
-                                     const ForwardPropagation&,
-                                     LossIndexBackPropagation& back_propagation) const
+                                     const ForwardPropagation& forward_propagation,
+                                     BackPropagation& back_propagation) const
 {
+    calculate_errors(batch, forward_propagation, back_propagation);
+
+    const Index batch_samples_number = batch.get_batch_samples_number();
+
     Tensor<type, 0> minkowski_error;
 
     minkowski_error.device(*thread_pool_device)
             = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter);
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
-
     back_propagation.error = minkowski_error(0)/type(batch_samples_number);
 
-    if(is_nan(back_propagation.error))
+    if(isnan(back_propagation.error))
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: minkowski_error class.\n"
-               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
+               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
                << "NAN values found in back propagation error.";
 
         throw invalid_argument(buffer.str());
@@ -114,36 +116,38 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
 
 void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                                             ForwardPropagation&,
-                                            LossIndexBackPropagation& back_propagation) const
+                                            BackPropagation& back_propagation) const
 {
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
     
-    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
+    const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
+    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
 
-    const Tensor<type, 0> p_norm_derivative =
-            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter)).pow(minkowski_parameter - type(1));
+    Tensor<type, 0> p_norm_derivative;
+    
+    p_norm_derivative.device(*thread_pool_device) 
+        = (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(type(1) / minkowski_parameter)).pow(minkowski_parameter - type(1));
 
     if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
-        deltas_map.setZero();
+        deltas.setZero();
 
         return;
     }
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    deltas_map.device(*thread_pool_device)
+    deltas.device(*thread_pool_device)
             = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
-    deltas_map.device(*thread_pool_device)
-            = (type(1.0/batch_samples_number))*deltas_map/p_norm_derivative();
+    deltas.device(*thread_pool_device)
+            = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
 
-    replace_if(deltas_map.data(), deltas_map.data()+deltas_map.size(), [](type x){return isnan(x);}, type(0));
+    replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, type(0));
 }
 
 

@@ -114,10 +114,10 @@ public:
 
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
-
-   Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
-
-   void update_parameters(const DataSetBatch& , ForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData&) const;
+/*
+   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+*/
+   void update_parameters(const DataSetBatch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training() final;
 
@@ -218,6 +218,8 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
         // Optimization algorithm data
 
+        BFGS.resize(parameters_number);
+
         training_direction.resize(parameters_number);
 
         old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
@@ -256,6 +258,8 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
     Tensor<type, 1> old_inverse_hessian_dot_gradient_difference;
 
     // Optimization algorithm data
+
+    Tensor<type, 1> BFGS;
 
     Index epoch = 0;
 

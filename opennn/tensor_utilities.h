@@ -45,6 +45,7 @@ void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const 
 // Rows
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
+Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 // Columns
 
@@ -71,8 +72,6 @@ bool has_NAN(Tensor<type, 2>&);
 
 bool is_zero(const Tensor<type, 1>&);
 bool is_zero(const Tensor<type,1>&, const type&);
-
-bool is_nan(const type&);
 
 bool is_binary(const Tensor<type, 2>&);
 
@@ -136,9 +135,9 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, cons
 
 // Kronecker product
 
-Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&);
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-void kronecker_product_void(TensorMap<Tensor<type, 1>>&, TensorMap<Tensor<type, 2>>&);
+void kronecker_product(const Tensor<type, 1>&, Tensor<type, 2>&);
 
 // L1 norm
 
@@ -160,10 +159,7 @@ type l2_distance(const type&, const type&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
-Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
-
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>&, type*);
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
+// Check
 
 void check_size(const Tensor<type, 1>&, const Index&, const string&);
 
@@ -172,21 +168,29 @@ void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const 
 void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 
-bool contains(const Tensor<size_t,1>&, const size_t&);
-bool contains(const Tensor<type,1>&, const type&);
-bool contains(const Tensor<string,1>&, const string&);
-bool contains(const Tensor<Index,1>&, const Index&);
+// Fill
 
-// Assemble methods
+void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>&, type*);
+void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
+
+// Contain
+
+bool contains(const Tensor<size_t, 1>&, const size_t&);
+bool contains(const Tensor<type, 1>&, const type&);
+bool contains(const Tensor<string, 1>&, const string&);
+bool contains(const Tensor<Index, 1>&, const Index&);
+
+Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
+
+// Assemble 
 
 Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
 
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
-Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
 
 // Push back
 
@@ -195,6 +199,14 @@ void push_back_string(Tensor<string, 1>&, const string&);
 void push_back_type(Tensor<type, 1>&, const type&);
 
 Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
+
+// Conversion
+
+string string_tensor_to_string(const Tensor<string, 1>&, const string&);
+
+Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
+
+
 
 Index partition(Tensor<type, 2>&, Index, Index, Index);
 Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
@@ -206,11 +218,7 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
 Tensor<type, 1> mode(Tensor<type, 1>&);
 
-
-Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
-
-string tensor_string_to_text(const Tensor<string,1>&, string&);
-Tensor<string, 1> to_string_tensor(const Tensor<type,1>&);
+void print_tensor(const float* vector, const int dimensions[]);
 
 
 template<class T, int n>
@@ -223,9 +231,7 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
     return dimensions;
 }
 
-
-void print_tensor(const float* vector, const int dimensions[]);
-
+/*
 template<int rank>
 pair<type*, dimensions> get_pair(const Tensor<type, rank>& tensor)
 {
@@ -238,7 +244,7 @@ pair<type*, dimensions> get_pair(const Tensor<type, rank>& tensor)
 
     return pair<type*, dimensions>(data, dimensions);
 }
-
+*/
 }
 
 #endif

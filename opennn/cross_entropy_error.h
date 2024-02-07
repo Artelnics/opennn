@@ -44,29 +44,29 @@ public:
 
    void calculate_error(const DataSetBatch&,
                         const ForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+                        BackPropagation&) const final;
 
    void calculate_binary_error(const DataSetBatch&,
                         const ForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        BackPropagation&) const;
 
    void calculate_multiple_error(const DataSetBatch&,
                         const ForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        BackPropagation&) const;
 
    // Gradient methods
 
    void calculate_output_delta(const DataSetBatch&,
                                ForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+                               BackPropagation&) const final;
 
    void calculate_binary_output_delta(const DataSetBatch&,
                                       ForwardPropagation&,
-                                      LossIndexBackPropagation&) const;
+                                      BackPropagation&) const;
 
    void calculate_multiple_output_delta(const DataSetBatch&,
                                         ForwardPropagation&,
-                                        LossIndexBackPropagation&) const;
+                                        BackPropagation&) const;
 
    string get_error_type() const final;
    string get_error_type_text() const final;

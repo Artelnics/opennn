@@ -114,7 +114,7 @@ void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
     }
     else
     {
-        preprocessed_inputs = inputs;
+        preprocessed_inputs.device(*thread_pool_device) = inputs;
     }
 
     if(row_stride != 1 || column_stride != 1)
@@ -206,6 +206,7 @@ void ConvolutionalLayer::normalize(LayerForwardPropagation* layer_forward_propag
         if(is_training)
         {
             TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
+
             TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
 
             mean.device(*thread_pool_device) = kernel_output.mean();
@@ -473,8 +474,7 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
 
     const Index batch_samples_number = convolutional_layer_back_propagation->batch_samples_number;
 
-    const Index next_flatten_layer_neurons_number  =
-            next_flatten_layer_pointer->get_neurons_number();
+    const Index next_flatten_layer_neurons_number = next_flatten_layer_pointer->get_neurons_number();
     
     copy(execution::par, 
          next_flatten_layer_back_propagation->deltas.data(),

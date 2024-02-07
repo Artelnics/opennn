@@ -74,11 +74,11 @@ public:
      
    void calculate_error(const DataSetBatch&,
                         const ForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+                        BackPropagation&) const final;
 
    void calculate_output_delta(const DataSetBatch&,
                                ForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+                               BackPropagation&) const final;
 
     // Back propagation LM
 

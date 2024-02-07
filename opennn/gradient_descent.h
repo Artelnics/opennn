@@ -96,7 +96,7 @@ public:
    void update_parameters(
            const DataSetBatch&,
            ForwardPropagation&,
-           LossIndexBackPropagation&,
+           BackPropagation&,
            GradientDescentData&) const;
 
    TrainingResults perform_training() final;

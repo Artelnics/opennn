@@ -42,13 +42,19 @@ bool calculate_random_bool()
 
 void initialize_sequential(Tensor<type, 1>& vector)
 {
-    for(Index i = 0; i < vector.size(); i++) vector(i) = type(i);
+    #pragma omp parallel for
+
+    for(Index i = 0; i < vector.size(); i++) 
+        vector(i) = type(i);
 }
 
 
 void initialize_sequential(Tensor<Index, 1>& vector)
 {
-    for(Index i = 0; i < vector.size(); i++) vector(i) = i;
+    #pragma omp parallel for
+
+    for(Index i = 0; i < vector.size(); i++) 
+        vector(i) = i;
 }
 
 
@@ -62,7 +68,7 @@ void initialize_sequential(Tensor<Index, 1>& new_tensor,
 
     for(Index i = 1; i < new_size-1; i++)
     {
-        new_tensor(i) = new_tensor(i-1)+step;
+        new_tensor(i) = new_tensor(i-1) + step;
     }
 
     new_tensor(new_size-1) = end;
@@ -155,14 +161,6 @@ bool is_zero(const Tensor<type,1>& tensor,const type& limit)
 }
 
 
-bool is_nan(const type& value)
-{
-    if(!isnan(value)) return false;
-
-    return true;
-}
-
-
 bool is_false(const Tensor<bool, 1>& tensor)
 {
     const Index size = tensor.size();
@@ -179,6 +177,8 @@ bool is_false(const Tensor<bool, 1>& tensor)
 Index count_true(const Tensor<bool, 1>& tensor)
 {
     Index trueCount = 0;
+
+#pragma omp parallel for
 
     for(int i = 0; i < tensor.size(); ++i)
     {
@@ -314,7 +314,12 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
-    for(int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
+    #pragma omp parallel for
+
+    for(int i = 0; i < x.size(); i++) 
+    { 
+        result(i) = (x(i) == y(i)); 
+    }
 
     return result;
 }
@@ -373,29 +378,6 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
     return rank;
 }
 
-/*
-Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
-{
-    const Index columns_number = box_plots.dimension(0);
-
-    Tensor<type, 2> summary(5, columns_number);
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        const BoxPlot& box_plot = box_plots(i);
-        summary(0, i) = box_plot.minimum;
-        summary(1, i) = box_plot.first_quartile;
-        summary(2, i) = box_plot.median;
-        summary(3, i) = box_plot.third_quartile;
-        summary(4, i) = box_plot.maximum;
-    }
-
-    Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
-    Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
-
-    return reshaped_summary;
-}
-*/
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 {
@@ -435,6 +417,8 @@ Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index
 
     Tensor<string,1> sorted_tokens(tokens_size);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < tokens_size; i++)
     {
         sorted_tokens(i) = tokens(rank(i));
@@ -461,6 +445,8 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
     }
 
     Tensor<Index,1> sorted_tokens(tokens_size);
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < tokens_size; i++)
     {
@@ -577,7 +563,7 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const 
     }
 
     return indices;
-};
+}
 
 
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vectors, const Index& bound)
@@ -594,7 +580,7 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vec
     }
 
     return indices;
-};
+}
 
 
 void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
@@ -617,7 +603,7 @@ void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
             index++;
         }
     }
-};
+}
 
 
 
@@ -641,8 +627,7 @@ void delete_indices(Tensor<Index,1>& vector, const Tensor<Index,1>& indices)
             index++;
         }
     }
-};
-
+}
 
 
 void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
@@ -704,7 +689,8 @@ Index count_between(const Tensor<type,1>& vector,const type& minimum, const type
 
     for(Index i = 0; i < size; i++)
     {
-        if(vector(i) >= minimum && vector(i) <= maximum) count++;
+        if(vector(i) >= minimum && vector(i) <= maximum) 
+            count++;
     }
 
     return count;
@@ -715,32 +701,7 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 {
     const Index columns_number = new_row.size();
 
-#ifdef __OPENNN_DEBUG__
-
-    if(row_index >= rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix Template.\n"
-               << "set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index) method.\n"
-               << "Index must be less than number of rows.\n";
-
-        throw logic_error(buffer.str());
-    }
-    if(columns_number != matrix.dimension(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix Template.\n"
-               << "set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index) method.\n"
-               << "New row must have same columns number than original matrix.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set new row
+    #pragma omp parallel for    
 
     for(Index i = 0; i < columns_number; i++)
     {
@@ -751,20 +712,6 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
 Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index& column_index, const type& minimum, const type& maximum)
 {
-#ifdef __OPENNN_DEBUG__
-
-    if(column_index >= matrix.dimension(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Matrix Template.\n"
-               << "filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index& column_index, const type& minimum, const type& maximum)\n"
-               << "Column index must be less than number of columns.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
     const Tensor<type,1> column = matrix.chip(column_index,1);
     const Index new_rows_number = count_between(column, minimum, maximum);
 
@@ -812,13 +759,16 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
 };
 
 
-Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
+    type* x_data = (type*)x.data();
+    type* y_data = (type*)y.data();
+
     // Transform Tensors into Dense matrix
 
-    auto ml = Map<Matrix<type, Dynamic, Dynamic, RowMajor >>(x.data(), x.dimension(0), 1);
+    const auto ml = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(x_data, x.dimension(0), 1);
 
-    auto mr = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(y.data(),y.dimension(0), 1);
+    const auto mr = Map<Matrix<type, Dynamic, Dynamic, RowMajor>>(y_data, y.dimension(0), 1);
 
     // Kronecker Product
 
@@ -826,19 +776,22 @@ Tensor<type, 2> kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y)
 
     // Matrix into a Tensor
 
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), x.size(), y.size());
+    const TensorMap<Tensor<type, 2>> direct_matrix(product.data(), x.size(), y.size());
 
     return direct_matrix;
 }
 
 
-void kronecker_product_void(TensorMap<Tensor<type, 1>>& x, TensorMap<Tensor<type, 2>>& y)
+void kronecker_product(const Tensor<type, 1>& x, Tensor<type, 2>& y)
 {
     const Index n = x.dimension(0);
+    
+    type* x_data = (type*)x.data();
+    type* y_data = (type*)y.data();
 
-    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic> >(x.data(), n, 1);
+    const auto x_matrix = Map<Matrix<type, Dynamic, Dynamic>>(x_data, n, 1);
 
-    auto product = Map< Matrix<type, Dynamic, Dynamic> >(y.data(), n*n, 1);
+    auto product = Map<Matrix<type, Dynamic, Dynamic>>(y_data, n*n, 1);
 
     product = kroneckerProduct(x_matrix, x_matrix).eval();
 }
@@ -987,7 +940,7 @@ void sum_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
 {
     const Index rows_number = matrix.dimension(0);
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for (Index i = 0; i < rows_number; i++)
         matrix(i, i) += values(i);
@@ -1003,7 +956,9 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
     Tensor<type, 1> x(n);
 
     const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
+
     const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
+    
     Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
@@ -1060,6 +1015,8 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 Index count_NAN(const Tensor<type, 1>& x)
 {
     Index NAN_number = 0;
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < x.size(); i++)
     {
@@ -1221,6 +1178,8 @@ Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>& x, const Tensor<ty
 
     Tensor<type, 2> data(rows_number, columns_number);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
     {
         data(i, 0) = x(i);
@@ -1237,6 +1196,8 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<ty
     const Index columns_number = 1 + y.dimension(1);
 
     Tensor<type, 2> data(rows_number, columns_number);
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -1259,6 +1220,8 @@ Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<ty
 
     Tensor<type, 2> data(rows_number, columns_number);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < rows_number; i++)
     {
         for(Index j = 0; j < x.dimension(1); j++)
@@ -1279,6 +1242,8 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
     const Index columns_number = x.dimension(1) + y.dimension(1);
 
     Tensor<type, 2> data(rows_number, columns_number);
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -1304,10 +1269,14 @@ Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const 
 
     Tensor<string,1> data(x_size + y_size);
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < x_size; i++)
     {
         data(i) = x(i);
     }
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < y_size; i++)
     {
@@ -1318,7 +1287,7 @@ Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const 
 }
 
 
-string tensor_string_to_text(const Tensor<string,1>&x, string& separator)
+string string_tensor_to_string(const Tensor<string,1>&x, const string& separator)
 {
     const Index size = x.size();
 
@@ -1327,7 +1296,7 @@ string tensor_string_to_text(const Tensor<string,1>&x, string& separator)
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Tensor utilites.\n"
-              << "Mstring tensor_string_to_text(Tensor<string,1>&x,string& separator).\n"
+              << "Mstring to_string(Tensor<string,1>&x,string& separator).\n"
               << "Input vector must have dimension greater than 0.\n";
 
        throw invalid_argument(buffer.str());
@@ -1377,6 +1346,8 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
    Tensor<type, 2> new_matrix(rows_number-1, columns_number);
 
+    #pragma omp parallel for
+
    for(Index i = 0; i < row_index; i++)
    {
       for(Index j = 0; j < columns_number; j++)
@@ -1384,6 +1355,8 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
         new_matrix(i,j) = tensor(i,j);
       }
    }
+
+    #pragma omp parallel for
 
    for(Index i = row_index+1; i < rows_number; i++)
    {
@@ -1463,7 +1436,10 @@ void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
 
     Tensor<Index, 1> new_vector(new_size);
 
-    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+    #pragma omp parallel for
+
+    for(Index i = 0; i < old_size; i++) 
+        new_vector(i) = old_vector(i);
 
     new_vector(new_size-1) = new_element;
 
@@ -1479,7 +1455,10 @@ void push_back_string(Tensor<string, 1>& old_vector, const string& new_string)
 
     Tensor<string, 1> new_vector(new_size);
 
-    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+    #pragma omp parallel for
+
+    for(Index i = 0; i < old_size; i++) 
+        new_vector(i) = old_vector(i);
 
     new_vector(new_size-1) = new_string;
 
@@ -1495,7 +1474,10 @@ void push_back_type(Tensor<type, 1>& vector, const type& new_value)
 
     Tensor<type, 1> new_vector(new_size);
 
-    for(Index i = 0; i < old_size; i++) new_vector(i) = vector(i);
+    #pragma omp parallel for
+
+    for(Index i = 0; i < old_size; i++) 
+        new_vector(i) = vector(i);
 
     new_vector(new_size-1) = new_value;
 
@@ -1507,9 +1489,11 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
 {
     Tensor<string, 1> vector(x.size());
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < x.size(); i++)
     {
-        vector(i) = to_string(x(i));
+        vector(i) = std::to_string(x(i));
     }
 
     return vector;
@@ -1550,10 +1534,13 @@ void print_tensor(const float* vector, const int dimensions[])
     }
 }
 
+
 void swap_rows(Tensor<type, 2>& data_matrix, Index row1, Index row2)
 {
-    Tensor<type, 1> temp = data_matrix.chip(row1, 0);
+    const Tensor<type, 1> temp = data_matrix.chip(row1, 0);
+
     data_matrix.chip(row1, 0) = data_matrix.chip(row2, 0);
+
     data_matrix.chip(row2, 0) = temp;
 }
 
@@ -1563,7 +1550,7 @@ void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index
     if(start_index >= end_index)
         return;
 
-    Index partition_index = partition(data, start_index, end_index, target_column);
+    const Index partition_index = partition(data, start_index, end_index, target_column);
 
     quick_sort(data, start_index, partition_index - 1, target_column);
     quick_sort(data, partition_index + 1, end_index, target_column);
@@ -1573,7 +1560,7 @@ void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index
 void quicksort_by_column(Tensor<type, 2>& data, Index target_column)
 {
     Tensor<type, 2>* data_matrix_ptr = &data;
-    Index rows_number = data_matrix_ptr->dimension(0);
+    const Index rows_number = data_matrix_ptr->dimension(0);
 
     quick_sort(*data_matrix_ptr, 0, rows_number - 1, target_column);
 }

@@ -402,6 +402,8 @@ void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
+    outputs.device(*thread_pool_device) = inputs;
+
     if(bounding_method == BoundingMethod::Bounding)
     {
         const Index rows_number = inputs.dimension(0);
@@ -421,16 +423,8 @@ void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair
                 {
                     outputs(i,j) = upper_bounds(j);
                 }
-                else
-                {
-                    outputs(i,j) = inputs(i,j);
-                }
             }
         }
-    }
-    else
-    {
-        outputs = inputs;
     }
 }
 

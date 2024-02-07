@@ -41,59 +41,51 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 /// \param back_propagation
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const ForwardPropagation&,
-                     LossIndexBackPropagation& back_propagation) const
+                                       const ForwardPropagation& forward_propagation,
+                                       BackPropagation& back_propagation) const
 {
-    Tensor<type, 0> sum_squared_error;
+    calculate_errors(batch, forward_propagation, back_propagation);
 
-    Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    // Check if works for convolutional
-    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     // This line was needed in convolutional branch: 
     // const Index batch_samples_number = batch.inputs_2d.dimension(0) > 0 ? batch.inputs_2d.dimension(0) : batch.inputs_4d.dimension(0);
 
     const type coefficient = batch_samples_number > type(0) ? type(batch_samples_number) : type(1);
 
+    Tensor<type, 0> sum_squared_error;
+
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
 
-    if(is_nan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: mean_squared_error class.\n"
-               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
+    if(isnan(back_propagation.error)) throw invalid_argument("Error is NAN.");
 }
 
 
 void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
-                     const ForwardPropagation&,
-                     LossIndexBackPropagationLM& back_propagation) const
+                                          const ForwardPropagation&,
+                                          LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
     sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
-    const type coefficient = type(batch_samples_number);
+    const type coefficient = type(1)/type(batch_samples_number*outputs_number);
 
-    back_propagation.error = sum_squared_error(0)/coefficient;
+    back_propagation.error = coefficient*sum_squared_error(0);
 }
 
 
 void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                               ForwardPropagation&,
-                                              LossIndexBackPropagation& back_propagation) const
+                                              BackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
      check();
@@ -116,11 +108,11 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const type coefficient = type(2.0)/type(outputs_number*batch_samples_number);
      
-     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
+     const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
 
-     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
+     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
 
-     deltas_map.device(*thread_pool_device) = coefficient*errors;
+     deltas.device(*thread_pool_device) = coefficient*errors;
 }
 
 

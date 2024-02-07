@@ -262,7 +262,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 void GradientDescent::update_parameters(
         const DataSetBatch& batch,
         ForwardPropagation& forward_propagation,
-        LossIndexBackPropagation& back_propagation,
+        BackPropagation& back_propagation,
         GradientDescentData& optimization_data) const
 {
     NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
@@ -397,8 +397,8 @@ TrainingResults GradientDescent::perform_training()
 
     loss_index_pointer->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 

@@ -273,7 +273,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 }
 
 
-void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
+void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data) const
 {
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
@@ -400,8 +400,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     loss_index_pointer->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
+    BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
 
     //type training_loss = type(0);
     type training_error = type(0);

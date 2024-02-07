@@ -704,6 +704,9 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
+    const Index samples_number = inputs_pair.second[0][0];
+    const Index neurons_number = get_neurons_number();
+
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation
             = static_cast<UnscalingLayerForwardPropagation*>(forward_propagation);
 
@@ -711,13 +714,16 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
 
     Tensor<type,2>& outputs = unscaling_layer_forward_propagation->outputs;
 
-    const Index neurons_number = get_neurons_number();
+
+    Scaler scaler;
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        const Scaler scaler = scalers(i);
+        scaler = scalers(i);
 
-        Tensor<type, 1> column = inputs.chip(i, 1);
+        const TensorMap<Tensor<type, 1>> input_column(inputs.data() + i * samples_number, samples_number);
+
+        TensorMap<Tensor<type, 1>> output_column(outputs.data() + i * samples_number, samples_number);
 
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
@@ -740,7 +746,7 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
 
                 const type intercept = -(min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(max_range-min_range);
 
-                column = intercept + slope*inputs.chip(i, 1);
+                output_column.device(*thread_pool_device) = intercept + slope * input_column;
             }
             else if(scaler == Scaler::MeanStandardDeviation)
             {
@@ -748,17 +754,17 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
 
                 const type intercept = descriptives(i).mean;
 
-                column = intercept + slope*inputs.chip(i, 1);
+                output_column.device(*thread_pool_device) = intercept + slope*input_column;
             }
             else if(scaler == Scaler::StandardDeviation)
             {
                 const type standard_deviation = descriptives(i).standard_deviation;
 
-                column = standard_deviation * inputs.chip(i, 1);
+                output_column.device(*thread_pool_device) = standard_deviation*input_column;
             }
             else if(scaler == Scaler::Logarithm)
             {
-                column = inputs.chip(i,1).exp();
+                output_column.device(*thread_pool_device) = input_column.exp();
             }
             else
             {
@@ -771,7 +777,6 @@ void UnscalingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
                 throw invalid_argument(buffer.str());
             }
         }
-        outputs.chip(i, 1) = column;
     }
 }
 

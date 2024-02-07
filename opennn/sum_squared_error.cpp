@@ -33,10 +33,12 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, Data
 }
 
 
-void SumSquaredError::calculate_error(const DataSetBatch&,
-                     const ForwardPropagation&,
-                     LossIndexBackPropagation& back_propagation) const
+void SumSquaredError::calculate_error(const DataSetBatch& batch,
+                                      const ForwardPropagation& forward_propagation,
+                                      BackPropagation& back_propagation) const
 {
+    calculate_errors(batch, forward_propagation, back_propagation);
+
     Tensor<type, 0> sum_squared_error;
 
     sum_squared_error.device(*thread_pool_device)
@@ -61,7 +63,7 @@ void SumSquaredError::calculate_error_lm(const DataSetBatch&,
 
 void SumSquaredError::calculate_output_delta(const DataSetBatch&,
                                              ForwardPropagation&,
-                                             LossIndexBackPropagation& back_propagation) const
+                                             BackPropagation& back_propagation) const
 {
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -69,11 +71,11 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
      const type coefficient = type(2.0);
      
-     const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
+     const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
+     
+     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
 
-     TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
-
-     deltas_map.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 

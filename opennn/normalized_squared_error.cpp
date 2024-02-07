@@ -105,7 +105,7 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     for(Index i = 0; i < columns; i++)
     {
         copy(execution::par, 
-            targets.data() + targets.dimension(0) * i,
+             targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
     }
@@ -113,7 +113,7 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     for(Index i = 0; i < columns; i++)
     {
         copy(execution::par, 
-            targets.data() + targets.dimension(0) * i + 1,
+             targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
              targets_t.data() + targets_t.dimension(0) * i);
     }
@@ -150,13 +150,15 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 #endif
 
     const Index target_samples_number = targets_t_1.dimension(0);
-    const Index target_varaibles_number = targets_t_1.dimension(1);
+    const Index target_variables_number = targets_t_1.dimension(1);
 
     type normalization_coefficient = type(0);
 
+    // @todo add pragma
+
     for(Index i = 0; i < target_samples_number; i++)
     {
-        for(Index j = 0; j < target_varaibles_number; j++)
+        for(Index j = 0; j < target_variables_number; j++)
         {
             normalization_coefficient += (targets_t_1(i,j) - targets_t(i,j)) * (targets_t_1(i,j) - targets_t(i,j));
         }
@@ -255,9 +257,11 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     type normalization_coefficient = type(0);
 
+    Tensor<type, 0> norm;
+
     for(Index i = 0; i < size; i++)
     {
-        const Tensor<type, 0> norm = (targets.chip(i, 0) - targets_mean).square().sum();
+        norm.device(*thread_pool_device) = (targets.chip(i, 0) - targets_mean).square().sum();
 
         normalization_coefficient += norm(0);
     }
@@ -274,8 +278,8 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                                             const ForwardPropagation&,
-                                             LossIndexBackPropagation& back_propagation) const
+                                             const ForwardPropagation& forward_propagation,
+                                             BackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -290,6 +294,8 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
         throw invalid_argument(buffer.str());
     }
 #endif
+
+    calculate_errors(batch, forward_propagation, back_propagation);
 
     Tensor<type, 0> sum_squared_error;
 
@@ -337,7 +343,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                     ForwardPropagation&,
-                                                    LossIndexBackPropagation& back_propagation) const
+                                                    BackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -352,14 +358,13 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient
-            = type(2)/(type(batch_samples_number)/type(total_samples_number)*normalization_coefficient);
+    const type coefficient = type(2)/(type(batch_samples_number)/type(total_samples_number)*normalization_coefficient);
     
-    const pair<type*, dimensions> deltas = output_layer_back_propagation->get_deltas_pair();
+    const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas_map(deltas.first, deltas.second[0][0], deltas.second[0][1]);
+    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
 
-    deltas_map.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 
@@ -405,9 +410,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& bat
     const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
-
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient * loss_index_back_propagation_lm.gradient;
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B)*coefficient;
 }
 
 

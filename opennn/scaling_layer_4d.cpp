@@ -737,11 +737,8 @@ void ScalingLayer4D::forward_propagate(const pair<type*, dimensions>& inputs_pai
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
 {
-/*
     ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation);
-
-    const Index input_rank = inputs.second.size();
 
     const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
                                             inputs_pair.second[0][0],
@@ -751,13 +748,7 @@ void ScalingLayer4D::forward_propagate(const pair<type*, dimensions>& inputs_pai
 
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 
-    for(Index i = 0; i < inputs.size(); i++)
-    {
-
-        output(i) = -type(1) + type(2*input_map(i)/255);
-
-    }
-*/
+    outputs.device(*thread_pool_device) = -type(1) + type(2/255)*inputs;
 }
 
 

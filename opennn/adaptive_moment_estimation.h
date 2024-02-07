@@ -105,7 +105,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
-   void update_parameters(LossIndexBackPropagation&, AdaptiveMomentEstimationData&) const;
+   void update_parameters(BackPropagation&, AdaptiveMomentEstimationData&) const;
 
 private:
 

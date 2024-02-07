@@ -628,7 +628,7 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
     {
         file_stream.OpenElement("Input");
 
-        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+        file_stream.PushAttribute("Index", std::to_string(i+1).c_str());
 
         file_stream.PushText(inputs_names[i].c_str());
 
@@ -693,7 +693,7 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
     {
         file_stream.OpenElement("Output");
 
-        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+        file_stream.PushAttribute("Index", std::to_string(i+1).c_str());
 
         file_stream.PushText(outputs_names[i].c_str());
 

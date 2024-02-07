@@ -30,7 +30,7 @@
 namespace opennn
 {
 
-struct LossIndexBackPropagation;
+struct BackPropagation;
 struct LossIndexBackPropagationLM;
 
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
@@ -171,29 +171,29 @@ public:
 
    void calculate_errors(const DataSetBatch&,
                          const ForwardPropagation&,
-                         LossIndexBackPropagation&) const;
+                         BackPropagation&) const;
 
    void calculate_errors(const pair<type*, dimensions>&,
                          const ForwardPropagation&,
-                         LossIndexBackPropagation&) const;
+                         BackPropagation&) const;
 
    virtual void calculate_error(const DataSetBatch&,
                                 const ForwardPropagation&,
-                                LossIndexBackPropagation&) const = 0;
+                                BackPropagation&) const = 0;
 
    virtual void calculate_output_delta(const DataSetBatch&,
                                        ForwardPropagation&,
-                                       LossIndexBackPropagation&) const = 0;
+                                       BackPropagation&) const = 0;
 
    void calculate_layers_error_gradient(const DataSetBatch& ,
                                         const ForwardPropagation& ,
-                                        LossIndexBackPropagation& ) const;
+                                        BackPropagation& ) const;
 
-   void assemble_layers_error_gradient(LossIndexBackPropagation&) const;
+   void assemble_layers_error_gradient(BackPropagation&) const;
 
    void back_propagate(const DataSetBatch&,
                        ForwardPropagation&,
-                       LossIndexBackPropagation&) const;
+                       BackPropagation&) const;
 
    // Back propagation LM
 

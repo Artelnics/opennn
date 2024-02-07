@@ -14,18 +14,18 @@ namespace opennn
 /// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-struct LossIndexBackPropagation
+struct BackPropagation
 {
     /// Default constructor.
 
-    explicit LossIndexBackPropagation() {}
+    explicit BackPropagation() {}
 
-    explicit LossIndexBackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
+    explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
         set(new_batch_samples_number, new_loss_index_pointer);
     }
 
-    virtual ~LossIndexBackPropagation();
+    virtual ~BackPropagation();
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {

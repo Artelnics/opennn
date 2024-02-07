@@ -318,8 +318,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     loss_index_pointer->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
+    BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
 
 //    type training_loss = type(0);
     type training_error = type(0);
@@ -366,6 +366,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
 
             // Data set
+            cout << "fill" << endl;
 
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
@@ -375,11 +376,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             
             inputs_pair = training_batch.get_inputs_pair();
 
+            cout << "forward_propagate" << endl;
+
             neural_network_pointer->forward_propagate(inputs_pair,
                                                       training_forward_propagation,
                                                       is_training);
 
             // Loss index
+
+            cout << "back_propagate" << endl;
 
             loss_index_pointer->back_propagate(training_batch,
                                                training_forward_propagation,
@@ -535,37 +540,37 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Initial learning rate
 
     labels_values(0,0) = "Initial learning rate";
-    labels_values(0,1) = to_string(double(initial_learning_rate));
+    labels_values(0,1) = std::to_string(double(initial_learning_rate));
 
     // Initial decay
 
     labels_values(1,0) = "Initial decay";
-    labels_values(1,1) = to_string(double(initial_decay));
+    labels_values(1,1) = std::to_string(double(initial_decay));
 
     // Beta 1
 
     labels_values(2,0) = "Beta 1";
-    labels_values(2,1) = to_string(double(beta_1));
+    labels_values(2,1) = std::to_string(double(beta_1));
 
     // Beta 2
 
     labels_values(3,0) = "Beta 2";
-    labels_values(3,1) = to_string(double(beta_2));
+    labels_values(3,1) = std::to_string(double(beta_2));
 
     // Epsilon
 
     labels_values(4,0) = "Epsilon";
-    labels_values(4,1) = to_string(double(epsilon));
+    labels_values(4,1) = std::to_string(double(epsilon));
 
     // Training loss goal
 
     labels_values(5,0) = "Training loss goal";
-    labels_values(5,1) = to_string(double(training_loss_goal));
+    labels_values(5,1) = std::to_string(double(training_loss_goal));
 
     // Maximum epochs number
 
     labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = to_string(maximum_epochs_number);
+    labels_values(6,1) = std::to_string(maximum_epochs_number);
 
     // Maximum time
 
@@ -575,7 +580,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Batch samples number
 
     labels_values(8,0) = "Batch samples number";
-    labels_values(8,1) = to_string(batch_samples_number);
+    labels_values(8,1) = std::to_string(batch_samples_number);
 
     return labels_values;
 }
@@ -585,7 +590,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 /// @param back_propagation New loss index back propagation.
 /// @param optimization_data New moment estimation data.
 
-void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
+void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
     AdaptiveMomentEstimationData& optimization_data) const
 {
     const type learning_rate =
