@@ -8,6 +8,8 @@
 
 #include "pooling_layer.h"
 #include "4d_dimensions.h"
+#include "convolutional_layer.h"
+#include "flatten_layer.h"
 
 namespace opennn
 {
@@ -318,7 +320,24 @@ void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_fo
             back_propagation);
     }
         break;
-    
+    case Layer::Type::Convolutional:
+    {
+        static_cast<const ConvolutionalLayer*>(next_layer_forward_propagation->layer_pointer)->calculate_hidden_delta(
+            next_layer_forward_propagation,
+            next_layer_back_propagation,
+            back_propagation
+        );
+    }
+        break;
+    case Layer::Type::Flatten:
+    {
+        static_cast<const FlattenLayer*>(next_layer_forward_propagation->layer_pointer)->calculate_hidden_delta(
+            next_layer_forward_propagation,
+            next_layer_back_propagation,
+            back_propagation
+        );
+    }
+        break;
     default:
     {
         //Forwarding

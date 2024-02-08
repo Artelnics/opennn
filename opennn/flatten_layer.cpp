@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "flatten_layer.h"
+#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -274,6 +275,14 @@ void FlattenLayer::calculate_hidden_delta(
                 next_flatten_layer_back_propagation,
                 back_propagation);
             
+        }
+        break;
+        case Layer::Type::Perceptron:
+        {
+            static_cast<const PerceptronLayer*>(next_layer_forwardpropagation->layer_pointer)->calculate_hidden_delta(
+                next_layer_forwardpropagation,
+                next_layer_back_propagation,
+                back_propagation);
         }
         break;
         default:

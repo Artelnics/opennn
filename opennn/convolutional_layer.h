@@ -147,11 +147,43 @@ public:
 
     // Padding
 
-    auto get_padded_input(TensorRef<Tensor<type, 4>>) const -> TensorPaddingOp<const Eigen::array<pair<int, int>, 4>, const TensorRef<Tensor<type, 4>>>;
+    template<typename TensorType> 
+    inline auto get_padded_input(const TensorType& inputs) const 
+    {
+        Eigen::array<pair<int, int>, 4> padding;
+        switch(convolution_type)
+        {
+        case ConvolutionType::Valid: 
+        {
+            padding.fill(make_pair(0, 0));
+        }
+        break;
+
+        case ConvolutionType::Same:
+        {
+            const Index input_rows_number = inputs.dimension(0);
+            const Index input_cols_number = inputs.dimension(1);
+
+            const Index kernel_rows_number = get_kernels_rows_number();
+            const Index kernel_cols_number = get_kernels_columns_number();
+
+            const int pad_rows = int(0.5 *(input_rows_number*(row_stride - 1) - row_stride + kernel_rows_number));
+            const int pad_cols = int(0.5 *(input_cols_number*(column_stride - 1) - column_stride + kernel_cols_number));
+
+            padding[Convolutional4dDimensions::row_index] = make_pair(pad_rows, pad_rows);
+            padding[Convolutional4dDimensions::column_index] = make_pair(pad_cols, pad_cols);
+            padding[Convolutional4dDimensions::channel_index] = make_pair(0, 0);
+            padding[Convolutional4dDimensions::sample_index] = make_pair(0, 0);
+        }
+        break;
+        }
+        
+        return inputs.pad(padding);
+    }
 
     // Combinations
 
-    void calculate_convolutions(TensorRef<Tensor<type, 4>>, type*) const; //change
+    void calculate_convolutions(const Tensor<type, 4>&, type*) const; //change
 
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,
@@ -282,6 +314,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
 
     void print() const;
+
+    Tensor<type, 4> deltas_times_activations_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 4> synaptic_weights_derivatives;
