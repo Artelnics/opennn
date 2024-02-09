@@ -124,13 +124,13 @@ public:
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) {}
 
-    Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
+    void calculate_no_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
-    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&, Tensor<tuple<Index, Index>, 4>& switches) const;
+    void calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>&, Tensor<tuple<Index, Index>, 4>& switches, TensorMap<Tensor<type, 4>>&) const;
     
-    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
+    void calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
-    Tensor<type, 4> calculate_average_pooling_outputs(const Tensor<type, 4>&) const;
+    void calculate_average_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
     // Activations derivatives
 

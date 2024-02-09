@@ -87,29 +87,8 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 /// Returns the result of applying average pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 4>& inputs) const
+void PoolingLayer::calculate_average_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, TensorMap<Tensor<type, 4>>& outputs) const
 {
-    const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
-
-    const Index channels_number = inputs.dimension(Convolutional4dDimensions::channel_index);
-
-    const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
-
-    const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
-
-    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number) / row_stride + 1;
-
-    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number) / column_stride + 1;
-
-    DSizes<Index, 4> outputs_dimension{};
-    outputs_dimension[Convolutional4dDimensions::sample_index] = images_number;
-    outputs_dimension[Convolutional4dDimensions::channel_index] = channels_number;
-    outputs_dimension[Convolutional4dDimensions::row_index] = outputs_rows_number;
-    outputs_dimension[Convolutional4dDimensions::column_index] = outputs_columns_number;
-
-    Tensor<type, 4> outputs(outputs_dimension);
-
-
     Tensor<type, 2> kernel(pool_columns_number, pool_rows_number);
     kernel.setConstant(static_cast<type>(1));
 
@@ -120,24 +99,22 @@ Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<typ
     outputs.device(*thread_pool_device) = 
         perform_convolution(inputs, kernel, row_stride, column_stride, conv_dim) / 
         static_cast<type>(pool_rows_number * pool_columns_number);
-
-    return outputs;
 }
 
 
 /// Returns the result of applying no pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 4> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 4>& inputs) const
+void PoolingLayer::calculate_no_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, TensorMap<Tensor<type, 4>>& outputs) const
 {
-    return inputs;
+    outputs = inputs;
 }
 
 
 /// Returns the result of applying max pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs) const
+void PoolingLayer::calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, TensorMap<Tensor<type, 4>>& outputs) const
 {
     const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
 
@@ -146,19 +123,6 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
     const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
 
     const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
-
-    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
-
-    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
-
-    Tensor<type, 4> outputs([&](){
-        DSizes<Index, 4> dim{};
-        dim[Convolutional4dDimensions::sample_index] = images_number;
-        dim[Convolutional4dDimensions::channel_index] = channels_number;
-        dim[Convolutional4dDimensions::row_index] = outputs_rows_number;
-        dim[Convolutional4dDimensions::column_index] = outputs_columns_number;
-        return dim;
-    }());
 
     outputs.setConstant(numeric_limits<type>::min());
 
@@ -181,15 +145,13 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
             }
         }
     }
-
-    return outputs;
 }
 
 /// Returns the result of applying max pooling to a batch of images and saves the indexes of the max elements in switches.
 /// @param inputs The batch of images.
 /// @param switches Saves index of the max values. Memory needs to be preallocated. 
 
-Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs, Tensor<tuple<Index, Index>, 4>& switches) const
+void PoolingLayer::calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, Tensor<tuple<Index, Index>, 4>& switches, TensorMap<Tensor<type, 4>>& outputs) const
 {
     const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
 
@@ -198,19 +160,6 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
     const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
 
     const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
-
-    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
-
-    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
-
-    Tensor<type, 4> outputs([&](){
-        DSizes<Index, 4> dim{};
-        dim[Convolutional4dDimensions::sample_index] = images_number;
-        dim[Convolutional4dDimensions::channel_index] = channels_number;
-        dim[Convolutional4dDimensions::row_index] = outputs_rows_number;
-        dim[Convolutional4dDimensions::column_index] = outputs_columns_number;
-        return dim;
-    }());
 
     outputs.setConstant(numeric_limits<type>::min());
 
@@ -235,8 +184,6 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
             }
         }
     }
-   
-    return outputs;
 }
 
 
@@ -275,23 +222,23 @@ void PoolingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
     {
     case PoolingMethod::AveragePooling:
     {
-        outputs = calculate_average_pooling_outputs(inputs);
+        calculate_average_pooling_outputs(inputs, outputs);
     }
         break;
     case PoolingMethod::NoPooling:
     {
-        outputs = calculate_no_pooling_outputs(inputs);
+        calculate_no_pooling_outputs(inputs, outputs);
     }
         break;
     case PoolingMethod::MaxPooling:
     {
         if(switch_train)
         {
-            outputs = calculate_max_pooling_outputs(inputs, pooling_layer_forward_propagation->switches);
+            calculate_max_pooling_outputs(inputs, pooling_layer_forward_propagation->switches, outputs);
         }
         else
         {
-            outputs = calculate_max_pooling_outputs(inputs);
+            calculate_max_pooling_outputs(inputs, outputs);
         }
     }
         break;

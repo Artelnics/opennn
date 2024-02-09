@@ -233,7 +233,10 @@ void PoolingLayerTest::test_calculate_no_pooling_outputs()
     inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
     inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
-    Tensor<type, 4> output = pooling_layer.calculate_no_pooling_outputs(inputs);
+    Tensor<type, 4> output(t1d2array<4>(inputs_dimension));
+    TensorMap<Tensor<type, 4>> output_m(output); 
+
+    pooling_layer.calculate_no_pooling_outputs(inputs, output_m);
 
     assert_true(is_equal<4>(inputs, output), LOG);
 }
@@ -273,7 +276,11 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
     inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
     inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
-    Tensor<type, 4> outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
+    Tensor<type, 4> outputs(t1d2array<4>(pooling_layer.get_outputs_dimensions()));
+    TensorMap<Tensor<type, 4>> output_m(outputs); 
+
+    pooling_layer.calculate_average_pooling_outputs(inputs, output_m);
+
     assert_true(outputs.dimension(0) == 2 && 
                 outputs.dimension(1) == 2 &&
                 outputs.dimension(2) == 2 &&
@@ -434,7 +441,10 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
     inputs.chip(2, Convolutional4dDimensions::row_index).setConstant(type(3));
     inputs.chip(3, Convolutional4dDimensions::row_index).setConstant(type(4));
 
-    Tensor<type, 4> outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
+    Tensor<type, 4> outputs(t1d2array<4>(pooling_layer.get_outputs_dimensions()));
+    TensorMap<Tensor<type, 4>> output_m(outputs); 
+
+    pooling_layer.calculate_max_pooling_outputs(inputs, output_m);
 
     assert_true(outputs.dimension(0) == 2 && 
                 outputs.dimension(1) == 2 &&
@@ -450,7 +460,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
     
     Tensor<tuple<Index,Index>, 4> switches(expected_outputs.dimensions());
 
-    outputs = pooling_layer.calculate_max_pooling_outputs(inputs, switches);
+    pooling_layer.calculate_max_pooling_outputs(inputs, switches, output_m);
 
     assert_true(is_equal<4>(expected_outputs, outputs), LOG);
 

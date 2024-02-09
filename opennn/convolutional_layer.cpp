@@ -81,7 +81,7 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 
 /// Calculate convolutions
 
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
+void ConvolutionalLayer::calculate_convolutions(const TensorMap<Tensor<type, 4>>& inputs,
                                                 type* combinations) const
 {
     const Tensor<type, 4> padded_inputs = get_padded_input(inputs);
