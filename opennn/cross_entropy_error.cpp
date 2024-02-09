@@ -63,18 +63,23 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
+    // Batch
+
     const Index batch_samples_number = batch.get_batch_samples_number();
-
-    const Index last_trainable_layers_number = neural_network_pointer->get_last_trainable_layer_index();
-    
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layers_number)->get_outputs_pair();
-
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    // Back propagation
+
+    type& error = back_propagation.error;
 /*
     /// @todo remove tensor allocation
 
@@ -87,6 +92,9 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
     cross_entropy_error.device(*thread_pool_device) 
         = -((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(batch_samples_number);
 
+    error = cross_entropy_error();
+
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -94,33 +102,31 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
+    // Batch
+
     const Index batch_samples_number = batch.get_batch_samples_number();
-
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
-    
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
-
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    // Back propagation
+
+    type& error = back_propagation.error;
+
     Tensor<type, 0> cross_entropy_error;
+    
     cross_entropy_error.device(*thread_pool_device) = -(targets*outputs.log()).sum();
 
-    back_propagation.error = cross_entropy_error()/type(batch_samples_number);
+    error = cross_entropy_error()/type(batch_samples_number);
 
-    if(isnan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_multiple_error(const DataSetBatch&, const NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -241,7 +247,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Cross entropy error element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Regularization

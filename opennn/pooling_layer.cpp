@@ -312,7 +312,7 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
                << "void set_pooling_type(const string&) method.\n"
                << "Unknown pooling type: " << new_pooling_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -871,7 +871,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling layer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Pooling method element
@@ -884,7 +884,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling method element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const string pooling_method_string = pooling_method_element->GetText();
@@ -901,7 +901,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling input variables dimensions element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
@@ -918,7 +918,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling column stride element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const string column_stride_string = column_stride_element->GetText();
@@ -935,7 +935,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling row stride element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const string row_stride_string = row_stride_element->GetText();
@@ -952,7 +952,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling columns number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const string pool_columns_number_string = pool_columns_number_element->GetText();
@@ -967,7 +967,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pooling rows number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const string pool_rows_number_string = pool_rows_number_element->GetText();
@@ -984,7 +984,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Padding width element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(padding_width_element->GetText())

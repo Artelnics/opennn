@@ -289,7 +289,7 @@ void MultiheadAttentionLayer::set_causal_mask(const bool& apply_causal_mask)
                << "void set_causal_mask(const bool&) method.\n"
                << "Causal mask can only be applied to self-attention. In this case, input size (" << input_size << ") should be equal to context size (" << context_size << ").";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     causal_mask = apply_causal_mask;

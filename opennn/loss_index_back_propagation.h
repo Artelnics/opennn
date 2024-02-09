@@ -58,6 +58,15 @@ struct BackPropagation
         regularization_gradient.resize(parameters_number);
     }
 
+    pair<type*, dimensions> get_output_deltas_pair() const
+    {
+        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        return neural_network.layers(trainable_layers_number - 1)->get_deltas_pair();
+    }
+
 
     void print() const
     {

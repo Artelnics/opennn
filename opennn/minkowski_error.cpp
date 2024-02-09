@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error.h"
+#include "neural_network_forward_propagation.h"
 #include "loss_index_back_propagation.h"
 
 namespace opennn
@@ -72,7 +73,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
                << "void set_Minkowski_parameter(const type&) method.\n"
                << "The Minkowski parameter must be greater than 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Set Minkowski parameter
@@ -90,27 +91,32 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
-    calculate_errors(batch, forward_propagation, back_propagation);
+    // Batch
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    Tensor<type, 2>& errors = back_propagation.errors;
+    type& error = back_propagation.error;
+
+    errors.device(*thread_pool_device) = outputs - targets;
+
     Tensor<type, 0> minkowski_error;
 
-    minkowski_error.device(*thread_pool_device)
-            = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter);
+    minkowski_error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter);
 
-    back_propagation.error = minkowski_error(0)/type(batch_samples_number);
+    error = minkowski_error(0)/type(batch_samples_number);
 
-    if(isnan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: minkowski_error class.\n"
-               << "void calculate_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -118,19 +124,20 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                                             ForwardPropagation&,
                                             BackPropagation& back_propagation) const
 {
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-    
-    const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
+    // Back propagation
+   
+    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
 
+    const Tensor<type, 2>& errors = back_propagation.errors;
+
     Tensor<type, 0> p_norm_derivative;
-    
+   
     p_norm_derivative.device(*thread_pool_device) 
-        = (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(type(1) / minkowski_parameter)).pow(minkowski_parameter - type(1));
+        = (errors.abs().pow(minkowski_parameter).sum().pow(type(1) / minkowski_parameter)).pow(minkowski_parameter - type(1));
 
     if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
@@ -139,13 +146,9 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         return;
     }
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)));
 
-    deltas.device(*thread_pool_device)
-            = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
-
-    deltas.device(*thread_pool_device)
-            = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
+    deltas.device(*thread_pool_device) = (type(1.0/batch_samples_number))*deltas/p_norm_derivative();
 
     replace_if(deltas.data(), deltas.data()+deltas.size(), [](type x){return isnan(x);}, type(0));
 }
@@ -210,7 +213,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Minkowski error element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Minkowski parameter
@@ -230,7 +233,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_Minkowski_parameter(new_Minkowski_parameter);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }

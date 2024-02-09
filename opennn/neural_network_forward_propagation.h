@@ -1,5 +1,5 @@
-#ifndef NEURALNETWORKFORWARDPROPAGATION_H
-#define NEURALNETWORKFORWARDPROPAGATION_H
+#ifndef FORWARDPROPAGATION_H
+#define FORWARDPROPAGATION_H
 
 #include <string>
 
@@ -47,6 +47,7 @@ struct ForwardPropagation
         const Index layers_number = layers_pointers.size();
 
         layers.resize(layers_number);
+        layers.setConstant(nullptr);
 
         for(Index i = 0; i < layers_number; i++)
         {
@@ -55,7 +56,6 @@ struct ForwardPropagation
             case Layer::Type::Perceptron:
             {
                 layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, layers_pointers(i));
-
             }
             break;
 
@@ -159,24 +159,13 @@ struct ForwardPropagation
         }
     }
 
-    LayerForwardPropagation* get_first_layer_forward_propagation() const
+    pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const
     {
-        const Index layers_number = layers.size();
+        const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
-        if(layers_number == 0) return nullptr;
-
-        return layers(0);
+        return layers(last_trainable_layer_index)->get_outputs_pair();
     }
 
-
-    LayerForwardPropagation* get_last_layer_forward_propagation() const
-    {
-        const Index layers_number = layers.size();
-
-        if (layers_number == 0) return nullptr;
-
-        return layers(layers_number - 1);
-    }
 
     void print() const
     {

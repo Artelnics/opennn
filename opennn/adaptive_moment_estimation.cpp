@@ -188,7 +188,7 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
                << "void set_maximum_epochs_number(const type&) method.\n"
                << "Maximum epochs number must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -214,7 +214,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -366,7 +366,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
 
             // Data set
-            cout << "fill" << endl;
 
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
@@ -376,15 +375,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             
             inputs_pair = training_batch.get_inputs_pair();
 
-            cout << "forward_propagate" << endl;
-
             neural_network_pointer->forward_propagate(inputs_pair,
                                                       training_forward_propagation,
                                                       is_training);
 
             // Loss index
-
-            cout << "back_propagate" << endl;
 
             loss_index_pointer->back_propagate(training_batch,
                                                training_forward_propagation,
@@ -427,10 +422,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                                           is_training);
 
                 // Loss
-
-                loss_index_pointer->calculate_errors(selection_batch,
-                                                     selection_forward_propagation,
-                                                     selection_back_propagation);
 
                 loss_index_pointer->calculate_error(selection_batch,
                                                     selection_forward_propagation,
@@ -741,7 +732,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Adaptive moment estimation element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // DataSetBatch size
@@ -756,7 +747,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_batch_samples_number(new_batch_samples_number);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -774,7 +765,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -793,7 +784,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -812,7 +803,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -831,7 +822,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

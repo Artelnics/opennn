@@ -87,17 +87,17 @@ public:
 
    void calculate_squared_errors_lm(const DataSetBatch&,
                                     const ForwardPropagation&,
-                                    LossIndexBackPropagationLM&) const final;
+                                    BackPropagationLM&) const final;
 
    void calculate_error_lm(const DataSetBatch&,
                            const ForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+                           BackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+                              BackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const DataSetBatch&,
-                                           LossIndexBackPropagationLM&) const final;
+                                           BackPropagationLM&) const final;
 
    // Serialization methods
 

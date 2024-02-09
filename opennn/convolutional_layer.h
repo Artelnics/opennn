@@ -209,7 +209,7 @@ public:
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
-                        Tensor<type, 1>&) const; // change
+                        Tensor<type, 1>&) const final; // change
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void write_XML(tinyxml2::XMLPrinter&) const final;

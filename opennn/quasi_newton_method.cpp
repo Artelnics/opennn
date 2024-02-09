@@ -81,7 +81,7 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
                << "string write_inverse_hessian_approximation_method() const method.\n"
                << "Unknown inverse hessian approximation method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -181,7 +181,7 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
                << "void set_inverse_hessian_approximation_method(const string&) method.\n"
                << "Unknown inverse hessian approximation method: " << new_inverse_hessian_approximation_method_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -271,7 +271,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -319,7 +319,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
                "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
                << "Unknown inverse hessian approximation method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -691,8 +691,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             // Loss Index
 
-            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -950,7 +948,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Quasi-Newton method element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Inverse hessian approximation method
@@ -965,7 +963,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_inverse_hessian_approximation_method(new_inverse_hessian_approximation_method);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1001,7 +999,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1020,7 +1018,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1039,7 +1037,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1058,7 +1056,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1077,7 +1075,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1096,7 +1094,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

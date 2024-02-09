@@ -68,7 +68,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     ForwardPropagation forward_propagation;
 
-    LossIndexBackPropagation back_propagation;
+    BackPropagation back_propagation;
 
     LearningRateAlgorithm::Triplet triplet;
 

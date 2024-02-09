@@ -16,7 +16,7 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
                << "void read_bmp_image() method.\n"
                << "Couldn't open the file.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     unsigned char info[54];
@@ -535,7 +535,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                << "void read_bmp() method.\n"
                << "Data file name is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     has_columns_names = true;
@@ -678,7 +678,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
                << "void read_bmp() method.\n"
                << "Invalid number of categories. The minimum is 2 and you have 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<string, 1> categories(classes_number);

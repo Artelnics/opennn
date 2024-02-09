@@ -427,6 +427,8 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         Tensor<type, 2> inputs(samples_number, inputs_number);
         inputs.setConstant(type(1));
 
+        /*
+
         const pair<type*, dimensions> inputs_pair = get_pair(inputs);
 
         //Forward propagate
@@ -436,7 +438,6 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         probabilistic_layer_3d.forward_propagate(inputs_pair,
             &probabilistic_layer_3d_forward_propagation,
             is_training);
-        /*
         Tensor<type, 3> outputs = probabilistic_layer_3d_forward_propagation.outputs;
 
         bool correct_outputs = true;

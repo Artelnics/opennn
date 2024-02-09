@@ -114,10 +114,10 @@ void MeanSquaredErrorTest::test_back_propagate()
 
     // Test approximation all random
     {
-        samples_number = 1 + rand()%5;
-        inputs_number = 1 + rand()%5;
-        outputs_number = 1 + rand()%5;
-        neurons_number = 1 + rand()%5;
+        samples_number = type(1) + rand()%5;
+        inputs_number = type(1) + rand()%5;
+        outputs_number = type(1) + rand()%5;
+        neurons_number = type(1) + rand()%5;
 
         // Data set
 
@@ -200,10 +200,10 @@ void MeanSquaredErrorTest::test_back_propagate()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
 
         // Data set
 
@@ -284,10 +284,10 @@ void MeanSquaredErrorTest::test_back_propagate()
 
     // Test forecasting random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
 
         // Data set
 
@@ -333,10 +333,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
     // Test approximation random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
 
         // Data set
 
@@ -978,7 +978,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//    LossIndexBackPropagation back_propagation(2, &mean_squared_error);
+//    BackPropagation back_propagation(2, &mean_squared_error);
 
 //    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -1174,7 +1174,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
 //        MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//        LossIndexBackPropagation back_propagation(2, &mean_squared_error);
+//        BackPropagation back_propagation(2, &mean_squared_error);
 
 //        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -1333,7 +1333,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-        LossIndexBackPropagation back_propagation(2, &mean_squared_error);
+        BackPropagation back_propagation(2, &mean_squared_error);
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -1542,7 +1542,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-        LossIndexBackPropagation back_propagation(images_number, &mean_squared_error);
+        BackPropagation back_propagation(images_number, &mean_squared_error);
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -1769,7 +1769,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
         MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-        LossIndexBackPropagation back_propagation(images_number, &mean_squared_error);
+        BackPropagation back_propagation(images_number, &mean_squared_error);
 
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 

@@ -184,7 +184,7 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
                << "void set_scaler(const string&) method.\n"
                << "Unknown scaler: " << new_scaler << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -232,7 +232,7 @@ void DataSet::RawVariable::set_use(const string& new_column_use)
                << "void set_use(const string&) method.\n"
                << "Unknown column use: " << new_column_use << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -270,7 +270,7 @@ void DataSet::RawVariable::set_type(const string& new_column_type)
                << "void Column::set_type(const string&) method.\n"
                << "Column type not valid (" << new_column_type << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
 
     }
 }
@@ -345,7 +345,7 @@ void DataSet::RawVariable::set_categories_uses(const Tensor<string, 1>& new_cate
                    << "void Column::set_categories_uses(const Tensor<string, 1>&) method.\n"
                    << "Category use not valid (" << new_categories_uses(i) << ").\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 }
@@ -374,7 +374,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
                << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Name element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(name_element->GetText())
@@ -394,7 +394,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
                << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Scaler element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(scaler_element->GetText())
@@ -414,7 +414,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
                << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Column use element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(column_use_element->GetText())
@@ -434,7 +434,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
                << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Type element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(type_element->GetText())
@@ -455,7 +455,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
                    << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Categories element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(categories_element->GetText())
@@ -475,7 +475,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& column_document
                    << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Categories uses element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(categories_uses_element->GetText())
@@ -1514,7 +1514,7 @@ void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
                << "void set_sample_use(const Index&, const SampleUse&) method.\n"
                << "Index must be less than samples number.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     samples_uses(index) = new_use;
@@ -1551,7 +1551,7 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
                << "void set_sample_use(const string&) method.\n"
                << "Unknown sample use: " << new_use << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1576,7 +1576,7 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
                << "void set_samples_uses(const Tensor<SampleUse, 1>&) method.\n"
                << "Size of uses(" << new_uses_size << ") must be equal to number of samples(" << samples_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1609,7 +1609,7 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
                << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
                << "Size of uses(" << new_uses_size << ") must be equal to number of samples(" << samples_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1638,7 +1638,7 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
                    << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
                    << "Unknown sample use: " << new_uses(i) << ".\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 }
@@ -1688,7 +1688,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
                << "void split_samples_random(const type&, const type&, const type&) method.\n"
                << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index samples_number = get_samples_number();
@@ -1793,7 +1793,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
                << "void split_samples_sequential(const type&, const type&, const type&) method.\n"
                << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index i = 0;
@@ -3172,7 +3172,7 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
                << new_columns_uses_size << ") must be equal to columns size ("
                << columns.size() << "). \n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < new_columns_uses.size(); i++)
@@ -3204,7 +3204,7 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
                << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
                << "Size of columns uses (" << new_columns_uses_size << ") must be equal to columns size (" << columns.size() << "). \n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < new_columns_uses.size(); i++)
@@ -3246,7 +3246,7 @@ void DataSet::set_columns_types(const Tensor<string, 1>& new_column_types)
                << "void set_all_column_types(const Tensor<ColumnType, 1>&) method.\n"
                << "Size of column types (" << new_column_types_size << ") must be equal to columns size (" << columns.size() << "). \n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < new_column_types.size(); i++)
@@ -3492,7 +3492,7 @@ void DataSet::set_columns_names(const Tensor<string, 1>& new_names)
                << "void set_columns_names(const Tensor<string, 1>&).\n"
                << "Size of names (" << new_names.size() << ") is not equal to columns number (" << columns_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < columns_number; i++)
@@ -3572,7 +3572,7 @@ void DataSet::set_columns_scalers(const Tensor<Scaler, 1>& new_scalers)
                << "void set_columns_scalers(const Tensor<Scaler, 1>& new_scalers) method.\n"
                << "Size of column scalers(" << new_scalers.size() << ") has to be the same as columns numbers(" << columns_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < columns_number; i++)
@@ -4047,7 +4047,7 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
                << "static Scaler get_scaling_unscaling_method(const string).\n"
                << "Unknown scaling-unscaling method: " << scaling_unscaling_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -4269,7 +4269,7 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
                << "Tensor<type, 1> get_sample(const Index&) const method.\n"
                << "Index of sample (" << index << ") must be less than number of samples (" << samples_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -4298,7 +4298,7 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor
                << "Tensor<type, 1> get_sample(const Index&, const Tensor<Index, 1>&) const method.\n"
                << "Index of sample must be less than number of \n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -4382,7 +4382,7 @@ Index DataSet::get_column_index(const string& column_name) const
            << "Index get_column_index(const string&) const method.\n"
            << "Cannot find " << column_name << "\n";
 
-    throw invalid_argument(buffer.str());
+    throw runtime_error(buffer.str());
 }
 
 
@@ -4415,7 +4415,7 @@ Index DataSet::get_column_index(const Index& variable_index) const
            << "Index get_column_index(const type&) const method.\n"
            << "Cannot find variable index: " << variable_index << ".\n";
 
-    throw invalid_argument(buffer.str());
+    throw runtime_error(buffer.str());
 }
 
 /// Returns the indices of a variable in the data set.
@@ -4507,7 +4507,7 @@ Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 {
     if(sample_index >= data.dimension(0))
     {
-        throw std::runtime_error("Sample index out of bounds.");
+        throw runtime_error("Sample index out of bounds.");
     }
     return data.chip(sample_index, 0);
 }
@@ -4527,7 +4527,7 @@ void DataSet::add_sample(const Tensor<type, 1>& sample)
 
     if(sample.dimension(0) != data.dimension(1))
     {
-        throw std::runtime_error("Sample size doesn't match data column size.");
+        throw runtime_error("Sample size doesn't match data column size.");
     }
 
     Tensor<type, 2> new_data(current_samples + 1, data.dimension(1));
@@ -4548,7 +4548,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 
     if(columns[column_index_start].type != RawVariableType::Categorical)
     {
-        throw logic_error("The specified column is not of categorical type.");
+        throw runtime_error("The specified column is not of categorical type.");
     }
 
     for(Index column_index = column_index_start; column_index < columns.size(); ++column_index)
@@ -4559,7 +4559,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
         }
     }
 
-    throw logic_error("Sample does not have a valid one-hot encoded category.");
+    throw runtime_error("Sample does not have a valid one-hot encoded category.");
 }
 
 
@@ -4661,7 +4661,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
                << "Tensor<type, 1> get_variable(const string&) const method.\n"
                << "Variable: " << variable_name << " does not exist.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(variables_size > 1)
@@ -4672,7 +4672,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
                << "Tensor<type, 1> get_variable(const string&) const method.\n"
                << "Variable: " << variable_name << " appears more than once in the data set.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -4743,7 +4743,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
                << "Tensor<type, 1> get_variable(const string&) const method.\n"
                << "Variable: " << variable_name << " does not exist.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(variables_size > 1)
@@ -4754,7 +4754,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
                << "Tensor<type, 1> get_variable(const string&, const Tensor<Index, 1>&) const method.\n"
                << "Variable: " << variable_name << " appears more than once in the data set.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -5109,7 +5109,7 @@ void DataSet::set_model_type_string(const string& new_model_type)
             "void set_model_type_string(const string&)\n"
             "Unknown project type: " + new_model_type + "\n";
 
-        throw logic_error(message);
+        throw runtime_error(message);
     }
 }
 
@@ -5207,7 +5207,7 @@ void DataSet::set_separator(const char& new_separator)
                << "void set_separator(const char&) method.\n"
                << "Unknown separator: " << new_separator << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -5241,7 +5241,7 @@ void DataSet::set_separator(const string& new_separator_string)
                << "void set_separator(const string&) method.\n"
                << "Unknown separator: " << new_separator_string << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -5277,7 +5277,7 @@ void DataSet::set_codification(const string& new_codification_string)
                << "Unknown codification: " << new_codification_string << ".\n"
                << "Available codifications: UTF-8, SHIFT_JIS.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -5297,7 +5297,7 @@ void DataSet::set_missing_values_label(const string& new_missing_values_label)
                << "void set_missing_values_label(const string&) method.\n"
                << "Missing values label cannot be empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -5341,7 +5341,7 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
                << "void set_missing_values_method(const string & method.\n"
                << "Not known method type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -5386,7 +5386,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
                << "Tensor<string, 1> unuse_constant_columns() method.\n"
                << "Number of columns is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -5426,7 +5426,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
                << "Tensor<Index, 1> unuse_repeated_samples() method.\n"
                << "Number of samples is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -5771,7 +5771,7 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
                        << "Index calculate_used_negatives(const Index&) const method.\n"
                        << "Training sample is neither a positive nor a negative: " << training_index << "-" << target_index << "-" << data(training_index, target_index) << endl;
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
         }
     }
@@ -5807,7 +5807,7 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
                    << "Index calculate_training_negatives(const Index&) const method.\n"
                    << "Training sample is neither a positive nor a negative: " << data(training_index, target_index) << endl;
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -5842,7 +5842,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
                    << "Index calculate_testing_negatives(const Index&) const method.\n"
                    << "Selection sample is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -6692,7 +6692,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
                    << "void scale_data() method.\n"
                    << "Unknown scaler: " << int(columns(i).scaler) << "\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
         }
     }
@@ -6737,7 +6737,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
                    << "void unscale_data() method.\n"
                    << "Unknown scaler: " << int(columns(i).scaler) << "\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
         }
     }
@@ -6788,7 +6788,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
                    << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
         }
     }
@@ -6843,7 +6843,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
                    << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown scaling and unscaling method: " << int(target_variables_scalers(i)) << "\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
         }
     }
@@ -6895,7 +6895,7 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
                    << "void unscale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown unscaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
         }
     }
@@ -6942,7 +6942,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
                    << "void unscale_targets(const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown unscaling and unscaling method.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
         }
     }
@@ -7398,7 +7398,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data set element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data file
@@ -7411,7 +7411,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data file element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data file name
@@ -7424,7 +7424,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "DataFileName element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(data_file_name_element->GetText())
@@ -7468,7 +7468,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_has_columns_names(new_columns_names_string == "1");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -7486,7 +7486,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_has_rows_label(new_rows_label_string == "1");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -7538,7 +7538,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Columns number
@@ -7551,7 +7551,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_columns_number = 0;
@@ -7580,7 +7580,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Name
@@ -7593,7 +7593,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(name_element->GetText())
@@ -7613,7 +7613,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Scaler element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(scaler_element->GetText())
@@ -7633,7 +7633,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column use element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(column_use_element->GetText())
@@ -7653,7 +7653,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(type_element->GetText())
@@ -7674,7 +7674,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_element->GetText())
@@ -7694,7 +7694,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories uses element is nullptr.\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_uses_element->GetText())
@@ -7727,7 +7727,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                   << "Time seires columns number element is nullptr.\n";
 
-//            throw invalid_argument(buffer.str());
+//            throw runtime_error(buffer.str());
 //        }
 
 //        Index time_series_new_columns_number = 0;
@@ -7756,7 +7756,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_column_element->Attribute("Item") << ").\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                // Name
@@ -7769,7 +7769,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series name element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_name_element->GetText())
@@ -7789,7 +7789,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series scaler element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_scaler_element->GetText())
@@ -7809,7 +7809,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series column use element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_column_use_element->GetText())
@@ -7829,7 +7829,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series type element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_type_element->GetText())
@@ -7850,7 +7850,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories element is nullptr.\n";
 
-//                        throw invalid_argument(buffer.str());
+//                        throw runtime_error(buffer.str());
 //                    }
 
 //                    if(time_series_categories_element->GetText())
@@ -7870,7 +7870,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories uses element is nullptr.\n";
 
-//                        throw invalid_argument(buffer.str());
+//                        throw runtime_error(buffer.str());
 //                    }
 
 //                    if(time_series_categories_uses_element->GetText())
@@ -7898,7 +7898,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows labels element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Rows labels
@@ -7928,7 +7928,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Samples number
@@ -7941,7 +7941,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_number_element->GetText())
@@ -7963,7 +7963,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples uses element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_uses_element->GetText())
@@ -7981,7 +7981,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Missing values method
@@ -7994,7 +7994,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values method element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(missing_values_method_element->GetText())
@@ -8012,7 +8012,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(missing_values_number_element->GetText())
@@ -8032,7 +8032,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Columns missing values number element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(columns_missing_values_number_element->GetText())
@@ -8057,7 +8057,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows missing values number element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(rows_missing_values_number_element->GetText())
@@ -8076,7 +8076,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview data element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Preview size
@@ -8089,7 +8089,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview size element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_preview_size = 0;
@@ -8116,7 +8116,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(row_element->GetText())
@@ -8137,7 +8137,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -8211,7 +8211,7 @@ void DataSet::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);
@@ -8362,7 +8362,7 @@ void DataSet::save_data() const
                << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
                << "Cannot open matrix data file: " << data_source_path << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     file.precision(20);
@@ -8445,7 +8445,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
                << "void save_data_binary() method." << endl
                << "Cannot open data binary file." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Write data
@@ -8512,7 +8512,7 @@ void DataSet::load_data_binary()
                << "void load_data_binary() method.\n"
                << "Cannot open binary file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     streamsize size = sizeof(Index);
@@ -8913,7 +8913,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
                << "Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of minimums(" << minimums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(maximums.size() != used_variables_number)
@@ -8924,7 +8924,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
                << "Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of maximums(" << maximums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -9307,7 +9307,7 @@ void DataSet::read_csv_1()
                << "void read_csv() method.\n"
                << "Data file name is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     std::regex accent_regex("[\\xC0-\\xFF]");
@@ -9336,7 +9336,7 @@ void DataSet::read_csv_1()
                << "void read_csv() method.\n"
                << "Cannot open data file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -9384,7 +9384,7 @@ void DataSet::read_csv_1()
                << "void read_csv_1() method.\n"
                << "File " << data_source_path << " is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Set rows labels and columns names
@@ -9408,7 +9408,7 @@ void DataSet::read_csv_1()
                << "void read_csv_1() method.\n"
                << "Some columns names are numeric.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Columns names
@@ -9473,7 +9473,7 @@ void DataSet::read_csv_1()
                            << "void read_csv() method.\n"
                            << "Cannot open data file: " << data_source_path << "\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 while(file.good())
@@ -9585,7 +9585,7 @@ void DataSet::read_csv_2_simple()
                << "void read_csv_2_simple() method.\n"
                << "Cannot open data file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     string line;
@@ -9644,7 +9644,7 @@ void DataSet::read_csv_2_simple()
                    << tokens_count << ") is not equal to number of columns("
                    << raw_columns_number << ").\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         samples_count++;
@@ -9692,7 +9692,7 @@ void DataSet::read_csv_3_simple()
                << "void read_csv_3_simple() method.\n"
                << "Cannot open data file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const bool is_float = is_same<type, float>::value;
@@ -9824,7 +9824,7 @@ void DataSet::read_csv_3_language_model()
                << "void read_csv_3_simple() method.\n"
                << "Cannot open data file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const bool is_float = is_same<type, float>::value;
@@ -9951,7 +9951,7 @@ void DataSet::read_csv_2_complete()
                << "void read_csv_2_complete() method.\n"
                << "Cannot open data file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -10020,7 +10020,7 @@ void DataSet::read_csv_2_complete()
                                                            "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(raw_columns_number) + ").\n"
                                                                                                                                                                                     "Please check the format of the data file (e.g: Use of commas both as decimal and column separator)";
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
 
         for(unsigned j = 0; j < raw_columns_number; j++)
@@ -10115,7 +10115,7 @@ void DataSet::read_csv_3_complete()
                << "void read_csv_3_complete() method.\n"
                << "Cannot open data file: " << data_source_path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const char separator_char = get_separator_char();
@@ -10200,7 +10200,7 @@ void DataSet::read_csv_3_complete()
                         data(sample_index, variable_index) = type(stod(tokens(j)));
                         variable_index++;
                     }
-                    catch(const invalid_argument& e)
+                    catch(const exception& e)
                     {
                         ostringstream buffer;
 
@@ -10208,7 +10208,7 @@ void DataSet::read_csv_3_complete()
                                << "void read_csv_3_complete() method.\n"
                                << "Sample " << sample_index << "; Invalid number: " << tokens(j) << "\n";
 
-                        throw invalid_argument(buffer.str());
+                        throw runtime_error(buffer.str());
                     }
                 }
             }
@@ -10376,7 +10376,7 @@ void DataSet::check_separators(const string& line) const
                 "Error: " + get_separator_string() + " separator not found in line data file " + data_source_path + ".\n"
                                                                                                                   "Line: '" + line + "'";
 
-        throw invalid_argument(message);
+        throw runtime_error(message);
     }
 
     if(separator == Separator::Space)
@@ -10386,14 +10386,14 @@ void DataSet::check_separators(const string& line) const
             const string message =
                     "Error: Found comma (',') in data file " + data_source_path + ", but separator is space (' ').";
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
         if(line.find(';') != string::npos)
         {
             const string message =
                     "Error: Found semicolon (';') in data file " + data_source_path + ", but separator is space (' ').";
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
     }
     else if(separator == Separator::Tab)
@@ -10403,14 +10403,14 @@ void DataSet::check_separators(const string& line) const
             const string message =
                     "Error: Found comma (',') in data file " + data_source_path + ", but separator is tab ('   ').";
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
         if(line.find(';') != string::npos)
         {
             const string message =
                     "Error: Found semicolon (';') in data file " + data_source_path + ", but separator is tab ('   ').";
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
     }
     else if(separator == Separator::Comma)
@@ -10420,7 +10420,7 @@ void DataSet::check_separators(const string& line) const
             const string message =
                     "Error: Found semicolon (';') in data file " + data_source_path + ", but separator is comma (',').";
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
     }
     else if(separator == Separator::Semicolon)
@@ -10430,7 +10430,7 @@ void DataSet::check_separators(const string& line) const
             const string message =
                     "Error: Found comma (',') in data file " + data_source_path + ", but separator is semicolon (';'). " + line;
 
-            throw invalid_argument(message);
+            throw runtime_error(message);
         }
     }
 }
@@ -10442,7 +10442,7 @@ void DataSet::check_special_characters(const string & line) const
     {
         const string message =
                 "Error: found special characters in line: " + line + ". Please, review the file.";
-        throw invalid_argument(message);
+        throw runtime_error(message);
     }
 
     //#ifdef __unix__
@@ -10450,7 +10450,7 @@ void DataSet::check_special_characters(const string & line) const
     //    {
     //        const string message =
     //                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
-    //        throw invalid_argument(message);
+    //        throw runtime_error(message);
     //    }
     //#endif
 
@@ -10802,7 +10802,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
                << "void check_input_csv() method.\n"
                << "Cannot open input data file: " << input_data_file_name << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     string line;
@@ -10842,7 +10842,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
                    << columns_number << "). \n"
                    << "Input csv must contain values for all the variables except the target. \n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -10856,7 +10856,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
                << "void check_input_csv() method.\n"
                << "Input data file is empty. \n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -10879,7 +10879,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                << "void read_input_csv() method.\n"
                << "Cannot open input data file: " << input_data_file_name << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Count samples number
@@ -10920,7 +10920,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                    << tokens_count << ") is not equal to number of columns("
                    << columns_number << ").\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         input_samples_count++;
@@ -10947,7 +10947,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                << "void read_input_csv() method.\n"
                << "Cannot open input data file: " << input_data_file_name << " for filling input data file. \n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Read first line

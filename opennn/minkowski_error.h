@@ -58,7 +58,7 @@ public:
 
    void calculate_error(const DataSetBatch& batch,
                         const ForwardPropagation& forward_propagation,
-                        BackPropagation& back_propagation) const override;
+                        BackPropagation& back_propagation) const final;
 
    void calculate_output_delta(const DataSetBatch&,
                                ForwardPropagation&,

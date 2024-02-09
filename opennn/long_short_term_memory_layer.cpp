@@ -818,7 +818,7 @@ void LongShortTermMemoryLayer::set_activation_function(const string& new_activat
                << "void set_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_activation_function_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -890,7 +890,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
                << "void set_recurrent_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_recurrent_activation_function_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -3315,7 +3315,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "PerceptronLayer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Layer name
@@ -3328,7 +3328,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "LayerName element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(layer_name_element->GetText())
@@ -3346,7 +3346,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "InputsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(inputs_number_element->GetText())
@@ -3364,7 +3364,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuronsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(neurons_number_element->GetText())
@@ -3382,7 +3382,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "TimeStep element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(time_step_element->GetText())
@@ -3400,7 +3400,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ActivationFunction element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(activation_function_element->GetText())
@@ -3418,7 +3418,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ActivationFunction element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(recurrent_activation_function_element->GetText())
@@ -3436,7 +3436,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(parameters_element->GetText())

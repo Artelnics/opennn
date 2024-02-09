@@ -185,7 +185,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
                << "void set_damping_parameter_factor(const type&) method." << endl
                << "Damping parameter factor must be greater than zero." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -209,7 +209,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
                << "void set_minimum_damping_parameter(const type&) method." << endl
                << "Minimum damping parameter must be greater than zero." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -233,7 +233,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
                << "void set_maximum_damping_parameter(const type&) method." << endl
                << "Maximum damping parameter must be greater than zero." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -296,7 +296,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -324,7 +324,7 @@ void LevenbergMarquardtAlgorithm::check() const
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -335,7 +335,7 @@ void LevenbergMarquardtAlgorithm::check() const
                << "void check() const method.\n"
                << "The loss funcional has no data set." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -346,7 +346,7 @@ void LevenbergMarquardtAlgorithm::check() const
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -358,15 +358,15 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
     if(loss_index_pointer->get_error_type() == "MINKOWSKI_ERROR")
     {
-        throw invalid_argument("Levenberg-Marquard algorithm cannot work with Minkowski error.");
+        throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     }
     else if(loss_index_pointer->get_error_type() == "CROSS_ENTROPY_ERROR")
     {
-        throw invalid_argument("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
+        throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     }
     else if(loss_index_pointer->get_error_type() == "WEIGHTED_SQUARED_ERROR")
     {
-        throw invalid_argument("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
+        throw runtime_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
     }
 
     ostringstream buffer;
@@ -450,8 +450,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     Index selection_failures = 0;
 
-    LossIndexBackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
+    BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
+    BackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
 
     // Training strategy stuff
 
@@ -619,7 +619,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
 void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
                                                     ForwardPropagation& forward_propagation,
-                                                    LossIndexBackPropagationLM& back_propagation_lm,
+                                                    BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
 
@@ -665,7 +665,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         {
             new_loss = back_propagation_lm.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
-        }catch(invalid_argument)
+        }catch(exception)
         {
             new_loss = back_propagation_lm.loss;
         }
@@ -877,7 +877,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Levenberg-Marquardt algorithm element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Damping parameter factor
@@ -893,7 +893,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_damping_parameter_factor(new_damping_parameter_factor);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -911,7 +911,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_minimum_loss_decrease(new_minimum_loss_decrease);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -929,7 +929,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_loss_goal(new_loss_goal);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -949,7 +949,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_maximum_selection_failures(new_maximum_selection_failures);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -967,7 +967,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_maximum_epochs_number(new_maximum_epochs_number);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -985,7 +985,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_maximum_time(new_maximum_time);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1003,7 +1003,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

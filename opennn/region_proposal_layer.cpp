@@ -103,7 +103,7 @@ void RegionProposalLayer::calculate_regions(type* inputs_data, const Tensor<Inde
         buffer << "OpenNN Exception: RegionProposalLayer class.\n"
                << "void RegionProposalLayer::calculate_regions(type*, const Tensor<Index, 1>&, type*, Tensor<Index, 1>&)"
                << "Inputs dimensions must be equal to 2.\n";
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Propose random region for each image

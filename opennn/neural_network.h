@@ -60,12 +60,12 @@ class NeuralNetwork
 
 public:
 
-   enum class ModelType{Approximation,
-                          Classification,
-                          Forecasting,
-                          ImageClassification,
-                          TextClassification,
-                          AutoAssociation};
+   enum class ModelType{AutoAssociation,
+                        Approximation,
+                        Classification,
+                        Forecasting,
+                        ImageClassification,
+                        TextClassification};
 
    // Constructors
 
@@ -215,6 +215,7 @@ public:
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
+   Tensor<Index, 1> get_layers_parameters_numbers() const;
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
    void set_parameters(Tensor<type, 1>&) const;
@@ -231,10 +232,11 @@ public:
 
    // Output
 
-   Tensor<type, 2> calculate_outputs(Tensor<type, 2>&);
-   Tensor<type, 2> calculate_outputs(Tensor<type, 4>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_unscaled_outputs(Tensor<type, 2>&);
+   Tensor<type, 2> calculate_scaled_outputs(const Tensor<type, 2>&);
+
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
@@ -252,8 +254,6 @@ public:
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
 
    void print() const;
-   void print_layers_inputs_indices() const;
-   void summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 

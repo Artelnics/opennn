@@ -142,7 +142,7 @@ void TestingAnalysis::check() const
                << "void check() const method.\n"
                << "Neural network pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(!data_set_pointer)
@@ -151,7 +151,7 @@ void TestingAnalysis::check() const
                << "void check() const method.\n"
                << "Data set pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -231,7 +231,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
                << "GoodnessOfFit perform_linear_regression_analysis() const method.\n"
                << "Number of testing samples is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<type, 2> testing_inputs = data_set_pointer->get_testing_input_data();
@@ -240,9 +240,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     // Neural network
 
-    Tensor<type, 2> testing_outputs;
-
-    testing_outputs = neural_network_pointer->calculate_outputs(testing_inputs);
+    const Tensor<type, 2> testing_outputs = neural_network_pointer->calculate_outputs(testing_inputs);
 
     // Approximation testing stuff
 
@@ -253,13 +251,12 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
         const Tensor<type,1> targets = testing_targets.chip(i,1);
         const Tensor<type,1> outputs = testing_outputs.chip(i,1);
 
-        type determination_coefficient = calculate_determination_coefficient(outputs, targets);
+        const type determination_coefficient = calculate_determination_coefficient(outputs, targets);
 
         goodness_of_fit_results[i].targets = targets;
         goodness_of_fit_results[i].outputs = outputs;
 
         goodness_of_fit_results[i].determination = determination_coefficient;
-
     }
 
     return goodness_of_fit_results;
@@ -293,15 +290,13 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs  = neural_network_pointer->calculate_outputs(inputs);
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
 
@@ -315,18 +310,19 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     // Absolute error
 
-   Tensor<type, 2> difference_absolute_value = (targets - outputs).abs();
+   Tensor<type, 2> difference_absolute_value = (outputs - targets).abs();
+
+   #pragma omp parallel for
 
    for(Index i = 0; i < outputs_number; i++)
    {
        for(Index j = 0; j < testing_samples_number; j++)
        {
-           // Absolute error
-           error_data(j,0,i) = difference_absolute_value(j,i);
-           // Relative error
-           error_data(j,1,i) = difference_absolute_value(j,i)/abs(outputs_maximum(i)-outputs_minimum(i));
-           // Percentage error
-           error_data(j,2,i) = (difference_absolute_value(j,i)*type(100.0))/abs(outputs_maximum(i)-outputs_minimum(i));
+           error_data(j, 0, i) = difference_absolute_value(j,i);
+
+           error_data(j, 1, i) = difference_absolute_value(j,i)/abs(outputs_maximum(i)-outputs_minimum(i));
+
+           error_data(j, 2, i) = (difference_absolute_value(j,i)*type(100.0))/abs(outputs_maximum(i)-outputs_minimum(i));
        }
    }
 
@@ -345,13 +341,13 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
 
@@ -362,7 +358,9 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     Tensor<type, 2> error_data(testing_samples_number, outputs_number);
 
-    Tensor<type, 2> difference_value = (targets - outputs);
+    Tensor<type, 2> difference_value = outputs - targets;
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < testing_samples_number; i++)
     {
@@ -386,9 +384,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
 
     // Neural network
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     // Error descriptives
 
@@ -411,11 +407,11 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 
     Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
 
-    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
+    const Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     // Neural network
 
-    Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     // Error descriptives
 
@@ -424,7 +420,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 
 
 Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptives(const Tensor<type, 2>& targets,
-        const Tensor<type, 2>& outputs) const
+                                                                                  const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> diff = (type(100)*(targets-outputs).abs())/targets;
 
@@ -1159,7 +1155,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
                    << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                    << "Unknown case.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -1184,7 +1180,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
                << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                << "Number of elements in confusion matrix (" << confusion_sum << ") must be equal to number of testing samples (" << testing_samples_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     return confusion;
@@ -1208,7 +1204,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
                << "Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
                << "Number of targets (" << targets_number << ") must be equal to number of outputs (" << outputs.dimension(1) << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<Index, 2> confusion(targets_number + 1, targets_number + 1);
@@ -1372,7 +1368,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples ("<< total_positives <<") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(total_negatives == 0)
@@ -1383,7 +1379,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples ("<< total_negatives <<") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index maximum_points_number = 200;
@@ -1400,7 +1396,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of of target variables ("<< targets.dimension(1) <<") must be one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(outputs.dimension(1) != 1)
@@ -1413,7 +1409,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of of output variables ("<< targets.dimension(1) <<") must be one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Sort by ascending values of outputs vector
@@ -1524,7 +1520,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
                << "Tensor<type, 2> calculate_roc_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(total_negatives == 0)
@@ -1535,7 +1531,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
                << "Tensor<type, 2> calculate_roc_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Tensor<type, 2> roc_curve = calculate_roc_curve(targets, outputs);
@@ -1618,7 +1614,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
                << "Tensor<type, 2> calculate_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples(" << total_positives << ") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index testing_samples_number = targets.dimension(0);
@@ -1694,7 +1690,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
                << "Tensor<type, 2> calculate_negative_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples(" << total_negatives << ") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index testing_samples_number = targets.dimension(0);
@@ -2598,7 +2594,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
     const Index targets_number = data_set_pointer->get_target_numeric_variables_number();
 
-    const Tensor<type, 2> error = targets - outputs;
+    const Tensor<type, 2> error = outputs - targets;
 
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
@@ -2627,7 +2623,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    const Tensor<type, 2> errors = targets - outputs;
+    const Tensor<type, 2> errors = outputs - targets;
 
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
 
@@ -3069,7 +3065,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Testing analysis element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Display
@@ -3084,7 +3080,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -3127,7 +3123,7 @@ void TestingAnalysis::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);

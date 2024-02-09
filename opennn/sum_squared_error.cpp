@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error.h"
+#include "neural_network_forward_propagation.h"
 #include "loss_index_back_propagation.h"
 
 namespace opennn
@@ -37,27 +38,47 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
                                       const ForwardPropagation& forward_propagation,
                                       BackPropagation& back_propagation) const
 {
-    calculate_errors(batch, forward_propagation, back_propagation);
+    // Batch
+
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    Tensor<type, 2>& errors = back_propagation.errors;
+    type& error = back_propagation.error;
+
+    errors.device(*thread_pool_device) = outputs - targets;
 
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device)
-        = back_propagation.errors.contract(back_propagation.errors, SSE);
+    sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
-    back_propagation.error = sum_squared_error(0);
+    error = sum_squared_error(0);
+
+    if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
 void SumSquaredError::calculate_error_lm(const DataSetBatch&,
                      const ForwardPropagation&,
-                     LossIndexBackPropagationLM& back_propagation) const
+                     BackPropagationLM& back_propagation) const
 {
+    Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
+    type& error = back_propagation.error;
+
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device)
-        = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
+    sum_squared_error.device(*thread_pool_device) = (squared_errors*squared_errors).sum();
 
-    back_propagation.error = sum_squared_error(0);
+    error = sum_squared_error(0);
+
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -68,12 +89,12 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
-     const type coefficient = type(2.0);
-     
+    
      const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
      
      TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
+
+     const type coefficient = type(2.0);
 
      deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
@@ -81,7 +102,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
 void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
                                                 ForwardPropagation&,
-                                                LossIndexBackPropagationLM& loss_index_back_propagation) const
+                                                BackPropagationLM& loss_index_back_propagation) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -95,17 +116,6 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
-    if(output_layer_pointer->get_type() != Layer::Type::Perceptron
-    && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
     copy(loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
@@ -115,7 +125,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
 
 void SumSquaredError::calculate_error_gradient_lm(const DataSetBatch& ,
-                                            LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                  BackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -128,14 +138,14 @@ void SumSquaredError::calculate_error_gradient_lm(const DataSetBatch& ,
 
     Tensor<type, 1>& gradient = loss_index_back_propagation_lm.gradient;
        
-    const type coefficient = (type(2.0));
+    const type coefficient = type(2.0);
 
     gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
 }
 
 
 void SumSquaredError::calculate_error_hessian_lm(const DataSetBatch&,
-                                                      LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                      BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = loss_index_back_propagation_lm.squared_errors_jacobian;
@@ -192,7 +202,7 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Sum squared element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 

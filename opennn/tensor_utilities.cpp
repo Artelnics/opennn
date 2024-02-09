@@ -309,7 +309,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
             << "Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y) method.\n"
             << "Input vectors must have equal sizes.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
@@ -337,7 +337,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
              << "void save_csv(const Tensor<type,2>&, const string&) method." << endl
              << "Cannot open matrix data file: " << filename << endl;
 
-      throw invalid_argument(buffer.str());
+      throw runtime_error(buffer.str());
     }
 
     file.precision(20);
@@ -412,7 +412,7 @@ Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index
                << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
                << "Tokens and rank size must be the same.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<string,1> sorted_tokens(tokens_size);
@@ -441,7 +441,7 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
                << "Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank) method.\n"
                << "Tokens and rank size must be the same.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<Index,1> sorted_tokens(tokens_size);
@@ -752,7 +752,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
                << "Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
                << "Invalid conditions\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     return new_matrix;
@@ -834,7 +834,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
         buffer << "OpenNN Exception: l2 norm of vector is not a number."
                << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     return norm(0);
@@ -881,7 +881,7 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
                << "type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&)\n"
                << "x and y vector must  have the same dimensions.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<type, 0> distance;
@@ -1098,7 +1098,7 @@ void check_size(const Tensor<type, 1>& vector, const Index& size, const string& 
         buffer << "OpenNN Exception: " << log <<  endl
                << "Size of vector is " << vector.size() << ", but must be " << size << "." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1112,7 +1112,7 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
         buffer << "OpenNN Exception: " << log <<  endl
                << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(matrix.dimension(1) != columns_number)
@@ -1122,7 +1122,7 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
         buffer << "OpenNN Exception: " << log <<  endl
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << "." <<  endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1136,7 +1136,7 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
         buffer << "OpenNN Exception: " << log <<  endl
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << "." <<  endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1150,7 +1150,7 @@ void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, 
         buffer << "OpenNN Exception: " << log <<  endl
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1299,7 +1299,7 @@ string string_tensor_to_string(const Tensor<string,1>&x, const string& separator
               << "Mstring to_string(Tensor<string,1>&x,string& separator).\n"
               << "Input vector must have dimension greater than 0.\n";
 
-       throw invalid_argument(buffer.str());
+       throw runtime_error(buffer.str());
     }
 
     string line = x(0);
@@ -1329,7 +1329,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
              << "Index of row must be less than number of rows.\n"
              << "row index: " << row_index << "rows_number" << rows_number << "\n";
 
-      throw invalid_argument(buffer.str());
+      throw runtime_error(buffer.str());
    }
    else if(rows_number < 2)
    {
@@ -1339,7 +1339,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
              << "Matrix<T> delete_row(const size_t&) const.\n"
              << "Number of rows must be equal or greater than two.\n";
 
-      throw invalid_argument(buffer.str());
+      throw runtime_error(buffer.str());
    }
 
    #endif

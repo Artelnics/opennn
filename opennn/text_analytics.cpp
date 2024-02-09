@@ -191,7 +191,7 @@ void TextAnalytics::set_separator(const string& new_separator)
                << "void set_separator(const string&) method.\n"
                << "Unknown separator: " << new_separator << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1866,7 +1866,7 @@ string TextAnalytics::read_txt_file(const string& path) const
             << "void load_documents() method.\n"
             << "Data file name is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     ifstream file(path.c_str());
@@ -1879,7 +1879,7 @@ string TextAnalytics::read_txt_file(const string& path) const
             << "void load_documents() method.\n"
             << "Cannot open data file: " << path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     string result="", line;
@@ -2303,7 +2303,7 @@ Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tens
                   "const Index& combinations_length) const method."
                << "Words number must be greater than 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(combinations_length < 2)
@@ -2316,7 +2316,7 @@ Tensor<string, 2> TextAnalytics::calculate_combinated_words_frequency(const Tens
                   "const Index& combinations_length) const method."
                << "Length of combinations not valid, must be greater than 1";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index combinated_words_size = 0;
@@ -2428,7 +2428,7 @@ void TextAnalytics::load_documents(const string& path)
                << "void load_documents() method.\n"
                << "Data file name is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     ifstream file(path.c_str());
@@ -2441,7 +2441,7 @@ void TextAnalytics::load_documents(const string& path)
                << "void load_documents() method.\n"
                << "Cannot open data file: " << path << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<Tensor<string,1>, 1> documents_copy(documents);
@@ -2520,7 +2520,7 @@ void TextAnalytics::load_documents(const string& path)
                        << "void load_documents() method.\n"
                        << "Found more than one separator in line: " << line << "\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
             if(tokens(0).empty() && tokens(1).empty())  continue;
 
@@ -2578,7 +2578,7 @@ string TextAnalytics::generate_word(TextGenerationAlphabet& text_generation_alph
            << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
            << "This method is not implemented yet.\n";
 
-    throw invalid_argument(buffer.str());
+    throw runtime_error(buffer.str());
 
     return string();
 
@@ -2594,7 +2594,7 @@ string TextAnalytics::generate_word(TextGenerationAlphabet& text_generation_alph
     //               << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
     //               << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
 
-    //        throw invalid_argument(buffer.str());
+    //        throw runtime_error(buffer.str());
     //    }
 
 
@@ -2645,7 +2645,7 @@ string TextAnalytics::generate_phrase(TextGenerationAlphabet& text_generation_al
                << "string generate_word(TextGenerationAlphabet&, const string&, const Index&) method.\n"
                << "Input string length must be equal to " << int(get_inputs_number()/alphabet_length) << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     string result = first_letters;
@@ -2883,7 +2883,7 @@ string TextGenerationAlphabet::one_hot_decode(const Tensor<type, 1>& tensor) con
                << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
                << "Tensor length must be equal to alphabet length.";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     auto index = max_element(tensor.data(), tensor.data() + tensor.size()) - tensor.data();
@@ -2904,7 +2904,7 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
                << "string one_hot_decode(Tensor<type, 1>& tensor).\n"
                << "Tensor length must be equal to alphabet length.";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     string result = "";

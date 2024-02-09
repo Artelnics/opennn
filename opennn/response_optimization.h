@@ -144,7 +144,7 @@ struct ResponseOptimizationResults
                    << "void ResponseOptimizationResults::print() method.\n"
                    << "Optimal variables vector is empty.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         for(Index i = 0; i < inputs_number; i++)

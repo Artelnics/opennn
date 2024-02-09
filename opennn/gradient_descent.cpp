@@ -148,7 +148,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
                << "void set_maximum_epochs_number(const type&) method.\n"
                << "Maximum epochs number must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -201,7 +201,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -228,7 +228,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
                << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -244,7 +244,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
                << "Size of gradient(" << gradient_size
                << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -443,7 +443,6 @@ TrainingResults GradientDescent::perform_training()
             
             neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
 
-            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -696,7 +695,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Gradient descent element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Learning rate algorithm
@@ -729,7 +728,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -748,7 +747,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -767,7 +766,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -786,7 +785,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -805,7 +804,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -823,7 +822,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

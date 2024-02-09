@@ -65,9 +65,9 @@ private:
 
     ForwardPropagation forward_propagation;
 
-    LossIndexBackPropagation back_propagation;
+    BackPropagation back_propagation;
 
-    LossIndexBackPropagationLM back_propagation_lm;
+    BackPropagationLM back_propagation_lm;
 
     Tensor<type, 1> numerical_gradient;
     Tensor<type, 2> numerical_jacobian;

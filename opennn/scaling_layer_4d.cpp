@@ -205,7 +205,7 @@ Tensor<string, 1> ScalingLayer4D::write_scalers() const
                    << "Tensor<string, 1> write_scalers() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -230,7 +230,7 @@ Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
                << "Tensor<string, 1> write_scalers() const method.\n"
                << "Neurons number must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -267,7 +267,7 @@ Tensor<string, 1> ScalingLayer4D::write_scalers_text() const
                    << "Tensor<string, 1> write_scalers_text() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -440,7 +440,7 @@ void ScalingLayer4D::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
                << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
                << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -516,7 +516,7 @@ void ScalingLayer4D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
                << "void set_scalers(const Tensor<Scaler, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -543,7 +543,7 @@ void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
                << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -580,7 +580,7 @@ void ScalingLayer4D::set_scalers(const Tensor<string, 1>& new_scaling_methods_st
                    << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -612,7 +612,7 @@ void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
                << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -649,7 +649,7 @@ void ScalingLayer4D::set_scalers(const string& new_scaling_methods_string)
                    << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -876,7 +876,7 @@ string ScalingLayer4D::write_expression(const Tensor<string, 1>& inputs_names, c
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -1004,7 +1004,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Scaling layer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Scaling neurons number
@@ -1017,7 +1017,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Scaling neurons number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
@@ -1039,7 +1039,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Scaling neuron " << i+1 << " is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
@@ -1050,7 +1050,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Index " << index << " is not correct.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Descriptives
@@ -1063,7 +1063,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Descriptives element " << i+1 << " is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(descriptives_element->GetText())
@@ -1086,7 +1086,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Scaling method element " << i+1 << " is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         const string new_method = scaling_method_element->GetText();
@@ -1129,7 +1129,7 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display_string != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

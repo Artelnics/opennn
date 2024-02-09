@@ -183,8 +183,6 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                                            const ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation) const
 {
-    calculate_errors(batch, forward_propagation, back_propagation);
-
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(last_trainable_layer_index);
@@ -227,7 +225,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
 void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
                                               const ForwardPropagation&,
-                                              LossIndexBackPropagationLM &back_propagation) const
+                                              BackPropagationLM &back_propagation) const
 {
     Tensor<type, 0> error;
 
@@ -282,7 +280,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 /// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
 
 void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
-                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                       BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
@@ -299,7 +297,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch
 
 
 void WeightedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
-                                                      LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                      BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
@@ -384,7 +382,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Weighted squared element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Positives weight
@@ -399,7 +397,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_positives_weight(type(atof(string.c_str())));
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -417,7 +415,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_negatives_weight(type(atof(string.c_str())));
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -455,7 +453,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
 
 void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch,
                                                        const ForwardPropagation& forward_propagation,
-                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                       BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
 

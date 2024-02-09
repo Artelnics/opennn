@@ -31,7 +31,7 @@ namespace opennn
 {
 
 struct BackPropagation;
-struct LossIndexBackPropagationLM;
+struct BackPropagationLM;
 
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
@@ -81,7 +81,7 @@ public:
                     << "NeuralNetwork* get_neural_network_pointer() const method.\n"
                     << "Neural network pointer is nullptr.\n";
 
-             throw invalid_argument(buffer.str());
+             throw runtime_error(buffer.str());
         }
 
         #endif
@@ -103,7 +103,7 @@ public:
                     << "DataSet* get_data_set_pointer() const method.\n"
                     << "DataSet pointer is nullptr.\n";
 
-             throw invalid_argument(buffer.str());
+             throw runtime_error(buffer.str());
         }
 
         #endif
@@ -161,32 +161,18 @@ public:
 
    // Back propagation
 
-   void calculate_errors(const Tensor<type, 2>&, 
-                         const Tensor<type, 2>&, 
-                         Tensor<type, 2>&) const;
-
-   void calculate_errors(const Tensor<type, 3>&, 
-                         const Tensor<type, 3>&, 
-                         Tensor<type, 3>&) const;
-
-   void calculate_errors(const DataSetBatch&,
-                         const ForwardPropagation&,
-                         BackPropagation&) const;
-
-   void calculate_errors(const pair<type*, dimensions>&,
-                         const ForwardPropagation&,
-                         BackPropagation&) const;
-
    virtual void calculate_error(const DataSetBatch&,
                                 const ForwardPropagation&,
                                 BackPropagation&) const = 0;
+
+   void add_regularization(BackPropagation&) const;
 
    virtual void calculate_output_delta(const DataSetBatch&,
                                        ForwardPropagation&,
                                        BackPropagation&) const = 0;
 
    void calculate_layers_error_gradient(const DataSetBatch& ,
-                                        const ForwardPropagation& ,
+                                        ForwardPropagation& ,
                                         BackPropagation& ) const;
 
    void assemble_layers_error_gradient(BackPropagation&) const;
@@ -199,37 +185,37 @@ public:
 
    void calculate_errors_lm(const DataSetBatch&,
                             const ForwardPropagation&,
-                            LossIndexBackPropagationLM&) const; // general
+                            BackPropagationLM&) const; // general
 
    virtual void calculate_squared_errors_lm(const DataSetBatch&,
                                             const ForwardPropagation&,
-                                            LossIndexBackPropagationLM&) const;
+                                            BackPropagationLM&) const;
 
    virtual void calculate_error_lm(const DataSetBatch&,
                                    const ForwardPropagation&,
-                                   LossIndexBackPropagationLM&) const {}
+                                   BackPropagationLM&) const {}
 
    virtual void calculate_output_delta_lm(const DataSetBatch&,
                                           ForwardPropagation&,
-                                          LossIndexBackPropagationLM&) const {}
+                                          BackPropagationLM&) const {}
 
    void calculate_layers_delta_lm(const DataSetBatch&,
                                   ForwardPropagation&,
-                                  LossIndexBackPropagationLM&) const;
+                                  BackPropagationLM&) const;
 
    virtual void calculate_error_gradient_lm(const DataSetBatch&,
-                                      LossIndexBackPropagationLM&) const;
+                                      BackPropagationLM&) const;
 
    void calculate_squared_errors_jacobian_lm(const DataSetBatch&,
                                              ForwardPropagation&,
-                                             LossIndexBackPropagationLM&) const;
+                                             BackPropagationLM&) const;
 
    virtual void calculate_error_hessian_lm(const DataSetBatch&,
-                                           LossIndexBackPropagationLM&) const {}
+                                           BackPropagationLM&) const {}
 
    void back_propagate_lm(const DataSetBatch&,
                           ForwardPropagation&,
-                          LossIndexBackPropagationLM&) const;
+                          BackPropagationLM&) const;
 
    // Regularization methods
 
@@ -305,13 +291,13 @@ protected:
 /// A method returning this structure might be implemented more efficiently than the loss,
 /// gradient and <i>Hessian</i> methods separately.
 
-struct LossIndexBackPropagationLM
+struct BackPropagationLM
 {
     /// Default constructor.
 
-    LossIndexBackPropagationLM();
+    BackPropagationLM();
 
-    explicit LossIndexBackPropagationLM(const Index&, LossIndex*);
+    explicit BackPropagationLM(const Index&, LossIndex*);
 
     void set(const Index&, LossIndex*);
 

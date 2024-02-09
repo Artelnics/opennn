@@ -84,7 +84,7 @@ void TextDataSet::set_text_separator(const string& new_separator_string)
                << "void set_text_separator(const string&) method.\n"
                << "Unknown separator: " << new_separator_string << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -517,7 +517,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data set element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data file
@@ -530,7 +530,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data file element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data file name
@@ -543,7 +543,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "DataFileName element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(data_file_name_element->GetText())
@@ -589,7 +589,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 set_text_separator(new_separator);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -608,7 +608,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_has_columns_names(new_columns_names_string == "1");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -626,7 +626,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_has_rows_label(new_rows_label_string == "1");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -720,7 +720,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Columns number
@@ -733,7 +733,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_columns_number = 0;
@@ -762,7 +762,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Name
@@ -775,7 +775,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(name_element->GetText())
@@ -795,7 +795,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Scaler element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(scaler_element->GetText())
@@ -815,7 +815,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column use element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(column_use_element->GetText())
@@ -835,7 +835,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(type_element->GetText())
@@ -856,7 +856,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_element->GetText())
@@ -876,7 +876,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories uses element is nullptr.\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_uses_element->GetText())
@@ -909,7 +909,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                   << "Time seires columns number element is nullptr.\n";
 
-//            throw invalid_argument(buffer.str());
+//            throw runtime_error(buffer.str());
 //        }
 
 //        Index time_series_new_columns_number = 0;
@@ -938,7 +938,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_column_element->Attribute("Item") << ").\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                // Name
@@ -951,7 +951,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series name element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_name_element->GetText())
@@ -971,7 +971,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series scaler element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_scaler_element->GetText())
@@ -991,7 +991,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series column use element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_column_use_element->GetText())
@@ -1011,7 +1011,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series type element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_type_element->GetText())
@@ -1032,7 +1032,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories element is nullptr.\n";
 
-//                        throw invalid_argument(buffer.str());
+//                        throw runtime_error(buffer.str());
 //                    }
 
 //                    if(time_series_categories_element->GetText())
@@ -1052,7 +1052,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories uses element is nullptr.\n";
 
-//                        throw invalid_argument(buffer.str());
+//                        throw runtime_error(buffer.str());
 //                    }
 
 //                    if(time_series_categories_uses_element->GetText())
@@ -1080,7 +1080,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows labels element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Rows labels
@@ -1110,7 +1110,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Samples number
@@ -1123,7 +1123,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_number_element->GetText())
@@ -1145,7 +1145,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples uses element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_uses_element->GetText())
@@ -1163,7 +1163,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Missing values method
@@ -1176,7 +1176,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values method element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(missing_values_method_element->GetText())
@@ -1194,7 +1194,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Missing values number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(missing_values_number_element->GetText())
@@ -1214,7 +1214,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Columns missing values number element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(columns_missing_values_number_element->GetText())
@@ -1239,7 +1239,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows missing values number element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(rows_missing_values_number_element->GetText())
@@ -1258,7 +1258,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview data element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Preview size
@@ -1271,7 +1271,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Preview size element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_preview_size = 0;
@@ -1301,7 +1301,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1323,7 +1323,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1343,7 +1343,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Target item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(row_element->GetText())
@@ -1365,7 +1365,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }

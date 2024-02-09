@@ -516,7 +516,6 @@ protected:
         y.device(*thread_pool_device) = (x.constant(type(1)) + x.exp()).log();
 
         dy_dx.device(*thread_pool_device) = type(1) / (type(1) + x.exp().inverse());
-
     }
 
 

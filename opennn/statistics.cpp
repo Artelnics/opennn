@@ -47,7 +47,7 @@ Descriptives::Descriptives(const Tensor<type, 1>&x)
                   "const Tensor<Index, 1>&).\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -240,7 +240,7 @@ void Descriptives::save(const string &file_name) const
                << "void save(const string&) const method.\n"
                << "Cannot open descriptives data file.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Write file
@@ -565,7 +565,7 @@ Index Histogram::calculate_bin(const type& value) const
                << "Index Histogram::calculate_bin(const type&) const.\n"
                << "Unknown return value.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -841,7 +841,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
                << "type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end) \n"
                << "Begin must be less or equal than end.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -879,7 +879,7 @@ type mean(const Tensor<type, 1>& vector)
                   "const method.\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -921,7 +921,7 @@ type variance(const Tensor<type, 1>& vector)
                   "const method.\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -969,7 +969,7 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
                   "const method.\n"
                << "Indeces size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1020,7 +1020,7 @@ type standard_deviation(const Tensor<type, 1>& vector)
                << "type standard_deviation(const Tensor<type, 1>&) const method.\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1048,7 +1048,7 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
                << "type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1110,7 +1110,7 @@ type asymmetry(const Tensor<type, 1>& vector)
                << "type asymmetry(const Tensor<type, 1>& vector) const method.\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1166,7 +1166,7 @@ type kurtosis(const Tensor<type, 1>& vector)
                << "type kurtosis(const Tensor<type, 1>& vector) const method.\n"
                << "Size must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1514,7 +1514,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
                   "const Index&) const method.\n"
                << "Number of bins is less than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1659,7 +1659,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
                   "const type&, const Index&) const method.\n"
                << "Number of bins is less than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -1850,7 +1850,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
                   "const method.\n"
                << "Number of rows must be greater than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -2208,7 +2208,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
                << "Tensor<type, 1> mean(const Tensor<type, 2>&) const method.\n"
                << "Number of rows must be greater than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -2297,7 +2297,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
                   "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Size of row indices(" << row_indices_size << ") is greater than number of rows(" << rows_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < row_indices_size; i++)
@@ -2311,7 +2311,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
                       "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                    << "Row index " << i << " must be less than rows number.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -2324,7 +2324,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
                   "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Size of row indices must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Columns check
@@ -2338,7 +2338,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
                   "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Column indices size must be equal or less than columns number.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < columns_indices_size; i++)
@@ -2352,7 +2352,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
                       "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                    << "Column index " << i << " must be less than columns number.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -2412,7 +2412,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
                << "type mean(const Tensor<type, 2>&, const Index&) const method.\n"
                << "Number of rows must be greater than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(column_index >= columns_number)
@@ -2423,7 +2423,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
                << "type mean(const Tensor<type, 2>&, const Index&) const method.\n"
                << "Index of column must be less than number of columns.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -2469,7 +2469,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
                << "Tensor<type, 1> median() const method.\n"
                << "Number of rows must be greater than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -2517,7 +2517,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
                << "type median(const Index&) const method.\n"
                << "Number of rows must be greater than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(column_index >= columns_number)
@@ -2528,7 +2528,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
                << "type median(const Index&) const method.\n"
                << "Index of column must be less than number of columns.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -2638,7 +2638,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
                << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Size of row indices(" << row_indices_size << ") is greater than number of rows(" << rows_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < row_indices_size; i++)
@@ -2651,7 +2651,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
                    << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                    << "Row index " << i << " must be less than rows number.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -2663,7 +2663,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
                << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Size of row indices must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Columns check
@@ -2676,7 +2676,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
                << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                << "Column indices size must be equal or less than columns number.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < columns_indices_size; i++)
@@ -2689,7 +2689,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
                    << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
                    << "Column index " << i << " must be less than columns number.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -3056,7 +3056,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
                << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index&) \n"
                << "Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 
@@ -3104,7 +3104,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
                << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index&) \n"
                << "Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 
@@ -3243,7 +3243,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
                << "Tensor<type, 1> percentiles(const Tensor<type, 1>& vector) method.\n"
                << "Size must be greater or equal than 10.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif

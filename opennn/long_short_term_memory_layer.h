@@ -79,7 +79,7 @@ public:
 
    Index get_timesteps() const;
 
-   Index get_parameters_number() const override;
+   Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
 
    // Activation functions

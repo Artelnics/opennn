@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A D A P T I V E   M O M E N T   E S T I M A T I O N      T E S T   C L A S S
+//   A D A P T I V E   M O M E N T   E S T I M A T I O N   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com

@@ -324,7 +324,7 @@ string TrainingStrategy::write_optimization_method() const
                << "string write_optimization_method() const method.\n"
                << "Unknown main type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -366,7 +366,7 @@ string TrainingStrategy::write_optimization_method_text() const
                << "string write_optimization_method_text() const method.\n"
                << "Unknown main type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -468,7 +468,7 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
                << "void set_loss_method(const string&) method.\n"
                << "Unknown loss method: " << new_loss_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -531,7 +531,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
                << "void set_optimization_method(const string&) method.\n"
                << "Unknown main type: " << new_optimization_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -722,7 +722,7 @@ TrainingResults TrainingStrategy::perform_training()
                << "TrainingResults perform_training() const method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     switch(optimization_method)
@@ -915,7 +915,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Training strategy element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Loss index
@@ -1166,7 +1166,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1209,7 +1209,7 @@ void TrainingStrategy::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);

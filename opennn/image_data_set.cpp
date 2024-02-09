@@ -529,7 +529,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data set element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data file
@@ -542,7 +542,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Data file element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // File type
@@ -555,7 +555,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "FileType element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(file_type_element->GetText())
@@ -575,7 +575,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "DataFileName element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(data_file_name_element->GetText())
@@ -597,7 +597,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_has_rows_label(new_rows_label_string == "1");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -789,7 +789,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Columns number
@@ -802,7 +802,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Columns number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Index new_columns_number = 0;
@@ -831,7 +831,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Name
@@ -844,7 +844,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Name element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(name_element->GetText())
@@ -864,7 +864,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Scaler element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(scaler_element->GetText())
@@ -884,7 +884,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Column use element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(column_use_element->GetText())
@@ -904,7 +904,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                        << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Type element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             if(type_element->GetText())
@@ -925,7 +925,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories element is nullptr.\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_element->GetText())
@@ -945,7 +945,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
                            << "Categories uses element is nullptr.\n";
 
-                    throw invalid_argument(buffer.str());
+                    throw runtime_error(buffer.str());
                 }
 
                 if(categories_uses_element->GetText())
@@ -978,7 +978,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                   << "Time seires columns number element is nullptr.\n";
 
-//            throw invalid_argument(buffer.str());
+//            throw runtime_error(buffer.str());
 //        }
 
 //        Index time_series_new_columns_number = 0;
@@ -1007,7 +1007,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_column_element->Attribute("Item") << ").\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                // Name
@@ -1020,7 +1020,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series name element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_name_element->GetText())
@@ -1040,7 +1040,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series scaler element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_scaler_element->GetText())
@@ -1060,7 +1060,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series column use element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_column_use_element->GetText())
@@ -1080,7 +1080,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                           << "Time series type element is nullptr.\n";
 
-//                    throw invalid_argument(buffer.str());
+//                    throw runtime_error(buffer.str());
 //                }
 
 //                if(time_series_type_element->GetText())
@@ -1101,7 +1101,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories element is nullptr.\n";
 
-//                        throw invalid_argument(buffer.str());
+//                        throw runtime_error(buffer.str());
 //                    }
 
 //                    if(time_series_categories_element->GetText())
@@ -1121,7 +1121,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
 //                               << "Time series categories uses element is nullptr.\n";
 
-//                        throw invalid_argument(buffer.str());
+//                        throw runtime_error(buffer.str());
 //                    }
 
 //                    if(time_series_categories_uses_element->GetText())
@@ -1149,7 +1149,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Rows labels element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Rows labels
@@ -1179,7 +1179,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Samples number
@@ -1192,7 +1192,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_number_element->GetText())
@@ -1214,7 +1214,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Samples uses element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(samples_uses_element->GetText())
@@ -1232,7 +1232,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Missing values element is nullptr.\n";
 
-       throw invalid_argument(buffer.str());
+       throw runtime_error(buffer.str());
    }
 
    // Missing values method
@@ -1245,7 +1245,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Missing values method element is nullptr.\n";
 
-       throw invalid_argument(buffer.str());
+       throw runtime_error(buffer.str());
    }
 
    if(missing_values_method_element->GetText())
@@ -1263,7 +1263,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Missing values number element is nullptr.\n";
 
-       throw invalid_argument(buffer.str());
+       throw runtime_error(buffer.str());
    }
 
     if(missing_values_number_element->GetText())
@@ -1283,7 +1283,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                   << "Columns missing values number element is nullptr.\n";
 
-           throw invalid_argument(buffer.str());
+           throw runtime_error(buffer.str());
        }
 
        if(columns_missing_values_number_element->GetText())
@@ -1308,7 +1308,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                   << "Rows missing values number element is nullptr.\n";
 
-           throw invalid_argument(buffer.str());
+           throw runtime_error(buffer.str());
        }
 
     if(missing_values_number_element->GetText())
@@ -1329,7 +1329,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1348,7 +1348,7 @@ Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
                << "void read_bmp_image() method.\n"
                << "Couldn't open the file.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     unsigned char info[54];
@@ -1429,7 +1429,7 @@ void ImageDataSet::read_bmp()
                << "void read_bmp() method.\n"
                << "Data file name is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     has_columns_names = true;
@@ -1466,7 +1466,7 @@ void ImageDataSet::read_bmp()
             //                   << "void read_bmp() method.\n"
             //                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
 
-            //            throw invalid_argument(buffer.str());
+            //            throw runtime_error(buffer.str());
         }
     }
 
@@ -1499,7 +1499,7 @@ void ImageDataSet::read_bmp()
                << "void read_bmp() method.\n"
                << "Some images of the dataset have different channel number, width and/or height.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     FILE* f = fopen(info_img.data(), "rb");
@@ -1608,7 +1608,7 @@ void ImageDataSet::read_bmp()
                << "void read_bmp() method.\n"
                << "Invalid number of categories. The minimum is 2 and you have 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
 
 
     }else if(classes_number == 2)
@@ -1666,7 +1666,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
                << "void fill_image_data() method.\n"
                << "Data file name is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     has_columns_names = true;
@@ -1757,7 +1757,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
                << "void read_bmp() method.\n"
                << "Invalid number of categories. The minimum is 2 and you have 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
 
 
     }
@@ -1868,7 +1868,7 @@ void ImageDataSet::read_ground_truth()
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << data_source_path << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Read ground Truth XML
@@ -1883,7 +1883,7 @@ void ImageDataSet::read_ground_truth()
                << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                << "NeuralLabeler element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Images
@@ -1896,7 +1896,7 @@ void ImageDataSet::read_ground_truth()
                << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                << "Images element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Images Number
@@ -1909,7 +1909,7 @@ void ImageDataSet::read_ground_truth()
                << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                << "ImagesNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index images_number = Index(atoi(images_number_element->GetText()));
@@ -1929,7 +1929,7 @@ void ImageDataSet::read_ground_truth()
                    << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                    << "Image element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Filename
@@ -1942,7 +1942,7 @@ void ImageDataSet::read_ground_truth()
                    << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                    << "Filename element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         const string image_filename = file_name_element->GetText();
@@ -1959,7 +1959,7 @@ void ImageDataSet::read_ground_truth()
                    << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                    << "AnnotationsNumber element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         const Index annotations_number = Index(atoi(annotations_number_element->GetText()));
@@ -1980,7 +1980,7 @@ void ImageDataSet::read_ground_truth()
                        << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                        << "Annotation element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Label
@@ -1993,7 +1993,7 @@ void ImageDataSet::read_ground_truth()
                        << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                        << "Label element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             const string ground_truth_class = label_element->GetText();
@@ -2008,7 +2008,7 @@ void ImageDataSet::read_ground_truth()
                        << "void read_ground_truth(const tinyxml2::XMLDocument&) method.\n"
                        << "Points element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             const string bounding_box_points = points_element->GetText();
@@ -2106,7 +2106,7 @@ void ImageDataSet::read_ground_truth()
                << "void read_ground_truth() method.\n"
                << "Invalid number of categories. The minimum is 1 and you have 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
 
     }
     else if(classes_number == 1) // Just one because we include background (1+1)
@@ -2155,7 +2155,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     //--------------------------- Read ground Truth XML---------------------------
@@ -2170,7 +2170,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuralLabeler element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Images
@@ -2183,7 +2183,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Images element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Images Number
@@ -2196,7 +2196,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ImagesNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index images_number = Index(atoi(images_number_element->GetText()));
@@ -2218,7 +2218,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                    << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Image element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Filename
@@ -2231,7 +2231,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                    << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Filename element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         image_filename = file_name_element->GetText();
@@ -2246,7 +2246,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                    << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "AnnotationsNumber element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         const Index annotations_number = Index(atoi(annotations_number_element->GetText()));
@@ -2266,7 +2266,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                        << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Annotation element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Label
@@ -2279,7 +2279,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                        << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Label element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             string ground_truth_class = label_element->GetText();
@@ -2294,7 +2294,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
                        << "void get_bounding_boxes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Points element is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
         }
 
@@ -2321,7 +2321,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     //--------------------------------Read ground Truth XML-------------------------------------/
@@ -2336,7 +2336,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuralLabeler element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Images
@@ -2349,7 +2349,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Images element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Labels
@@ -2362,7 +2362,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Labels element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Labels Number
@@ -2375,7 +2375,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "LabelsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(labels_number_element->GetText())
@@ -2402,7 +2402,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                    << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Label element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Name
@@ -2415,7 +2415,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                    << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Name element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         const string label_string = name_element->GetText();
@@ -2432,7 +2432,7 @@ Index ImageDataSet::get_label_classes_number_from_XML(const string& file_name)
                    << "void get_label_classes_number_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Color element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 

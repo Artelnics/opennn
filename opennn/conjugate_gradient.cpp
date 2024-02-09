@@ -61,7 +61,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_gradient_size = old_gradient.size();
@@ -72,7 +72,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -83,7 +83,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -95,7 +95,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "Size of old training direction (" << old_training_direction_size
                << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -133,7 +133,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -148,7 +148,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -159,7 +159,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -218,7 +218,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -233,7 +233,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -244,7 +244,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -256,7 +256,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "Size of old training direction (" << old_training_direction_size
                << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -293,7 +293,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -308,7 +308,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -319,7 +319,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -378,7 +378,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -393,7 +393,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -404,7 +404,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -416,7 +416,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "Size of old training direction(" << old_training_direction_size
                << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -593,7 +593,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
                << "void set_training_direction_method(const string&) method.\n"
                << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -641,7 +641,7 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -677,7 +677,7 @@ void ConjugateGradient::set_save_period(const Index& new_save_period)
                << "void set_save_period(const type&) method.\n"
                << "Save period must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -814,7 +814,6 @@ TrainingResults ConjugateGradient::perform_training()
 
             neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
 
-            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -1205,7 +1204,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Conjugate gradient element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Training direction method
@@ -1220,7 +1219,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_training_direction_method(new_training_direction_method);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1256,7 +1255,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_minimum_loss_decrease(new_minimum_loss_decrease);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1275,7 +1274,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_loss_goal(new_loss_goal);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1294,7 +1293,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_maximum_selection_failures(new_maximum_selection_failures);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1313,7 +1312,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_maximum_epochs_number(new_maximum_iterations_number);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1332,7 +1331,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_maximum_time(new_maximum_time);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1351,7 +1350,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display_period(new_display_period);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1370,7 +1369,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_save_period(new_save_period);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1388,7 +1387,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_neural_network_file_name(new_neural_network_file_name);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1407,7 +1406,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1426,7 +1425,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_hardware_use(new_hardware_use);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }

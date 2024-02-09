@@ -51,7 +51,7 @@ public:
 
    // Get methods  
 
-   Index get_inputs_number() const override;
+   Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
    Tensor<Descriptives, 1> get_descriptives() const; 

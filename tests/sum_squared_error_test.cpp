@@ -55,9 +55,6 @@ void SumSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-    // Empty test does not work
-    // sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
     // Test approximation all zero
     {
         samples_number = 1;
@@ -102,13 +99,14 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(is_zero(back_propagation.gradient) , LOG);
     }
-
+/*
+*/
     // Test approximation all random
     {
-        samples_number = 1 + rand()%5;
-        inputs_number = 1 + rand()%5;
-        outputs_number = 1 + rand()%5;
-        neurons_number = 1 + rand()%5;
+        samples_number = type(1) + rand() % 5;
+        inputs_number = type(1) + rand()%5;
+        outputs_number = type(1) + rand()%5;
+        neurons_number = type(1) + rand()%5;
         bool is_training = true;
 
         // Data set
@@ -431,10 +429,10 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test multiple classification random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
         bool is_training = true;
 
         // Data set

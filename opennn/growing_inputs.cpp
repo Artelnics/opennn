@@ -103,7 +103,7 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
                << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -129,7 +129,7 @@ void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_nu
                << "void set_minimum_inputs_number(const Index&) method.\n"
                << "Minimum inputs number must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -153,7 +153,7 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_sele
                << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -644,7 +644,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "GrowingInputs element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Trials number
@@ -659,7 +659,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_trials_number(new_trials_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -678,7 +678,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -697,7 +697,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_selection_error_goal(new_selection_error_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -716,7 +716,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -735,7 +735,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_correlation(new_maximum_correlation);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -754,7 +754,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_correlation(new_minimum_correlation);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -773,7 +773,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -793,7 +793,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_inputs_number(new_minimum_inputs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -813,7 +813,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_inputs_number(new_maximum_inputs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -832,7 +832,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -875,7 +875,7 @@ void GrowingInputs::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);

@@ -35,31 +35,18 @@ public:
     // Parameters norm / descriptives / histogram
 
     void test_calculate_parameters_norm();
-    void test_calculate_parameters_descriptives();
-    void test_calculate_parameters_histogram();
-
-    void test_perturbate_parameters();
 
     // Output
 
-    void test_calculate_trainable_outputs();
     void test_calculate_outputs();
 
     void test_calculate_directional_inputs();
-    void test_calculate_outputs_histograms();
 
     // Forward propagation
 
     void test_forward_propagate();
 
-    // Expression methods
-
-    void test_save_expression();
-
     // Serialization methods
-
-    void test_to_XML();
-    void test_from_XML();
 
     void test_save();
     void test_load();

@@ -130,7 +130,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
                << "void split_samples_random(const type&, const type&, const type&) method.\n"
                << "Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index samples_number = get_samples_number();
@@ -230,7 +230,7 @@ void AutoAssociationDataSet::save_auto_associative_data_binary(const string& bin
                << "void save_auto_associative_data_binary(const string) method." << endl
                << "Cannot open data binary file." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Write data
@@ -295,7 +295,7 @@ void AutoAssociationDataSet::load_auto_associative_data_binary(const string& aut
                << "void load_auto_associative_data_binary(const string&) method.\n"
                << "Cannot open binary file: " << auto_associative_data_file_name << "\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     streamsize size = sizeof(Index);

@@ -119,7 +119,7 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
-        throw invalid_argument("Correlations Exception: Unknown case.");
+        throw runtime_error("Correlations Exception: Unknown case.");
     }
 
     return correlation;
@@ -174,7 +174,7 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
-        throw invalid_argument("Correlations Exception: Unknown case.");
+        throw runtime_error("Correlations Exception: Unknown case.");
     }
 
     return correlation;
@@ -199,7 +199,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
                << "Both vectors must have the same size.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     Tensor<type, 1> cross_correlation(maximum_lags_number);
@@ -243,7 +243,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
                "exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -484,7 +484,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
                << "Correlation linear_correlation(const Tensor<type, 1>&) const method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -729,7 +729,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                "method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -809,9 +809,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network.calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
@@ -892,9 +890,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     const Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network.calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
 
@@ -995,9 +991,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network.calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
@@ -1120,9 +1114,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Tensor<type, 2> targets = data_set.get_target_data();
 
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network.calculate_outputs(inputs);
+    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     const Eigen::array<Index, 1> vector{{targets.size()}};
 
@@ -1162,7 +1154,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
                   "method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif

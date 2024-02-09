@@ -175,7 +175,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
             << "void check() const method.\n"
             << "Pointer to training strategy is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Loss index
@@ -188,7 +188,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
             << "void check() const method.\n"
             << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Neural network
@@ -201,7 +201,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
             << "void check() const method.\n"
             << "Pointer to neural network is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(new_individuals_number != individuals_number)
@@ -212,7 +212,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
             << "void set_population(const Tensor<type, 2>&) method.\n"
             << "Population rows(" << new_individuals_number << ") must be equal to population size(" << individuals_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -261,7 +261,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
             << "Fitness size (" << new_fitness.size()
             << ") must be equal to population size (" << individuals_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < individuals_number; i++)
@@ -274,7 +274,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
                 << "void set_fitness(const Tensor<type, 2>&) method.\n"
                 << "Fitness must be greater than 0.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
     }
 
@@ -298,7 +298,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
             << "void set_individuals_number(const Index&) method.\n"
             << "Population size (" << new_individuals_number << ") must be greater than 4.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -348,7 +348,7 @@ void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
             << "void set_mutation_rate(const type&) method.\n"
             << "Mutation rate must be between 0 and 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -375,7 +375,7 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
             << "Elitism size(" << new_elitism_size
             << ") must be lower than the population size(" << individuals_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -400,7 +400,7 @@ void GeneticAlgorithm::initialize_population()
             << "void initialize_population() method.\n"
             << "Population size must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index genes_number = get_genes_number();
@@ -413,7 +413,7 @@ void GeneticAlgorithm::initialize_population()
             << "void initialize_population() method.\n"
             << "Individuals number must be less than 2 to the power of genes number.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -708,7 +708,7 @@ void GeneticAlgorithm::evaluate_population()
             << "void evaluate_population() method.\n"
             << "Population size must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -876,7 +876,7 @@ void GeneticAlgorithm::perform_selection()
             << "void perform_selection() method.\n"
             << "Population size must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(fitness.dimension(0) == 0)
@@ -887,7 +887,7 @@ void GeneticAlgorithm::perform_selection()
             << "void perform_selection() method.\n"
             << "No fitness found.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -934,7 +934,7 @@ void GeneticAlgorithm::perform_selection()
             << "void perform_selection() method.\n"
             << "Number of selected individuals (" << selection_assert << ") must be " << individuals_number / 2 << " .\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -983,7 +983,7 @@ void GeneticAlgorithm::perform_crossover()
                 buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                     << "void perform_crossover() method.\n"
                     << "Selected individuals number is wrong.\n";
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
     #endif
 
@@ -1847,7 +1847,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
             << "GeneticAlgorithm element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Population size
@@ -1862,7 +1862,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_individuals_number(new_population_size);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1881,7 +1881,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_mutation_rate(new_mutation_rate);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1900,7 +1900,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_elitism_size(new_elitism_size);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1919,7 +1919,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1938,7 +1938,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_selection_error_goal(new_selection_error_goal);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1957,7 +1957,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1976,7 +1976,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_correlation(new_maximum_correlation);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1995,7 +1995,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_correlation(new_minimum_correlation);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -2014,7 +2014,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch (const invalid_argument& e)
+            catch (const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -2070,7 +2070,7 @@ void GeneticAlgorithm::load(const string& file_name)
             << "void load(const string&) method.\n"
             << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);

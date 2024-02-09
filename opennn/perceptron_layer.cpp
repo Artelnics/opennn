@@ -411,7 +411,7 @@ void PerceptronLayer::set_activation_function(const string& new_activation_funct
                << "void set_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_activation_function_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -1047,6 +1047,7 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
     calculate_error_combinations_derivatives(deltas, activations_derivatives, error_combinations_derivatives);
 
     Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives;
+
     Tensor<type, 1>& biases_derivatives = perceptron_layer_back_propagation->biases_derivatives;
 
     biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
@@ -1169,7 +1170,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "PerceptronLayer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Layer name
@@ -1182,7 +1183,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "LayerName element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(layer_name_element->GetText())
@@ -1200,7 +1201,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "InputsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(inputs_number_element->GetText())
@@ -1218,7 +1219,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuronsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(neurons_number_element->GetText())
@@ -1236,7 +1237,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ActivationFunction element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(activation_function_element->GetText())
@@ -1254,7 +1255,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(parameters_element->GetText())
@@ -1395,7 +1396,7 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
 }
 
 
-std::pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() const
+pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer_pointer->get_neurons_number();
     
@@ -1473,14 +1474,19 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
     const Index inputs_number = layer_pointer->get_inputs_number();
     
     deltas.resize(batch_samples_number, neurons_number);
-    
+    deltas.setZero();
+
     deltas_data = deltas.data();
-    
-    biases_derivatives.resize(neurons_number);
-    
-    synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-    
+
     error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    biases_derivatives.setZero();
+
+    biases_derivatives.resize(neurons_number);
+    biases_derivatives.setZero();
+
+    synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+    synaptic_weights_derivatives.setZero();
+
 }
 
 
@@ -1488,7 +1494,10 @@ void PerceptronLayerBackPropagation::print() const
 {
     cout << "Deltas:" << endl;
     cout << deltas << endl;
-    
+
+    cout << "Error combinations derivatives:" << endl;
+    cout << error_combinations_derivatives << endl;
+
     cout << "Biases derivatives:" << endl;
     cout << biases_derivatives << endl;
     

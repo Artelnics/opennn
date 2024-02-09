@@ -191,7 +191,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
                << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "BoxPlotDistances element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Minimum
@@ -204,7 +204,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
                << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Minimum element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_minimum = type(0);
@@ -225,7 +225,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
                << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "FirstQuartile element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_first_quartile = type(0);
@@ -246,7 +246,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
                << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Median element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_median = type(0);
@@ -267,7 +267,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
                << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ThirdQuartile element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_third_quartile = type(0);
@@ -288,7 +288,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
                << "void box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Maximum element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_maximum = type(0);
@@ -313,7 +313,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
                << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "DistancesDescriptives element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Minimum
@@ -326,7 +326,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
                << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Minimum element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_minimum = type(0);
@@ -347,7 +347,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
                << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Maximum element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_maximum = type(0);
@@ -367,7 +367,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
                << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Mean element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_mean = type(0);
@@ -387,7 +387,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
                << "void distances_descriptives_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "StandardDeviation element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     type new_standard_deviation = type(0);
@@ -415,7 +415,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
                << "void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Multivariate Distances BoxPlot element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const tinyxml2::XMLElement* variables_number_element = multivariate_distances_element->FirstChildElement("VariablesNumber");
@@ -426,7 +426,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
                << "void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Variables Number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index variables_number = Index(atoi(variables_number_element->GetText()));
@@ -447,7 +447,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
                    << "void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Variable boxPlot element is nullptr.\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         if(variable_box_plot_element->GetText())
@@ -574,7 +574,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
                << "void  save_autoassociation_outputs(const string&) method.\n"
                << "Distances and types vectors must have the same dimensions.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(!file.is_open())
@@ -585,7 +585,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
                << "void save_autoassociation_outputs(const string&) method.\n"
                << "Cannot open " << file_name << " file.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index samples_number = distances_vector.dimension(0);
@@ -899,7 +899,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Neural network element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Inputs
@@ -1013,7 +1013,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
             {
                 set_display(new_display_string != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

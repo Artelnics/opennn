@@ -106,7 +106,7 @@ public:
    void update_parameters(
            const DataSetBatch&,
            ForwardPropagation&,
-           LossIndexBackPropagationLM&,
+           BackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
 
    string write_optimization_algorithm_type() const final;

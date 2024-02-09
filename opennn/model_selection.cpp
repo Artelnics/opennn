@@ -44,7 +44,7 @@ TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
                << "TrainingStrategy* get_training_strategy_pointer() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -169,7 +169,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
                << "void set_neurons_selection_method(const string&) method.\n"
                << "Unknown neurons selection type: " << new_neurons_selection_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -204,7 +204,7 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
                << "void set_inputs_selection_method(const string&) method.\n"
                << "Unknown inputs selection type: " << new_inputs_selection_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -242,7 +242,7 @@ void ModelSelection::check() const
                << "void check() const method.\n"
                << "Pointer to training strategy is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Loss index
@@ -255,7 +255,7 @@ void ModelSelection::check() const
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Neural network
@@ -268,7 +268,7 @@ void ModelSelection::check() const
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(neural_network_pointer->is_empty())
@@ -277,7 +277,7 @@ void ModelSelection::check() const
                << "void check() const method.\n"
                << "Multilayer Perceptron is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data set
@@ -290,7 +290,7 @@ void ModelSelection::check() const
                << "void check() const method.\n"
                << "Pointer to data set is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
@@ -301,7 +301,7 @@ void ModelSelection::check() const
                << "void check() const method.\n"
                << "Number of selection samples is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -395,7 +395,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Model Selection element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Neurons Selection
@@ -556,7 +556,7 @@ void ModelSelection::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);

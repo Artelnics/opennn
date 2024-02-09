@@ -75,7 +75,7 @@ public:
 
    bool is_empty() const;
 
-   Index get_inputs_number() const override;
+   Index get_inputs_number() const final;
    Index get_inputs_size() const;
    Index get_neurons_number() const final;
 

@@ -62,7 +62,7 @@ public:
 
    bool is_empty() const;
 
-   Index get_inputs_number() const override;
+   Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
    const Tensor<type, 1>& get_hidden_states() const;

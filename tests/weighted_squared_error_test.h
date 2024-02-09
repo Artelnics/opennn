@@ -61,7 +61,7 @@ private:
 
     ForwardPropagation forward_propagation;
 
-    LossIndexBackPropagation back_propagation;
+    BackPropagation back_propagation;
 
     Tensor<type, 1> numerical_gradient;
 

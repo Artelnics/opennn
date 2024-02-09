@@ -67,7 +67,7 @@ type BoundingLayer::get_lower_bound(const Index& i) const
                << "type get_lower_bound(const Index&) const method.\n"
                << "Index must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -109,7 +109,7 @@ type BoundingLayer::get_upper_bound(const Index& i) const
                << "type get_upper_bound(const Index&) const method.\n"
                << "Number of bounding neurons is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
     else if(i >= neurons_number)
     {
@@ -119,7 +119,7 @@ type BoundingLayer::get_upper_bound(const Index& i) const
                << "type get_upper_bound(const Index&) const method.\n"
                << "Index must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -231,7 +231,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
                << "void set_bounding_method(const string&) method.\n"
                << "Unknown bounding method: " << new_method_string << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -288,7 +288,7 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
                << "void set_lower_bound(const Index&, const type&) method.\n"
                << "Index of bounding neurons must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -322,7 +322,7 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
                << "void set_lower_bounds(const Tensor<type, 1>&) method.\n"
                << "Size must be equal to number of bounding neurons number.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -375,7 +375,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
                << "void set_upper_bound(const Index&, const type&) method.\n"
                << "Index of bounding neuron must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -449,7 +449,7 @@ string BoundingLayer::write_bounding_method() const
                << "string write_bounding_method() const method.\n"
                << "Unknown bounding method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -557,7 +557,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
                << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                << "Unknown bounding method type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -596,7 +596,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "BoundingLayer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Bounding neurons number
@@ -609,7 +609,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "BoundingNeuronsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
@@ -633,7 +633,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                        << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                        << "Item " << i+1 << " is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             item_element->QueryUnsignedAttribute("Index", &index);
@@ -644,7 +644,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                        << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                        << "Index " << index << " is not correct.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Lower bound
@@ -695,7 +695,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                        << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                        << "Unknown bounding method.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
         }
     }

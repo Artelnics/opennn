@@ -110,7 +110,7 @@ string ProbabilisticLayer3D::write_activation_function() const
                << "string write_activation_function() const method.\n"
                << "Unknown probabilistic method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -144,7 +144,7 @@ string ProbabilisticLayer3D::write_activation_function_text() const
                << "string write_activation_function_text() const method.\n"
                << "Unknown probabilistic method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -363,7 +363,7 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
                << "void set_decision_threshold(const type&) method.\n"
                << "Decision threshold(" << decision_threshold << ") must be greater than zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
     else if(new_decision_threshold >= 1)
     {
@@ -373,7 +373,7 @@ void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_thres
                << "void set_decision_threshold(const type&) method.\n"
                << "Decision threshold(" << decision_threshold << ") must be less than one.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -422,7 +422,7 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Competitive when the number of neurons is 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(neurons_number == 1 && new_activation_function == ActivationFunction::Softmax)
@@ -433,7 +433,7 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Softmax when the number of neurons is 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(neurons_number != 1 && new_activation_function == ActivationFunction::Binary)
@@ -444,7 +444,7 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Binary when the number of neurons is greater than 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(neurons_number != 1 && new_activation_function == ActivationFunction::Logistic)
@@ -455,7 +455,7 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Logistic when the number of neurons is greater than 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -494,7 +494,7 @@ void ProbabilisticLayer3D::set_activation_function(const string& new_activation_
                << "void set_activation_function(const string&) method.\n"
                << "Unknown probabilistic method: " << new_activation_function << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -923,7 +923,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Probabilistic layer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Inputs number
@@ -936,7 +936,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Inputs number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 /*
     Index new_inputs_number;
@@ -956,7 +956,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Neurons number element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 /*
     Index new_neurons_number;
@@ -978,7 +978,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Activation function element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(activation_function_element->GetText())
@@ -996,7 +996,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(parameters_element->GetText())
@@ -1016,7 +1016,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Decision threshold element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(decision_threshold_element->GetText())
@@ -1036,7 +1036,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }

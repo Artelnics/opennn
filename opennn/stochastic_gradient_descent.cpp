@@ -138,7 +138,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
                << "void set_initial_learning_rate(const type&) method.\n"
                << "initial_learning_rate must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -164,7 +164,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
                << "void set_initial_decay(const type&) method.\n"
                << "new_dacay must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -191,7 +191,7 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
                << "void set_momentum(const type&) method.\n"
                << "new_momentum must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -226,7 +226,7 @@ void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maxim
                << "void set_maximum_epochs_number(const type&) method.\n"
                << "Maximum epochs number must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -262,7 +262,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -510,8 +510,6 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Loss
 
-                loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-
                 loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
                 selection_error += selection_back_propagation.error;
@@ -750,7 +748,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Stochastic gradient descent element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // DataSetBatch size
@@ -765,7 +763,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_batch_samples_number(new_batch_samples_number);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -790,7 +788,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
                 set_momentum(type(0));
             }
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -808,7 +806,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -827,7 +825,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -846,7 +844,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -865,7 +863,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }

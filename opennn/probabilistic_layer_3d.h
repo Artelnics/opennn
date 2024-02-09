@@ -63,7 +63,7 @@ public:
 
    // Get methods
 
-   Index get_inputs_number() const override;
+   Index get_inputs_number() const final;
    Index get_inputs_depth() const;
    Index get_neurons_number() const final;
 
@@ -156,7 +156,9 @@ public:
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 
-   void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const final;
+   void insert_gradient(LayerBackPropagation*, 
+                        const Index&, 
+                        Tensor<type, 1>&) const final;
 
    // Expression methods
 

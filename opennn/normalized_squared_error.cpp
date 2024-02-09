@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "normalized_squared_error.h"
+#include "neural_network_forward_propagation.h"
 #include "loss_index_back_propagation.h"
 
 namespace opennn
@@ -127,28 +128,6 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 type NormalizedSquaredError::calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1,
                                                                              const Tensor<type, 2>& targets_t) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    const Index target_t_1_samples_number = targets_t_1.dimension(0);
-    const Index target_t_1_variables_number = targets_t_1.dimension(1);
-    const Index target_t_samples_number = targets_t.dimension(0);
-    const Index target_t_variables_number = targets_t.dimension(1);
-
-    if(target_t_1_samples_number != target_t_samples_number || target_t_1_variables_number != target_t_variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NormalizedquaredError class.\n"
-               << "type calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) function.\n"
-               << " The columns number of targets("<< target_t_variables_number <<") must be equal("<< target_t_1_variables_number<<").\n"
-               << " The samples number of targets("<< target_t_1_samples_number <<") must be equal("<< target_t_samples_number<<").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
-
     const Index target_samples_number = targets_t_1.dimension(0);
     const Index target_variables_number = targets_t_1.dimension(1);
 
@@ -234,25 +213,6 @@ void NormalizedSquaredError::set_default()
 type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets,
                                                                  const Tensor<type, 1>& targets_mean) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-    const Index means_number = targets_mean.dimension(0);
-    const Index targets_number = targets.dimension(1);
-
-    if(targets_number != means_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NormalizedquaredError class.\n"
-               << "type calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) function.\n"
-               << " The columns number of targets("<< targets_number <<") must be equal("<< means_number<<").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
-
     const Index size = targets.dimension(0);
 
     type normalization_coefficient = type(0);
@@ -281,63 +241,65 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
                                              const ForwardPropagation& forward_propagation,
                                              BackPropagation& back_propagation) const
 {
-#ifdef OPENNN_DEBUG
+    const Index total_samples_number = data_set_pointer->get_used_samples_number();
 
-    if(isnan(normalization_coefficient))
-    {
-        ostringstream buffer;
+    // Batch
 
-        buffer << "OpenNN Exception: NormalizedquaredError class.\n"
-               << "calculate_error() method.\n"
-               << "Normalization coefficient is NAN.\n";
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
-        throw invalid_argument(buffer.str());
-    }
-#endif
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    calculate_errors(batch, forward_propagation, back_propagation);
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    // Back propagation
+
+    Tensor<type, 2>& errors = back_propagation.errors;
+    type& error = back_propagation.error;
+
+    errors.device(*thread_pool_device) = outputs - targets;
 
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);
+    sum_squared_error.device(*thread_pool_device) =  errors.contract(errors, SSE);
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
-    const Index total_samples_number = data_set_pointer->get_used_samples_number();
+    const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
+        
+    back_propagation.error = sum_squared_error(0)*coefficient;
 
-    const type coefficient = ((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
-
-    back_propagation.error = sum_squared_error(0)/coefficient;
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
 void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
                                                 const ForwardPropagation&,
-                                                LossIndexBackPropagationLM& back_propagation) const
+                                                BackPropagationLM& back_propagation) const
 {
-#ifdef OPENNN_DEBUG
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    if(isnan(normalization_coefficient))
-    {
-        ostringstream buffer;
+    // Batch
 
-        buffer << "OpenNN Exception: NormalizedquaredError class.\n"
-               << "calculate_error() method.\n"
-               << "Normalization coefficient is NAN.\n";
+    const Index batch_samples_number = batch.get_batch_samples_number();
 
-        throw invalid_argument(buffer.str());
-    }
-#endif
+    // Back propagation
+
+    Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
+    type& error = back_propagation.error;
 
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
+    sum_squared_error.device(*thread_pool_device) = (squared_errors*squared_errors).sum();
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
+    const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
 
-    const type coefficient = ((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
+    error = sum_squared_error(0)*coefficient;
 
-    back_propagation.error = sum_squared_error(0)/coefficient;
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -345,12 +307,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                     ForwardPropagation&,
                                                     BackPropagation& back_propagation) const
 {
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
@@ -370,27 +326,13 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
 void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
                                                        ForwardPropagation&,
-                                                       LossIndexBackPropagationLM & loss_index_back_propagation) const
+                                                       BackPropagationLM & loss_index_back_propagation) const
 {
-#ifdef OPENNN_DEBUG
-    check();
-#endif
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
-
-    if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
-
-        throw invalid_argument(buffer.str());
-    }
 
     copy(execution::par,
          loss_index_back_propagation.errors.data(),
@@ -402,12 +344,13 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
 
 
 void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
-                                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                         BackPropagationLM& loss_index_back_propagation_lm) const
 {
-    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
+    const Index batch_samples_number = batch.get_batch_samples_number();
+
+    const type coefficient = type(2* total_samples_number)/type(batch_samples_number* normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B)*coefficient;
@@ -415,7 +358,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& bat
 
 
 void NormalizedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
-                                                             LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                             BackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -479,7 +422,7 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document) con
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Normalized squared element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 

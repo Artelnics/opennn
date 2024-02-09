@@ -36,55 +36,56 @@ struct NeuralNetworkBackPropagation
 
         neural_network_pointer = new_neural_network_pointer;
 
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+        const Tensor<Layer*, 1> layers_pointers = neural_network_pointer->get_layers_pointers();
 
-        const Index trainable_layers_number = trainable_layers_pointers.size();
+        const Index layers_number = layers_pointers.size();
 
-        layers.resize(trainable_layers_number);
+        layers.resize(layers_number);
+        layers.setConstant(nullptr);
 
-        for(Index i = 0; i < trainable_layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
-            switch(trainable_layers_pointers(i)->get_type())
+            switch(layers_pointers(i)->get_type())
             {
             case Layer::Type::Perceptron:
             {
-                layers(i) = new PerceptronLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PerceptronLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Probabilistic:
             {
-                layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ProbabilisticLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Recurrent:
             {
-                layers(i) = new RecurrentLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new RecurrentLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::LongShortTermMemory:
             {
-                layers(i) = new LongShortTermMemoryLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new LongShortTermMemoryLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Convolutional:
             {
-            //    layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Pooling:
             {
-                layers(i) = new PoolingLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new PoolingLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 
             case Layer::Type::Flatten:
             {
-                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new FlattenLayerBackPropagation(batch_samples_number, layers_pointers(i));
             }
             break;
 

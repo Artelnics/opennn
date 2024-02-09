@@ -31,7 +31,7 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
+        DataSet data_set("data/airfoil_self_noise.csv", ';', true);
 
         const Index input_variables_number = data_set.get_input_numeric_variables_number();
         const Index target_variables_number = data_set.get_target_numeric_variables_number();
@@ -47,15 +47,15 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.set_maximum_epochs_number(100);
 
         training_strategy.perform_training();
 
         // Testing analysis
-/*
+
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_goodness_of_fit_analysis();
@@ -77,7 +77,7 @@ int main()
 //      const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-*/
+
         cout << "Good bye!" << endl;       
 
         return 0;

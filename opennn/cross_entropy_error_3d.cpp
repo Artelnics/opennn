@@ -76,7 +76,7 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
                << "void calculate_multiple_error(const DataSetBatch&, const NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
                << "NAN values found in back propagation error.";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -254,7 +254,7 @@ void CrossEntropyError3D::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Cross entropy error element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Regularization

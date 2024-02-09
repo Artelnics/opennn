@@ -236,7 +236,7 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
                << "void EmbeddingLayer::one_hot_encode_row(const Tensor<Index, 1>&)\n"
                << "All input values must be less than " << inputs_dimensions << " (" << max_input(0) << ").\n";
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #pragma omp parallel for
