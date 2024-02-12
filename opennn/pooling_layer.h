@@ -33,6 +33,7 @@ namespace opennn
 //Forward declaration
 struct PoolingLayerForwardPropagation;
 struct PoolingLayerBackPropagation;
+struct Switch;
 
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
 /// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
@@ -126,10 +127,8 @@ public:
 
     void calculate_no_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
-    void calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>&, Tensor<tuple<Index, Index>, 4>& switches, TensorMap<Tensor<type, 4>>&) const;
+    void calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&, Switch*) const;
     
-    void calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
-
     void calculate_average_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
     // Activations derivatives
@@ -217,7 +216,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     void set(const Index& numb_of_batches, Layer* layer_pointer) override;
     void print() const override;
 
-    Tensor<tuple<Index, Index>, 4> switches;
+    unique_ptr<Switch> pimpl{};
 };
 
 struct PoolingLayerBackPropagation : LayerBackPropagation

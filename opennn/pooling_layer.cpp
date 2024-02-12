@@ -13,7 +13,77 @@
 
 namespace opennn
 {
+struct Switch
+{
+    class MaxVal
+    {
+    public:
+        constexpr friend MaxVal operator*(MaxVal mval, type val) noexcept
+        {
+            mval.val_ = max(val, mval.val_);
+            return mval;
+        }
+        constexpr friend MaxVal operator*(type val, MaxVal mval) noexcept
+        {
+            return mval * val;
+        }
+        constexpr friend MaxVal max(MaxVal a, MaxVal b) noexcept
+        {
+            return a.val_ > b.val_ ? a : b;
+        }
+        constexpr friend MaxVal& operator+=(MaxVal& a, MaxVal b) noexcept
+        {
+            return (a = max(a, b));
+        }
+        constexpr friend MaxVal operator+(MaxVal a, MaxVal b) noexcept
+        {
+            return max(a, b);
+        }
 
+        template<typename Outstream>
+        friend Outstream& operator<<(Outstream& o, MaxVal mval) noexcept
+        {
+            return o << mval.val_ << " at ( " << mval.column_offset_ << ", " << mval.row_offset_ << " ) ";
+        }
+
+        constexpr MaxVal() noexcept {}
+        constexpr MaxVal(Index c_off, Index r_off) noexcept : column_offset_(c_off), row_offset_(r_off) {}
+        constexpr explicit MaxVal(int) noexcept {}
+
+        constexpr auto getOffsets() const noexcept
+        {
+            return make_pair(column_offset_, row_offset_);
+        }
+        constexpr auto getVal() const noexcept
+        {
+            return val_;
+        }
+    private:
+        Index column_offset_{};
+        Index row_offset_{};
+        type val_{numeric_limits<type>::lowest()};
+    };
+    Tensor<MaxVal, 4> switches{};
+};
+}
+
+using MaxVal = opennn::Switch::MaxVal;
+
+namespace Eigen{
+namespace internal{
+template<>
+struct promote_storage_type<opennn::type, MaxVal>
+{
+    using ret = MaxVal;
+};
+}
+//template<> 
+//struct NumTraits<MaxVal> : NumTraits<opennn::type>
+//{};
+}
+
+namespace opennn
+{
 /// Default constructor.
 /// It creates an empty PoolingLayer object.
 
@@ -114,78 +184,30 @@ void PoolingLayer::calculate_no_pooling_outputs(const TensorMap<Tensor<type, 4>>
 /// Returns the result of applying max pooling to a batch of images.
 /// @param inputs The batch of images.
 
-void PoolingLayer::calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, TensorMap<Tensor<type, 4>>& outputs) const
+void PoolingLayer::calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, TensorMap<Tensor<type, 4>>& outputs, Switch* pswitch) const
 {
-    const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
-
-    const Index channels_number = inputs.dimension(Convolutional4dDimensions::channel_index);
-
-    const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
-
-    const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
-
-    outputs.setConstant(numeric_limits<type>::min());
-
-    #pragma omp parallel for
-    for(Index row_index = 0; row_index < inputs_rows_number; row_index++)
-    {
-        Index output_row_index = (row_index / pool_rows_number);
-        for(Index column_index = 0; column_index < inputs_columns_number; column_index++)
-        {
-            Index output_column_index = (column_index / pool_columns_number);
-            for(Index channel_index = 0; channel_index < channels_number; channel_index++)
+    const Tensor<MaxVal, 2> kernel{
+        [&]{
+            Tensor<MaxVal, 2> ret(pool_columns_number, pool_rows_number);
+            for(Index row_index = 0; row_index < pool_rows_number; row_index++)
             {
-                for(Index image_index = 0; image_index < images_number; image_index++)
+                for(Index column_index = 0; column_index < pool_columns_number; column_index++)
                 {
-                    outputs(image_index, channel_index, output_column_index, output_row_index) = max(
-                        outputs(image_index, channel_index, output_column_index, output_row_index),
-                        inputs(image_index, channel_index, column_index, row_index)
-                        );
+                    ret(column_index, row_index) = {column_index, row_index};
                 }
             }
-        }
-    }
+            return ret;
+        }()
+    };
+
+    const Eigen::array<Index, 2> conv_dim{Convolutional4dDimensions::column_index, Convolutional4dDimensions::row_index};
+
+    pswitch->switches.device(*thread_pool_device) = perform_convolution(inputs, kernel, row_stride, column_stride, conv_dim);
+    
+    outputs.device(*thread_pool_device) = pswitch->switches.unaryExpr([](const auto& mval){
+        return mval.getVal();
+    });
 }
-
-/// Returns the result of applying max pooling to a batch of images and saves the indexes of the max elements in switches.
-/// @param inputs The batch of images.
-/// @param switches Saves index of the max values. Memory needs to be preallocated. 
-
-void PoolingLayer::calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>& inputs, Tensor<tuple<Index, Index>, 4>& switches, TensorMap<Tensor<type, 4>>& outputs) const
-{
-    const Index images_number = inputs.dimension(Convolutional4dDimensions::sample_index);
-
-    const Index channels_number = inputs.dimension(Convolutional4dDimensions::channel_index);
-
-    const Index inputs_rows_number = inputs.dimension(Convolutional4dDimensions::row_index);
-
-    const Index inputs_columns_number = inputs.dimension(Convolutional4dDimensions::column_index);
-
-    outputs.setConstant(numeric_limits<type>::min());
-
-    #pragma omp parallel for
-    for(Index row_index = 0; row_index < inputs_rows_number; row_index++)
-    {
-        Index output_row_index = (row_index / pool_rows_number);
-        for(Index column_index = 0; column_index < inputs_columns_number; column_index++)
-        {
-            Index output_column_index = (column_index / pool_columns_number);
-            for(Index channel_index = 0; channel_index < channels_number; channel_index++)
-            {
-                for(Index image_index = 0; image_index < images_number; image_index++)
-                {
-                    if( inputs(image_index, channel_index, column_index, row_index) > 
-                        outputs(image_index, channel_index, output_column_index, output_row_index))
-                    {
-                        outputs(image_index, channel_index, output_column_index, output_row_index) = inputs(image_index, channel_index, column_index, row_index);
-                        switches(image_index, channel_index, output_column_index, output_row_index) = make_tuple(column_index, row_index);
-                    }   
-                }
-            }
-        }
-    }
-}
-
 
 void PoolingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimension,
                            LayerForwardPropagation* forward_propagation, bool& switch_train) 
@@ -232,14 +254,7 @@ void PoolingLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
         break;
     case PoolingMethod::MaxPooling:
     {
-        if(switch_train)
-        {
-            calculate_max_pooling_outputs(inputs, pooling_layer_forward_propagation->switches, outputs);
-        }
-        else
-        {
-            calculate_max_pooling_outputs(inputs, outputs);
-        }
+        calculate_max_pooling_outputs(inputs, outputs, pooling_layer_forward_propagation->pimpl.get());
     }
         break;
     
@@ -491,27 +506,34 @@ void PoolingLayer::calculate_hidden_delta_max_pooling(
 
     PoolingLayer* current_pooling_layer = static_cast<PoolingLayer*>(back_propagation->layer_pointer);
 
-    
     const Index next_delta_rows_number = next_delta.dimension(Convolutional4dDimensions::row_index);
     const Index next_delta_columns_number = next_delta.dimension(Convolutional4dDimensions::column_index);
     const Index images_number = next_delta.dimension(Convolutional4dDimensions::sample_index);
     const Index channels_number = next_delta.dimension(Convolutional4dDimensions::channel_index);
 
-    const auto& switches = next_layer_forward_propagation->switches;
+    const Index row_stride = next_pooling_layer->get_row_stride();
+    const Index column_stride = next_pooling_layer->get_column_stride();
 
     current_delta.setZero();
 
     #pragma omp parallel for
     for(Index row_index = 0; row_index < next_delta_rows_number; row_index++)
     {
+        const Index current_delta_row_index = row_index * row_stride;
         for(Index column_index = 0; column_index < next_delta_columns_number; column_index++)
         {
+            const Index current_delta_column_index = column_index * column_stride;
             for(Index channel_index = 0; channel_index < channels_number; channel_index++)
             {
                 for(Index image_index = 0; image_index < images_number; image_index++)
                 {
-                   const auto [current_delta_column_index, current_delta_row_index] = switches(image_index, channel_index, column_index, row_index);
-                   current_delta(image_index, channel_index, current_delta_column_index, current_delta_row_index) = next_delta(image_index, channel_index, column_index, row_index); 
+                    const auto [c_offset, r_offset] = 
+                        next_layer_forward_propagation->pimpl->switches(image_index, channel_index, column_index, row_index).getOffsets();  
+                    current_delta(
+                        image_index, 
+                        channel_index, 
+                        current_delta_column_index + c_offset, 
+                        current_delta_row_index + r_offset) = next_delta(image_index, channel_index, column_index, row_index); 
                 }
             }
         }
@@ -1073,25 +1095,6 @@ void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
 
 void PoolingLayer::set_pooling_method(const PoolingMethod& new_pooling_method)
 {
-    if(new_pooling_method == PoolingMethod::MaxPooling)
-    {
-        if( row_stride != pool_rows_number || 
-            column_stride != pool_columns_number ||
-            (get_inputs_rows_number() % pool_rows_number) != 0 ||
-            (get_inputs_columns_number() % pool_columns_number) != 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: PoolingLayer class.\n"
-                << "void set_pooling_method(const PoolingMethod&) method.\n"
-                << "MaxPooling needs to satisfy following condition: row_stride == pool_rows_number && \n" 
-                "column_stride == pool_columns_number && \n"
-                "(get_inputs_rows_number() % pool_rows_number) == 0 \n"
-                "(get_inputs_columns_number() % pool_columns_number) == 0.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-    }
     pooling_method = new_pooling_method;
 }
 
@@ -1395,7 +1398,8 @@ void PoolingLayerForwardPropagation::set(const Index& numb_of_batches, Layer* la
     outputs_dimensions[Convolutional4dDimensions::column_index] = numb_of_output_columns;
     outputs_dimensions[Convolutional4dDimensions::channel_index] = numb_of_channels;
 
-    switches.resize(outputs_dimensions);
+    pimpl = make_unique<Switch>();
+    pimpl->switches.resize(outputs_dimensions);
 
     outputs_data = static_cast<type*>(malloc(numb_of_output_rows * 
                                             numb_of_output_columns * 

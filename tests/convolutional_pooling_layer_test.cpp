@@ -301,25 +301,34 @@ void ConvolutionalPoolingLayerTest::test_convolution_pooling_backward_pass()
         numb_of_input_images,
         &pooling_layer
     );
-    pooling_layer_forward_propagation.switches.resize(t1d2array<4>(pooling_layer.get_outputs_dimensions()));
+
+    Tensor<type, 4> pooling_layer_inputs{t1d2array<4>(pooling_layer.get_input_variables_dimensions())};
+    pooling_layer_inputs.setConstant(static_cast<type>(-2));
     //image 1
-    pooling_layer_forward_propagation.switches(0, 0, 0, 0) = make_tuple(0, 0);
-    pooling_layer_forward_propagation.switches(0, 1, 0, 0) = make_tuple(1, 0);
-    pooling_layer_forward_propagation.switches(0, 0, 1, 0) = make_tuple(3, 1);
-    pooling_layer_forward_propagation.switches(0, 1, 1, 0) = make_tuple(2, 0);
-    pooling_layer_forward_propagation.switches(0, 0, 0, 1) = make_tuple(0, 3);
-    pooling_layer_forward_propagation.switches(0, 1, 0, 1) = make_tuple(1, 2);
-    pooling_layer_forward_propagation.switches(0, 0, 1, 1) = make_tuple(3, 2);
-    pooling_layer_forward_propagation.switches(0, 1, 1, 1) = make_tuple(2, 3);
-    ////image 2
-    pooling_layer_forward_propagation.switches(1, 0, 0, 0) = make_tuple(1, 1);
-    pooling_layer_forward_propagation.switches(1, 1, 0, 0) = make_tuple(0, 1);
-    pooling_layer_forward_propagation.switches(1, 0, 1, 0) = make_tuple(2, 0);
-    pooling_layer_forward_propagation.switches(1, 1, 1, 0) = make_tuple(2, 1);
-    pooling_layer_forward_propagation.switches(1, 0, 0, 1) = make_tuple(0, 2);
-    pooling_layer_forward_propagation.switches(1, 1, 0, 1) = make_tuple(1, 3);
-    pooling_layer_forward_propagation.switches(1, 0, 1, 1) = make_tuple(3, 3);
-    pooling_layer_forward_propagation.switches(1, 1, 1, 1) = make_tuple(2, 2);
+    pooling_layer_inputs(0, 0, 0, 0) = static_cast<type>(-1);
+    pooling_layer_inputs(0, 1, 1, 0) = static_cast<type>(-1);
+    pooling_layer_inputs(0, 0, 3, 1) = static_cast<type>(-1);
+    pooling_layer_inputs(0, 1, 2, 0) = static_cast<type>(-1);
+    pooling_layer_inputs(0, 0, 0, 3) = static_cast<type>(-1);
+    pooling_layer_inputs(0, 1, 1, 2) = static_cast<type>(5);
+    pooling_layer_inputs(0, 0, 3, 2) = static_cast<type>(5);
+    pooling_layer_inputs(0, 1, 2, 3) = static_cast<type>(5);
+    //image 2
+    pooling_layer_inputs(1, 0, 1, 1) = static_cast<type>(5);
+    pooling_layer_inputs(1, 1, 0, 1) = static_cast<type>(5);
+    pooling_layer_inputs(1, 0, 2, 0) = static_cast<type>(-1);
+    pooling_layer_inputs(1, 1, 2, 1) = static_cast<type>(-1);
+    pooling_layer_inputs(1, 0, 0, 2) = static_cast<type>(-1);
+    pooling_layer_inputs(1, 1, 1, 3) = static_cast<type>(-1);
+    pooling_layer_inputs(1, 0, 3, 3) = static_cast<type>(-1);
+    pooling_layer_inputs(1, 1, 2, 2) = static_cast<type>(-1);
+
+    TensorMap<Tensor<type, 4>> outputs_m{
+        pooling_layer_forward_propagation.outputs_data, 
+        t1d2array<4>(pooling_layer_forward_propagation.outputs_dimensions)
+    };
+
+    pooling_layer.calculate_max_pooling_outputs(pooling_layer_inputs, outputs_m, pooling_layer_forward_propagation.pimpl.get());
 
     PoolingLayerBackPropagation pooling_layer_back_propagation(
         numb_of_input_images,
