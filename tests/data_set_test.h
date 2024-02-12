@@ -32,9 +32,9 @@ public:
    void test_add_sample();
    void test_append_variable();
    void test_remove_variable();
-   void test_unuse_constant_columns();
+   void test_unuse_constant_raw_variables();
    void test_unuse_repeated_samples();
-   void test_unuse_uncorrelated_columns();
+   void test_unuse_uncorrelated_raw_variables();
 
    // Statistics methods
 
@@ -51,7 +51,7 @@ public:
    void test_calculate_autocorrelations();
    void test_calculate_cross_correlations();
    void test_calculate_input_target_correlations();
-   void test_calculate_input_columns_correlations();
+   void test_calculate_input_raw_variables_correlations();
 
    // Histrogram methods
 

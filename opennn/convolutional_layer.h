@@ -95,26 +95,26 @@ public:
 
     Index get_outputs_rows_number() const;
 
-    Index get_outputs_columns_number() const;
+    Index get_outputs_raw_variables_number() const;
 
     ConvolutionType get_convolution_type() const;
     string write_convolution_type() const;
 
-    Index get_column_stride() const;
+    Index get_raw_variable_stride() const;
 
     Index get_row_stride() const;
 
     Index get_kernels_number() const;
     Index get_kernels_channels_number() const;
     Index get_kernels_rows_number() const;
-    Index get_kernels_columns_number() const;
+    Index get_kernels_raw_variables_number() const;
 
     Index get_padding_width() const;
     Index get_padding_height() const;
 
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
-    Index get_inputs_columns_number() const;
+    Index get_inputs_raw_variables_number() const;
 
     Index get_inputs_number() const;
     Index get_neurons_number() const;
@@ -144,7 +144,7 @@ public:
 
     void set_row_stride(const Index&);
 
-    void set_column_stride(const Index&);
+    void set_raw_variable_stride(const Index&);
 
     void set_inputs_dimensions(const Tensor<Index,1>&);
 
@@ -271,46 +271,46 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
    // Constructor
 
-   explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+   explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
        : LayerForwardPropagation()
    {
-       set(new_batch_samples_number, new_layer_pointer);
+       set(new_batch_samples_number, new_layer);
    }
    
    
    pair<type*, dimensions> get_outputs_pair() const final
    {
-       const Index neurons_number = layer_pointer->get_neurons_number();
+       const Index neurons_number = layer->get_neurons_number();
 
        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number, 1, 1}});
    }
 
 
-   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+   void set(const Index& new_batch_samples_number, Layer* new_layer) final
    {
        batch_samples_number = new_batch_samples_number;
 
-       layer_pointer = new_layer_pointer;
+       layer = new_layer;
 
-       const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+       const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
 
-       const Index inputs_rows_number = convolutional_layer_pointer->get_inputs_rows_number();
-       const Index inputs_columns_number = convolutional_layer_pointer->get_inputs_columns_number();
+       const Index inputs_rows_number = convolutional_layer->get_inputs_rows_number();
+       const Index inputs_raw_variables_number = convolutional_layer->get_inputs_raw_variables_number();
 
-       const Index inputs_channels_number = convolutional_layer_pointer->get_inputs_channels_number();
+       const Index inputs_channels_number = convolutional_layer->get_inputs_channels_number();
 
-       const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
-       const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
-       const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+       const Index kernels_number = convolutional_layer->get_kernels_number();
+       const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+       const Index outputs_raw_variables_number = convolutional_layer->get_outputs_raw_variables_number();
 
        preprocessed_inputs.resize(batch_samples_number,
                                   inputs_rows_number,
-                                  inputs_columns_number,
+                                  inputs_raw_variables_number,
                                   inputs_channels_number);
 
        outputs.resize(batch_samples_number,
                       outputs_rows_number,
-                      outputs_columns_number,
+                      outputs_raw_variables_number,
                       kernels_number);
 
        means.resize(kernels_number);
@@ -318,7 +318,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
        activations_derivatives.resize(batch_samples_number,
                                       inputs_rows_number,
-                                      inputs_columns_number,
+                                      inputs_raw_variables_number,
                                       inputs_channels_number);
    }
 
@@ -353,10 +353,10 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    }
 
 
-   explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+   explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
        : LayerBackPropagation()
    {
-       set(new_batch_samples_number, new_layer_pointer);
+       set(new_batch_samples_number, new_layer);
    }
 
 
@@ -365,38 +365,38 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    }   
 
 
-   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+   void set(const Index& new_batch_samples_number, Layer* new_layer) final
    {
        batch_samples_number = new_batch_samples_number;
 
-       layer_pointer = new_layer_pointer;
+       layer = new_layer;
 
-       const ConvolutionalLayer* convolutional_layer_pointer = static_cast<ConvolutionalLayer*>(layer_pointer);
+       const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
 
-       const Index kernesl_rows_number = convolutional_layer_pointer->get_kernels_rows_number();
-       const Index kernels_columns_number = convolutional_layer_pointer->get_kernels_columns_number();
-       const Index kernels_number = convolutional_layer_pointer->get_kernels_number();
-       const Index kernels_channels_number = convolutional_layer_pointer->get_kernels_channels_number();
+       const Index kernesl_rows_number = convolutional_layer->get_kernels_rows_number();
+       const Index kernels_raw_variables_number = convolutional_layer->get_kernels_raw_variables_number();
+       const Index kernels_number = convolutional_layer->get_kernels_number();
+       const Index kernels_channels_number = convolutional_layer->get_kernels_channels_number();
 
-       const Index outputs_rows_number = convolutional_layer_pointer->get_outputs_rows_number();
-       const Index outputs_columns_number = convolutional_layer_pointer->get_outputs_columns_number();
+       const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+       const Index outputs_raw_variables_number = convolutional_layer->get_outputs_raw_variables_number();
 
        deltas.resize(batch_samples_number,
                      outputs_rows_number,
-                     outputs_columns_number,
+                     outputs_raw_variables_number,
                      kernels_number);
 
        deltas_data = deltas.data();
 
        error_combinations_derivatives.resize(batch_samples_number,
                                                    outputs_rows_number,
-                                                   outputs_columns_number,
+                                                   outputs_raw_variables_number,
                                                    kernels_number);
 
        biases_derivatives.resize(kernels_number);
 
        synaptic_weights_derivatives.resize(kernesl_rows_number,
-                                           kernels_columns_number,
+                                           kernels_raw_variables_number,
                                            kernels_channels_number,
                                            kernels_number);
    }

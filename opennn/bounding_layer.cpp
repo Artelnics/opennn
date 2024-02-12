@@ -407,13 +407,13 @@ void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair
     if(bounding_method == BoundingMethod::Bounding)
     {
         const Index rows_number = inputs.dimension(0);
-        const Index columns_number = inputs.dimension(1);
+        const Index raw_variables_number = inputs.dimension(1);
 
         #pragma omp parallel for
 
         for(Index i = 0; i < rows_number; i++)
         {
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < raw_variables_number; j++)
             {
                 if(inputs(i,j) < lower_bounds(j))
                 {

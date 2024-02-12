@@ -65,9 +65,9 @@ int main(void)
 
 
         Tensor<type, 2> true_outlier = data_set.get_column_data("outlier");
-        data_set.set_column_use("outlier", DataSet::VariableUse::Unused);
+        data_set.set_raw_variable_use("outlier", DataSet::VariableUse::Unused);
 
-        const Index input_variables_number = data_set.get_input_numeric_variables_number();
+        const Index input_variables_number = data_set.get_input_variables_number();
 
         t0 = clock();
 

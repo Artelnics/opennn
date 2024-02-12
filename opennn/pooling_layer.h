@@ -69,23 +69,23 @@ public:
 
     Index get_inputs_rows_number() const;
 
-    Index get_inputs_columns_number() const;
+    Index get_inputs_raw_variables_number() const;
 
     Index get_neurons_number() const;
 
     Index get_outputs_rows_number() const;
 
-    Index get_outputs_columns_number() const;
+    Index get_outputs_raw_variables_number() const;
 
     Index get_padding_width() const;
 
     Index get_row_stride() const;
 
-    Index get_column_stride() const;
+    Index get_raw_variable_stride() const;
 
     Index get_pool_rows_number() const;
 
-    Index get_pool_columns_number() const;
+    Index get_pool_raw_variables_number() const;
 
     Index get_parameters_number() const final;
 
@@ -109,7 +109,7 @@ public:
 
     void set_row_stride(const Index&);
 
-    void set_column_stride(const Index&);
+    void set_raw_variable_stride(const Index&);
 
     void set_pool_size(const Index&, const Index&);
 
@@ -167,7 +167,7 @@ protected:
 
     Index pool_rows_number = 2;
 
-    Index pool_columns_number = 2;
+    Index pool_raw_variables_number = 2;
 
     Index padding_width = 0;
 
@@ -198,50 +198,50 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit PoolingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit PoolingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
     
     
     pair<type*, dimensions> get_outputs_pair() const final
     {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index neurons_number = layer->get_neurons_number();
 
         return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number, 1, 1}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
         batch_samples_number = new_batch_samples_number;
 
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+        const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-        const Index pool_rows_number = pooling_layer_pointer->get_pool_rows_number();
+        const Index pool_rows_number = pooling_layer->get_pool_rows_number();
 
-        const Index pool_columns_number = pooling_layer_pointer->get_pool_columns_number();
+        const Index pool_raw_variables_number = pooling_layer->get_pool_raw_variables_number();
 
-        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
+        const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
 
-        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
+        const Index outputs_raw_variables_number = pooling_layer->get_outputs_raw_variables_number();
 
-        const Index channels_number = pooling_layer_pointer->get_channels_number();
+        const Index channels_number = pooling_layer->get_channels_number();
 
         outputs.resize(batch_samples_number,
                           outputs_rows_number,
-                          outputs_columns_number,
+                          outputs_raw_variables_number,
                           channels_number);
 
         outputs_data = outputs.data();
 
         image_patches.resize(batch_samples_number,
                              pool_rows_number,
-                             pool_columns_number,
-                             outputs_rows_number*outputs_columns_number,
+                             pool_raw_variables_number,
+                             outputs_rows_number*outputs_raw_variables_number,
                              channels_number);
     }
 
@@ -272,10 +272,10 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     }
 
 
-    explicit PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
@@ -286,38 +286,38 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     
     pair<type*, dimensions> get_deltas_pair() const final
     {
-        const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+        const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-        const Index kernels_number = 0;// = pooling_layer_pointer->get_kernels_number();
+        const Index kernels_number = 0;// = pooling_layer->get_kernels_number();
 
-        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
+        const Index outputs_raw_variables_number = pooling_layer->get_outputs_raw_variables_number();
 
-        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
+        const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
 
         return pair<type*, dimensions>(deltas_data, {{batch_samples_number,
                                                       kernels_number,
                                                       outputs_rows_number,
-                                                      outputs_columns_number}});
+                                                      outputs_raw_variables_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
         batch_samples_number = new_batch_samples_number;
 
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
+        const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
 
-        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
+        const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+        const Index outputs_raw_variables_number = pooling_layer->get_outputs_raw_variables_number();
 
         const Index kernels_number = 0;
 
         deltas.resize(batch_samples_number,
                       kernels_number,
                       outputs_rows_number,
-                      outputs_columns_number);
+                      outputs_raw_variables_number);
 
         deltas_data = deltas.data();
     }

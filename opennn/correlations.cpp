@@ -321,7 +321,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
                                                                            const Tensor<type, 2>& y)
 {
     const Index rows_number = x.size();
-    const Index y_columns_number = y.dimension(1);
+    const Index y_raw_variables_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -345,7 +345,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
 
     Tensor<type, 1> new_x(new_rows_number);
 
-    Tensor<type, 2> new_y(new_rows_number,y_columns_number);
+    Tensor<type, 2> new_y(new_rows_number,y_raw_variables_number);
 
     Index index = 0;
 
@@ -353,7 +353,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
     {
         if(not_NAN_row(i))
         {
-            for(Index j = 0; j < y_columns_number; j++)
+            for(Index j = 0; j < y_raw_variables_number; j++)
             {
                 new_y(index, j) = y(i,j);
             }
@@ -384,8 +384,8 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
                                                                            const Tensor<type, 2>& y)
 {
     const Index rows_number = x.dimension(0);
-    const Index x_columns_number = x.dimension(1);
-    const Index y_columns_number = y.dimension(1);
+    const Index x_raw_variables_number = x.dimension(1);
+    const Index y_raw_variables_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -401,7 +401,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         }
         else
         {
-            for(Index j = 0; j < x_columns_number; j++)
+            for(Index j = 0; j < x_raw_variables_number; j++)
             {
                 if(isnan(x(i,j)))
                 {
@@ -414,9 +414,9 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         if(not_NAN_row(i)) new_rows_number++;
     }
 
-    Tensor<type, 2> new_x(new_rows_number, x_columns_number);
+    Tensor<type, 2> new_x(new_rows_number, x_raw_variables_number);
 
-    Tensor<type, 2> new_y(new_rows_number,y_columns_number);
+    Tensor<type, 2> new_y(new_rows_number,y_raw_variables_number);
 
     Index index = 0;
 
@@ -424,12 +424,12 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
     {
         if(not_NAN_row(i))
         {
-            for(Index j = 0; j < y_columns_number; j++)
+            for(Index j = 0; j < y_raw_variables_number; j++)
             {
                 new_y(index, j) = y(i,j);
             }
 
-            for(Index j = 0; j < x_columns_number; j++)
+            for(Index j = 0; j < x_raw_variables_number; j++)
             {
                 new_x(index, j) = x(i, j);
             }
@@ -448,13 +448,13 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
     const Index rows_number = correlations.dimension(0);
-    const Index columns_number = correlations.dimension(1);
+    const Index raw_variables_number = correlations.dimension(1);
 
-    Tensor<type, 2> values(rows_number, columns_number);
+    Tensor<type, 2> values(rows_number, raw_variables_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
             values(i,j) = correlations(i,j).r;
         }
@@ -787,12 +787,12 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     DataSet data_set(data);
     data_set.set_training();
 
-    data_set.set_columns_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
-    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
+    neural_network.get_scaling_layer_2d()->set_display(false);
 
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -801,7 +801,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.perform_training();
 
@@ -868,12 +868,12 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     DataSet data_set(data);
     data_set.set_training();
 
-    data_set.set_columns_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1,1});
-    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
+    neural_network.get_scaling_layer_2d()->set_display(false);
 
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -882,7 +882,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.perform_training();
 
@@ -952,24 +952,24 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> data = opennn::assemble_vector_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_columns_indices(1);
-    input_columns_indices(0) = type(0);
+    Tensor<Index, 1> input_raw_variables_indices(1);
+    input_raw_variables_indices(0) = type(0);
 
-    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
-    for(Index i = 0; i < y_filtered.dimension(1); i++) target_columns_indices(i) = i + 1;
+    Tensor<Index, 1> target_raw_variables_indices(y_filtered.dimension(1));
+    for(Index i = 0; i < y_filtered.dimension(1); i++) target_raw_variables_indices(i) = i + 1;
 
     DataSet data_set(data);
 
-    data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
+    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
     data_set.set_training();
 
-    const Index input_variables_number = data_set.get_input_numeric_variables_number();
-    const Index target_variables_number = data_set.get_target_numeric_variables_number();
+    const Index input_variables_number = data_set.get_input_variables_number();
+    const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
+    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    neural_network.get_scaling_layer_2d()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -977,7 +977,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.set_display(false);
 
@@ -1069,34 +1069,34 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
+    Tensor<Index, 1> input_raw_variables_indices(x_filtered.dimension(1));
     for(Index i = 0; i < x_filtered.dimension(1); i++)
     {
-            input_columns_indices(i) = i;
+            input_raw_variables_indices(i) = i;
     }
 
-    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
+    Tensor<Index, 1> target_raw_variables_indices(y_filtered.dimension(1));
     for(Index i = 0; i < y_filtered.dimension(1); i++)
     {
-            target_columns_indices(i) = x_filtered.dimension(1)+i;
+            target_raw_variables_indices(i) = x_filtered.dimension(1)+i;
     }
 
     DataSet data_set(data);
 
-    data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
+    data_set.set_input_target_raw_variables(input_raw_variables_indices, target_raw_variables_indices);
 
     data_set.set_training();
 
-    const Index input_variables_number = data_set.get_input_numeric_variables_number();
-    const Index target_variables_number = data_set.get_target_numeric_variables_number();
+    const Index input_variables_number = data_set.get_input_variables_number();
+    const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    neural_network.get_scaling_layer_2d_pointer()->set_display(false);
+    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    neural_network.get_scaling_layer_2d()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 

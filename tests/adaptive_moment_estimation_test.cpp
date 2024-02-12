@@ -13,7 +13,7 @@ AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    adaptive_moment_estimation.set_loss_index_pointer(&sum_squared_error);
+    adaptive_moment_estimation.set_loss_index(&sum_squared_error);
 }
 
 

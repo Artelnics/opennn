@@ -27,8 +27,8 @@ void TrainingStrategyTest::test_constructor()
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    assert_true(training_strategy.get_neural_network_pointer() != nullptr, LOG);
-    assert_true(training_strategy.get_data_set_pointer() != nullptr, LOG);
+    assert_true(training_strategy.get_neural_network() != nullptr, LOG);
+    assert_true(training_strategy.get_data_set() != nullptr, LOG);
 }
 
 
@@ -36,9 +36,9 @@ void TrainingStrategyTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
+    TrainingStrategy* training_strategy = new TrainingStrategy(&neural_network, &data_set);
 
-    delete training_strategy_pointer;
+    delete training_strategy;
 }
 
 
@@ -78,7 +78,7 @@ void TrainingStrategyTest::test_perform_training()
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
     training_strategy.set_maximum_epochs_number(10);
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L1);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L1);
     training_strategy.set_display(false);
 
     training_strategy.perform_training();

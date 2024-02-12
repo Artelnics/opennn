@@ -35,8 +35,8 @@ int main()
 
         DataSet data_set("data/iris_plant_original.csv", ';', true);
 
-        const Index input_variables_number = data_set.get_input_numeric_variables_number();
-        const Index target_variables_number = data_set.get_target_numeric_variables_number();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
         // Neural network
 

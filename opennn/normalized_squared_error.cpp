@@ -27,11 +27,11 @@ NormalizedSquaredError::NormalizedSquaredError() : LossIndex()
 /// Neural network and data set constructor.
 /// It creates a normalized squared error term associated with a neural network and measured on a data set.
 /// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-/// @param new_data_set_pointer Pointer to a data set object.
+/// @param new_neural_network Pointer to a neural network object.
+/// @param new_data_set Pointer to a data set object.
 
-NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : LossIndex(new_neural_network, new_data_set)
 {
     set_default();
 }
@@ -54,14 +54,14 @@ type NormalizedSquaredError::get_selection_normalization_coefficient() const
 
 
 ///
-/// \brief set_data_set_pointer
-/// \param new_data_set_pointer
+/// \brief set_data_set
+/// \param new_data_set
 
-void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
+void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
-    data_set_pointer = new_data_set_pointer;
+    data_set = new_data_set;
 
-    if(neural_network_pointer->has_recurrent_layer() || neural_network_pointer->has_long_short_term_memory_layer())
+    if(neural_network->has_recurrent_layer() || neural_network->has_long_short_term_memory_layer())
     {
         set_time_series_normalization_coefficient();
     }
@@ -79,11 +79,11 @@ void NormalizedSquaredError::set_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<type, 1> targets_mean = data_set_pointer->calculate_used_targets_mean();
+    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
 
     // Targets matrix
 
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data();
+    const Tensor<type, 2> targets = data_set->get_target_data();
 
     // Normalization coefficient
 
@@ -95,15 +95,15 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
     //Targets matrix
 
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data();
+    const Tensor<type, 2> targets = data_set->get_target_data();
 
     const Index rows = targets.dimension(0)-1;
-    const Index columns = targets.dimension(1);
+    const Index raw_variables = targets.dimension(1);
 
-    Tensor<type, 2> targets_t(rows, columns);
-    Tensor<type, 2> targets_t_1(rows, columns);
+    Tensor<type, 2> targets_t(rows, raw_variables);
+    Tensor<type, 2> targets_t_1(rows, raw_variables);
 
-    for(Index i = 0; i < columns; i++)
+    for(Index i = 0; i < raw_variables; i++)
     {
         copy(execution::par, 
              targets.data() + targets.dimension(0) * i,
@@ -111,7 +111,7 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
              targets_t_1.data() + targets_t_1.dimension(0) * i);
     }
 
-    for(Index i = 0; i < columns; i++)
+    for(Index i = 0; i < raw_variables; i++)
     {
         copy(execution::par, 
              targets.data() + targets.dimension(0) * i + 1,
@@ -163,15 +163,15 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<Index, 1> selection_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> selection_indices = data_set->get_selection_samples_indices();
 
     const Index selection_samples_number = selection_indices.size();
 
     if(selection_samples_number == 0) return;
 
-    const Tensor<type, 1> selection_targets_mean = data_set_pointer->calculate_selection_targets_mean();
+    const Tensor<type, 1> selection_targets_mean = data_set->calculate_selection_targets_mean();
 
-    const Tensor<type, 2> targets = data_set_pointer->get_selection_target_data();
+    const Tensor<type, 2> targets = data_set->get_selection_target_data();
 
     // Normalization coefficient
 
@@ -192,7 +192,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient(const type&
 
 void NormalizedSquaredError::set_default()
 {
-    if(has_neural_network() && has_data_set() && !data_set_pointer->is_empty())
+    if(has_neural_network() && has_data_set() && !data_set->is_empty())
     {
         set_normalization_coefficient();
         set_selection_normalization_coefficient();
@@ -241,7 +241,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
                                              const ForwardPropagation& forward_propagation,
                                              BackPropagation& back_propagation) const
 {
-    const Index total_samples_number = data_set_pointer->get_used_samples_number();
+    const Index total_samples_number = data_set->get_used_samples_number();
 
     // Batch
 
@@ -280,7 +280,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
                                                 const ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
-    const Index total_samples_number = data_set_pointer->get_samples_number();
+    const Index total_samples_number = data_set->get_samples_number();
 
     // Batch
 
@@ -307,18 +307,23 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                     ForwardPropagation&,
                                                     BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index total_samples_number = data_set->get_samples_number();
+
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+
+    // Batch
+
+    const Index batch_samples_number = batch.get_batch_samples_number();
+
+    // Back propagation
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
-
-    const type coefficient = type(2)/(type(batch_samples_number)/type(total_samples_number)*normalization_coefficient);
-    
-    const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
+    const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();  
 
     TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
+
+    const type coefficient = type(2) / (type(batch_samples_number) / type(total_samples_number) * normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
@@ -328,25 +333,25 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & loss_index_back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    const Layer* output_layer = output_layer_back_propagation->layer;
 
     copy(execution::par,
          loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
 
-    divide_columns(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
+    divide_raw_variables(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
 }
 
 
 void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
                                                          BackPropagationLM& loss_index_back_propagation_lm) const
 {
-    const Index total_samples_number = data_set_pointer->get_samples_number();
+    const Index total_samples_number = data_set->get_samples_number();
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
@@ -367,7 +372,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batc
 #endif
 
     const Index batch_samples_number = batch.get_batch_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
+    const Index total_samples_number = data_set->get_samples_number();
 
     const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 

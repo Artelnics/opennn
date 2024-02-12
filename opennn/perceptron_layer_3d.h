@@ -165,10 +165,6 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(const pair<type*, dimensions>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*) final;
-
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
@@ -245,10 +241,10 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
      }
 
 
-     explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+     explicit PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
          : LayerForwardPropagation()
      {        
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
      }
 
 
@@ -259,27 +255,27 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const final
     {
-        PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer_pointer);
+        PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
-        const Index neurons_number = perceptron_layer_3d_pointer->get_neurons_number();
+        const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
-        const Index inputs_size = perceptron_layer_3d_pointer->get_inputs_size();
+        const Index inputs_size = perceptron_layer_3d->get_inputs_size();
 
         return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_size, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer_pointer);
+        PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = perceptron_layer_3d_pointer->get_neurons_number();
+        const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
-        const Index inputs_size = perceptron_layer_3d_pointer->get_inputs_size();
+        const Index inputs_size = perceptron_layer_3d->get_inputs_size();
 
         outputs.resize(batch_samples_number, inputs_size, neurons_number);
 
@@ -314,10 +310,10 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     }
 
 
-    explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
@@ -328,20 +324,20 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     
     pair<type*, dimensions> get_deltas_pair() const final
     {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index neurons_number = layer->get_neurons_number();
 
         return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
+        const Index neurons_number = layer->get_neurons_number();
+        const Index inputs_number = layer->get_inputs_number();
 
         deltas.resize(batch_samples_number, neurons_number);
 

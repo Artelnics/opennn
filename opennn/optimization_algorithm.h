@@ -51,7 +51,7 @@ public:
 
    // Get methods
 
-   LossIndex* get_loss_index_pointer() const;
+   LossIndex* get_loss_index() const;
 
    /// Hardware use.
    string get_hardware_use() const;
@@ -81,7 +81,7 @@ public:
 
    virtual void set_threads_number(const int&);
 
-   virtual void set_loss_index_pointer(LossIndex*);
+   virtual void set_loss_index(LossIndex*);
 
    virtual void set_display(const bool&);
 
@@ -124,7 +124,7 @@ protected:
 
    /// Pointer to a loss index for a neural network object.
 
-   LossIndex* loss_index_pointer = nullptr;
+   LossIndex* loss_index = nullptr;
 
    /// Number of training epochs in the neural network.
 

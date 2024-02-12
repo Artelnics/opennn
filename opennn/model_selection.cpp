@@ -20,11 +20,11 @@ ModelSelection::ModelSelection()
 
 
 /// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
+ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
-    set(new_training_strategy_pointer);
+    set(new_training_strategy);
 
     set_default();
 }
@@ -32,16 +32,16 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 
 /// Returns a pointer to the training strategy object.
 
-TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
+TrainingStrategy* ModelSelection::get_training_strategy() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "TrainingStrategy* get_training_strategy_pointer() const method.\n"
+               << "TrainingStrategy* get_training_strategy() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -49,7 +49,7 @@ TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 
 #endif
 
-    return training_strategy_pointer;
+    return training_strategy;
 }
 
 
@@ -58,7 +58,7 @@ TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 
 bool ModelSelection::has_training_strategy() const
 {   
-    if(training_strategy_pointer)
+    if(training_strategy)
     {
         return true;
     }
@@ -87,7 +87,7 @@ const ModelSelection::InputsSelectionMethod& ModelSelection::get_inputs_selectio
 
 /// Returns a pointer to the growing neurons selection algorithm.
 
-GrowingNeurons* ModelSelection::get_growing_neurons_pointer()
+GrowingNeurons* ModelSelection::get_growing_neurons()
 {
     return &growing_neurons;
 }
@@ -95,7 +95,7 @@ GrowingNeurons* ModelSelection::get_growing_neurons_pointer()
 
 /// Returns a pointer to the growing inputs selection algorithm.
 
-GrowingInputs* ModelSelection::get_growing_inputs_pointer()
+GrowingInputs* ModelSelection::get_growing_inputs()
 {
     return &growing_inputs;
 }
@@ -103,7 +103,7 @@ GrowingInputs* ModelSelection::get_growing_inputs_pointer()
 
 /// Returns a pointer to the genetic inputs selection algorithm.
 
-GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer()
+GeneticAlgorithm* ModelSelection::get_genetic_algorithm()
 {
     return &genetic_algorithm;
 }
@@ -210,20 +210,20 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
 
 
 /// Sets a new training strategy pointer.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-void ModelSelection::set(TrainingStrategy* new_training_strategy_pointer)
+void ModelSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    training_strategy = new_training_strategy;
 
     // Neurons selection
 
-    growing_neurons.set_training_strategy_pointer(new_training_strategy_pointer);
+    growing_neurons.set_training_strategy(new_training_strategy);
 
     // Inputs selection
 
-    growing_inputs.set(new_training_strategy_pointer);
-    genetic_algorithm.set(new_training_strategy_pointer);
+    growing_inputs.set(new_training_strategy);
+    genetic_algorithm.set(new_training_strategy);
 }
 
 
@@ -236,7 +236,7 @@ void ModelSelection::check() const
 
     ostringstream buffer;
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check() const method.\n"
@@ -247,9 +247,9 @@ void ModelSelection::check() const
 
     // Loss index
 
-    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index = training_strategy->get_loss_index();
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check() const method.\n"
@@ -260,9 +260,9 @@ void ModelSelection::check() const
 
     // Neural network
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(!neural_network_pointer)
+    if(!neural_network)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check() const method.\n"
@@ -271,7 +271,7 @@ void ModelSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    if(neural_network_pointer->is_empty())
+    if(neural_network->is_empty())
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check() const method.\n"
@@ -282,9 +282,9 @@ void ModelSelection::check() const
 
     // Data set
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    if(!data_set_pointer)
+    if(!data_set)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check() const method.\n"
@@ -293,7 +293,7 @@ void ModelSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
     if(selection_samples_number == 0)
     {

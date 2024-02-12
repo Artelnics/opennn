@@ -37,9 +37,9 @@ void GrowingNeuronsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingNeurons* growing_neurons_pointer = new GrowingNeurons;
+    GrowingNeurons* growing_neurons = new GrowingNeurons;
 
-    delete growing_neurons_pointer;
+    delete growing_neurons;
 }
 
 
@@ -47,7 +47,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
-    growing_neurons.set_training_strategy_pointer(&training_strategy);
+    growing_neurons.set_training_strategy(&training_strategy);
 
     Index samples_number;
     Index inputs_number;
@@ -85,7 +85,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     Tensor<DataSet::VariableUse, 1> uses(2);
     uses.setValues({DataSet::VariableUse::Input, DataSet::VariableUse::Target});
-    data_set.set_columns_uses(uses);
+    data_set.set_raw_variables_uses(uses);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1,3,1});
     neural_network.set_parameters_constant(type(0));

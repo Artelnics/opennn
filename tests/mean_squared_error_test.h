@@ -36,6 +36,13 @@ public:
 
     void test_back_propagate();
 
+    void test_back_propagate_perceptron();
+    void test_back_propagate_probabilistic();
+    void test_back_propagate_convolutional();
+    void test_back_propagate_recurrent();
+    void test_back_propagate_long_short_term_memory();
+
+
     void test_back_propagate_lm();
 
     // Unit testing methods

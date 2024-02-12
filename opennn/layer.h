@@ -12,9 +12,9 @@
 // System includes
 
 #include <iostream>
-#include <string>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 // OpenNN includes
 
@@ -68,6 +68,8 @@ public:
 
     explicit Layer()   
     {
+        layer_type = Layer::Type::Perceptron;
+
         const int n = omp_get_max_threads();
 
         thread_pool = new ThreadPool(n);
@@ -117,10 +119,6 @@ public:
     virtual void forward_propagate(const pair<type*, dimensions>&,
                                    LayerForwardPropagation*,
                                    const bool&) = 0;
-
-    virtual void forward_propagate(const pair<type*, dimensions>&,
-                                   Tensor<type, 1>&,
-                                   LayerForwardPropagation*);
 
     // Back propagation
 
@@ -239,7 +237,7 @@ protected:
     template <int rank>
     void logistic(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        y.device(*thread_pool_device) = type(1)/(type(1) - x.exp());
+        y.device(*thread_pool_device) = type(1)/(type(1) + x.exp().inverse());
     }
 
 
@@ -329,79 +327,13 @@ protected:
     }
 
 
-    void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-    {
-        const Index rows_number = x.dimension(0);
-        const Index columns_number = x.dimension(1);
+    void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-        const Eigen::array<Index, 1> last_dimension{ {2} };
-        const Eigen::array<Index, 2> range_2{ {rows_number, 1} };
-        const Eigen::array<Index, 2> expand_last_dim{ {1, columns_number} };
+    void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const;
 
-        y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-                                             .reshape(range_2)
-                                             .broadcast(expand_last_dim);
+    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
 
-        y.device(*thread_pool_device) = y.exp();
-
-        Tensor<type, 2> y_sum = y.sum(last_dimension)
-                                 .reshape(range_2)
-                                 .broadcast(expand_last_dim);
-
-        y.device(*thread_pool_device) = y / y.sum(last_dimension)
-                                             .reshape(range_2)
-                                             .broadcast(expand_last_dim);
-    }
-
-
-    void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
-    {
-        const Index rows_number = x.dimension(0);
-        const Index columns_number = x.dimension(1);
-        const Index channels_number = x.dimension(2);
-
-        const Eigen::array<Index, 1> last_dimension{ {2} };
-        const Eigen::array<Index, 3> range_3{ {rows_number, columns_number, 1} };
-        const Eigen::array<Index, 3> expand_last_dim{ {1, 1, channels_number} };
-
-        y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-                                             .reshape(range_3)
-                                             .broadcast(expand_last_dim);
-
-        y.device(*thread_pool_device) = y.exp();
-
-        Tensor<type, 3> y_sum = y.sum(last_dimension)
-                                 .reshape(range_3)
-                                 .broadcast(expand_last_dim);
-
-        y.device(*thread_pool_device) = y / y_sum;
-    }
-
-
-    void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
-    {
-        const Index rows_number = x.dimension(0);
-        const Index columns_number = x.dimension(1);
-        const Index channels_number = x.dimension(2);
-        const Index blocks_number = x.dimension(3);
-
-        const Eigen::array<Index, 1> last_dimension{ {2} };
-        const Eigen::array<Index, 4> range_4{ {rows_number, columns_number, 1, blocks_number} };
-        const Eigen::array<Index, 4> expand_last_dim{ {1, 1, channels_number, 1} };
-
-        y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-            .reshape(range_4)
-            .broadcast(expand_last_dim);
-
-        y.device(*thread_pool_device) = y.exp();
-
-        Tensor<type, 4> y_sum = y.sum(last_dimension)
-            .reshape(range_4)
-            .broadcast(expand_last_dim);
-
-        y.device(*thread_pool_device) = y / y_sum;
-    }
-
+    void softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const;
 
     template <int rank>
     void linear_derivatives(const Tensor<type, rank>& x, Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
@@ -545,14 +477,14 @@ protected:
     void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
     {
         const Index rows_number = x.dimension(0);
-        const Index columns_number = x.dimension(1);
+        const Index raw_variables_number = x.dimension(1);
 
         softmax(x, y);
 
         dy_dx.setZero();
 
-        Tensor<type, 1> y_row(columns_number);
-        Tensor<type, 2> dy_dx_matrix(columns_number, columns_number);
+        Tensor<type, 1> y_row(raw_variables_number);
+        Tensor<type, 2> dy_dx_matrix(raw_variables_number, raw_variables_number);
 
         for (Index i = 0; i < rows_number; i++)
         {
@@ -570,14 +502,14 @@ protected:
     void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
     {
         const Index rows_number = x.dimension(0);
-        const Index columns_number = x.dimension(1);
+        const Index raw_variables_number = x.dimension(1);
         const Index channels_number = x.dimension(2);
 
         softmax(x, y);
 
         dy_dx.setZero();
 
-        Tensor<type, 2> y_row(columns_number, channels_number);
+        Tensor<type, 2> y_row(raw_variables_number, channels_number);
         Tensor<type, 1> y_element(channels_number);
         Tensor<type, 2> dy_dx_element(channels_number, channels_number);
 
@@ -585,7 +517,7 @@ protected:
         {
             y_row = y.chip(i, 0);
 
-            for (Index j = 0; j < columns_number; j++)
+            for (Index j = 0; j < raw_variables_number; j++)
             {
                 y_element = y_row.chip(j, 0);
 

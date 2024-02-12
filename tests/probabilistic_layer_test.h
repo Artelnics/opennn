@@ -47,10 +47,25 @@ public:
 
 private:
 
-    Index inputs_number;
-    Index outputs_number;
-    Index neurons_number;
-    Index samples_number;
+    Index inputs_number = 0;
+    Index outputs_number = 0;
+    Index neurons_number = 0;
+    Index samples_number = 0;
+
+    Tensor<type, 1> biases;
+    Tensor<type, 2> synaptic_weights;
+    Tensor<type, 1> parameters;
+
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
+    Tensor<type, 2> activations_derivatives_2d;
+    Tensor<type, 3> activations_derivatives_3d;
+
+    pair<type*, dimensions> inputs_pair;
+
+    bool is_training = true;
 
     ProbabilisticLayer probabilistic_layer;
 

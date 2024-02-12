@@ -118,28 +118,28 @@ public:
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
-   Tensor<Layer*, 1> get_layers_pointers() const;
-   Layer* get_layer_pointer(const Index&) const;
-   Tensor<Layer*, 1> get_trainable_layers_pointers() const;
+   Tensor<Layer*, 1> get_layers() const;
+   Layer* get_layer(const Index&) const;
+   Tensor<Layer*, 1> get_trainable_layers() const;
    Tensor<Index, 1> get_trainable_layers_indices() const;   
 
    Index get_layer_index(const string&) const;
 
    Tensor<Tensor<Index, 1>, 1> get_layers_inputs_indices() const;
 
-   ScalingLayer2D* get_scaling_layer_2d_pointer() const;
-   ScalingLayer4D* get_scaling_layer_4d_pointer() const;
-   UnscalingLayer* get_unscaling_layer_pointer() const;
-   BoundingLayer* get_bounding_layer_pointer() const;
-   FlattenLayer* get_flatten_layer_pointer() const;
-   //ConvolutionalLayer* get_convolutional_layer_pointer() const;
-   PoolingLayer* get_pooling_layer_pointer() const;
-   ProbabilisticLayer* get_probabilistic_layer_pointer() const;
-   LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const;
-   RecurrentLayer* get_recurrent_layer_pointer() const;
+   ScalingLayer2D* get_scaling_layer_2d() const;
+   ScalingLayer4D* get_scaling_layer_4d() const;
+   UnscalingLayer* get_unscaling_layer() const;
+   BoundingLayer* get_bounding_layer() const;
+   FlattenLayer* get_flatten_layer() const;
+   //ConvolutionalLayer* get_convolutional_layer() const;
+   PoolingLayer* get_pooling_layer() const;
+   ProbabilisticLayer* get_probabilistic_layer() const;
+   LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
+   RecurrentLayer* get_recurrent_layer() const;
 
-   Layer* get_last_trainable_layer_pointer() const;
-   PerceptronLayer* get_first_perceptron_layer_pointer() const;
+   Layer* get_last_trainable_layer() const;
+   PerceptronLayer* get_first_perceptron_layer() const;
 
    Index get_batch_samples_number() const;
 
@@ -155,7 +155,7 @@ public:
 
    void set(const string&);
 
-   void set_layers_pointers(Tensor<Layer*, 1>&);
+   void set_layers(Tensor<Layer*, 1>&);
 
    void set_layers_inputs_indices(const Tensor<Tensor<Index, 1>, 1>&);
    void set_layer_inputs_indices(const Index&, const Tensor<Index, 1>&);
@@ -218,7 +218,7 @@ public:
    Tensor<Index, 1> get_layers_parameters_numbers() const;
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
 
-   void set_parameters(Tensor<type, 1>&) const;
+   void set_parameters(const Tensor<type, 1>&) const;
 
    // Parameters initialization methods
 
@@ -279,9 +279,13 @@ public:
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(const pair<type*, dimensions>&, ForwardPropagation&, const bool& = false) const;
+   void forward_propagate(const pair<type*, dimensions>&, 
+                          ForwardPropagation&, 
+                          const bool& = false) const;
 
-   void forward_propagate(const pair<type*, dimensions>&, Tensor<type, 1>&, ForwardPropagation&) const;
+   void forward_propagate(const pair<type*, dimensions>&, 
+                          const Tensor<type, 1>&, 
+                          ForwardPropagation&) const;
 
 protected:
 
@@ -299,7 +303,7 @@ protected:
 
    /// Layers
 
-   Tensor<Layer*, 1> layers_pointers;
+   Tensor<Layer*, 1> layers;
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 

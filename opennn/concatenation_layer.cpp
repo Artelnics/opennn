@@ -21,7 +21,7 @@ ConcatenationLayer::ConcatenationLayer() : Layer()
 
 /// Input size setter constructor.
 /// After setting new dimensions for the input, it creates an empty ConcatenationLayer object.
-/// @param new_input_variables_dimensions A vector containing the new number of channels, rows and columns for the input.
+/// @param new_input_variables_dimensions A vector containing the new number of channels, rows and raw_variables for the input.
 
 ConcatenationLayer::ConcatenationLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
@@ -31,8 +31,8 @@ ConcatenationLayer::ConcatenationLayer(const Tensor<Index, 1>& new_input_variabl
 
 /// Input size setter constructor.
 /// After setting new dimensions for the input, it creates an empty ConcatenationLayer object.
-/// @param new_input_variables_dimensions A vector containing the desired number of rows and columns for the input.
-/// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
+/// @param new_input_variables_dimensions A vector containing the desired number of rows and raw_variables for the input.
+/// @param pool_dimensions A vector containing the desired number of rows and raw_variables for the pool.
 
 ConcatenationLayer::ConcatenationLayer(const Tensor<Index, 1>& new_input_variables_dimensions, const Tensor<Index, 1>& pool_dimensions) : Layer()
 { 
@@ -48,7 +48,7 @@ ConcatenationLayer::ConcatenationLayer(const Tensor<Index, 1>& new_input_variabl
 
 Index ConcatenationLayer::get_neurons_number() const
 {
-    return get_outputs_rows_number() * get_outputs_columns_number();
+    return get_outputs_rows_number() * get_outputs_raw_variables_number();
 }
 
 
@@ -59,7 +59,7 @@ Tensor<Index, 1> ConcatenationLayer::get_outputs_dimensions() const
     Tensor<Index, 1> outputs_dimensions(3);
 
     outputs_dimensions[0] = get_outputs_rows_number();
-    outputs_dimensions[1] = get_outputs_columns_number();
+    outputs_dimensions[1] = get_outputs_raw_variables_number();
     outputs_dimensions[2] = inputs_dimensions[2];
 
     return outputs_dimensions;
@@ -83,9 +83,9 @@ Index ConcatenationLayer::get_inputs_rows_number() const
 }
 
 
-/// Returns the number of columns of the layer's input.
+/// Returns the number of raw_variables of the layer's input.
 
-Index ConcatenationLayer::get_inputs_columns_number() const
+Index ConcatenationLayer::get_inputs_raw_variables_number() const
 {
     return inputs_dimensions[1];
 }
@@ -107,9 +107,9 @@ Index ConcatenationLayer::get_outputs_rows_number() const
 }
 
 
-/// Returns the number of columns of the layer's output.
+/// Returns the number of raw_variables of the layer's output.
 
-Index ConcatenationLayer::get_outputs_columns_number() const
+Index ConcatenationLayer::get_outputs_raw_variables_number() const
 {
     return 0;
 }

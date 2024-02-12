@@ -65,7 +65,7 @@ public:
 
    void set_normalization_coefficient() override;
 
-   void set_data_set_pointer(DataSet*) final;
+   void set_data_set(DataSet*) final;
 
    type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y) const;
 

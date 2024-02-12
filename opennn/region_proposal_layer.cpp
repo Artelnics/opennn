@@ -57,7 +57,7 @@ Index RegionProposalLayer::get_region_rows() const
 }
 
 
-Index RegionProposalLayer::get_region_columns() const
+Index RegionProposalLayer::get_region_raw_variables() const
 {
     return region_columns;
 }
@@ -81,7 +81,7 @@ void RegionProposalLayer::set_region_rows(const Index& new_region_rows)
 }
 
 
-void RegionProposalLayer::set_region_columns(const Index& new_region_columns)
+void RegionProposalLayer::set_region_raw_variables(const Index& new_region_columns)
 {
     region_columns = new_region_columns;
 }

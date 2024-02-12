@@ -59,7 +59,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -103,7 +103,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);

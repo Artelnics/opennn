@@ -44,7 +44,13 @@ void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const 
 
 // Rows
 
+void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&);
+
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
+
+void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
+
+
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 // Columns
@@ -63,7 +69,7 @@ void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 // Division
 
-void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_raw_variables(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 
 // Checking
 
@@ -131,7 +137,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
 
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
+Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
 
 // Kronecker product
 
@@ -165,7 +171,7 @@ void check_size(const Tensor<type, 1>&, const Index&, const string&);
 
 void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
 
-void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
+void check_raw_variables_number(const Tensor<type, 2>&, const Index&, const string&);
 void check_rows_number(const Tensor<type, 2>&, const Index&, const string&);
 
 // Fill

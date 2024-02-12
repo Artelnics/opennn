@@ -12,7 +12,7 @@ ConjugateGradientTest::ConjugateGradientTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    conjugate_gradient.set_loss_index_pointer(&sum_squared_error);
+    conjugate_gradient.set_loss_index(&sum_squared_error);
 
     conjugate_gradient.set_display(false);
 }

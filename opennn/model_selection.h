@@ -57,16 +57,16 @@ public:
 
     // Get methods
 
-    TrainingStrategy* get_training_strategy_pointer() const;
+    TrainingStrategy* get_training_strategy() const;
     bool has_training_strategy() const;
 
     const NeuronsSelectionMethod& get_neurons_selection_method() const;
     const InputsSelectionMethod& get_inputs_selection_method() const;
 
-    GrowingNeurons* get_growing_neurons_pointer();
+    GrowingNeurons* get_growing_neurons();
 
-    GrowingInputs* get_growing_inputs_pointer();
-    GeneticAlgorithm* get_genetic_algorithm_pointer();
+    GrowingInputs* get_growing_inputs();
+    GeneticAlgorithm* get_genetic_algorithm();
 
     // Set methods
 
@@ -107,7 +107,7 @@ private:
 
     /// Pointer to a training strategy object.
 
-    TrainingStrategy* training_strategy_pointer = nullptr;
+    TrainingStrategy* training_strategy = nullptr;
 
     /// Growing neurons object to be used for neurons selection.
 

@@ -35,11 +35,11 @@ int main()
         Tensor<string, 1> uses(8);
         uses.setValues({"Input","Input","Target","Target","Target","Target","Target","Target"});
 
-        data_set.set_columns_uses(uses);
+        data_set.set_raw_variables_uses(uses);
         data_set.set_training();
 
-        const Index input_variables_number = data_set.get_input_numeric_variables_number();
-        const Index target_variables_number = data_set.get_target_numeric_variables_number();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
         // Neural network
 

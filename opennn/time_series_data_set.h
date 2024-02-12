@@ -38,7 +38,7 @@ public:
     explicit TimeSeriesDataSet(const string&, const char&, const bool&, const Codification& = Codification::UTF8);
 
     void transform_time_series();
-    void transform_time_series_columns();
+    void transform_time_series_raw_variables();
     void transform_time_series_data();
     void fill_time_series_gaps();
 
@@ -47,21 +47,21 @@ public:
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
 
-    Index get_time_series_columns_number() const;
-    Tensor<RawVariable, 1> get_time_series_columns() const;
+    Index get_time_series_raw_variables_number() const;
+    Tensor<RawVariable, 1> get_time_series_raw_variables() const;
 
-    Index get_input_time_series_columns_number() const;
-    Index get_target_time_series_columns_number() const;
+    Index get_input_time_series_raw_variables_number() const;
+    Index get_target_time_series_raw_variables_number() const;
 
-    Tensor<Index, 1> get_input_time_series_columns_indices() const;
-    Tensor<Index, 1> get_target_time_series_columns_indices() const;
+    Tensor<Index, 1> get_input_time_series_raw_variables_indices() const;
+    Tensor<Index, 1> get_target_time_series_raw_variables_indices() const;
 
     const string& get_time_column() const;
 
     void set_time_series_data(const Tensor<type, 2>&);
-    void set_time_series_columns_number(const Index&);
+    void set_time_series_raw_variables_number(const Index&);
 
-    Tensor<type, 2> get_time_series_column_data(const Index&) const;
+    Tensor<type, 2> get_time_series_raw_variable_data(const Index&) const;
     const string& get_group_by_column() const;
 
     void set_lags_number(const Index&);
@@ -77,7 +77,7 @@ public:
 
     void save_time_series_data_binary(const string&) const;
 
-    Index get_time_series_numeric_variables_number() const;
+    Index get_time_series_variables_number() const;
     Tensor<string, 1> get_time_series_variables_names() const;
 
     const Tensor<type, 2>& get_time_series_data() const;
@@ -85,9 +85,9 @@ public:
     void write_XML(tinyxml2::XMLPrinter&) const;
     void from_XML(const tinyxml2::XMLDocument&);
 
-    Tensor<string, 1> get_time_series_columns_names() const;
+    Tensor<string, 1> get_time_series_raw_variables_names() const;
 
-    Index get_time_series_time_column_index() const;
+    Index get_time_series_time_raw_variable_index() const;
 
     void impute_missing_values_mean();
 
@@ -105,11 +105,11 @@ private:
 
     /// Time series data matrix.
     /// The number of rows is the number of samples before time series transformation.
-    /// The number of columns is the number of variables before time series transformation.
+    /// The number of raw_variables is the number of variables before time series transformation.
 
     Tensor<type, 2> time_series_data;
 
-    Tensor<RawVariable, 1> time_series_columns;
+    Tensor<RawVariable, 1> time_series_raw_variables;
 
     /// Index where time variable is located for forecasting applications.
 
@@ -119,7 +119,7 @@ private:
 
     string group_by_column;
 
-    Index group_by_column_index;
+    Index group_by_raw_variable_index;
 
 };
 

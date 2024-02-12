@@ -1299,29 +1299,29 @@ Tensor<Tensor<string>> TextAnalytics::apply_spanish_stemmer(const Tensor<Tensor<
 
     // Set vowels and suffixes
 
-    string vowels_pointer[] = {"a", "e", "i", "o", "u", "á", "é", "í", "ó", "ú", "ü"};
+    string vowels[] = {"a", "e", "i", "o", "u", "á", "é", "í", "ó", "ú", "ü"};
 
-    const Tensor<string> vowels(Tensor<string>(vowels_pointer, vowels_pointer + sizeof(vowels_pointer) / sizeof(string) ));
+    const Tensor<string> vowels(Tensor<string>(vowels, vowels + sizeof(vowels) / sizeof(string) ));
 
-    string step0_suffixes_pointer[] = {"selas", "selos", "sela", "selo", "las", "les", "los", "nos", "me", "se", "la", "le", "lo"};
+    string step0_suffixes[] = {"selas", "selos", "sela", "selo", "las", "les", "los", "nos", "me", "se", "la", "le", "lo"};
 
-    const Tensor<string> step0_suffixes(Tensor<string>(step0_suffixes_pointer, step0_suffixes_pointer + sizeof(step0_suffixes_pointer) / sizeof(string) ));
+    const Tensor<string> step0_suffixes(Tensor<string>(step0_suffixes, step0_suffixes + sizeof(step0_suffixes) / sizeof(string) ));
 
-    string step1_suffixes_pointer[] = {"amientos", "imientos", "amiento", "imiento", "aciones", "uciones", "adoras", "adores",
+    string step1_suffixes[] = {"amientos", "imientos", "amiento", "imiento", "aciones", "uciones", "adoras", "adores",
                                        "ancias", "logías", "encias", "amente", "idades", "anzas", "ismos", "ables", "ibles",
                                        "istas", "adora", "acion", "ación", "antes", "ancia", "logía", "ución", "ucion", "encia",
                                        "mente", "anza", "icos", "icas", "ion", "ismo", "able", "ible", "ista", "osos", "osas",
                                        "ador", "ante", "idad", "ivas", "ivos", "ico", "ica", "oso", "osa", "iva", "ivo", "ud"};
 
-    const Tensor<string> step1_suffixes(Tensor<string>(step1_suffixes_pointer, step1_suffixes_pointer + sizeof(step1_suffixes_pointer) / sizeof(string) ));
+    const Tensor<string> step1_suffixes(Tensor<string>(step1_suffixes, step1_suffixes + sizeof(step1_suffixes) / sizeof(string) ));
 
-    string step2a_suffixes_pointer[] = {"yeron", "yendo", "yamos", "yais", "yan",
+    string step2a_suffixes[] = {"yeron", "yendo", "yamos", "yais", "yan",
                                         "yen", "yas", "yes", "ya", "ye", "yo",
                                         "yó"};
 
-    const Tensor<string> step2a_suffixes(Tensor<string>(step2a_suffixes_pointer, step2a_suffixes_pointer + sizeof(step2a_suffixes_pointer) / sizeof(string) ));
+    const Tensor<string> step2a_suffixes(Tensor<string>(step2a_suffixes, step2a_suffixes + sizeof(step2a_suffixes) / sizeof(string) ));
 
-    string step2b_suffixes_pointer[] = {"aríamos", "eríamos", "iríamos", "iéramos", "iésemos", "aríais",
+    string step2b_suffixes[] = {"aríamos", "eríamos", "iríamos", "iéramos", "iésemos", "aríais",
                                         "aremos", "eríais", "eremos", "iríais", "iremos", "ierais", "ieseis",
                                         "asteis", "isteis", "ábamos", "áramos", "ásemos", "arían",
                                         "arías", "aréis", "erían", "erías", "eréis", "irían",
@@ -1335,11 +1335,11 @@ Tensor<Tensor<string>> TextAnalytics::apply_spanish_stemmer(const Tensor<Tensor<
                                         "éis", "ía", "ad", "ed", "id", "an", "ió", "ar", "er", "ir", "as",
                                         "ís", "en", "es"};
 
-    const Tensor<string> step2b_suffixes(Tensor<string>(step2b_suffixes_pointer, step2b_suffixes_pointer + sizeof(step2b_suffixes_pointer) / sizeof(string) ));
+    const Tensor<string> step2b_suffixes(Tensor<string>(step2b_suffixes, step2b_suffixes + sizeof(step2b_suffixes) / sizeof(string) ));
 
-    string step3_suffixes_pointer[] = {"os", "a", "e", "o", "á", "é", "í", "ó"};
+    string step3_suffixes[] = {"os", "a", "e", "o", "á", "é", "í", "ó"};
 
-    const Tensor<string> step3_suffixes(Tensor<string>(step3_suffixes_pointer, step3_suffixes_pointer + sizeof(step3_suffixes_pointer) / sizeof(string) ));
+    const Tensor<string> step3_suffixes(Tensor<string>(step3_suffixes, step3_suffixes + sizeof(step3_suffixes) / sizeof(string) ));
 
     const size_t step0_suffixes_size = step0_suffixes.size();
     const size_t step1_suffixes_size = step1_suffixes.size();
@@ -2396,9 +2396,9 @@ Tensor<string, 2> TextAnalytics::top_words_correlations(const Tensor<Tensor<stri
 
     const Matrix<double> top_words_binary_matrix;// = new_documents.get_unique_binary_matrix(';', words_name).to_double_matrix();
 
-    Tensor<double> correlations(top_words_binary_matrix.get_columns_number());
+    Tensor<double> correlations(top_words_binary_matrix.get_raw_variables_number());
 
-    for(size_t i = 0; i < top_words_binary_matrix.get_columns_number(); i++)
+    for(size_t i = 0; i < top_words_binary_matrix.get_raw_variables_number(); i++)
     {
         correlations[i] = linear_correlation(top_words_binary_matrix.get_column(i), targets.to_double_Tensor());
     }
@@ -2784,9 +2784,9 @@ void TextGenerationAlphabet::encode_alphabet()
 {
     const Index rows_number = text.length();
 
-    const Index columns_number = alphabet.size();
+    const Index raw_variables_number = alphabet.size();
 
-    data_tensor.resize(rows_number, columns_number);
+    data_tensor.resize(rows_number, raw_variables_number);
     data_tensor.setZero();
 
     const Index length = text.length();

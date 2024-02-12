@@ -92,7 +92,7 @@ Tensor<type, 1> RecurrentLayer::get_biases() const
 /// Returns the weights from the recurrent layer.
 /// The format is a matrix of real values.
 /// The number of rows is the number of neurons in the layer.
-/// The number of columns is the number of inputs to the layer.
+/// The number of raw_variables is the number of inputs to the layer.
 
 const Tensor<type, 2>& RecurrentLayer::get_input_weights() const
 {
@@ -103,7 +103,7 @@ const Tensor<type, 2>& RecurrentLayer::get_input_weights() const
 /// Returns the recurrent weights from the recurrent layer.
 /// The format is a matrix of real values.
 /// The number of rows is the number of neurons in the layer.
-/// The number of columns is the number of neurons to the layer.
+/// The number of raw_variables is the number of neurons to the layer.
 
 const Tensor<type, 2>& RecurrentLayer::get_recurrent_weights() const
 {
@@ -188,7 +188,7 @@ Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) co
 /// Returns the weights from the recurrent layer.
 /// The format is a matrix of real values.
 /// The number of rows is the number of inputs in the layer.
-/// The number of columns is the number of neurons to the layer.
+/// The number of raw_variables is the number of neurons to the layer.
 
 Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
 {
@@ -208,7 +208,7 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
 /// Returns the recurrent weights from the recurrent layer.
 /// The format is a matrix of real values.
 /// The number of rows is the number of neurons in the layer.
-/// The number of columns is the number of neurons to the layer.
+/// The number of raw_variables is the number of neurons to the layer.
 
 Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
 {
@@ -588,9 +588,6 @@ void RecurrentLayer::set_parameters_random()
 
 
 void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
-                                            const Tensor<type, 2>& input_weights,
-                                            const Tensor<type, 2>& recurrent_weights,
-                                            const Tensor<type, 1>& biases,
                                             Tensor<type, 1>& combinations) const
 {   
     combinations.device(*thread_pool_device) = biases
@@ -694,19 +691,18 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
     const Index samples_number = inputs_pair.second[0][0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
-
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-            = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+        = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
+
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
+    Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
+
+    Tensor<type, 1>& current_combinations = recurrent_layer_forward_propagation->current_combinations;
 
     Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
-    Tensor<type, 2>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
 
-    Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
-    Tensor<type, 1>& current_combinations = recurrent_layer_forward_propagation->current_combinations;
+    Tensor<type, 2, RowMajor>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
     Tensor<type, 1>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
-
-    /// @todo simplify
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -725,6 +721,8 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
             calculate_activations_derivatives(current_combinations,
                                               hidden_states,
                                               current_activations_derivatives);
+
+            set_row(activations_derivatives, current_activations_derivatives, i);
         }
         else
         {
@@ -733,64 +731,6 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
         }
 
         outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
-
-        activations_derivatives.chip(i, 0).device(*thread_pool_device) = current_activations_derivatives;
-    }
-}
-
-
-void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
-                                       Tensor<type, 1>& parameters,
-                                       LayerForwardPropagation* forward_propagation)
-{
-    const Index neurons_number = get_neurons_number();
-    const Index inputs_number = get_inputs_number();
-
-    type* parameters_data = parameters.data();
-    
-    const TensorMap<Tensor<type, 1>> biases(parameters_data, neurons_number);
-
-    const TensorMap<Tensor<type, 2>> input_weights(parameters_data +neurons_number, inputs_number, neurons_number);
-
-    const TensorMap<Tensor<type, 2>> recurrent_weights(parameters_data +neurons_number+inputs_number*neurons_number, neurons_number, neurons_number);
-
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
-
-    const Index samples_number = inputs.dimension(0);
-
-    // Forward propagation
-
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-        = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-
-    Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
-
-    Tensor<type, 1>& current_combinations = recurrent_layer_forward_propagation->current_combinations;
-
-    Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
-
-    Tensor<type, 2>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
-    Tensor<type, 1>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        if(i%timesteps == 0) hidden_states.setZero();
-
-        current_inputs.device(*thread_pool_device) = inputs.chip(i, 0);
-
-        calculate_combinations(current_inputs,
-                               input_weights,
-                               recurrent_weights,
-                               biases,
-                               current_combinations);
-
-        calculate_activations_derivatives(current_combinations,
-                                          hidden_states,
-                                          current_activations_derivatives);
-
-        outputs.chip(i, 0).device(*thread_pool_device) = hidden_states;
-
-        activations_derivatives.chip(i, 0).device(*thread_pool_device) = current_activations_derivatives;
     }
 }
 
@@ -802,7 +742,7 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_forwar
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
             static_cast<RecurrentLayerBackPropagation*>(current_layer_back_propagation);
 
-    const Layer::Type layer_type = next_back_propagation->layer_pointer->get_type();
+    const Layer::Type layer_type = next_back_propagation->layer->get_type();
 
     switch(layer_type)
     {
@@ -845,16 +785,11 @@ void RecurrentLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* n
                                             PerceptronLayerBackPropagation* next_back_propagation,
                                             RecurrentLayerBackPropagation* back_propagation) const
 {
-    const PerceptronLayer* next_perceptron_layer = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer);
+    const PerceptronLayer* next_perceptron_layer = static_cast<PerceptronLayer*>(next_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
-
     // Next forward propagation
-
-    const Tensor<type, 2>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
-
-    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
 
@@ -872,15 +807,13 @@ void RecurrentLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation
 {
     // Next layer
 
-    const ProbabilisticLayer* next_probabilistic_layer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
+    const ProbabilisticLayer* next_probabilistic_layer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
 
     // Next back propagation
 
     const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     // This back propagation
 
@@ -890,68 +823,33 @@ void RecurrentLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation
 }
 
 
-void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
-                                     const Index& index,
-                                     Tensor<type, 1>& gradient) const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    type* gradient_data = gradient.data();
-
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-            = static_cast<RecurrentLayerBackPropagation*>(back_propagation);
-
-    // Biases
-
-    copy(execution::par, 
-        recurrent_layer_back_propagation->biases_derivatives.data(),
-         recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
-         gradient_data + index);
-
-    // Input weights
-
-    copy(execution::par, 
-        recurrent_layer_back_propagation->input_weights_derivatives.data(),
-         recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number*neurons_number,
-         gradient_data + index + neurons_number);
-
-    // Recurrent weights
-
-    copy(execution::par, 
-         recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
-         recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number*neurons_number,
-         gradient_data + index + neurons_number + inputs_number*neurons_number);
-}
-
-
 void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
+    const Index samples_number = inputs_pair.second[0][0];
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+
+//    const Index parameters_number = neurons_number;
+
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
             static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
             static_cast<RecurrentLayerBackPropagation*>(back_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
-
-    const Index inputs_number = get_inputs_number();
-
-    const Index samples_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
-    const Index parameters_number = neurons_number;
-
     // Forward propagation
 
-    const Tensor<type, 2>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
-
-    const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
     Tensor<type, 1>& previous_activations = recurrent_layer_forward_propagation->previous_activations;
+
+    const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
+
+    const Tensor<type, 2, RowMajor>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
 
     Tensor<type, 1>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
@@ -967,21 +865,21 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     Tensor<type, 2>& combinations_weights_derivatives = recurrent_layer_back_propagation->combinations_weights_derivatives;
     combinations_weights_derivatives.setZero();
 
-    Tensor<type, 1>& error_current_combinations_derivatives = recurrent_layer_back_propagation->error_current_combinations_derivatives;
+    Tensor<type, 2>& combinations_recurrent_weights_derivatives = recurrent_layer_back_propagation->combinations_recurrent_weights_derivatives;
+    combinations_recurrent_weights_derivatives.setZero();
 
-    Tensor<type, 1>& input_weights_derivatives = recurrent_layer_back_propagation->input_weights_derivatives;
-    input_weights_derivatives.setZero();
+    Tensor<type, 1>& error_current_combinations_derivatives = recurrent_layer_back_propagation->error_current_combinations_derivatives;
 
     Tensor<type, 1>& biases_derivatives = recurrent_layer_back_propagation->biases_derivatives;
     biases_derivatives.setZero();
 
-    Tensor<type, 2>& combinations_recurrent_weights_derivatives = recurrent_layer_back_propagation->combinations_recurrent_weights_derivatives;
-    combinations_recurrent_weights_derivatives.setZero();
+    Tensor<type, 2>& input_weights_derivatives = recurrent_layer_back_propagation->input_weights_derivatives;
+    input_weights_derivatives.setZero();
 
-    Tensor<type, 1>& recurrent_weights_derivatives = recurrent_layer_back_propagation->recurrent_weights_derivatives;
+    Tensor<type, 2>& recurrent_weights_derivatives = recurrent_layer_back_propagation->recurrent_weights_derivatives;
     recurrent_weights_derivatives.setZero();
 
-    Index column_index = 0;
+    Index raw_variable_index = 0;
     Index input_index = 0;
     Index neuron_index = 0;
 
@@ -989,7 +887,7 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     {
         current_inputs.device(*thread_pool_device) = inputs.chip(sample, 0);
 
-        current_activations_derivatives.device(*thread_pool_device) = activations_derivatives.chip(sample, 0);
+        get_row(current_activations_derivatives, activations_derivatives, sample);
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
 
@@ -1003,66 +901,67 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
         {
             // Combinations biases derivatives
 
-            combinations_biases_derivatives.device(*thread_pool_device)
-                = combinations_biases_derivatives.contract(recurrent_weights, A_B);
+            combinations_biases_derivatives.device(*thread_pool_device) = combinations_biases_derivatives.contract(recurrent_weights, A_B);
 
             multiply_rows(combinations_biases_derivatives, current_activations_derivatives);
 
+            sum_diagonal(combinations_biases_derivatives, type(1));
+
             // Combinations weights derivatives
 
-            combinations_weights_derivatives.device(*thread_pool_device) 
-                = combinations_weights_derivatives.contract(recurrent_weights, A_B);
+            combinations_weights_derivatives.device(*thread_pool_device) = combinations_weights_derivatives.contract(recurrent_weights, A_B);
 
             multiply_rows(combinations_weights_derivatives, current_activations_derivatives);
 
-            column_index = 0;
+            raw_variable_index = 0;
             input_index = 0;
-
+/*
             for (Index i = 0; i < parameters_number; i++)
             {
-                combinations_weights_derivatives(i, column_index) += current_inputs(input_index);
+                combinations_weights_derivatives(i, raw_variable_index) += current_inputs(input_index);
 
                 input_index++;
 
                 if (input_index == inputs_number)
                 {
                     input_index = 0;
-                    column_index++;
+                    raw_variable_index++;
                 }
             }
-
-            sum_diagonal(combinations_biases_derivatives, type(1));
+*/
+            previous_activations.device(*thread_pool_device) = outputs.chip(sample - 1, 0);
 
             // Combinations recurrent weights derivatives
 
-            combinations_recurrent_weights_derivatives.device(*thread_pool_device)
-                = combinations_recurrent_weights_derivatives.contract(recurrent_weights, A_B);
+            combinations_recurrent_weights_derivatives.device(*thread_pool_device) = combinations_recurrent_weights_derivatives.contract(recurrent_weights, A_B);
 
             multiply_rows(combinations_recurrent_weights_derivatives, current_activations_derivatives);
 
-            previous_activations.device(*thread_pool_device) = outputs.chip(sample - 1, 0);
-
-            column_index = 0;
+            raw_variable_index = 0;
             neuron_index = 0;
-
+/*
             for (Index i = 0; i < parameters_number; i++)
             {
-                combinations_recurrent_weights_derivatives(i, column_index) += previous_activations(neuron_index);
+                combinations_recurrent_weights_derivatives(i, raw_variable_index) += previous_activations(neuron_index);
 
                 neuron_index++;
 
                 if (neuron_index == neurons_number)
                 {
                     neuron_index = 0;
-                    column_index++;
+                    raw_variable_index++;
                 }
             }
+*/
         }
 
-        error_current_combinations_derivatives.device(*thread_pool_device) = current_deltas*current_activations_derivatives;
-
+        error_current_combinations_derivatives.device(*thread_pool_device) 
+            = current_deltas*current_activations_derivatives;
+        
         biases_derivatives.device(*thread_pool_device) 
             += combinations_biases_derivatives.contract(error_current_combinations_derivatives, A_B);
+
+        // Dimensions changed from vector to matrix:
 
         input_weights_derivatives.device(*thread_pool_device)
             += combinations_weights_derivatives.contract(error_current_combinations_derivatives, A_B);
@@ -1070,6 +969,41 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
         recurrent_weights_derivatives.device(*thread_pool_device)
             += combinations_recurrent_weights_derivatives.contract(error_current_combinations_derivatives, A_B);
     }
+}
+
+
+void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
+                                     const Index& index,
+                                     Tensor<type, 1>& gradient) const
+{
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    type* gradient_data = gradient.data();
+
+    RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+        = static_cast<RecurrentLayerBackPropagation*>(back_propagation);
+
+    // Biases
+
+    copy(execution::par,
+        recurrent_layer_back_propagation->biases_derivatives.data(),
+        recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
+        gradient_data + index);
+
+    // Input weights
+
+    copy(execution::par,
+        recurrent_layer_back_propagation->input_weights_derivatives.data(),
+        recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number * neurons_number,
+        gradient_data + index + neurons_number);
+
+    // Recurrent weights
+
+    copy(execution::par,
+        recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
+        recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number * neurons_number,
+        gradient_data + index + neurons_number + inputs_number * neurons_number);
 }
 
 

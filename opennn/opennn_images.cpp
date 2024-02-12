@@ -59,12 +59,12 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     if(channels_number == 3)
     {
         const int rows_number = static_cast<int>(image_height);
-        const int columns_number = static_cast<int>(image_width);
+        const int raw_variables_number = static_cast<int>(image_width);
 
-        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
+        const Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, raw_variables_number, padding);
 
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, raw_variables_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*raw_variables_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
@@ -78,9 +78,9 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
         green_channel_flatted_sorted.setZero();
         blue_channel_flatted_sorted.setZero();
 
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,columns_number);
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, raw_variables_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, raw_variables_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,raw_variables_number);
 
         Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
@@ -103,25 +103,25 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
 
 // @todo bad variables names
 
-void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& columns_number)
+void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& raw_variables_number)
 {
     unsigned char* aux_row = nullptr;
 
-    aux_row = (unsigned char*)malloc(size_t(columns_number*sizeof(unsigned char)));
+    aux_row = (unsigned char*)malloc(size_t(raw_variables_number*sizeof(unsigned char)));
 
-    const int rows_number = static_cast<int>(original.size()/columns_number);
+    const int rows_number = static_cast<int>(original.size()/raw_variables_number);
 
     for(int i = 0; i <rows_number; i++)
     {
         copy(execution::par, 
-            original.data() + columns_number * rows_number - (i + 1) * columns_number,
-            original.data() + columns_number * rows_number - i * columns_number,
+            original.data() + raw_variables_number * rows_number - (i + 1) * raw_variables_number,
+            original.data() + raw_variables_number * rows_number - i * raw_variables_number,
             aux_row);
 
-        // reverse(aux_row, aux_row + columns_number); //uncomment this if the lower right corner px should be in the upper left corner.
+        // reverse(aux_row, aux_row + raw_variables_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
         copy(execution::par, 
-            aux_row, aux_row + columns_number, sorted.data() + columns_number * i);
+            aux_row, aux_row + raw_variables_number, sorted.data() + raw_variables_number * i);
     }
 }
 
@@ -240,19 +240,19 @@ void translate_image(TensorMap<Tensor<type, 3>>& input,
         Index channel = i % channels;
         Index column = i / channels;
 
-        TensorMap<const Tensor<type, 2>> input_column_map(input.data() + column*height + channel*input_size,
+        TensorMap<const Tensor<type, 2>> input_raw_variable_map(input.data() + column*height + channel*input_size,
                                                           height,
                                                           1);
 
-        TensorMap<Tensor<type, 2>> output_column_map(output.data() + (column + shift)*height + channel*input_size,
+        TensorMap<Tensor<type, 2>> output_raw_variable_map(output.data() + (column + shift)*height + channel*input_size,
                                                      height,
                                                      1);
-        output_column_map= input_column_map;
+        output_raw_variable_map= input_raw_variable_map;
     }
 }
 
 
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& columns_number, const int& padding)
+Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& raw_variables_number, const int& padding)
 {
     Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
 
@@ -261,10 +261,10 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
     if(rows_number % 4 == 0)
     {
         /*
-        memcpy(data_without_padding.data(), img.data(), size_t(columns_number*channels*rows_number)*sizeof(unsigned char));
+        memcpy(data_without_padding.data(), img.data(), size_t(raw_variables_number*channels*rows_number)*sizeof(unsigned char));
         */
         copy(execution::par, 
-            img.data(), img.data() + columns_number * channels * rows_number, data_without_padding.data());
+            img.data(), img.data() + raw_variables_number * channels * rows_number, data_without_padding.data());
 
     }
     else
@@ -274,22 +274,22 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
             if(i == 0)
             {
                 /*
-                memcpy(data_without_padding.data(), img.data(), size_t(columns_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data(), img.data(), size_t(raw_variables_number*channels)*sizeof(unsigned char));
                 */
                 copy(execution::par, 
-                    img.data(), img.data() + columns_number * channels, data_without_padding.data());
+                    img.data(), img.data() + raw_variables_number * channels, data_without_padding.data());
 
             }
             else
             {
                 /*
-                memcpy(data_without_padding.data() + channels*columns_number*i, img.data() + channels*columns_number*i + padding*i, size_t(columns_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data() + channels*raw_variables_number*i, img.data() + channels*raw_variables_number*i + padding*i, size_t(raw_variables_number*channels)*sizeof(unsigned char));
                 */
 
                 copy(execution::par, 
-                    img.data() + channels * columns_number * i + padding * i,
-                    img.data() + channels * columns_number * (i + 1) + padding * i,
-                    data_without_padding.data() + channels * columns_number * i);
+                    img.data() + channels * raw_variables_number * i + padding * i,
+                    img.data() + channels * raw_variables_number * (i + 1) + padding * i,
+                    data_without_padding.data() + channels * raw_variables_number * i);
 
             }
         }
@@ -538,7 +538,7 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         throw runtime_error(buffer.str());
     }
 
-    has_columns_names = true;
+    has_raw_variables_names = true;
     has_rows_labels = true;
 
     separator = Separator::None;
@@ -586,9 +586,9 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
 
     if(classes_number == 2)
     {
-        Index binary_columns_number = 1;
-        data.resize(images_number, image_size + binary_columns_number);
-        imageDataAux.resize(images_number, image_size + binary_columns_number);
+        Index binary_raw_variables_number = 1;
+        data.resize(images_number, image_size + binary_raw_variables_number);
+        imageDataAux.resize(images_number, image_size + binary_raw_variables_number);
     }
     else
     {
@@ -645,11 +645,11 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         }
     }
 
-    columns.resize(image_size + 1);
+    raw_variables.resize(image_size + 1);
 
-    // Input columns
+    // Input raw_variables
 
-    Index column_index = 0;
+    Index raw_variable_index = 0;
 
     for(Index i = 0; i < channels; i++)
     {
@@ -657,18 +657,18 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         {
             for(Index k = 0; k < height ; k++)
             {
-                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                columns(column_index).type = ColumnType::Numeric;
-                columns(column_index).column_use = VariableUse::Input;
-                columns(column_index).scaler = Scaler::MinimumMaximum;
-                column_index++;
+                raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                raw_variables(raw_variable_index).type = ColumnType::Numeric;
+                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Input;
+                raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
+                raw_variable_index++;
             }
         }
     }
 
-    // Target columns
+    // Target raw_variables
 
-    columns(image_size).name = "class";
+    raw_variables(image_size).name = "class";
 
     if(classes_number == 1)
     {
@@ -688,19 +688,19 @@ Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
         categories(i) = folder_paths[i].filename().string();
     }
 
-    columns(image_size).column_use = VariableUse::Target;
-    columns(image_size).categories = categories;
+    raw_variables(image_size).raw_variable_use = VariableUse::Target;
+    raw_variables(image_size).categories = categories;
 
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+    raw_variables(image_size).categories_uses.resize(classes_number);
+    raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
 
     if(classes_number == 2)
     {
-        columns(image_size).type = ColumnType::Binary;
+        raw_variables(image_size).type = ColumnType::Binary;
     }
     else
     {
-        columns(image_size).type = ColumnType::Categorical;
+        raw_variables(image_size).type = ColumnType::Categorical;
     }
 
     samples_uses.resize(images_number);

@@ -118,7 +118,7 @@ namespace opennn
  Index maximal_index_from_indices(const Tensor<type, 1>&, const Tensor<Index, 1>&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
- Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);
+ Tensor<Index, 2> maximal_raw_variables_indices(const Tensor<type, 2>&, const Index&);
  Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
 
  // Mean weights

@@ -41,9 +41,9 @@ void NeuronsSelectionTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingNeurons* growing_neurons_pointer = new GrowingNeurons;
+    GrowingNeurons* growing_neurons = new GrowingNeurons;
 
-    delete growing_neurons_pointer;
+    delete growing_neurons;
 }
 
 

@@ -73,7 +73,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         training_samples_indices = data_set.get_training_samples_indices();
 
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -119,7 +119,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -161,7 +161,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -210,7 +210,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -253,7 +253,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -297,7 +297,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -352,7 +352,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -403,7 +403,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -454,7 +454,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -517,7 +517,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     uses.resize(8);
     uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
 
-    data_set.set_columns_uses(uses);
+    data_set.set_raw_variables_uses(uses);
 
     target_data = data_set.get_target_data();
 

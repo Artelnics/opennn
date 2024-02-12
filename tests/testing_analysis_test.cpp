@@ -10,8 +10,8 @@
 
 TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {
-    testing_analysis.set_neural_network_pointer(&neural_network);
-    testing_analysis.set_data_set_pointer(&data_set);
+    testing_analysis.set_neural_network(&neural_network);
+    testing_analysis.set_data_set(&data_set);
 }
 
 
@@ -28,9 +28,9 @@ void TestingAnalysisTest::test_constructor()
 
     TestingAnalysis testing_analysis(&neural_network,&data_set);
 
-    assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
+    assert_true(testing_analysis.get_neural_network() != nullptr, LOG);
 
-    assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
+    assert_true(testing_analysis.get_data_set() != nullptr, LOG);
 }
 
 

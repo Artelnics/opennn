@@ -73,7 +73,7 @@ void SumSquaredErrorTest::test_back_propagate()
         training_samples_indices = data_set.get_training_samples_indices();
 
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -118,7 +118,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -158,7 +158,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -204,7 +204,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -246,7 +246,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -288,7 +288,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -339,7 +339,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -377,10 +377,10 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
+        samples_number = type(1) + rand()%10;
+        inputs_number = type(1) + rand()%10;
+        outputs_number = type(1) + rand()%10;
+        neurons_number = type(1) + rand()%10;
         bool is_training = true;
 
         // Data set
@@ -391,7 +391,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -443,7 +443,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);

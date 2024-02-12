@@ -59,7 +59,7 @@ public:
 
    /// Enumeration of the available methods for interpreting variables as probabilities.
 
-   enum class ActivationFunction{Binary, Logistic, Competitive, Softmax};
+   enum class ActivationFunction{Softmax, Competitive};
 
    // Get methods
 
@@ -104,9 +104,6 @@ public:
    const Tensor<type, 1>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
 
-//   Tensor<type, 1> get_biases(Tensor<type, 1>&) const;
-//   Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;
-
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
 
@@ -146,10 +143,6 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(const pair<type*, dimensions>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*) final;
-
    // Gradient methods
 
    void calculate_error_gradient(const pair<type*, dimensions>&,
@@ -162,11 +155,8 @@ public:
 
    // Expression methods
 
-   string write_binary_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_logistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
    string write_combinations(const Tensor<string, 1>&) const;
@@ -194,7 +184,7 @@ protected:
 
    /// Activation function variable.
 
-   ActivationFunction activation_function = ActivationFunction::Logistic;
+   ActivationFunction activation_function = ActivationFunction::Softmax;
 
    type decision_threshold;
 
@@ -220,10 +210,10 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ProbabilisticLayer3DForwardPropagation(const Index new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
@@ -234,27 +224,27 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const final
     {
-        ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
+        ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
-        const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
+        const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
 
-        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
+        const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
         return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_number, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
+        ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
+        const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
 
-        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
+        const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
         outputs.resize(batch_samples_number, inputs_number, neurons_number);
 
@@ -290,35 +280,35 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     }
 
 
-    explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
     
     
     pair<type*, dimensions> get_deltas_pair() const final
     {
-        ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
+        ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
-        const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
-        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
+        const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
+        const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
         return pair<type*, dimensions>(deltas_data, {{batch_samples_number, inputs_number, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(layer_pointer);
+        ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
-        const Index inputs_number = probabilistic_layer_3d_pointer->get_inputs_number();
-        const Index inputs_depth = probabilistic_layer_3d_pointer->get_inputs_depth();
+        const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
+        const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+        const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
         deltas.resize(batch_samples_number, inputs_number, neurons_number);
 

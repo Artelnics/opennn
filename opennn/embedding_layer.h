@@ -106,11 +106,7 @@ public:
     void forward_propagate(const pair<type*, dimensions>&layer,
                            LayerForwardPropagation*,
                            const bool&) final;
-/*
-    void forward_propagate(const pair<type*, dimensions>&,
-                           Tensor<type, 1>&,
-                           LayerForwardPropagation*) final;
-*/
+
     // Expression methods
 
     //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
@@ -164,10 +160,10 @@ protected:
         }
 
 
-        explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerForwardPropagation()
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            set(new_batch_samples_number, new_layer);
         }
 
 
@@ -178,25 +174,25 @@ protected:
         
         pair<type*, dimensions> get_outputs_pair() const final
         {
-            EmbeddingLayer* embedding_layer_pointer = static_cast<EmbeddingLayer*>(layer_pointer);
+            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-            const Index inputs_length = embedding_layer_pointer->get_input_length();
+            const Index inputs_length = embedding_layer->get_input_length();
 
-            const Index depth = embedding_layer_pointer->get_depth();
+            const Index depth = embedding_layer->get_depth();
 
             return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_length, depth}});
         }
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            EmbeddingLayer* layer_pointer = static_cast<EmbeddingLayer*>(new_layer_pointer);
+            EmbeddingLayer* layer = static_cast<EmbeddingLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index inputs_length = layer_pointer->get_input_length();
+            const Index inputs_length = layer->get_input_length();
 
-            const Index depth = layer_pointer->get_depth();
+            const Index depth = layer->get_depth();
 
             // Outputs
 
@@ -224,10 +220,10 @@ protected:
 
         void build_positional_encoding_matrix()
         {
-            EmbeddingLayer* embedding_layer_pointer = static_cast<EmbeddingLayer*>(layer_pointer);
+            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-            const Index inputs_length = embedding_layer_pointer->get_input_length();
-            const Index depth = embedding_layer_pointer->get_depth();
+            const Index inputs_length = embedding_layer->get_input_length();
+            const Index depth = embedding_layer->get_depth();
 
             positional_encoding.resize(inputs_length, depth);
 
@@ -283,10 +279,10 @@ protected:
         }
 
 
-        explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerBackPropagation()
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            set(new_batch_samples_number, new_layer);
         }
 
 
@@ -296,16 +292,16 @@ protected:
 
 
         /// @todo
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
             /*
 
-            layer_pointer = new_layer_pointer;
+            layer = new_layer;
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index neurons_number = layer_pointer->get_neurons_number();
-            const Index inputs_number = layer_pointer->get_inputs_number();
+            const Index neurons_number = layer->get_neurons_number();
+            const Index inputs_number = layer->get_inputs_number();
 
             deltas_dimensions.resize(2);
             deltas_dimensions.setValues({batch_samples_number, neurons_number});

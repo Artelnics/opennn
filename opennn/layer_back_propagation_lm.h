@@ -26,7 +26,7 @@ struct LayerBackPropagationLM
 
     Index batch_samples_number;
 
-    Layer* layer_pointer = nullptr;
+    Layer* layer = nullptr;
 
     Tensor<type, 2> deltas;
 };

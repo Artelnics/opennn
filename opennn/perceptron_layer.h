@@ -83,8 +83,6 @@ public:
 
    // Get methods
 
-   bool is_empty() const;
-
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
@@ -112,6 +110,7 @@ public:
    // Set methods
 
    void set();
+
    void set(const Index&,
             const Index&,
             const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
@@ -153,8 +152,6 @@ public:
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 2>&,
-                               const Tensor<type, 1>&,
-                               const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
    void dropout(Tensor<type, 2>&) const;
@@ -169,10 +166,6 @@ public:
    void forward_propagate(const pair<type*, dimensions>&layer,
                           LayerForwardPropagation*,
                           const bool&) final;
-
-   void forward_propagate(const pair<type*, dimensions>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*) final;
 
    // Delta methods
 
@@ -215,8 +208,8 @@ public:
    // Gradient methods
 
    void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
-       const Tensor<type, 2>&,
-       Tensor<type, 2>&) const;
+                                                 const Tensor<type, 2>&,
+                                                 Tensor<type, 2>&) const;
 
    void calculate_error_gradient(const pair<type*, dimensions>&,
                                  LayerForwardPropagation*,

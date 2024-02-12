@@ -16,9 +16,9 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
                         const Tensor<Index, 1>& inputs_indices,
                         const Tensor<Index, 1>& targets_indices)
 {
-    const Tensor<type, 2>& data = data_set_pointer->get_data();
+    const Tensor<type, 2>& data = data_set->get_data();
 
-    const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+    const Tensor<Index, 1>& input_variables_dimensions = data_set->get_input_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)
     {
@@ -27,13 +27,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
     else if(input_variables_dimensions.size() == 3)
     {
         const Index rows_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
+        const Index raw_variables_number = input_variables_dimensions(1);
         const Index channels_number = input_variables_dimensions(2);
 
         TensorMap<Tensor<type, 4>> inputs(inputs_data,
                                           batch_size,
                                           rows_number,
-                                          columns_number,
+                                          raw_variables_number,
                                           channels_number);
 
         /// @todo index will not work. Since it is for images, it will contain all rows in the matrix.
@@ -46,7 +46,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
 
             for(Index row = 0; row < rows_number; row++)
             {
-                for(Index column = 0; column < columns_number; column++)
+                for(Index column = 0; column < raw_variables_number; column++)
                 {
                     for(Index channel = 0; channel < channels_number ; channel++)
                     {
@@ -58,7 +58,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
             }
         }
 
-        const bool augmentation = data_set_pointer->get_augmentation();
+        const bool augmentation = data_set->get_augmentation();
 
         if(augmentation) perform_augmentation();
     }
@@ -72,19 +72,19 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
 void DataSetBatch::perform_augmentation() const
 {
     ImageDataSet* image_data_set
-            = static_cast<ImageDataSet*>(data_set_pointer);
+            = static_cast<ImageDataSet*>(data_set);
 
-    const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+    const Tensor<Index, 1>& input_variables_dimensions = data_set->get_input_variables_dimensions();
 
     const Index rows_number = input_variables_dimensions(0);
-    const Index columns_number = input_variables_dimensions(1);
+    const Index raw_variables_number = input_variables_dimensions(1);
     const Index channels_number = input_variables_dimensions(2);
-    const Index input_size = rows_number*columns_number*channels_number;
+    const Index input_size = rows_number*raw_variables_number*channels_number;
 
 //    TensorMap<Tensor<type, 4>> inputs(inputs_data,
 //                                      batch_size,
 //                                      rows_number,
-//                                      columns_number,
+//                                      raw_variables_number,
 //                                      channels_number);
 
     const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
@@ -103,7 +103,7 @@ void DataSetBatch::perform_augmentation() const
 /*
         TensorMap<Tensor<type, 3>> image(inputs_tensor.data() + batch*input_size,
                                          rows_number,
-                                         columns_number,
+                                         raw_variables_number,
                                          channels_number);
 
         if(random_reflection_axis_x)
@@ -149,23 +149,23 @@ void DataSetBatch::perform_augmentation() const
 }
 
 
-DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer)
+DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_set)
 {
-    set(new_samples_number, new_data_set_pointer);
+    set(new_samples_number, new_data_set);
 }
 
 
-void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointer)
+void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set)
 {
     batch_size = new_batch_size;
 
-    data_set_pointer = new_data_set_pointer;
+    data_set = new_data_set;
 
-    const Index input_variables_number = data_set_pointer->get_input_numeric_variables_number();
-    const Index target_variables_number = data_set_pointer->get_target_numeric_variables_number();
+    const Index input_variables_number = data_set->get_input_variables_number();
+    const Index target_variables_number = data_set->get_target_variables_number();
 
-    const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-    const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+    const Tensor<Index, 1> input_variables_dimensions = data_set->get_input_variables_dimensions();
+    const Tensor<Index, 1> target_variables_dimensions = data_set->get_target_variables_dimensions();
 
     if(input_variables_dimensions.size() == 1)
     {
@@ -177,23 +177,23 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     else if(input_variables_dimensions.size() == 2)
     {
         const Index rows_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
+        const Index raw_variables_number = input_variables_dimensions(1);
 
-        inputs_dimensions = {{batch_size, rows_number, columns_number}};
+        inputs_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
         inputs_tensor.resize(1);
-        inputs_tensor.resize(batch_size*rows_number*columns_number);
+        inputs_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
     else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
         const Index rows_number = input_variables_dimensions(1);
-        const Index columns_number = input_variables_dimensions(2);
+        const Index raw_variables_number = input_variables_dimensions(2);
 
-        inputs_dimensions = {{batch_size, channels_number, rows_number, columns_number}};
+        inputs_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
 
         inputs_tensor.resize(1);
-        inputs_tensor.resize(batch_size*channels_number*rows_number*columns_number);
+        inputs_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
     inputs_data = inputs_tensor.data();
@@ -208,23 +208,23 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
     else if(target_variables_dimensions.size() == 2)
     {
         const Index rows_number = target_variables_dimensions(0);
-        const Index columns_number = target_variables_dimensions(1);
+        const Index raw_variables_number = target_variables_dimensions(1);
 
-        targets_dimensions = {{batch_size, rows_number, columns_number}};
+        targets_dimensions = {{batch_size, rows_number, raw_variables_number}};
 
         targets_tensor.resize(1);
-        targets_tensor.resize(batch_size*rows_number*columns_number);
+        targets_tensor.resize(batch_size*rows_number*raw_variables_number);
     }
     else if(target_variables_dimensions.size() == 3)
     {
         const Index channels_number = target_variables_dimensions(0);
         const Index rows_number = target_variables_dimensions(1);
-        const Index columns_number = target_variables_dimensions(2);
+        const Index raw_variables_number = target_variables_dimensions(2);
 
-        targets_dimensions = {{batch_size, channels_number, rows_number, columns_number}};
+        targets_dimensions = {{batch_size, channels_number, rows_number, raw_variables_number}};
 
         targets_tensor.resize(1);
-        targets_tensor.resize(batch_size*channels_number*rows_number*columns_number);
+        targets_tensor.resize(batch_size*channels_number*rows_number*raw_variables_number);
     }
 
     targets_data = targets_tensor.data();

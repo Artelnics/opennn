@@ -40,13 +40,13 @@ KMeans::KMeans(Index clusters, string distance_calculation_method, Index iterati
 void KMeans::fit(const Tensor<type, 2>& data)
 {
     const Index rows_number = data.dimension(0);
-    const Index columns_number = data.dimension(1);
+    const Index raw_variables_number = data.dimension(1);
 
     Tensor<type,1> row(rows_number);
-    Tensor<type,1> center(columns_number);
-    Tensor<type, 1> center_sum(columns_number);
+    Tensor<type,1> center(raw_variables_number);
+    Tensor<type, 1> center_sum(raw_variables_number);
 
-    cluster_centers.resize(clusters_number, columns_number);
+    cluster_centers.resize(clusters_number, raw_variables_number);
     rows_cluster_labels.resize(rows_number);
 
     set_centers_random(data);

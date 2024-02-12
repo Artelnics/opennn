@@ -30,7 +30,7 @@ struct LayerBackPropagation
 
     Index batch_samples_number = 0;
 
-    Layer* layer_pointer = nullptr;
+    Layer* layer = nullptr;
 
     type* deltas_data = nullptr;
 };

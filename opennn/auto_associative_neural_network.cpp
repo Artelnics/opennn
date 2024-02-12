@@ -649,10 +649,10 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
 
     buffer.str("");
 
-    for(Index i = 0; i < layers_pointers.size(); i++)
+    for(Index i = 0; i < layers.size(); i++)
     {
-        buffer << layers_pointers[i]->get_type_string();
-        if(i != (layers_pointers.size()-1)) buffer << " ";
+        buffer << layers[i]->get_type_string();
+        if(i != (layers.size()-1)) buffer << " ";
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -661,9 +661,9 @@ void AutoAssociativeNeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) 
 
     // Layers information
 
-    for(Index i = 0; i < layers_pointers.size(); i++)
+    for(Index i = 0; i < layers.size(); i++)
     {
-        layers_pointers[i]->write_XML(file_stream);
+        layers[i]->write_XML(file_stream);
     }
 
     // Layers (end tag)

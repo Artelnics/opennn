@@ -135,7 +135,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("ColumnsNames");
 
         buffer.str("");
-        buffer << has_columns_names;
+        buffer << has_raw_variables_names;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -188,7 +188,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("ColumnsNumber");
 
         buffer.str("");
-        buffer << get_columns_number();
+        buffer << get_raw_variables_number();
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -197,22 +197,22 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Columns items
 
-    const Index columns_number = get_columns_number();
+    const Index raw_variables_number = get_raw_variables_number();
 
     {
-        for(Index i = 0; i < columns_number; i++)
+        for(Index i = 0; i < raw_variables_number; i++)
         {
             file_stream.OpenElement("Column");
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            columns(i).write_XML(file_stream);
+            raw_variables(i).write_XML(file_stream);
 
             file_stream.CloseElement();
         }
     }
 
-    // Close columns
+    // Close raw_variables
 
     file_stream.CloseElement();
 
@@ -329,15 +329,15 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("ColumnsMissingValuesNumber");
 
-            const Index columns_number = columns_missing_values_number.size();
+            const Index raw_variables_number = columns_missing_values_number.size();
 
             buffer.str("");
 
-            for(Index i = 0; i < columns_number; i++)
+            for(Index i = 0; i < raw_variables_number; i++)
             {
                 buffer << columns_missing_values_number(i);
 
-                if(i != (columns_number-1)) buffer << " ";
+                if(i != (raw_variables_number-1)) buffer << " ";
             }
 
             file_stream.PushText(buffer.str().c_str());
@@ -533,17 +533,17 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Has columns names
+    // Has raw_variables names
 
     const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
 
     if(columns_names_element)
     {
-        const string new_columns_names_string = columns_names_element->GetText();
+        const string new_raw_variables_names_string = columns_names_element->GetText();
 
         try
         {
-            set_has_columns_names(new_columns_names_string == "1");
+            set_has_raw_variables_names(new_raw_variables_names_string == "1");
         }
         catch(const exception& e)
         {
@@ -631,22 +631,22 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
-    Index new_columns_number = 0;
+    Index new_raw_variables_number = 0;
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = Index(atoi(columns_number_element->GetText()));
+        new_raw_variables_number = Index(atoi(columns_number_element->GetText()));
 
-        set_columns_number(new_columns_number);
+        set_raw_variables_number(new_raw_variables_number);
     }
 
     // Columns
 
     const tinyxml2::XMLElement* start_element = columns_number_element;
 
-    if(new_columns_number > 0)
+    if(new_raw_variables_number > 0)
     {
-        for(Index i = 0; i < new_columns_number; i++)
+        for(Index i = 0; i < new_raw_variables_number; i++)
         {
             const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
             start_element = column_element;
@@ -677,7 +677,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 const string new_name = name_element->GetText();
 
-                columns(i).name = new_name;
+                raw_variables(i).name = new_name;
             }
 
             // Scaler
@@ -697,14 +697,14 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 const string new_scaler = scaler_element->GetText();
 
-                columns(i).set_scaler(new_scaler);
+                raw_variables(i).set_scaler(new_scaler);
             }
 
             // Column use
 
-            const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("ColumnUse");
 
-            if(!column_use_element)
+            if(!raw_variable_use_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -713,11 +713,11 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 throw runtime_error(buffer.str());
             }
 
-            if(column_use_element->GetText())
+            if(raw_variable_use_element->GetText())
             {
-                const string new_column_use = column_use_element->GetText();
+                const string new_raw_variable_use = raw_variable_use_element->GetText();
 
-                columns(i).set_use(new_column_use);
+                raw_variables(i).set_use(new_raw_variable_use);
             }
 
             // Type
@@ -736,10 +736,10 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(type_element->GetText())
             {
                 const string new_type = type_element->GetText();
-                columns(i).set_type(new_type);
+                raw_variables(i).set_type(new_type);
             }
 
-            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
+            if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
             {
                 // Categories
 
@@ -758,7 +758,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    columns(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ';');
                 }
 
                 // Categories uses
@@ -778,7 +778,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
                 }
             }
         }
@@ -937,13 +937,13 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(columns_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_columns_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
 
-            columns_missing_values_number.resize(new_columns_missing_values_number.size());
+            columns_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
-            for(Index i = 0; i < new_columns_missing_values_number.size(); i++)
+            for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
             {
-                columns_missing_values_number(i) = atoi(new_columns_missing_values_number(i).c_str());
+                columns_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
             }
         }
 
@@ -1319,17 +1319,17 @@ void LanguageDataSet::read_txt_language_model()
 
     data_source_path = transformed_data_path;
     separator = Separator::Semicolon;
-    has_columns_names = true;
+    has_raw_variables_names = true;
 
     read_csv_language_model();
 
-    for(Index i = 0; i < get_columns_number(); i++)
+    for(Index i = 0; i < get_raw_variables_number(); i++)
     {
-        set_column_type(i, ColumnType::Numeric);
+        set_raw_variable_type(i, ColumnType::Numeric);
         if(i < max_context_length + max_completion_length + 4)
-            set_column_use(i, VariableUse::Input);
+            set_raw_variable_use(i, VariableUse::Input);
         else
-            set_column_use(i, VariableUse::Target);
+            set_raw_variable_use(i, VariableUse::Target);
     }
 */
 }

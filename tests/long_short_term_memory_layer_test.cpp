@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O N G   S H O R T   T E R M   M E M O R Y    L A Y E R   T E S T   C L A S S
+//   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -21,13 +21,6 @@ LongShortTermMemoryLayerTest::~LongShortTermMemoryLayerTest()
 void LongShortTermMemoryLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    Index inputs_number;
-    Index neurons_number;
-
-    Tensor<type, 2> synaptic_weights;
-    Tensor<type, 2> recurrent_initializer;
-    Tensor<type, 1> biases;
 
     // Test
 

@@ -65,39 +65,39 @@ int main()
 //        random_horizontal_translation = 0;
 //        random_vertical_translation = 0;
 
-        const Index target_variables_number = image_data_set.get_target_numeric_variables_number();
+        const Index target_variables_number = image_data_set.get_target_variables_number();
 
         const Tensor<Index, 1> samples_indices = image_data_set.get_training_samples_indices();
         const Index samples_number = samples_indices.size();
 
         const Tensor<Index, 1> input_variables_indices = image_data_set.get_input_variables_indices();
-        const Tensor<Index, 1> target_variables_indices = image_data_set.get_target_numeric_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = image_data_set.get_target_variables_indices();
 
         const Tensor<Index, 1> input_variables_dimensions = image_data_set.get_input_variables_dimensions();
         const Index inputs_channels_number = input_variables_dimensions[0];
         const Index inputs_rows_number = input_variables_dimensions[1];
-        const Index inputs_columns_number = input_variables_dimensions[2];
+        const Index inputs_raw_variables_number = input_variables_dimensions[2];
 
         Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
         convolutional_layer_inputs_dimensions[0] = inputs_rows_number;
-        convolutional_layer_inputs_dimensions[1] = inputs_columns_number;
+        convolutional_layer_inputs_dimensions[1] = inputs_raw_variables_number;
         convolutional_layer_inputs_dimensions[2] = inputs_channels_number;
         convolutional_layer_inputs_dimensions[3] = samples_number;
 
         const Index kernels_rows_number = 2;
-        const Index kernels_columns_number = 2;
+        const Index kernels_raw_variables_number = 2;
         const Index kernels_number = 1;
         const Index kernels_channels_number = inputs_channels_number;
 
         Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
         convolutional_layer_kernels_dimensions(0) = kernels_rows_number;
-        convolutional_layer_kernels_dimensions(1) = kernels_columns_number;
+        convolutional_layer_kernels_dimensions(1) = kernels_raw_variables_number;
         convolutional_layer_kernels_dimensions(2) = kernels_number;
         convolutional_layer_kernels_dimensions(3) = kernels_channels_number;
 
         Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
         flatten_layer_inputs_dimensions(0) = inputs_rows_number-kernels_rows_number+1;
-        flatten_layer_inputs_dimensions(1) = inputs_columns_number-kernels_columns_number+1;
+        flatten_layer_inputs_dimensions(1) = inputs_raw_variables_number-kernels_raw_variables_number+1;
         flatten_layer_inputs_dimensions(2) = kernels_number;
         flatten_layer_inputs_dimensions(3) = samples_number;
 
@@ -124,9 +124,9 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(1000);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
 
         training_strategy.perform_training();
 

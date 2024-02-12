@@ -112,7 +112,7 @@ const Tensor<type, 1>& PerceptronLayer3D::get_biases() const
 /// Returns the synaptic weights from the perceptrons.
 /// The format is a matrix of real values.
 /// The number of rows is the number of neurons in the layer.
-/// The number of columns is the number of inputs to the layer.
+/// The number of raw_variables is the number of inputs to the layer.
 
 const Tensor<type, 2>& PerceptronLayer3D::get_synaptic_weights() const
 {
@@ -335,7 +335,7 @@ void PerceptronLayer3D::set_biases(const Tensor<type, 1>& new_biases)
 /// Sets the synaptic weights of this perceptron layer from a single matrix.
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of neurons in the corresponding layer.
-/// The number of columns is the number of inputs to the corresponding layer.
+/// The number of raw_variables is the number of inputs to the corresponding layer.
 /// @param new_synaptic_weights New set of synaptic weights in that layer.
 
 void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
@@ -701,48 +701,6 @@ void PerceptronLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_
 }
 
 
-void PerceptronLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
-                                        Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* layer_forward_propagation)
-{
-
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
-
-    PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
-        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation);
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index inputs_number = get_inputs_number();
-
-    const TensorMap<Tensor<type, 1>> potential_biases(potential_parameters.data(),
-                                                      neurons_number);
-
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data() + neurons_number,
-                                                                inputs_number,
-                                                                neurons_number);
-
-    Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
-
-    Tensor<type, 3>& activations_derivatives = perceptron_layer_3d_forward_propagation->activations_derivatives;
-
-    calculate_combinations(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           outputs);
-
-    if(dropout_rate > type(0))
-    {
-        dropout(outputs);
-    }
-
-    calculate_activations_derivatives(outputs,
-                                      outputs,
-                                      activations_derivatives);
-
-}
-
-
 void PerceptronLayer3D::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
                                              LayerBackPropagation* next_back_propagation,
                                              LayerBackPropagation* layer_back_propagation) const
@@ -750,7 +708,9 @@ void PerceptronLayer3D::calculate_hidden_delta(LayerForwardPropagation* next_for
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayer3DBackPropagation*>(layer_back_propagation);
 
-    switch(next_back_propagation->layer_pointer->get_type())
+    const Layer::Type layer_type = next_back_propagation->layer->get_type();
+
+    switch(layer_type)
     {
 
     case Type::Perceptron:
@@ -794,16 +754,16 @@ void PerceptronLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagati
 {
     // Next layer
 
-    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer_pointer);
+    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
     // Next forward propagation
 
-    const Tensor<type, 3>& next_activations_derivatives = next_forward_propagation->activations_derivatives;
-
     // Next back-propagation
 
+    /// @todo  change to errors combinations derivatives
+    /*
     const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     // This back propagation
@@ -812,7 +772,7 @@ void PerceptronLayer3D::calculate_hidden_delta(PerceptronLayer3DForwardPropagati
 
     deltas.device(*thread_pool_device)
         = (next_deltas*next_activations_derivatives).contract(next_synaptic_weights, A_BT);
-
+    */
 //#ifdef OPENNN_MKL
 
 //   if(typeid(type) == typeid(float))
@@ -862,11 +822,11 @@ void PerceptronLayer3D::calculate_hidden_delta(ProbabilisticLayer3DForwardPropag
 {
     // Next layer
 
-    const ProbabilisticLayer3D* probabilistic_layer_3d_pointer = static_cast<ProbabilisticLayer3D*>(next_back_propagation->layer_pointer);
+    const ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(next_back_propagation->layer);
 
-    const Index next_neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
+    const Index next_neurons_number = probabilistic_layer_3d->get_neurons_number();
 
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_3d_pointer->get_synaptic_weights();
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_3d->get_synaptic_weights();
 
     // Next forward propagation
 
@@ -897,7 +857,7 @@ void PerceptronLayer3D::calculate_hidden_delta(ProbabilisticLayer3DForwardPropag
     }
     else
     {
-        const Index next_layer_neurons_number = probabilistic_layer_3d_pointer->get_neurons_number();
+        const Index next_layer_neurons_number = probabilistic_layer_3d->get_neurons_number();
 
         Tensor<type, 1>& next_deltas_row = next_back_propagation->deltas_row;
 

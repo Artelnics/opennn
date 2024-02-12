@@ -200,7 +200,7 @@ public:
 
    // Get methods
 
-   LossIndex* get_loss_index_pointer() const;
+   LossIndex* get_loss_index() const;
 
    bool has_loss_index() const;
 
@@ -222,7 +222,7 @@ public:
    void set();
    void set(LossIndex*);
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index(LossIndex*);
    void set_threads_number(const int&);
 
    // Training operators
@@ -267,7 +267,7 @@ protected:
 
    /// Pointer to an external loss index object.
 
-   LossIndex* loss_index_pointer = nullptr;
+   LossIndex* loss_index = nullptr;
 
    // TRAINING OPERATORS
 

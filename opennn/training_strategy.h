@@ -91,29 +91,29 @@ public:
 
     // Get methods
 
-    DataSet* get_data_set_pointer();
+    DataSet* get_data_set();
 
-    NeuralNetwork* get_neural_network_pointer() const;
+    NeuralNetwork* get_neural_network() const;
 
-    LossIndex* get_loss_index_pointer();
-    OptimizationAlgorithm* get_optimization_algorithm_pointer();
+    LossIndex* get_loss_index();
+    OptimizationAlgorithm* get_optimization_algorithm();
 
     bool has_neural_network() const;
     bool has_data_set() const;
 
-    SumSquaredError* get_sum_squared_error_pointer();
-    MeanSquaredError* get_mean_squared_error_pointer();
-    NormalizedSquaredError* get_normalized_squared_error_pointer();
-    MinkowskiError* get_Minkowski_error_pointer();
-    CrossEntropyError* get_cross_entropy_error_pointer();
-    WeightedSquaredError* get_weighted_squared_error_pointer();
+    SumSquaredError* get_sum_squared_error();
+    MeanSquaredError* get_mean_squared_error();
+    NormalizedSquaredError* get_normalized_squared_error();
+    MinkowskiError* get_Minkowski_error();
+    CrossEntropyError* get_cross_entropy_error();
+    WeightedSquaredError* get_weighted_squared_error();
 
-    GradientDescent* get_gradient_descent_pointer();
-    ConjugateGradient* get_conjugate_gradient_pointer();
-    QuasiNewtonMethod* get_quasi_Newton_method_pointer();
-    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer();
-    StochasticGradientDescent* get_stochastic_gradient_descent_pointer();
-    AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer();
+    GradientDescent* get_gradient_descent();
+    ConjugateGradient* get_conjugate_gradient();
+    QuasiNewtonMethod* get_quasi_Newton_method();
+    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm();
+    StochasticGradientDescent* get_stochastic_gradient_descent();
+    AdaptiveMomentEstimation* get_adaptive_moment_estimation();
 
     const LossMethod& get_loss_method() const;
     const OptimizationMethod& get_optimization_method() const;
@@ -134,15 +134,15 @@ public:
 
     void set_threads_number(const int&);
 
-    void set_data_set_pointer(DataSet*);
-    void set_neural_network_pointer(NeuralNetwork*);
+    void set_data_set(DataSet*);
+    void set_neural_network(NeuralNetwork*);
 
     void set_loss_index_threads_number(const int&);
     void set_optimization_algorithm_threads_number(const int&);
 
-    void set_loss_index_pointer(LossIndex*);
-    void set_loss_index_data_set_pointer(DataSet*);
-    void set_loss_index_neural_network_pointer(NeuralNetwork*);
+    void set_loss_index(LossIndex*);
+    void set_loss_index_data_set(DataSet*);
+    void set_loss_index_neural_network(NeuralNetwork*);
 
     void set_loss_method(const LossMethod&);
     void set_optimization_method(const OptimizationMethod&);
@@ -180,9 +180,9 @@ public:
 
 private:
 
-    DataSet* data_set_pointer = nullptr;
+    DataSet* data_set = nullptr;
 
-    NeuralNetwork* neural_network_pointer = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
     // Loss index
 

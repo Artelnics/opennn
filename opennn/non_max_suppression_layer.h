@@ -56,10 +56,10 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit NonMaxSuppressionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit NonMaxSuppressionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : NonMaxSuppressionLayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
     
     
@@ -69,9 +69,9 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
         outputs.resize(2);
 

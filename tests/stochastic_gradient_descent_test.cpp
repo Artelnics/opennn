@@ -13,7 +13,7 @@ StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    stochastic_gradient_descent.set_loss_index_pointer(&sum_squared_error);
+    stochastic_gradient_descent.set_loss_index(&sum_squared_error);
 
     stochastic_gradient_descent.set_display(false);
 }

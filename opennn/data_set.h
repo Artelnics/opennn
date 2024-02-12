@@ -67,8 +67,8 @@ namespace opennn
 /// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
 
 ///
-/// It basically consists of a data Matrix separated by columns.
-/// These columns can take different categories depending on the data hosted in them.
+/// It basically consists of a data Matrix separated by raw_variables.
+/// These raw_variables can take different categories depending on the data hosted in them.
 ///
 /// With OpenNN DataSet class you can edit the data to prepare your model, such as eliminating missing values,
 /// calculating correlations between variables (inputs and targets), not using certain variables or samples, etc \dots.
@@ -90,8 +90,7 @@ public:
 
     explicit DataSet(const Tensor<type, 1>&, const Index&);
 
-    /// This enumeration represents the data file string codification
-    /// (utf8, shift_jis)
+    /// This enumeration represents the data file string codification (utf8, shift_jis)
 
     enum class Codification{UTF8, SHIFT_JIS};
 
@@ -132,7 +131,7 @@ public:
 
     // Structs
 
-    /// This structure represents the columns of the DataSet.
+    /// This structure represents the raw variables of the DataSet.
 
     struct RawVariable
     {
@@ -149,19 +148,19 @@ public:
                const Tensor<string, 1>& = Tensor<string, 1>(),
                const Tensor<DataSet::VariableUse, 1>& = Tensor<DataSet::VariableUse, 1>());
 
-        /// Column name.
+        /// Raw variable name.
 
         string name = "";
 
-        /// Column use.
+        /// Raw variable use.
 
-        DataSet::VariableUse column_use = DataSet::VariableUse::Input;
+        DataSet::VariableUse raw_variable_use = DataSet::VariableUse::Input;
 
-        /// Column type.
+        /// Raw variable type.
 
         DataSet::RawVariableType type = DataSet::RawVariableType::Numeric;
 
-        /// Categories within the column.
+        /// Categories within the raw variable.
 
         Tensor<string, 1> categories;
 
@@ -173,12 +172,12 @@ public:
 
         // Methods
 
-        Index get_numeric_variables_number() const;
+        Index get_variables_number() const;
 
         Index get_categories_number() const;
         Index get_used_categories_number() const;
 
-        Tensor<string, 1> get_used_numeric_variables_names() const;
+        Tensor<string, 1> get_used_variables_names() const;
 
         void set_scaler(const Scaler&);
         void set_scaler(const string&);
@@ -193,9 +192,6 @@ public:
         void set_categories(const Tensor<string, 1>&);
         void set_categories_uses(const Tensor<string, 1>&);
         void set_categories_uses(const DataSet::VariableUse&);
-
-        bool is_used();
-        bool is_unused();
 
         void from_XML(const tinyxml2::XMLDocument&);
         void write_XML(tinyxml2::XMLPrinter&) const;
@@ -239,60 +235,60 @@ public:
 
     Tensor<type, 1> box_plot_from_histogram(Histogram&, const Index&) const;
 
-    // Columns get methods
+    // Raw variables get methods
 
-    Tensor<RawVariable, 1> get_columns() const;
-    Tensor<RawVariable, 1> get_input_columns() const;
-    Tensor<bool, 1> get_input_columns_binary() const;
-    Tensor<RawVariable, 1> get_target_columns() const;
-    Tensor<RawVariable, 1> get_used_columns() const;
+    Tensor<RawVariable, 1> get_raw_variables() const;
+    Tensor<RawVariable, 1> get_input_raw_variables() const;
+    Tensor<bool, 1> get_input_raw_variables_binary() const;
+    Tensor<RawVariable, 1> get_target_raw_variables() const;
+    Tensor<RawVariable, 1> get_used_raw_variables() const;
 
-    Index get_columns_number() const;
-    Index get_constant_columns_number() const;
+    Index get_raw_variables_number() const;
+    Index get_constant_raw_variables_number() const;
 
-    Index get_input_columns_number() const;
-    Index get_target_columns_number() const;
-    Index get_time_columns_number() const;
-    Index get_unused_columns_number() const;
-    Index get_used_columns_number() const;
+    Index get_input_raw_variables_number() const;
+    Index get_target_raw_variables_number() const;
+    Index get_time_raw_variables_number() const;
+    Index get_unused_raw_variables_number() const;
+    Index get_used_raw_variables_number() const;
 
     Index get_variables_less_target() const;
 
-    Tensor<Index, 1> get_columns_index(const Tensor<string, 1>&) const;
+    Tensor<Index, 1> get_raw_variables_index(const Tensor<string, 1>&) const;
 
-    Index get_column_index(const string&) const;
-    Index get_column_index(const Index&) const;
+    Index get_raw_variable_index(const string&) const;
+    Index get_raw_variable_index(const Index&) const;
 
-    Tensor<Index, 1> get_input_columns_indices() const;
-    Tensor<Index, 1> get_target_columns_indices() const;
-    Tensor<Index, 1> get_unused_columns_indices() const;
-    Tensor<Index, 1> get_used_columns_indices() const;
-    Tensor<Index, 1> get_numeric_input_columns() const;
+    Tensor<Index, 1> get_input_raw_variables_indices() const;
+    Tensor<Index, 1> get_target_raw_variables_indices() const;
+    Tensor<Index, 1> get_unused_raw_variables_indices() const;
+    Tensor<Index, 1> get_used_raw_variables_indices() const;
+    Tensor<Index, 1> get_numeric_input_raw_variables() const;
 
-    Tensor<string, 1> get_columns_names() const;
+    Tensor<string, 1> get_raw_variables_names() const;
 
-    Tensor<string, 1> get_input_columns_names() const;
-    Tensor<string, 1> get_target_columns_names() const;
-    Tensor<string, 1> get_used_columns_names() const;
+    Tensor<string, 1> get_input_raw_variables_names() const;
+    Tensor<string, 1> get_target_raw_variables_names() const;
+    Tensor<string, 1> get_used_raw_variables_names() const;
 
-    RawVariableType get_column_type(const Index& index) const {return columns[index].type;}
-    string get_column_type_string(const RawVariableType&) const;
+    RawVariableType get_raw_variable_type(const Index& index) const {return raw_variables[index].type;}
+    string get_raw_variable_type_string(const RawVariableType&) const;
 
-    VariableUse get_column_use(const Index&) const;
-    Tensor<VariableUse, 1> get_columns_uses() const;
+    VariableUse get_raw_variable_use(const Index&) const;
+    Tensor<VariableUse, 1> get_raw_variables_uses() const;
 
     // Variables get methods
 
-    Index get_numeric_variables_number() const;
+    Index get_variables_number() const;
 
-    Index get_input_numeric_variables_number() const;
-    Index get_target_numeric_variables_number() const;
-    Index get_unused_numeric_variables_number() const;
-    Index get_used_numeric_variables_number() const;
-    Index get_numerical_input_columns_number() const;
+    Index get_input_variables_number() const;
+    Index get_target_variables_number() const;
+    Index get_unused_variables_number() const;
+    Index get_used_variables_number() const;
+    Index get_numerical_input_raw_variables_number() const;
 
     string get_numeric_variable_name(const Index&) const;
-    Tensor<string, 1> get_numeric_variables_names() const;
+    Tensor<string, 1> get_variables_names() const;
 
     Tensor<string, 1> get_input_variables_names() const;
     Tensor<string, 1> get_target_variables_names() const;
@@ -305,10 +301,10 @@ public:
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
     Tensor<Index, 1> get_numeric_input_variables_indices() const;
-    Tensor<Index, 1> get_target_numeric_variables_indices() const;
+    Tensor<Index, 1> get_target_variables_indices() const;
 
     VariableUse get_numeric_variable_use(const Index&) const;
-    Tensor<VariableUse, 1> get_numeric_variables_uses() const;
+    Tensor<VariableUse, 1> get_variables_uses() const;
 
     const Tensor<Index, 1>& get_input_variables_dimensions() const;
     Index get_input_variables_rank() const;
@@ -317,7 +313,7 @@ public:
 
     // Scalers get methods
 
-    Tensor<Scaler, 1> get_columns_scalers() const;
+    Tensor<Scaler, 1> get_raw_variables_scalers() const;
 
     Tensor<Scaler, 1> get_input_variables_scalers() const;
     Tensor<Scaler, 1> get_target_variables_scalers() const;
@@ -329,7 +325,7 @@ public:
     // Data get methods
 
     const Tensor<type, 2>& get_data() const;
-    Tensor<type, 2>* get_data_pointer();
+    Tensor<type, 2>* get_data_p();
 
     Tensor<type, 2> get_training_data() const;
     Tensor<type, 2> get_selection_data() const;
@@ -355,12 +351,12 @@ public:
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
 
-    Tensor<type, 2> get_columns_data(const Tensor<Index, 1>&) const;
+    Tensor<type, 2> get_raw_variables_data(const Tensor<Index, 1>&) const;
 
-    Tensor<type, 2> get_column_data(const Index&) const;
-    Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
-    Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
-    Tensor<type, 2> get_column_data(const string&) const;
+    Tensor<type, 2> get_raw_variable_data(const Index&) const;
+    Tensor<type, 2> get_raw_variable_data(const Index&, const Tensor<Index, 1>&) const;
+    Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
+    Tensor<type, 2> get_raw_variable_data(const string&) const;
 
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
@@ -398,7 +394,7 @@ public:
 
     const string& get_missing_values_label() const;
 
-    static Tensor<string, 1> get_default_columns_names(const Index&);
+    static Tensor<string, 1> get_default_raw_variables_names(const Index&);
 
     static Scaler get_scaling_unscaling_method(const string&);
 
@@ -454,52 +450,52 @@ public:
 
     // Columns set methods
 
-    void set_columns(const Tensor<RawVariable, 1>&);
+    void set_raw_variables(const Tensor<RawVariable, 1>&);
 
-    void set_default_columns_uses();
+    void set_default_raw_variables_uses();
 
-    void set_default_columns_names();
+    void set_default_raw_variables_names();
 
-    void set_column_name(const Index&, const string&);
+    void set_raw_variable_name(const Index&, const string&);
 
-    void set_columns_uses(const Tensor<string, 1>&);
-    void set_columns_uses(const Tensor<VariableUse, 1>&);
-    void set_columns_unused();
-    void set_columns_types(const Tensor<string, 1>&);
-    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-    void set_input_target_columns(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    void set_input_columns_unused();
+    void set_raw_variables_uses(const Tensor<string, 1>&);
+    void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
+    void set_raw_variables_unused();
+    void set_raw_variables_types(const Tensor<string, 1>&);
+    void set_input_target_raw_variables(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_raw_variables(const Tensor<string, 1>&, const Tensor<string, 1>&);
+    void set_input_raw_variables_unused();
 
-    void set_columns_unused(const Tensor<Index, 1>&);
+    void set_raw_variables_unused(const Tensor<Index, 1>&);
 
-    void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
+    void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
-    void set_column_use(const Index&, const VariableUse&);
-    void set_column_use(const string&, const VariableUse&);
+    void set_raw_variable_use(const Index&, const VariableUse&);
+    void set_raw_variable_use(const string&, const VariableUse&);
 
-    void set_column_type(const Index&, const RawVariableType&);
-    void set_column_type(const string&, const RawVariableType&);
+    void set_raw_variable_type(const Index&, const RawVariableType&);
+    void set_raw_variable_type(const string&, const RawVariableType&);
 
-    void set_columns_names(const Tensor<string, 1>&);
+    void set_raw_variables_names(const Tensor<string, 1>&);
 
-    void set_columns_number(const Index&);
+    void set_raw_variables_number(const Index&);
 
-    void set_columns_scalers(const Scaler&);
+    void set_raw_variables_scalers(const Scaler&);
 
-    void set_columns_scalers(const Tensor<Scaler, 1>&);
+    void set_raw_variables_scalers(const Tensor<Scaler, 1>&);
 
-    void set_binary_simple_columns();
+    void set_binary_simple_raw_variables();
 
     // Columns other methods
 
-    void check_constant_columns();
+    void check_constant_raw_variables();
 
     Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
 
     // Variables set methods
 
     void set_variables_names(const Tensor<string, 1>&);
-    void set_variables_names_from_columns(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
+    void set_variables_names_from_raw_variables(const Tensor<string, 1>&, const Tensor<DataSet::RawVariable, 1>&);
     void set_variable_name(const Index&, const string&);
 
     void set_input();
@@ -519,7 +515,7 @@ public:
 
     void set_data_source_path(const string&);
 
-    void set_has_columns_names(const bool&);
+    void set_has_raw_variables_names(const bool&);
     void set_has_rows_label(const bool&);
 
     void set_has_text_data(const bool&);
@@ -546,11 +542,11 @@ public:
     bool is_sample_used(const Index&) const;
     bool is_sample_unused(const Index&) const;
 
-    bool has_binary_columns() const;
-    bool has_categorical_columns() const;
-    bool has_time_columns() const;
+    bool has_binary_raw_variables() const;
+    bool has_categorical_raw_variables() const;
+    bool has_time_raw_variables() const;
 
-    //bool has_time_time_series_columns() const;
+    //bool has_time_time_series_raw_variables() const;
 
     bool has_selection() const;
 
@@ -566,13 +562,13 @@ public:
 
     // Unusing methods
 
-    Tensor<string, 1> unuse_constant_columns();
+    Tensor<string, 1> unuse_constant_raw_variables();
 
     Tensor<Index, 1> unuse_repeated_samples();
-    Tensor<string, 1> get_columns_types() const;
+    Tensor<string, 1> get_raw_variables_types() const;
 
-    Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
-    Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
+    Tensor<string, 1> unuse_uncorrelated_raw_variables(const type& = type(0.25));
+    Tensor<string, 1> unuse_multicollinear_raw_variables(Tensor<Index, 1>&, Tensor<Index, 1>&);
 
     // Initialization methods
 
@@ -591,12 +587,12 @@ public:
     Tensor<Descriptives, 1> calculate_variables_descriptives() const;
     Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
-    Tensor<Descriptives, 1> calculate_columns_descriptives_positive_samples() const;
-    Tensor<Descriptives, 1> calculate_columns_descriptives_negative_samples() const;
-    Tensor<Descriptives, 1> calculate_columns_descriptives_categories(const Index&) const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_positive_samples() const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_negative_samples() const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_categories(const Index&) const;
 
-    Tensor<Descriptives, 1> calculate_columns_descriptives_training_samples() const;
-    Tensor<Descriptives, 1> calculate_columns_descriptives_selection_samples() const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_training_samples() const;
+    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_selection_samples() const;
 
     Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
     Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
@@ -621,17 +617,17 @@ public:
 
     // Distribution methods
 
-    Tensor<Histogram, 1> calculate_columns_distribution(const Index& = 10) const;
+    Tensor<Histogram, 1> calculate_raw_variables_distribution(const Index& = 10) const;
 
     // Box and whiskers
 
     BoxPlot calculate_single_box_plot(Tensor<type,1>&) const;
-    Tensor<BoxPlot, 1> calculate_columns_box_plots() const;
-    Tensor<BoxPlot, 1> calculate_data_columns_box_plot(Tensor<type,2>&) const;
+    Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
+    Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(const bool& = true, const bool& = false) const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_raw_variables_correlations(const bool& = true, const bool& = false) const;
 
     void print_inputs_correlations() const;
 
@@ -639,13 +635,13 @@ public:
 
     // Inputs-targets correlations
 
-    Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
-    Tensor<Correlation, 2> calculate_input_target_columns_correlations_spearman() const;
-    Tensor<Correlation, 2> calculate_relevant_input_target_columns_correlations(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_raw_variables_correlations_spearman() const;
+    Tensor<Correlation, 2> calculate_relevant_input_target_raw_variables_correlations(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
-    void print_input_target_columns_correlations() const;
+    void print_input_target_raw_variables_correlations() const;
 
-    void print_top_input_target_columns_correlations() const;
+    void print_top_input_target_raw_variables_correlations() const;
 
     // Filtering methods
 
@@ -653,7 +649,7 @@ public:
 
     // Scaling methods
 
-    void set_default_columns_scalers();
+    void set_default_raw_variables_scalers();
 
     // Data scaling
 
@@ -699,10 +695,10 @@ public:
     void save(const string&) const;
     void load(const string&);
 
-    void print_columns() const;
-    void print_columns_types() const;
-    void print_columns_uses() const;
-    void print_columns_scalers() const;
+    void print_raw_variables() const;
+    void print_raw_variables_types() const;
+    void print_raw_variables_uses() const;
+    void print_raw_variables_scalers() const;
 
     void print_data() const;
     void print_data_preview() const;
@@ -734,15 +730,15 @@ public:
 
     void scrub_missing_values();
 
-    Tensor<Index, 1> count_nan_columns() const;
+    Tensor<Index, 1> count_nan_raw_variables() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
     void set_missing_values_number(const Index&);
     void set_missing_values_number();
 
-    void set_columns_missing_values_number(const Tensor<Index, 1>&);
-    void set_columns_missing_values_number();
+    void set_raw_variables_missing_values_number(const Tensor<Index, 1>&);
+    void set_raw_variables_missing_values_number();
 
     void set_rows_missing_values_number(const Index&);
     void set_rows_missing_values_number();
@@ -794,7 +790,7 @@ protected:
 
     /// Data Matrix.
     /// The number of rows is the number of samples.
-    /// The number of columns is the number of variables.
+    /// The number of raw_variables is the number of variables.
 
     Tensor<type, 2> data;
 
@@ -806,7 +802,7 @@ protected:
 
     // Columns
 
-    Tensor<RawVariable, 1> columns;
+    Tensor<RawVariable, 1> raw_variables;
 
     Tensor<Index, 1> input_variables_dimensions;
 
@@ -830,7 +826,7 @@ protected:
 
     /// Header which contains variables name.
 
-    bool has_columns_names = false;
+    bool has_raw_variables_names = false;
 
     /// Header which contains the rows label.
 
@@ -841,7 +837,6 @@ protected:
     Codification codification = Codification::UTF8;
 
     Tensor<Tensor<string, 1>, 1> data_file_preview;
-
 
     Index gmt = 0;
 

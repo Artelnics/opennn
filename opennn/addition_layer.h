@@ -62,13 +62,13 @@ public:
 
     Index get_inputs_rows_number() const;
 
-    Index get_inputs_columns_number() const;
+    Index get_inputs_raw_variables_number() const;
 
     Index get_neurons_number() const;
 
     Index get_outputs_rows_number() const;
 
-    Index get_outputs_columns_number() const;
+    Index get_outputs_raw_variables_number() const;
 
     Index get_parameters_number() const final;
 
@@ -127,30 +127,30 @@ struct AdditionLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit AdditionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit AdditionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
         batch_samples_number = new_batch_samples_number;
 
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        const AdditionLayer* addition_layer_pointer = static_cast<AdditionLayer*>(layer_pointer);
+        const AdditionLayer* addition_layer = static_cast<AdditionLayer*>(layer);
 
-        const Index outputs_rows_number = addition_layer_pointer->get_outputs_rows_number();
+        const Index outputs_rows_number = addition_layer->get_outputs_rows_number();
 
-        const Index outputs_columns_number = addition_layer_pointer->get_outputs_columns_number();
+        const Index outputs_raw_variables_number = addition_layer->get_outputs_raw_variables_number();
 
-        const Index channels_number = addition_layer_pointer->get_channels_number();
+        const Index channels_number = addition_layer->get_channels_number();
 
         outputs.resize(batch_samples_number,
                        outputs_rows_number,
-                       outputs_columns_number,
+                       outputs_raw_variables_number,
                        channels_number);
     }
 
@@ -178,18 +178,18 @@ struct AdditionLayerBackPropagation : LayerBackPropagation
     {
     }
 
-    explicit AdditionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit AdditionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
         batch_samples_number = new_batch_samples_number;
 
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
     }
 
 

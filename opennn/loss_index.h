@@ -69,16 +69,16 @@ public:
 
    /// Returns a pointer to the neural network object associated with the error term.
 
-   inline NeuralNetwork* get_neural_network_pointer() const 
+   inline NeuralNetwork* get_neural_network() const 
    {
         #ifdef OPENNN_DEBUG
 
-        if(!neural_network_pointer)
+        if(!neural_network)
         {
              ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "NeuralNetwork* get_neural_network_pointer() const method.\n"
+                    << "NeuralNetwork* get_neural_network() const method.\n"
                     << "Neural network pointer is nullptr.\n";
 
              throw runtime_error(buffer.str());
@@ -86,21 +86,21 @@ public:
 
         #endif
 
-      return neural_network_pointer;
+      return neural_network;
    }
 
    /// Returns a pointer to the data set object associated with the error term.
 
-   inline DataSet* get_data_set_pointer() const 
+   inline DataSet* get_data_set() const 
    {
         #ifdef OPENNN_DEBUG
 
-        if(!data_set_pointer)
+        if(!data_set)
         {
              ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "DataSet* get_data_set_pointer() const method.\n"
+                    << "DataSet* get_data_set() const method.\n"
                     << "DataSet pointer is nullptr.\n";
 
              throw runtime_error(buffer.str());
@@ -108,7 +108,7 @@ public:
 
         #endif
 
-      return data_set_pointer;
+      return data_set;
    }
 
    const type& get_regularization_weight() const;
@@ -134,9 +134,9 @@ public:
 
    void set_threads_number(const int&);
 
-   void set_neural_network_pointer(NeuralNetwork*);
+   void set_neural_network(NeuralNetwork*);
 
-   virtual void set_data_set_pointer(DataSet*);
+   virtual void set_data_set(DataSet*);
 
    void set_default();
 
@@ -250,11 +250,11 @@ protected:
 
    /// Pointer to a neural network object.
 
-   NeuralNetwork* neural_network_pointer = nullptr;
+   NeuralNetwork* neural_network = nullptr;
 
    /// Pointer to a data set object.
 
-   DataSet* data_set_pointer = nullptr;
+   DataSet* data_set = nullptr;
 
    /// Pointer to a regularization method object.
 
@@ -305,7 +305,7 @@ struct BackPropagationLM
 
     Index batch_samples_number = 0;
 
-    LossIndex* loss_index_pointer = nullptr;
+    LossIndex* loss_index = nullptr;
 
     type error = type(0);
     type regularization = type(0);

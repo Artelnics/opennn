@@ -15,9 +15,9 @@ struct NeuralNetworkBackPropagationLM
 {
     NeuralNetworkBackPropagationLM() {}
 
-    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network_pointer)
+    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network)
     {
-        neural_network_pointer = new_neural_network_pointer;
+        neural_network = new_neural_network;
     }
 
     virtual ~NeuralNetworkBackPropagationLM()
@@ -31,13 +31,13 @@ struct NeuralNetworkBackPropagationLM
     }
 
 
-    void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network)
     {
         batch_samples_number = new_batch_samples_number;
 
-        neural_network_pointer = new_neural_network_pointer;
+        neural_network = new_neural_network;
 
-        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers();
 
         const Index trainable_layers_number = trainable_layers_pointers.size();
 
@@ -88,7 +88,7 @@ struct NeuralNetworkBackPropagationLM
 
     Index batch_samples_number = 0;
 
-    NeuralNetwork* neural_network_pointer = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
     Tensor<LayerBackPropagationLM*, 1> layers;
 };

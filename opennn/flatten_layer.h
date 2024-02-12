@@ -56,7 +56,7 @@ public:
     Index get_inputs_number() const;
     Index get_inputs_channels_number() const;
     Index get_inputs_rows_number() const;
-    Index get_inputs_columns_number() const;
+    Index get_inputs_raw_variables_number() const;
     Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const final;
@@ -84,7 +84,9 @@ public:
 
     // Outputs
 
-    void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
+    void forward_propagate(const pair<type*, dimensions>&, 
+                           LayerForwardPropagation*, 
+                           const bool&) final;
 
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
@@ -124,28 +126,28 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
    // Constructor
 
-   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
        : LayerForwardPropagation()
    {
-       set(new_batch_samples_number, new_layer_pointer);
+       set(new_batch_samples_number, new_layer);
    }
    
    
    pair<type*, dimensions> get_outputs_pair() const final
    {
-       const Index neurons_number = layer_pointer->get_neurons_number();
+       const Index neurons_number = layer->get_neurons_number();
 
        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
    }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
         batch_samples_number = new_batch_samples_number;
 
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index neurons_number = layer->get_neurons_number();
 
         outputs.resize(batch_samples_number, neurons_number);
 
@@ -175,10 +177,10 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     }
 
 
-    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
@@ -189,19 +191,19 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     
     pair<type*, dimensions> get_deltas_pair() const final
     {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index neurons_number = layer->get_neurons_number();
 
         return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = new_layer_pointer->get_neurons_number();
+        const Index neurons_number = new_layer->get_neurons_number();
 
         deltas.resize(batch_samples_number, neurons_number);
 

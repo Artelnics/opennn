@@ -68,7 +68,7 @@ public:
    // Get methods
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
-   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+   LearningRateAlgorithm* get_learning_rate_algorithm();
 
    const InverseHessianApproximationMethod& get_inverse_hessian_approximation_method() const;
    string write_inverse_hessian_approximation_method() const;
@@ -87,7 +87,7 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*) override;
+   void set_loss_index(LossIndex*) override;
 
    void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
    void set_inverse_hessian_approximation_method(const string&);
@@ -177,22 +177,22 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
     {
     }
 
-    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method)
     {
-        set(new_quasi_newton_method_pointer);
+        set(new_quasi_newton_method);
     }
 
     virtual ~QuasiNewtonMehtodData() {}
 
-    void set(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+    void set(QuasiNewtonMethod* new_quasi_newton_method)
     {
-        quasi_newton_method_pointer = new_quasi_newton_method_pointer;
+        quasi_newton_method = new_quasi_newton_method;
 
-        const LossIndex* loss_index_pointer = quasi_newton_method_pointer->get_loss_index_pointer();
+        const LossIndex* loss_index = quasi_newton_method->get_loss_index();
 
-        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network->get_parameters_number();
 
         // Neural network data
 
@@ -234,7 +234,7 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
         cout << learning_rate << endl;
     }
 
-    QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
+    QuasiNewtonMethod* quasi_newton_method = nullptr;
 
     // Neural network data
 

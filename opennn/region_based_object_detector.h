@@ -71,9 +71,9 @@ private:
 
     /// Maximum number of inputs in the neural network.
 
-    NeuralNetwork* neural_network_pointer;
+    NeuralNetwork* neural_network;
 
-    DataSet* data_set_pointer;
+    DataSet* data_set;
 
     Index regions_number = 2000;
 

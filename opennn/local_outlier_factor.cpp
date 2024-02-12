@@ -161,7 +161,7 @@ Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type,
 Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
 {
     const Index used_samples_number = get_used_samples_number();
-    const Index input_variables_number = get_input_numeric_variables_number();
+    const Index input_variables_number = get_input_variables_number();
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
@@ -606,7 +606,7 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
 {
     const Index used_samples_number = indices.size();
 
-    const Index variables_number = get_input_numeric_variables_number();
+    const Index variables_number = get_input_variables_number();
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     list<list<Index>> tree_simulation;

@@ -106,7 +106,7 @@ const Tensor<type, 1>& PerceptronLayer::get_biases() const
 /// Returns the synaptic weights from the perceptrons.
 /// The format is a matrix of real values.
 /// The number of rows is the number of neurons in the layer.
-/// The number of columns is the number of inputs to the layer.
+/// The number of raw_variables is the number of inputs to the layer.
 
 const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
 {
@@ -138,14 +138,7 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
          biases_data,
          biases_data + biases_number,
          parameters_data + synaptic_weights_number);
-/*
-    memcpy(parameters.data(),
-           synaptic_weights.data(),
-           size_t(synaptic_weights.size())*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights.size(),
-           biases.data(), size_t(biases.size())*sizeof(type));
-*/
     return parameters;
 }
 
@@ -308,7 +301,7 @@ void PerceptronLayer::set_biases(const Tensor<type, 1>& new_biases)
 /// Sets the synaptic weights of this perceptron layer from a single matrix.
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of neurons in the corresponding layer.
-/// The number of columns is the number of inputs to the corresponding layer.
+/// The number of raw_variables is the number of inputs to the corresponding layer.
 /// @param new_synaptic_weights New set of synaptic weights in that layer.
 
 void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
@@ -321,27 +314,23 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {   
-//    const Index biases_number = get_biases_number();
-//    const Index synaptic_weights_number = get_synaptic_weights_number();
-/*
-    memcpy(synaptic_weights.data(),
-           new_parameters.data() + index,
-           size_t(synaptic_weights.size())*sizeof(type));
+    type* new_parameters_data = (type*)new_parameters.data();
 
-    memcpy(biases.data(),
-           new_parameters.data() + index + synaptic_weights.size(),
-           size_t(biases.size())*sizeof(type));
-*/
-    copy(execution::par, 
-        new_parameters.data() + index,
-        new_parameters.data() + index + synaptic_weights.size(),
-        synaptic_weights.data());
+    type* synaptic_weights_data = (type*)synaptic_weights.data();
+    type* biases_data = (type*)biases.data();
+
+    const Index biases_number = get_biases_number();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
 
     copy(execution::par, 
-        new_parameters.data() + index + synaptic_weights.size(),
-        new_parameters.data() + index + synaptic_weights.size() + biases.size(),
-        biases.data());
+        new_parameters_data + index,
+        new_parameters_data + index + synaptic_weights_number,
+        synaptic_weights_data);
 
+    copy(execution::par, 
+        new_parameters_data + index + synaptic_weights_number,
+        new_parameters_data + index + synaptic_weights_number + biases_number,
+        biases_data);
 }
 
 
@@ -468,8 +457,6 @@ void PerceptronLayer::set_parameters_random()
 
 
 void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
-                                             const Tensor<type, 1>& biases,
-                                             const Tensor<type, 2>& synaptic_weights,
                                              Tensor<type, 2>& combinations) const
 {
 
@@ -673,47 +660,6 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pa
 }
 
 
-void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
-                                        Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* layer_forward_propagation)
-{
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
-
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
-        static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index inputs_number = get_inputs_number();
-
-    const TensorMap<Tensor<type, 1>> potential_biases(potential_parameters.data(),
-                                                      neurons_number);
-
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data() + neurons_number,
-                                                                inputs_number,
-                                                                neurons_number);
-
-    Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
-
-    Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
-
-    calculate_combinations(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           outputs);
-
-    if(dropout_rate > type(0))
-    {
-        dropout(outputs);
-    }
-
-    calculate_activations_derivatives(outputs,
-                                      outputs,
-                                      activations_derivatives);
-
-}
-
-
 void PerceptronLayer::calculate_error_combinations_derivatives(const Tensor<type, 2>& deltas,
     const Tensor<type, 2>& activations_derivatives,
     Tensor<type, 2>& error_combinations_derivatives) const
@@ -729,7 +675,7 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_forwa
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);
 
-    switch(next_back_propagation->layer_pointer->get_type())
+    switch(next_back_propagation->layer->get_type())
     {
 
     case Type::Perceptron:
@@ -773,13 +719,11 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 {
     // Next layer
 
-    const PerceptronLayer* next_perceptron_layer = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer);
+    const PerceptronLayer* next_perceptron_layer = static_cast<PerceptronLayer*>(next_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
     // Next back-propagation
-
-    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
 
@@ -838,15 +782,13 @@ void PerceptronLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagatio
 {
     // Next layer
 
-    const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
+    const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer);
 
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer->get_synaptic_weights();
 
     // Next back propagation
 
     const Tensor<type, 2>& next_error_combinations_derivatives = next_back_propagation->error_combinations_derivatives;
-
-    const Tensor<type, 2>& next_deltas = next_back_propagation->deltas;
 
     // This back propagation
 
@@ -863,7 +805,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_fo
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
 
-    const Layer::Type next_type = next_back_propagation->layer_pointer->get_type();
+    const Layer::Type next_type = next_back_propagation->layer->get_type();
 
     switch(next_type)
     {
@@ -907,7 +849,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
                                                 PerceptronLayerBackPropagationLM* back_propagation) const
 {
     const PerceptronLayer* next_perceptron_layer
-        = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer);
+        = static_cast<PerceptronLayer*>(next_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
@@ -927,9 +869,9 @@ void PerceptronLayer::calculate_hidden_delta_lm(ProbabilisticLayerForwardPropaga
                                                 ProbabilisticLayerBackPropagationLM* next_back_propagation,
                                                 PerceptronLayerBackPropagationLM* back_propagation) const
 {
-    const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
+    const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer);
 
-    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer->get_synaptic_weights();
 
     // Next back propagation
 
@@ -1380,13 +1322,13 @@ string PerceptronLayer::write_activation_function_expression() const
 }
 
 
-void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_number, Layer *new_layer_pointer)
+void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_number, Layer *new_layer)
 {
-    layer_pointer = new_layer_pointer;
+    layer = new_layer;
     
     batch_samples_number = new_batch_samples_number;
     
-    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index neurons_number = layer->get_neurons_number();
     
     outputs.resize(batch_samples_number, neurons_number);
     
@@ -1398,7 +1340,7 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
 
 pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index neurons_number = layer->get_neurons_number();
     
     return pair<type *, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
 }
@@ -1412,10 +1354,10 @@ PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation()
 
 
 PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(const Index &new_batch_samples_number,
-                                                                     Layer *new_layer_pointer)
+                                                                     Layer *new_layer)
 : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer_pointer);
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -1442,10 +1384,10 @@ PerceptronLayerBackPropagation::PerceptronLayerBackPropagation()
 }
 
 
-PerceptronLayerBackPropagation::PerceptronLayerBackPropagation(const Index &new_batch_samples_number, Layer *new_layer_pointer)
+PerceptronLayerBackPropagation::PerceptronLayerBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer_pointer);
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -1457,21 +1399,21 @@ PerceptronLayerBackPropagation::~PerceptronLayerBackPropagation()
 
 std::pair<type *, dimensions> PerceptronLayerBackPropagation::get_deltas_pair() const
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index neurons_number = layer->get_neurons_number();
     
     return pair<type *, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
 }
 
 
 void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
-                                         Layer *new_layer_pointer)
+                                         Layer *new_layer)
 {
-    layer_pointer = new_layer_pointer;
+    layer = new_layer;
     
     batch_samples_number = new_batch_samples_number;
     
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index inputs_number = layer_pointer->get_inputs_number();
+    const Index neurons_number = layer->get_neurons_number();
+    const Index inputs_number = layer->get_inputs_number();
     
     deltas.resize(batch_samples_number, neurons_number);
     deltas.setZero();
@@ -1486,7 +1428,6 @@ void PerceptronLayerBackPropagation::set(const Index &new_batch_samples_number,
 
     synaptic_weights_derivatives.resize(inputs_number, neurons_number);
     synaptic_weights_derivatives.setZero();
-
 }
 
 
@@ -1514,10 +1455,10 @@ PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM()
 
 
 PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_samples_number,
-                                                                   Layer *new_layer_pointer)
+                                                                   Layer *new_layer)
     : LayerBackPropagationLM()
 {
-    set(new_batch_samples_number, new_layer_pointer);
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -1527,14 +1468,14 @@ PerceptronLayerBackPropagationLM::~PerceptronLayerBackPropagationLM()
 }
 
 
-void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number, Layer *new_layer_pointer)
+void PerceptronLayerBackPropagationLM::set(const Index &new_batch_samples_number, Layer *new_layer)
 {
-    layer_pointer = new_layer_pointer;
+    layer = new_layer;
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index parameters_number = layer_pointer->get_parameters_number();
+    const Index neurons_number = layer->get_neurons_number();
+    const Index parameters_number = layer->get_parameters_number();
 
     deltas.resize(batch_samples_number, neurons_number);
 

@@ -88,9 +88,9 @@ public:
 
 private:
 
-    NeuralNetwork* neural_network_pointer = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
-    DataSet* data_set_pointer = nullptr;
+    DataSet* data_set = nullptr;
 
     Tensor<Condition, 1> inputs_conditions;
     Tensor<Condition, 1> outputs_conditions;
@@ -114,26 +114,26 @@ struct ResponseOptimizationResults
 {
     /// Default constructor.
 
-    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network_pointer)
+    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network)
     {
-        neural_network_pointer = new_neural_network_pointer;
+        neural_network = new_neural_network;
     }
 
     virtual ~ResponseOptimizationResults(){}
 
     DataSet* data_set = nullptr;
 
-    NeuralNetwork* neural_network_pointer = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
     Tensor<type, 1> optimal_variables;
 
     void print() const
     {
-        const Index inputs_number = neural_network_pointer->get_inputs_number();
-        const Index outputs_number = neural_network_pointer->get_outputs_number();
+        const Index inputs_number = neural_network->get_inputs_number();
+        const Index outputs_number = neural_network->get_outputs_number();
 
-        const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
-        const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
+        const Tensor<string, 1> inputs_names = neural_network->get_inputs_names();
+        const Tensor<string, 1> outputs_names = neural_network->get_outputs_names();
 
         cout << "\nResponse optimization results: " << endl;
         if(optimal_variables.size() == 0)

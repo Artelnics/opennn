@@ -42,9 +42,9 @@ void InputsSelectionTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingInputs* growing_inputs_pointer = new GrowingInputs;
+    GrowingInputs* growing_inputs = new GrowingInputs;
 
-    delete growing_inputs_pointer;
+    delete growing_inputs;
 }
 
 

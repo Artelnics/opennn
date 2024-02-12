@@ -13,7 +13,7 @@ LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    levenberg_marquardt_algorithm.set_loss_index_pointer(&sum_squared_error);
+    levenberg_marquardt_algorithm.set_loss_index(&sum_squared_error);
 
     levenberg_marquardt_algorithm.set_display(false);
 }

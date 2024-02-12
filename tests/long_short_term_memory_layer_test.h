@@ -41,6 +41,14 @@ private:
     LongShortTermMemoryLayer long_short_term_memory_layer;
 
     LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation;
+
+    Index inputs_number = 0;
+    Index neurons_number = 0;
+
+    Tensor<type, 2> synaptic_weights;
+    Tensor<type, 2> recurrent_initializer;
+    Tensor<type, 1> biases;
+
 };
 
 

@@ -41,9 +41,9 @@ void GeneticAlgorithmTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GeneticAlgorithm* genetic_algorithm_pointer = new GeneticAlgorithm;
+    GeneticAlgorithm* genetic_algorithm = new GeneticAlgorithm;
 
-    delete genetic_algorithm_pointer;
+    delete genetic_algorithm;
 }
 
 
@@ -98,7 +98,7 @@ void GeneticAlgorithmTest::test_initialize_population()
     input_variables_indices.setValues({0,1,2,3,4,5,6,7,8,9});
     target_variables_indices.setValues({10,11,12});
 
-    data_set.set_input_target_columns(input_variables_indices,target_variables_indices);
+    data_set.set_input_target_raw_variables(input_variables_indices,target_variables_indices);
 
     genetic_algorithm.set_individuals_number(individuals_number);
 
@@ -449,7 +449,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     }
 
     data_set.set(data);
-    data_set.set_default_columns_uses();
+    data_set.set_default_raw_variables_uses();
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(4);
@@ -476,7 +476,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     }
 
     data_set.set_data(data);
-    data_set.set_default_columns_uses();
+    data_set.set_default_raw_variables_uses();
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 

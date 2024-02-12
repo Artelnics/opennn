@@ -39,7 +39,7 @@ struct DataSetBatch
 
     Index batch_size = 0;
 
-    DataSet* data_set_pointer = nullptr;
+    DataSet* data_set = nullptr;
 
     dimensions inputs_dimensions;
 

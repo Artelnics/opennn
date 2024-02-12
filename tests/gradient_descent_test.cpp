@@ -13,7 +13,7 @@ GradientDescentTest::GradientDescentTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    gradient_descent.set_loss_index_pointer(&sum_squared_error);
+    gradient_descent.set_loss_index(&sum_squared_error);
 }
 
 

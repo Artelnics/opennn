@@ -26,11 +26,11 @@ CrossEntropyError3D::CrossEntropyError3D() : LossIndex()
 /// Neural network and data set constructor.
 /// It creates a cross-entropy error term object associated with a neural network and measured on a data set.
 /// It also initializes all the rest of the class members to their default values:
-/// @param new_neural_network_pointer: Pointer to a neural network object.
-/// @param new_data_set_pointer: Pointer to a data set object.
+/// @param new_neural_network: Pointer to a neural network object.
+/// @param new_data_set: Pointer to a data set object.
 
-CrossEntropyError3D::CrossEntropyError3D(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+CrossEntropyError3D::CrossEntropyError3D(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : LossIndex(new_neural_network, new_data_set)
 {
 }
 
@@ -46,7 +46,7 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
@@ -89,13 +89,13 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
 
     const pair<type*, dimensions> targets_pair = get_pair(targets);
     
-    ForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+    ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
     
     pair<type*, dimensions> outputs_pair;
 
-    const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Tensor<type, 1> parameters = neural_network->get_parameters();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const Index parameters_number = parameters.size();
 
@@ -115,7 +115,7 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
 
         parameters_forward(i) += h;
         
-        neural_network_pointer->forward_propagate(inputs_pair,
+        neural_network->forward_propagate(inputs_pair,
                                                   parameters_forward,
                                                   forward_propagation);
 
@@ -129,7 +129,7 @@ Tensor<type, 1> CrossEntropyError3D::calculate_numerical_gradient(const Tensor<t
         
         parameters_backward(i) -= h;
         
-        neural_network_pointer->forward_propagate(inputs_pair,
+        neural_network->forward_propagate(inputs_pair,
                                                   parameters_backward,
                                                   forward_propagation);
 
@@ -152,8 +152,8 @@ void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
@@ -184,8 +184,8 @@ void CrossEntropyError3D::calculate_output_delta(const pair<type*, dimensions>& 
                                                  ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_back_propagation
         = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number - 1));

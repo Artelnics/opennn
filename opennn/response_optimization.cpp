@@ -18,18 +18,18 @@ ResponseOptimization::ResponseOptimization()
 {
 }
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : data_set_pointer(new_data_set_pointer)
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : data_set(new_data_set)
 {
-    set(new_neural_network_pointer);
+    set(new_neural_network);
 }
 
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer)
-    : neural_network_pointer(new_neural_network_pointer)
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
+    : neural_network(new_neural_network)
 {
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     inputs_conditions.resize(inputs_number);
     inputs_conditions.setConstant(Condition::None);
@@ -37,10 +37,10 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     outputs_conditions.resize(outputs_number);
     outputs_conditions.setConstant(Condition::None);
 
-    inputs_minimums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_minimums();
-    inputs_maximums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_maximums();
+    inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
+    inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
 
-    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
+    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification case
     {
 
         outputs_minimums.resize(outputs_number);
@@ -51,18 +51,18 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     }
     else // Approximation and forecasting
     {
-        outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
-        outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+        outputs_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
+        outputs_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network_pointer)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
-    neural_network_pointer = new_neural_network_pointer;
+    neural_network = new_neural_network;
 
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     inputs_conditions.resize(inputs_number);
     inputs_conditions.setConstant(Condition::None);
@@ -70,10 +70,10 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network_pointer)
     outputs_conditions.resize(outputs_number);
     outputs_conditions.setConstant(Condition::None);
 
-    inputs_minimums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_minimums();
-    inputs_maximums = neural_network_pointer->get_scaling_layer_2d_pointer()->get_maximums();
+    inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
+    inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
 
-    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
+    if(neural_network->get_last_trainable_layer()->get_type() == Layer::Type::Probabilistic) // Classification case
     {
 
         outputs_minimums.resize(outputs_number);
@@ -84,8 +84,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network_pointer)
     }
     else // Approximation and forecasting
     {
-        outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
-        outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+        outputs_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
+        outputs_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
     }
 }
 
@@ -140,7 +140,7 @@ void ResponseOptimization::set_input_condition(const string& name,
                                                const ResponseOptimization::Condition& condition,
                                                const Tensor<type, 1>& values)
 {
-    const Index index = neural_network_pointer->get_input_index(name);
+    const Index index = neural_network->get_input_index(name);
 
     set_input_condition(index, condition, values);
 }
@@ -148,7 +148,7 @@ void ResponseOptimization::set_input_condition(const string& name,
 
 void ResponseOptimization::set_output_condition(const string& name, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
 {
-    const Index index = neural_network_pointer->get_output_index(name);
+    const Index index = neural_network->get_output_index(name);
 
     set_output_condition(index, condition, values);
 }
@@ -362,9 +362,9 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
 
-    const Tensor<string, 1> outputs_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> outputs_names = data_set->get_target_variables_names();
 
     Index index;
 
@@ -372,13 +372,13 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
     {
         if(contains(inputs_names,names[i]))
         {
-            index = neural_network_pointer->get_input_index(names[i]);
+            index = neural_network->get_input_index(names[i]);
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
         else if(contains(outputs_names,names[i]))
         {
-            index = neural_network_pointer->get_output_index(names[i]);
+            index = neural_network->get_output_index(names[i]);
 
             set_output_condition(index, conditions[i], values_conditions[i]);
         }
@@ -536,26 +536,26 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 {
 
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
+    const Index inputs_number = neural_network->get_inputs_number();
 
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const int input_columns_number = data_set_pointer->get_input_columns_number();
+    const int input_raw_variables_number = data_set->get_input_raw_variables_number();
 
-    Tensor<Index, 1> used_columns_indices = data_set_pointer->get_used_columns_indices();
+    Tensor<Index, 1> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
-        Index used_column_index = 0;
+        Index used_raw_variable_index = 0;
 
         Index index = 0;
 
-        for(Index j = 0; j < input_columns_number; j++)
+        for(Index j = 0; j < input_raw_variables_number; j++)
         {
-            used_column_index = used_columns_indices(j);
+            used_raw_variable_index = used_raw_variables_indices(j);
 
-            DataSet::RawVariableType column_type = data_set_pointer->get_column_type(used_column_index);
+            DataSet::RawVariableType column_type = data_set->get_raw_variable_type(used_raw_variable_index);
 
             if(column_type == DataSet::RawVariableType::Numeric || column_type == DataSet::RawVariableType::Constant)
             {
@@ -578,7 +578,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
             else if(column_type == DataSet::RawVariableType::Categorical)
             {
-                Index categories_number = data_set_pointer->get_columns()(used_column_index).get_categories_number();
+                Index categories_number = data_set->get_raw_variables()(used_raw_variable_index).get_categories_number();
                 Index equal_index = -1;
 
                 for(Index k = 0; k < categories_number; k++)
@@ -617,8 +617,8 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
 Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& inputs, const Tensor<type, 2>& outputs) const
 {
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 2> envelope = assemble_matrix_matrix(inputs,outputs);
 
@@ -626,7 +626,7 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     {
         if(envelope.size() != 0)
         {
-            envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
+            envelope = filter_raw_variable_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
         }
         else
         {
@@ -641,20 +641,20 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
 
 ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
-    ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network_pointer);
+    ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network);
 
     Tensor<type, 2> inputs = calculate_inputs();
 
     Tensor<type, 2> outputs;
 
-    outputs = neural_network_pointer->calculate_outputs(inputs);
+    outputs = neural_network->calculate_outputs(inputs);
 
     const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
 
     const Index samples_number = envelope.dimension(0);
 
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 1> objective(samples_number);
     objective.setZero();

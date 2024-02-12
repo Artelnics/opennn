@@ -750,34 +750,34 @@ Index maximum(const Tensor<Index, 1>& vector)
 }
 
 
-/// Returns the maximums values of given columns.
+/// Returns the maximums values of given raw_variables.
 /// The format is a vector of type values.
-/// The size of that vector is equal to the number of given columns.
+/// The size of that vector is equal to the number of given raw_variables.
 /// @param matrix Used matrix.
 /// @param rows_indices Indices of the rows for which the maximums are to be computed.
-/// @param columns_indices Indices of the columns for which the maximums are to be computed.
+/// @param columns_indices Indices of the raw_variables for which the maximums are to be computed.
 
 Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
                                  const Tensor<Index, 1>& rows_indices,
                                  const Tensor<Index, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_columns_indices;
+    Tensor<Index, 1> used_raw_variables_indices;
 
     if(columns_indices.dimension(0) == 0)
     {
-        used_columns_indices.resize(columns_number);
+        used_raw_variables_indices.resize(raw_variables_number);
 
-        for(Index i = 0; i < columns_number; i++)
+        for(Index i = 0; i < raw_variables_number; i++)
         {
-            used_columns_indices(i) = i;
+            used_raw_variables_indices(i) = i;
         }
     }
     else
     {
-        used_columns_indices = columns_indices;
+        used_raw_variables_indices = columns_indices;
     }
 
     Tensor<Index, 1> used_rows_indices;
@@ -797,24 +797,24 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
     }
 
     const Index rows_indices_size = used_rows_indices.size();
-    const Index columns_indices_size = used_columns_indices.size();
+    const Index columns_indices_size = used_raw_variables_indices.size();
 
     Tensor<type, 1> maximums(columns_indices_size);
 
     Index row_index;
-    Index column_index;
+    Index raw_variable_index;
 
     Tensor<type, 1> column(rows_indices_size);
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = used_columns_indices(j);
+        raw_variable_index = used_raw_variables_indices(j);
 
         for(Index i = 0; i < rows_indices_size; i++)
         {
             row_index = used_rows_indices(i);
 
-            column(i) = matrix(row_index,column_index);
+            column(i) = matrix(row_index,raw_variable_index);
         }
 
         maximums(j) = maximum(column);
@@ -1804,7 +1804,7 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 
 /// Calculates a histogram for each column, each having a given number of bins.
 /// It returns a vector of vectors.
-/// The size of the main vector is the number of columns.
+/// The size of the main vector is the number of raw_variables.
 /// Each subvector contains the frequencies and centers of that colums.
 /// @param matrix Data to calculate histograms
 /// @param bins_number Number of bins for each histogram.
@@ -1812,13 +1812,13 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    Tensor<Histogram, 1> histograms(columns_number);
+    Tensor<Histogram, 1> histograms(raw_variables_number);
 
     Tensor<type, 1> column(rows_number);
 
-    for(Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
         column = matrix.chip(i,1);
 
@@ -1829,15 +1829,15 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
 }
 
 
-/// Returns the basic descriptives of the columns.
+/// Returns the basic descriptives of the raw_variables.
 /// The format is a vector of descriptives structures.
-/// The size of that vector is equal to the number of columns in this matrix.
+/// The size of that vector is equal to the number of raw_variables in this matrix.
 /// @param matrix Used matrix.
 
 Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
 #ifdef OPENNN_DEBUG
 
@@ -1855,13 +1855,13 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 
 #endif
 
-    Tensor<Descriptives, 1> descriptives(columns_number);
+    Tensor<Descriptives, 1> descriptives(raw_variables_number);
 
     Tensor<type, 1> column(rows_number);
 
     //    #pragma omp parallel for private(column)
 
-    for(Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
         column = matrix.chip(i,1);
 
@@ -1872,11 +1872,11 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns the basic descriptives of given columns for given rows.
+/// Returns the basic descriptives of given raw_variables for given rows.
 /// The format is a vector of descriptives structures.
-/// The size of that vector is equal to the number of given columns.
+/// The size of that vector is equal to the number of given raw_variables.
 /// @param row_indices Indices of the rows for which the descriptives are to be computed.
-/// @param columns_indices Indices of the columns for which the descriptives are to be computed.
+/// @param columns_indices Indices of the raw_variables for which the descriptives are to be computed.
 
 Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
                                      const Tensor<Index, 1>& row_indices,
@@ -1888,7 +1888,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     Tensor<Descriptives, 1> descriptives(columns_indices_size);
 
     Index row_index;
-    Index column_index;
+    Index raw_variable_index;
 
     Tensor<type, 1> minimums(columns_indices_size);
     minimums.setConstant(numeric_limits<type>::max());
@@ -1908,13 +1908,13 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     {
         row_index = row_indices(i);
 
-        //        #pragma omp parallel for private(column_index)
+        //        #pragma omp parallel for private(raw_variable_index)
 
         for(Index j = 0; j < columns_indices_size; j++)
         {
-            column_index = columns_indices(j);
+            raw_variable_index = columns_indices(j);
 
-            const type value = matrix(row_index,column_index);
+            const type value = matrix(row_index,raw_variable_index);
 
             if(isnan(value)) continue;
 
@@ -1966,32 +1966,32 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 }
 
 
-/// Returns the minimums values of given columns.
+/// Returns the minimums values of given raw_variables.
 /// The format is a vector of type values.
-/// The size of that vector is equal to the number of given columns.
+/// The size of that vector is equal to the number of given raw_variables.
 /// @param matrix Used matrix.
 /// @param rows_indices Indices of the rows for which the minimums are to be computed.
-/// @param columns_indices Indices of the columns for which the minimums are to be computed.
+/// @param columns_indices Indices of the raw_variables for which the minimums are to be computed.
 
 Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_columns_indices;
+    Tensor<Index, 1> used_raw_variables_indices;
 
     if(columns_indices.dimension(0) == 0)
     {
-        used_columns_indices.resize(columns_number);
+        used_raw_variables_indices.resize(raw_variables_number);
 
-        for(Index i = 0; i < columns_number; i++)
+        for(Index i = 0; i < raw_variables_number; i++)
         {
-            used_columns_indices(i) = i;
+            used_raw_variables_indices(i) = i;
         }
     }
     else
     {
-        used_columns_indices = columns_indices;
+        used_raw_variables_indices = columns_indices;
     }
 
     Tensor<Index, 1> used_rows_indices;
@@ -2011,16 +2011,16 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     }
 
     const Index rows_indices_size = used_rows_indices.size();
-    const Index columns_indices_size = used_columns_indices.size();
+    const Index columns_indices_size = used_raw_variables_indices.size();
 
     Tensor<type, 1> minimums(columns_indices_size);
 
     Index row_index;
-    Index column_index;
+    Index raw_variable_index;
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = used_columns_indices(j);
+        raw_variable_index = used_raw_variables_indices(j);
 
         Tensor<type, 1> column(rows_indices_size);
 
@@ -2028,7 +2028,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
         {
             row_index = used_rows_indices(i);
 
-            column(i) = matrix(row_index,column_index);
+            column(i) = matrix(row_index,raw_variable_index);
         }
 
         minimums(j) = minimum(column);
@@ -2038,40 +2038,40 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
 }
 
 
-/// Returns the maximums values of given columns.
+/// Returns the maximums values of given raw_variables.
 /// The format is a vector of type values.
-/// The size of that vector is equal to the number of given columns.
+/// The size of that vector is equal to the number of given raw_variables.
 /// @param matrix Used matrix.
-/// @param columns_indices Indices of the columns for which the descriptives are to be computed.
+/// @param columns_indices Indices of the raw_variables for which the descriptives are to be computed.
 
 Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_columns_indices;
+    Tensor<Index, 1> used_raw_variables_indices;
 
     if(columns_indices.dimension(0) == 0 && columns_indices.dimension(1) == 0)
     {
-        used_columns_indices.resize(columns_number);
+        used_raw_variables_indices.resize(raw_variables_number);
     }
     else
     {
-        used_columns_indices = columns_indices;
+        used_raw_variables_indices = columns_indices;
     }
 
-    const Index columns_indices_size = used_columns_indices.size();
+    const Index columns_indices_size = used_raw_variables_indices.size();
 
     Tensor<type, 1> maximums(columns_indices_size);
 
-    Index column_index;
+    Index raw_variable_index;
     Tensor<type, 1> column(rows_number);
 
     for(Index i = 0; i < columns_indices_size; i++)
     {
-        column_index = used_columns_indices(i);
+        raw_variable_index = used_raw_variables_indices(i);
 
-        column = matrix.chip(column_index,1);
+        column = matrix.chip(raw_variable_index,1);
 
         maximums(i) = maximum(column);
     }
@@ -2189,14 +2189,14 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns a vector with the mean values of all the matrix columns.
-/// The size is equal to the number of columns in the matrix.
+/// Returns a vector with the mean values of all the matrix raw_variables.
+/// The size is equal to the number of raw_variables in the matrix.
 /// @param matrix Matrix used.
 
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
 #ifdef OPENNN_DEBUG
 
@@ -2215,10 +2215,10 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 
     // Mean
 
-    Tensor<type, 1> mean(columns_number);
+    Tensor<type, 1> mean(raw_variables_number);
     mean.setZero();
 
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < raw_variables_number; j++)
     {
         for(Index i = 0; i < rows_number; i++)
         {
@@ -2235,9 +2235,9 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns a vector with the mean values of given columns.
+/// Returns a vector with the mean values of given raw_variables.
 /// The size of the vector is equal to the size of the column indices vector.
-/// @param columns_indices Indices of columns.
+/// @param columns_indices Indices of raw_variables.
 
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
 {
@@ -2245,7 +2245,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 
     const Index columns_indices_size = columns_indices.size();
 
-    Index column_index;
+    Index raw_variable_index;
 
     // Mean
 
@@ -2254,11 +2254,11 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = columns_indices(j);
+        raw_variable_index = columns_indices(j);
 
         for(Index i = 0; i < rows_number; i++)
         {
-            mean(j) += matrix(i, column_index);
+            mean(j) += matrix(i, raw_variable_index);
         }
 
         mean(j) /= type(rows_number);
@@ -2268,11 +2268,11 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 }
 
 
-/// Returns a vector with the mean values of given columns for given rows.
+/// Returns a vector with the mean values of given raw_variables for given rows.
 /// The size of the vector is equal to the size of the column indices vector.
 /// @param matrix Matrix used.
 /// @param row_indices Indices of rows.
-/// @param columns_indices Indices of columns.
+/// @param columns_indices Indices of raw_variables.
 
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
@@ -2284,7 +2284,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 #ifdef OPENNN_DEBUG
 
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     // Rows check
 
@@ -2329,28 +2329,28 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 
     // Columns check
 
-    if(columns_indices_size > columns_number)
+    if(columns_indices_size > raw_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Statistics class.\n"
                << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
                   "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Column indices size must be equal or less than columns number.\n";
+               << "Column indices size must be equal or less than raw_variables number.\n";
 
         throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < columns_indices_size; i++)
     {
-        if(columns_indices(i) >= columns_number)
+        if(columns_indices(i) >= raw_variables_number)
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: Statistics class.\n"
                    << "Tensor<type, 1> mean(const Tensor<type, 2>& matrix, "
                       "const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-                   << "Column index " << i << " must be less than columns number.\n";
+                   << "Column index " << i << " must be less than raw_variables number.\n";
 
             throw runtime_error(buffer.str());
         }
@@ -2359,7 +2359,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 #endif
 
     Index row_index;
-    Index column_index;
+    Index raw_variable_index;
 
     Index count = 0;
 
@@ -2370,7 +2370,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = columns_indices(j);
+        raw_variable_index = columns_indices(j);
 
         count = 0;
 
@@ -2378,9 +2378,9 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
         {
             row_index = row_indices(i);
 
-            if(!isnan(matrix(row_index,column_index)))
+            if(!isnan(matrix(row_index,raw_variable_index)))
             {
-                mean(j) += matrix(row_index,column_index);
+                mean(j) += matrix(row_index,raw_variable_index);
                 count++;
             }
         }
@@ -2392,15 +2392,15 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 }
 
 
-/// Returns a vector with the mean values of all the matrix columns.
-/// The size is equal to the number of columns in the matrix.
+/// Returns a vector with the mean values of all the matrix raw_variables.
+/// The size is equal to the number of raw_variables in the matrix.
 
-type mean(const Tensor<type, 2>& matrix, const Index& column_index)
+type mean(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    if(rows_number == 0 && columns_number == 0) return type(NAN);
+    if(rows_number == 0 && raw_variables_number == 0) return type(NAN);
 
 #ifdef OPENNN_DEBUG
 
@@ -2415,20 +2415,20 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
         throw runtime_error(buffer.str());
     }
 
-    if(column_index >= columns_number)
+    if(raw_variable_index >= raw_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Statistics class.\n"
                << "type mean(const Tensor<type, 2>&, const Index&) const method.\n"
-               << "Index of column must be less than number of columns.\n";
+               << "Index of column must be less than number of raw_variables.\n";
 
         throw runtime_error(buffer.str());
     }
 
 #endif
 
-    if(rows_number == 0 && columns_number == 0) return type(NAN);
+    if(rows_number == 0 && raw_variables_number == 0) return type(NAN);
 
     // Mean
 
@@ -2438,9 +2438,9 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(!isnan(matrix(i,column_index)))
+        if(!isnan(matrix(i,raw_variable_index)))
         {
-            mean += matrix(i,column_index);
+            mean += matrix(i,raw_variable_index);
             count++;
         }
     }
@@ -2451,13 +2451,13 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 }
 
 
-/// Returns a vector with the median values of all the matrix columns.
-/// The size is equal to the number of columns in the matrix.
+/// Returns a vector with the median values of all the matrix raw_variables.
+/// The size is equal to the number of raw_variables in the matrix.
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
 #ifdef OPENNN_DEBUG
 
@@ -2476,9 +2476,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 
     // median
 
-    Tensor<type, 1> median(columns_number);
+    Tensor<type, 1> median(raw_variables_number);
 
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < raw_variables_number; j++)
     {
         Tensor<type, 1> sorted_column(matrix.chip(j,1));
 
@@ -2498,16 +2498,16 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns a vector with the median values of all the matrix columns.
-/// The size is equal to the number of columns in the matrix.
+/// Returns a vector with the median values of all the matrix raw_variables.
+/// The size is equal to the number of raw_variables in the matrix.
 
-type median(const Tensor<type, 2>& matrix, const Index& column_index)
+type median(const Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     const Index rows_number = matrix.dimension(0);
 
 #ifdef OPENNN_DEBUG
 
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     if(rows_number == 0)
     {
@@ -2520,13 +2520,13 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
         throw runtime_error(buffer.str());
     }
 
-    if(column_index >= columns_number)
+    if(raw_variable_index >= raw_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Matrix template.\n"
                << "type median(const Index&) const method.\n"
-               << "Index of column must be less than number of columns.\n";
+               << "Index of column must be less than number of raw_variables.\n";
 
         throw runtime_error(buffer.str());
     }
@@ -2539,7 +2539,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     Tensor<type, 1> sorted_column;
 
-    const Tensor<type, 1> column = matrix.chip(column_index,1);
+    const Tensor<type, 1> column = matrix.chip(raw_variable_index,1);
 
     for(Index i = 0; i < column.size(); i++)
     {
@@ -2564,9 +2564,9 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 }
 
 
-/// Returns a vector with the median values of given columns.
+/// Returns a vector with the median values of given raw_variables.
 /// The size of the vector is equal to the size of the column indices vector.
-/// @param columns_indices Indices of columns.
+/// @param columns_indices Indices of raw_variables.
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
 {
@@ -2574,7 +2574,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
     const Index columns_indices_size = columns_indices.size();
 
-    Index column_index;
+    Index raw_variable_index;
 
     // median
 
@@ -2582,11 +2582,11 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = columns_indices(j);
+        raw_variable_index = columns_indices(j);
 
         Tensor<type, 1> sorted_column(0);
 
-        Tensor<type, 1> column = matrix.chip(column_index, 1);
+        Tensor<type, 1> column = matrix.chip(raw_variable_index, 1);
 
         for(Index i = 0; i < column.size(); i++)
         {
@@ -2612,10 +2612,10 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 }
 
 
-/// Returns a vector with the median values of given columns for given rows.
+/// Returns a vector with the median values of given raw_variables for given rows.
 /// The size of the vector is equal to the size of the column indices vector.
 /// @param row_indices Indices of rows.
-/// @param columns_indices Indices of columns.
+/// @param columns_indices Indices of raw_variables.
 
 Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
 {
@@ -2626,7 +2626,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 #ifdef OPENNN_DEBUG
 
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     // Rows check
 
@@ -2668,26 +2668,26 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
     // Columns check
 
-    if(columns_indices_size > columns_number)
+    if(columns_indices_size > raw_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Matrix template.\n"
                << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Column indices size must be equal or less than columns number.\n";
+               << "Column indices size must be equal or less than raw_variables number.\n";
 
         throw runtime_error(buffer.str());
     }
 
     for(Index i = 0; i < columns_indices_size; i++)
     {
-        if(columns_indices(i) >= columns_number)
+        if(columns_indices(i) >= raw_variables_number)
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: Matrix template.\n"
                    << "Tensor<type, 1> median(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const method.\n"
-                   << "Column index " << i << " must be less than columns number.\n";
+                   << "Column index " << i << " must be less than raw_variables number.\n";
 
             throw runtime_error(buffer.str());
         }
@@ -2695,7 +2695,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
 #endif
 
-    Index column_index;
+    Index raw_variable_index;
 
     // median
 
@@ -2703,7 +2703,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
     for(Index j = 0; j < columns_indices_size; j++)
     {
-        column_index = columns_indices(j);
+        raw_variable_index = columns_indices(j);
 
         Tensor<type, 1> sorted_column;
 
@@ -2711,9 +2711,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
         {
             const Index row_index = row_indices(k);
 
-            if(!isnan(matrix(row_index, column_index)))
+            if(!isnan(matrix(row_index, raw_variable_index)))
             {                
-                push_back_type(sorted_column, matrix(row_index, column_index));
+                push_back_type(sorted_column, matrix(row_index, raw_variable_index));
             }
         }
 
@@ -3135,7 +3135,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     type minimum = matrix(0,0);
 
@@ -3144,7 +3144,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
             if(!isnan(matrix(i,j)) && matrix(i,j) < minimum)
             {
@@ -3164,7 +3164,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
 Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     type maximum = matrix(0,0);
 
@@ -3173,7 +3173,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
             if(!isnan(matrix(i,j)) && matrix(i,j) > maximum)
             {
@@ -3188,19 +3188,19 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-/// Returns a matrix in which each of the columns contain the maximal indices of each of the columns of the
+/// Returns a matrix in which each of the raw_variables contain the maximal indices of each of the raw_variables of the
 /// original matrix.
 
-Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>& matrix, const Index& maximum_number)
+Tensor<Index, 2> maximal_raw_variables_indices(const Tensor<type, 2>& matrix, const Index& maximum_number)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    Tensor<Index, 2> maximal_columns_indices(maximum_number, columns_number);
+    Tensor<Index, 2> maximal_raw_variables_indices(maximum_number, raw_variables_number);
 
     Tensor<type, 1> columns_minimums = opennn::columns_minimums(matrix);
 
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < raw_variables_number; j++)
     {
         Tensor<type, 1> column = matrix.chip(j,1);
 
@@ -3219,11 +3219,11 @@ Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>& matrix, const In
             }
 
             column(maximal_index) = columns_minimums(j)-type(1);
-            maximal_columns_indices(i,j) = maximal_index;
+            maximal_raw_variables_indices(i,j) = maximal_index;
         }
     }
 
-    return maximal_columns_indices;
+    return maximal_raw_variables_indices;
 }
 
 

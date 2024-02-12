@@ -26,11 +26,11 @@ MinkowskiError::MinkowskiError() : LossIndex()
 /// Neural network and data set constructor.
 /// It creates a Minkowski error term object associated with a neural network and measured on a data set.
 /// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-/// @param new_data_set_pointer Pointer to a data set object.
+/// @param new_neural_network Pointer to a neural network object.
+/// @param new_data_set Pointer to a data set object.
 
-MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : LossIndex(new_neural_network, new_data_set)
 {
     set_default();
 }

@@ -30,7 +30,7 @@ struct LayerForwardPropagation
 
     Index batch_samples_number = type(0);
 
-    Layer* layer_pointer = nullptr;
+    Layer* layer = nullptr;
 
     type* outputs_data = nullptr;
     

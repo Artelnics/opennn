@@ -131,8 +131,6 @@ public:
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 2>&,
-                               const Tensor<type, 1>&,
-                               const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
    void calculate_activations(const Tensor<type, 2>&,
@@ -140,13 +138,12 @@ public:
 
    void calculate_activations_derivatives(const Tensor<type, 2>&,
                                           Tensor<type, 2>&,
+                                          Tensor<type, 2>&) const;
+
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
                                           Tensor<type, 3>&) const;
 
-   void logistic_derivatives(const Tensor<type, 2>&,
-                            Tensor<type, 2>&,
-                            Tensor<type, 3>&) const;
-
-   void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
    // Outputs
 
@@ -154,15 +151,16 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(const pair<type*, dimensions>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*) final;
-
    // Gradient methods
+
+   void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
+                                                 const Tensor<type, 2>&,
+                                                 Tensor<type, 2>&) const;
 
    void calculate_error_combinations_derivatives(const Tensor<type, 2>&,
                                                  const Tensor<type, 3>&,
                                                  Tensor<type, 2>&) const;
+
 
    void calculate_error_gradient(const pair<type*, dimensions>&,
                                  LayerForwardPropagation*,
@@ -188,7 +186,6 @@ public:
    string write_logistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
    string write_combinations(const Tensor<string, 1>&) const;
@@ -241,13 +238,13 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
     pair<type *, dimensions> get_outputs_pair() const final;
 
-    void set(const Index &new_batch_samples_number,
-             Layer *new_layer_pointer) final;
+    void set(const Index&, Layer*) final;
 
     void print() const;
 
     Tensor<type, 2> outputs;
-    Tensor<type, 3> activations_derivatives;
+    Tensor<type, 2> activations_derivatives_2d;
+    Tensor<type, 3> activations_derivatives_3d;
 };
 
 
@@ -285,10 +282,10 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     }
 
 
-    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerBackPropagationLM()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
@@ -298,14 +295,14 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
+        const Index neurons_number = layer->get_neurons_number();
+        const Index parameters_number = layer->get_parameters_number();
 
         deltas.resize(batch_samples_number, neurons_number);
         deltas_row.resize(neurons_number);

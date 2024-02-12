@@ -203,38 +203,38 @@ protected:
         }
 
 
-        explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerForwardPropagation()
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            set(new_batch_samples_number, new_layer);
         }
         
         
         pair<type*, dimensions> get_outputs_pair() const final
         {
-            MultiheadAttentionLayer* multihead_attention_layer_pointer = static_cast<MultiheadAttentionLayer*>(layer_pointer);
+            MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
 
-            const Index input_size = multihead_attention_layer_pointer->get_input_size();
+            const Index input_size = multihead_attention_layer->get_input_size();
 
-            const Index depth = multihead_attention_layer_pointer->get_depth();
+            const Index depth = multihead_attention_layer->get_depth();
 
             return pair<type*, dimensions>(outputs_data, {{batch_samples_number, input_size, depth}});
         }
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            MultiheadAttentionLayer* layer_pointer = static_cast<MultiheadAttentionLayer*>(new_layer_pointer);
+            MultiheadAttentionLayer* layer = static_cast<MultiheadAttentionLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index input_size = layer_pointer->get_input_size();
+            const Index input_size = layer->get_input_size();
 
-            const Index context_size = layer_pointer->get_context_size();
+            const Index context_size = layer->get_context_size();
 
-            const Index depth = layer_pointer->get_depth();
+            const Index depth = layer->get_depth();
 
-            const Index heads_number = layer_pointer->get_heads_number();
+            const Index heads_number = layer->get_heads_number();
 
             // Outputs
 
@@ -289,10 +289,10 @@ protected:
         }
 
 
-        explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
             : LayerBackPropagation()
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            set(new_batch_samples_number, new_layer);
         }
 
 
@@ -301,15 +301,15 @@ protected:
         }
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
 /*
-            layer_pointer = new_layer_pointer;
+            layer = new_layer;
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index neurons_number = layer_pointer->get_neurons_number();
-            const Index inputs_number = layer_pointer->get_inputs_number();
+            const Index neurons_number = layer->get_neurons_number();
+            const Index inputs_number = layer->get_inputs_number();
 
             deltas_dimensions.resize(2);
             deltas_dimensions.setValues({batch_samples_number, neurons_number});

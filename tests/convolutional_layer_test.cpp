@@ -172,7 +172,7 @@ void ConvolutionalLayerTest::test_constructor()
 
     assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
                 convolutional_layer.get_inputs_rows_number() == 23 &&
-                convolutional_layer.get_inputs_columns_number() == 64, LOG);
+                convolutional_layer.get_inputs_raw_variables_number() == 64, LOG);
 }
 
 
@@ -810,19 +810,19 @@ void ConvolutionalLayerTest::test_forward_propagation()
 
     const Index inputs_channels_number = 3;
     const Index inputs_rows_number = 5;
-    const Index inputs_columns_number = 4;
+    const Index inputs_raw_variables_number = 4;
 
     const Index kernels_number = 2;
     const Index kernels_channels_number = inputs_channels_number;
     const Index kernels_rows_number = 3;
-    const Index kernels_columns_number = 3;
+    const Index kernels_raw_variables_number = 3;
 
     const Index targets_number = 1;
 
     DataSet data_set(batch_samples_number,
                      inputs_channels_number,
                      inputs_rows_number,
-                     inputs_columns_number,
+                     inputs_raw_variables_number,
                      targets_number);
 
     data_set.set_data_constant(type(1));
@@ -830,13 +830,13 @@ void ConvolutionalLayerTest::test_forward_propagation()
     Tensor<Index, 1> input_variables_dimensions(3);
     input_variables_dimensions.setValues({inputs_channels_number,
                                           inputs_rows_number,
-                                          inputs_columns_number});
+                                          inputs_raw_variables_number});
 
     Tensor<Index, 1> kernels_dimensions(4);
     kernels_dimensions.setValues({kernels_number,
                                   kernels_channels_number,
                                   kernels_rows_number,
-                                  kernels_columns_number});
+                                  kernels_raw_variables_number});
 
     NeuralNetwork neural_network;
 
@@ -862,8 +862,8 @@ void ConvolutionalLayerTest::test_forward_propagation()
     DataSetBatch batch(batch_samples_number, &data_set);
 
     const Tensor<Index, 1>& samples(batch_samples_number);
-    const Tensor<Index, 1>& inputs = data_set.get_input_columns_indices();
-    const Tensor<Index, 1>& targets = data_set.get_target_columns_indices();
+    const Tensor<Index, 1>& inputs = data_set.get_input_raw_variables_indices();
+    const Tensor<Index, 1>& targets = data_set.get_target_raw_variables_indices();
 
     batch.fill(samples, inputs, targets);
 
@@ -941,14 +941,14 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
     const Index images_number = 2;
     const Index kernels_number = 2;
     const Index output_rows_number = 4;
-    const Index output_columns_number = 4;
+    const Index output_raw_variables_number = 4;
 
 
     // Next layer's values
 
     const Index neurons_perceptron = 3;
 
-    PerceptronLayer perceptronlayer(kernels_number*output_rows_number*output_columns_number,
+    PerceptronLayer perceptronlayer(kernels_number*output_rows_number*output_raw_variables_number,
                                     neurons_perceptron, PerceptronLayer::ActivationFunction::Linear);
 
     convolutional_layer.set(Tensor<type, 4>(5,5,3,1), Tensor<type, 4>(2, 2, 3, kernels_number), Tensor<type, 1>());
@@ -959,12 +959,12 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
     // initialize
 
-    Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_columns_number,
+    Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_raw_variables_number,
                                                 neurons_perceptron);
 
-    for(int i = 0; i<kernels_number * output_rows_number * output_columns_number*neurons_perceptron; i++)
+    for(int i = 0; i<kernels_number * output_rows_number * output_raw_variables_number*neurons_perceptron; i++)
     {
-        Index neuron_value = i / (kernels_number * output_rows_number * output_columns_number);
+        Index neuron_value = i / (kernels_number * output_rows_number * output_raw_variables_number);
 
         *(synaptic_weights_perceptron.data() + i) = 1.0 * neuron_value;
     }

@@ -26,11 +26,11 @@ CrossEntropyError::CrossEntropyError() : LossIndex()
 /// Neural network and data set constructor.
 /// It creates a cross-entropy error term object associated with a neural network and measured on a data set.
 /// It also initializes all the rest of the class members to their default values:
-/// @param new_neural_network_pointer: Pointer to a neural network object.
-/// @param new_data_set_pointer: Pointer to a data set object.
+/// @param new_neural_network: Pointer to a neural network object.
+/// @param new_data_set: Pointer to a data set object.
 
-CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : LossIndex(new_neural_network, new_data_set)
 {
 }
 
@@ -44,7 +44,7 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
                      const ForwardPropagation& forward_propagation,
                      BackPropagation& back_propagation) const
 {      
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     if(outputs_number == 1)
     {
@@ -134,7 +134,7 @@ void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
-     const Index outputs_number = neural_network_pointer->get_outputs_number();
+     const Index outputs_number = neural_network->get_outputs_number();
 
      if(outputs_number == 1)
      {
@@ -151,8 +151,8 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
                                                       ForwardPropagation& forward_propagation,
                                                       BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(last_trainable_layer_index));
@@ -179,8 +179,8 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));

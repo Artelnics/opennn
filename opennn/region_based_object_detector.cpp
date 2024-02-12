@@ -19,11 +19,11 @@ RegionBasedObjectDetector::RegionBasedObjectDetector()
 
 
 /// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-RegionBasedObjectDetector::RegionBasedObjectDetector(NeuralNetwork* new_neural_network_pointer)
+RegionBasedObjectDetector::RegionBasedObjectDetector(NeuralNetwork* new_neural_network)
 {
-    neural_network_pointer = new_neural_network_pointer;
+    neural_network = new_neural_network;
 }
 
 
@@ -124,7 +124,7 @@ Tensor<Index, 2> RegionBasedObjectDetector::calculate_region_outputs(const Tenso
 //    for(Index i = 0; i < regions_number; i++)
 //    {
 //        Tensor<type, 2> inputs;
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
+//        Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 //    }
 
     return region_outputs;

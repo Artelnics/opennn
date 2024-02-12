@@ -50,7 +50,7 @@ void FlattenLayer::set_name(const string& new_layer_name)
 
 
 /// @todo
-/// Returns a vector containing the number of channels, rows and columns of the result of applying the layer's kernels to an image.
+/// Returns a vector containing the number of channels, rows and raw_variables of the result of applying the layer's kernels to an image.
 
 Index FlattenLayer::get_outputs_number() const
 {
@@ -80,7 +80,7 @@ Index FlattenLayer::get_inputs_rows_number() const
 }
 
 
-Index FlattenLayer::get_inputs_columns_number() const
+Index FlattenLayer::get_inputs_raw_variables_number() const
 {
     return inputs_dimensions(1);
 }
@@ -153,7 +153,7 @@ void FlattenLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_
     FlattenLayerBackPropagation* flatten_layer_back_propagation =
             static_cast<FlattenLayerBackPropagation*>(this_back_propagation);
 
-    Layer::Type next_type = next_back_propagation->layer_pointer->get_type();
+    Layer::Type next_type = next_back_propagation->layer->get_type();
 
     switch(next_type)
     {
@@ -197,7 +197,7 @@ void FlattenLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* nex
                                           FlattenLayerBackPropagation* flatten_layer_back_propagation) const
 {
     const PerceptronLayer* next_perceptron_layer
-        = static_cast<PerceptronLayer*>(next_perceptron_layer_back_propagation->layer_pointer);
+        = static_cast<PerceptronLayer*>(next_perceptron_layer_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
@@ -214,7 +214,7 @@ void FlattenLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation* 
                                           FlattenLayerBackPropagation* flatten_layer_back_propagation) const
 {
     const ProbabilisticLayer* next_probabilistic_layer
-        = static_cast<ProbabilisticLayer*>(next_probabilistic_layer_back_propagation->layer_pointer);
+        = static_cast<ProbabilisticLayer*>(next_probabilistic_layer_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
 
@@ -246,7 +246,7 @@ void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("InputWidth");
     buffer.str("");
-    buffer << get_inputs_columns_number();
+    buffer << get_inputs_raw_variables_number();
 
     file_stream.PushText(buffer.str().c_str());
     file_stream.CloseElement();

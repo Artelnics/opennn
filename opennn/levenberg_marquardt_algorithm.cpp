@@ -26,10 +26,10 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
 /// Loss index constructor.
 /// It creates a Levenberg-Marquardt optimization algorithm object associated associated with a given loss index object.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to an external loss index object.
+/// @param new_loss_index Pointer to an external loss index object.
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
+    : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
 }
@@ -318,7 +318,7 @@ void LevenbergMarquardtAlgorithm::check() const
 {
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class.\n"
                << "void check() const method.\n"
@@ -327,9 +327,9 @@ void LevenbergMarquardtAlgorithm::check() const
         throw runtime_error(buffer.str());
     }
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    if(!data_set_pointer)
+    if(!data_set)
     {
         buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
                << "void check() const method.\n"
@@ -338,9 +338,9 @@ void LevenbergMarquardtAlgorithm::check() const
         throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(!neural_network_pointer)
+    if(!neural_network)
     {
         buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
                << "void check() const method.\n"
@@ -356,15 +356,15 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
-    if(loss_index_pointer->get_error_type() == "MINKOWSKI_ERROR")
+    if(loss_index->get_error_type() == "MINKOWSKI_ERROR")
     {
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     }
-    else if(loss_index_pointer->get_error_type() == "CROSS_ENTROPY_ERROR")
+    else if(loss_index->get_error_type() == "CROSS_ENTROPY_ERROR")
     {
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     }
-    else if(loss_index_pointer->get_error_type() == "WEIGHTED_SQUARED_ERROR")
+    else if(loss_index->get_error_type() == "WEIGHTED_SQUARED_ERROR")
     {
         throw runtime_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
     }
@@ -387,71 +387,71 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Data set
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    DataSet* data_set = loss_index->get_data_set();
 
-    const bool has_selection = data_set_pointer->has_selection();
+    const bool has_selection = data_set->has_selection();
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_training_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network_pointer->set_inputs_names(inputs_names);
-    neural_network_pointer->set_outputs_names(targets_names);
+    neural_network->set_inputs_names(inputs_names);
+    neural_network->set_outputs_names(targets_names);
 
-    if(neural_network_pointer->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        input_variables_descriptives = data_set_pointer->scale_input_variables();
+        input_variables_descriptives = data_set->scale_input_variables();
 
-        ScalingLayer2D* scaling_layer_2d_pointer = neural_network_pointer->get_scaling_layer_2d_pointer();
-        scaling_layer_2d_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
     }
 
-    if(neural_network_pointer->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
-        target_variables_descriptives = data_set_pointer->scale_target_variables();
+        target_variables_descriptives = data_set->scale_target_variables();
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
-    ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     // Loss index
 
-    loss_index_pointer->set_normalization_coefficient();
+    loss_index->set_normalization_coefficient();
 
     type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
     Index selection_failures = 0;
 
-    BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
-    BackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
+    BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index);
+    BackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index);
 
     // Training strategy stuff
 
@@ -475,13 +475,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural network
         
-        neural_network_pointer->forward_propagate(training_batch.get_inputs_pair(),
+        neural_network->forward_propagate(training_batch.get_inputs_pair(),
                                                   training_forward_propagation,
                                                   is_training);
 
         // Loss index
 
-        loss_index_pointer->back_propagate_lm(training_batch,
+        loss_index->back_propagate_lm(training_batch,
                                               training_forward_propagation,
                                               training_back_propagation_lm);
 
@@ -489,19 +489,19 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(has_selection)
         {           
-            neural_network_pointer->forward_propagate(selection_batch.get_inputs_pair(),
+            neural_network->forward_propagate(selection_batch.get_inputs_pair(),
                                                       selection_forward_propagation,
                                                       is_training);
 
-            loss_index_pointer->calculate_errors_lm(selection_batch,
+            loss_index->calculate_errors_lm(selection_batch,
                                                     selection_forward_propagation,
                                                     selection_back_propagation_lm);
 
-            loss_index_pointer->calculate_squared_errors_lm(selection_batch,
+            loss_index->calculate_squared_errors_lm(selection_batch,
                                                             selection_forward_propagation,
                                                             selection_back_propagation_lm);
 
-            loss_index_pointer->calculate_error_lm(selection_batch,
+            loss_index->calculate_error_lm(selection_batch,
                                                    selection_forward_propagation,
                                                    selection_back_propagation_lm);
 
@@ -590,7 +590,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             break;
         }
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
 
         update_parameters(training_batch,
                           training_forward_propagation,
@@ -598,11 +598,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           optimization_data);
     }
 
-    if(neural_network_pointer->has_scaling_layer())
-        data_set_pointer->unscale_input_variables(input_variables_descriptives);
+    if(neural_network->has_scaling_layer())
+        data_set->unscale_input_variables(input_variables_descriptives);
 
-    if(neural_network_pointer->has_unscaling_layer())
-        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has_unscaling_layer())
+        data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -625,9 +625,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
 
-    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+    const type regularization_weight = loss_index->get_regularization_weight();
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;
 
@@ -649,21 +649,21 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
-        neural_network_pointer->forward_propagate(inputs_pair,
+        neural_network->forward_propagate(inputs_pair,
                                                   potential_parameters,
                                                   forward_propagation);
 
-        loss_index_pointer->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss_index->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-        loss_index_pointer->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss_index->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-        loss_index_pointer->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        loss_index->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
         type new_loss;
 
         try
         {
-            new_loss = back_propagation_lm.error + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
+            new_loss = back_propagation_lm.error + regularization_weight*loss_index->calculate_regularization(potential_parameters);
 
         }catch(exception)
         {
@@ -718,7 +718,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     // Set parameters
 
-    neural_network_pointer->set_parameters(back_propagation_lm.parameters);
+    neural_network->set_parameters(back_propagation_lm.parameters);
 }
 
 

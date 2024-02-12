@@ -20,10 +20,10 @@ NeuronsSelection::NeuronsSelection()
 
 
 /// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy_pointer)
-    : training_strategy_pointer(new_training_strategy_pointer)
+NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
+    : training_strategy(new_training_strategy)
 {
     set_default();
 }
@@ -31,16 +31,16 @@ NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy_point
 
 /// Returns a pointer to the training strategy object.
 
-TrainingStrategy* NeuronsSelection::get_training_strategy_pointer() const
+TrainingStrategy* NeuronsSelection::get_training_strategy() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "DataSet* get_training_strategy_pointer() const method.\n"
+               << "DataSet* get_training_strategy() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -48,7 +48,7 @@ TrainingStrategy* NeuronsSelection::get_training_strategy_pointer() const
 
 #endif
 
-    return training_strategy_pointer;
+    return training_strategy;
 }
 
 
@@ -56,7 +56,7 @@ TrainingStrategy* NeuronsSelection::get_training_strategy_pointer() const
 
 bool NeuronsSelection::has_training_strategy() const
 {
-    if(training_strategy_pointer != nullptr)
+    if(training_strategy != nullptr)
     {
         return true;
     }
@@ -125,11 +125,11 @@ const type& NeuronsSelection::get_maximum_time() const
 
 
 /// Sets a new training strategy pointer.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-void NeuronsSelection::set_training_strategy_pointer(TrainingStrategy* new_training_strategy_pointer)
+void NeuronsSelection::set_training_strategy(TrainingStrategy* new_training_strategy)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    training_strategy = new_training_strategy;
 }
 
 
@@ -140,16 +140,16 @@ void NeuronsSelection::set_default()
     Index inputs_number;
     Index outputs_number;
 
-    if(training_strategy_pointer == nullptr
-            || !training_strategy_pointer->has_neural_network())
+    if(training_strategy == nullptr
+            || !training_strategy->has_neural_network())
     {
         inputs_number = 0;
         outputs_number = 0;
     }
     else
     {
-        inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        outputs_number = training_strategy_pointer->get_neural_network_pointer()->get_outputs_number();
+        inputs_number = training_strategy->get_neural_network()->get_inputs_number();
+        outputs_number = training_strategy->get_neural_network()->get_outputs_number();
     }
     // MEMBERS
 
@@ -379,7 +379,7 @@ void NeuronsSelection::check() const
 
     ostringstream buffer;
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
@@ -390,9 +390,9 @@ void NeuronsSelection::check() const
 
     // Loss index
 
-    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index = training_strategy->get_loss_index();
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
@@ -403,9 +403,9 @@ void NeuronsSelection::check() const
 
     // Neural network
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(!neural_network_pointer)
+    if(!neural_network)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
@@ -414,7 +414,7 @@ void NeuronsSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    if(neural_network_pointer->is_empty())
+    if(neural_network->is_empty())
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
@@ -423,7 +423,7 @@ void NeuronsSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    if(neural_network_pointer->get_layers_number() == 1)
+    if(neural_network->get_layers_number() == 1)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
@@ -434,9 +434,9 @@ void NeuronsSelection::check() const
 
     // Data set
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    if(!data_set_pointer)
+    if(!data_set)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
                << "void check() const method.\n"
@@ -445,7 +445,7 @@ void NeuronsSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
     if(selection_samples_number == 0)
     {

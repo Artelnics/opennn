@@ -27,10 +27,10 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation()
 /// Loss index constructor.
 /// It creates an adaptive moment estimation optimization algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
+    : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
 }
@@ -165,11 +165,11 @@ void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
 
 /// Sets a pointer to a loss index object to be associated with the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void AdaptiveMomentEstimation::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 }
 
 
@@ -243,32 +243,32 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Data set
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    DataSet* data_set = loss_index->get_data_set();
 
-    const bool has_selection = data_set_pointer->has_selection();
+    const bool has_selection = data_set->has_selection();
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_numeric_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
 
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();    
+    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();    
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();    
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();    
 
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_training_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
     training_samples_number < batch_samples_number
             ? training_batch_samples_number = training_samples_number
@@ -278,8 +278,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    DataSetBatch training_batch(training_batch_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_batch_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_batch_samples_number, data_set);
+    DataSetBatch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -289,37 +289,37 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network_pointer->set_inputs_names(inputs_names);
-    neural_network_pointer->set_outputs_names(targets_names);
+    neural_network->set_inputs_names(inputs_names);
+    neural_network->set_outputs_names(targets_names);
 
-    if(neural_network_pointer->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        ScalingLayer2D* scaling_layer_2d_pointer = neural_network_pointer->get_scaling_layer_2d_pointer();
-        scaling_layer_2d_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
     }
 
-    if(neural_network_pointer->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
-        target_variables_descriptives = data_set_pointer->scale_target_variables();
+        target_variables_descriptives = data_set->scale_target_variables();
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
 
-    ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network_pointer);
+    ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
     pair<type*, dimensions> inputs_pair;
 
     // Loss index
 
-    loss_index_pointer->set_normalization_coefficient();
+    loss_index->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_batch_samples_number, loss_index_pointer);
-    BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
+    BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
 
 //    type training_loss = type(0);
     type training_error = type(0);
@@ -343,8 +343,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     bool shuffle = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer()
-    || neural_network_pointer->has_recurrent_layer())
+    if(neural_network->has_long_short_term_memory_layer()
+    || neural_network->has_recurrent_layer())
         shuffle = false;
 
     // Main loop
@@ -353,7 +353,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set_pointer->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -375,13 +375,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             
             inputs_pair = training_batch.get_inputs_pair();
 
-            neural_network_pointer->forward_propagate(inputs_pair,
+            neural_network->forward_propagate(inputs_pair,
                                                       training_forward_propagation,
                                                       is_training);
 
             // Loss index
 
-            loss_index_pointer->back_propagate(training_batch,
+            loss_index->back_propagate(training_batch,
                                                training_forward_propagation,
                                                training_back_propagation);
 
@@ -401,7 +401,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
+            selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
 
             selection_error = type(0);
 
@@ -417,13 +417,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 inputs_pair = training_batch.get_inputs_pair();
 
-                neural_network_pointer->forward_propagate(inputs_pair,
+                neural_network->forward_propagate(inputs_pair,
                                                           selection_forward_propagation,
                                                           is_training);
 
                 // Loss
 
-                loss_index_pointer->calculate_error(selection_batch,
+                loss_index->calculate_error(selection_batch,
                                                     selection_forward_propagation,
                                                     selection_back_propagation);
 
@@ -507,13 +507,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             break;
         }
 
-        if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    data_set_pointer->unscale_input_variables(input_variables_descriptives);
+    data_set->unscale_input_variables(input_variables_descriptives);
 
-    if(neural_network_pointer->has_unscaling_layer())
-        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has_unscaling_layer())
+        data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -633,7 +633,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     // Update parameters
 
-    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(parameters);
+    back_propagation.loss_index->get_neural_network()->set_parameters(parameters);
 }
 
 
@@ -840,26 +840,26 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
 /// Adaptive Moment Estimation constructor.
 /// It creates an adaptive moment estimation data object associated with an adaptive moment estimation algorithm.
-/// @param new_adaptive_moment_estimation_pointer Pointer to a adaptive moment estimation object.
+/// @param new_adaptive_moment_estimation Pointer to a adaptive moment estimation object.
 
-AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
+AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
-    set(new_adaptive_moment_estimation_pointer);
+    set(new_adaptive_moment_estimation);
 }
 
 
 /// Sets a new adaptive moment estimation pointer.
-/// @param new_adaptive_moment_estimation_pointer New adaptive moment estimation pointer.
+/// @param new_adaptive_moment_estimation New adaptive moment estimation pointer.
 
-void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
+void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
-    adaptive_moment_estimation_pointer = new_adaptive_moment_estimation_pointer;
+    adaptive_moment_estimation = new_adaptive_moment_estimation;
 
-    LossIndex* loss_index_pointer = new_adaptive_moment_estimation_pointer->get_loss_index_pointer();
+    LossIndex* loss_index = new_adaptive_moment_estimation->get_loss_index();
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     gradient_exponential_decay.resize(parameters_number);
     gradient_exponential_decay.setZero();

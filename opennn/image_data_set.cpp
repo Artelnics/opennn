@@ -132,21 +132,21 @@ void ImageDataSet::set(const Index& new_images_number,
 
     data.resize(new_images_number, new_variables_number);
 
-    columns.resize(new_variables_number);
+    raw_variables.resize(new_variables_number);
 
     for(Index i = 0; i < new_variables_number; i++)
     {
         if(i < new_inputs_number)
         {
-            columns(i).name = "column_" + to_string(i+1);
-            columns(i).column_use = VariableUse::Input;
-            columns(i).type = RawVariableType::Numeric;
+            raw_variables(i).name = "column_" + to_string(i+1);
+            raw_variables(i).raw_variable_use = VariableUse::Input;
+            raw_variables(i).type = RawVariableType::Numeric;
         }
         else
         {
-            columns(i).name = "column_" + to_string(i+1);
-            columns(i).column_use = VariableUse::Target;
-            columns(i).type = RawVariableType::Numeric;
+            raw_variables(i).name = "column_" + to_string(i+1);
+            raw_variables(i).raw_variable_use = VariableUse::Target;
+            raw_variables(i).type = RawVariableType::Numeric;
         }
     }
 
@@ -414,7 +414,7 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("ColumnsNumber");
 
         buffer.str("");
-        buffer << get_columns_number();
+        buffer << get_raw_variables_number();
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -423,22 +423,22 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Columns items
 
-    const Index columns_number = get_columns_number();
+    const Index raw_variables_number = get_raw_variables_number();
 
     {
-        for(Index i = 0; i < columns_number; i++)
+        for(Index i = 0; i < raw_variables_number; i++)
         {
             file_stream.OpenElement("Column");
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            columns(i).write_XML(file_stream);
+            raw_variables(i).write_XML(file_stream);
 
             file_stream.CloseElement();
         }
     }
 
-    // Close columns
+    // Close raw_variables
 
     file_stream.CloseElement();
 
@@ -805,22 +805,22 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw runtime_error(buffer.str());
     }
 
-    Index new_columns_number = 0;
+    Index new_raw_variables_number = 0;
 
     if(columns_number_element->GetText())
     {
-        new_columns_number = Index(atoi(columns_number_element->GetText()));
+        new_raw_variables_number = Index(atoi(columns_number_element->GetText()));
 
-        set_columns_number(new_columns_number);
+        set_raw_variables_number(new_raw_variables_number);
     }
 
     // Columns
 
     const tinyxml2::XMLElement* start_element = columns_number_element;
 
-    if(new_columns_number > 0)
+    if(new_raw_variables_number > 0)
     {
-        for(Index i = 0; i < new_columns_number; i++)
+        for(Index i = 0; i < new_raw_variables_number; i++)
         {
             const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
             start_element = column_element;
@@ -851,7 +851,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 const string new_name = name_element->GetText();
 
-                columns(i).name = new_name;
+                raw_variables(i).name = new_name;
             }
 
             // Scaler
@@ -871,14 +871,14 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 const string new_scaler = scaler_element->GetText();
 
-                columns(i).set_scaler(new_scaler);
+                raw_variables(i).set_scaler(new_scaler);
             }
 
             // Column use
 
-            const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
+            const tinyxml2::XMLElement* raw_variable_use_element = column_element->FirstChildElement("ColumnUse");
 
-            if(!column_use_element)
+            if(!raw_variable_use_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -887,11 +887,11 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 throw runtime_error(buffer.str());
             }
 
-            if(column_use_element->GetText())
+            if(raw_variable_use_element->GetText())
             {
-                const string new_column_use = column_use_element->GetText();
+                const string new_raw_variable_use = raw_variable_use_element->GetText();
 
-                columns(i).set_use(new_column_use);
+                raw_variables(i).set_use(new_raw_variable_use);
             }
 
             // Type
@@ -910,10 +910,10 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(type_element->GetText())
             {
                 const string new_type = type_element->GetText();
-                columns(i).set_type(new_type);
+                raw_variables(i).set_type(new_type);
             }
 
-            if(columns(i).type == RawVariableType::Categorical || columns(i).type == RawVariableType::Binary)
+            if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
             {
                 // Categories
 
@@ -932,7 +932,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    columns(i).categories = get_tokens(new_categories, ';');
+                    raw_variables(i).categories = get_tokens(new_categories, ';');
                 }
 
                 // Categories uses
@@ -952,67 +952,67 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
+                    raw_variables(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
                 }
             }
         }
     }
 
-//    // Time series columns
+//    // Time series raw_variables
 
-//    const tinyxml2::XMLElement* time_series_columns_element = data_set_element->FirstChildElement("TimeSeriesColumns");
+//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesColumns");
 
-//    if(!time_series_columns_element)
+//    if(!time_series_raw_variables_element)
 //    {
 //        // do nothing
 //    }
 //    else
 //    {
-//        // Time series columns number
+//        // Time series raw_variables number
 
-//        const tinyxml2::XMLElement* time_series_columns_number_element = time_series_columns_element->FirstChildElement("TimeSeriesColumnsNumber");
+//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesColumnsNumber");
 
-//        if(!time_series_columns_number_element)
+//        if(!time_series_raw_variables_number_element)
 //        {
 //            buffer << "OpenNN Exception: DataSet class.\n"
 //                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                   << "Time seires columns number element is nullptr.\n";
+//                   << "Time seires raw_variables number element is nullptr.\n";
 
 //            throw runtime_error(buffer.str());
 //        }
 
-//        Index time_series_new_columns_number = 0;
+//        Index time_series_new_raw_variables_number = 0;
 
-//        if(time_series_columns_number_element->GetText())
+//        if(time_series_raw_variables_number_element->GetText())
 //        {
-//            time_series_new_columns_number = Index(atoi(time_series_columns_number_element->GetText()));
+//            time_series_new_raw_variables_number = Index(atoi(time_series_raw_variables_number_element->GetText()));
 
-//            set_time_series_columns_number(time_series_new_columns_number);
+//            set_time_series_raw_variables_number(time_series_new_raw_variables_number);
 //        }
 
-//        // Time series columns
+//        // Time series raw_variables
 
-//        const tinyxml2::XMLElement* time_series_start_element = time_series_columns_number_element;
+//        const tinyxml2::XMLElement* time_series_start_element = time_series_raw_variables_number_element;
 
-//        if(time_series_new_columns_number > 0)
+//        if(time_series_new_raw_variables_number > 0)
 //        {
-//            for(Index i = 0; i < time_series_new_columns_number; i++)
+//            for(Index i = 0; i < time_series_new_raw_variables_number; i++)
 //            {
-//                const tinyxml2::XMLElement* time_series_column_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
-//                time_series_start_element = time_series_column_element;
+//                const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
+//                time_series_start_element = time_series_raw_variable_element;
 
-//                if(time_series_column_element->Attribute("Item") != to_string(i+1))
+//                if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
 //                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_column_element->Attribute("Item") << ").\n";
+//                           << "Time series column item number (" << i+1 << ") does not match (" << time_series_raw_variable_element->Attribute("Item") << ").\n";
 
 //                    throw runtime_error(buffer.str());
 //                }
 
 //                // Name
 
-//                const tinyxml2::XMLElement* time_series_name_element = time_series_column_element->FirstChildElement("Name");
+//                const tinyxml2::XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
 
 //                if(!time_series_name_element)
 //                {
@@ -1027,12 +1027,12 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                {
 //                    const string time_series_new_name = time_series_name_element->GetText();
 
-//                    time_series_columns(i).name = time_series_new_name;
+//                    time_series_raw_variables(i).name = time_series_new_name;
 //                }
 
 //                // Scaler
 
-//                const tinyxml2::XMLElement* time_series_scaler_element = time_series_column_element->FirstChildElement("Scaler");
+//                const tinyxml2::XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
 
 //                if(!time_series_scaler_element)
 //                {
@@ -1047,14 +1047,14 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                {
 //                    const string time_series_new_scaler = time_series_scaler_element->GetText();
 
-//                    time_series_columns(i).set_scaler(time_series_new_scaler);
+//                    time_series_raw_variables(i).set_scaler(time_series_new_scaler);
 //                }
 
 //                // Column use
 
-//                const tinyxml2::XMLElement* time_series_column_use_element = time_series_column_element->FirstChildElement("ColumnUse");
+//                const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("ColumnUse");
 
-//                if(!time_series_column_use_element)
+//                if(!time_series_raw_variable_use_element)
 //                {
 //                    buffer << "OpenNN Exception: DataSet class.\n"
 //                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1063,16 +1063,16 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    throw runtime_error(buffer.str());
 //                }
 
-//                if(time_series_column_use_element->GetText())
+//                if(time_series_raw_variable_use_element->GetText())
 //                {
-//                    const string time_series_new_column_use = time_series_column_use_element->GetText();
+//                    const string time_series_new_raw_variable_use = time_series_raw_variable_use_element->GetText();
 
-//                    time_series_columns(i).set_use(time_series_new_column_use);
+//                    time_series_raw_variables(i).set_use(time_series_new_raw_variable_use);
 //                }
 
 //                // Type
 
-//                const tinyxml2::XMLElement* time_series_type_element = time_series_column_element->FirstChildElement("Type");
+//                const tinyxml2::XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
 
 //                if(!time_series_type_element)
 //                {
@@ -1086,14 +1086,14 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                if(time_series_type_element->GetText())
 //                {
 //                    const string time_series_new_type = time_series_type_element->GetText();
-//                    time_series_columns(i).set_type(time_series_new_type);
+//                    time_series_raw_variables(i).set_type(time_series_new_type);
 //                }
 
-//                if(time_series_columns(i).type == ColumnType::Categorical || time_series_columns(i).type == ColumnType::Binary)
+//                if(time_series_raw_variables(i).type == ColumnType::Categorical || time_series_raw_variables(i).type == ColumnType::Binary)
 //                {
 //                    // Categories
 
-//                    const tinyxml2::XMLElement* time_series_categories_element = time_series_column_element->FirstChildElement("Categories");
+//                    const tinyxml2::XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
 
 //                    if(!time_series_categories_element)
 //                    {
@@ -1108,12 +1108,12 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    {
 //                        const string time_series_new_categories = time_series_categories_element->GetText();
 
-//                        time_series_columns(i).categories = get_tokens(time_series_new_categories, ';');
+//                        time_series_raw_variables(i).categories = get_tokens(time_series_new_categories, ';');
 //                    }
 
 //                    // Categories uses
 
-//                    const tinyxml2::XMLElement* time_series_categories_uses_element = time_series_column_element->FirstChildElement("CategoriesUses");
+//                    const tinyxml2::XMLElement* time_series_categories_uses_element = time_series_raw_variable_element->FirstChildElement("CategoriesUses");
 
 //                    if(!time_series_categories_uses_element)
 //                    {
@@ -1128,7 +1128,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //                    {
 //                        const string time_series_new_categories_uses = time_series_categories_uses_element->GetText();
 
-//                        time_series_columns(i).set_categories_uses(get_tokens(time_series_new_categories_uses, ';'));
+//                        time_series_raw_variables(i).set_categories_uses(get_tokens(time_series_new_categories_uses, ';'));
 //                    }
 //                }
 //            }
@@ -1288,13 +1288,13 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
        if(columns_missing_values_number_element->GetText())
        {
-           Tensor<string, 1> new_columns_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+           Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
 
-           columns_missing_values_number.resize(new_columns_missing_values_number.size());
+           columns_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
-           for(Index i = 0; i < new_columns_missing_values_number.size(); i++)
+           for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
            {
-               columns_missing_values_number(i) = atoi(new_columns_missing_values_number(i).c_str());
+               columns_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
            }
        }
 
@@ -1384,12 +1384,12 @@ Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
     if(channels_number == 3)
     {
         const int rows_number = static_cast<int>(get_image_height());
-        const int columns_number = static_cast<int>(get_image_width());
+        const int raw_variables_number = static_cast<int>(get_image_width());
 
-        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, columns_number, padding);
+        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, raw_variables_number, padding);
 
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, columns_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*columns_number};
+        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, raw_variables_number};
+        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*raw_variables_number};
 
         Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
         Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
@@ -1403,9 +1403,9 @@ Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
         green_channel_flatted_sorted.setZero();
         blue_channel_flatted_sorted.setZero();
 
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, columns_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, columns_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,columns_number);
+        sort_channel(red_channel_flatted, red_channel_flatted_sorted, raw_variables_number);
+        sort_channel(green_channel_flatted, green_channel_flatted_sorted, raw_variables_number);
+        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,raw_variables_number);
 
         Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
         red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
@@ -1432,7 +1432,7 @@ void ImageDataSet::read_bmp()
         throw runtime_error(buffer.str());
     }
 
-    has_columns_names = true;
+    has_raw_variables_names = true;
     has_rows_labels = true;
 
     separator = Separator::None;
@@ -1520,8 +1520,8 @@ void ImageDataSet::read_bmp()
 
     if(classes_number == 2)
     {
-        Index binary_columns_number = 1;
-        data.resize(images_number, image_size + binary_columns_number);
+        Index binary_raw_variables_number = 1;
+        data.resize(images_number, image_size + binary_raw_variables_number);
     }
     else
     {
@@ -1575,11 +1575,11 @@ void ImageDataSet::read_bmp()
         }
     }
 
-    columns.resize(image_size + 1);
+    raw_variables.resize(image_size + 1);
 
-    // Input columns
+    // Input raw_variables
 
-    Index column_index = 0;
+    Index raw_variable_index = 0;
 
     for(Index i = 0; i < channels; i++)
     {
@@ -1587,18 +1587,18 @@ void ImageDataSet::read_bmp()
         {
             for(Index k = 0; k < height ; k++)
             {
-                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                columns(column_index).type = ColumnType::Numeric;
-                columns(column_index).column_use = VariableUse::Input;
-                columns(column_index).scaler = Scaler::MinimumMaximum;
-                column_index++;
+                raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                raw_variables(raw_variable_index).type = ColumnType::Numeric;
+                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Input;
+                raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
+                raw_variable_index++;
             }
         }
     }
 
-    // Target columns
+    // Target raw_variables
 
-    columns(image_size).name = "class";
+    raw_variables(image_size).name = "class";
 
     if(classes_number == 1)
     {
@@ -1620,12 +1620,12 @@ void ImageDataSet::read_bmp()
             categories(i) = folder_paths[i].filename().string();
         }
 
-        columns(image_size).column_use = VariableUse::Target;
-        columns(image_size).type = ColumnType::Binary;
-        columns(image_size).categories = categories;
+        raw_variables(image_size).raw_variable_use = VariableUse::Target;
+        raw_variables(image_size).type = ColumnType::Binary;
+        raw_variables(image_size).categories = categories;
 
-        columns(image_size).categories_uses.resize(classes_number);
-        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+        raw_variables(image_size).categories_uses.resize(classes_number);
+        raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
     }else
     {
         Tensor<string, 1> categories(classes_number);
@@ -1635,12 +1635,12 @@ void ImageDataSet::read_bmp()
             categories(i) = folder_paths[i].filename().string();
         }
 
-        columns(image_size).column_use = VariableUse::Target;
-        columns(image_size).type = ColumnType::Categorical;
-        columns(image_size).categories = categories;
+        raw_variables(image_size).raw_variable_use = VariableUse::Target;
+        raw_variables(image_size).type = ColumnType::Categorical;
+        raw_variables(image_size).categories = categories;
 
-        columns(image_size).categories_uses.resize(classes_number);
-        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+        raw_variables(image_size).categories_uses.resize(classes_number);
+        raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
     }
 
     samples_uses.resize(images_number);
@@ -1669,7 +1669,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
         throw runtime_error(buffer.str());
     }
 
-    has_columns_names = true;
+    has_raw_variables_names = true;
     has_rows_labels = true;
 
     separator = Separator::None;
@@ -1683,9 +1683,9 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
 
     if(classes_number == 2)
     {
-        Index binary_columns_number = 1;
-        data.resize(images_number, image_size + binary_columns_number);
-//        imageDataAux.resize(images_number, image_size + binary_columns_number);
+        Index binary_raw_variables_number = 1;
+        data.resize(images_number, image_size + binary_raw_variables_number);
+//        imageDataAux.resize(images_number, image_size + binary_raw_variables_number);
     }
     else
     {
@@ -1724,11 +1724,11 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
         }
     }
 
-    columns.resize(image_size + 1);
+    raw_variables.resize(image_size + 1);
 
-    // Input columns
+    // Input raw_variables
 
-    Index column_index = 0;
+    Index raw_variable_index = 0;
 
         for(Index i = 0; i < channels; i++)
         {
@@ -1736,18 +1736,18 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
             {
                 for(Index k = 0; k < height ; k++)
                 {
-                    columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                    columns(column_index).type = RawVariableType::Numeric;
-                    columns(column_index).column_use = VariableUse::Input;
-                    columns(column_index).scaler = Scaler::MinimumMaximum;
-                    column_index++;
+                    raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                    raw_variables(raw_variable_index).type = RawVariableType::Numeric;
+                    raw_variables(raw_variable_index).raw_variable_use = VariableUse::Input;
+                    raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
+                    raw_variable_index++;
                 }
             }
         }
 
-    // Target columns
+    // Target raw_variables
 
-    columns(image_size).name = "class";
+    raw_variables(image_size).name = "class";
 
     if(classes_number == 1)
     {
@@ -1769,19 +1769,19 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
         categories(i) = classes_folder[i];
     }
 
-    columns(image_size).column_use = VariableUse::Target;
-    columns(image_size).categories = categories;
+    raw_variables(image_size).raw_variable_use = VariableUse::Target;
+    raw_variables(image_size).categories = categories;
 
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+    raw_variables(image_size).categories_uses.resize(classes_number);
+    raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
 
     if(classes_number == 2)
     {
-        columns(image_size).type = RawVariableType::Binary;
+        raw_variables(image_size).type = RawVariableType::Binary;
     }
     else
     {
-        columns(image_size).type = RawVariableType::Categorical;
+        raw_variables(image_size).type = RawVariableType::Categorical;
     }
 
     samples_uses.resize(images_number);
@@ -2075,9 +2075,9 @@ void ImageDataSet::read_ground_truth()
         }
     }
 
-    // Input columns
+    // Input raw_variables
 
-    Index column_index = 0;
+    Index raw_variable_index = 0;
 
     for(Index i = 0; i < channels_number; i++)
     {
@@ -2085,18 +2085,18 @@ void ImageDataSet::read_ground_truth()
         {
             for(Index k = 0; k < region_columns ; k++)
             {
-                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                columns(column_index).type = ColumnType::Numeric;
-                columns(column_index).column_use = VariableUse::Input;
-                columns(column_index).scaler = Scaler::MinimumMaximum;
-                column_index++;
+                raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                raw_variables(raw_variable_index).type = ColumnType::Numeric;
+                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Input;
+                raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
+                raw_variable_index++;
             }
         }
     }
 
-    // Target columns
+    // Target raw_variables
 
-    columns(pixels_number).name = "label";
+    raw_variables(pixels_number).name = "label";
 
     if(classes_number == 0)
     {
@@ -2111,23 +2111,23 @@ void ImageDataSet::read_ground_truth()
     }
     else if(classes_number == 1) // Just one because we include background (1+1)
     {
-        columns(pixels_number).column_use = VariableUse::Target;
-        columns(pixels_number).type = ColumnType::Binary;
-        columns(pixels_number).categories = labels_tokens;
+        raw_variables(pixels_number).raw_variable_use = VariableUse::Target;
+        raw_variables(pixels_number).type = ColumnType::Binary;
+        raw_variables(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
-        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+        raw_variables(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
+        raw_variables(pixels_number).categories_uses.setConstant(VariableUse::Target);
     }
     else
     {
         Tensor<string, 1> categories(target_variables_number);
 
-        columns(pixels_number).column_use = VariableUse::Target;
-        columns(pixels_number).type = ColumnType::Categorical;
-        columns(pixels_number).categories = labels_tokens;
+        raw_variables(pixels_number).raw_variable_use = VariableUse::Target;
+        raw_variables(pixels_number).type = ColumnType::Categorical;
+        raw_variables(pixels_number).categories = labels_tokens;
 
-        columns(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
-        columns(pixels_number).categories_uses.setConstant(VariableUse::Target);
+        raw_variables(pixels_number).categories_uses.resize(target_variables_number); // classes_number + Background
+        raw_variables(pixels_number).categories_uses.setConstant(VariableUse::Target);
     }
 
     split_samples_random();

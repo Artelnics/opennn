@@ -63,7 +63,7 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*) final;
+   void set_loss_index(LossIndex*) final;
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
 
@@ -173,7 +173,7 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     virtual void print() const;
 
-    AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
+    AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
     Tensor<type, 1> gradient_exponential_decay;
     Tensor<type, 1> square_gradient_exponential_decay;

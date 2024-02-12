@@ -25,10 +25,10 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 
 
 /// It creates a optimization algorithm object associated with a loss index object.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
-    : loss_index_pointer(new_loss_index_pointer)
+OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
+    : loss_index(new_loss_index)
 {
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);
@@ -50,16 +50,16 @@ OptimizationAlgorithm::~OptimizationAlgorithm()
 /// Returns a pointer to the loss index object to which the optimization algorithm is
 /// associated.
 
-LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
+LossIndex* OptimizationAlgorithm::get_loss_index() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "LossIndex* get_loss_index_pointer() const method.\n"
+               << "LossIndex* get_loss_index() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -67,7 +67,7 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
 
 #endif
 
-    return loss_index_pointer;
+    return loss_index;
 }
 
 
@@ -92,7 +92,7 @@ void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
 
 bool OptimizationAlgorithm::has_loss_index() const
 {
-    if(loss_index_pointer)
+    if(loss_index)
     {
         return true;
     }
@@ -141,7 +141,7 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 
 void OptimizationAlgorithm::set()
 {
-    loss_index_pointer = nullptr;
+    loss_index = nullptr;
 
     set_default();
 }
@@ -158,11 +158,11 @@ void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 
 
 /// Sets a pointer to a loss index object to be associated with the optimization algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void OptimizationAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void OptimizationAlgorithm::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 }
 
 
@@ -292,7 +292,7 @@ void OptimizationAlgorithm::check() const
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
                << "void check() const method.\n"
@@ -301,9 +301,9 @@ void OptimizationAlgorithm::check() const
         throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network_pointer == nullptr)
+    if(neural_network == nullptr)
     {
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
                << "void check() const method.\n"

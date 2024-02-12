@@ -62,7 +62,7 @@ public:
 
     void set_default();
 
-    void set_data_set_pointer(DataSet* new_data_set_pointer) final;
+    void set_data_set(DataSet* new_data_set) final;
 
    // Normalization coefficients 
 

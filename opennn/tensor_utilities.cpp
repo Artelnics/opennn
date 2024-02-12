@@ -78,13 +78,13 @@ void initialize_sequential(Tensor<Index, 1>& new_tensor,
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < raw_variables_number; j++)
         {
            matrix(i,j) *= vector(j);
         }
@@ -92,12 +92,12 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+void divide_raw_variables(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < raw_variables_number; j++)
     {
         TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
 
@@ -109,9 +109,9 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
 void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
-    for(Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
         TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
 
@@ -123,12 +123,12 @@ void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& ve
 void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
     const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
+    const Index raw_variables_number = tensor.dimension(1);
     const Index channels_number = tensor.dimension(2);
 
     for(Index i = 0; i < channels_number; i++)
     {
-        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*columns_number, rows_number, columns_number);
+        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
 
         matrix.device(*thread_pool_device) = matrix + vector(i);
     }
@@ -697,22 +697,37 @@ Index count_between(const Tensor<type,1>& vector,const type& minimum, const type
 }
 
 
+void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&)
+{
+}
+
+
 void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index)
 {
-    const Index columns_number = new_row.size();
+    const Index raw_variables_number = new_row.size();
 
     #pragma omp parallel for    
 
-    for(Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < raw_variables_number; i++)
     {
         matrix(row_index,i) = new_row(i);
     }
 }
 
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index& column_index, const type& minimum, const type& maximum)
+void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
 {
-    const Tensor<type,1> column = matrix.chip(column_index,1);
+/*
+    copy(execution::par,
+        matrix.data(),
+        vector.data() + vector.size(),
+        matrix.data() + row_index);
+*/
+}
+
+Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>& matrix,const Index& raw_variable_index, const type& minimum, const type& maximum)
+{
+    const Tensor<type,1> column = matrix.chip(raw_variable_index,1);
     const Index new_rows_number = count_between(column, minimum, maximum);
 
     if(new_rows_number == 0)
@@ -721,18 +736,18 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
     }
 
     const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index raw_variables_number = matrix.dimension(1);
 
     bool check_conditions = false;
 
-    Tensor<type,2> new_matrix(new_rows_number, columns_number);
+    Tensor<type,2> new_matrix(new_rows_number, raw_variables_number);
 
     Index row_index = 0;
-    Tensor<type,1> row(columns_number);
+    Tensor<type,1> row(raw_variables_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(matrix(i,column_index) >= minimum && matrix(i, column_index) <= maximum)
+        if(matrix(i,raw_variable_index) >= minimum && matrix(i, raw_variable_index) <= maximum)
         {
             row = matrix.chip(i, 0);
 
@@ -749,7 +764,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TensorUtilities class.\n"
-               << "Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
+               << "Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
                << "Invalid conditions\n";
 
         throw runtime_error(buffer.str());
@@ -970,30 +985,30 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 void fill_submatrix(const Tensor<type, 2>& matrix,
                     const Tensor<Index, 1>& rows_indices,
                     const Tensor<Index, 1>& columns_indices,
-                    type* submatrix_pointer)
+                    type* submatrix)
 {
     const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
+    const Index raw_variables_number = columns_indices.size();
 
-    const type* matrix_pointer = matrix.data();
+    const type* matrix_data = matrix.data();
 
     #pragma omp parallel for
 
-    for(Index j = 0; j < columns_number; j++)
+    for(Index j = 0; j < raw_variables_number; j++)
     {
-        const type* matrix_column_pointer = matrix_pointer + matrix.dimension(0)*columns_indices[j];
-        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
+        const type* matrix_raw_variable = matrix_data + matrix.dimension(0)*columns_indices[j];
+        type* submatrix_raw_variable = submatrix + rows_number*j;
 
-        const type* value_pointer = nullptr;
+        const type* value = nullptr;
 
-        const Index* rows_indices_pointer = rows_indices.data();
+        const Index* rows_indices_data = rows_indices.data();
 
         for(Index i = 0; i < rows_number; i++)
         {
-            value_pointer = matrix_column_pointer + *rows_indices_pointer;
-            rows_indices_pointer++;
-            *submatrix_column_pointer = *value_pointer;
-            submatrix_column_pointer++;
+            value = matrix_raw_variable + *rows_indices_data;
+            rows_indices_data++;
+            *submatrix_raw_variable = *value;
+            submatrix_raw_variable++;
         }
     }
 }
@@ -1030,7 +1045,7 @@ Index count_NAN(const Tensor<type, 1>& x)
 Index count_NAN(const Tensor<type, 2>& x)
 {
     const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
+    const Index raw_variables_number = x.dimension(1);
 
     Index count = 0;
 
@@ -1038,9 +1053,9 @@ Index count_NAN(const Tensor<type, 2>& x)
 
     for(Index row_index = 0; row_index < rows_number; row_index++)
     {
-        for(Index column_index = 0; column_index < columns_number; column_index++)
+        for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
-            if(isnan(x(row_index, column_index))) count++;
+            if(isnan(x(row_index, raw_variable_index))) count++;
         }
     }
 
@@ -1103,7 +1118,7 @@ void check_size(const Tensor<type, 1>& vector, const Index& size, const string& 
 }
 
 
-void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, const Index& columns_number, const string& log)
+void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, const Index& raw_variables_number, const string& log)
 {
     if(matrix.dimension(0) != rows_number)
     {
@@ -1115,26 +1130,26 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
         throw runtime_error(buffer.str());
     }
 
-    if(matrix.dimension(1) != columns_number)
+    if(matrix.dimension(1) != raw_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << "." <<  endl;
+               << "Number of raw_variables in matrix is " << matrix.dimension(0) << ", but must be " << raw_variables_number << "." <<  endl;
 
         throw runtime_error(buffer.str());
     }
 }
 
 
-void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_number, const string& log)
+void check_raw_variables_number(const Tensor<type, 2>& matrix, const Index& raw_variables_number, const string& log)
 {
-    if(matrix.dimension(1) != columns_number)
+    if(matrix.dimension(1) != raw_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << "." <<  endl;
+               << "Number of raw_variables in matrix is " << matrix.dimension(0) << ", but must be " << raw_variables_number << "." <<  endl;
 
         throw runtime_error(buffer.str());
     }
@@ -1148,7 +1163,7 @@ void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: " << log <<  endl
-               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
+               << "Number of raw_variables in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
 
         throw runtime_error(buffer.str());
     }
@@ -1174,9 +1189,9 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     const Index rows_number = x.size();
-    const Index columns_number = 2;
+    const Index raw_variables_number = 2;
 
-    Tensor<type, 2> data(rows_number, columns_number);
+    Tensor<type, 2> data(rows_number, raw_variables_number);
 
     #pragma omp parallel for
 
@@ -1193,9 +1208,9 @@ Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>& x, const Tensor<ty
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<type, 2>& y)
 {
     const Index rows_number = x.size();
-    const Index columns_number = 1 + y.dimension(1);
+    const Index raw_variables_number = 1 + y.dimension(1);
 
-    Tensor<type, 2> data(rows_number, columns_number);
+    Tensor<type, 2> data(rows_number, raw_variables_number);
 
     #pragma omp parallel for
 
@@ -1216,9 +1231,9 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<ty
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
     const Index rows_number = y.size();
-    const Index columns_number = x.dimension(1) + 1;
+    const Index raw_variables_number = x.dimension(1) + 1;
 
-    Tensor<type, 2> data(rows_number, columns_number);
+    Tensor<type, 2> data(rows_number, raw_variables_number);
 
     #pragma omp parallel for
 
@@ -1229,7 +1244,7 @@ Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<ty
             data(i, j) = x(i,j);
         }
 
-        data(i, columns_number-1) = y(i);
+        data(i, raw_variables_number-1) = y(i);
     }
 
     return data;
@@ -1239,9 +1254,9 @@ Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<ty
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1) + y.dimension(1);
+    const Index raw_variables_number = x.dimension(1) + y.dimension(1);
 
-    Tensor<type, 2> data(rows_number, columns_number);
+    Tensor<type, 2> data(rows_number, raw_variables_number);
 
     #pragma omp parallel for
 
@@ -1317,7 +1332,7 @@ string string_tensor_to_string(const Tensor<string,1>&x, const string& separator
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
 {
     const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
+    const Index raw_variables_number = tensor.dimension(1);
    #ifdef OPENNN_DEBUG
 
    if(row_index > rows_number)
@@ -1344,13 +1359,13 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
    #endif
 
-   Tensor<type, 2> new_matrix(rows_number-1, columns_number);
+   Tensor<type, 2> new_matrix(rows_number-1, raw_variables_number);
 
     #pragma omp parallel for
 
    for(Index i = 0; i < row_index; i++)
    {
-      for(Index j = 0; j < columns_number; j++)
+      for(Index j = 0; j < raw_variables_number; j++)
       {
         new_matrix(i,j) = tensor(i,j);
       }
@@ -1360,7 +1375,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 
    for(Index i = row_index+1; i < rows_number; i++)
    {
-      for(Index j = 0; j < columns_number; j++)
+      for(Index j = 0; j < raw_variables_number; j++)
       {
          new_matrix(i-1,j) = tensor(i,j);
       }
@@ -1505,7 +1520,7 @@ void print_tensor(const float* vector, const int dimensions[])
     cout<<"Tensor"<<endl;
 
     const int rows_number = dimensions[0];
-    const int columns_number = dimensions[1];
+    const int raw_variables_number = dimensions[1];
     const int channels = dimensions[2];
     const int batch = dimensions[3];
 
@@ -1515,17 +1530,17 @@ void print_tensor(const float* vector, const int dimensions[])
         {
             for(int i = 0; i<rows_number; i++)
             {
-                for(int j = 0; j<columns_number; j++)
+                for(int j = 0; j<raw_variables_number; j++)
                 {
-                    if(i + rows_number*j + k*rows_number*columns_number + l*channels*rows_number*columns_number % rows_number*columns_number*channels == 0)
+                    if(i + rows_number*j + k*rows_number*raw_variables_number + l*channels*rows_number*raw_variables_number % rows_number*raw_variables_number*channels == 0)
 
                         cout<< "<--Batch-->"<<endl;
 
-                    if(i + rows_number*j + k*rows_number*columns_number % rows_number*columns_number == 0)
+                    if(i + rows_number*j + k*rows_number*raw_variables_number % rows_number*raw_variables_number == 0)
 
                         cout<< "*--Channel--*"<<endl;
 
-                   cout<<*(vector + i + j*rows_number + k*rows_number*columns_number+ l*channels*rows_number*columns_number)<< " ";
+                   cout<<*(vector + i + j*rows_number + k*rows_number*raw_variables_number+ l*channels*rows_number*raw_variables_number)<< " ";
                 }
 
                cout<<" "<<endl;

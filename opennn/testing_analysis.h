@@ -147,15 +147,15 @@ public:
 
    // Get methods
 
-   NeuralNetwork* get_neural_network_pointer() const;
-   DataSet* get_data_set_pointer() const;
+   NeuralNetwork* get_neural_network() const;
+   DataSet* get_data_set() const;
 
    const bool& get_display() const;
 
    // Set methods
 
-   void set_neural_network_pointer(NeuralNetwork*);
-   void set_data_set_pointer(DataSet*);
+   void set_neural_network(NeuralNetwork*);
+   void set_data_set(DataSet*);
 
    void set_display(const bool&);
 
@@ -339,11 +339,11 @@ private:
 
    /// Pointer to the neural network object to be tested. 
 
-   NeuralNetwork* neural_network_pointer = nullptr;
+   NeuralNetwork* neural_network = nullptr;
 
    /// Pointer to a data set object.
 
-   DataSet* data_set_pointer = nullptr;
+   DataSet* data_set = nullptr;
 
    /// Display messages to screen.
    

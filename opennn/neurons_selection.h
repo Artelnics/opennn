@@ -53,7 +53,7 @@ public:
 
     // Get methods
 
-    TrainingStrategy* get_training_strategy_pointer() const;
+    TrainingStrategy* get_training_strategy() const;
 
     bool has_training_strategy() const;
 
@@ -69,7 +69,7 @@ public:
 
     // Set methods
 
-    void set_training_strategy_pointer(TrainingStrategy*);
+    void set_training_strategy(TrainingStrategy*);
 
     void set_default();
 
@@ -107,7 +107,7 @@ protected:
 
     /// Pointer to a training strategy object.
 
-    TrainingStrategy* training_strategy_pointer = nullptr;
+    TrainingStrategy* training_strategy = nullptr;
 
     /// Neurons of all the neural networks trained.
 

@@ -39,9 +39,9 @@ void ModelSelectionTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    ModelSelection* model_selection_pointer = new ModelSelection;
+    ModelSelection* model_selection = new ModelSelection;
 
-    delete model_selection_pointer;
+    delete model_selection;
 }
 
 
@@ -57,11 +57,11 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     model_selection.set_display(false);
 
-    GrowingNeurons* incremental_neurons_pointer = model_selection.get_growing_neurons_pointer();
+    GrowingNeurons* incremental_neurons = model_selection.get_growing_neurons();
 
-    incremental_neurons_pointer->set_maximum_selection_failures(2);
+    incremental_neurons->set_maximum_selection_failures(2);
 
-    incremental_neurons_pointer->set_display(false);
+    incremental_neurons->set_display(false);
 
     NeuronsSelectionResults results;
 

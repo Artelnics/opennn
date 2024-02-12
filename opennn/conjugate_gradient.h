@@ -62,7 +62,7 @@ public:
    // Get methods
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
-   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+   LearningRateAlgorithm* get_learning_rate_algorithm();
 
    // Training operators
 
@@ -85,7 +85,7 @@ public:
 
    void set_default() final;
 
-   void set_loss_index_pointer(LossIndex*) final;
+   void set_loss_index(LossIndex*) final;
 
    // Training operators
 
@@ -192,7 +192,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     virtual void print() const;
 
-    ConjugateGradient* conjugate_gradient_pointer = nullptr;  
+    ConjugateGradient* conjugate_gradient = nullptr;  
 
     Tensor<type, 1> parameters_increment;
 

@@ -20,10 +20,10 @@ InputsSelection::InputsSelection()
 
 
 /// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a trainig strategy object.
+/// @param new_training_strategy Pointer to a trainig strategy object.
 
-InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer)
-    : training_strategy_pointer(new_training_strategy_pointer)
+InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
+    : training_strategy(new_training_strategy)
 {
     set_default();
 }
@@ -31,16 +31,16 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer
 
 /// Returns a pointer to the training strategy object.
 
-TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
+TrainingStrategy* InputsSelection::get_training_strategy() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "DataSet* get_training_strategy_pointer() const method.\n"
+               << "DataSet* get_training_strategy() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -48,7 +48,7 @@ TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
 
 #endif
 
-    return training_strategy_pointer;
+    return training_strategy;
 }
 
 
@@ -56,7 +56,7 @@ TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
 
 bool InputsSelection::has_training_strategy() const
 {
-    if(training_strategy_pointer)
+    if(training_strategy)
     {
         return true;
     }
@@ -125,11 +125,11 @@ const type& InputsSelection::get_minimum_correlation() const
 
 
 /// Sets a new training strategy pointer.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-void InputsSelection::set(TrainingStrategy* new_training_strategy_pointer)
+void InputsSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy_pointer = new_training_strategy_pointer;     
+    training_strategy = new_training_strategy;     
 }
 
 
@@ -307,7 +307,7 @@ void InputsSelection::check() const
 {
     ostringstream buffer;
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
@@ -318,11 +318,11 @@ void InputsSelection::check() const
 
     // Loss index
 
-    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index = training_strategy->get_loss_index();
 
     // Neural network
 
-    if(!loss_index_pointer->has_neural_network())
+    if(!loss_index->has_neural_network())
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
@@ -331,9 +331,9 @@ void InputsSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network_pointer->is_empty())
+    if(neural_network->is_empty())
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
@@ -344,7 +344,7 @@ void InputsSelection::check() const
 
     // Data set
 
-    if(!loss_index_pointer->has_data_set())
+    if(!loss_index->has_data_set())
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
@@ -353,9 +353,9 @@ void InputsSelection::check() const
         throw runtime_error(buffer.str());
     }
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
     if(selection_samples_number == 0)
     {

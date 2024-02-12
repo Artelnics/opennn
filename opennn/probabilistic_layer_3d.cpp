@@ -86,15 +86,7 @@ const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activa
 
 string ProbabilisticLayer3D::write_activation_function() const
 {
-    if(activation_function == ActivationFunction::Binary)
-    {
-        return "Binary";
-    }
-    else if(activation_function == ActivationFunction::Logistic)
-    {
-        return "Logistic";
-    }
-    else if(activation_function == ActivationFunction::Competitive)
+    if(activation_function == ActivationFunction::Competitive)
     {
         return "Competitive";
     }
@@ -116,19 +108,11 @@ string ProbabilisticLayer3D::write_activation_function() const
 
 
 /// Returns a string with the probabilistic method for the outputs to be included in some text
-/// ("competitive", "softmax" or "no probabilistic").
+/// ("competitive", "softmax").
 
 string ProbabilisticLayer3D::write_activation_function_text() const
 {
-    if(activation_function == ActivationFunction::Binary)
-    {
-        return "binary";
-    }
-    else if(activation_function == ActivationFunction::Logistic)
-    {
-        return "logistic";
-    }
-    else if(activation_function == ActivationFunction::Competitive)
+    if(activation_function == ActivationFunction::Competitive)
     {
         return "competitive";
     }
@@ -173,34 +157,6 @@ const Tensor<type, 2>& ProbabilisticLayer3D::get_synaptic_weights() const
     return synaptic_weights;
 }
 
-/*
-/// Returns the biases from a given vector of paramters for the layer.
-/// @param parameters Parameters of the layer.
-
-Tensor<type, 1> ProbabilisticLayer3D::get_biases(Tensor<type, 1>& parameters) const
-{
-    const Index neurons_number = get_neurons_number();
-
-    const TensorMap<Tensor<type, 1>> bias_tensor(parameters.data(), neurons_number);
-
-    return bias_tensor;
-}
-
-
-/// Returns the synaptic weights from a given vector of paramters for the layer.
-/// @param parameters Parameters of the layer.
-
-Tensor<type, 2> ProbabilisticLayer3D::get_synaptic_weights(Tensor<type, 1>& parameters) const
-{
-    const Index inputs_depth = get_inputs_depth();
-    const Index neurons_number = get_neurons_number();
-    const Index biases_number = get_biases_number();
-
-    const TensorMap< Tensor<type, 2> > synaptic_weights_tensor(parameters.data()+biases_number, inputs_depth, neurons_number);
-
-    return  synaptic_weights_tensor;
-}
-*/
 
 /// Returns the number of parameters (biases and synaptic weights) of the layer.
 
@@ -217,13 +173,7 @@ Index ProbabilisticLayer3D::get_parameters_number() const
 Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
-/*
-    memcpy(parameters.data(),
-           synaptic_weights.data(), size_t(synaptic_weights.size())*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights.size(),
-           biases.data(), size_t(biases.size())*sizeof(type));
-*/
     copy(execution::par, 
         synaptic_weights.data(),
         synaptic_weights.data() + synaptic_weights.size(),
@@ -233,6 +183,7 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
         biases.data(),
         biases.data() + biases.size(),
         parameters.data() + synaptic_weights.size());
+
     return parameters;
 }
 
@@ -470,15 +421,7 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
 
 void ProbabilisticLayer3D::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Binary")
-    {
-        set_activation_function(ActivationFunction::Binary);
-    }
-    else if(new_activation_function == "Logistic")
-    {
-        set_activation_function(ActivationFunction::Logistic);
-    }
-    else if(new_activation_function == "Competitive")
+    if(new_activation_function == "Competitive")
     {
         set_activation_function(ActivationFunction::Competitive);
     }
@@ -632,32 +575,6 @@ void ProbabilisticLayer3D::calculate_activations_derivatives(const Tensor<type, 
     }
 }
 
-/*
-void ProbabilisticLayer3D::logistic_derivatives(const Tensor<type, 2>& x,
-                                              Tensor<type, 2>& y,
-                                              Tensor<type, 3>& dy_dx) const
-{
-
-}
-*/
-
-/*
-void ProbabilisticLayer3D::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    const Index rows_number = x.dimension(0);
-
-    Index maximum_index = 0;
-
-    y.setZero();
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        maximum_index = maximal_index(x.chip(i, 1));
-
-        y(i, maximum_index) = type(1);
-    }
-}
-*/
 
 void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                              LayerForwardPropagation* forward_propagation,
@@ -688,41 +605,6 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
         calculate_activations(outputs,
                               outputs);
     }*/
-}
-
-
-void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
-                                             Tensor<type, 1>& potential_parameters,
-                                             LayerForwardPropagation* forward_propagation)
-{
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, 
-                                            inputs_pair.second[0][0], 
-                                            inputs_pair.second[0][1], 
-                                            inputs_pair.second[0][2]);
-
-    const Index neurons_number = get_neurons_number();
-    const Index inputs_number = get_inputs_number();
-
-    const TensorMap<Tensor<type, 1>> potential_biases(potential_parameters.data(), neurons_number);
-
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
-                                                                inputs_number, neurons_number);
-
-    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation
-            = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
-
-    Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
-
-    Tensor<type, 4>& activations_derivatives = probabilistic_layer_3d_forward_propagation->activations_derivatives;
-
-    calculate_combinations(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           outputs);
-
-    calculate_activations_derivatives(outputs,
-                                      outputs,
-                                      activations_derivatives);
 }
 
 
@@ -1044,41 +926,6 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Returns a string with the expression of the binary probabilistic outputs function.
-/// @param inputs_names Names of inputs to the probabilistic layer.
-/// @param outputs_names Names of outputs to the probabilistic layer.
-
-string ProbabilisticLayer3D::write_binary_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    buffer.str("");
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        buffer << outputs_names(j) << " = binary(" << inputs_names(j) << ");\n";
-    }
-    return buffer.str();
-}
-
-
-/// Returns a string with the expression of the probability outputs function.
-/// @param inputs_names Names of inputs to the probabilistic layer.
-/// @param outputs_names Names of outputs to the probabilistic layer.
-
-string ProbabilisticLayer3D::write_logistic_expression(const Tensor<string, 1>& inputs_names,
-                                                     const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        buffer << outputs_names(j) << " = logistic(" << inputs_names(j) << ");\n";
-    }
-    return buffer.str();
-}
-
-
 /// Returns a string with the expression of the competitive probabilistic outputs function.
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
@@ -1111,22 +958,6 @@ string ProbabilisticLayer3D::write_softmax_expression(const Tensor<string, 1>& i
     return buffer.str();
 }
 
-
-/// Returns a string with the expression of the no probabilistic outputs function.
-/// @param inputs_names Names of inputs to the probabilistic layer.
-/// @param outputs_names Names of outputs to the probabilistic layer.
-
-string ProbabilisticLayer3D::write_no_probabilistic_expression(const Tensor<string, 1>& inputs_names,
-                                                             const Tensor<string, 1>& outputs_names) const
-{
-    ostringstream buffer;
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        buffer << outputs_names(j) << " = (" << inputs_names(j) << ");\n";
-    }
-    return buffer.str();
-}
 
 
 string ProbabilisticLayer3D::write_combinations(const Tensor<string, 1>& inputs_names) const
@@ -1164,18 +995,6 @@ string ProbabilisticLayer3D::write_activations(const Tensor<string, 1>& outputs_
     {
         switch(activation_function)
         {
-        case ActivationFunction::Binary:
-        {
-            buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << outputs_names(i) << "= 0.0. Else " << outputs_names(i) << " = 1.0\n";
-        }
-            break;
-
-        case ActivationFunction::Logistic:
-        {
-            buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ") );\n";
-        }
-            break;
-
         case ActivationFunction::Competitive:
             if(i == 0)
             {

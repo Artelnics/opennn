@@ -43,7 +43,6 @@ public:
                           LayerForwardPropagation*,
                           const bool&);
 
-
 protected:
 
    bool display = true;
@@ -61,15 +60,15 @@ struct BoundingBoxRegressorLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit BoundingBoxRegressorLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit BoundingBoxRegressorLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : BoundingBoxRegressorLayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer)
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
     }
 

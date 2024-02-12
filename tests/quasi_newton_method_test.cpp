@@ -13,7 +13,7 @@ QuasiNewtonMethodTest::QuasiNewtonMethodTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    quasi_newton_method.set_loss_index_pointer(&sum_squared_error);
+    quasi_newton_method.set_loss_index(&sum_squared_error);
 }
 
 

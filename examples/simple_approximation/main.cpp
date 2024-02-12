@@ -33,8 +33,8 @@ int main()
 
         DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
-        const Index input_variables_number = data_set.get_input_numeric_variables_number();
-        const Index target_variables_number = data_set.get_target_numeric_variables_number();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
         const Index hidden_neurons_number = 3;
 
         // Neural Network

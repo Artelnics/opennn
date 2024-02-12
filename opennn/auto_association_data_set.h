@@ -36,16 +36,16 @@ public:
    explicit AutoAssociationDataSet();
 
 
-    Tensor<RawVariable, 1> get_associative_columns() const;
+    Tensor<RawVariable, 1> get_associative_raw_variables() const;
     const Tensor<type, 2>& get_associative_data() const;
     void set_auto_associative_samples_uses();
 
-    Index get_associative_columns_number() const;
+    Index get_associative_raw_variables_number() const;
     void set_associative_data(const Tensor<type, 2>&);
-    void set_associative_columns_number(const Index&);
+    void set_associative_raw_variables_number(const Index&);
 
     void transform_associative_dataset();
-    void transform_associative_columns();
+    void transform_associative_raw_variables();
     void transform_associative_data();
 
     void save_auto_associative_data_binary(const string&) const;
@@ -55,7 +55,7 @@ private:
 
     Tensor<type, 2> associative_data;
 
-    Tensor<RawVariable, 1> associative_columns;
+    Tensor<RawVariable, 1> associative_raw_variables;
 
 };
 

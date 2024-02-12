@@ -21,10 +21,10 @@ GrowingNeurons::GrowingNeurons()
 
 
 /// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a gradient descent object.
+/// @param new_training_strategy Pointer to a gradient descent object.
 
-GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy_pointer)
-    : NeuronsSelection(new_training_strategy_pointer)
+GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
+    : NeuronsSelection(new_training_strategy)
 {
     set_default();
 }
@@ -119,13 +119,13 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
     #ifdef OPENNN_DEBUG
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
          ostringstream buffer;
 
          buffer << "OpenNN Exception: growing_neurons class.\n"
-                << "TrainingStrategy* training_strategy_pointer const method.\n"
-                << "training_strategy_pointer is nullptr.\n";
+                << "TrainingStrategy* training_strategy const method.\n"
+                << "training_strategy is nullptr.\n";
 
          throw runtime_error(buffer.str());
     }
@@ -138,11 +138,11 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Neural network    
 
-    NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
-    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers = neural_network->get_trainable_layers();
 
     Index neurons_number;
 
@@ -163,7 +163,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     TrainingResults training_results;
 
-    training_strategy_pointer->set_display(false);
+    training_strategy->set_display(false);
 
     time(&beginning_time);
 
@@ -177,9 +177,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(neurons_number);
+        trainable_layers(trainable_layers_number-2)->set_neurons_number(neurons_number);
 
-        trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(neurons_number);
+        trainable_layers(trainable_layers_number-1)->set_inputs_number(neurons_number);
 
         neurons_selection_results.neurons_number_history(epoch) = neurons_number;
 
@@ -192,7 +192,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             neural_network->set_parameters_random();
 
-            training_results = training_strategy_pointer->perform_training();
+            training_results = training_strategy->perform_training();
 
             if(display)
             {
@@ -296,8 +296,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Save neural network
 
-    trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_selection_results.optimal_neurons_number);
-    trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_selection_results.optimal_neurons_number);
+    trainable_layers[trainable_layers_number-1]->set_inputs_number(neurons_selection_results.optimal_neurons_number);
+    trainable_layers[trainable_layers_number-2]->set_neurons_number(neurons_selection_results.optimal_neurons_number);
 
     neural_network->set_parameters(neurons_selection_results.optimal_parameters);
 
@@ -389,9 +389,9 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
     values(7) = buffer.str();
 
     const Index rows_number = labels.size();
-    const Index columns_number = 2;
+    const Index raw_variables_number = 2;
 
-    Tensor<string, 2> string_matrix(rows_number, columns_number);
+    Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
 
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;

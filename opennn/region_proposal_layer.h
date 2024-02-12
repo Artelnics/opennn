@@ -41,12 +41,12 @@ public:
 
     Index get_regions_number() const;
     Index get_region_rows() const;
-    Index get_region_columns() const;
+    Index get_region_raw_variables() const;
     Index get_channels_number() const;
 
     void set_regions_number(const Index&);
     void set_region_rows(const Index&);
-    void set_region_columns(const Index&);
+    void set_region_raw_variables(const Index&);
     void set_channels_number(const Index&);
 
     // Region proposal layer outputs
@@ -81,25 +81,25 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit RegionProposalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit RegionProposalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : RegionProposalLayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer)
     {
-        layer_pointer = new_layer_pointer;      
+        layer = new_layer;      
 
-        const RegionProposalLayer* region_proposal_layer_pointer = static_cast<RegionProposalLayer*>(layer_pointer);
+        const RegionProposalLayer* region_proposal_layer = static_cast<RegionProposalLayer*>(layer);
 
-        const Index regions_number = region_proposal_layer_pointer->get_regions_number();
+        const Index regions_number = region_proposal_layer->get_regions_number();
 
         batch_samples_number = new_batch_samples_number*regions_number;
 
-        const Index region_rows = region_proposal_layer_pointer->get_region_rows();
-        const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
-        const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
+        const Index region_rows = region_proposal_layer->get_region_rows();
+        const Index region_columns =  region_proposal_layer->get_region_raw_variables();
+        const Index channels_number =  region_proposal_layer->get_channels_number();
 
         outputs_data.resize(2);
         outputs_dimensions.resize(2);
@@ -131,11 +131,11 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
     {
         cout << "Region proposal layer forward propagation structure" << endl;
 
-        const RegionProposalLayer* region_proposal_layer_pointer = static_cast<RegionProposalLayer*>(layer_pointer);
+        const RegionProposalLayer* region_proposal_layer = static_cast<RegionProposalLayer*>(layer);
 
-        const Index region_rows = region_proposal_layer_pointer->get_region_rows();
-        const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
-        const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
+        const Index region_rows = region_proposal_layer->get_region_rows();
+        const Index region_columns =  region_proposal_layer->get_region_raw_variables();
+        const Index channels_number =  region_proposal_layer->get_channels_number();
 
         cout << "Image patches:" << endl;
 
@@ -153,7 +153,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
 
         cout << "Batch samples number: " << batch_samples_number << endl;
         cout << "Region rows: " << region_rows << endl;
-        cout << "Region columns: " << region_columns << endl;
+        cout << "Region raw_variables: " << region_columns << endl;
         cout << "Channels number: " << channels_number << endl;
 
 

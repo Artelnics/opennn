@@ -65,7 +65,7 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*) override;
+   void set_loss_index(LossIndex*) override;
 
    void set_default() final;
 
@@ -165,22 +165,22 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
     {
     }
 
-    explicit StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+    explicit StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent)
     {
-        set(new_stochastic_gradient_descent_pointer);
+        set(new_stochastic_gradient_descent);
     }
 
     virtual ~StochasticGradientDescentData() {}
 
-    void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+    void set(StochasticGradientDescent* new_stochastic_gradient_descent)
     {
-        stochastic_gradient_descent_pointer = new_stochastic_gradient_descent_pointer;
+        stochastic_gradient_descent = new_stochastic_gradient_descent;
 
-        const LossIndex* loss_index_pointer = stochastic_gradient_descent_pointer->get_loss_index_pointer();
+        const LossIndex* loss_index = stochastic_gradient_descent->get_loss_index();
 
-        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network->get_parameters_number();
 
         parameters_increment.resize(parameters_number);
         last_parameters_increment.resize(parameters_number);
@@ -189,7 +189,7 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
         last_parameters_increment.setZero();
     }
 
-    StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
+    StochasticGradientDescent* stochastic_gradient_descent = nullptr;
 
     Index iteration = 0;
 

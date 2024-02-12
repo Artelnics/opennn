@@ -25,11 +25,11 @@ SumSquaredError::SumSquaredError() : LossIndex()
 /// Neural network and data set constructor.
 /// It creates a sum squared error associated with a neural network and measured on a data set.
 /// It also initializes all the rest of the class members to their default values.
-/// @param new_neural_network_pointer Pointer to a neural network object.
-/// @param new_data_set_pointer Pointer to a data set object.
+/// @param new_neural_network Pointer to a neural network object.
+/// @param new_data_set Pointer to a data set object.
 
-SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : LossIndex(new_neural_network, new_data_set)
 {
 }
 
@@ -86,17 +86,19 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
                                              ForwardPropagation&,
                                              BackPropagation& back_propagation) const
 {
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
-     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-    
-     const pair<type*, dimensions> deltas_pair = output_layer_back_propagation->get_deltas_pair();
-     
+     // Back propagation
+
+     const Tensor<type, 2>& errors = back_propagation.errors;
+
+     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
+
      TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
 
      const type coefficient = type(2.0);
 
-     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     deltas.device(*thread_pool_device) = coefficient*errors;
 }
 
 
@@ -110,17 +112,17 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
 #endif
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    const Layer* output_layer = output_layer_back_propagation->layer;
 
     copy(loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
 
-    divide_columns(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
+    divide_raw_variables(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
 }
 
 

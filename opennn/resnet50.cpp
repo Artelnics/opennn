@@ -36,7 +36,7 @@ Resnet50::Resnet50() : NeuralNetwork()
     pooling_layer_1_a.set_name("pooling_layer_1_a");
     pooling_layer_1_a.set(convolutional_layer_1_1_a.get_outputs_dimensions(), pooling_dimensions);
     pooling_layer_1_a.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
-    pooling_layer_1_a.set_column_stride(2);
+    pooling_layer_1_a.set_raw_variable_stride(2);
     pooling_layer_1_a.set_row_stride(2);
     add_layer(&pooling_layer_1_a);
 
@@ -78,7 +78,7 @@ Resnet50::Resnet50() : NeuralNetwork()
 
     pooling_layer_2.set(convolutional_layer_4.get_outputs_dimensions(), pooling_dimensions);
     pooling_layer_2.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
-    pooling_layer_2.set_column_stride(2);
+    pooling_layer_2.set_raw_variable_stride(2);
     pooling_layer_2.set_row_stride(2);
     pooling_layer_2.set_name("pooling_layer_2");
     add_layer(&pooling_layer_2);
@@ -108,7 +108,7 @@ Resnet50::Resnet50() : NeuralNetwork()
 
     pooling_layer_3.set(convolutional_layer_7.get_outputs_dimensions(), pooling_dimensions);
     pooling_layer_3.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
-    pooling_layer_3.set_column_stride(2);
+    pooling_layer_3.set_raw_variable_stride(2);
     pooling_layer_3.set_row_stride(2);
     pooling_layer_3.set_name("pooling_layer_3");
     add_layer(&pooling_layer_3);
@@ -138,7 +138,7 @@ Resnet50::Resnet50() : NeuralNetwork()
 
     pooling_layer_4.set(convolutional_layer_10.get_outputs_dimensions(), pooling_dimensions);
     pooling_layer_4.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
-    pooling_layer_4.set_column_stride(2);
+    pooling_layer_4.set_raw_variable_stride(2);
     pooling_layer_4.set_row_stride(2);
     pooling_layer_4.set_name("pooling_layer_4");
     add_layer(&pooling_layer_4);
@@ -168,7 +168,7 @@ Resnet50::Resnet50() : NeuralNetwork()
 
     pooling_layer_5.set(convolutional_layer_13.get_outputs_dimensions(), pooling_dimensions);
     pooling_layer_5.set_pooling_method(PoolingLayer::PoolingMethod::MaxPooling);
-    pooling_layer_5.set_column_stride(2);
+    pooling_layer_5.set_raw_variable_stride(2);
     pooling_layer_5.set_row_stride(2);
     pooling_layer_5.set_name("pooling_layer_5");
     add_layer(&pooling_layer_5);
@@ -225,7 +225,7 @@ Resnet50::Resnet50() : NeuralNetwork()
         "miniature_schnauzer", "giant_schnauzer", "standard_schnauzer", "Scotch_terrier", "Tibetan_terrier", 
         "silky_terrier", "soft-coated_wheaten_terrier", "West_Highland_white_terrier", "Lhasa", 
         "flat-coated_retriever", "curly-coated_retriever", "golden_retriever", "Labrador_retriever", 
-        "Chesapeake_Bay_retriever", "German_short-haired_pointer", "vizsla", "English_setter", "Irish_setter",
+        "Chesapeake_Bay_retriever", "German_short-haired", "vizsla", "English_setter", "Irish_setter",
         "Gordon_setter", "Brittany_spaniel", "clumber", "English_springer", "Welsh_springer_spaniel", 
         "cocker_spaniel", "Sussex_spaniel", "Irish_water_spaniel", "kuvasz", "schipperke", "groenendael", "malinois", 
         "briard", "kelpie", "komondor", "Old_English_sheepdog", "Shetland_sheepdog", "collie", "Border_collie",

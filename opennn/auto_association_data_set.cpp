@@ -51,50 +51,50 @@ void AutoAssociationDataSet::transform_associative_data()
 }
 
 
-/// This method duplicates the columns for association problems.
+/// This method duplicates the raw_variables for association problems.
 
-void AutoAssociationDataSet::transform_associative_columns()
+void AutoAssociationDataSet::transform_associative_raw_variables()
 {
-    cout << "Transforming associative columns..." << endl;
+    cout << "Transforming associative raw variables..." << endl;
 
-    associative_columns = columns;
+    associative_raw_variables = raw_variables;
 
-    const Index columns_number = get_columns_number();
+    const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<RawVariable, 1> new_columns;
+    Tensor<RawVariable, 1> new_raw_variables;
 
-    new_columns.resize(2*columns_number);
+    new_raw_variables.resize(2*raw_variables_number);
 
-    Index column_index = 0;
+    Index raw_variable_index = 0;
     Index index = 0;
 
-    for(Index i = 0; i < 2*columns_number; i++)
+    for(Index i = 0; i < 2*raw_variables_number; i++)
     {
-        column_index = i%columns_number;
+        raw_variable_index = i%raw_variables_number;
 
-        if(i < columns_number)
+        if(i < raw_variables_number)
         {
-            new_columns(index).name = columns(column_index).name;
+            new_raw_variables(index).name = raw_variables(raw_variable_index).name;
 
-            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(index).set_use(DataSet::VariableUse::Input);
-            new_columns(index).type = columns(column_index).type;
-            new_columns(index).categories = columns(column_index).categories;
+            new_raw_variables(index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
+            new_raw_variables(index).set_use(DataSet::VariableUse::Input);
+            new_raw_variables(index).type = raw_variables(raw_variable_index).type;
+            new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
             index++;
         }
         else
         {
-            new_columns(index).name = columns(column_index).name + "_output";
+            new_raw_variables(index).name = raw_variables(raw_variable_index).name + "_output";
 
-            new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(index).set_use(DataSet::VariableUse::Target);
-            new_columns(index).type = columns(column_index).type;
-            new_columns(index).categories = columns(column_index).categories;
+            new_raw_variables(index).categories_uses.resize(raw_variables(raw_variable_index).get_categories_number());
+            new_raw_variables(index).set_use(DataSet::VariableUse::Target);
+            new_raw_variables(index).type = raw_variables(raw_variable_index).type;
+            new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
             index++;
         }
     }
 
-    columns = new_columns;
+    raw_variables = new_raw_variables;
 }
 
 
@@ -186,9 +186,9 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     }
 }
 
-Tensor<DataSet::RawVariable, 1> AutoAssociationDataSet::get_associative_columns() const
+Tensor<DataSet::RawVariable, 1> AutoAssociationDataSet::get_associative_raw_variables() const
 {
-    return associative_columns;
+    return associative_raw_variables;
 }
 
 
@@ -198,9 +198,9 @@ const Tensor<type, 2>& AutoAssociationDataSet::get_associative_data() const
 }
 
 
-Index AutoAssociationDataSet::get_associative_columns_number() const
+Index AutoAssociationDataSet::get_associative_raw_variables_number() const
 {
-    return associative_columns.size();
+    return associative_raw_variables.size();
 }
 
 
@@ -210,9 +210,9 @@ void AutoAssociationDataSet::set_associative_data(const Tensor<type, 2>& new_dat
 }
 
 
-void AutoAssociationDataSet::set_associative_columns_number(const Index& new_variables_number)
+void AutoAssociationDataSet::set_associative_raw_variables_number(const Index& new_variables_number)
 {
-    associative_columns.resize(new_variables_number);
+    associative_raw_variables.resize(new_variables_number);
 }
 
 
@@ -237,19 +237,19 @@ void AutoAssociationDataSet::save_auto_associative_data_binary(const string& bin
 
     streamsize size = sizeof(Index);
 
-    Index columns_number = associative_data.dimension(1);
+    Index raw_variables_number = associative_data.dimension(1);
     Index rows_number = associative_data.dimension(0);
 
     cout << "Saving binary associative data file..." << endl;
 
-    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&raw_variables_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
     type value;
 
-    for(int i = 0; i < columns_number; i++)
+    for(int i = 0; i < raw_variables_number; i++)
     {
         for(int j = 0; j < rows_number; j++)
         {
@@ -271,9 +271,9 @@ void AutoAssociationDataSet::transform_associative_dataset()
 {
     transform_associative_data();
 
-    transform_associative_columns();
+    transform_associative_raw_variables();
 
-    unuse_constant_columns();
+    unuse_constant_raw_variables();
 
     set_auto_associative_samples_uses();
 }
@@ -300,19 +300,19 @@ void AutoAssociationDataSet::load_auto_associative_data_binary(const string& aut
 
     streamsize size = sizeof(Index);
 
-    Index columns_number;
+    Index raw_variables_number;
     Index rows_number;
 
-    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&raw_variables_number), size);
     file.read(reinterpret_cast<char*>(&rows_number), size);
 
     size = sizeof(type);
 
     type value;
 
-    associative_data.resize(rows_number, columns_number);
+    associative_data.resize(rows_number, raw_variables_number);
 
-    for(Index i = 0; i < rows_number*columns_number; i++)
+    for(Index i = 0; i < rows_number*raw_variables_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
 

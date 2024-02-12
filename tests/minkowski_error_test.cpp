@@ -77,7 +77,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -121,7 +121,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -138,7 +138,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Loss index
 
-        Tensor<Layer*,1> trainable_layers = neural_network.get_trainable_layers_pointers();
+        Tensor<Layer*,1> trainable_layers = neural_network.get_trainable_layers();
 
         back_propagation.set(samples_number, &minkowski_error);
 
@@ -166,7 +166,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -214,7 +214,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -257,7 +257,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -297,7 +297,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_numeric_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);

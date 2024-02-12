@@ -584,9 +584,9 @@ public:
     Tensor<type, 2> calculate_gradient_matrix(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 2>&) const, const Index& integer, const Tensor<type, 2>& x) const
     {
         const Index rows_number = x.dimension(0);
-        const Index columns_number = x.dimension(1);
+        const Index raw_variables_number = x.dimension(1);
 
-        Tensor<type, 2> gradient(rows_number, columns_number);
+        Tensor<type, 2> gradient(rows_number, raw_variables_number);
 
         type h;
         Tensor<type, 2> x_forward(x);
@@ -597,7 +597,7 @@ public:
 
         for(Index i = 0; i < rows_number; i++)
         {
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < raw_variables_number; j++)
             {
                 h = calculate_h(x(i,j));
 

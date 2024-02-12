@@ -179,26 +179,26 @@ struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
     
     
     pair<type*, dimensions> get_outputs_pair() const final
     {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index neurons_number = layer->get_neurons_number();
 
         return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer) final
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index neurons_number = layer->get_neurons_number();
 
         batch_samples_number = new_batch_samples_number;
 
