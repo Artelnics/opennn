@@ -39,7 +39,7 @@ int main()
    try
    {
         cout << "Blank\n";
-
+        /*
         const int M = 10000;
         const int K = 10000;
         const int N = 10000;
@@ -119,7 +119,28 @@ int main()
         std::cout << "Execution time Eigen:" << std::endl;
         std::cout << seconds_eigen << " seconds " << milliseconds_eigen << " milliseconds" << std::endl;
         std::cout << "Total Milliseconds: " << duration_eigen.count() << std::endl;
-        
+        */
+
+        Tensor<type, 3> A(2, 2, 2);
+        A.setValues({ {{1, 2},
+                       {3, 4}},
+            
+                      {{5, 6},
+                       {7, 8}} });
+
+        Tensor<type, 3> B(2, 2, 3);
+        B.setValues({ {{1, 2, 3},
+                       {4, 5, 6}},
+
+                      {{7, 8, 9},
+                       {10, 11, 12}} });
+
+        const Eigen::array<IndexPair<Index>, 2> contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+
+        Tensor<type, 2> C = A.contract(B, contraction_indices);
+
+        cout << C << endl;
+
         cout << "Bye!" << endl;
 
         return 0;

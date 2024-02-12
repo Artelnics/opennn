@@ -661,8 +661,8 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pa
 
 
 void PerceptronLayer::calculate_error_combinations_derivatives(const Tensor<type, 2>& deltas,
-    const Tensor<type, 2>& activations_derivatives,
-    Tensor<type, 2>& error_combinations_derivatives) const
+                                                               const Tensor<type, 2>& activations_derivatives,
+                                                               Tensor<type, 2>& error_combinations_derivatives) const
 {
     error_combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
 }
@@ -977,7 +977,7 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
 
     const Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
 
-    // Back praopagation
+    // Back propagation
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);

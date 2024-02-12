@@ -29,12 +29,12 @@ EmbeddingLayer::EmbeddingLayer() : Layer()
 /// It initializes the parameters at random.
 /// This constructor also initializes the rest of the class members to their default values.
 
-EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimensions,
+EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
                                const Index& new_input_length,
                                const Index& new_depth,
                                const bool& new_positional_encoding) : Layer()
 {
-    set(new_inputs_dimensions, new_input_length, new_depth, new_positional_encoding);
+    set(new_inputs_dimension, new_input_length, new_depth, new_positional_encoding);
 
     layer_type = Type::Embedding;
 
@@ -44,9 +44,9 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimensions,
 
 /// Returns the dimension (maximum value + 1) of the input to the layer.
 
-Index EmbeddingLayer::get_input_dim() const
+Index EmbeddingLayer::get_input_dimension() const
 {
-    return inputs_dimensions;
+    return inputs_dimension;
 }
 
 
@@ -65,12 +65,17 @@ Index EmbeddingLayer::get_depth() const
     return depth;
 }
 
+Tensor<type, 2> EmbeddingLayer::get_embedding_weights() const
+{
+    return embedding_weights;
+}
+
 
 /// Returns the number of parameters of the layer.
 
 Index EmbeddingLayer::get_parameters_number() const
 {
-    return lookup_table.size();
+    return embedding_weights.size();
 }
 
 
@@ -88,7 +93,7 @@ const bool& EmbeddingLayer::get_display() const
 
 void EmbeddingLayer::set()
 {
-    inputs_dimensions = 0;
+    inputs_dimension = 0;
 
     inputs_length = 0;
 
@@ -96,7 +101,7 @@ void EmbeddingLayer::set()
 
     positional_encoding = false;
 
-    lookup_table.resize(0, 0);
+    embedding_weights.resize(0, 0);
 
     set_default();
 }
@@ -105,18 +110,18 @@ void EmbeddingLayer::set()
 /// Sets new input dimension, input length, embedding depth and activation function of the layer.
 /// It also sets the rest of the members to their default values.
 
-void EmbeddingLayer::set(const Index& new_inputs_dimensions,
+void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_input_length,
                          const Index& new_depth,
                          const bool& new_positional_encoding)
 {
-    inputs_dimensions = new_inputs_dimensions;
+    inputs_dimension = new_inputs_dimension;
 
     inputs_length = new_input_length;
 
     depth = new_depth;
 
-    set_lookup_table();
+    set_embedding_weights();
 
     positional_encoding = new_positional_encoding;
 
@@ -144,11 +149,11 @@ void EmbeddingLayer::set_name(const string& new_layer_name)
 
 /// Sets a new input dim in the layer.
 
-void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimensions)
+void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
 {
-    inputs_dimensions = new_inputs_dimensions;
+    inputs_dimension = new_inputs_dimension;
 
-    set_lookup_table();
+    set_embedding_weights();
 }
 
 
@@ -166,15 +171,15 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 
-    set_lookup_table();
+    set_embedding_weights();
 }
 
 
 /// Sets the lookup table and randomizes its parameters.
 
-void EmbeddingLayer::set_lookup_table()
+void EmbeddingLayer::set_embedding_weights()
 {
-    lookup_table.resize(inputs_dimensions, depth);
+    embedding_weights.resize(inputs_dimension, depth);
 
     set_parameters_random();
 }
@@ -187,22 +192,22 @@ void EmbeddingLayer::set_parameters_random()
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
 
-//    lookup_table = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
+//    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
     // first row must be 0s because input value 0 is padding
 
     for(Index j = 0; j < depth; j++)
     {
-        lookup_table(0, j) = type(0);
+        embedding_weights(0, j) = type(0);
     }
 
-    for(Index i = 1; i < inputs_dimensions; i++)
+    for(Index i = 1; i < inputs_dimension; i++)
     {
         for(Index j = 0; j < depth; j++)
         {
             const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-            lookup_table(i, j) = minimum + (maximum - minimum)*random;
+            embedding_weights(i, j) = minimum + (maximum - minimum)*random;
         }
     }
 }
@@ -220,23 +225,23 @@ void EmbeddingLayer::set_display(const bool& new_display)
 
 
 /*
-/// Calculates one-hot encoding, of dimension = inputs_dimensions, of an input row (assuming all input values are integers)
+/// Calculates one-hot encoding, of dimension = inputs_dimension, of an input row (assuming all input values are integers)
 /// @return Matrix of one-hot encodings of all values in input_row
 
 Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_row)
 {
-    Tensor<type, 2> one_hot_encoded_input_row(inputs_length, inputs_dimensions);
+    Tensor<type, 2> one_hot_encoded_input_row(inputs_length, inputs_dimension);
     one_hot_encoded_input_row.setZero();
 
     const Tensor<type, 0> max_input = input_row.maximum();
 
-    if(max_input(0) >= type(inputs_dimensions))
+    if(max_input(0) >= type(inputs_dimension))
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
                << "void EmbeddingLayer::one_hot_encode_row(const Tensor<Index, 1>&)\n"
-               << "All input values must be less than " << inputs_dimensions << " (" << max_input(0) << ").\n";
-        throw runtime_error(buffer.str());
+               << "All input values must be less than " << inputs_dimension << " (" << max_input(0) << ").\n";
+        throw invalid_argument(buffer.str());
     }
 
 #pragma omp parallel for
@@ -260,7 +265,7 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
         for(Index input_position = 0; input_position < inputs_length; input_position++)
         {
             outputs.chip(row, 0).chip(input_position, 0)
-                = lookup_table.chip(inputs(row, input_position), 0);
+                = embedding_weights.chip(inputs(row, input_position), 0);
         }
     }
 }
@@ -293,6 +298,67 @@ void EmbeddingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
             outputs.chip(batch_element, 0)/*.device(thread_pool_device)*/ += positional_encoding;
         }
     }
+}
+
+void EmbeddingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
+                                            LayerBackPropagation* next_back_propagation,
+                                            LayerBackPropagation* back_propagation) const
+{
+
+    EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
+        static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
+
+    switch (next_back_propagation->layer_pointer->get_type())
+    {
+    case Type::MultiheadAttention:
+    {
+        MultiheadAttentionLayerForwardPropagation* next_multihead_attention_layer_forward_propagation =
+            reinterpret_cast<MultiheadAttentionLayerForwardPropagation*>(next_forward_propagation);
+
+        MultiheadAttentionLayerBackPropagation* next_multihead_attention_layer_back_propagation =
+            reinterpret_cast<MultiheadAttentionLayerBackPropagation*>(next_back_propagation);
+
+        calculate_hidden_delta(next_multihead_attention_layer_forward_propagation,
+                               next_multihead_attention_layer_back_propagation,
+                               embedding_layer_back_propagation);
+    }
+    return;
+
+    default:
+
+        return;
+    }
+}
+
+void EmbeddingLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation* next_forward_propagation,
+                                            MultiheadAttentionLayerBackPropagation* next_back_propagation,
+                                            EmbeddingLayerBackPropagation* back_propagation) const
+{
+    // Next layer
+
+    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer_pointer);
+
+}
+
+void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+                                              LayerForwardPropagation* forward_propagation,
+                                              LayerBackPropagation* back_propagation) const
+{
+    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+
+    // Forward propagation
+
+    EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
+
+    // Back propagation
+
+    EmbeddingLayerBackPropagation* embedding_layer_back_propagation = static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
+
+    const Tensor<type, 3>& deltas = embedding_layer_back_propagation->deltas;
+
+    Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
+
+
 }
 
 }

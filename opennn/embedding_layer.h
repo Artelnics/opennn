@@ -22,7 +22,9 @@
 
 #include "config.h"
 #include "layer.h"
-#include "perceptron_layer.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+#include "muLtihead_attention_layer.h"
 
 #ifdef OPENNN_MKL
 #include "../mkl/mkl.h"
@@ -44,7 +46,6 @@ struct EmbeddingLayerBackPropagationLM;
 
 /// EmbeddingLayer has inputs of a fixed length (inputs_length) and within a fixed set of possible integer values (inputs_dimensions).
 /// The layer will assign to each possible value a dense vector of fixed length (depth).
-/// The vectors are learnable parameters, which is implemented by passing a one-hot encoding of each value through a PerceptronLayer.
 
 
 class EmbeddingLayer : public Layer
@@ -65,10 +66,10 @@ public:
 
     bool is_empty() const;
 
-    Index get_input_dim() const;
+    Index get_input_dimension() const;
     Index get_input_length() const;
     Index get_depth() const;
-    Tensor<type, 2> get_lookup_table() const;
+    Tensor<type, 2> get_embedding_weights() const;
 
     Index get_parameters_number() const final;
 
@@ -90,7 +91,7 @@ public:
     void set_input_length(const Index&);
     void set_depth(const Index&);
 
-    void set_lookup_table();
+    void set_embedding_weights();
     void set_parameters_random() final;
 
     // Display messages
@@ -106,6 +107,26 @@ public:
     void forward_propagate(const pair<type*, dimensions>&layer,
                            LayerForwardPropagation*,
                            const bool&) final;
+    /*
+    void forward_propagate(const pair<type*, dimensions>&,
+                           Tensor<type, 1>&,
+                           LayerForwardPropagation*) final;
+*/
+    // Delta methods
+
+    void calculate_hidden_delta(LayerForwardPropagation*,
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const final;
+
+    void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
+                                MultiheadAttentionLayerBackPropagation*,
+                                EmbeddingLayerBackPropagation*) const;
+
+    // Gradient methods
+
+    void calculate_error_gradient(const pair<type*, dimensions>&,
+                                  LayerForwardPropagation*,
+                                  LayerBackPropagation*) const final;
 
     // Expression methods
 
@@ -123,7 +144,7 @@ protected:
 
     /// Input dimension (i.e. number of values input can take or vocabulary size)
 
-    Index inputs_dimensions;
+    Index inputs_dimension;
 
     /// Length of each input entry (assuming equal length)
 
@@ -135,7 +156,7 @@ protected:
 
     /// Lookup table
 
-    Tensor<type, 2> lookup_table;
+    Tensor<type, 2> embedding_weights;
 
     /// Whether the layer has to add positional encoding or not
 
@@ -291,29 +312,27 @@ protected:
         }
 
 
-        /// @todo
         void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            /*
-
             layer = new_layer;
+
+            EmbeddingLayer* embedding_layer_pointer = static_cast<EmbeddingLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index neurons_number = layer->get_neurons_number();
-            const Index inputs_number = layer->get_inputs_number();
+            const Index inputs_length = embedding_layer_pointer->get_input_length();
 
-            deltas_dimensions.resize(2);
-            deltas_dimensions.setValues({batch_samples_number, neurons_number});
+            const Index depth = embedding_layer_pointer->get_depth();
 
-            deltas_data = (type*)malloc( size_t(batch_samples_number*neurons_number*sizeof(type)));
+            // Deltas
 
-            biases_derivatives.resize(neurons_number);
+            deltas.resize(batch_samples_number, inputs_length, depth);
 
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+            deltas_data = deltas.data();
 
-            error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-        */
+            const Index input_dimension = embedding_layer_pointer->get_input_dimension();
+
+            embedding_weights_derivatives.resize(input_dimension, depth);
         }
 
 
@@ -323,6 +342,13 @@ protected:
             //cout << deltas << endl;
 
         }
+
+
+        Tensor<type, 3> deltas;
+
+        Tensor<type, 2> embedding_weights_derivatives;
+
+        //Tensor<type, 3> error_combinations_derivatives;
 
     };
 

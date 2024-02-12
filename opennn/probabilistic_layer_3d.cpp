@@ -628,44 +628,24 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
 
     const Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas; // CrossEntropyError3D::calculate_output_delta
 
-    Tensor<type,1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
-    Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
+    Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
 
-    Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
-    Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
-
-    if(neurons_number == 1)
+    if(get_neurons_number() == 1)
     {
-/*
-        cout << "hello" << endl;
-
-        const Eigen::array<Index, 2> reshape_dimensions = {{samples_number, 1}};
+        const Eigen::array<Index, 3> reshape_dimensions = {{batch_samples_number, inputs_number, 1}};
 
         // Reshape does not copy the data
 
-        const Tensor<type, 2> activations_derivatives_2d = activations_derivatives.reshape(reshape_dimensions);
-
-        biases_derivatives.device(*thread_pool_device) =
-            (deltas*activations_derivatives_2d).sum(Eigen::array<Index, 1>({0}));
-
-        synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs.contract(deltas*activations_derivatives_2d, AT_B);
-
-        biases_derivatives.device(*thread_pool_device) =
-            (deltas*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
-
-        synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs.contract(deltas*activations_derivatives, AT_B);
-*/
+        error_combinations_derivatives = activations_derivatives.reshape(reshape_dimensions) * deltas;
     }
     else
     {
-
-        Tensor<type, 3>& error_combinations_derivatives = probabilistic_layer_3d_back_propagation->error_combinations_derivatives;
+        Tensor<type, 1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
+        Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
 
         for(Index i = 0; i < batch_samples_number; i++)
         {
-            for(Index j = 0; j < get_inputs_number(); j++)
+            for(Index j = 0; j < inputs_number; j++)
             {
                 activations_derivatives_matrix = activations_derivatives.chip(i, 0).chip(j, 0);
 
@@ -675,13 +655,18 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
                         deltas_row.contract(activations_derivatives_matrix, AT_B);
             }
         }
-
-        biases_derivatives.device(*thread_pool_device) =
-                error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
-
-        synaptic_weights_derivatives.device(*thread_pool_device) =
-                inputs.contract(error_combinations_derivatives, AT_B);
     }
+
+    Tensor<type, 1>& biases_derivatives = probabilistic_layer_3d_back_propagation->biases_derivatives;
+    Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_3d_back_propagation->synaptic_weights_derivatives;
+
+    biases_derivatives.device(*thread_pool_device) =
+        error_combinations_derivatives.sum(Eigen::array<Index, 2>({ 0, 1 }));
+
+    const Eigen::array<IndexPair<Index>, 2> contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+
+    synaptic_weights_derivatives.device(*thread_pool_device) =
+        inputs.contract(error_combinations_derivatives, contraction_indices);
 }
 
 

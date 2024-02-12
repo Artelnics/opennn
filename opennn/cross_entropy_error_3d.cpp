@@ -176,39 +176,10 @@ void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
 
     Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    deltas.device(*thread_pool_device) = (-targets/outputs)/type(batch_samples_number);
+    deltas.device(*thread_pool_device) = (-targets / (outputs/* + epsilon*/)) / type(batch_samples_number);
 }
 
-/*
-void CrossEntropyError3D::calculate_output_delta(const pair<type*, dimensions>& targets_pair,
-                                                 ForwardPropagation& forward_propagation,
-                                                 BackPropagation& back_propagation) const
-{
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    ProbabilisticLayer3DBackPropagation* probabilistic_layer_back_propagation
-        = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number - 1));
-
-    const Index batch_samples_number = targets_pair.second[0][0];
-
-    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
-
-    const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             outputs_pair.second[0][0],
-                                             outputs_pair.second[0][1],
-                                             outputs_pair.second[0][2]);
-
-    const TensorMap<Tensor<type, 3>> targets(targets_pair.first, 
-                                             targets_pair.second[0][0],
-                                             targets_pair.second[0][1],
-                                             targets_pair.second[0][2]);
-
-    Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
-
-    deltas.device(*thread_pool_device) = (-targets/outputs) / type(batch_samples_number);
-}
-*/
 
 /// Returns a string with the name of the cross-entropy error loss type, "CROSS_ENTROPY_ERROR".
 

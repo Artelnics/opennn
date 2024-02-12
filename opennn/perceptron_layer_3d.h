@@ -19,7 +19,9 @@
 
 #include "config.h"
 #include "layer.h"
+#include "layer_back_propagation.h"
 #include "probabilistic_layer_3d.h"
+#include "multihead_attention_layer.h"
 
 #ifdef OPENNN_MKL
     #include "../mkl/mkl.h"
@@ -116,7 +118,7 @@ public:
 
    // Architecture
 
-   void set_inputs_number(const Index&) final;
+   void set_inputs_size(const Index&);
    void set_neurons_number(const Index&) final;
 
    // Parameters
@@ -165,6 +167,10 @@ public:
                           LayerForwardPropagation*,
                           const bool&) final;
 
+   void forward_propagate(const pair<type*, dimensions>&,
+                          Tensor<type, 1>&,
+                          LayerForwardPropagation*);
+
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
@@ -179,11 +185,19 @@ public:
                                ProbabilisticLayer3DBackPropagation*,
                                PerceptronLayer3DBackPropagation*) const;
 
+   void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
+                               MultiheadAttentionLayerBackPropagation*,
+                               PerceptronLayer3DBackPropagation*) const;
+
    // Gradient methods
 
    void calculate_error_gradient(const pair<type*, dimensions>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
+
+   void calculate_error_combinations_derivatives(const Tensor<type, 3>&,
+                                                 const Tensor<type, 3>&,
+                                                 Tensor<type, 3>&) const;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
@@ -204,7 +218,7 @@ protected:
 
    // MEMBERS
 
-   Index inputs_size;
+   Index inputs_number;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's transfer function to generate the neuron's output.
@@ -324,9 +338,12 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     
     pair<type*, dimensions> get_deltas_pair() const final
     {
-        const Index neurons_number = layer->get_neurons_number();
+        PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer);
 
-        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, neurons_number}});
+        const Index neurons_number = perceptron_layer_3d_pointer->get_neurons_number();
+        const Index inputs_number = perceptron_layer_3d_pointer->get_inputs_number();
+
+        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, inputs_number, neurons_number}});
     }
 
 
@@ -334,20 +351,23 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     {
         layer = new_layer;
 
+        PerceptronLayer3D* perceptron_layer_3d_pointer = static_cast<PerceptronLayer3D*>(layer);
+
         batch_samples_number = new_batch_samples_number;
 
-        const Index neurons_number = layer->get_neurons_number();
-        const Index inputs_number = layer->get_inputs_number();
+        const Index neurons_number = perceptron_layer_3d_pointer->get_neurons_number();
+        const Index inputs_number = perceptron_layer_3d_pointer->get_inputs_number();
+        const Index inputs_size = perceptron_layer_3d_pointer->get_inputs_size();
 
-        deltas.resize(batch_samples_number, neurons_number);
+        deltas.resize(batch_samples_number, inputs_number, neurons_number);
 
         deltas_data = deltas.data();
 
         biases_derivatives.resize(neurons_number);
 
-        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+        synaptic_weights_derivatives.resize(inputs_size, neurons_number);
 
-        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+        error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
     }
 
 
@@ -363,12 +383,12 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
         cout << synaptic_weights_derivatives << endl;
     }
 
-    Tensor<type, 2> deltas;
+    Tensor<type, 3> deltas;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
 
-    Tensor<type, 2> error_combinations_derivatives;
+    Tensor<type, 3> error_combinations_derivatives;
 };
 
 }
