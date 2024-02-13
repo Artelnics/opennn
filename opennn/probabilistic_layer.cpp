@@ -560,8 +560,8 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
 
 
 void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-    Tensor<type, 2>& activations,
-    Tensor<type, 3>& activations_derivatives) const
+                                                           Tensor<type, 2>& activations,
+                                                           Tensor<type, 3>& activations_derivatives) const
 {
 
     switch (activation_function)
@@ -569,8 +569,8 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
     case ActivationFunction::Softmax:
 
         softmax_derivatives(combinations,
-            activations,
-            activations_derivatives);
+                            activations,
+                            activations_derivatives);
         return;
 
     default:
@@ -593,10 +593,7 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
-    calculate_combinations(inputs,
-                           biases,
-                           synaptic_weights,
-                           outputs);
+    calculate_combinations(inputs, outputs);
 
     if(is_training)
     {
@@ -605,16 +602,16 @@ void ProbabilisticLayer::forward_propagate(const pair<type*, dimensions>& inputs
             Tensor<type, 2>& activations_derivatives_2d = probabilistic_layer_forward_propagation->activations_derivatives_2d;
 
             calculate_activations_derivatives(outputs,
-                outputs,
-                activations_derivatives_2d);
+                                              outputs,
+                                              activations_derivatives_2d);
         }
         else
         {
             Tensor<type, 3>& activations_derivatives_3d = probabilistic_layer_forward_propagation->activations_derivatives_3d;
 
             calculate_activations_derivatives(outputs,
-                outputs,
-                activations_derivatives_3d);
+                                              outputs,
+                                              activations_derivatives_3d);
         }
         
     }
@@ -747,7 +744,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<type, 3>& activations_derivatives_2d = probabilistic_layer_forward_propagation->activations_derivatives_2d;
+    const Tensor<type, 2>& activations_derivatives_2d = probabilistic_layer_forward_propagation->activations_derivatives_2d;
     const Tensor<type, 3>& activations_derivatives_3d = probabilistic_layer_forward_propagation->activations_derivatives_3d;
 
     // Back propagation

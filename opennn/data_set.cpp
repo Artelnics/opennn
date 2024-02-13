@@ -4019,23 +4019,23 @@ const string& DataSet::get_missing_values_label() const
 
 Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
 {
-    if(scaling_unscaling_method == "NoScaling")
+    if (scaling_unscaling_method == "NoScaling")
     {
         return Scaler::NoScaling;
     }
-    else if(scaling_unscaling_method == "MinimumMaximum")
+    else if (scaling_unscaling_method == "MinimumMaximum")
     {
         return Scaler::MinimumMaximum;
     }
-    else if(scaling_unscaling_method == "Logarithmic")
+    else if (scaling_unscaling_method == "Logarithmic")
     {
         return Scaler::Logarithm;
     }
-    else if(scaling_unscaling_method == "MeanStandardDeviation")
+    else if (scaling_unscaling_method == "MeanStandardDeviation")
     {
         return Scaler::MeanStandardDeviation;
     }
-    else if(scaling_unscaling_method == "StandardDeviation")
+    else if (scaling_unscaling_method == "StandardDeviation")
     {
         return Scaler::StandardDeviation;
     }
@@ -4044,23 +4044,11 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "static Scaler get_scaling_unscaling_method(const string).\n"
-               << "Unknown scaling-unscaling method: " << scaling_unscaling_method << ".\n";
+            << "static Scaler get_scaling_unscaling_method(const string).\n"
+            << "Unknown scaling-unscaling method: " << scaling_unscaling_method << ".\n";
 
         throw runtime_error(buffer.str());
     }
-}
-
-
-Tensor<string, 1> DataSet::get_context_vocabulary() const
-{
-    return context_vocabulary;
-}
-
-
-Tensor<string, 1> DataSet::get_completion_vocabulary() const
-{
-    return completion_vocabulary;
 }
 
 

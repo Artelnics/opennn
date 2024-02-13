@@ -517,9 +517,7 @@ void ProbabilisticLayer3D::insert_parameters(const Tensor<type, 1>& parameters, 
 
 
 void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
-                                                const Tensor<type, 1>& biases,
-                                                const Tensor<type, 2>& synaptic_weights,
-                                                Tensor<type, 3>& combinations) const
+                                                  Tensor<type, 3>& combinations) const
 {
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = {IndexPair<Index>(2, 0)};
     

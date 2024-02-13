@@ -711,9 +711,6 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
         current_inputs.device(*thread_pool_device) = inputs.chip(i, 0);
 
         calculate_combinations(current_inputs,
-                               input_weights,
-                               recurrent_weights,
-                               biases,
                                current_combinations);
 
         if(is_training)

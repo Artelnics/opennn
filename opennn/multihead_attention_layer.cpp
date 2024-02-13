@@ -438,7 +438,8 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 
 void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& transformed_query,
                                                        const Tensor<type, 4>& transformed_key,
-                                                       Tensor<type, 4>& attention_scores) const
+                                                       Tensor<type, 4>& attention_scores,
+                                                       Tensor<type, 4>& softmax_attention_scores) const
 {
     const Index batch_size = transformed_query.dimension(0);
 
@@ -461,12 +462,12 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& tr
         apply_causal_mask(attention_scores);
     }
 
-    softmax(attention_scores, attention_scores);
+    softmax(attention_scores, softmax_attention_scores);
 }
 
 
 void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& transformed_value,
-                                                       const Tensor<type, 4>& attention_scores,
+                                                       const Tensor<type, 4>& softmax_attention_scores,
                                                        Tensor<type, 4>& attention_outputs) const 
 {    
     const Index batch_size = transformed_value.dimension(0);
@@ -476,7 +477,7 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& t
         for(Index head_index = 0; head_index < heads_number ; head_index++)
         {
             attention_outputs.chip(sample_index, 0).chip(head_index, 2).device(*thread_pool_device) =
-                attention_scores.chip(sample_index, 0).chip(head_index, 2).contract(
+                softmax_attention_scores.chip(sample_index, 0).chip(head_index, 2).contract(
                 transformed_value.chip(sample_index, 0).chip(head_index, 2), A_B);
         }
     }
@@ -514,43 +515,43 @@ void MultiheadAttentionLayer::forward_propagate(const pair<type*, dimensions>& i
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> query(inputs_pair.first,
+    const TensorMap<Tensor<type, 3>> input(inputs_pair.first,
                                            inputs_pair.second[0][0],
                                            inputs_pair.second[0][1],
                                            inputs_pair.second[0][2]);
 
-    const TensorMap<Tensor<type, 3>> key(inputs_pair.first + inputs_pair.second[0][0] + inputs_pair.second[0][1] + inputs_pair.second[0][2],
-                                         inputs_pair.second[1][0],
-                                         inputs_pair.second[1][1],
-                                         inputs_pair.second[1][2]);
+    const TensorMap<Tensor<type, 3>> context(inputs_pair.first + inputs_pair.second[0][0] + inputs_pair.second[0][1] + inputs_pair.second[0][2],
+                                             inputs_pair.second[1][0],
+                                             inputs_pair.second[1][1],
+                                             inputs_pair.second[1][2]);
 
-    const TensorMap<Tensor<type, 3>> value = key;
+    Tensor<type, 4>& query = multihead_attention_layer_forward_propagation->query;
+    Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
+    Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
 
-    Tensor<type, 4>& transformed_query = multihead_attention_layer_forward_propagation->transformed_query;
-    Tensor<type, 4>& transformed_key = multihead_attention_layer_forward_propagation->transformed_key;
-    Tensor<type, 4>& transformed_value = multihead_attention_layer_forward_propagation->transformed_value;
+    calculate_transformation(input, query, query_weights);
 
-    calculate_transformation(query, transformed_query, query_weights);
+    calculate_transformation(context, key, key_weights);
 
-    calculate_transformation(key, transformed_key, key_weights);
-
-    calculate_transformation(value, transformed_value, value_weights);
+    calculate_transformation(context, value, value_weights);
 
     Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
+    Tensor<type, 4>& softmax_attention_scores = multihead_attention_layer_forward_propagation->softmax_attention_scores;
 
-    compute_attention_scores(transformed_query,
-                             transformed_key,
-                             attention_scores);
+    compute_attention_scores(query,
+                             key,
+                             attention_scores,
+                             softmax_attention_scores);
 
     if (dropout_rate > type(0))
     {
-        dropout(attention_scores);
+        dropout(softmax_attention_scores);
     }
 
     Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
 
-    compute_attention_outputs(transformed_value,
-                             attention_scores,
+    compute_attention_outputs(value,
+                             softmax_attention_scores,
                              attention_outputs);
 
 
@@ -569,7 +570,7 @@ void MultiheadAttentionLayer::calculate_hidden_delta(LayerForwardPropagation* ne
     MultiheadAttentionLayerBackPropagation* multihead_layer_back_propagation =
         static_cast<MultiheadAttentionLayerBackPropagation*>(back_propagation);
 
-    switch (next_back_propagation->layer_pointer->get_type())
+    switch (next_back_propagation->layer->get_type())
     {
 
     case Type::Perceptron3D:
@@ -613,7 +614,7 @@ void MultiheadAttentionLayer::calculate_hidden_delta(PerceptronLayer3DForwardPro
 {
     // Next layer
 
-    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer_pointer);
+    const PerceptronLayer3D* next_perceptron_layer = static_cast<PerceptronLayer3D*>(next_back_propagation->layer);
 
     const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
 
@@ -638,7 +639,7 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
 {
     // Next layer
 
-    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer_pointer);
+    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
 
 }
 
@@ -647,22 +648,27 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
                                                        LayerForwardPropagation* forward_propagation,
                                                        LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> query_map(inputs.first,
+    const TensorMap<Tensor<type, 3>> input(inputs.first,
                                                inputs.second[0][0],
                                                inputs.second[0][1],
                                                inputs.second[0][2]);
 
-    const TensorMap<Tensor<type, 3>> key_map(inputs.first + inputs.second[0][0] + inputs.second[0][1] + inputs.second[0][2],
+    const TensorMap<Tensor<type, 3>> context(inputs.first + inputs.second[0][0] + inputs.second[0][1] + inputs.second[0][2],
                                              inputs.second[1][0],
                                              inputs.second[1][1],
                                              inputs.second[1][2]);
-
-    const TensorMap<Tensor<type, 3>> value_map = key_map;
 
     // Forward propagation
 
     const MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation =
         static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
+
+    const Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
+    const Tensor<type, 4>& softmax_attention_scores = multihead_attention_layer_forward_propagation->softmax_attention_scores;
+
+    const Tensor<type, 4>& query = multihead_attention_layer_forward_propagation-> query;
+    const Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
+    const Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
 
     // Back propagation
 
@@ -671,6 +677,12 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     const Tensor<type, 3>& deltas = multihead_attention_layer_back_propagation->deltas;
 
+    Tensor<type, 4>& attention_scores_derivatives = multihead_attention_layer_back_propagation->attention_scores_derivatives;
+
+    Tensor<type, 3> error_query_derivatives = multihead_attention_layer_back_propagation->error_query_derivatives;
+    Tensor<type, 3> error_key_derivatives = multihead_attention_layer_back_propagation->error_key_derivatives;
+    Tensor<type, 3> error_value_derivatives = multihead_attention_layer_back_propagation->error_value_derivatives;
+
     Tensor<type, 3>& query_weights_derivatives = multihead_attention_layer_back_propagation->query_weights_derivatives;
     Tensor<type, 3>& key_weights_derivatives = multihead_attention_layer_back_propagation->key_weights_derivatives;
     Tensor<type, 3>& value_weights_derivatives = multihead_attention_layer_back_propagation->value_weights_derivatives;
@@ -678,9 +690,28 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
     Tensor<type, 1>& projection_biases_derivatives = multihead_attention_layer_back_propagation->projection_biases_derivatives;
 
-//    biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(Eigen::array<Index, 1>({ 0 }));
+    /// PROJECTION DERIVATIVES
 
-//    synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
+    //calculate_error_projection_weights_derivatives() // using attention_outputs and deltas
+    //calculate_error_projection_biases_derivatives() // using deltas
+
+
+    /// VALUE DERIVATIVES
+
+    //calculate_error_value_derivatives() // using softmax_attention_scores, deltas, projection_weights and value_weights (sum)
+
+    //calculate_error_value_weights_derivatives() // using context and error_value_derivatives 
+
+
+    /// QUERY AND KEY DERIVATIVES
+
+    //calculate_attention_scores_derivatives(); // using deltas, projection_weights, value and softmax_derivatives(attention_scores)
+
+    //calculate_error_query_derivatives() // using attention_scores_derivatives, key, weight_depth and query_weights (sum)
+    //calculate_error_key_derivatives() // using attention_scores_derivatives, query, weight_depth and key_weights (sum)
+
+    //calculate_error_query_weights_derivatives() // using input and error_query_derivatives
+    //calculate_error_key_weights_derivatives() // using context and error_key_derivatives
 }
 
 }

@@ -863,8 +863,8 @@ void PerceptronLayer3D::calculate_hidden_delta(MultiheadAttentionLayerForwardPro
 
 
 void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
-                                               LayerForwardPropagation* forward_propagation,
-                                               LayerBackPropagation* back_propagation) const
+                                                 LayerForwardPropagation* forward_propagation,
+                                                 LayerBackPropagation* back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs_map(inputs_pair.first,
                                                 inputs_pair.second[0][0],
@@ -897,6 +897,7 @@ void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& 
     perceptron_layer_3d_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
         inputs_map.contract(error_combinations_derivatives, contraction_indices);
 }
+
 
 void PerceptronLayer3D::calculate_error_combinations_derivatives(const Tensor<type, 3>& deltas,
                                                                  const Tensor<type, 3>& activations_derivatives,

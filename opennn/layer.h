@@ -181,42 +181,23 @@ protected:
     template <int rank>
     void binary(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        /*
-        const Tensor<bool, 1> if_sentence = x < x.constant(type(0.5));
+        
+        const Tensor<bool, rank> if_sentence = x < x.constant(type(0.5));
 
-        const Tensor<type, 1> f_1 = x.constant(type(false));
+        const Tensor<type, rank> f_1 = x.constant(type(false));
 
-        const Tensor<type, 1> f_2 = x.constant(type(true));
+        const Tensor<type, rank> f_2 = x.constant(type(true));
 
         y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-*/
+
     }
 
 
     template <int rank>
     void exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        y.device(*thread_pool_device) = x;
 
-        /*
-         
-                 const type alpha = type(1);
-
-    y.device(*thread_pool_device) = y.select(y < 0, alpha * (y.exp() - type(1)));
-
-    const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
-
-    Tensor<type, 1> f_1(x.dimension(0));
-
-    Tensor<type, 1> f_2(x.dimension(0));
-
-    f_1.device(*thread_pool_device) = alpha*(x.exp() - type(1));
-
-    f_2 = x;
-
-    y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-    */
-
+        y.device(*thread_pool_device) = (x > 0).select(x, x.exp() - type(1));
     }
 
 
@@ -258,19 +239,11 @@ protected:
     template <int rank>
     void scaled_exponential_linear(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        /*
         const type lambda = type(1.0507);
 
-        const type alpha = type(1.67326);
+        const type alpha = type(1);
 
-        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
-
-        const Tensor<type, 1> f_1 = lambda*alpha*(x.exp()-type(1));
-
-        Tensor<type, 1> f_2 = lambda*x;
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-*/
+        y.device(*thread_pool_device) = (x > 0).select(lambda * x, lambda * alpha * (x.exp() - type(1)));
     }
 
 
@@ -284,15 +257,7 @@ protected:
     template <int rank>
     void soft_sign(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-/*
-        const Tensor<bool, 1> if_sentence = x < x.constant(type(0));
-
-        const Tensor<type, 1> f_1 = x / (type(1) - x);
-
-        const Tensor<type, 1> f_2 = x / (type(1) + x);
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-*/
+        y.device(*thread_pool_device) = x / (1 + x.abs());
     }
 
 

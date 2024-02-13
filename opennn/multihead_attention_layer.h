@@ -120,7 +120,7 @@ public:
 
     // Attention computation
 
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -247,19 +247,21 @@ protected:
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            MultiheadAttentionLayer* layer = static_cast<MultiheadAttentionLayer*>(new_layer);
+            layer = new_layer;
+
+            MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index input_size = layer->get_input_size();
+            const Index input_size = multihead_attention_layer->get_input_size();
 
-            const Index context_size = layer->get_context_size();
+            const Index context_size = multihead_attention_layer->get_context_size();
 
-            const Index depth = layer->get_depth();
+            const Index depth = multihead_attention_layer->get_depth();
 
-            const Index heads_number = layer->get_heads_number();
+            const Index heads_number = multihead_attention_layer->get_heads_number();
 
-            const Index weights_depth = layer_pointer->get_weights_depth();
+            const Index weights_depth = multihead_attention_layer->get_weights_depth();
 
             // Outputs
 
@@ -269,11 +271,12 @@ protected:
 
             // Rest of quantities
 
-            transformed_query.resize(new_batch_samples_number, input_size, weights_depth, heads_number);
-            transformed_key.resize(new_batch_samples_number, context_size, weights_depth, heads_number);
-            transformed_value.resize(new_batch_samples_number, context_size, weights_depth, heads_number);
+            query.resize(new_batch_samples_number, input_size, weights_depth, heads_number);
+            key.resize(new_batch_samples_number, context_size, weights_depth, heads_number);
+            value.resize(new_batch_samples_number, context_size, weights_depth, heads_number);
 
             attention_scores.resize(new_batch_samples_number, input_size, context_size, heads_number);
+            softmax_attention_scores.resize(new_batch_samples_number, input_size, context_size, heads_number);
             attention_outputs.resize(new_batch_samples_number, input_size, weights_depth, heads_number);
         }
 
@@ -293,11 +296,12 @@ protected:
 //            cout << attention_scores << endl;
         }
 
-        Tensor<type, 4> transformed_query;
-        Tensor<type, 4> transformed_key;
-        Tensor<type, 4> transformed_value;
+        Tensor<type, 4> query;
+        Tensor<type, 4> key;
+        Tensor<type, 4> value;
 
         Tensor<type, 4> attention_scores;
+        Tensor<type, 4> softmax_attention_scores;
         Tensor<type, 4> attention_outputs;
 
         Tensor<type, 3> outputs;
@@ -330,23 +334,25 @@ protected:
         {
             layer = new_layer;
 
-            MultiheadAttentionLayer* multihead_attention_layer_pointer = static_cast<MultiheadAttentionLayer*>(layer_pointer);
+            MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index neurons_number = multihead_attention_layer_pointer->get_neurons_number();
-            const Index input_size = multihead_attention_layer_pointer->get_input_size();
-            const Index context_size = multihead_attention_layer_pointer->get_context_size();
-            const Index depth = multihead_attention_layer_pointer->get_depth();
-            const Index heads_number = multihead_attention_layer_pointer->get_heads_number();
-            const Index weights_depth = multihead_attention_layer_pointer->get_weights_depth();
+            const Index input_size = multihead_attention_layer->get_input_size();
+            const Index context_size = multihead_attention_layer->get_context_size();
+            const Index depth = multihead_attention_layer->get_depth();
+            const Index heads_number = multihead_attention_layer->get_heads_number();
+            const Index weights_depth = multihead_attention_layer->get_weights_depth();
 
             deltas.resize(batch_samples_number, input_size, depth);
 
             deltas_data = deltas.data();
 
-            input_deltas.resize(batch_samples_number, input_size, depth);
-            context_deltas.resize(batch_samples_number, context_size, depth);
+            attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
+
+            error_query_derivatives.resize(batch_samples_number, input_size, depth);
+            error_key_derivatives.resize(batch_samples_number, context_size, depth);
+            error_value_derivatives.resize(batch_samples_number, context_size, depth);
 
             query_weights_derivatives.resize(depth, weights_depth, heads_number);
             key_weights_derivatives.resize(depth, weights_depth, heads_number);
@@ -363,8 +369,12 @@ protected:
         }
 
         Tensor<type, 3> deltas;
-        Tensor<type, 3> input_deltas;
-        Tensor<type, 3> context_deltas;
+
+        Tensor<type, 4> attention_scores_derivatives;
+
+        Tensor<type, 3> error_query_derivatives;
+        Tensor<type, 3> error_key_derivatives;
+        Tensor<type, 3> error_value_derivatives;
 
         Tensor<type, 3> query_weights_derivatives;
         Tensor<type, 3> key_weights_derivatives;
@@ -372,8 +382,6 @@ protected:
 
         Tensor<type, 3> projection_weights_derivatives;
         Tensor<type, 1> projection_biases_derivatives;
-
-        //Tensor<type, 3> error_combinations_derivatives;
 
     };
 

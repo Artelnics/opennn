@@ -38,6 +38,9 @@ public:
 
     string get_text_separator_string() const;
 
+    Tensor<string, 1> get_context_vocabulary() const;
+    Tensor<string, 1> get_completion_vocabulary() const;
+
     void set_text_separator(const Separator&);
     void set_text_separator(const string&);
 
@@ -57,6 +60,16 @@ private:
     TextAnalytics text_analytics;
 
     Tensor<string, 2> text_data_file_preview;
+
+    // LARGE LANGUAGE MODEL
+
+    Tensor<string, 1> context_vocabulary;
+
+    Tensor<string, 1> completion_vocabulary;
+
+    Index max_completion_length;
+
+    Index max_context_length;
 };
 
 }

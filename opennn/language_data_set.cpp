@@ -34,6 +34,18 @@ string LanguageDataSet::get_text_separator_string() const
     }
 }
 
+
+Tensor<string, 1> LanguageDataSet::get_context_vocabulary() const
+{
+    return context_vocabulary;
+}
+
+
+Tensor<string, 1> LanguageDataSet::get_completion_vocabulary() const
+{
+    return completion_vocabulary;
+}
+
 /// Sets a new separator.
 /// @param new_separator Separator value.
 

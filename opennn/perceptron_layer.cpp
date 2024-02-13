@@ -635,8 +635,6 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pa
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
     calculate_combinations(inputs,
-                           biases,
-                           synaptic_weights,
                            outputs);
 
     if(is_training && dropout_rate > type(0))

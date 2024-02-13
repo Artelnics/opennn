@@ -126,8 +126,6 @@ public:
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,
-                               const Tensor<type, 1>&,
-                               const Tensor<type, 2>&,
                                Tensor<type, 3>&) const;
 
    void calculate_activations(const Tensor<type, 3>&,

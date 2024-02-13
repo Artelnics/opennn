@@ -99,7 +99,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     // Test
 
@@ -108,7 +108,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     inputs.setConstant(type(3));
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -132,7 +132,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == samples_number, LOG);
@@ -157,7 +157,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 2, LOG);
@@ -186,7 +186,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     combinations.resize(samples_number, neurons_number);
     combinations.setZero();
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == samples_number, LOG);
@@ -246,7 +246,7 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     combinations.resize(samples_number, neurons_number);
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2, LOG);
     assert_true(combinations.dimension(0) == 1, LOG);
@@ -288,7 +288,7 @@ void PerceptronLayerTest::test_calculate_activations()
 
     activations.resize(samples_number, neurons_number);
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
@@ -318,7 +318,7 @@ void PerceptronLayerTest::test_calculate_activations()
     biases = perceptron_layer.get_biases();
     synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
+    perceptron_layer.calculate_combinations(inputs, combinations);
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
     perceptron_layer.calculate_activations(combinations, activations);
@@ -440,8 +440,6 @@ void PerceptronLayerTest::test_calculate_activations()
     activations.resize(1,2);
 
     perceptron_layer.calculate_combinations(inputs,
-                                            perceptron_layer.get_biases(),
-                                            perceptron_layer.get_synaptic_weights(),
                                             combinations);
 
     assert_true(combinations.rank() == 2, LOG);

@@ -398,9 +398,6 @@ public:
 
     static Scaler get_scaling_unscaling_method(const string&);
 
-    Tensor<string, 1> get_context_vocabulary() const;
-    Tensor<string, 1> get_completion_vocabulary() const;
-
     Index get_gmt() const;
 
     const bool& get_display() const;
@@ -839,16 +836,6 @@ protected:
     Tensor<Tensor<string, 1>, 1> data_file_preview;
 
     Index gmt = 0;
-
-    // LANGUAGE MODEL
-
-    Tensor<string, 1> context_vocabulary;
-
-    Tensor<string, 1> completion_vocabulary;
-
-    Index max_completion_length;
-
-    Index max_context_length;
 
     // MISSING VALUES
 

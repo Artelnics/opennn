@@ -308,7 +308,7 @@ void EmbeddingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forwar
     EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
         static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
 
-    switch (next_back_propagation->layer_pointer->get_type())
+    switch (next_back_propagation->layer->get_type())
     {
     case Type::MultiheadAttention:
     {
@@ -336,7 +336,7 @@ void EmbeddingLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropag
 {
     // Next layer
 
-    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer_pointer);
+    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
 
 }
 

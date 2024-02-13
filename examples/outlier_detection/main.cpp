@@ -64,7 +64,7 @@ int main(void)
 //        type contamination = type(0);
 
 
-        Tensor<type, 2> true_outlier = data_set.get_column_data("outlier");
+        Tensor<type, 2> true_outlier = Tensor<type, 2>();// data_set.get_column_data("outlier");
         data_set.set_raw_variable_use("outlier", DataSet::VariableUse::Unused);
 
         const Index input_variables_number = data_set.get_input_variables_number();

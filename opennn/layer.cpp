@@ -217,23 +217,21 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     const Index rows_number = x.dimension(0);
     const Index raw_variables_number = x.dimension(1);
 
-    const Eigen::array<Index, 1> last_dimension{ {2} };
+    const Eigen::array<Index, 1> last_dimension{ {1} };
     const Eigen::array<Index, 2> range_2{ {rows_number, 1} };
     const Eigen::array<Index, 2> expand_last_dim{ {1, raw_variables_number} };
 
     y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-        .reshape(range_2)
-        .broadcast(expand_last_dim);
+                                         .reshape(range_2)
+                                         .broadcast(expand_last_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
     Tensor<type, 2> y_sum = y.sum(last_dimension)
-        .reshape(range_2)
-        .broadcast(expand_last_dim);
+                             .reshape(range_2)
+                             .broadcast(expand_last_dim);
 
-    y.device(*thread_pool_device) = y / y.sum(last_dimension)
-        .reshape(range_2)
-        .broadcast(expand_last_dim);
+    y.device(*thread_pool_device) = y / y_sum;
 }
 
 
@@ -248,14 +246,14 @@ void Layer::softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const
     const Eigen::array<Index, 3> expand_last_dim{ {1, 1, channels_number} };
 
     y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-        .reshape(range_3)
-        .broadcast(expand_last_dim);
+                                         .reshape(range_3)
+                                         .broadcast(expand_last_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
     Tensor<type, 3> y_sum = y.sum(last_dimension)
-        .reshape(range_3)
-        .broadcast(expand_last_dim);
+                             .reshape(range_3)
+                             .broadcast(expand_last_dim);
 
     y.device(*thread_pool_device) = y / y_sum;
 }
@@ -273,14 +271,14 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
     const Eigen::array<Index, 4> expand_last_dim{ {1, 1, channels_number, 1} };
 
     y.device(*thread_pool_device) = x - x.maximum(last_dimension)
-        .reshape(range_4)
-        .broadcast(expand_last_dim);
+                                         .reshape(range_4)
+                                         .broadcast(expand_last_dim);
 
     y.device(*thread_pool_device) = y.exp();
 
     Tensor<type, 4> y_sum = y.sum(last_dimension)
-        .reshape(range_4)
-        .broadcast(expand_last_dim);
+                             .reshape(range_4)
+                             .broadcast(expand_last_dim);
 
     y.device(*thread_pool_device) = y / y_sum;
 }
