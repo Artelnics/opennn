@@ -5229,16 +5229,32 @@ string NeuralNetwork::write_expression_javascript() const
 
     if(has_scaling_layer())
     {
+        float min_value;
+        float max_value;
+
         const Tensor<Descriptives, 1>  inputs_descriptives = get_scaling_layer_pointer()->get_descriptives();
 
         for(int i = 0; i < inputs.dimension(0); i++)
         {
+            min_value = inputs_descriptives(i).minimum;
+            max_value = inputs_descriptives(i).maximum;
+
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
             buffer << "<tr style=\"height:3.5em\">" << endl;
             buffer << "<td> " << inputs_names[i] << " </td>" << endl;
             buffer << "<td style=\"text-align:center\">" << endl;
-            buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
-            buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+
+            if (min_value==0 && min_value==0)
+            {
+                buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
+                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+            }
+            else
+            {
+                buffer << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl;
+                buffer << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl;
+            }
+
             buffer << "</td>" << endl;
             buffer << "</tr>" << endl;
             buffer << "\n" << endl;
