@@ -1919,6 +1919,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
     ostringstream buffer;
 
         // Forget gate
+
         for(Index i = 0; i < neurons_number; i++)
         {
             buffer << "forget_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[i] << " + ";
@@ -1937,6 +1938,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
         }
 
        // Input gate
+
        for(Index i = 0; i < neurons_number; i++)
        {
            buffer << "input_gate_" << to_string(i) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[i] << " + ";

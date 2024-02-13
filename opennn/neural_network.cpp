@@ -2684,7 +2684,8 @@ void NeuralNetwork::load(const string& file_name)
 /// The format of this file is just a sequence of numbers.
 /// @param file_name Name of the parameters data file.
 
-void NeuralNetwork::load_parameters_binary(const string& file_name)
+void NeuralNetwork::
+load_parameters_binary(const string& file_name)
 {
 
     std::ifstream file;
