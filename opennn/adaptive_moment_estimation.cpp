@@ -595,31 +595,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
-#ifdef OPENNN_MKL
-
-    const int parameters_number = gradient.size();
-
-    const int incx = 1;
-    const int incy = 1;
-
-    const type a = type(1) - beta_1;
-    const type b = beta_1;
-
-    saxpby(&parameters_number, 
-           &a, 
-           gradient.data(), 
-           &incx, 
-           &b, 
-           gradient_exponential_decay.data(), 
-           &incy);
-
-#else
-
     gradient_exponential_decay.device(*thread_pool_device)
         = gradient * (type(1) - beta_1) + gradient_exponential_decay * beta_1;
-
-
-#endif
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient*gradient * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;

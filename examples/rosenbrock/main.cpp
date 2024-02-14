@@ -40,6 +40,11 @@ int main()
 
         data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
 
+        data_set.set_data_source_path("C:/Users/Roberto Lopez/Documents/rosenbrock.csv");
+
+        data_set.save_data();
+
+/*
         data_set.set_training();
 
         // Neural network
@@ -62,7 +67,7 @@ int main()
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
-
+*/
         cout << "End Rosenbrock" << endl;
 
         return 0;

@@ -695,6 +695,7 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
+
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
     Tensor<type, 1>& current_combinations = recurrent_layer_forward_propagation->current_combinations;
@@ -828,8 +829,6 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-//    const Index parameters_number = neurons_number;
-
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
             static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
@@ -859,8 +858,8 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     Tensor<type, 2>& combinations_biases_derivatives = recurrent_layer_back_propagation->combinations_biases_derivatives;
     combinations_biases_derivatives.setZero();
 
-    Tensor<type, 2>& combinations_weights_derivatives = recurrent_layer_back_propagation->combinations_weights_derivatives;
-    combinations_weights_derivatives.setZero();
+    Tensor<type, 2>& combinations_input_weights_derivatives = recurrent_layer_back_propagation->combinations_input_weights_derivatives;
+    combinations_input_weights_derivatives.setZero();
 
     Tensor<type, 2>& combinations_recurrent_weights_derivatives = recurrent_layer_back_propagation->combinations_recurrent_weights_derivatives;
     combinations_recurrent_weights_derivatives.setZero();
@@ -876,88 +875,103 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     Tensor<type, 2>& recurrent_weights_derivatives = recurrent_layer_back_propagation->recurrent_weights_derivatives;
     recurrent_weights_derivatives.setZero();
 
-    Index raw_variable_index = 0;
+    Index input_weights_number = get_input_weights_number();
+
+    Index column_index = 0;
     Index input_index = 0;
     Index neuron_index = 0;
 
-    for(Index sample = 0; sample < samples_number; sample++)
+    for(Index sample_index = 0; sample_index < samples_number; sample_index++)
     {
-        current_inputs.device(*thread_pool_device) = inputs.chip(sample, 0);
+        current_inputs.device(*thread_pool_device) = inputs.chip(sample_index, 0);
 
-        get_row(current_activations_derivatives, activations_derivatives, sample);
+        get_row(current_activations_derivatives, activations_derivatives, sample_index);
 
-        current_deltas.device(*thread_pool_device) = deltas.chip(sample, 0);
+        current_deltas.device(*thread_pool_device) = deltas.chip(sample_index, 0);
 
-        if (sample % timesteps == 0)
+        error_current_combinations_derivatives.device(*thread_pool_device) = current_deltas * current_activations_derivatives;
+
+        if (sample_index % timesteps == 0)
         {
             combinations_biases_derivatives.setZero();
-            combinations_weights_derivatives.setZero();
+            combinations_input_weights_derivatives.setZero();
             combinations_recurrent_weights_derivatives.setZero();
         }
         else
         {
             // Combinations biases derivatives
 
-            combinations_biases_derivatives.device(*thread_pool_device) = combinations_biases_derivatives.contract(recurrent_weights, A_B);
-
             multiply_rows(combinations_biases_derivatives, current_activations_derivatives);
 
-            sum_diagonal(combinations_biases_derivatives, type(1));
+            combinations_biases_derivatives.device(*thread_pool_device) = combinations_biases_derivatives.contract(recurrent_weights, A_B);
 
             // Combinations weights derivatives
 
-            combinations_weights_derivatives.device(*thread_pool_device) = combinations_weights_derivatives.contract(recurrent_weights, A_B);
+            multiply_rows(combinations_input_weights_derivatives, current_activations_derivatives);
 
-            multiply_rows(combinations_weights_derivatives, current_activations_derivatives);
+            combinations_input_weights_derivatives.device(*thread_pool_device) = combinations_input_weights_derivatives.contract(recurrent_weights, A_B);
 
-            raw_variable_index = 0;
-            input_index = 0;
-/*
-            for (Index i = 0; i < parameters_number; i++)
-            {
-                combinations_weights_derivatives(i, raw_variable_index) += current_inputs(input_index);
-
-                input_index++;
-
-                if (input_index == inputs_number)
-                {
-                    input_index = 0;
-                    raw_variable_index++;
-                }
-            }
-*/
-            previous_activations.device(*thread_pool_device) = outputs.chip(sample - 1, 0);
-
-            // Combinations recurrent weights derivatives
-
-            combinations_recurrent_weights_derivatives.device(*thread_pool_device) = combinations_recurrent_weights_derivatives.contract(recurrent_weights, A_B);
-
-            multiply_rows(combinations_recurrent_weights_derivatives, current_activations_derivatives);
-
-            raw_variable_index = 0;
-            neuron_index = 0;
-/*
-            for (Index i = 0; i < parameters_number; i++)
-            {
-                combinations_recurrent_weights_derivatives(i, raw_variable_index) += previous_activations(neuron_index);
-
-                neuron_index++;
-
-                if (neuron_index == neurons_number)
-                {
-                    neuron_index = 0;
-                    raw_variable_index++;
-                }
-            }
-*/
         }
 
-        error_current_combinations_derivatives.device(*thread_pool_device) 
-            = current_deltas*current_activations_derivatives;
-        
-        biases_derivatives.device(*thread_pool_device) 
+        sum_diagonal(combinations_biases_derivatives, type(1));
+
+        // Biases derivatives
+
+        biases_derivatives.device(*thread_pool_device)
             += combinations_biases_derivatives.contract(error_current_combinations_derivatives, A_B);
 
+        
+    column_index = 0;
+    input_index = 0;
+
+    for (Index row_index = 0; combinations_input_weights_derivatives.dimension(0); row_index++)
+    {
+        combinations_input_weights_derivatives(row_index, column_index) += current_inputs(input_index);
+
+        input_index++;
+
+        if (input_index == inputs_number)
+        {
+            input_index = 0;
+            column_index++;
+        }
+    }
+
+
+
+
+/*
+* 
+* 
+* 
+* 
+* 
+
+        previous_activations.device(*thread_pool_device) = outputs.chip(sample - 1, 0);
+
+        // Combinations recurrent weights derivatives
+
+        combinations_recurrent_weights_derivatives.device(*thread_pool_device) = combinations_recurrent_weights_derivatives.contract(recurrent_weights, A_B);
+
+        multiply_rows(combinations_recurrent_weights_derivatives, current_activations_derivatives);
+
+        raw_variable_index = 0;
+        neuron_index = 0;
+
+        for (Index i = 0; i < parameters_number; i++)
+        {
+            combinations_recurrent_weights_derivatives(i, raw_variable_index) += previous_activations(neuron_index);
+
+            neuron_index++;
+
+            if (neuron_index == neurons_number)
+            {
+                neuron_index = 0;
+                raw_variable_index++;
+            }
+        }
+
+/*       
         // Dimensions changed from vector to matrix:
 
         input_weights_derivatives.device(*thread_pool_device)
@@ -965,6 +979,7 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
 
         recurrent_weights_derivatives.device(*thread_pool_device)
             += combinations_recurrent_weights_derivatives.contract(error_current_combinations_derivatives, A_B);
+*/
     }
 }
 

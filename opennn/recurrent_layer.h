@@ -327,7 +327,7 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
         combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
-        combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        combinations_input_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
 
         combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
 
@@ -353,7 +353,7 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> current_deltas;
 
     Tensor<type, 2> combinations_biases_derivatives;
-    Tensor<type, 2> combinations_weights_derivatives;
+    Tensor<type, 2> combinations_input_weights_derivatives;
     Tensor<type, 2> combinations_recurrent_weights_derivatives;
 
     Tensor<type, 1> error_current_combinations_derivatives;

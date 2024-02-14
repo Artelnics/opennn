@@ -50,7 +50,6 @@ void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
 void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
-
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 // Columns
@@ -239,6 +238,9 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 
     return dimensions;
 }
+
+
+TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
 /*
 template<int rank>

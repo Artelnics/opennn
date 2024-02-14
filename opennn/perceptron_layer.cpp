@@ -459,52 +459,9 @@ void PerceptronLayer::set_parameters_random()
 void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              Tensor<type, 2>& combinations) const
 {
-
-#ifdef OPENNN_MKL
-
-    if(typeid(type) == typeid(float))
-    {
-        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            inputs.dimension(0),
-            synaptic_weights.dimension(1),
-            inputs.dimension(1),
-            type(1),
-            (float*)inputs.data(),
-            inputs.dimension(0),
-            (float*)synaptic_weights.data(),
-            synaptic_weights.dimension(0),
-            type(1),
-            (float*)combinations.data(),
-            inputs.dimension(0));
-    }
-    else if(typeid(type) == typeid(double))
-    {
-        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            inputs.dimension(0),
-            synaptic_weights.dimension(1),
-            inputs.dimension(1),
-            type(1),
-            (double*)inputs.data(),
-            inputs.dimension(0),
-            (double*)synaptic_weights.data(),
-            synaptic_weights.dimension(0),
-            type(1),
-            (double*)combinations.data(),
-            inputs.dimension(0));
-    }
-
-#else
-
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
-
-#endif
-    
+   
     sum_columns(thread_pool_device, biases, combinations);
-
 }
 
 
@@ -522,8 +479,7 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
-        TensorMap<Tensor<type, 1>> column(outputs_data + neuron_index*batch_samples_number,
-                                          batch_samples_number);
+        TensorMap<Tensor<type, 1>> column = tensor_map(outputs, neuron_index);
 
         random = calculate_random_uniform(type(0), type(1));
 
@@ -730,47 +686,6 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
     Tensor<type, 2>& deltas = back_propagation->deltas;
 
     deltas.device(*thread_pool_device) = next_error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
-
-#ifdef OPENNN_MKL
-
-   if(typeid(type) == typeid(float))
-    {
-        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            CBLAS_TRANSPOSE::CblasTrans,
-            next_deltas.dimension(0),
-            next_synaptic_weights.dimension(0),
-            next_deltas.dimension(1),
-            type(1),
-            next_deltas.data(),
-            next_deltas.dimension(0),
-            next_synaptic_weights.data(),
-            next_synaptic_weights.dimension(0),
-            type(0),
-            deltas.data(),
-            next_deltas.dimension(0));
-    }
-    else if(typeid(type) == typeid(double))
-    {
-        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            CBLAS_TRANSPOSE::CblasTrans,
-            next_deltas.dimension(0),
-            next_synaptic_weights.dimension(0),
-            next_deltas.dimension(1),
-            type(1),
-            (double*)next_deltas.data(),
-            next_deltas.dimension(0),
-            (double*)next_synaptic_weights.data(),
-            next_synaptic_weights.dimension(0),
-            type(0),
-            (double*)deltas.data(),
-            next_deltas.dimension(0));
-    }
-    
-#else
-
-#endif
 }
 
 
@@ -907,37 +822,37 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
             static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
 
     const Tensor<type, 2>& deltas = perceptron_layer_back_propagation_lm->deltas;
-
+   
     Tensor<type, 2>& error_combinations_derivatives = perceptron_layer_back_propagation_lm->error_combinations_derivatives;
 
     error_combinations_derivatives.device(*thread_pool_device) = deltas*activations_derivatives;
 
     Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
 
-    /// @todo to tensor
+    Index synaptic_weight_index = 0;
 
-    #pragma omp parallel for
-
-    for(Index sample = 0; sample < samples_number; sample++)
+    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
     {
-        Index synaptic_weight_index = 0;
+        const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
 
-        for(Index neuron = 0; neuron < neurons_number; neuron++)
-        { 
-            // synaptic weights
+        for (Index input_index = 0; input_index < inputs_number; input_index++)
+        {
+            const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
 
-            for(Index input = 0; input < inputs_number; input++)
-            {
-                squared_errors_Jacobian(sample, synaptic_weight_index) =
-                        error_combinations_derivatives(sample, neuron)*inputs(sample, input);
+            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight = tensor_map(squared_errors_Jacobian, synaptic_weight_index);
 
-                synaptic_weight_index++;
-            }
+            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) = error_combinations_derivatives_neuron * input;
 
-            // bias
-
-            squared_errors_Jacobian(sample, synaptic_weights_number + neuron) = error_combinations_derivatives(sample, neuron);
+            synaptic_weight_index++;
         }
+
+        // bias
+
+        Index bias_index = synaptic_weights_number + neuron_index;
+
+        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
+
+        squared_errors_jacobian_bias.device(*thread_pool_device) = error_combinations_derivatives_neuron;
     }
 }
 
@@ -993,47 +908,6 @@ void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& in
     biases_derivatives.device(*thread_pool_device) = error_combinations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(error_combinations_derivatives, AT_B);
-
-#ifdef OPENNN_MKL
-
-    if(typeid(type) == typeid(float))
-    {
-        cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasTrans,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            inputs.dimension(1),
-            error_combinations_derivatives.dimension(1),
-            inputs.dimension(0),
-            type(1),
-            inputs.data(),
-            inputs.dimension(0),
-            error_combinations_derivatives.data(),
-            error_combinations_derivatives.dimension(0),
-            type(0),
-            synaptic_weights_derivatives.data(),
-            inputs.dimension(1));
-    }
-    else if(typeid(type) == typeid(double))
-    {
-        cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-            CBLAS_TRANSPOSE::CblasTrans,
-            CBLAS_TRANSPOSE::CblasNoTrans,
-            inputs.dimension(1),
-            error_combinations_derivatives.dimension(1),
-            inputs.dimension(0),
-            type(1),
-            (double*)inputs.data(),
-            inputs.dimension(0),
-            (double*)error_combinations_derivatives.data(),
-            error_combinations_derivatives.dimension(0),
-            type(0),
-            (double*)synaptic_weights_derivatives.data(),
-            inputs.dimension(1));
-    }
-
-#else
-
-#endif
 }
 
 

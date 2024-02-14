@@ -176,9 +176,9 @@ void divide_raw_variables(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>&
 void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index raw_variables_number = matrix.dimension(1);
+    const Index columns_number = matrix.dimension(1);
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
 
@@ -1810,6 +1810,16 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
     }
 
     return intersection;
+}
+
+
+TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
+{
+    type* a = nullptr;
+
+    TensorMap<Tensor<type, 1>> b(a, 1);
+
+    return b;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
 }
 
 }

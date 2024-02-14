@@ -25,8 +25,6 @@
 #include <iostream>
 
 // OneDNN
-#include "oneapi/dnnl/dnnl.hpp"
-#include "../mkl/mkl.h"
 
 using namespace std;
 using namespace opennn;

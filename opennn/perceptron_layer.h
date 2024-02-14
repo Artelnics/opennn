@@ -23,10 +23,6 @@
 #include "layer.h"
 #include "probabilistic_layer.h"
 
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
-
 namespace opennn
 {
 

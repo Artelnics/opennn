@@ -25,10 +25,6 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 
-#ifdef OPENNN_MKL
-#include "../mkl/mkl.h"
-#endif
-
 namespace opennn
 {
 

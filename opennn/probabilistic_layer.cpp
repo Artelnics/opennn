@@ -767,27 +767,30 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
 
-    // @todo to tensor
+    Index synaptic_weight_index = 0;
 
-#pragma omp parallel for
-
-    for (Index sample = 0; sample < samples_number; sample++)
+    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
     {
-        Index synaptic_weight_index = 0;
+        const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
 
-        for (Index neuron = 0; neuron < neurons_number; neuron++)
+        for (Index input_index = 0; input_index < inputs_number; input_index++)
         {
-            for (Index input = 0; input < inputs_number; input++)
-            {
-                squared_errors_Jacobian(sample, synaptic_weight_index)
-                    = error_combinations_derivatives(sample, neuron) * inputs(sample, input);
+            const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
 
-                synaptic_weight_index++;
-            }
+            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight = tensor_map(squared_errors_Jacobian, synaptic_weight_index);
 
-            squared_errors_Jacobian(sample, synaptic_weights_number + neuron)
-                = error_combinations_derivatives(sample, neuron);
+            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) = error_combinations_derivatives_neuron * input;
+
+            synaptic_weight_index++;
         }
+
+        // bias
+
+        Index bias_index = synaptic_weights_number + neuron_index;
+
+        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
+
+        squared_errors_jacobian_bias.device(*thread_pool_device) = error_combinations_derivatives_neuron;
     }
 }
 

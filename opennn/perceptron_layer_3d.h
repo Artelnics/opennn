@@ -23,10 +23,6 @@
 #include "probabilistic_layer_3d.h"
 #include "multihead_attention_layer.h"
 
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
-
 namespace opennn
 {
 

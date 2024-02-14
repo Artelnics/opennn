@@ -718,7 +718,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     // Set parameters
 
-    neural_network->set_parameters(back_propagation_lm.parameters);
+    neural_network->set_parameters(parameters);
 }
 
 

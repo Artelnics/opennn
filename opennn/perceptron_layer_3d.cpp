@@ -504,48 +504,6 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
 
     sum_matrices(thread_pool_device, biases, combinations);
-
-    /* @todo MKL implementation
-
-    #ifdef OPENNN_MKL
-
-       if(typeid(type) == typeid(float))
-        {
-            cblas_sgemm(CBLAS_LAYOUT::CblasColMajor,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                inputs.dimension(0),
-                synaptic_weights.dimension(1),
-                inputs.dimension(1),
-                type(1),
-                (float*)inputs.data(),
-                inputs.dimension(0),
-                (float*)synaptic_weights.data(),
-                synaptic_weights.dimension(0),
-                type(1),
-                (float*)combinations_data,
-                inputs.dimension(0));
-        }
-        else if(typeid(type) == typeid(double))
-        {
-            cblas_dgemm(CBLAS_LAYOUT::CblasColMajor,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                CBLAS_TRANSPOSE::CblasNoTrans,
-                inputs.dimension(0),
-                synaptic_weights.dimension(1),
-                inputs.dimension(1),
-                type(1),
-                (double*)inputs.data(),
-                inputs.dimension(0),
-                (double*)synaptic_weights.data(),
-                synaptic_weights.dimension(0),
-                type(1),
-                (double*)combinations_data,
-                inputs.dimension(0));
-        }
-
-    #else
-    */
 }
 
 

@@ -5,12 +5,6 @@
 
 //#define OPENNN_CUDA
 
-//#define OPENNN_MKL
-
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
-
 //Eigen includes
 
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"

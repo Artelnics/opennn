@@ -26,10 +26,6 @@
 #include "layer_back_propagation.h"
 #include "multihead_attention_layer.h"
 
-#ifdef OPENNN_MKL
-#include "../mkl/mkl.h"
-#endif
-
 namespace opennn
 {
 
