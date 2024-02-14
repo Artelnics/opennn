@@ -224,8 +224,8 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     parameters = perceptron_layer.get_parameters();
 
-    assert_true(parameters(0) - type(-0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(parameters(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(parameters(0) - type(-0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(parameters(1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 

@@ -105,9 +105,6 @@ namespace opennn
  type half_normal_distribution_distance(const Tensor<type, 1>&);
  type uniform_distribution_distance(const Tensor<type, 1>&);
 
- // Normality
- type normality_parameter(const Tensor<type, 1>&);
-
  // Minimal indices
  Index minimal_index(const Tensor<type, 1>&);
  Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index&);
@@ -120,10 +117,6 @@ namespace opennn
  Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
  Tensor<Index, 2> maximal_raw_variables_indices(const Tensor<type, 2>&, const Index&);
  Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
-
- // Mean weights
-// Tensor<Index, 1> maximal_indices();
-// Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
 
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);

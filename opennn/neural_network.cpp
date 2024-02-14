@@ -1821,18 +1821,24 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-
     const Index batch_samples_number = inputs.dimension(0);
+    const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
-/*
-    forward_propagate(data_set_batch, neural_network_forward_propagation);
 
-    Tensor<type, 3> outputs = neural_network_forward_propagation.layers(layers_number - 1)->outputs(0);
+    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)} });
 
-    return outputs.to_tensor_map<2>();
-*/
-    return Tensor<type, 2>();
+    forward_propagate(inputs_pair, neural_network_forward_propagation);
+
+    const Index layers_number = get_layers_number();
+
+    if (layers_number == 0) return Tensor<type, 2>();
+
+    const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    return outputs;
 }
 
 

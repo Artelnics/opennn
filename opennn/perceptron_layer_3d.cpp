@@ -348,17 +348,6 @@ void PerceptronLayer3D::set_synaptic_weights(const Tensor<type, 2>& new_synaptic
 
 void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-//    const Index biases_number = get_biases_number();
-//    const Index synaptic_weights_number = get_synaptic_weights_number();
-/*
-    memcpy(synaptic_weights.data(),
-           new_parameters.data() + index,
-           size_t(synaptic_weights.size())*sizeof(type));
-
-    memcpy(biases.data(),
-           new_parameters.data() + index + synaptic_weights.size(),
-           size_t(biases.size())*sizeof(type));
-*/
     copy(execution::par, 
         new_parameters.data() + index,
         new_parameters.data() + index + synaptic_weights.size(),
@@ -368,7 +357,6 @@ void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, co
         new_parameters.data() + index + synaptic_weights.size(),
         new_parameters.data() + index + synaptic_weights.size() + biases.size(),
         biases.data());
-
 }
 
 

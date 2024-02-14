@@ -91,8 +91,6 @@ public:
 
     void impute_missing_values_mean();
 
-    void quicksort_by_column(Index);
-
 private:
 
     /// Number of lags.

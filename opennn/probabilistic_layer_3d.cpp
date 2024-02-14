@@ -278,15 +278,7 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
 {
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
-/*
-    memcpy(synaptic_weights.data(),
-           new_parameters.data() + index,
-           size_t(synaptic_weights_number)*sizeof(type));
 
-    memcpy(biases.data(),
-           new_parameters.data() + index + synaptic_weights_number,
-           size_t(biases_number)*sizeof(type));
-*/
     copy(execution::par, 
         new_parameters.data() + index,
         new_parameters.data() + index + synaptic_weights_number,
@@ -584,11 +576,8 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation);
 
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
-    /*
-    calculate_combinations(inputs,
-                           biases,
-                           synaptic_weights,
-                           outputs);
+    
+    calculate_combinations(inputs, outputs);
     
     if(is_training)
     {
@@ -602,7 +591,7 @@ void ProbabilisticLayer3D::forward_propagate(const pair<type*, dimensions>& inpu
     {
         calculate_activations(outputs,
                               outputs);
-    }*/
+    }
 }
 
 

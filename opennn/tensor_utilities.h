@@ -219,8 +219,6 @@ Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 Index partition(Tensor<type, 2>&, Index, Index, Index);
 Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, Index, Index);
-void quick_sort(Tensor<type, 2>&, Index, Index, Index);
-void quicksort_by_column(Tensor<type, 2>&, Index);
 
 Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
@@ -242,20 +240,6 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
-/*
-template<int rank>
-pair<type*, dimensions> get_pair(const Tensor<type, rank>& tensor)
-{
-    type* data = const_cast<type*>(tensor.data());
-    
-    dimensions dimensions(1);
-
-    for (int i = 0; i < rank; i++)
-        dimensions[0].push_back(tensor.dimension(i));
-
-    return pair<type*, dimensions>(data, dimensions);
-}
-*/
 }
 
 #endif

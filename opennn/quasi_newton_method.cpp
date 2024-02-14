@@ -323,32 +323,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
     }
 }
 
-/*
-Tensor<type, 2> QuasiNewtonMethod::kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y) const
-{  
-    // Transform Tensors into Dense matrix  
-
-    const Index n = x.dimension(0);
-    const Index m = x.dimension(0);
-
-    type* x_data = (type*)x.data();
-    type* y_data = (type*)y.data();
-
-    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic, RowMajor> >(x_data, n, 1);
-
-    auto y_matrix = Map< Matrix<type, Dynamic, Dynamic, RowMajor> >(y_data, m, 1);
-
-    // Kronecker Product
-
-    auto product = kroneckerProduct(x_matrix, y_matrix).eval();
-
-    // Matrix into a Tensor
-
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), n, m);
-
-    return direct_matrix;
-}
-*/
 
 /// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel
 /// (DFP) algorithm.

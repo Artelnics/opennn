@@ -439,6 +439,8 @@ protected:
     }
 
 
+    /// @todo inefficient code
+
     void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
     {
         const Index rows_number = x.dimension(0);

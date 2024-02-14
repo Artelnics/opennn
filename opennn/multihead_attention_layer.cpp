@@ -121,6 +121,7 @@ Index MultiheadAttentionLayer::get_parameters_number() const
     return query_weights.size() + key_weights.size() + value_weights.size() + projection_weights.size() + projection_biases.size();
 }
 
+
 Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
@@ -497,7 +498,8 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& t
 
 
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
-{/*
+{
+   /*
     const Index batch_samples_number = attention_scores.dimension(0);
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
@@ -517,7 +519,8 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
                 : matrix = matrix * scaling_factor;
         }
     }
-*/}
+*/
+}
 
 
 void MultiheadAttentionLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,

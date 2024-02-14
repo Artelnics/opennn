@@ -140,14 +140,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     initialize_sequential(indices, 0, 1, samples_number-1);
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
-/*
-    Index count = 0;
 
-    for(Index i = 0; i < samples_uses.size(); i++)
-    {
-        if(samples_uses(i) == SampleUse::Unused) count++;
-    }
-*/
     Index i = 0;
     Index index;
 

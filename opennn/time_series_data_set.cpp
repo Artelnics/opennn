@@ -437,11 +437,6 @@ void TimeSeriesDataSet::transform_time_series_data()
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
-/*
-            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
-                   time_series_data.data() + i + j*old_samples_number,
-                   size_t(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
-*/
             copy(execution::par, 
                 time_series_data.data() + i + j * old_samples_number,
                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
@@ -1830,17 +1825,6 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 }
 
 
-void TimeSeriesDataSet::quicksort_by_column(Index target_column)
-{
-/*
-    Tensor<type, 2>* data_matrix_ptr = get_data();
-    const Index rows_number = data_matrix_ptr->dimension(0);
-
-    quick_sort(*data_matrix_ptr, 0, rows_number - 1, target_column);
-*/
-}
-
-
 /// @todo bad quality code.
 
 void TimeSeriesDataSet::fill_time_series_gaps()
@@ -1848,8 +1832,6 @@ void TimeSeriesDataSet::fill_time_series_gaps()
 /*
     const Index rows_number = data.dimension(0);
     const Index raw_variables_number = data.dimension(1);
-
-    quicksort_by_column(0);
 
     const Tensor<type, 1> time_data = data.chip(0, 1);
 

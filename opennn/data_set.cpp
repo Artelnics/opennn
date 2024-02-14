@@ -1698,14 +1698,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     initialize_sequential(indices, 0, 1, samples_number-1);
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
-/*
-    Index count = 0;
 
-    for(Index i = 0; i < samples_uses.size(); i++)
-    {
-        if(samples_uses(i) == SampleUse::Unused) count++;
-    }
-*/
     Index i = 0;
     Index index;
 
@@ -5047,9 +5040,6 @@ void DataSet::set_default()
 
     missing_values_label = "NA";
 
-
-    /// @todo We are setting some parameters: raw_variables uses, variables uses, ... but we have not yet configured the raw_variables tensor.
-
     set_default_raw_variables_uses();
 
     set_default_raw_variables_names();
@@ -6634,7 +6624,6 @@ void DataSet::set_default_raw_variables_scalers()
             }
         }
     }
-
 }
 
 
@@ -7025,20 +7014,6 @@ void DataSet::set_data_binary_random()
             else 
                 data(i,j) = (j == target_variable_index) ? type(1) : type(0);
         }
-    }
-}
-
-
-/// Initializes the data matrix with random integer values.
-
-void DataSet::set_data_random_integers(const Index& maximum)
-{
-    /// @todo in Tensor form
-
-#pragma omp parallel for
-    for (Index i = 0; i < data.size(); i++)
-    {
-        data(i) = rand()%maximum;
     }
 }
 

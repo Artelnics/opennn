@@ -2493,13 +2493,14 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
     {
         misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
     }
-    std::ofstream classification_statistics_file(statistics_file_name);
+
+    ofstream classification_statistics_file(statistics_file_name);
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";
-/*
+
     classification_statistics_file << misclassified_numerical_probabilities.mean() << ",";
-*/
+
     classification_statistics_file << standard_deviation(misclassified_numerical_probabilities);
 }
 

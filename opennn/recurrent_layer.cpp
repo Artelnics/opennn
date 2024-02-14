@@ -910,7 +910,6 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
             multiply_rows(combinations_input_weights_derivatives, current_activations_derivatives);
 
             combinations_input_weights_derivatives.device(*thread_pool_device) = combinations_input_weights_derivatives.contract(recurrent_weights, A_B);
-
         }
 
         sum_diagonal(combinations_biases_derivatives, type(1));
@@ -919,34 +918,23 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
 
         biases_derivatives.device(*thread_pool_device)
             += combinations_biases_derivatives.contract(error_current_combinations_derivatives, A_B);
-
         
-    column_index = 0;
-    input_index = 0;
+        column_index = 0;
+        input_index = 0;
 
-    for (Index row_index = 0; combinations_input_weights_derivatives.dimension(0); row_index++)
-    {
-        combinations_input_weights_derivatives(row_index, column_index) += current_inputs(input_index);
-
-        input_index++;
-
-        if (input_index == inputs_number)
+        for (Index row_index = 0; combinations_input_weights_derivatives.dimension(0); row_index++)
         {
-            input_index = 0;
-            column_index++;
+            combinations_input_weights_derivatives(row_index, column_index) += current_inputs(input_index);
+
+            input_index++;
+
+            if (input_index == inputs_number)
+            {
+                input_index = 0;
+                column_index++;
+            }
         }
-    }
-
-
-
-
 /*
-* 
-* 
-* 
-* 
-* 
-
         previous_activations.device(*thread_pool_device) = outputs.chip(sample - 1, 0);
 
         // Combinations recurrent weights derivatives
@@ -970,8 +958,7 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
                 raw_variable_index++;
             }
         }
-
-/*       
+       
         // Dimensions changed from vector to matrix:
 
         input_weights_derivatives.device(*thread_pool_device)

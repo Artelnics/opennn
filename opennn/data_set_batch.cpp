@@ -81,11 +81,11 @@ void DataSetBatch::perform_augmentation() const
     const Index channels_number = input_variables_dimensions(2);
     const Index input_size = rows_number*raw_variables_number*channels_number;
 
-//    TensorMap<Tensor<type, 4>> inputs(inputs_data,
-//                                      batch_size,
-//                                      rows_number,
-//                                      raw_variables_number,
-//                                      channels_number);
+    TensorMap<Tensor<type, 4>> inputs(inputs_data,
+                                      batch_size,
+                                      rows_number,
+                                      raw_variables_number,
+                                      channels_number);
 
     const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
     const bool random_reflection_axis_y = image_data_set->get_random_reflection_axis_y();
@@ -100,8 +100,8 @@ void DataSetBatch::perform_augmentation() const
 
     for(Index batch = 0; batch < batch_size; batch++)
     {
-/*
-        TensorMap<Tensor<type, 3>> image(inputs_tensor.data() + batch*input_size,
+
+        TensorMap<Tensor<type, 3>> image(inputs.data() + batch*input_size,
                                          rows_number,
                                          raw_variables_number,
                                          channels_number);
@@ -132,7 +132,6 @@ void DataSetBatch::perform_augmentation() const
                     : random_rescaling_maximum;
 
             //rescale_image(image, image, rescaling);
-
         }
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
@@ -143,9 +142,7 @@ void DataSetBatch::perform_augmentation() const
 
             translate_image(image, image, translation);
         }
-        */
-    }
-    
+    }  
 }
 
 

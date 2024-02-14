@@ -1080,19 +1080,6 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     }
 }
 
-/*
-void fill_submatrix(const Tensor<type, 2>& matrix,
-    const Tensor<Index, 1>& rows_indices,
-    const Tensor<Index, 1>& columns_indices,
-    Tensor<type, 2>& submatrix)
-{
-    const Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
-
-    Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
-
-    submatrix_map = matrix_map(rows_indices, columns_indices);
-}
-*/
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
@@ -1624,27 +1611,6 @@ void swap_rows(Tensor<type, 2>& data_matrix, Index row1, Index row2)
     data_matrix.chip(row1, 0) = data_matrix.chip(row2, 0);
 
     data_matrix.chip(row2, 0) = temp;
-}
-
-
-void quick_sort(Tensor<type, 2>& data, Index start_index, Index end_index, Index target_column)
-{
-    if(start_index >= end_index)
-        return;
-
-    const Index partition_index = partition(data, start_index, end_index, target_column);
-
-    quick_sort(data, start_index, partition_index - 1, target_column);
-    quick_sort(data, partition_index + 1, end_index, target_column);
-}
-
-
-void quicksort_by_column(Tensor<type, 2>& data, Index target_column)
-{
-    Tensor<type, 2>* data_matrix_ptr = &data;
-    const Index rows_number = data_matrix_ptr->dimension(0);
-
-    quick_sort(*data_matrix_ptr, 0, rows_number - 1, target_column);
 }
 
 

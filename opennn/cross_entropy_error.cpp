@@ -57,8 +57,6 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 }
 
 
-/// @todo Add epsilon to avoid NaN
-
 void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
@@ -80,13 +78,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
     // Back propagation
 
     type& error = back_propagation.error;
-/*
-    /// @todo remove tensor allocation
 
-    Tensor<type, 2> binary_cross_entropy = - (type(1) - targets)*((type(1) - outputs).log());
-
-    replace_if(binary_cross_entropy.data(), binary_cross_entropy.data()+binary_cross_entropy.size(), [](type x){return isnan(x);}, type(0));
-*/
     Tensor<type, 0> cross_entropy_error;
 
     cross_entropy_error.device(*thread_pool_device) 

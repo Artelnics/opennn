@@ -114,9 +114,7 @@ public:
 
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
-/*
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-*/
+
    void update_parameters(const DataSetBatch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training() final;

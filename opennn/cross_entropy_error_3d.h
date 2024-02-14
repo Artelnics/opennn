@@ -45,20 +45,13 @@ public:
    void calculate_error(const DataSetBatch&,
                         const ForwardPropagation&,
                         BackPropagation&) const final;
-/*
-   using LossIndex::calculate_numerical_gradient;
-   Tensor<type, 1> calculate_numerical_gradient(const Tensor<type, 3>&, const Tensor<type, 3>&);
-*/
+
    // Gradient methods
 
    void calculate_output_delta(const DataSetBatch&,
                                ForwardPropagation&,
                                BackPropagation&) const final;
-/*
-   void calculate_output_delta(const pair<type*, dimensions>&,
-                               ForwardPropagation&,
-                               BackPropagation&) const;
-*/
+
    string get_error_type() const final;
    string get_error_type_text() const final;
 
