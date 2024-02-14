@@ -370,7 +370,6 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 /// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
-/// @todo Add thread pool.
 
 void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {

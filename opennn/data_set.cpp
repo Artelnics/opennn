@@ -939,9 +939,11 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
             break;
 
         case RawVariableType::DateTime:
-            // @todo do something
-            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += to_string(double(data(sample_index, variable_index)));
+            if(isnan(data(sample_index, variable_index))) 
+                sample_string += missing_values_label;
+            else 
+                sample_string += to_string(double(data(sample_index, variable_index)));
+            
             variable_index++;
             break;
 
@@ -2560,14 +2562,14 @@ Tensor<type, 1> DataSet::box_plot_from_histogram(Histogram& histogram, const Ind
 {
     const Index samples_number = get_training_samples_number();
 
-    Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
+    const Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
            histogram.frequencies.constant(100.0).cast<type>() /
            histogram.frequencies.constant(samples_number).cast<type>();
 
     // Assuming you have the bin centers and relative frequencies in the following arrays:
 
-    Tensor<type, 1> bin_centers = histogram.centers;
-    Tensor<type, 1> binFrequencies = relative_frequencies;
+    const Tensor<type, 1> bin_centers = histogram.centers;
+    const Tensor<type, 1> binFrequencies = relative_frequencies;
 
     // Calculate the cumulative frequency distribution
 
@@ -6598,20 +6600,19 @@ void DataSet::print_top_inputs_correlations() const
 }
 
 
-/// Returns a vector of strings containing the scaling method that best fits each
-/// of the input variables.
+/// Returns a vector of strings containing the scaling method that best fits each of the input variables.
 /// @todo Takes too long in big files.
 
 void DataSet::set_default_raw_variables_scalers()
 {
-    const Index raw_variables_number = raw_variables.size();
-
     if(model_type == ModelType::ImageClassification)
     {
         set_raw_variables_scalers(Scaler::MinimumMaximum);
     }
     else
     {
+        const Index raw_variables_number = raw_variables.size();
+
         for(Index i = 0; i < raw_variables_number; i++)
         {
             if(raw_variables(i).type == RawVariableType::Numeric)
@@ -11088,7 +11089,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             const Index samples_number = inputs_data.dimension(0);
             const Index variables_number = inputs_data.dimension(1);
 
-#pragma omp parallel for schedule(dynamic)
+            #pragma omp parallel for schedule(dynamic)
 
             for(Index j = 0; j < variables_number; j++)
             {

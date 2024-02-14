@@ -133,7 +133,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = type(0);
 
-    // @todo add pragma
+    // @todo add pragma 
 
     for(Index i = 0; i < target_samples_number; i++)
     {

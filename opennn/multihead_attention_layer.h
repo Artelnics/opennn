@@ -148,17 +148,11 @@ public:
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 
-    // Expression methods
-
-//    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-    string write_activation_function_expression() const;
-
     // Serialization methods
     /// @todo
 
-//    void from_XML(const tinyxml2::XMLDocument&) final;
-//    void write_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

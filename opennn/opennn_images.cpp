@@ -121,7 +121,8 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
         // reverse(aux_row, aux_row + raw_variables_number); //uncomment this if the lower right corner px should be in the upper left corner.
 
         copy(execution::par, 
-            aux_row, aux_row + raw_variables_number, sorted.data() + raw_variables_number * i);
+             aux_row, aux_row + raw_variables_number, 
+             sorted.data() + raw_variables_number * i);
     }
 }
 

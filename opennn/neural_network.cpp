@@ -3975,13 +3975,10 @@ string NeuralNetwork::write_expression_javascript() const
 
     if(has_scaling_layer())
     {
-        const Tensor<Descriptives, 1>  inputs_descriptives = get_scaling_layer_2d()->get_descriptives();
-
-        /// @todo Does not work for Eigen::half: fix that.
+        const Tensor<Descriptives, 1> inputs_descriptives = get_scaling_layer_2d()->get_descriptives();
 
         for(int i = 0; i < inputs.dimension(0); i++)
         {
-/*
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
             buffer << "<tr style=\"height:3.5em\">" << endl;
             buffer << "<td> " << inputs_names[i] << " </td>" << endl;
@@ -3991,7 +3988,6 @@ string NeuralNetwork::write_expression_javascript() const
             buffer << "</td>" << endl;
             buffer << "</tr>" << endl;
             buffer << "\n" << endl;
-*/
         }
     }
     else

@@ -271,8 +271,6 @@
     <ClCompile Include="image_data_set.cpp" />
     <ClInclude Include="inputs_selection.h" />
     <ClCompile Include="inputs_selection.cpp" />
-    <ClInclude Include="json_to_xml.h" />
-    <ClCompile Include="json_to_xml.cpp" />
     <ClInclude Include="kmeans.h" />
     <ClCompile Include="kmeans.cpp" />
     <ClInclude Include="language_data_set.h" />

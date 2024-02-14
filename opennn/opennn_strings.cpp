@@ -2050,8 +2050,9 @@ Tensor<string,1> sort_string_tensor(Tensor<string, 1> tensor)
         return a.length() > b.length();
     };
 
-    std::vector<string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
-    std::sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
+    vector<string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
+    
+    sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
 
     for(int i = 0; i < tensor.size(); i++)
     {
