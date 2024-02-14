@@ -24,7 +24,7 @@
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
-#include "muLtihead_attention_layer.h"
+#include "multihead_attention_layer.h"
 
 #ifdef OPENNN_MKL
 #include "../mkl/mkl.h"

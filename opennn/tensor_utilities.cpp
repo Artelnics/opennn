@@ -92,6 +92,73 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
+void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Tensor<type, 4>& A, const Tensor<type, 4>& B, Tensor<type, 4>& C)
+{
+    // Assumes A, B & C share dimensions 2 & 3 and A.dimension(1) == B.dimension(0) (the contraction axes)
+    // The other 2 dimensions of C will be C.dimension(0) == A.dimension(0) & B.dimension(1) == C.dimension(1)
+
+    Index channels_number = A.dimension(2);
+    Index blocks_number = A.dimension(3);
+
+    Index A_rows_number = A.dimension(0);
+    Index B_columns_number = B.dimension(1);
+
+    Index product_dimension = A.dimension(1);
+
+    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
+
+    for (Index i = 0; i < blocks_number; i++)
+    {
+        for (Index j = 0; j < channels_number; j++)
+        {
+            const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows_number*product_dimension + i * A_rows_number*product_dimension*channels_number,
+                A_rows_number, product_dimension);
+
+            const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + j * product_dimension*B_columns_number + i * product_dimension*B_columns_number*channels_number,
+                product_dimension, B_columns_number);
+
+            TensorMap<Tensor<type, 2>> C_matrix(C.data(), A_rows_number, B_columns_number);
+
+            C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, A_B);
+        }
+    }
+}
+
+
+void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Tensor<type, 4>& A, const Tensor<type, 3>& B, Tensor<type, 4>& C)
+{
+    // Assumes A & C share dimensions 2 & 3, B.dimension(2) == A.dimension(3) and A.dimension(1) == B.dimension(0) (the contraction axes)
+    // The other 2 dimensions of C will be C.dimension(0) == A.dimension(0) & B.dimension(1) == C.dimension(1)
+
+    Index channels_number = A.dimension(2);
+    Index blocks_number = A.dimension(3);
+
+    Index A_rows_number = A.dimension(0);
+    Index B_columns_number = B.dimension(1);
+
+    Index product_dimension = A.dimension(1);
+
+    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
+
+    for (Index i = 0; i < blocks_number; i++)
+    {
+        const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + i * product_dimension * B_columns_number,
+            product_dimension, B_columns_number);
+
+        for (Index j = 0; j < channels_number; j++)
+        {
+            const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows_number * product_dimension + i * A_rows_number * product_dimension * channels_number,
+                A_rows_number, product_dimension);
+
+            TensorMap<Tensor<type, 2>> C_matrix(C.data() + j * A_rows_number*B_columns_number + i * A_rows_number* B_columns_number*channels_number,
+                A_rows_number, B_columns_number);
+
+            C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, A_B);
+        }
+    }
+}
+
+
 void divide_raw_variables(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index rows_number = matrix.dimension(0);

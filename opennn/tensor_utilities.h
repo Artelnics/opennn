@@ -67,6 +67,9 @@ void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
+void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
+void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&);
+
 // Division
 
 void divide_raw_variables(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);

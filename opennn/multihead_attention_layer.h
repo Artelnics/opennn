@@ -348,11 +348,16 @@ protected:
 
             deltas_data = deltas.data();
 
-            attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
+            error_attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
 
-            error_query_derivatives.resize(batch_samples_number, input_size, depth);
-            error_key_derivatives.resize(batch_samples_number, context_size, depth);
-            error_value_derivatives.resize(batch_samples_number, context_size, depth);
+            error_attention_output_derivatives.resize(batch_samples_number, input_size, weights_depth, heads_number);
+
+            error_query_derivatives.resize(batch_samples_number, input_size, weights_depth, heads_number);
+            error_key_derivatives.resize(batch_samples_number, context_size, weights_depth, heads_number);
+            error_value_derivatives.resize(batch_samples_number, context_size, weights_depth, heads_number);
+
+            error_input_derivatives.resize(batch_samples_number, input_size, depth);
+            error_context_derivatives.resize(batch_samples_number, context_size, depth);
 
             query_weights_derivatives.resize(depth, weights_depth, heads_number);
             key_weights_derivatives.resize(depth, weights_depth, heads_number);
@@ -370,11 +375,16 @@ protected:
 
         Tensor<type, 3> deltas;
 
-        Tensor<type, 4> attention_scores_derivatives;
+        Tensor<type, 4> error_attention_scores_derivatives;
 
-        Tensor<type, 3> error_query_derivatives;
-        Tensor<type, 3> error_key_derivatives;
-        Tensor<type, 3> error_value_derivatives;
+        Tensor<type, 4> error_attention_output_derivatives;
+
+        Tensor<type, 4> error_query_derivatives;
+        Tensor<type, 4> error_key_derivatives;
+        Tensor<type, 4> error_value_derivatives;
+
+        Tensor<type, 3> error_input_derivatives;
+        Tensor<type, 3> error_context_derivatives;
 
         Tensor<type, 3> query_weights_derivatives;
         Tensor<type, 3> key_weights_derivatives;
@@ -382,7 +392,6 @@ protected:
 
         Tensor<type, 3> projection_weights_derivatives;
         Tensor<type, 1> projection_biases_derivatives;
-
     };
 
 }
