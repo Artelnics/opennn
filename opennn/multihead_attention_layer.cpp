@@ -424,7 +424,7 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 
     Tensor<type, 4> projection_outputs(batch_size, input_size, depth, heads_number);
 
-    /// batch_matrix_multiplication(*thread_pool_device, attention_outputs, projection_weights, projection_outputs);
+    // batch_matrix_multiplication(*thread_pool_device, attention_outputs, projection_weights, projection_outputs);
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
@@ -455,7 +455,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& tr
 
     const Tensor<type, 4> scaled_query = transformed_query /type(sqrt(weights_depth));
 
-    /// batch_matrix_multiplication(*thread_pool_device, scaled_query, transformed_key, attention_scores);
+    // batch_matrix_multiplication(*thread_pool_device, scaled_query, transformed_key, attention_scores);
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
@@ -482,7 +482,7 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& t
 {    
     const Index batch_size = transformed_value.dimension(0);
 
-    /// batch_matrix_multiplication(*thread_pool_device, softmax_attention_scores, transformed_value, attention_outputs)
+    // batch_matrix_multiplication(*thread_pool_device, softmax_attention_scores, transformed_value, attention_outputs)
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
@@ -711,18 +711,18 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     Tensor<type, 3>& projection_weights_derivatives = multihead_attention_layer_back_propagation->projection_weights_derivatives;
     Tensor<type, 1>& projection_biases_derivatives = multihead_attention_layer_back_propagation->projection_biases_derivatives;
 
-    /// PROJECTION DERIVATIVES
+
+    // PROJECTION DERIVATIVES
 
     //calculate_error_projection_weights_derivatives() // using attention_outputs and deltas
 
-    const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+    const Eigen::array<IndexPair<Index>, 2> weights_derivatives_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
     
-    /// This is NOT batch matrix multiplication
-
+    // This is NOT batch matrix multiplication
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         projection_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
-            attention_outputs.chip(head_index, 3).contract(deltas, projection_weights_derivatives_contraction_indices);
+            attention_outputs.chip(head_index, 3).contract(deltas, weights_derivatives_contraction_indices);
     }
 
     //calculate_error_projection_biases_derivatives() // using deltas
@@ -730,24 +730,24 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     projection_biases_derivatives.device(*thread_pool_device) = deltas.sum(Eigen::array<Index, 2>({ 0, 1 }));
 
 
-    /// VALUE DERIVATIVES
+    // VALUE DERIVATIVES
 
     //calculate_error_value_derivatives() // using softmax_attention_scores, deltas, projection_weights and value_weights (sum)
 
     const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    /// This is NOT batch matrix multiplication
-
+    // This is NOT batch matrix multiplication
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
+
         error_attention_output_derivatives.chip(head_index, 2).device(*thread_pool_device) =
             deltas.contract(projection_weights.chip(head_index, 2), attention_output_derivatives_contraction_indices);
     }
 
     const Eigen::array<IndexPair<Index>, 1> value_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    /// batch_matrix_multiplication(*thread_pool_device, softmax_attention_scores, error_attention_output_derivatives, error_value_derivatives)
-
+    // batch_matrix_multiplication(*thread_pool_device, softmax_attention_scores, error_attention_output_derivatives, error_value_derivatives)
+       
     for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
     {
         for (Index head_index = 0; head_index < heads_number; head_index++)
@@ -758,12 +758,16 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
         }
     }
 
+    //calculate_value_weights_derivatives() // using context and error_value_derivatives
+    
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        value_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
+            context.contract(error_value_derivatives.chip(head_index, 3), weights_derivatives_contraction_indices);
+    }
 
 
-    //calculate_error_value_weights_derivatives() // using context and error_value_derivatives 
-
-
-    /// QUERY AND KEY DERIVATIVES
+    // QUERY AND KEY DERIVATIVES
 
     //calculate_error_attention_scores_derivatives(); // using deltas, projection_weights, value and softmax_derivatives(attention_scores)
 

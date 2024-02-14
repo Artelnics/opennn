@@ -41,11 +41,11 @@ struct ForwardPropagation
         batch_samples_number = new_batch_samples_number;
 
         neural_network = new_neural_network;
-
+        
         const Tensor<Layer*, 1> neural_network_layers = neural_network->get_layers();
 
         const Index layers_number = layers.size();
-
+        
         layers.resize(layers_number);
         layers.setConstant(nullptr);
 

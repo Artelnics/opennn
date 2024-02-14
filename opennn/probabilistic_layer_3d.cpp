@@ -610,8 +610,6 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
                                                     LayerForwardPropagation* forward_propagation,
                                                     LayerBackPropagation* back_propagation) const
 {
-    const Index neurons_number = get_neurons_number();
-
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
 
     const Index batch_samples_number = forward_propagation->batch_samples_number;

@@ -370,23 +370,23 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_batch.fill(training_batches.chip(iteration, 0),
                                 input_variables_indices,
                                 target_variables_indices);
-
+            
             // Neural network
             
             inputs_pair = training_batch.get_inputs_pair();
-
+            
             neural_network->forward_propagate(inputs_pair,
                                                       training_forward_propagation,
                                                       is_training);
-
+            
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                                training_forward_propagation,
                                                training_back_propagation);
-
+                                              
             results.training_error_history(epoch) = training_back_propagation.error;
-
+            
             training_error += training_back_propagation.error;
 //            training_loss += training_back_propagation.loss;
 
@@ -438,7 +438,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
 
         }
-
+        
         // Elapsed time
 
         time(&current_time);

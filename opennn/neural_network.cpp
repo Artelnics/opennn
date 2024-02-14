@@ -1757,8 +1757,8 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair
         }
         
         layers(i)->forward_propagate(layer_inputs_pair,
-                                              forward_propagation.layers(i),
-                                              is_training);
+                                     forward_propagation.layers(i),
+                                     is_training);
     }
 }
 
