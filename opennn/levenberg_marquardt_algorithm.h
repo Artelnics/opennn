@@ -24,7 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "optimization_algorithm.h"
 
 // Eigen includes

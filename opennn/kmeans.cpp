@@ -17,8 +17,6 @@
 #include <cstring>
 #include <time.h>
 #include <omp.h>
-// #include <Eigen/Dense>
-// #include "unsupported/Eigen/CXX11/Tensor"
 #include "config.h"
 
 // OpenNN includes
@@ -229,22 +227,25 @@ Tensor<Index, 1> KMeans::get_cluster_labels()
     return rows_cluster_labels;
 }
 
+
 Index KMeans::get_clusters_number()
 {
     return clusters_number;
 }
+
 
 void KMeans::set_cluster_number(const Index& new_clusters_number)
 {
     clusters_number = new_clusters_number;
 }
 
+
 void KMeans::set_centers_random(const Tensor<type, 2>& data)
 {
-    Index data_size = data.dimension(0);
+    const Index data_size = data.dimension(0);
 
     random_device rd;
-    mt19937 gen(rd());
+    const mt19937 gen(rd());
     uniform_int_distribution<> index_distribution(0, data_size - 1);
 
     for(Index i = 0; i < clusters_number; i++)

@@ -454,6 +454,7 @@ void LanguageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
+/*
     ostringstream buffer;
 
     // Data set element
@@ -1100,6 +1101,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
+*/
 }
 
 

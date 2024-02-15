@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "unscaling_layer.h"
-#include "opennn_strings.h"
+#include "strings.h"
 
 namespace opennn
 {

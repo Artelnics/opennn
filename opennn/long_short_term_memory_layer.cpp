@@ -9,7 +9,7 @@
 // OpeNN Includes
 
 #include "long_short_term_memory_layer.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {

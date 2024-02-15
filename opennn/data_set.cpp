@@ -9,11 +9,8 @@
 #include "data_set.h"
 #include "statistics.h"
 #include "correlations.h"
-#include "tensor_utilities.h"
-#include "text_analytics.h"
+#include "tensors.h"
 #include "codification.h"
-
-#include "bounding_box.h"
 
 using namespace opennn;
 using namespace std;

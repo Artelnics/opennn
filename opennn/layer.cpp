@@ -13,7 +13,7 @@
 #include <ctype.h>
 
 #include "layer.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "statistics.h"
 #include "scaling.h"
 #include <tuple>

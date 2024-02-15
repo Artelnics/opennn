@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "data_set.h"
-#include "text_analytics.h"
 
 namespace opennn
 {
@@ -67,10 +66,6 @@ private:
     Index long_words_length = 15;
 
     Tensor<Index, 1> words_frequencies;
-
-    TextAnalytics text_analytics;
-
-    Tensor<string, 1> stop_words = text_analytics.get_stop_words();
 
     Tensor<string, 2> text_data_file_preview;
 };

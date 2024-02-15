@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "perceptron_layer.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {

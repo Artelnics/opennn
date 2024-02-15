@@ -19,7 +19,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 
 namespace opennn {

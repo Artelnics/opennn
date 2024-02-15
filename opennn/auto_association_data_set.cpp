@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "auto_association_data_set.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {

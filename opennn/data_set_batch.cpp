@@ -1,7 +1,7 @@
 #include "data_set_batch.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "image_data_set.h"
-#include "opennn_images.h"
+#include "images.h"
 
 namespace opennn
 {

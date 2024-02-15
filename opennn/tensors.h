@@ -17,7 +17,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "opennn_strings.h"
+#include "strings.h"
 #include "statistics.h"
 
 

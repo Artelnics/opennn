@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "image_data_set.h"
-#include "opennn_images.h"
-#include "opennn_strings.h"
+#include "images.h"
+#include "strings.h"
 
 namespace opennn
 {

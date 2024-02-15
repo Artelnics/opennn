@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "data_set.h"
-#include "text_analytics.h"
+#include "strings.h"
 
 namespace opennn
 {
@@ -56,8 +56,6 @@ public:
 private:
 
     Separator text_separator = Separator::Tab;
-
-    TextAnalytics text_analytics;
 
     Tensor<string, 2> text_data_file_preview;
 

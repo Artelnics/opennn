@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
