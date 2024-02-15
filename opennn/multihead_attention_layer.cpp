@@ -696,7 +696,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     const Tensor<type, 3>& deltas = multihead_attention_layer_back_propagation->deltas;
 
     Tensor<type, 4>& error_attention_scores_derivatives = multihead_attention_layer_back_propagation->error_attention_scores_derivatives;
-
+    Tensor<type, 4>& error_softmax_attention_scores_derivatives = multihead_attention_layer_back_propagation->error_softmax_attention_scores_derivatives;
     Tensor<type, 4>& error_attention_output_derivatives = multihead_attention_layer_back_propagation->error_attention_output_derivatives;
 
     Tensor<type, 4>& error_query_derivatives = multihead_attention_layer_back_propagation->error_query_derivatives;
@@ -742,7 +742,6 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     // This is NOT batch matrix multiplication
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
-
         error_attention_output_derivatives.chip(head_index, 2).device(*thread_pool_device) =
             deltas.contract(projection_weights.chip(head_index, 2), attention_output_derivatives_contraction_indices);
     }
@@ -750,7 +749,6 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     const Eigen::array<IndexPair<Index>, 1> value_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
 
     // batch_matrix_multiplication(*thread_pool_device, softmax_attention_scores, error_attention_output_derivatives, error_value_derivatives)
-       
     for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
     {
         for (Index head_index = 0; head_index < heads_number; head_index++)
@@ -763,6 +761,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     //calculate_value_weights_derivatives() // using context and error_value_derivatives
     
+    // Same as projection_weights_derivatives
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         value_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
@@ -773,6 +772,17 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     // QUERY AND KEY DERIVATIVES
 
     //calculate_error_attention_scores_derivatives(); // using deltas, projection_weights, value and softmax_derivatives(attention_scores)
+    const Eigen::array<IndexPair<Index>, 1> value_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
+
+    for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+    {
+        for (Index head_index = 0; head_index < heads_number; head_index++)
+        {
+                error_softmax_attention_scores_derivatives =
+                    error_attention_output_derivatives.chip(head_index, 3).chip(sample_index, 0).contract(
+                        value.chip(head_index, 3).chip(sample_index, 0), A_BT);
+        }
+    }
 
     //calculate_error_query_derivatives() // using error_attention_scores_derivatives, key, weight_depth and query_weights (sum)
     //calculate_error_key_derivatives() // using error_attention_scores_derivatives, query, weight_depth and key_weights (sum)

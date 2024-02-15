@@ -340,7 +340,7 @@ protected:
             deltas_data = deltas.data();
 
             error_attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
-
+            error_softmax_attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
             error_attention_output_derivatives.resize(batch_samples_number, input_size, weights_depth, heads_number);
 
             error_query_derivatives.resize(batch_samples_number, input_size, weights_depth, heads_number);
@@ -367,7 +367,7 @@ protected:
         Tensor<type, 3> deltas;
 
         Tensor<type, 4> error_attention_scores_derivatives;
-
+        Tensor<type, 4> error_softmax_attention_scores_derivatives;
         Tensor<type, 4> error_attention_output_derivatives;
 
         Tensor<type, 4> error_query_derivatives;
