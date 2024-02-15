@@ -149,7 +149,7 @@ private:
 
     Index regions_number = 1000; // Number of region proposals per image
     Index region_rows = 6; // Final region width to warp
-    Index region_columns = 6; // Final region height to warp
+    Index region_raw_variables = 6; // Final region height to warp
 
 };
 

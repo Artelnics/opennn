@@ -147,9 +147,9 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     Tensor<type, 2> scaled_x(rows_number, raw_variables_number);
 
-    const Tensor<type, 1> columns_minimums = opennn::columns_minimums(x);
+    const Tensor<type, 1> raw_variables_minimums = opennn::raw_variables_minimums(x);
 
-    const Tensor<type, 1> columns_maximums = opennn::columns_maximums(x);
+    const Tensor<type, 1> raw_variables_maximums = opennn::raw_variables_maximums(x);
 
     const type min_range = type(-1);
     const type max_range = type(1);
@@ -158,8 +158,8 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     for(Index j = 0; j < raw_variables_number; j++)
     {
-        const type minimum = columns_minimums(j);
-        const type maximum = columns_maximums(j);
+        const type minimum = raw_variables_minimums(j);
+        const type maximum = raw_variables_maximums(j);
 
         const type slope = (max_range-min_range)/(maximum - minimum);
         const type intercept = (min_range*maximum-max_range*minimum)/(maximum - minimum);

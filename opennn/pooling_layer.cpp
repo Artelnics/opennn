@@ -497,9 +497,9 @@ void PoolingLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* 
 
     const Index next_layers_filters_number = convolutional_layer->get_kernels_number();
     const Index next_layers_filter_rows = convolutional_layer->get_kernels_rows_number();
-    const Index next_layers_filter_columns = convolutional_layer->get_kernels_raw_variables_number();
+    const Index next_layers_filter_raw_variables = convolutional_layer->get_kernels_raw_variables_number();
     const Index next_layers_output_rows = convolutional_layer->get_outputs_rows_number();
-    const Index next_layers_output_columns = convolutional_layer->get_outputs_raw_variables_number();
+    const Index next_layers_output_raw_variables = convolutional_layer->get_outputs_raw_variables_number();
     const Index next_layers_row_stride = convolutional_layer->get_row_stride();
     const Index next_layers_raw_variable_stride = convolutional_layer->get_raw_variable_stride();
 
@@ -524,8 +524,8 @@ void PoolingLayer::calculate_hidden_delta(ConvolutionalLayerForwardPropagation* 
 
             const Index lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
             const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-            const Index lower_raw_variable_index = (raw_variable_index - next_layers_filter_columns)/next_layers_raw_variable_stride + 1;
-            const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_columns);
+            const Index lower_raw_variable_index = (raw_variable_index - next_layers_filter_raw_variables)/next_layers_raw_variable_stride + 1;
+            const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_raw_variables);
 
             for(Index i = 0; i < next_layers_filters_number; i++)
             {
@@ -572,9 +572,9 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_f
                 // Next layer's values
 
                 const Index next_layers_pool_rows = next_layer->get_pool_rows_number();
-                const Index next_layers_pool_columns = next_layer->get_pool_raw_variables_number();
+                const Index next_layers_pool_raw_variables = next_layer->get_pool_raw_variables_number();
                 const Index next_layers_output_rows = next_layer->get_outputs_rows_number();
-                const Index next_layers_output_columns = next_layer->get_outputs_raw_variables_number();
+                const Index next_layers_output_raw_variables = next_layer->get_outputs_raw_variables_number();
                 const Index next_layers_row_stride = next_layer->get_row_stride();
                 const Index next_layers_raw_variable_stride = next_layer->get_raw_variable_stride();
 
@@ -597,8 +597,8 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_f
 
                     const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                     const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-                    const Index lower_raw_variable_index = (raw_variable_index - next_layers_pool_columns)/next_layers_raw_variable_stride + 1;
-                    const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_columns);
+                    const Index lower_raw_variable_index = (raw_variable_index - next_layers_pool_raw_variables)/next_layers_raw_variable_stride + 1;
+                    const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_raw_variables);
 
                     for(Index i = lower_row_index; i < upper_row_index; i++)
                     {
@@ -613,7 +613,7 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_f
                     hidden_delta(image_index, channel_index, row_index, raw_variable_index) = sum;
                 }
 
-//                return hidden_delta/(next_layers_pool_rows*next_layers_pool_columns);
+//                return hidden_delta/(next_layers_pool_rows*next_layers_pool_raw_variables);
             }
 
             case opennn::PoolingLayer::PoolingMethod::MaxPooling:
@@ -628,9 +628,9 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_f
                 // Next layer's values
 
                 const Index next_layers_pool_rows = next_layer->get_pool_rows_number();
-                const Index next_layers_pool_columns = next_layer->get_pool_raw_variables_number();
+                const Index next_layers_pool_raw_variables = next_layer->get_pool_raw_variables_number();
                 const Index next_layers_output_rows = next_layer->get_outputs_rows_number();
-                const Index next_layers_output_columns = next_layer->get_outputs_raw_variables_number();
+                const Index next_layers_output_raw_variables = next_layer->get_outputs_raw_variables_number();
                 const Index next_layers_row_stride = next_layer->get_row_stride();
                 const Index next_layers_raw_variable_stride = next_layer->get_raw_variable_stride();
 
@@ -653,37 +653,37 @@ void PoolingLayer::calculate_hidden_delta(PoolingLayerForwardPropagation* next_f
 
                     const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                     const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
-                    const Index lower_raw_variable_index = (raw_variable_index - next_layers_pool_columns)/next_layers_raw_variable_stride + 1;
-                    const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_columns);
+                    const Index lower_raw_variable_index = (raw_variable_index - next_layers_pool_raw_variables)/next_layers_raw_variable_stride + 1;
+                    const Index upper_raw_variable_index = min(raw_variable_index/next_layers_raw_variable_stride + 1, next_layers_output_raw_variables);
 
                     for(Index i = lower_row_index; i < upper_row_index; i++)
                     {
                         for(Index j = lower_raw_variable_index; j < upper_raw_variable_index; j++)
                         {
-                            Tensor<type, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
+                            Tensor<type, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_raw_variables);
 
                             for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                             {
-                                for(Index submatrix_raw_variable_index = 0; submatrix_raw_variable_index < next_layers_pool_columns; submatrix_raw_variable_index++)
+                                for(Index submatrix_raw_variable_index = 0; submatrix_raw_variable_index < next_layers_pool_raw_variables; submatrix_raw_variable_index++)
                                 {
                                     activations_current_submatrix(submatrix_row_index, submatrix_raw_variable_index) =
                                             activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_raw_variable_stride + submatrix_raw_variable_index);
                                 }
                             }
 
-                            Tensor<type, 2> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
+                            Tensor<type, 2> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_raw_variables);
 
                             type max_value = activations_current_submatrix(0,0);
 
                             for(Index submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                             {
-                                for(Index submatrix_raw_variable_index = 0; submatrix_raw_variable_index < next_layers_pool_columns; submatrix_raw_variable_index++)
+                                for(Index submatrix_raw_variable_index = 0; submatrix_raw_variable_index < next_layers_pool_raw_variables; submatrix_raw_variable_index++)
                                 {
                                     if(activations_current_submatrix(submatrix_row_index, submatrix_raw_variable_index) > max_value)
                                     {
                                         max_value = activations_current_submatrix(submatrix_row_index, submatrix_raw_variable_index);
 
-                                        //multiply_not_multiply.resize(next_layers_pool_rows, next_layers_pool_columns, 0.0);
+                                        //multiply_not_multiply.resize(next_layers_pool_rows, next_layers_pool_raw_variables, 0.0);
                                         //multiply_not_multiply(submatrix_row_index, submatrix_raw_variable_index) = type(1);
                                     }
                                 }
@@ -797,7 +797,7 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Column stride
 
-    file_stream.OpenElement("ColumnStride");
+    file_stream.OpenElement("raw_variablestride");
 
     buffer.str("");
     buffer << get_raw_variable_stride();
@@ -819,7 +819,7 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Pool raw_variables number
 
-    file_stream.OpenElement("PoolColumnsNumber");
+    file_stream.OpenElement("Poolraw_variablesNumber");
 
     buffer.str("");
     buffer << get_pool_raw_variables_number();
@@ -910,7 +910,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Column stride
 
-    const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
+    const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("raw_variablestride");
 
     if(!column_stride_element)
     {
@@ -944,7 +944,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Pool raw_variables number
 
-    const tinyxml2::XMLElement* pool_raw_variables_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
+    const tinyxml2::XMLElement* pool_raw_variables_number_element = pooling_layer_element->FirstChildElement("Poolraw_variablesNumber");
 
     if(!pool_raw_variables_number_element)
     {

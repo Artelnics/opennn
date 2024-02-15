@@ -445,7 +445,7 @@ public:
     void set_samples_uses(const Tensor<string, 1>&);
     void set_samples_uses(const Tensor<Index, 1>&, const SampleUse);
 
-    // Columns set methods
+    // raw_variables set methods
 
     void set_raw_variables(const Tensor<RawVariable, 1>&);
 
@@ -483,7 +483,7 @@ public:
 
     void set_binary_simple_raw_variables();
 
-    // Columns other methods
+    // raw_variables other methods
 
     void check_constant_raw_variables();
 
@@ -796,7 +796,7 @@ protected:
 
     Tensor<string, 1> rows_labels;
 
-    // Columns
+    // raw_variables
 
     Tensor<RawVariable, 1> raw_variables;
 
@@ -818,7 +818,7 @@ protected:
 
     string missing_values_label = "NA";
 
-    Tensor<bool, 1> nans_columns;
+    Tensor<bool, 1> nans_raw_variables;
 
     /// Header which contains variables name.
 
@@ -846,7 +846,7 @@ protected:
 
     Index missing_values_number;
 
-    Tensor<Index, 1> columns_missing_values_number;
+    Tensor<Index, 1> raw_variables_missing_values_number;
 
     Index rows_missing_values_number;
 

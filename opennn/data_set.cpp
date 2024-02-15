@@ -1966,14 +1966,14 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_raw_variables_uses() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<DataSet::VariableUse, 1> columns_uses(raw_variables_number);
+    Tensor<DataSet::VariableUse, 1> raw_variables_uses(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        columns_uses(i) = raw_variables(i).raw_variable_use;
+        raw_variables_uses(i) = raw_variables(i).raw_variable_use;
     }
 
-    return columns_uses;
+    return raw_variables_uses;
 }
 
 
@@ -2281,14 +2281,14 @@ Tensor<Scaler, 1> DataSet::get_raw_variables_scalers() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<Scaler, 1> columns_scalers(raw_variables_number);
+    Tensor<Scaler, 1> raw_variables_scalers(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        columns_scalers(i) = raw_variables(i).scaler;
+        raw_variables_scalers(i) = raw_variables(i).scaler;
     }
 
-    return columns_scalers;
+    return raw_variables_scalers;
 }
 
 
@@ -2346,14 +2346,14 @@ Tensor<string, 1> DataSet::get_raw_variables_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<string, 1> columns_names(raw_variables_number);
+    Tensor<string, 1> raw_variables_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        columns_names(i) = raw_variables(i).name;
+        raw_variables_names(i) = raw_variables(i).name;
     }
 
-    return columns_names;
+    return raw_variables_names;
 }
 
 
@@ -4333,18 +4333,18 @@ Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) cons
 
 
 /// Returns the index from the column with a given name,
-/// @param columns_names Names of the raw_variables we want to know the index.
+/// @param raw_variables_names Names of the raw_variables we want to know the index.
 
-Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& columns_names) const
+Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& raw_variables_names) const
 {
-    Tensor<Index, 1> columns_index(columns_names.size());
+    Tensor<Index, 1> raw_variables_index(raw_variables_names.size());
 
-    for(Index i = 0; i < columns_names.size(); i++)
+    for(Index i = 0; i < raw_variables_names.size(); i++)
     {
-        columns_index(i) = get_raw_variable_index(columns_names(i));
+        raw_variables_index(i) = get_raw_variable_index(raw_variables_names(i));
     }
 
-    return columns_index;
+    return raw_variables_index;
 }
 
 /// Returns the index of the column with the given name.
@@ -4806,7 +4806,7 @@ void DataSet::set()
 
     //time_series_raw_variables.resize(0);
 
-    columns_missing_values_number.resize(0);
+    raw_variables_missing_values_number.resize(0);
 }
 
 
@@ -5373,7 +5373,7 @@ Tensor<string, 1> DataSet::unuse_constant_raw_variables()
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    Tensor<string, 1> constant_columns;
+    Tensor<string, 1> constant_raw_variables;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -5381,11 +5381,11 @@ Tensor<string, 1> DataSet::unuse_constant_raw_variables()
         {
             raw_variables(i).set_use(VariableUse::Unused);
 
-            push_back_string(constant_columns, raw_variables(i).name);
+            push_back_string(constant_raw_variables, raw_variables(i).name);
         }
     }
 
-    return constant_columns;
+    return constant_raw_variables;
 }
 
 
@@ -5443,7 +5443,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
 
 Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_correlation)
 {
-    Tensor<string, 1> unused_columns;
+    Tensor<string, 1> unused_raw_variables;
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variables_correlations();
 
@@ -5464,12 +5464,12 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
             {
                 raw_variables(input_raw_variable_index).set_use(VariableUse::Unused);
 
-                push_back_string(unused_columns, raw_variables(input_raw_variable_index).name);
+                push_back_string(unused_raw_variables, raw_variables(input_raw_variable_index).name);
             }
         }
     }
 
-    return unused_columns;
+    return unused_raw_variables;
 }
 
 
@@ -5477,7 +5477,7 @@ Tensor<string, 1> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& 
 {
     // Original_raw_variables_indices and final_raw_variables_indices refers to the indices of the variables
 
-    Tensor<string, 1> unused_columns;
+    Tensor<string, 1> unused_raw_variables;
 
     for(Index i = 0; i < original_variable_indices.size(); i++)
     {
@@ -5500,11 +5500,11 @@ Tensor<string, 1> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& 
         {
             raw_variables(raw_variable_index).set_use(VariableUse::Unused);
 
-            push_back_string(unused_columns, raw_variables(raw_variable_index).name);
+            push_back_string(unused_raw_variables, raw_variables(raw_variable_index).name);
         }
     }
 
-    return unused_columns;
+    return unused_raw_variables;
 }
 
 
@@ -6099,7 +6099,7 @@ Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives
 
 Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 {
-    return columns_minimums(data, get_used_samples_indices(), get_input_variables_indices());
+    return raw_variables_minimums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
 
@@ -6107,7 +6107,7 @@ Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
 
 Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 {
-    return columns_minimums(data, get_used_samples_indices(), get_target_variables_indices());
+    return raw_variables_minimums(data, get_used_samples_indices(), get_target_variables_indices());
 }
 
 
@@ -6116,7 +6116,7 @@ Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
 
 Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 {
-    return columns_maximums(data, get_used_samples_indices(), get_input_variables_indices());
+    return raw_variables_maximums(data, get_used_samples_indices(), get_input_variables_indices());
 }
 
 
@@ -6124,7 +6124,7 @@ Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
 
 Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 {
-    return columns_maximums(data, get_used_samples_indices(), get_target_variables_indices());
+    return raw_variables_maximums(data, get_used_samples_indices(), get_target_variables_indices());
 }
 
 
@@ -6132,7 +6132,7 @@ Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
 
 Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 {
-    return columns_minimums(data, get_used_samples_indices(), get_used_variables_indices());
+    return raw_variables_minimums(data, get_used_samples_indices(), get_used_variables_indices());
 }
 
 
@@ -6364,10 +6364,10 @@ void DataSet::print_missing_values_information() const
 
     cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
 
-    const Tensor<Index, 0> columns_with_missing_values = count_nan_raw_variables().sum();
+    const Tensor<Index, 0> raw_variables_with_missing_values = count_nan_raw_variables().sum();
 
-    cout << "Columns with missing values: " << columns_with_missing_values(0)
-         << " (" << columns_with_missing_values(0)*100/data.dimension(1) << "%)" << endl;
+    cout << "raw_variables with missing values: " << raw_variables_with_missing_values(0)
+         << " (" << raw_variables_with_missing_values(0)*100/data.dimension(1) << "%)" << endl;
 
     const Index samples_with_missing_values = count_rows_with_nan();
 
@@ -7075,9 +7075,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns names
+    // raw_variables names
     {
-        file_stream.OpenElement("ColumnsNames");
+        file_stream.OpenElement("raw_variablesNames");
 
         buffer.str("");
         buffer << has_raw_variables_names;
@@ -7124,13 +7124,13 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Columns
+    // raw_variables
 
-    file_stream.OpenElement("Columns");
+    file_stream.OpenElement("raw_variables");
 
-    // Columns number
+    // raw_variables number
     {
-        file_stream.OpenElement("ColumnsNumber");
+        file_stream.OpenElement("raw_variablesNumber");
 
         buffer.str("");
         buffer << get_raw_variables_number();
@@ -7140,7 +7140,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns items
+    // raw_variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -7270,17 +7270,17 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // Columns missing values number
+        // raw_variables missing values number
         {
-            file_stream.OpenElement("ColumnsMissingValuesNumber");
+            file_stream.OpenElement("raw_variablesMissingValuesNumber");
 
-            const Index raw_variables_number = columns_missing_values_number.size();
+            const Index raw_variables_number = raw_variables_missing_values_number.size();
 
             buffer.str("");
 
             for(Index i = 0; i < raw_variables_number; i++)
             {
-                buffer << columns_missing_values_number(i);
+                buffer << raw_variables_missing_values_number(i);
 
                 if(i != (raw_variables_number-1)) buffer << " ";
             }
@@ -7426,11 +7426,11 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("raw_variablesNames");
 
-    if(columns_names_element)
+    if(raw_variables_names_element)
     {
-        const string new_raw_variables_names_string = columns_names_element->GetText();
+        const string new_raw_variables_names_string = raw_variables_names_element->GetText();
 
         try
         {
@@ -7496,44 +7496,44 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* columns_element = data_set_element->FirstChildElement("Columns");
+    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("raw_variables");
 
-    if(!columns_element)
+    if(!raw_variables_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns element is nullptr.\n";
+               << "raw_variables element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    // Columns number
+    // raw_variables number
 
-    const tinyxml2::XMLElement* columns_number_element = columns_element->FirstChildElement("ColumnsNumber");
+    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("raw_variablesNumber");
 
-    if(!columns_number_element)
+    if(!raw_variables_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns number element is nullptr.\n";
+               << "raw_variables number element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
     Index new_raw_variables_number = 0;
 
-    if(columns_number_element->GetText())
+    if(raw_variables_number_element->GetText())
     {
-        new_raw_variables_number = Index(atoi(columns_number_element->GetText()));
+        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
 
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* start_element = columns_number_element;
+    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     if(new_raw_variables_number > 0)
     {
@@ -7677,7 +7677,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //    // Time series raw_variables
 
-//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesColumns");
+//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
 
 //    if(!time_series_raw_variables_element)
 //    {
@@ -7687,7 +7687,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //    {
 //        // Time series raw_variables number
 
-//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesColumnsNumber");
+//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesraw_variablesNumber");
 
 //        if(!time_series_raw_variables_number_element)
 //        {
@@ -7990,28 +7990,28 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // Columns Missing values number
+        // raw_variables Missing values number
 
-        const tinyxml2::XMLElement* columns_missing_values_number_element = missing_values_element->FirstChildElement("ColumnsMissingValuesNumber");
+        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("raw_variablesMissingValuesNumber");
 
-        if(!columns_missing_values_number_element)
+        if(!raw_variables_missing_values_number_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Columns missing values number element is nullptr.\n";
+                   << "raw_variables missing values number element is nullptr.\n";
 
             throw runtime_error(buffer.str());
         }
 
-        if(columns_missing_values_number_element->GetText())
+        if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
 
-            columns_missing_values_number.resize(new_raw_variables_missing_values_number.size());
+            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
             for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
             {
-                columns_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
             }
         }
 
@@ -8632,7 +8632,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
                 continue;
             }
 
-            Index columns_outliers = 0;
+            Index raw_variables_outliers = 0;
 
             for(Index j = 0; j < samples_number; j++)
             {
@@ -8643,11 +8643,11 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
                 {
                     return_values(0)(Index(j)) = 1;
 
-                    columns_outliers++;
+                    raw_variables_outliers++;
                 }
             }
 
-            return_values(1)(used_variable_index) = columns_outliers;
+            return_values(1)(used_variable_index) = raw_variables_outliers;
 
             variable_index++;
             used_variable_index++;
@@ -8720,7 +8720,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
                 continue;
             }
 
-            Index columns_outliers = 0;
+            Index raw_variables_outliers = 0;
 
             for(Index j = 0; j < samples_number; j++)
             {
@@ -8731,13 +8731,13 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
                 {
                     return_values(0)(Index(j)) = 1;
 
-                    columns_outliers++;
+                    raw_variables_outliers++;
 
                     data(samples_indices(Index(j)), variable_index) = numeric_limits<type>::quiet_NaN();
                 }
             }
 
-            return_values(1)(used_variable_index) = columns_outliers;
+            return_values(1)(used_variable_index) = raw_variables_outliers;
 
             variable_index++;
             used_variable_index++;
@@ -9249,7 +9249,7 @@ void DataSet::read_csv()
 
 Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_variables_number)
 {
-    Tensor<string, 1> columns_names(raw_variables_number);
+    Tensor<string, 1> raw_variables_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -9257,10 +9257,10 @@ Tensor<string, 1> DataSet::get_default_raw_variables_names(const Index& raw_vari
 
         buffer << "column_" << i+1;
 
-        columns_names(i) = buffer.str();
+        raw_variables_names(i) = buffer.str();
     }
 
-    return columns_names;
+    return raw_variables_names;
 }
 
 void DataSet::read_csv_1()
@@ -9379,7 +9379,7 @@ void DataSet::read_csv_1()
         throw runtime_error(buffer.str());
     }
 
-    // Columns names
+    // raw_variables names
 
     if(display) cout << "Setting raw_variables names..." << endl;
 
@@ -9396,11 +9396,11 @@ void DataSet::read_csv_1()
 
     // Check raw_variables with all missing values
 
-    bool has_nans_columns = false;
+    bool has_nans_raw_variables = false;
 
     do
     {
-        has_nans_columns = false;
+        has_nans_raw_variables = false;
 
         if(lines_number > 10)
             break;
@@ -9416,14 +9416,14 @@ void DataSet::read_csv_1()
                     && data_file_preview(lines_number-2)(i) == missing_values_label
                     && data_file_preview(lines_number-1)(i) == missing_values_label)
             {
-                has_nans_columns = true;
+                has_nans_raw_variables = true;
             }
             else
             {
-                has_nans_columns = false;
+                has_nans_raw_variables = false;
             }
 
-            if(has_nans_columns)
+            if(has_nans_raw_variables)
             {
                 lines_number++;
                 data_file_preview.resize(lines_number);
@@ -9460,9 +9460,9 @@ void DataSet::read_csv_1()
                 file.close();
             }
         }
-    }while(has_nans_columns);
+    }while(has_nans_raw_variables);
 
-    // Columns types
+    // raw_variables types
 
     if(display) cout << "Setting raw_variables types..." << endl;
 
@@ -10191,9 +10191,9 @@ void DataSet::read_csv_3_complete()
 
                 while(previous_timestamp != 0 && difftime(current_timestamp, previous_timestamp) > time_step)
                 {
-                    for(Index columns_index = 0; columns_index < raw_variables_number; ++columns_index)
+                    for(Index raw_variables_index = 0; raw_variables_index < raw_variables_number; ++raw_variables_index)
                     {
-                        data(sample_index, columns_index) = type(NAN);
+                        data(sample_index, raw_variables_index) = type(NAN);
                     }
                     sample_index++;
 
@@ -10292,9 +10292,9 @@ void DataSet::read_csv_3_complete()
 
         if(insert_nan_row)
         {
-            for(Index columns_index = 0; columns_index < raw_variables_number; ++columns_index)
+            for(Index raw_variables_index = 0; raw_variables_index < raw_variables_number; ++raw_variables_index)
             {
-                data(sample_index, columns_index) = type(NAN);
+                data(sample_index, raw_variables_index) = type(NAN);
             }
             sample_index++;
 
@@ -10559,13 +10559,13 @@ void DataSet::set_missing_values_number()
 
 void DataSet::set_raw_variables_missing_values_number(const Tensor<Index, 1>& new_raw_variables_missing_values_number)
 {
-    columns_missing_values_number = new_raw_variables_missing_values_number;
+    raw_variables_missing_values_number = new_raw_variables_missing_values_number;
 }
 
 
 void DataSet::set_raw_variables_missing_values_number()
 {
-    columns_missing_values_number = count_nan_raw_variables();
+    raw_variables_missing_values_number = count_nan_raw_variables();
 }
 
 
@@ -10587,16 +10587,16 @@ void DataSet::fix_repeated_names()
 
     const Index raw_variables_number = raw_variables.size();
 
-    map<string, Index> columns_count_map;
+    map<string, Index> raw_variables_count_map;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        auto result = columns_count_map.insert(pair<string, Index>(raw_variables(i).name, 1));
+        auto result = raw_variables_count_map.insert(pair<string, Index>(raw_variables(i).name, 1));
 
         if(!result.second) result.first->second++;
     }
 
-    for(const auto & element : columns_count_map)
+    for(const auto & element : raw_variables_count_map)
     {
         if(element.second > 1)
         {
@@ -10697,7 +10697,7 @@ void DataSet::shuffle()
     mt19937 urng(rng());
 
     const Index data_rows = data.dimension(0);
-    const Index data_columns = data.dimension(1);
+    const Index data_raw_variables = data.dimension(1);
 
     Tensor<Index, 1> indices(data_rows);
 
@@ -10705,7 +10705,7 @@ void DataSet::shuffle()
 
     std::shuffle(&indices(0), &indices(data_rows-1), urng);
 
-    Tensor<type, 2> new_data(data_rows, data_columns);
+    Tensor<type, 2> new_data(data_rows, data_raw_variables);
     Tensor<string, 1> new_rows_labels(data_rows);
 
     Index index = 0;
@@ -10716,7 +10716,7 @@ void DataSet::shuffle()
 
         new_rows_labels(i) = rows_labels(index);
 
-        for(Index j = 0; j < data_columns; j++)
+        for(Index j = 0; j < data_raw_variables; j++)
         {
             new_data(i,j) = data(index,j);
         }

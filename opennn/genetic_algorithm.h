@@ -185,7 +185,7 @@ private:
     /// Initial raw_variables unused
 
     Tensor <Index, 1> original_unused_raw_variables_indices;
-    Tensor<bool, 1> original_unused_columns;
+    Tensor<bool, 1> original_unused_raw_variables;
 
     /// Activation probabilities.
     
