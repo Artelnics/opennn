@@ -149,10 +149,11 @@ public:
                                   LayerBackPropagation*) const final;
 
     // Serialization methods
+
     /// @todo
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void write_XML(tinyxml2::XMLPrinter&) const final;
+    //void from_XML(const tinyxml2::XMLDocument&) final;
+    //void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

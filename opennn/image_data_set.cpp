@@ -1795,7 +1795,7 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
     input_variables_dimensions.setValues({height, width, channels});
 }
 
-
+/*
 BoundingBox ImageDataSet::propose_random_region(const Tensor<unsigned char, 1>& image) const
 {
 
@@ -1831,7 +1831,7 @@ BoundingBox ImageDataSet::propose_random_region(const Tensor<unsigned char, 1>& 
 
     return random_region;
 }
-
+*/
 
 void ImageDataSet::read_ground_truth()
 {

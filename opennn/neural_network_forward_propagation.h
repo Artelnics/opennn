@@ -131,12 +131,6 @@ struct ForwardPropagation
             }
             break;
 
-            case Layer::Type::NonMaxSuppression:
-            {
-                layers(i) = new NonMaxSuppressionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-            }
-            break;
-
             case Layer::Type::Embedding:
             {
                 layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i));

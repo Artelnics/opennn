@@ -26,7 +26,7 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
-
+        /*
         srand(static_cast<unsigned>(time(nullptr)));
 
         // DataSet
@@ -97,7 +97,7 @@ int main()
 
         neural_network.save_expression_c("../data/amazon_reviews.txt");
         neural_network.save_expression_python("../data/amazon_reviews.py");
-
+        */
         cout << "Good bye!" << endl;
 
         return 0;

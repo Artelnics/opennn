@@ -23,7 +23,6 @@
 
 #include "config.h"
 #include "layer.h"
-#include "addition_layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"
 #include "bounding_layer.h"
@@ -35,18 +34,15 @@
 #include "probabilistic_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
-// #include "region_proposal_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 #include "kmeans.h"
-#include "non_max_suppression_layer.h"
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
 #include "auto_associative_neural_network.h"
-// #include "transformer.h"
+#include "transformer.h"
 #include "neural_network_forward_propagation.h"
-#include "vgg16.h"
 
 // Training strategy
 
@@ -89,8 +85,6 @@
 #include "tensor_utilities.h"
 #include "statistics.h"
 #include "scaling.h"
-#include "region_based_object_detector.h"
-#include "json_to_xml.h"
 #include "text_analytics.h"
 #include "codification.h"
 

@@ -101,7 +101,7 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
 }
 
 
-// @todo bad variables names
+/// @todo bad variables names
 
 void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& sorted, const int& raw_variables_number)
 {

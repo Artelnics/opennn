@@ -24,7 +24,6 @@
 #include "config.h"
 #include "data_set_batch.h"
 #include "layer.h"
-#include "addition_layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
 #include "scaling_layer_2d.h"
@@ -35,7 +34,6 @@
 #include "probabilistic_layer_3d.h"
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
-#include "non_max_suppression_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 

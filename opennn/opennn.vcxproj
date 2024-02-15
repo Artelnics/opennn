@@ -216,26 +216,18 @@
   <ItemGroup>
     <ClInclude Include="adaptive_moment_estimation.h" />
     <ClCompile Include="adaptive_moment_estimation.cpp" />
-    <ClInclude Include="addition_layer.h" />
-    <ClCompile Include="addition_layer.cpp" />
     <ClInclude Include="auto_association_data_set.h" />
     <ClCompile Include="auto_association_data_set.cpp" />
     <ClInclude Include="auto_associative_neural_network.h" />
     <ClCompile Include="auto_associative_neural_network.cpp" />
-    <ClInclude Include="bounding_box.h" />
-    <ClCompile Include="bounding_box.cpp" />
-    <ClInclude Include="bounding_box_regressor_layer.h" />
-    <ClCompile Include="bounding_box_regressor_layer.cpp" />
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
     <ClCompile Include="box_plot.cpp" />
     <ClInclude Include="codification.h" />
     <ClCompile Include="codification.cpp" />
-    <ClInclude Include="column.h" />
-    <ClCompile Include="column.cpp" />
-    <ClInclude Include="concatenation_layer.h" />
-    <ClCompile Include="concatenation_layer.cpp" />
+    <ClInclude Include="raw_variable.h" />
+    <ClCompile Include="raw_variable.cpp" />
     <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
     <ClCompile Include="conjugate_gradient.cpp" />
@@ -281,8 +273,6 @@
     <ClCompile Include="learning_rate_algorithm.cpp" />
     <ClInclude Include="levenberg_marquardt_algorithm.h" />
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
-    <ClInclude Include="local_outlier_factor.h" />
-    <ClCompile Include="local_outlier_factor.cpp" />
     <ClInclude Include="long_short_term_memory_layer.h" />
     <ClCompile Include="long_short_term_memory_layer.cpp" />
     <ClInclude Include="loss_index.h" />
@@ -309,8 +299,6 @@
     <ClCompile Include="neural_network_forward_propagation.cpp" />
     <ClInclude Include="neurons_selection.h" />
     <ClCompile Include="neurons_selection.cpp" />
-    <ClInclude Include="non_max_suppression_layer.h" />
-    <ClCompile Include="non_max_suppression_layer.cpp" />
     <ClInclude Include="normalized_squared_error.h" />
     <ClCompile Include="normalized_squared_error.cpp" />
     <ClInclude Include="numerical_differentiation.h" />
@@ -346,8 +334,6 @@
     <ClCompile Include="probabilistic_layer_back_propagation_lm.cpp" />
     <ClInclude Include="probabilistic_layer_forward_propagation.h" />
     <ClCompile Include="probabilistic_layer_forward_propagation.cpp" />
-    <ClInclude Include="pruning_inputs.h" />
-    <ClCompile Include="pruning_inputs.cpp" />
     <ClInclude Include="quasi_newton_method.h" />
     <ClCompile Include="quasi_newton_method.cpp" />
     <ClInclude Include="quasi_newton_method_data.h" />
@@ -358,12 +344,6 @@
     <ClCompile Include="recurrent_layer_back_propagation.cpp" />
     <ClInclude Include="recurrent_layer_forward_propagation.h" />
     <ClCompile Include="recurrent_layer_forward_propagation.cpp" />
-    <ClInclude Include="region_based_object_detector.h" />
-    <ClCompile Include="region_based_object_detector.cpp" />
-    <ClInclude Include="region_proposal_layer.h" />
-    <ClCompile Include="region_proposal_layer.cpp" />
-    <ClInclude Include="resnet50.h" />
-    <ClCompile Include="resnet50.cpp" />
     <ClInclude Include="response_optimization.h" />
     <ClCompile Include="response_optimization.cpp" />
     <ClInclude Include="scaling.h" />
@@ -404,8 +384,6 @@
     <ClCompile Include="unscaling_layer.cpp" />
     <ClInclude Include="unscaling_layer_forward_propagation.h" />
     <ClCompile Include="unscaling_layer_forward_propagation.cpp" />
-    <ClInclude Include="vgg16.h" />
-    <ClCompile Include="vgg16.cpp" />
     <ClInclude Include="weighted_squared_error.h" />
     <ClCompile Include="weighted_squared_error.cpp" />
     <ClInclude Include="word_bag.h" />
