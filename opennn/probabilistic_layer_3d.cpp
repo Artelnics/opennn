@@ -628,6 +628,7 @@ void ProbabilisticLayer3D::calculate_error_gradient(const pair<type*, dimensions
         Tensor<type, 1>& deltas_row = probabilistic_layer_3d_back_propagation->deltas_row;
         Tensor<type, 2>& activations_derivatives_matrix = probabilistic_layer_3d_back_propagation->activations_derivatives_matrix;
 
+        //batch_matrix_multiplication(*thread_pool_device, activations_derivatives, deltas, error_combinations_derivatives);
         for(Index i = 0; i < batch_samples_number; i++)
         {
             for(Index j = 0; j < inputs_number; j++)

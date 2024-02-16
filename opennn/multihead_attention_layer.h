@@ -179,6 +179,10 @@ protected:
 
     Index weights_depth;
 
+    // Scaling factor used for attention computation in each head
+
+    type scaling_factor;
+
     /// Linear transformation weights
 
     Tensor<type, 3> query_weights;

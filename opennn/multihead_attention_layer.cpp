@@ -221,6 +221,8 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     weights_depth = Index(depth / heads_number);
 
+    scaling_factor = type(1) / type(sqrt(weights_depth));
+
     set_weights();
 
     set_default();
@@ -454,7 +456,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& tr
 
     /// @todo do not assign memory
 
-    const Tensor<type, 4> scaled_query = transformed_query /type(sqrt(weights_depth));
+    const Tensor<type, 4> scaled_query = transformed_query * scaling_factor;
 
     // batch_matrix_multiplication(*thread_pool_device, scaled_query, transformed_key, attention_scores);
 
@@ -706,7 +708,6 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     Tensor<type, 3>& error_input_derivatives = multihead_attention_layer_back_propagation->error_input_derivatives;
     Tensor<type, 3>& error_context_derivatives = multihead_attention_layer_back_propagation->error_context_derivatives;
 
-
     Tensor<type, 3>& query_weights_derivatives = multihead_attention_layer_back_propagation->query_weights_derivatives;
     Tensor<type, 3>& key_weights_derivatives = multihead_attention_layer_back_propagation->key_weights_derivatives;
     Tensor<type, 3>& value_weights_derivatives = multihead_attention_layer_back_propagation->value_weights_derivatives;
@@ -721,12 +722,13 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     const Eigen::array<IndexPair<Index>, 2> weights_derivatives_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
     
-    // This is NOT batch matrix multiplication
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         projection_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
             attention_outputs.chip(head_index, 3).contract(deltas, weights_derivatives_contraction_indices);
     }
+
 
     //calculate_error_projection_biases_derivatives() // using deltas
 
@@ -735,11 +737,11 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     // VALUE DERIVATIVES
 
-    //calculate_error_value_derivatives() // using softmax_attention_scores, deltas, projection_weights and value_weights (sum)
+    //calculate_error_value_derivatives() // using softmax_attention_scores, deltas, projection_weights and value_weights
 
     const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    // This is NOT batch matrix multiplication
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         error_attention_output_derivatives.chip(head_index, 2).device(*thread_pool_device) =
@@ -759,9 +761,10 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
         }
     }
 
+
     //calculate_value_weights_derivatives() // using context and error_value_derivatives
     
-    // Same as projection_weights_derivatives
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         value_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
@@ -772,23 +775,125 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     // QUERY AND KEY DERIVATIVES
 
     //calculate_error_attention_scores_derivatives(); // using deltas, projection_weights, value and softmax_derivatives(attention_scores)
-    const Eigen::array<IndexPair<Index>, 1> value_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
-
+    
+    //batch_matrix_multiplication(*thread_pool_device, error_attention_output, value, error_softmax_attention_scores_derivatives);
     for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
     {
         for (Index head_index = 0; head_index < heads_number; head_index++)
         {
-                error_softmax_attention_scores_derivatives =
-                    error_attention_output_derivatives.chip(head_index, 3).chip(sample_index, 0).contract(
-                        value.chip(head_index, 3).chip(sample_index, 0), A_BT);
+            error_softmax_attention_scores_derivatives.chip(head_index, 3).chip(sample_index, 0) =
+                error_attention_output_derivatives.chip(head_index, 3).chip(sample_index, 0).contract(
+                    value.chip(head_index, 3).chip(sample_index, 0), A_BT);
         }
     }
 
-    //calculate_error_query_derivatives() // using error_attention_scores_derivatives, key, weight_depth and query_weights (sum)
-    //calculate_error_key_derivatives() // using error_attention_scores_derivatives, query, weight_depth and key_weights (sum)
+    Tensor<type, 4> softmax_activations_derivatives(batch_samples_number, input_size, context_size, context_size);
 
-    //calculate_error_query_weights_derivatives() // using input and error_query_derivatives
-    //calculate_error_key_weights_derivatives() // using context and error_key_derivatives
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        const TensorMap<Tensor<type, 3>> head_attention_scores((type*) attention_scores.data() + head_index * batch_samples_number*input_size*context_size,
+            batch_samples_number, input_size, context_size);
+
+        TensorMap<Tensor<type, 3>> head_softmax_attention_scores((type*) softmax_attention_scores.data() + head_index * batch_samples_number*input_size*context_size,
+            batch_samples_number, input_size, context_size);
+
+        //softmax_derivatives(head_attention_scores, head_softmax_attention_scores, softmax_activations_derivatives);
+
+        TensorMap<Tensor<type, 3>> head_attention_scores_derivatives((type*) error_attention_scores_derivatives.data() + head_index * batch_samples_number*input_size*context_size,
+            batch_samples_number, input_size, context_size);
+
+        //batch_matrix_multiplication(*thread_pool_device, softmax_activations_derivatives, error_softmax_attention_scores_derivatives, head_attention_scores_derivatives);
+    }
+    
+
+    //calculate_error_query_derivatives() // using error_attention_scores_derivatives, key, weight_depth and query_weights
+    
+    // batch_matrix_multiplication(*thread_pool_device, error_attention_scores_derivatives, key, error_query_derivatives, A_B)
+    for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+    {
+        for (Index head_index = 0; head_index < heads_number; head_index++)
+        {
+            error_query_derivatives.chip(head_index, 3).chip(sample_index, 0).device(*thread_pool_device) =
+                error_attention_scores_derivatives.chip(head_index, 3).chip(sample_index, 0).contract(
+                    key.chip(head_index, 3).chip(sample_index, 0), A_B) * scaling_factor;
+        }
+    }
+
+
+    //calculate_error_key_derivatives() // using error_attention_scores_derivatives, query, weight_depth and key_weights
+
+    // batch_matrix_multiplication(*thread_pool_device, error_attention_scores_derivatives, query, error_key_derivatives, AT_B)
+    for (Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+    {
+        for (Index head_index = 0; head_index < heads_number; head_index++)
+        {
+            error_key_derivatives.chip(head_index, 3).chip(sample_index, 0).device(*thread_pool_device) =
+                error_attention_scores_derivatives.chip(head_index, 3).chip(sample_index, 0).contract(
+                    query.chip(head_index, 3).chip(sample_index, 0), AT_B) * scaling_factor;
+        }
+    }
+
+
+    //calculate_error_input_derivatives() // using error_query_derivatives and query_weights (sum)
+    
+    error_input_derivatives.setZero();
+    
+    // This is NOT batch matrix multiplication
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        TensorMap<Tensor<type, 3>> head_query_derivatives(error_query_derivatives.data() + head_index * batch_samples_number*input_size*depth,
+            batch_samples_number, input_size, depth);
+
+        TensorMap<Tensor<type, 2>> head_query_weights((type*) query_weights.data() + head_index * depth*weights_depth,
+            depth, weights_depth);
+
+        error_input_derivatives.device(*thread_pool_device) += head_query_derivatives.contract(head_query_weights, A_BT);
+    }
+
+
+    //calculate_error_context_derivatives() // using error_key_derivatives, key_weights, error_value_derivatives and value_weights (sum)
+
+    error_context_derivatives.setZero();
+
+    // This is NOT batch matrix multiplication
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        TensorMap<Tensor<type, 3>> head_key_derivatives(error_key_derivatives.data() + head_index * batch_samples_number*context_size * depth,
+            batch_samples_number, context_size, depth);
+
+        TensorMap<Tensor<type, 2>> head_key_weights((type*)key_weights.data() + head_index * depth*weights_depth,
+            depth, weights_depth);
+
+        error_context_derivatives.device(*thread_pool_device) += head_key_derivatives.contract(head_key_weights, A_BT);
+
+        TensorMap<Tensor<type, 3>> head_value_derivatives(error_value_derivatives.data() + head_index * batch_samples_number * context_size * depth,
+            batch_samples_number, context_size, depth);
+
+        TensorMap<Tensor<type, 2>> head_value_weights((type*)value_weights.data() + head_index * depth * weights_depth,
+            depth, weights_depth);
+
+        error_context_derivatives.device(*thread_pool_device) += head_value_derivatives.contract(head_value_weights, A_BT);
+    }
+
+
+    //calculate_query_weights_derivatives() // using input and error_query_derivatives
+    
+    // This is NOT batch matrix multiplication. Maybe possible without for
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        query_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
+            input.contract(error_query_derivatives.chip(head_index, 3), weights_derivatives_contraction_indices);
+    }
+
+
+    //calculate_key_weights_derivatives() // using context and error_key_derivatives
+
+    // This is NOT batch matrix multiplication. Maybe possible without for
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        key_weights_derivatives.chip(head_index, 2).device(*thread_pool_device) =
+            context.contract(error_key_derivatives.chip(head_index, 3), weights_derivatives_contraction_indices);
+    }
 }
 
 }
