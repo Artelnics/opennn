@@ -236,9 +236,10 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/recurrent_layer_cuda.h"
-#else
-};
 #endif
+
+};
+
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {

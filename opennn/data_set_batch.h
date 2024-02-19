@@ -54,5 +54,13 @@ struct DataSetBatch
     type* targets_data = nullptr;
 };
 
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/data_set_batch.h"
+
+#endif
+
+
 }
 #endif

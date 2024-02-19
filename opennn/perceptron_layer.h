@@ -252,10 +252,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#else
-};
 #endif
 
+};
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
