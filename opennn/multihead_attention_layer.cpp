@@ -690,13 +690,13 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
     const MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation =
         static_cast<MultiheadAttentionLayerForwardPropagation*>(forward_propagation);
 
-    const Tensor<type, 4>& query = multihead_attention_layer_forward_propagation->query;
-    const Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
-    const Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
-
     const Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
     const Tensor<type, 4>& softmax_attention_scores = multihead_attention_layer_forward_propagation->softmax_attention_scores;
     const Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
+
+    const Tensor<type, 4>& query = multihead_attention_layer_forward_propagation-> query;
+    const Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
+    const Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
 
     // Back propagation
 
@@ -730,7 +730,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
     
-    // This is NOT batch matrix multiplication.
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 3>> head_attention_outputs((type*)attention_outputs.data() + head_index * input_size*weights_depth*batch_samples_number,
@@ -755,7 +755,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     const Eigen::array<IndexPair<Index>, 1> attention_output_derivatives_contraction_indices = { IndexPair<Index>(2, 1) };
 
-    // This is NOT batch matrix multiplication.
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 2>> head_projection_weights((type*)projection_weights.data() + head_index * weights_depth*depth,
@@ -786,7 +786,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
     
-    // This is NOT batch matrix multiplication.
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 3>> head_value_derivatives((type*)error_value_derivatives.data() + head_index * context_size*weights_depth*batch_samples_number,
@@ -913,7 +913,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     //calculate_query_weights_derivatives() // using input and error_query_derivatives
     
-    // This is NOT batch matrix multiplication. 
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 3>> head_query_derivatives((type*)error_query_derivatives.data() + head_index * input_size*weights_depth*batch_samples_number,
@@ -929,7 +929,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
     //calculate_key_weights_derivatives() // using context and error_key_derivatives
 
-    // This is NOT batch matrix multiplication. 
+    // This is NOT batch matrix multiplication. Maybe possible without for
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 3>> head_key_derivatives((type*)error_key_derivatives.data() + head_index * batch_samples_number*context_size*weights_depth,

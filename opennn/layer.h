@@ -455,9 +455,10 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
-#else
-};
 #endif
+
+};
+
 }
 
 #endif // LAYER_H
