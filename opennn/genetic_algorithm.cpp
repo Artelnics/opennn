@@ -632,7 +632,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     uniform_real_distribution<> distribution(0, 1);
 
-    Index columns_active;
+    Index raw_variables_active;
 
     type arrow;
 
@@ -642,9 +642,9 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
         individual_variables.setConstant(false);
 
-        columns_active = 1 + rand() % raw_variables_number;
+        raw_variables_active = 1 + rand() % raw_variables_number;
 
-        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < columns_active)
+        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
             arrow = type(distribution(gen));
 
@@ -1328,9 +1328,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set data set stuff
 
-    Tensor <Index, 1> optimal_columns = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
+    Tensor <Index, 1> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-    data_set->set_input_target_raw_variables(optimal_columns, original_target_raw_variables_indices);
+    data_set->set_input_target_raw_variables(optimal_raw_variables, original_target_raw_variables_indices);
 
     const Tensor <Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
 
@@ -1408,9 +1408,9 @@ Tensor<bool,1 > GeneticAlgorithm::get_individual_raw_variables(Tensor<bool,1>& i
 
     const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
 
-    Tensor<bool, 1> columns_from_variables(raw_variables_number);
+    Tensor<bool, 1> raw_variables_from_variables(raw_variables_number);
 
-    columns_from_variables.setConstant(false);
+    raw_variables_from_variables.setConstant(false);
 
     Index genes_count = 0;
 
@@ -1422,17 +1422,17 @@ Tensor<bool,1 > GeneticAlgorithm::get_individual_raw_variables(Tensor<bool,1>& i
 
             if(individual(genes_count))
             {
-                columns_from_variables(i) = true;
+                raw_variables_from_variables(i) = true;
             }
             genes_count += categories_number;
         }
         else
         {
-            columns_from_variables(i) = individual(genes_count);
+            raw_variables_from_variables(i) = individual(genes_count);
             genes_count++;
         }
     }
-    return columns_from_variables;
+    return raw_variables_from_variables;
 }
 
 

@@ -52,11 +52,11 @@ void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
-// Columns
+// raw_variables
 
 // Sum
 
-void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_raw_variables(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);

@@ -55,15 +55,15 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     Correlation correlation;
 
     const Index x_rows = x.dimension(0);
-    const Index x_columns = x.dimension(1);
-    const Index y_columns = y.dimension(1);
+    const Index x_raw_variables = x.dimension(1);
+    const Index y_raw_variables = y.dimension(1);
 
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
-    if(x_columns == 1 && y_columns == 1)
+    if(x_raw_variables == 1 && y_raw_variables == 1)
     {
         if(!x_binary && !y_binary)
         {
@@ -105,15 +105,15 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
             return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
     }
-    else if(x_columns != 1 && y_columns == 1)
+    else if(x_raw_variables != 1 && y_raw_variables == 1)
     {
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
-    else if(x_columns == 1 && y_columns != 1)
+    else if(x_raw_variables == 1 && y_raw_variables != 1)
     {
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
-    else if(x_columns != 1 && y_columns != 1)
+    else if(x_raw_variables != 1 && y_raw_variables != 1)
     {
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
@@ -133,15 +133,15 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     Correlation correlation;
 
     const Index x_rows = x.dimension(0);
-    const Index x_columns = x.dimension(1);
-    const Index y_columns = y.dimension(1);
+    const Index x_raw_variables = x.dimension(1);
+    const Index y_raw_variables = y.dimension(1);
 
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
-    if(x_columns == 1 && y_columns == 1)
+    if(x_raw_variables == 1 && y_raw_variables == 1)
     {
         if(!x_binary && !y_binary)
         {
@@ -160,15 +160,15 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
             return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
     }
-    else if(x_columns != 1 && y_columns == 1)
+    else if(x_raw_variables != 1 && y_raw_variables == 1)
     {
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
-    else if(x_columns == 1 && y_columns != 1)
+    else if(x_raw_variables == 1 && y_raw_variables != 1)
     {
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
-    else if(x_columns != 1 && y_columns != 1)
+    else if(x_raw_variables != 1 && y_raw_variables != 1)
     {
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }

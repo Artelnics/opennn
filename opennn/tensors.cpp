@@ -101,7 +101,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Ten
     Index blocks_number = A.dimension(3);
 
     Index A_rows_number = A.dimension(0);
-    Index B_columns_number = B.dimension(1);
+    Index B_raw_variables_number = B.dimension(1);
 
     Index product_dimension = A.dimension(1);
 
@@ -114,10 +114,10 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Ten
             const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows_number*product_dimension + i * A_rows_number*product_dimension*channels_number,
                 A_rows_number, product_dimension);
 
-            const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + j * product_dimension*B_columns_number + i * product_dimension*B_columns_number*channels_number,
-                product_dimension, B_columns_number);
+            const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + j * product_dimension*B_raw_variables_number + i * product_dimension*B_raw_variables_number*channels_number,
+                product_dimension, B_raw_variables_number);
 
-            TensorMap<Tensor<type, 2>> C_matrix(C.data(), A_rows_number, B_columns_number);
+            TensorMap<Tensor<type, 2>> C_matrix(C.data(), A_rows_number, B_raw_variables_number);
 
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, A_B);
         }
@@ -134,7 +134,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Ten
     Index blocks_number = A.dimension(3);
 
     Index A_rows_number = A.dimension(0);
-    Index B_columns_number = B.dimension(1);
+    Index B_raw_variables_number = B.dimension(1);
 
     Index product_dimension = A.dimension(1);
 
@@ -142,16 +142,16 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Ten
 
     for (Index i = 0; i < blocks_number; i++)
     {
-        const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + i * product_dimension * B_columns_number,
-            product_dimension, B_columns_number);
+        const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + i * product_dimension * B_raw_variables_number,
+            product_dimension, B_raw_variables_number);
 
         for (Index j = 0; j < channels_number; j++)
         {
             const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + j * A_rows_number * product_dimension + i * A_rows_number * product_dimension * channels_number,
                 A_rows_number, product_dimension);
 
-            TensorMap<Tensor<type, 2>> C_matrix(C.data() + j * A_rows_number*B_columns_number + i * A_rows_number* B_columns_number*channels_number,
-                A_rows_number, B_columns_number);
+            TensorMap<Tensor<type, 2>> C_matrix(C.data() + j * A_rows_number*B_raw_variables_number + i * A_rows_number* B_raw_variables_number*channels_number,
+                A_rows_number, B_raw_variables_number);
 
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, A_B);
         }
@@ -173,7 +173,7 @@ void divide_raw_variables(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>&
 }
 
 
-void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+void sum_raw_variables(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -410,17 +410,17 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     file.precision(20);
 
     const Index data_rows = data.dimension(0);
-    const Index data_columns = data.dimension(1);
+    const Index data_raw_variables = data.dimension(1);
 
     char separator_char = ';';
 
     for(Index i = 0; i < data_rows; i++)
     {
-       for(Index j = 0; j < data_columns; j++)
+       for(Index j = 0; j < data_raw_variables; j++)
        {
            file << data(i,j);
 
-           if(j != data_columns-1)
+           if(j != data_raw_variables-1)
            {
                file << separator_char;
            }
@@ -1051,11 +1051,11 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 
 void fill_submatrix(const Tensor<type, 2>& matrix,
                     const Tensor<Index, 1>& rows_indices,
-                    const Tensor<Index, 1>& columns_indices,
+                    const Tensor<Index, 1>& raw_variables_indices,
                     type* submatrix)
 {
     const Index rows_number = rows_indices.size();
-    const Index raw_variables_number = columns_indices.size();
+    const Index raw_variables_number = raw_variables_indices.size();
 
     const type* matrix_data = matrix.data();
 
@@ -1063,7 +1063,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < raw_variables_number; j++)
     {
-        const type* matrix_raw_variable = matrix_data + matrix.dimension(0)*columns_indices[j];
+        const type* matrix_raw_variable = matrix_data + matrix.dimension(0)*raw_variables_indices[j];
         type* submatrix_raw_variable = submatrix + rows_number*j;
 
         const type* value = nullptr;

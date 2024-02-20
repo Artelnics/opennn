@@ -88,12 +88,12 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
     case ConvolutionType::Same:
 
         const Index pad_rows = get_padding().first;
-        const Index pad_columns = get_padding().second;
+        const Index pad_raw_variables = get_padding().second;
 
         Eigen::array<pair<Index, Index>, 4> paddings;
         paddings[0] = make_pair(0, 0);
         paddings[1] = make_pair(pad_rows, pad_rows);
-        paddings[2] = make_pair(pad_columns, pad_columns);
+        paddings[2] = make_pair(pad_raw_variables, pad_raw_variables);
         paddings[3] = make_pair(0, 0);
 
         padded_output.device(*thread_pool_device) = inputs.pad(paddings);
@@ -1196,9 +1196,9 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index column_stride = get_raw_variable_stride();
 
         const Index pad_rows = max<Index>(0, (ceil((type)input_rows_number/row_stride) - 1) * row_stride + kernel_rows_number - input_rows_number) / 2;
-        const Index pad_columns = max<Index>(0, (ceil((type)input_raw_variables_number/column_stride) - 1) * column_stride + kernel_raw_variables_number - input_raw_variables_number) / 2;
+        const Index pad_raw_variables = max<Index>(0, (ceil((type)input_raw_variables_number/column_stride) - 1) * column_stride + kernel_raw_variables_number - input_raw_variables_number) / 2;
 
-        return make_pair(pad_rows, pad_columns);
+        return make_pair(pad_rows, pad_raw_variables);
     }
     default:
     {
@@ -1219,11 +1219,11 @@ Eigen::array<pair<Index, Index>, 4> ConvolutionalLayer::get_paddings() const
     Eigen::array<pair<Index, Index>, 4> paddings;
 
     const Index pad_rows = get_padding().first;
-    const Index pad_columns = get_padding().second;
+    const Index pad_raw_variables = get_padding().second;
 
     paddings[0] = make_pair(0, 0);
     paddings[1] = make_pair(pad_rows, pad_rows);
-    paddings[2] = make_pair(pad_columns, pad_columns);
+    paddings[2] = make_pair(pad_raw_variables, pad_raw_variables);
     paddings[3] = make_pair(0, 0);
 
     return paddings;

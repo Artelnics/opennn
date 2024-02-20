@@ -405,13 +405,13 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Columns
+    // raw_variables
 
-    file_stream.OpenElement("Columns");
+    file_stream.OpenElement("raw_variables");
 
-    // Columns number
+    // raw_variables number
     {
-        file_stream.OpenElement("ColumnsNumber");
+        file_stream.OpenElement("raw_variablesNumber");
 
         buffer.str("");
         buffer << get_raw_variables_number();
@@ -421,7 +421,7 @@ void ImageDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns items
+    // raw_variables items
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -779,44 +779,44 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     }
 
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* columns_element = data_set_element->FirstChildElement("Columns");
+    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("raw_variables");
 
-    if(!columns_element)
+    if(!raw_variables_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns element is nullptr.\n";
+               << "raw_variables element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    // Columns number
+    // raw_variables number
 
-    const tinyxml2::XMLElement* columns_number_element = columns_element->FirstChildElement("ColumnsNumber");
+    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("raw_variablesNumber");
 
-    if(!columns_number_element)
+    if(!raw_variables_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns number element is nullptr.\n";
+               << "raw_variables number element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
     Index new_raw_variables_number = 0;
 
-    if(columns_number_element->GetText())
+    if(raw_variables_number_element->GetText())
     {
-        new_raw_variables_number = Index(atoi(columns_number_element->GetText()));
+        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
 
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* start_element = columns_number_element;
+    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     if(new_raw_variables_number > 0)
     {
@@ -960,7 +960,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 //    // Time series raw_variables
 
-//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesColumns");
+//    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
 
 //    if(!time_series_raw_variables_element)
 //    {
@@ -970,7 +970,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 //    {
 //        // Time series raw_variables number
 
-//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesColumnsNumber");
+//        const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesraw_variablesNumber");
 
 //        if(!time_series_raw_variables_number_element)
 //        {
@@ -1273,28 +1273,28 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
    if(missing_values_number > 0)
    {
-       // Columns Missing values number
+       // raw_variables Missing values number
 
-       const tinyxml2::XMLElement* columns_missing_values_number_element = missing_values_element->FirstChildElement("ColumnsMissingValuesNumber");
+       const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("raw_variablesMissingValuesNumber");
 
-       if(!columns_missing_values_number_element)
+       if(!raw_variables_missing_values_number_element)
        {
            buffer << "OpenNN Exception: DataSet class.\n"
                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                  << "Columns missing values number element is nullptr.\n";
+                  << "raw_variables missing values number element is nullptr.\n";
 
            throw runtime_error(buffer.str());
        }
 
-       if(columns_missing_values_number_element->GetText())
+       if(raw_variables_missing_values_number_element->GetText())
        {
-           Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+           Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
 
-           columns_missing_values_number.resize(new_raw_variables_missing_values_number.size());
+           raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
            for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
            {
-               columns_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+               raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
            }
        }
 
@@ -1336,89 +1336,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     }
 }
 
-Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
-{
-    FILE* file = fopen(filename.data(), "rb");
-
-    if(!file)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp_image() method.\n"
-               << "Couldn't open the file.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    unsigned char info[54];
-    fread(info, sizeof(unsigned char), 54, file);
-
-    const Index width_no_padding = *(int*)&info[18];
-    image_height = *(int*)&info[22];
-    const Index bits_per_pixel = *(int*)&info[28];
-    int channels;
-
-    bits_per_pixel == 24 ? channels = 3 : channels = 1;
-
-    channels_number = channels;
-
-    padding = 0;
-
-    image_width = width_no_padding;
-
-    while((channels*image_width + padding)% 4 != 0)
-        padding++;
-
-    const size_t size = image_height*(channels_number*image_width + padding);
-
-    Tensor<unsigned char, 1> image(size);
-    image.setZero();
-
-    int data_offset = *(int*)(&info[0x0A]);
-    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
-
-    fread(image.data(), sizeof(unsigned char), size, file);
-    fclose(file);
-
-    if(channels_number == 3)
-    {
-        const int rows_number = static_cast<int>(get_image_height());
-        const int raw_variables_number = static_cast<int>(get_image_width());
-
-        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, raw_variables_number, padding);
-
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, raw_variables_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*raw_variables_number};
-
-        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
-        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
-        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
-
-        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
-        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
-        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
-
-        red_channel_flatted_sorted.setZero();
-        green_channel_flatted_sorted.setZero();
-        blue_channel_flatted_sorted.setZero();
-
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, raw_variables_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, raw_variables_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,raw_variables_number);
-
-        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
-        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
-
-        image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
-    }
-
-    return image;
-}
-
-
 void ImageDataSet::read_bmp()
-{/*
+{
+/*
     const fs::path path = data_source_path;
 
     if(data_source_path.empty())
@@ -1650,7 +1570,8 @@ void ImageDataSet::read_bmp()
     image_height = height;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, paddingWidth, height});*/
+    input_variables_dimensions.setValues({channels, paddingWidth, height});
+*/
 }
 
 
@@ -1844,9 +1765,9 @@ void ImageDataSet::read_ground_truth()
     const Index target_variables_number = classes_number == 1 ? 1 : classes_number + 1; // 1 class for background
 
     const Index samples_number = images_number*regions_number;
-    const Index variables_number = channels_number*region_rows*region_columns + target_variables_number;
+    const Index variables_number = channels_number*region_rows*region_raw_variables + target_variables_number;
 
-    const Index pixels_number = channels_number*region_rows*region_columns;
+    const Index pixels_number = channels_number*region_rows*region_raw_variables;
 
     set(samples_number, variables_number);
 
@@ -2061,7 +1982,7 @@ void ImageDataSet::read_ground_truth()
                     }
                 }
 
-                const BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_rows, region_columns);
+                const BoundingBox warped_bounding_box = random_bounding_box(region_index).resize(channels_number, region_rows, region_raw_variables);
 
                 for(Index j = 0; j < pixels_number; j++)
                 {
@@ -2083,7 +2004,7 @@ void ImageDataSet::read_ground_truth()
     {
         for(Index j = 0; j < region_rows; j++)
         {
-            for(Index k = 0; k < region_columns ; k++)
+            for(Index k = 0; k < region_raw_variables ; k++)
             {
                 raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
                 raw_variables(raw_variable_index).type = ColumnType::Numeric;
@@ -2133,7 +2054,7 @@ void ImageDataSet::read_ground_truth()
     split_samples_random();
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({region_rows, region_columns, channels_number});
+    input_variables_dimensions.setValues({region_rows, region_raw_variables, channels_number});
 */
 }
 
@@ -2301,7 +2222,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
         bounding_boxes_number += annotations_number;
     }
 
-    read_bmp_image(image_filename); // Read an image to save initially the channels number
+//    read_bmp_image(image_filename); // Read an image to save initially the channels number
 
     return bounding_boxes_number;
 }

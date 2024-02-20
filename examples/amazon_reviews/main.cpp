@@ -40,11 +40,11 @@ int main()
 
         text_data_set.split_samples_random();
 
-        const Tensor<string, 1> input_words = text_data_set.get_input_columns_names();
+        const Tensor<string, 1> input_words = text_data_set.get_input_raw_variables_names();
         const Tensor<string, 1> targets_names = text_data_set.get_target_variables_names();
 
-        const Index words_number = text_data_set.get_input_numeric_variables_number();
-        const Index target_variables_number = text_data_set.get_target_numeric_variables_number();
+        const Index words_number = text_data_set.get_input_variables_number();
+        const Index target_variables_number = text_data_set.get_target_variables_number();
 
         // Neural Network
 

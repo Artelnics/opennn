@@ -3,12 +3,96 @@
 
 namespace opennn
 {
+/*
+    Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
+    {
+        FILE* file = fopen(filename.data(), "rb");
+
+        if (!file)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                << "void read_bmp_image() method.\n"
+                << "Couldn't open the file.\n";
+
+            throw runtime_error(buffer.str());
+        }
+
+        unsigned char info[54];
+        fread(info, sizeof(unsigned char), 54, file);
+
+        const Index width_no_padding = *(int*)&info[18];
+        image_height = *(int*)&info[22];
+        const Index bits_per_pixel = *(int*)&info[28];
+        int channels;
+
+        bits_per_pixel == 24 ? channels = 3 : channels = 1;
+
+        channels_number = channels;
+
+        padding = 0;
+
+        image_width = width_no_padding;
+
+        while ((channels * image_width + padding) % 4 != 0)
+            padding++;
+
+        const size_t size = image_height * (channels_number * image_width + padding);
+
+        Tensor<unsigned char, 1> image(size);
+        image.setZero();
+
+        int data_offset = *(int*)(&info[0x0A]);
+        fseek(file, (long int)(data_offset - 54), SEEK_CUR);
+
+        fread(image.data(), sizeof(unsigned char), size, file);
+        fclose(file);
+
+        if (channels_number == 3)
+        {
+            const int rows_number = static_cast<int>(get_image_height());
+            const int raw_variables_number = static_cast<int>(get_image_width());
+
+            Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, raw_variables_number, padding);
+
+            const Eigen::array<Eigen::Index, 3> dims_3D = { channels, rows_number, raw_variables_number };
+            const Eigen::array<Eigen::Index, 1> dims_1D = { rows_number * raw_variables_number };
+
+            Tensor<unsigned char, 1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2, 0).reshape(dims_1D); // row_major
+            Tensor<unsigned char, 1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1, 0).reshape(dims_1D); // row_major
+            Tensor<unsigned char, 1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0, 0).reshape(dims_1D); // row_major
+
+            Tensor<unsigned char, 1> red_channel_flatted_sorted(red_channel_flatted.size());
+            Tensor<unsigned char, 1> green_channel_flatted_sorted(green_channel_flatted.size());
+            Tensor<unsigned char, 1> blue_channel_flatted_sorted(blue_channel_flatted.size());
+
+            red_channel_flatted_sorted.setZero();
+            green_channel_flatted_sorted.setZero();
+            blue_channel_flatted_sorted.setZero();
+
+            sort_channel(red_channel_flatted, red_channel_flatted_sorted, raw_variables_number);
+            sort_channel(green_channel_flatted, green_channel_flatted_sorted, raw_variables_number);
+            sort_channel(blue_channel_flatted, blue_channel_flatted_sorted, raw_variables_number);
+
+            Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
+            red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted, 0); // To allow a double concatenation
+
+            image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
+        }
+
+        return image;
+    }
+*/
+
+
+/// @todo ChatGPT gives something easier
 
 Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
 {
-    FILE* f = fopen(filename.data(), "rb");
+    FILE* file = fopen(filename.data(), "rb");
 
-    if(!f)
+    if(!file)
     {
         ostringstream buffer;
 
@@ -20,7 +104,8 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     }
 
     unsigned char info[54];
-    fread(info, sizeof(unsigned char), 54, f);
+
+    fread(info, sizeof(unsigned char), 54, file);
 
     const Index width_no_padding = *(int*)&info[18];
     const Index image_height = *(int*)&info[22];
@@ -51,10 +136,10 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
     image_data(1) = image_dimensions;
 
     int data_offset = *(int*)(&info[0x0A]);
-    fseek(f, (long int)(data_offset - 54), SEEK_CUR);
+    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
 
-    fread(image.data(), sizeof(unsigned char), size, f);
-    fclose(f);
+    fread(image.data(), sizeof(unsigned char), size, file);
+    fclose(file);
 
     if(channels_number == 3)
     {
@@ -127,8 +212,8 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 }
 
 
-void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
-                     TensorMap<Tensor<type, 3>>& output)
+void reflect_image_x(Tensor<type, 3>& input,
+                     Tensor<type, 3>& output)
 {
     const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
 
@@ -140,8 +225,8 @@ void reflect_image_x(TensorMap<Tensor<type, 3>>& input,
 }
 
 
-void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
-                     TensorMap<Tensor<type, 3>>& output)
+void reflect_image_y(Tensor<type, 3>& input,
+                     Tensor<type, 3>& output)
 {
     const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
 
@@ -153,8 +238,8 @@ void reflect_image_y(TensorMap<Tensor<type, 3>>& input,
 }
 
 
-void rotate_image(TensorMap<Tensor<type, 3>>& input,
-                  TensorMap<Tensor<type, 3>>& output,
+void rotate_image(Tensor<type, 3>& input,
+                  Tensor<type, 3>& output,
                   const type& angle_degree)
 {
     assert(input.dimension(0) == output.dimension(0));
@@ -219,8 +304,8 @@ void rotate_image(TensorMap<Tensor<type, 3>>& input,
 }
 
 
-void translate_image(TensorMap<Tensor<type, 3>>& input,
-                     TensorMap<Tensor<type, 3>>& output,
+void translate_image(Tensor<type, 3>& input,
+                     Tensor<type, 3>& output,
                      const Index& shift)
 {
     assert(input.dimension(0) == output.dimension(0));
@@ -229,44 +314,46 @@ void translate_image(TensorMap<Tensor<type, 3>>& input,
 
     output.setZero();
 
-    Index height = input.dimension(0);
-    Index width = input.dimension(1);
-    Index channels = input.dimension(2);
-    Index input_size = height*width;
+    const Index height = input.dimension(0);
+    const Index width = input.dimension(1);
+    const Index channels = input.dimension(2);
+    const Index input_size = height*width;
 
-    Index limit_column = width - shift;
+    const Index limit_column = width - shift;
 
     for(Index i = 0; i < limit_column * channels; i++)
     {
-        Index channel = i % channels;
-        Index column = i / channels;
+        const Index channel = i % channels;
+        const Index column = i / channels;
 
-        TensorMap<const Tensor<type, 2>> input_raw_variable_map(input.data() + column*height + channel*input_size,
-                                                          height,
+        const TensorMap<const Tensor<type, 2>> input_raw_variable_map(input.data() + column*height + channel*input_size,
+                                                           height,
                                                           1);
 
         TensorMap<Tensor<type, 2>> output_raw_variable_map(output.data() + (column + shift)*height + channel*input_size,
                                                      height,
                                                      1);
-        output_raw_variable_map= input_raw_variable_map;
+
+        output_raw_variable_map = input_raw_variable_map;
     }
 }
 
 
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int& rows_number,const int& raw_variables_number, const int& padding)
+Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image, 
+                                        const int& rows_number,
+                                        const int& raw_variables_number, 
+                                        const int& padding)
 {
-    Tensor<unsigned char, 1> data_without_padding(img.size() - padding*rows_number);
+    Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
 
     const int channels = 3;
 
     if(rows_number % 4 == 0)
     {
-        /*
-        memcpy(data_without_padding.data(), img.data(), size_t(raw_variables_number*channels*rows_number)*sizeof(unsigned char));
-        */
         copy(execution::par, 
-            img.data(), img.data() + raw_variables_number * channels * rows_number, data_without_padding.data());
-
+             image.data(), 
+             image.data() + raw_variables_number * channels * rows_number, 
+             data_without_padding.data());
     }
     else
     {
@@ -274,22 +361,19 @@ Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& img, const int
         {
             if(i == 0)
             {
-                /*
-                memcpy(data_without_padding.data(), img.data(), size_t(raw_variables_number*channels)*sizeof(unsigned char));
-                */
                 copy(execution::par, 
-                    img.data(), img.data() + raw_variables_number * channels, data_without_padding.data());
+                    image.data(), image.data() + raw_variables_number * channels, data_without_padding.data());
 
             }
             else
             {
                 /*
-                memcpy(data_without_padding.data() + channels*raw_variables_number*i, img.data() + channels*raw_variables_number*i + padding*i, size_t(raw_variables_number*channels)*sizeof(unsigned char));
+                memcpy(data_without_padding.data() + channels*raw_variables_number*i, image.data() + channels*raw_variables_number*i + padding*i, size_t(raw_variables_number*channels)*sizeof(unsigned char));
                 */
 
                 copy(execution::par, 
-                    img.data() + channels * raw_variables_number * i + padding * i,
-                    img.data() + channels * raw_variables_number * (i + 1) + padding * i,
+                    image.data() + channels * raw_variables_number * i + padding * i,
+                    image.data() + channels * raw_variables_number * (i + 1) + padding * i,
                     data_without_padding.data() + channels * raw_variables_number * i);
 
             }
@@ -474,13 +558,6 @@ Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>& input_image,
 {
     Tensor<type, 1> ground_truth_image;
     return ground_truth_image;
-}
-
-
-Tensor<type, 1> resize_image(Tensor<type, 1>& input_image)
-{
-    Tensor<type, 1> output_image;
-    return output_image;
 }
 
 

@@ -137,14 +137,14 @@ Tensor<string, 1> TimeSeriesDataSet::get_time_series_raw_variables_names() const
 {
     const Index raw_variables_number = get_time_series_raw_variables_number();
 
-    Tensor<string, 1> columns_names(raw_variables_number);
+    Tensor<string, 1> raw_variables_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        columns_names(i) = time_series_raw_variables(i).name;
+        raw_variables_names(i) = time_series_raw_variables(i).name;
     }
 
-    return columns_names;
+    return raw_variables_names;
 }
 
 
@@ -513,9 +513,9 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns names
+    // raw_variables names
     {
-        file_stream.OpenElement("ColumnsNames");
+        file_stream.OpenElement("raw_variablesNames");
 
         buffer.str("");
         buffer << has_raw_variables_names;
@@ -610,13 +610,13 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Columns
+    // raw_variables
 
-    file_stream.OpenElement("Columns");
+    file_stream.OpenElement("raw_variables");
 
-    // Columns number
+    // raw_variables number
     {
-        file_stream.OpenElement("ColumnsNumber");
+        file_stream.OpenElement("raw_variablesNumber");
 
         buffer.str("");
         buffer << get_raw_variables_number();
@@ -628,7 +628,7 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    // Columns items
+    // raw_variables items
     {
         for(Index i = 0; i < raw_variables_number; i++)
         {
@@ -652,11 +652,11 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(time_series_raw_variables_number != 0)
     {
-        file_stream.OpenElement("TimeSeriesColumns");
+        file_stream.OpenElement("TimeSeriesraw_variables");
 
         // Time series raw_variables number
         {
-            file_stream.OpenElement("TimeSeriesColumnsNumber");
+            file_stream.OpenElement("TimeSeriesraw_variablesNumber");
 
             buffer.str("");
             buffer << get_time_series_raw_variables_number();
@@ -790,17 +790,17 @@ void TimeSeriesDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // Columns missing values number
+        // raw_variables missing values number
         {
-            file_stream.OpenElement("ColumnsMissingValuesNumber");
+            file_stream.OpenElement("raw_variablesMissingValuesNumber");
 
-            const Index raw_variables_number = columns_missing_values_number.size();
+            const Index raw_variables_number = raw_variables_missing_values_number.size();
 
             buffer.str("");
 
             for(Index i = 0; i < raw_variables_number; i++)
             {
-                buffer << columns_missing_values_number(i);
+                buffer << raw_variables_missing_values_number(i);
 
                 if(i != (raw_variables_number-1)) buffer << " ";
             }
@@ -946,11 +946,11 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("raw_variablesNames");
 
-    if(columns_names_element)
+    if(raw_variables_names_element)
     {
-        const string new_raw_variables_names_string = columns_names_element->GetText();
+        const string new_raw_variables_names_string = raw_variables_names_element->GetText();
 
         try
         {
@@ -1098,44 +1098,44 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* columns_element = data_set_element->FirstChildElement("Columns");
+    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("raw_variables");
 
-    if(!columns_element)
+    if(!raw_variables_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns element is nullptr.\n";
+               << "raw_variables element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    // Columns number
+    // raw_variables number
 
-    const tinyxml2::XMLElement* columns_number_element = columns_element->FirstChildElement("ColumnsNumber");
+    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("raw_variablesNumber");
 
-    if(!columns_number_element)
+    if(!raw_variables_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns number element is nullptr.\n";
+               << "raw_variables number element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
     Index new_raw_variables_number = 0;
 
-    if(columns_number_element->GetText())
+    if(raw_variables_number_element->GetText())
     {
-        new_raw_variables_number = Index(atoi(columns_number_element->GetText()));
+        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
 
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* start_element = columns_number_element;
+    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     if(new_raw_variables_number > 0)
     {
@@ -1280,11 +1280,11 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesColumns");
+    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesraw_variables");
 
     // Time series raw_variables number
 
-    const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesColumnsNumber");
+    const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesraw_variablesNumber");
 
     if(!time_series_raw_variables_number_element)
     {
@@ -1586,28 +1586,28 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // Columns Missing values number
+        // raw_variables Missing values number
 
-        const tinyxml2::XMLElement* columns_missing_values_number_element = missing_values_element->FirstChildElement("ColumnsMissingValuesNumber");
+        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("raw_variablesMissingValuesNumber");
 
-        if(!columns_missing_values_number_element)
+        if(!raw_variables_missing_values_number_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Columns missing values number element is nullptr.\n";
+                   << "raw_variables missing values number element is nullptr.\n";
 
             throw runtime_error(buffer.str());
         }
 
-        if(columns_missing_values_number_element->GetText())
+        if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
 
-            columns_missing_values_number.resize(new_raw_variables_missing_values_number.size());
+            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
             for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
             {
-                columns_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
             }
         }
 

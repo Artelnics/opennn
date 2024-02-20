@@ -198,7 +198,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
     {
         current_point(0) = type(cluster_index);
         current_point(1) = sum_squared_error_values(cluster_index-1);
-
+         
         perpendicular_distance
             = type(abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
                   (final_endpoint(0) - initial_endpoint(0)) * current_point(1) +
@@ -245,7 +245,7 @@ void KMeans::set_centers_random(const Tensor<type, 2>& data)
     const Index data_size = data.dimension(0);
 
     random_device rd;
-    const mt19937 gen(rd());
+    mt19937 gen(rd());
     uniform_int_distribution<> index_distribution(0, data_size - 1);
 
     for(Index i = 0; i < clusters_number; i++)

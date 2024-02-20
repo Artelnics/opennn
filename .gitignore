@@ -255,6 +255,15 @@ tests/data/*.xml
 *.bak
 *.TMP
 
+#QT Build
+.qtc_clangd/
+*.settings
+*.advidb2
+\e000
+*.advixeproj
+*.qmake.stash
+
+
 #Python tests
 \.ipynb_checkpoints
 

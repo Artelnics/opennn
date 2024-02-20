@@ -161,9 +161,9 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns names
+    // raw_variables names
     {
-        file_stream.OpenElement("ColumnsNames");
+        file_stream.OpenElement("raw_variablesNames");
 
         buffer.str("");
         buffer << has_raw_variables_names;
@@ -255,13 +255,13 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Columns
+    // raw_variables
 
-    file_stream.OpenElement("Columns");
+    file_stream.OpenElement("raw_variables");
 
-    // Columns number
+    // raw_variables number
     {
-        file_stream.OpenElement("ColumnsNumber");
+        file_stream.OpenElement("raw_variablesNumber");
 
         buffer.str("");
         buffer << get_raw_variables_number();
@@ -271,7 +271,7 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Columns items
+    // raw_variables items
 
     const Index raw_variables_number = get_raw_variables_number();
     {
@@ -399,17 +399,17 @@ void TextDataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(missing_values_number > 0)
     {
-        // Columns missing values number
+        // raw_variables missing values number
         {
-            file_stream.OpenElement("ColumnsMissingValuesNumber");
+            file_stream.OpenElement("raw_variablesMissingValuesNumber");
 
-            const Index raw_variables_number = columns_missing_values_number.size();
+            const Index raw_variables_number = raw_variables_missing_values_number.size();
 
             buffer.str("");
 
             for(Index i = 0; i < raw_variables_number; i++)
             {
-                buffer << columns_missing_values_number(i);
+                buffer << raw_variables_missing_values_number(i);
 
                 if(i != (raw_variables_number-1)) buffer << " ";
             }
@@ -599,11 +599,11 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
+    const tinyxml2::XMLElement* raw_variables_names_element = data_file_element->FirstChildElement("raw_variablesNames");
 
-    if(columns_names_element)
+    if(raw_variables_names_element)
     {
-        const string new_raw_variables_names_string = columns_names_element->GetText();
+        const string new_raw_variables_names_string = raw_variables_names_element->GetText();
 
         try
         {
@@ -711,44 +711,44 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* columns_element = data_set_element->FirstChildElement("Columns");
+    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("raw_variables");
 
-    if(!columns_element)
+    if(!raw_variables_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns element is nullptr.\n";
+               << "raw_variables element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
-    // Columns number
+    // raw_variables number
 
-    const tinyxml2::XMLElement* columns_number_element = columns_element->FirstChildElement("ColumnsNumber");
+    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("raw_variablesNumber");
 
-    if(!columns_number_element)
+    if(!raw_variables_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Columns number element is nullptr.\n";
+               << "raw_variables number element is nullptr.\n";
 
         throw runtime_error(buffer.str());
     }
 
     Index new_raw_variables_number = 0;
 
-    if(columns_number_element->GetText())
+    if(raw_variables_number_element->GetText())
     {
-        new_raw_variables_number = Index(atoi(columns_number_element->GetText()));
+        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
 
         set_raw_variables_number(new_raw_variables_number);
     }
 
-    // Columns
+    // raw_variables
 
-    const tinyxml2::XMLElement* start_element = columns_number_element;
+    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     if(new_raw_variables_number > 0)
     {
@@ -890,6 +890,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         }
     }
 
+
     // Rows label
 
     if(has_rows_labels)
@@ -1028,28 +1029,28 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(missing_values_number > 0)
     {
-        // Columns Missing values number
+        // raw_variables Missing values number
 
-        const tinyxml2::XMLElement* columns_missing_values_number_element = missing_values_element->FirstChildElement("ColumnsMissingValuesNumber");
+        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("raw_variablesMissingValuesNumber");
 
-        if(!columns_missing_values_number_element)
+        if(!raw_variables_missing_values_number_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Columns missing values number element is nullptr.\n";
+                   << "raw_variables missing values number element is nullptr.\n";
 
             throw runtime_error(buffer.str());
         }
 
-        if(columns_missing_values_number_element->GetText())
+        if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+            Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), ' ');
 
-            columns_missing_values_number.resize(new_raw_variables_missing_values_number.size());
+            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
             for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
             {
-                columns_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
             }
         }
 
@@ -1216,7 +1217,7 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
 
     WordBag word_bag = text_analytics.calculate_word_bag(words);
 
-    const Tensor<string,1> columns_names = get_raw_variables_names();
+    const Tensor<string,1> raw_variables_names = get_raw_variables_names();
 
     const Index words_number = word_bag.words.size();
 
@@ -1224,10 +1225,10 @@ Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if( contains(columns_names, word_bag.words(i)) )
+        if( contains(raw_variables_names, word_bag.words(i)) )
         {
-            auto it = find(columns_names.data(), columns_names.data() + columns_names.size(), word_bag.words(i));
-            const Index index = it - columns_names.data();
+            auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
+            const Index index = it - raw_variables_names.data();
 
             vector(index) = type(word_bag.frequencies(i));
         }
@@ -1270,7 +1271,7 @@ void TextDataSet::read_txt()
     const WordBag document_word_bag = text_analytics.calculate_word_bag(document_tokens);
     set_words_frequencies(document_word_bag.frequencies);
 
-    Tensor<string, 1> columns_names = document_word_bag.words;
+    Tensor<string, 1> raw_variables_names = document_word_bag.words;
     const Index document_words_number = document_word_bag.words.size();
 
     Tensor<type, 1> row(document_words_number);
@@ -1287,7 +1288,7 @@ void TextDataSet::read_txt()
     file.open(transformed_data_path);
 
     for(Index i  = type(0); i < document_words_number; i++)
-        file << columns_names(i) << ";";
+        file << raw_variables_names(i) << ";";
     file << "target_variable" << "\n";
 
     // Data file preview
@@ -1329,11 +1330,11 @@ void TextDataSet::read_txt()
 
             for(Index k = 0; k < line_words.size(); k++)
             {
-                if( contains(columns_names, line_words(k)) )
+                if( contains(raw_variables_names, line_words(k)) )
                 {
-                    auto it = find(columns_names.data(), columns_names.data() + document_words_number, line_words(k));
+                    auto it = find(raw_variables_names.data(), raw_variables_names.data() + document_words_number, line_words(k));
 
-                    const Index word_index = it - columns_names.data();
+                    const Index word_index = it - raw_variables_names.data();
 
                     row(word_index) = type(line_frequencies(k));
                 }
