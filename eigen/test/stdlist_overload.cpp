@@ -63,7 +63,7 @@ void check_stdlist_matrix(const MatrixType& m)
     ++itw;
   }
 
-  v.resize(21);
+  v.resize(21, MatrixType::Zero(rows, cols));
   set(v, 20, x);
   VERIFY_IS_APPROX(*get(v, 20), x);
   v.resize(22,y);

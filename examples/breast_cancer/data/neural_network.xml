@@ -12,8 +12,8 @@
       <Input Index="9">mitoses</Input>
    </Inputs>
    <Layers>
-      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
-      <ScalingLayer>
+      <LayersTypes>Scaling2D Probabilistic</LayersTypes>
+      <ScalingLayer2D>
          <ScalingNeuronsNumber>9</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
             <Descriptives>1\10\4.44217\2.82076</Descriptives>
@@ -51,19 +51,12 @@
             <Descriptives>1\10\1.60322\1.73267</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
-      </ScalingLayer>
-      <PerceptronLayer>
-         <LayerName>perceptron_layer_1</LayerName>
-         <InputsNumber>9</InputsNumber>
-         <NeuronsNumber>6</NeuronsNumber>
-         <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-0.410459 -0.480636 -0.374227 -0.12416 -0.48882 -1.01173 -0.6293 -0.618955 -0.476184 -1.89173 -0.0182843 0.421053 -0.964893 0.755728 -0.279533 -1.481 -0.552386 -0.944644 -0.725397 -0.0445556 0.809674 -0.57094 -1.14932 -1.36711 -0.5561 -0.639428 -1.0885 1.31725 0.110668 -0.854949 0.85235 0.324598 0.548057 0.934058 0.248769 1.17359 0.360964 0.0624462 -0.612776 0.520807 0.409905 0.703815 0.438189 -0.332442 0.885094 -0.224815 -0.642703 -0.0383703 -0.272209 -0.394833 -1.27944 -0.931646 -0.827528 -0.689493 -0.317386 -0.83306 -0.549009 0.441484 -0.0689438 -0.180121</Parameters>
-      </PerceptronLayer>
+      </ScalingLayer2D>
       <ProbabilisticLayer>
-         <InputsNumber>6</InputsNumber>
+         <InputsNumber>9</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Logistic</ActivationFunction>
-         <Parameters>-0.526673 -2.2054 -1.8288 1.36867 1.02119 -0.754724 -2.25206</Parameters>
+         <Parameters>0.108917 0.0127159 0.736585 0.565136 0.343192 0.9082 0.313351 0.703263 0.219006 0.787805</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

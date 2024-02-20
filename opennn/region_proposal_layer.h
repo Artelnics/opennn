@@ -100,7 +100,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         const Index region_rows = region_proposal_layer_pointer->get_region_rows();
         const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
         const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
-
+/*
         outputs_data.resize(2);
         outputs_dimensions.resize(2);
 
@@ -124,7 +124,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         outputs_dimensions[1].resize(1);
 
         outputs_dimensions[1].setValues({1});
-
+*/
     }
 
     void print() const

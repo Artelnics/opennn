@@ -301,12 +301,9 @@ struct digamma_impl {
     This implementation works on both scalars and Ts.
 */
 template <typename T>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf_float(const T& a_x) {
-  // Clamp the inputs to the range [-4, 4] since anything outside
-  // this range is +/-1.0f in single-precision.
-  const T plus_4 = pset1<T>(4.f);
-  const T minus_4 = pset1<T>(-4.f);
-  const T x = pmax(pmin(a_x, plus_4), minus_4);
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf_float(const T& x) {
+  const float kErfInvOneMinusHalfULP = 3.832506856900711f;
+  const T clamp = pcmp_le(pset1<T>(kErfInvOneMinusHalfULP), pabs(x));
   // The monomial coefficients of the numerator polynomial (odd).
   const T alpha_1 = pset1<T>(-1.60960333262415e-02f);
   const T alpha_3 = pset1<T>(-2.95459980854025e-03f);
@@ -342,7 +339,8 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf_float(const T& a_x) {
   q = pmadd(x2, q, beta_0);
 
   // Divide the numerator by the denominator.
-  return pdiv(p, q);
+  const T sign = pselect(pcmp_le(x, pset1<T>(0.0f)), pset1<T>(-1.0f), pset1<T>(1.0f));
+  return pselect(clamp, sign, pdiv(p, q));
 }
 
 template <typename T>
@@ -473,9 +471,9 @@ struct erfc_impl<double> {
  * ERROR MESSAGES:
  *
  *   message         condition    value returned
- * ndtri domain       x <= 0        -MAXNUM
- * ndtri domain       x >= 1         MAXNUM
- *
+ * ndtri domain       x == 0        -INF
+ * ndtri domain       x == 1         INF
+ * ndtri domain       x < 0, x > 1   NAN
  */
  /*
    Cephes Math Library Release 2.2: June, 1992
@@ -637,8 +635,8 @@ T generic_ndtri(const T& a) {
       generic_ndtri_lt_exp_neg_two<T, ScalarType>(b, should_flipsign));
 
   return pselect(
-      pcmp_le(a, zero), neg_maxnum,
-      pselect(pcmp_le(one, a), maxnum, ndtri));
+      pcmp_eq(a, zero), neg_maxnum,
+      pselect(pcmp_eq(one, a), maxnum, ndtri));
 }
 
 template <typename Scalar>
@@ -1387,7 +1385,7 @@ struct zeta_impl {
             };
 
         const Scalar maxnum = NumTraits<Scalar>::infinity();
-        const Scalar zero = 0.0, half = 0.5, one = 1.0;
+        const Scalar zero = Scalar(0.0), half = Scalar(0.5), one = Scalar(1.0);
         const Scalar machep = cephes_helper<Scalar>::machep();
         const Scalar nan = NumTraits<Scalar>::quiet_NaN();
 
@@ -1429,11 +1427,19 @@ struct zeta_impl {
             return s;
         }
 
+        // If b is zero, then the tail sum will also end up being zero.
+        // Exiting early here can prevent NaNs for some large inputs, where
+        // the tail sum computed below has term `a` which can overflow to `inf`.
+        if (numext::equal_strict(b, zero)) {
+          return s;
+        }
+
         w = a;
         s += b*w/(x-one);
         s -= half * b;
         a = one;
         k = zero;
+        
         for( i=0; i<12; i++ )
         {
             a *= x + k;

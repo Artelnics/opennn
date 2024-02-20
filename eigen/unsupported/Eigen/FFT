@@ -162,15 +162,16 @@ class FFT
     typedef typename impl_type::Scalar Scalar;
     typedef typename impl_type::Complex Complex;
 
-    enum Flag {
-      Default=0, // goof proof
-      Unscaled=1,
-      HalfSpectrum=2,
-      // SomeOtherSpeedOptimization=4
-      Speedy=32767
-    };
+    typedef int Flag;
+    static const Flag Default = 0;
+    static const Flag Unscaled = 1;
+    static const Flag HalfSpectrum = 2;
+    static const Flag Speedy = 32767;
 
-    FFT( const impl_type & impl=impl_type() , Flag flags=Default ) :m_impl(impl),m_flag(flags) { }
+    FFT(const impl_type& impl = impl_type(), Flag flags = Default) : m_impl(impl), m_flag(flags)
+    {
+        eigen_assert((flags == Default || flags == Unscaled || flags == HalfSpectrum || flags == Speedy) && "invalid flags argument");
+    }
 
     inline
     bool HasFlag(Flag f) const { return (m_flag & (int)f) == f;}

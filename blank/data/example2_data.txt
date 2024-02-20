@@ -1,0 +1,7 @@
+context_token_position_0;context_token_position_1;context_token_position_2;context_token_position_3;context_token_position_4;context_token_position_5;context_token_position_6;context_token_position_7;input_token_position_0;input_token_position_1;input_token_position_2;input_token_position_3;input_token_position_4;input_token_position_5;input_token_position_6;input_token_position_7;target_token_position_0;target_token_position_1;target_token_position_2;target_token_position_3;target_token_position_4;target_token_position_5;target_token_position_6;target_token_position_7
+1;5;3;6;7;2;0;0;1;5;3;6;7;2;0;0;5;3;6;7;2;0;0;0
+1;5;3;9;10;11;4;2;1;5;3;8;11;12;13;4;5;3;8;11;12;13;4;2
+1;8;3;6;7;2;0;0;1;9;3;6;7;2;0;0;9;3;6;7;2;0;0;0
+1;8;3;12;13;14;4;2;1;9;3;14;10;15;4;2;9;3;14;10;15;4;2;0
+1;15;16;17;18;2;0;0;1;16;17;10;18;19;2;0;16;17;10;18;19;2;0;0
+1;19;20;21;22;4;2;0;1;8;20;21;4;2;0;0;8;20;21;4;2;0;0;0

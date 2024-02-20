@@ -70,7 +70,7 @@ void NumericalDifferentiation::set_default()
 
 type NumericalDifferentiation::calculate_eta() const
 {
-    return pow(static_cast<type>(10.0), static_cast<type>(-1.0)*type(precision_digits));
+    return pow(type(10.0), type(-1.0)*type(precision_digits));
 }
 
 
@@ -81,7 +81,7 @@ type NumericalDifferentiation::calculate_h(const type& x) const
 {
     const type eta = calculate_eta();
 
-    return sqrt(eta)*(static_cast<type>(1.0) + abs(x));
+    return sqrt(eta)*(type(1) + abs(x));
 }
 
 
@@ -152,7 +152,7 @@ Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

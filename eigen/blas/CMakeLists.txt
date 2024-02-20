@@ -1,6 +1,7 @@
 
 project(EigenBlas CXX)
 
+if(EIGEN_BUILD_BLAS)
 include(CheckLanguage)
 check_language(Fortran)
 if(CMAKE_Fortran_COMPILER)
@@ -50,7 +51,7 @@ endforeach()
 
 if(EIGEN_Fortran_COMPILER_WORKS)
 
-if(BUILD_TESTING)
+if(EIGEN_BUILD_TESTING)
   if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
     add_subdirectory(testing) # can't do EXCLUDE_FROM_ALL here, breaks CTest
   else()
@@ -59,4 +60,4 @@ if(BUILD_TESTING)
 endif()
 
 endif()
-
+endif()

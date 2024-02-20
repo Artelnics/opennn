@@ -62,7 +62,7 @@ public:
    // Get methods
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
-   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+   LearningRateAlgorithm* get_learning_rate_algorithm();
 
    // Training operators
 
@@ -85,7 +85,7 @@ public:
 
    void set_default() final;
 
-   void set_loss_index_pointer(LossIndex*) final;
+   void set_loss_index(LossIndex*) final;
 
    // Training operators
 
@@ -139,13 +139,13 @@ public:
 
    void update_parameters(
            const DataSetBatch&,
-           NeuralNetworkForwardPropagation&,
-           LossIndexBackPropagation&,
+           ForwardPropagation&,
+           BackPropagation&,
            ConjugateGradientData&) const;
 
 private:
 
-   type first_learning_rate = static_cast<type>(0.01);
+   type first_learning_rate = type(0.01);
 
    /// Applied method for calculating the conjugate gradient direction.
 
@@ -192,7 +192,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     virtual void print() const;
 
-    ConjugateGradient* conjugate_gradient_pointer = nullptr;  
+    ConjugateGradient* conjugate_gradient = nullptr;  
 
     Tensor<type, 1> parameters_increment;
 
@@ -214,7 +214,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

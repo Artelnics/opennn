@@ -24,7 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "optimization_algorithm.h"
 
 // Eigen includes
@@ -78,7 +78,7 @@ public:
 
    // Set methods
 
-   void set_default() override;
+   void set_default() final;
 
    void set_damping_parameter(const type&);
 
@@ -105,8 +105,8 @@ public:
 
    void update_parameters(
            const DataSetBatch&,
-           NeuralNetworkForwardPropagation&,
-           LossIndexBackPropagationLM&,
+           ForwardPropagation&,
+           BackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
 
    string write_optimization_algorithm_type() const final;
@@ -172,22 +172,22 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
     {
     }
 
-    explicit LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+    explicit LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method)
     {
-        set(new_Levenberg_Marquardt_method_pointer);
+        set(new_Levenberg_Marquardt_method);
     }
 
     virtual ~LevenbergMarquardtAlgorithmData() {}
 
-    void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+    void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method)
     {
-        Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method_pointer;
+        Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method;
 
-        const LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm->get_loss_index_pointer();
+        const LossIndex* loss_index = Levenberg_Marquardt_algorithm->get_loss_index();
 
-        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network->get_parameters_number();
 
         // Neural network data
 
@@ -226,7 +226,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

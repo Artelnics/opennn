@@ -12,26 +12,13 @@
 // System includes
 
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
 #include <limits>
-#include <cmath>
-#include <ctime>
-#include <chrono>
-#include <time.h>
-#include <iostream>
-#include <ctime>
-#include <ratio>
-#include <chrono>
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
-#include "config.h"
 
 namespace opennn
 {
@@ -76,7 +63,7 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*) final;
+   void set_loss_index(LossIndex*) final;
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
 
@@ -118,7 +105,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
-   void update_parameters(LossIndexBackPropagation&, AdaptiveMomentEstimationData&) const;
+   void update_parameters(BackPropagation&, AdaptiveMomentEstimationData&) const;
 
 private:
 
@@ -126,7 +113,7 @@ private:
 
    /// Initial learning rate
 
-   type initial_learning_rate = static_cast<type>(0.001);
+   type initial_learning_rate = type(0.001);
 
    /// Learning rate decay over each update.
 
@@ -134,15 +121,15 @@ private:
 
    /// Exponential decay over gradient estimates.
 
-   type beta_1 = static_cast<type>(0.9);
+   type beta_1 = type(0.9);
 
    /// Exponential decay over square gradient estimates.
 
-   type beta_2 = static_cast<type>(0.999);
+   type beta_2 = type(0.999);
 
    /// Small number to prevent any division by zero
 
-   type epsilon =static_cast<type>(1.e-7);
+   type epsilon =type(1.e-7);
 
     // Stopping criteria
 
@@ -186,7 +173,7 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     virtual void print() const;
 
-    AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
+    AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
     Tensor<type, 1> gradient_exponential_decay;
     Tensor<type, 1> square_gradient_exponential_decay;

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "learning_rate_algorithm.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -24,10 +25,10 @@ LearningRateAlgorithm::LearningRateAlgorithm()
 /// Destructor.
 /// It creates a learning rate algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index_pointer)
-    : loss_index_pointer(new_loss_index_pointer)
+LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
+    : loss_index(new_loss_index)
 {
     set_default();
 }
@@ -46,24 +47,24 @@ LearningRateAlgorithm::~LearningRateAlgorithm()
 /// to which the learning rate algorithm is associated.
 /// If the loss index pointer is nullptr, this method throws an exception.
 
-LossIndex* LearningRateAlgorithm::get_loss_index_pointer() const
+LossIndex* LearningRateAlgorithm::get_loss_index() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-               << "LossIndex* get_loss_index_pointer() const method.\n"
+               << "LossIndex* get_loss_index() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
 
-    return loss_index_pointer;
+    return loss_index;
 }
 
 
@@ -72,7 +73,7 @@ LossIndex* LearningRateAlgorithm::get_loss_index_pointer() const
 
 bool LearningRateAlgorithm::has_loss_index() const
 {
-    if(loss_index_pointer)
+    if(loss_index)
     {
         return true;
     }
@@ -128,7 +129,7 @@ const bool& LearningRateAlgorithm::get_display() const
 
 void LearningRateAlgorithm::set()
 {
-    loss_index_pointer = nullptr;
+    loss_index = nullptr;
 
     set_default();
 }
@@ -136,11 +137,11 @@ void LearningRateAlgorithm::set()
 
 /// Sets a new loss index pointer.
 /// It also sets the rest of the members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void LearningRateAlgorithm::set(LossIndex* new_loss_index_pointer)
+void LearningRateAlgorithm::set(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 
     set_default();
 }
@@ -169,11 +170,11 @@ void LearningRateAlgorithm::set_default()
 
 
 /// Sets a pointer to a loss index object to be associated with the optimization algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void LearningRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void LearningRateAlgorithm::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 }
 
 
@@ -218,7 +219,7 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
                << "void set_method(const string&) method.\n"
                << "Unknown learning rate method: " << new_learning_rate_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -230,7 +231,7 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_learning_rate_tolerance <= static_cast<type>(0.0))
+    if(new_learning_rate_tolerance <= type(0))
     {
         ostringstream buffer;
 
@@ -238,7 +239,7 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
                << "void set_learning_rate_tolerance(const type&) method.\n"
                << "Tolerance must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -261,20 +262,20 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 
 
 /// Returns a vector with two elements:
-///(i) the learning rate calculated by means of the corresponding algorithm, and
-///(ii) the loss for that learning rate.
+/// (i) the learning rate calculated by means of the corresponding algorithm, and
+/// (ii) the loss for that learning rate.
 
-pair<type,type> LearningRateAlgorithm::calculate_directional_point(
+pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     const DataSetBatch& batch,
-    NeuralNetworkForwardPropagation& forward_propagation,
-    LossIndexBackPropagation& back_propagation,
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
 #ifdef OPENNN_DEBUG
 
-    if(loss_index_pointer == nullptr)
+    if(loss_index == nullptr)
     {
         ostringstream buffer;
 
@@ -282,10 +283,10 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                << "pair<type, 1> calculate_directional_point() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    if(neural_network_pointer == nullptr)
+    if(neural_network == nullptr)
     {
         ostringstream buffer;
 
@@ -293,7 +294,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                << "Tensor<type, 1> calculate_directional_point() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(thread_pool_device == nullptr)
@@ -304,7 +305,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                << "pair<type, 1> calculate_directional_point() const method.\n"
                << "Pointer to thread pool device is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -321,7 +322,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     {
         triplet.check();
     }
-    catch(const invalid_argument& error)
+    catch(const exception& error)
     {
 //        cout << "Triplet bracketing" << endl;
 
@@ -332,7 +333,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         return triplet.minimum();
     }
 
-    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+    const type regularization_weight = loss_index->get_regularization_weight();
 
     pair<type, type> V;
 
@@ -352,7 +353,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                 default: break;
             }
         }
-        catch(const invalid_argument& error)
+        catch(const exception& error)
         {
             cout << error.what() << endl;
 
@@ -363,13 +364,12 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*V.first;
+        
+        neural_network->forward_propagate(batch.get_inputs_pair(), optimization_data.potential_parameters, forward_propagation);
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
-        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-        const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
         V.second = back_propagation.error + regularization_weight*regularization;
 
@@ -409,7 +409,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                    << "U = (" << triplet.U.first << "," << triplet.U.second << ")\n"
                    << "V = (" << V.first << "," << V.second << ")\n";
 
-            throw invalid_argument(buffer.str());
+            throw runtime_error(buffer.str());
         }
 
         // Check triplet
@@ -418,7 +418,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         {
             triplet.check();
         }
-        catch(const invalid_argument& error)
+        catch(const exception& error)
         {
             return triplet.minimum();
         }
@@ -433,8 +433,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
     const DataSetBatch& batch,
-    NeuralNetworkForwardPropagation& forward_propagation,
-    LossIndexBackPropagation& back_propagation,
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
     Triplet triplet;
@@ -443,27 +443,27 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     ostringstream buffer;
 
-    if(loss_index_pointer == nullptr)
+    if(loss_index == nullptr)
     {
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "Triplet calculate_bracketing_triplet() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
 #ifdef OPENNN_DEBUG
 
-    if(neural_network_pointer == nullptr)
+    if(neural_network == nullptr)
     {
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "Triplet calculate_bracketing_triplet() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(thread_pool_device == nullptr)
@@ -472,7 +472,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
                << "Triplet calculate_bracketing_triplet() const method.\n"
                << "Pointer to thread pool device is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(is_zero(optimization_data.training_direction))
@@ -481,7 +481,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
                << "Triplet calculate_bracketing_triplet() const method.\n"
                << "Training direction is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
@@ -490,14 +490,14 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
                << "Triplet calculate_bracketing_triplet() const method.\n"
                << "Initial learning rate is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
 
     const type loss = back_propagation.loss;
 
-    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+    const type regularization_weight = loss_index->get_regularization_weight();
 
     // Left point
 
@@ -512,17 +512,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     {
         count++;
 
-        triplet.B.first = optimization_data.initial_learning_rate*static_cast<type>(count);
+        triplet.B.first = optimization_data.initial_learning_rate*type(count);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
+        
+        neural_network->forward_propagate(batch.get_inputs_pair(), optimization_data.potential_parameters, forward_propagation);
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
-        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-        const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
         triplet.B.second = back_propagation.error + regularization_weight*regularization;
 
@@ -536,13 +535,14 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+        
+        neural_network->forward_propagate(batch.get_inputs_pair(),
+                                                  optimization_data.potential_parameters,
+                                                  forward_propagation);
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
-        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-        const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
         triplet.B.second = back_propagation.error + regularization_weight*regularization;
 
@@ -555,30 +555,32 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+            
+            neural_network->forward_propagate(batch.get_inputs_pair(),
+                                                      optimization_data.potential_parameters,
+                                                      forward_propagation);
 
-            neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+            loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-            loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
-            loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-            const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+            const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
             triplet.B.second = back_propagation.error + regularization_weight*regularization;
         }
     }
     else if(triplet.A.second < triplet.B.second)
     {
-        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*static_cast<type>(0.382);
+        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
+        
+        neural_network->forward_propagate(batch.get_inputs_pair(),
+                                                  optimization_data.potential_parameters,
+                                                  forward_propagation);
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
-        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-        const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
         triplet.U.second = back_propagation.error + regularization_weight*regularization;
 
@@ -586,17 +588,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         {
             triplet.B = triplet.U;
 
-            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*static_cast<type>(0.382);
+            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
 
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
+            
+            neural_network->forward_propagate(batch.get_inputs_pair(), optimization_data.potential_parameters, forward_propagation);
 
-            neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+            loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-            loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
-            loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
-
-            const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+            const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
 
             triplet.U.second = back_propagation.error + regularization_weight*regularization;
 
@@ -621,15 +622,15 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 {
     type learning_rate;
 
-    const type middle = triplet.A.first + static_cast<type>(0.5)*(triplet.B.first - triplet.A.first);
+    const type middle = triplet.A.first + type(0.5)*(triplet.B.first - triplet.A.first);
 
     if(triplet.U.first < middle)
     {
-        learning_rate = triplet.A.first + static_cast<type>(0.618)*(triplet.B.first - triplet.A.first);
+        learning_rate = triplet.A.first + type(0.618)*(triplet.B.first - triplet.A.first);
     }
     else
     {
-        learning_rate = triplet.A.first + static_cast<type>(0.382)*(triplet.B.first - triplet.A.first);
+        learning_rate = triplet.A.first + type(0.382)*(triplet.B.first - triplet.A.first);
     }
 
 #ifdef OPENNN_DEBUG
@@ -643,7 +644,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
                << "Learning rate(" << learning_rate << ") is less than left point("
                << triplet.A.first << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     if(learning_rate > triplet.B.first)
@@ -655,7 +656,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
                << "Learning rate(" << learning_rate << ") is greater than right point("
                << triplet.B.first << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -681,7 +682,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 
     const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
 
-    return u - static_cast<type>(0.5)*numerator/denominator;
+    return u - type(0.5)*numerator/denominator;
 }
 
 
@@ -738,7 +739,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Learning rate algorithm element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Learning rate method
@@ -753,7 +754,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_learning_rate_method(new_learning_rate_method);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -766,13 +767,13 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_learning_rate_tolerance = static_cast<type>(atof(element->GetText()));
+            const type new_learning_rate_tolerance = type(atof(element->GetText()));
 
             try
             {
                 set_learning_rate_tolerance(new_learning_rate_tolerance);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -791,7 +792,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -803,7 +804,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

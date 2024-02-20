@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "cross_entropy_error.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -24,42 +26,25 @@ CrossEntropyError::CrossEntropyError() : LossIndex()
 /// Neural network and data set constructor.
 /// It creates a cross-entropy error term object associated with a neural network and measured on a data set.
 /// It also initializes all the rest of the class members to their default values:
-/// @param new_neural_network_pointer: Pointer to a neural network object.
-/// @param new_data_set_pointer: Pointer to a data set object.
+/// @param new_neural_network: Pointer to a neural network object.
+/// @param new_data_set: Pointer to a data set object.
 
-CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : LossIndex(new_neural_network_pointer, new_data_set_pointer)
+CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    : LossIndex(new_neural_network, new_data_set)
 {
 }
 
 
-// \brief CrossEntropyError::calculate_error.
-// \param batch
-// \param forward_propagation
-// \param back_propagation
+/// \brief CrossEntropyError::calculate_error.
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
 
 void CrossEntropyError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
-                     LossIndexBackPropagation& back_propagation) const
+                     const ForwardPropagation& forward_propagation,
+                     BackPropagation& back_propagation) const
 {      
-#ifdef OPENNN_DEBUG
-
-    Layer* last_trainable_layer_pointer = forward_propagation.neural_network_pointer->get_last_trainable_layer_pointer();
-
-    if(last_trainable_layer_pointer->get_type() != Layer::Type::Probabilistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: CrossEntropyError class.\n"
-               << "calculate_error() method.\n"
-               << "Last trainable layer is not probabilistic: " << last_trainable_layer_pointer->get_type_string() << endl;
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     if(outputs_number == 1)
     {
@@ -72,91 +57,76 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 }
 
 
-
 void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
-                                               const NeuralNetworkForwardPropagation& forward_propagation,
-                                               LossIndexBackPropagation& back_propagation) const
+                                               const ForwardPropagation& forward_propagation,
+                                               BackPropagation& back_propagation) const
 {
+    // Batch
+
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layers_number = neural_network_pointer->get_last_trainable_layer_index();
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layers_number)->outputs_dimensions[0];
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layers_number)->outputs_data(0),
-                                             outputs_dimensions[0], outputs_dimensions(1));
+    // Forward propagation
 
-    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    Tensor<type, 2> binary_cross_entropy = - ((type(1)-targets)*((type(1)-outputs).log()));
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
-    replace_if(binary_cross_entropy.data(), binary_cross_entropy.data()+binary_cross_entropy.size(), [](type x){return isnan(x);}, 0);
+    // Back propagation
+
+    type& error = back_propagation.error;
 
     Tensor<type, 0> cross_entropy_error;
 
-    cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum() + binary_cross_entropy.sum();
+    cross_entropy_error.device(*thread_pool_device) 
+        = -((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(batch_samples_number);
 
-    back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
+    error = cross_entropy_error();
 
-    if(is_nan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_binary_error(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
 void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
-                                                 const NeuralNetworkForwardPropagation& forward_propagation,
-                                                 LossIndexBackPropagation& back_propagation) const
+                                                 const ForwardPropagation& forward_propagation,
+                                                 BackPropagation& back_propagation) const
 {
+    // Batch
+
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions[0];
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
-                                             outputs_dimensions[0], outputs_dimensions(1));
+    // Forward propagation
 
-    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
+    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+
+    // Back propagation
+
+    type& error = back_propagation.error;
 
     Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum();
+    
+    cross_entropy_error.device(*thread_pool_device) = -(targets*outputs.log()).sum();
 
-    back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
+    error = cross_entropy_error()/type(batch_samples_number);
 
-    if(is_nan(back_propagation.error))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_multiple_error(const DataSetBatch&, const NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in back propagation error.";
-
-        throw invalid_argument(buffer.str());
-    }
+    if (isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
 void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
-                                               NeuralNetworkForwardPropagation& forward_propagation,
-                                               LossIndexBackPropagation& back_propagation) const
+                                               ForwardPropagation& forward_propagation,
+                                               BackPropagation& back_propagation) const
 {
-     #ifdef OPENNN_DEBUG
-
-     check();
-
-     #endif
-
-     const Index outputs_number = neural_network_pointer->get_outputs_number();
+     const Index outputs_number = neural_network->get_outputs_number();
 
      if(outputs_number == 1)
      {
@@ -170,11 +140,11 @@ void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
 
 
 void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
-                                                      NeuralNetworkForwardPropagation& forward_propagation,
-                                                      LossIndexBackPropagation& back_propagation) const
+                                                      ForwardPropagation& forward_propagation,
+                                                      BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(last_trainable_layer_index));
@@ -182,72 +152,46 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
-    TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
-
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions[0];
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
-    const TensorMap<Tensor<type, 2>> outputs(probabilistic_layer_forward_propagation->outputs_data(0),
-                                             outputs_dimensions[0], outputs_dimensions(1));
+    const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
+
+    Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
 
     deltas.device(*thread_pool_device)
-            = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
-            (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
-
-
-    Tensor<type, 2> output_deltas(deltas);
-
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_binary_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
-
-        throw invalid_argument(buffer.str());
-    }
+            = (-targets/outputs + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
 }
 
 
 void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batch,
-                                                        NeuralNetworkForwardPropagation& forward_propagation,
-                                                        LossIndexBackPropagation& back_propagation) const
+                                                        ForwardPropagation& forward_propagation,
+                                                        BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-    const Index last_trainable_layer_index = neural_network_pointer->get_last_trainable_layer_index();
+    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const TensorMap<Tensor<type, 2>> targets(batch.targets_data, batch.targets_dimensions(0), batch.targets_dimensions(1));
+    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions[0];
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
 
-    const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data(0),
-                                             outputs_dimensions[0], outputs_dimensions(1));
+    const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-    TensorMap<Tensor<type, 2>> deltas(probabilistic_layer_back_propagation->deltas_data, probabilistic_layer_back_propagation->deltas_dimensions(0), probabilistic_layer_back_propagation->deltas_dimensions(1));
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][1], outputs_pair.second[0][1]);
 
-    deltas.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
+    Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    Tensor<type, 2> output_deltas(deltas);
+    const type coefficient = -type(1) / type(batch_samples_number);
 
-    if(has_NAN(output_deltas))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_multiple_output_delta(const DataSetBatch&, NeuralNetworkForwardPropagation&,LossIndexBackPropagation&) method.\n"
-               << "NAN values found in deltas.";
-
-        throw invalid_argument(buffer.str());
-    }
+    deltas.device(*thread_pool_device) = (targets/outputs)*coefficient;
 }
 
 
@@ -295,7 +239,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Cross entropy error element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Regularization
@@ -315,7 +259,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

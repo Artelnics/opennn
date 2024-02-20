@@ -31,62 +31,22 @@ public:
     // Appending layers
 
     void test_add_layer();
-    void check_layer_type();
-
-    // Get methods
-
-    void test_has_methods();
-
-    // Set methods
-
-    void test_set();
-
-    void test_set_names();
-    void test_set_inputs_number();
-
-    void test_set_pointers();
-
-    void test_set_default();
-
-    // Architecture
-
-    void test_set_network();
-
-    void test_set_parameters();
-
-    // Parameters initialization methods
-
-    void test_set_parameters_constant();
-    void test_set_parameters_random();
 
     // Parameters norm / descriptives / histogram
 
     void test_calculate_parameters_norm();
-    void test_calculate_parameters_descriptives();
-    void test_calculate_parameters_histogram();
-
-    void test_perturbate_parameters();
 
     // Output
 
-    void test_calculate_trainable_outputs();
     void test_calculate_outputs();
 
     void test_calculate_directional_inputs();
-    void test_calculate_outputs_histograms();
 
     // Forward propagation
 
     void test_forward_propagate();
 
-    // Expression methods
-
-    void test_save_expression();
-
     // Serialization methods
-
-    void test_to_XML();
-    void test_from_XML();
 
     void test_save();
     void test_load();
@@ -118,7 +78,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

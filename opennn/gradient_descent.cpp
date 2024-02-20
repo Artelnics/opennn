@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "gradient_descent.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -25,12 +27,12 @@ GradientDescent::GradientDescent()
 /// Loss index constructor.
 /// It creates a gradient descent optimization algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+GradientDescent::GradientDescent(LossIndex* new_loss_index)
+    : OptimizationAlgorithm(new_loss_index)
 {
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    learning_rate_algorithm.set_loss_index(new_loss_index);
 
     set_default();
 }
@@ -46,7 +48,7 @@ const LearningRateAlgorithm& GradientDescent::get_learning_rate_algorithm() cons
 
 /// Returns a pointer to the learning rate algorithm object inside the gradient descent object.
 
-LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
+LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm()
 {
     return &learning_rate_algorithm;
 }
@@ -103,13 +105,13 @@ const type& GradientDescent::get_maximum_time() const
 
 /// Sets a pointer to a loss index object to be associated with the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void GradientDescent::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void GradientDescent::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    learning_rate_algorithm.set_loss_index(new_loss_index);
 }
 
 
@@ -138,7 +140,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_epochs_number < static_cast<type>(0.0))
+    if(new_maximum_epochs_number < type(0))
     {
         ostringstream buffer;
 
@@ -146,7 +148,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
                << "void set_maximum_epochs_number(const type&) method.\n"
                << "Maximum epochs number must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -191,7 +193,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0))
     {
         ostringstream buffer;
 
@@ -199,7 +201,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -220,18 +222,18 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     const Index gradient_size = gradient.size();
 
@@ -242,7 +244,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
                << "Size of gradient(" << gradient_size
                << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -259,11 +261,11 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 void GradientDescent::update_parameters(
         const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
-        LossIndexBackPropagation& back_propagation,
+        ForwardPropagation& forward_propagation,
+        BackPropagation& back_propagation,
         GradientDescentData& optimization_data) const
 {
-    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
@@ -273,7 +275,7 @@ void GradientDescent::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-    const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+    const pair<type, type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
                             forward_propagation,
                             back_propagation,
@@ -289,7 +291,7 @@ void GradientDescent::update_parameters(
     }
     else
     {
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network->get_parameters_number();
 
         for(Index i = 0; i < parameters_number; i++)
         {
@@ -314,7 +316,7 @@ void GradientDescent::update_parameters(
 
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
-    forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
+    forward_propagation.neural_network->set_parameters(back_propagation.parameters);
 }
 
 
@@ -337,66 +339,66 @@ TrainingResults GradientDescent::perform_training()
 
     // Data set
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    DataSet* data_set = loss_index->get_data_set();
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_training_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
-    const bool has_selection = data_set_pointer->has_selection();
+    const bool has_selection = data_set->has_selection();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network_pointer->set_inputs_names(inputs_names);
-    neural_network_pointer->set_outputs_names(targets_names);
+    neural_network->set_inputs_names(inputs_names);
+    neural_network->set_outputs_names(targets_names);
 
-    if(neural_network_pointer->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
-        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
     }
 
-    if(neural_network_pointer->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
-        target_variables_descriptives = data_set_pointer->scale_target_variables();
+        target_variables_descriptives = data_set->scale_target_variables();
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index
 
-    const string error_type = loss_index_pointer->get_error_type();
+    const string error_type = loss_index->get_error_type();
 
-    loss_index_pointer->set_normalization_coefficient();
+    loss_index->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_samples_number, loss_index);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index);
 
     // Optimization algorithm
 
@@ -424,21 +426,24 @@ TrainingResults GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
+        
+        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
 
         // Loss index
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
         // Update parameters
+
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
+            
+            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
 
-            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
 
@@ -448,7 +453,7 @@ TrainingResults GradientDescent::perform_training()
         // Optimization algorithm
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         // Print progress
 
@@ -529,41 +534,13 @@ TrainingResults GradientDescent::perform_training()
             break;
         }
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    data_set->unscale_input_variables(input_variables_descriptives);
 
-        type* input_data = inputs.data();
-
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-
-    data_set_pointer->unscale_input_variables(input_variables_descriptives);
-
-    if(neural_network_pointer->has_unscaling_layer())
-        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has_unscaling_layer())
+        data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -718,7 +695,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Gradient descent element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Learning rate algorithm
@@ -745,13 +722,13 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = type(atof(element->GetText()));
 
             try
             {
                 set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -764,13 +741,13 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_loss_goal = static_cast<type>(atof(element->GetText()));
+            const type new_loss_goal = type(atof(element->GetText()));
 
             try
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -783,13 +760,13 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
 
             try
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -802,13 +779,13 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
 
             try
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -821,13 +798,13 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_time = type(atof(element->GetText()));
 
             try
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -845,7 +822,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -856,7 +833,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

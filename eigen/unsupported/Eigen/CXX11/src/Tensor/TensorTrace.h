@@ -134,6 +134,7 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
       }
     }
 
+    EIGEN_ONLY_USED_FOR_DEBUG(num_distinct_reduce_dims);
     eigen_assert(num_distinct_reduce_dims == NumReducedDims);
 
     // Compute the dimensions of the result.

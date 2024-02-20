@@ -12,6 +12,8 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/neural_network_forward_propagation.h"
+#include "../opennn/loss_index_back_propagation.h"
 
 class MeanSquaredErrorTest : public UnitTesting 
 {
@@ -33,6 +35,13 @@ public:
     void test_calculate_gradient_convolutional_network();
 
     void test_back_propagate();
+
+    void test_back_propagate_perceptron();
+    void test_back_propagate_probabilistic();
+    void test_back_propagate_convolutional();
+    void test_back_propagate_recurrent();
+    void test_back_propagate_long_short_term_memory();
+
 
     void test_back_propagate_lm();
 
@@ -61,14 +70,14 @@ private:
 
     DataSetBatch batch;
 
-    NeuralNetworkForwardPropagation forward_propagation;
+    ForwardPropagation forward_propagation;
 
-    LossIndexBackPropagation back_propagation;
+    BackPropagation back_propagation;
 
-    LossIndexBackPropagationLM back_propagation_lm;
+    BackPropagationLM back_propagation_lm;
 
-    Tensor<type, 1> numerical_differentiation_gradient;
-    Tensor<type, 2> jacobian_numerical_differentiation;
+    Tensor<type, 1> numerical_gradient;
+    Tensor<type, 2> numerical_jacobian;
 
 };
 
@@ -77,7 +86,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

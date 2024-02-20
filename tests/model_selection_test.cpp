@@ -39,9 +39,9 @@ void ModelSelectionTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    ModelSelection* model_selection_pointer = new ModelSelection;
+    ModelSelection* model_selection = new ModelSelection;
 
-    delete model_selection_pointer;
+    delete model_selection;
 }
 
 
@@ -51,17 +51,17 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     data_set.generate_sum_data(20,2);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 2, 1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 2, 1});
 
     training_strategy.set_display(false);
 
     model_selection.set_display(false);
 
-    GrowingNeurons* incremental_neurons_pointer = model_selection.get_growing_neurons_pointer();
+    GrowingNeurons* incremental_neurons = model_selection.get_growing_neurons();
 
-    incremental_neurons_pointer->set_maximum_selection_failures(2);
+    incremental_neurons->set_maximum_selection_failures(2);
 
-    incremental_neurons_pointer->set_display(false);
+    incremental_neurons->set_display(false);
 
     NeuronsSelectionResults results;
 
@@ -133,7 +133,7 @@ void ModelSelectionTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

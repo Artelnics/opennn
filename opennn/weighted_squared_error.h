@@ -65,7 +65,7 @@ public:
 
    void set_normalization_coefficient() override;
 
-   void set_data_set_pointer(DataSet*) final;
+   void set_data_set(DataSet*) final;
 
    type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y) const;
 
@@ -76,28 +76,28 @@ public:
    // Back propagation
 
    void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
    void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
    // Back propagation LM
 
    void calculate_squared_errors_lm(const DataSetBatch&,
-                                    const NeuralNetworkForwardPropagation&,
-                                    LossIndexBackPropagationLM&) const final;
+                                    const ForwardPropagation&,
+                                    BackPropagationLM&) const final;
 
    void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+                           const ForwardPropagation&,
+                           BackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+                              BackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const DataSetBatch&,
-                                           LossIndexBackPropagationLM&) const final;
+                                           BackPropagationLM&) const final;
 
    // Serialization methods
 
@@ -131,7 +131,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

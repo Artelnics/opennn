@@ -58,15 +58,15 @@ void check_symbolic_index()
   VERIFY( is_same_type( fix<9>()/2, int(9/2) ) );
 
   VERIFY( is_same_symb( lastp1-1, last, size) );
-  VERIFY( is_same_symb( lastp1-fix<1>, last, size) );
+  VERIFY( is_same_symb( lastp1-fix<1>(), last, size) );
 
   VERIFY_IS_EQUAL( ( (last*5-2)/3 ).eval(last=size-1), ((size-1)*5-2)/3 );
-  VERIFY_IS_EQUAL( ( (last*fix<5>-fix<2>)/fix<3> ).eval(last=size-1), ((size-1)*5-2)/3 );
+  VERIFY_IS_EQUAL( ( (last*fix<5>()-fix<2>())/fix<3>() ).eval(last=size-1), ((size-1)*5-2)/3 );
   VERIFY_IS_EQUAL( ( -last*lastp1  ).eval(last=size-1), -(size-1)*size );
   VERIFY_IS_EQUAL( ( lastp1-3*last  ).eval(last=size-1), size- 3*(size-1) );
   VERIFY_IS_EQUAL( ( (lastp1-3*last)/lastp1  ).eval(last=size-1), (size- 3*(size-1))/size );
 
-#if EIGEN_HAS_CXX14
+#if EIGEN_HAS_CXX14_VARIABLE_TEMPLATES
   {
     struct x_tag {};  static const symbolic::SymbolExpr<x_tag> x;
     struct y_tag {};  static const symbolic::SymbolExpr<y_tag> y;

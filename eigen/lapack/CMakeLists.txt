@@ -1,10 +1,18 @@
-
 project(EigenLapack CXX)
+
+if(EIGEN_BUILD_LAPACK AND EIGEN_BUILD_BLAS)
 
 include(CheckLanguage)
 check_language(Fortran)
 if(CMAKE_Fortran_COMPILER)
   enable_language(Fortran)
+  if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+    if ("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER_EQUAL 10.0)
+      # We use an old version of LAPACK with argument type mismatches.
+      # Allow them to compile anyway with newer GNU versions.
+      set(CMAKE_Fortran_FLAGS  "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+    endif()
+  endif()
   set(EIGEN_Fortran_COMPILER_WORKS ON)
 else()
   set(EIGEN_Fortran_COMPILER_WORKS OFF)
@@ -145,6 +153,7 @@ if(EXISTS ${eigen_full_path_to_testing_lapack})
     string(REPLACE "." "_" input_name ${input})
     set(testName "${target}_${input_name}")
     if(EXISTS "${TEST_INPUT}")
+      add_dependencies(buildtests ${target})
       add_test(NAME LAPACK-${testName}
         COMMAND "${CMAKE_COMMAND}"
         -DTEST=$<TARGET_FILE:${target}>
@@ -450,3 +459,6 @@ if(EXISTS ${eigen_full_path_to_testing_lapack})
 
 endif()
 
+elseif(EIGEN_BUILD_LAPACK AND NOT EIGEN_BUILD_BLAS)
+ message(FATAL_ERROR "EIGEN_BUILD_LAPACK requires EIGEN_BUILD_BLAS")
+endif() #EIGEN_BUILD_LAPACK

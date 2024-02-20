@@ -37,7 +37,7 @@ template<> struct packet_traits<std::complex<float> >  : default_packet_traits
     HasMul    = 1,
     HasDiv    = 1,
     HasNegate = 1,
-    HasSqrt   = 1,
+    HasSqrt   = EIGEN_HAS_AVX512_MATH,
     HasAbs    = 0,
     HasAbs2   = 0,
     HasMin    = 0,
@@ -97,7 +97,9 @@ template<> EIGEN_STRONG_INLINE Packet8cf ploadu<Packet8cf>(const std::complex<fl
 
 template<> EIGEN_STRONG_INLINE Packet8cf pset1<Packet8cf>(const std::complex<float>& from)
 {
-  return Packet8cf(_mm512_castpd_ps(pload1<Packet8d>((const double*)(const void*)&from)));
+  const float re = std::real(from);
+  const float im = std::imag(from);
+  return Packet8cf(_mm512_set_ps(im, re, im, re, im, re, im, re, im, re, im, re, im, re, im, re));
 }
 
 template<> EIGEN_STRONG_INLINE Packet8cf ploaddup<Packet8cf>(const std::complex<float>* from)
@@ -192,7 +194,7 @@ template<> struct packet_traits<std::complex<double> >  : default_packet_traits
     HasMul    = 1,
     HasDiv    = 1,
     HasNegate = 1,
-    HasSqrt   = 1,
+    HasSqrt   = EIGEN_HAS_AVX512_MATH,
     HasAbs    = 0,
     HasAbs2   = 0,
     HasMin    = 0,
@@ -253,11 +255,7 @@ template<> EIGEN_STRONG_INLINE Packet4cd ploadu<Packet4cd>(const std::complex<do
 
 template<> EIGEN_STRONG_INLINE Packet4cd pset1<Packet4cd>(const std::complex<double>& from)
 {
-  #ifdef EIGEN_VECTORIZE_AVX512DQ
-  return Packet4cd(_mm512_broadcast_f64x2(pset1<Packet1cd>(from).v));
-  #else
   return Packet4cd(_mm512_castps_pd(_mm512_broadcast_f32x4( _mm_castpd_ps(pset1<Packet1cd>(from).v))));
-  #endif
 }
 
 template<> EIGEN_STRONG_INLINE Packet4cd ploaddup<Packet4cd>(const std::complex<double>* from) {
@@ -408,6 +406,8 @@ ptranspose(PacketBlock<Packet4cd,4>& kernel) {
   kernel.packet[0] = Packet4cd(_mm512_shuffle_f64x2(T0, T2, (shuffle_mask<0,2,0,2>::mask))); // [a0 b0 c0 d0]
 }
 
+#if EIGEN_HAS_AVX512_MATH
+
 template<> EIGEN_STRONG_INLINE Packet4cd psqrt<Packet4cd>(const Packet4cd& a) {
   return psqrt_complex<Packet4cd>(a);
 }
@@ -415,6 +415,8 @@ template<> EIGEN_STRONG_INLINE Packet4cd psqrt<Packet4cd>(const Packet4cd& a) {
 template<> EIGEN_STRONG_INLINE Packet8cf psqrt<Packet8cf>(const Packet8cf& a) {
   return psqrt_complex<Packet8cf>(a);
 }
+
+#endif
 
 } // end namespace internal
 } // end namespace Eigen

@@ -50,19 +50,19 @@ public:
 
    // Set methods
 
-   virtual void set_default();
+   void set_default();
 
    void set_Minkowski_parameter(const type&);
 
    // loss methods
 
    void calculate_error(const DataSetBatch& batch,
-                        const NeuralNetworkForwardPropagation& forward_propagation,
-                        LossIndexBackPropagation& back_propagation) const override;
+                        const ForwardPropagation& forward_propagation,
+                        BackPropagation& back_propagation) const final;
 
    void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
    // Serialization methods
 
@@ -91,7 +91,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

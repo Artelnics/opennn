@@ -871,7 +871,7 @@ namespace half_float
 		/// \tparam R rounding mode to use
 		/// \tparam F number of fractional bits in [11,31]
 		/// \tparam S `true` for signed, `false` for unsigned
-		/// \tparam N `true` for additional normalization step, `false` if already normalized to type(1)
+		/// \tparam N `true` for additional normalization step, `false` if already normalized to 1.F
 		/// \tparam I `true` to always raise INEXACT exception, `false` to raise only for rounded results
 		/// \param m mantissa in Q1.F fixed point format
 		/// \param exp biased exponent - 1

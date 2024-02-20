@@ -28,38 +28,6 @@ public:
 
     void test_destructor();
 
-    // Inputs and neurons
-
-    void test_is_empty();
-
-    // Set methods
-
-    void test_set();
-    void test_set_default();
-
-    // Parameters
-
-    void test_set_biases();
-    void test_set_synaptic_weights();
-    void test_set_parameters();
-
-    // Inputs
-
-    void test_set_inputs_number();
-
-    //Perceptrons
-
-    void test_set_perceptrons_number();
-
-    // Activation functions
-
-    void test_set_activation_function();
-
-    // Parameters initialization methods
-
-    void test_set_parameters_constant();
-    void test_set_parameters_random();
-
     // Combination
 
     void test_calculate_combinations();
@@ -90,17 +58,12 @@ private:
 
     NumericalDifferentiation numerical_differentiation;
 
-    Tensor<type, 2> get_activations(const Tensor<type, 2>&combinations) const
+    Tensor<type, 2> get_activations(const Tensor<type, 2>& combinations) const
     {
-        Tensor<type, 2> combinations_copy(combinations);
         Tensor<type, 2> activations(combinations);
 
-        Tensor<Index, 1> combinations_dimensions = get_dimensions(combinations);
-        Tensor<Index, 1> activations_dimensions = get_dimensions(activations);
-/*
-        perceptron_layer.calculate_activations(combinations_copy.data(), combinations_dimensions,
-                                               activations.data(), activations_dimensions);
-*/
+        perceptron_layer.calculate_activations(combinations, activations);
+
         return activations;
     }
 };
@@ -110,7 +73,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

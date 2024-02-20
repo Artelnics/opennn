@@ -26,22 +26,6 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set();
-
-    void test_set_evaluations_number();
-
-    void test_set_input_condition();
-    void test_set_output_condition();
-    void test_set_inputs_outputs_conditions();
-
-    //
-
-    void test_get_conditions();
-
-    void test_get_values_conditions();
-
     // Performance methods
 
     void test_calculate_inputs();
@@ -89,7 +73,7 @@ private:
         data_set.set_variables_names(names);
         data_set.set_training();
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation,
+        neural_network.set(NeuralNetwork::ModelType::Approximation,
                                      { input_variables_number, hidden_neurons_number, target_variables_number});
 
         training_strategy.set(&neural_network, &data_set);
@@ -121,9 +105,9 @@ private:
         inputs_index.setValues({0,1});
         outputs_index.setValues({2,3});
 
-        data_set.set_input_target_columns(inputs_index,outputs_index);
+        data_set.set_input_target_raw_variables(inputs_index,outputs_index);
 
-        neural_network_2.set(NeuralNetwork::ProjectType::Approximation,
+        neural_network_2.set(NeuralNetwork::ModelType::Approximation,
                                      { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
 
         training_strategy.set(&neural_network_2, &data_set);
@@ -138,7 +122,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

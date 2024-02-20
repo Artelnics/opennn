@@ -171,9 +171,9 @@ template<typename ArrayType> void array_special_functions()
 
   // Check the ndtri function against scipy.special.ndtri
   {
-    ArrayType x(7), res(7), ref(7);
-    x << 0.5, 0.2, 0.8, 0.9, 0.1, 0.99, 0.01;
-    ref << 0., -0.8416212335729142, 0.8416212335729142, 1.2815515655446004, -1.2815515655446004, 2.3263478740408408, -2.3263478740408408;
+    ArrayType x(11), res(11), ref(11);
+    x << 0.5, 0.2, 0.8, 0.9, 0.1, 0.99, 0.01, 0, 1, -0.01, 1.01;
+    ref << 0., -0.8416212335729142, 0.8416212335729142, 1.2815515655446004, -1.2815515655446004, 2.3263478740408408, -2.3263478740408408, -plusinf, plusinf, nan, nan;
     CALL_SUBTEST( verify_component_wise(ref, ref); );
     CALL_SUBTEST( res = x.ndtri(); verify_component_wise(res, ref); );
     CALL_SUBTEST( res = ndtri(x); verify_component_wise(res, ref); );
@@ -191,10 +191,10 @@ template<typename ArrayType> void array_special_functions()
 
   // Check the zeta function against scipy.special.zeta
   {
-    ArrayType x(10), q(10), res(10), ref(10);
-    x << 1.5,   4, 10.5, 10000.5,    3,      1,    0.9,  2,  3,  4;
-    q <<   2, 1.5,    3,  1.0001, -2.5, 1.2345, 1.2345, -1, -2, -3;
-    ref << 1.61237534869, 0.234848505667, 1.03086757337e-5, 0.367879440865, 0.054102025820864097, plusinf, nan, plusinf, nan, plusinf;
+    ArrayType x(11), q(11), res(11), ref(11);
+    x << 1.5,   4, 10.5, 10000.5,    3,      1,    0.9,  2,  3,  4, 2000;
+    q <<   2, 1.5,    3,  1.0001, -2.5, 1.2345, 1.2345, -1, -2, -3, 2000;
+    ref << 1.61237534869, 0.234848505667, 1.03086757337e-5, 0.367879440865, 0.054102025820864097, plusinf, nan, plusinf, nan, plusinf, 0;
     CALL_SUBTEST( verify_component_wise(ref, ref); );
     CALL_SUBTEST( res = x.zeta(q); verify_component_wise(res, ref); );
     CALL_SUBTEST( res = zeta(x,q); verify_component_wise(res, ref); );

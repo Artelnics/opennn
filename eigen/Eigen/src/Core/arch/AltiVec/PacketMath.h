@@ -786,8 +786,22 @@ template<> EIGEN_STRONG_INLINE Packet8us  psub<Packet8us> (const Packet8us&  a, 
 template<> EIGEN_STRONG_INLINE Packet16c  psub<Packet16c> (const Packet16c&  a, const Packet16c&  b) { return a - b; }
 template<> EIGEN_STRONG_INLINE Packet16uc psub<Packet16uc>(const Packet16uc& a, const Packet16uc& b) { return a - b; }
 
-template<> EIGEN_STRONG_INLINE Packet4f pnegate(const Packet4f& a) { return p4f_ZERO - a; }
-template<> EIGEN_STRONG_INLINE Packet4i pnegate(const Packet4i& a) { return p4i_ZERO - a; }
+template<> EIGEN_STRONG_INLINE Packet4f pnegate(const Packet4f& a)
+{
+#ifdef __POWER8_VECTOR__
+  return vec_neg(a);
+#else
+  return vec_xor(a, p4f_MZERO);
+#endif
+}
+template<> EIGEN_STRONG_INLINE Packet4i pnegate(const Packet4i& a)
+{
+#ifdef __POWER8_VECTOR__
+  return vec_neg(a);
+#else
+  return p4i_ZERO - a;
+#endif
+}
 
 template<> EIGEN_STRONG_INLINE Packet4f pconj(const Packet4f& a) { return a; }
 template<> EIGEN_STRONG_INLINE Packet4i pconj(const Packet4i& a) { return a; }
@@ -865,7 +879,10 @@ template<> EIGEN_STRONG_INLINE Packet16c pmax<Packet16c>(const Packet16c& a, con
 template<> EIGEN_STRONG_INLINE Packet16uc pmax<Packet16uc>(const Packet16uc& a, const Packet16uc& b) { return vec_max(a, b); }
 
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_le(const Packet4f& a, const Packet4f& b) { return reinterpret_cast<Packet4f>(vec_cmple(a,b)); }
+// To fix bug with vec_cmplt on older versions
+#if defined(__POWER8_VECTOR__) || EIGEN_COMP_LLVM
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_lt(const Packet4f& a, const Packet4f& b) { return reinterpret_cast<Packet4f>(vec_cmplt(a,b)); }
+#endif
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_eq(const Packet4f& a, const Packet4f& b) { return reinterpret_cast<Packet4f>(vec_cmpeq(a,b)); }
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_lt_or_nan(const Packet4f& a, const Packet4f& b) {
   Packet4f c = reinterpret_cast<Packet4f>(vec_cmpge(a,b));
@@ -1339,16 +1356,6 @@ template<> EIGEN_STRONG_INLINE Packet8bf pnegate<Packet8bf>(const Packet8bf& a) 
 
 template<> EIGEN_STRONG_INLINE Packet8bf psub<Packet8bf>(const Packet8bf& a, const Packet8bf& b) {
   BF16_TO_F32_BINARY_OP_WRAPPER(psub<Packet4f>, a, b);
-}
-
-template<> EIGEN_STRONG_INLINE Packet8bf psqrt<Packet8bf> (const Packet8bf& a){
-  BF16_TO_F32_UNARY_OP_WRAPPER(vec_sqrt, a);
-}
-template<> EIGEN_STRONG_INLINE Packet8bf prsqrt<Packet8bf> (const Packet8bf& a){
-  BF16_TO_F32_UNARY_OP_WRAPPER(prsqrt<Packet4f>, a);
-}
-template<> EIGEN_STRONG_INLINE Packet8bf pexp<Packet8bf> (const Packet8bf& a){
-  BF16_TO_F32_UNARY_OP_WRAPPER(pexp_float, a);
 }
 
 template<> EIGEN_STRONG_INLINE Packet4f pldexp<Packet4f>(const Packet4f& a, const Packet4f& exponent) {
@@ -2304,7 +2311,11 @@ template<> struct packet_traits<double> : default_packet_traits
     HasLog  = 0,
     HasExp  = 1,
     HasSqrt = 1,
+#if !EIGEN_COMP_CLANG
     HasRsqrt = 1,
+#else
+    HasRsqrt = 0,
+#endif
     HasRound = 1,
     HasFloor = 1,
     HasCeil = 1,
@@ -2393,7 +2404,14 @@ template<> EIGEN_STRONG_INLINE Packet2d padd<Packet2d>(const Packet2d& a, const 
 
 template<> EIGEN_STRONG_INLINE Packet2d psub<Packet2d>(const Packet2d& a, const Packet2d& b) { return a - b; }
 
-template<> EIGEN_STRONG_INLINE Packet2d pnegate(const Packet2d& a) { return p2d_ZERO - a; }
+template<> EIGEN_STRONG_INLINE Packet2d pnegate(const Packet2d& a)
+{
+#ifdef __POWER8_VECTOR__
+  return vec_neg(a);
+#else
+  return vec_xor(a, p2d_MZERO);
+#endif
+}
 
 template<> EIGEN_STRONG_INLINE Packet2d pconj(const Packet2d& a) { return a; }
 

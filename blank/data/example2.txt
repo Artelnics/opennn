@@ -1,0 +1,6 @@
+Hola, mundo!	Hello, world!
+Hola, soy un traductor.	Hello, I am a translator.
+Adios, mundo!	Goodbye, world!
+Adios, nos vemos pronto.	Goodbye, see you soon.
+Que tal amigo?	How are you friend?
+Me gusta la programacion.	I like programming.

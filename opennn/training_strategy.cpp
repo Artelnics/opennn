@@ -22,9 +22,9 @@ TrainingStrategy::TrainingStrategy()
 
     set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
 
-    LossIndex* loss_index_pointer = get_loss_index_pointer();
+    LossIndex* loss_index = get_loss_index();
 
-    set_loss_index_pointer(loss_index_pointer);
+    set_loss_index(loss_index);
 
     set_default();
 
@@ -35,18 +35,18 @@ TrainingStrategy::TrainingStrategy()
 /// It creates a training strategy object not associated with any loss index object.
 /// It also loads the members of this object from NeuralNetwork and DataSet class.
 
-TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : neural_network_pointer(new_neural_network_pointer),
-      data_set_pointer(new_data_set_pointer)
+TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+    :  data_set(new_data_set),
+       neural_network(new_neural_network)
 {
 
     set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 
     set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
 
-    set_loss_index_neural_network_pointer(neural_network_pointer);
+    set_loss_index_neural_network(neural_network);
 
-    set_loss_index_data_set_pointer(data_set_pointer);
+    set_loss_index_data_set(data_set);
 
     set_default();
 }
@@ -54,23 +54,23 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
 
 /// Returns a pointer to the DataSet class.
 
-DataSet* TrainingStrategy::get_data_set_pointer()
+DataSet* TrainingStrategy::get_data_set()
 {
-    return data_set_pointer;
+    return data_set;
 }
 
 
 /// Returns a pointer to the NeuralNetwork class.
 
-NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
+NeuralNetwork* TrainingStrategy::get_neural_network() const
 {
-    return neural_network_pointer;
+    return neural_network;
 }
 
 
 /// Returns a pointer to the LossIndex class.
 
-LossIndex* TrainingStrategy::get_loss_index_pointer()
+LossIndex* TrainingStrategy::get_loss_index()
 {
     switch(loss_method)
     {
@@ -93,7 +93,7 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 
 /// Returns a pointer to the OptimizationAlgorithm class.
 
-OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
+OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
     switch(optimization_method)
     {
@@ -116,7 +116,7 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 
 bool TrainingStrategy::has_neural_network() const
 {
-    if(neural_network_pointer == nullptr) return false;
+    if(neural_network == nullptr) return false;
 
     return true;
 }
@@ -124,7 +124,7 @@ bool TrainingStrategy::has_neural_network() const
 
 bool TrainingStrategy::has_data_set() const
 {
-    if(data_set_pointer == nullptr) return false;
+    if(data_set == nullptr) return false;
 
     return true;
 }
@@ -133,7 +133,7 @@ bool TrainingStrategy::has_data_set() const
 /// Returns a pointer to the gradient descent main algorithm.
 /// It also throws an exception if that pointer is nullptr.
 
-GradientDescent* TrainingStrategy::get_gradient_descent_pointer()
+GradientDescent* TrainingStrategy::get_gradient_descent()
 {
     return &gradient_descent;
 }
@@ -142,7 +142,7 @@ GradientDescent* TrainingStrategy::get_gradient_descent_pointer()
 /// Returns a pointer to the conjugate gradient main algorithm.
 /// It also throws an exception if that pointer is nullptr.
 
-ConjugateGradient* TrainingStrategy::get_conjugate_gradient_pointer()
+ConjugateGradient* TrainingStrategy::get_conjugate_gradient()
 {
     return &conjugate_gradient;
 }
@@ -151,7 +151,7 @@ ConjugateGradient* TrainingStrategy::get_conjugate_gradient_pointer()
 /// Returns a pointer to the Newton method main algorithm.
 /// It also throws an exception if that pointer is nullptr.
 
-QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method_pointer()
+QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method()
 {
     return &quasi_Newton_method;
 }
@@ -160,7 +160,7 @@ QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method_pointer()
 /// Returns a pointer to the Levenberg-Marquardt main algorithm.
 /// It also throws an exception if that pointer is nullptr.
 
-LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm_pointer()
+LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm()
 {
     return &Levenberg_Marquardt_algorithm;
 }
@@ -169,7 +169,7 @@ LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm
 /// Returns a pointer to the stochastic gradient descent main algorithm.
 /// It also throws an exception if that pointer is nullptr.
 
-StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent_pointer()
+StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent()
 {
     return &stochastic_gradient_descent;
 }
@@ -178,7 +178,7 @@ StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent_poi
 /// Returns a pointer to the adaptive moment estimation main algorithm.
 /// It also throws an exception if that pointer is nullptr.
 
-AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation_pointer()
+AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
 {
     return &adaptive_moment_estimation;
 }
@@ -187,7 +187,7 @@ AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation_point
 /// Returns a pointer to the sum squared error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
-SumSquaredError* TrainingStrategy::get_sum_squared_error_pointer()
+SumSquaredError* TrainingStrategy::get_sum_squared_error()
 {
     return &sum_squared_error;
 }
@@ -196,7 +196,7 @@ SumSquaredError* TrainingStrategy::get_sum_squared_error_pointer()
 /// Returns a pointer to the mean squared error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
-MeanSquaredError* TrainingStrategy::get_mean_squared_error_pointer()
+MeanSquaredError* TrainingStrategy::get_mean_squared_error()
 {
     return &mean_squared_error;
 }
@@ -205,7 +205,7 @@ MeanSquaredError* TrainingStrategy::get_mean_squared_error_pointer()
 /// Returns a pointer to the normalized squared error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
-NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error_pointer()
+NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error()
 {
 
     return &normalized_squared_error;
@@ -216,7 +216,7 @@ NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error_pointer()
 /// Returns a pointer to the Minkowski error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
-MinkowskiError* TrainingStrategy::get_Minkowski_error_pointer()
+MinkowskiError* TrainingStrategy::get_Minkowski_error()
 {
 
     return &Minkowski_error;
@@ -226,7 +226,7 @@ MinkowskiError* TrainingStrategy::get_Minkowski_error_pointer()
 /// Returns a pointer to the cross-entropy error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
-CrossEntropyError* TrainingStrategy::get_cross_entropy_error_pointer()
+CrossEntropyError* TrainingStrategy::get_cross_entropy_error()
 {
     return &cross_entropy_error;
 }
@@ -235,7 +235,7 @@ CrossEntropyError* TrainingStrategy::get_cross_entropy_error_pointer()
 /// Returns a pointer to the weighted squared error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
-WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer()
+WeightedSquaredError* TrainingStrategy::get_weighted_squared_error()
 {
     return &weighted_squared_error;
 }
@@ -324,7 +324,7 @@ string TrainingStrategy::write_optimization_method() const
                << "string write_optimization_method() const method.\n"
                << "Unknown main type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -366,7 +366,7 @@ string TrainingStrategy::write_optimization_method_text() const
                << "string write_optimization_method_text() const method.\n"
                << "Unknown main type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -422,11 +422,11 @@ void TrainingStrategy::set()
 }
 
 
-void TrainingStrategy::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    set_neural_network_pointer(new_neural_network_pointer);
+    set_neural_network(new_neural_network);
 
-    set_data_set_pointer(new_data_set_pointer);
+    set_data_set(new_data_set);
 }
 
 
@@ -468,7 +468,7 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
                << "void set_loss_method(const string&) method.\n"
                << "Unknown loss method: " << new_loss_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -481,7 +481,7 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 {
     loss_method = new_loss_method;
 
-    set_loss_index_pointer(get_loss_index_pointer());
+    set_loss_index(get_loss_index());
 }
 
 
@@ -531,7 +531,7 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
                << "void set_optimization_method(const string&) method.\n"
                << "Unknown main type: " << new_optimization_method << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -544,19 +544,19 @@ void TrainingStrategy::set_threads_number(const int& new_threads_number)
 }
 
 
-void TrainingStrategy::set_data_set_pointer(DataSet* new_data_set_pointer)
+void TrainingStrategy::set_data_set(DataSet* new_data_set)
 {
-    data_set_pointer = new_data_set_pointer;
+    data_set = new_data_set;
 
-    set_loss_index_data_set_pointer(data_set_pointer);
+    set_loss_index_data_set(data_set);
 }
 
 
-void TrainingStrategy::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 {
-    neural_network_pointer = new_neural_network_pointer;
+    neural_network = new_neural_network;
 
-    set_loss_index_neural_network_pointer(neural_network_pointer);
+    set_loss_index_neural_network(neural_network);
 }
 
 
@@ -583,38 +583,38 @@ void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_
 
 
 /// Sets a pointer to a loss index object to be associated with the training strategy.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 {
-    gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    conjugate_gradient.set_loss_index_pointer(new_loss_index_pointer);
-    stochastic_gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    adaptive_moment_estimation.set_loss_index_pointer(new_loss_index_pointer);
-    quasi_Newton_method.set_loss_index_pointer(new_loss_index_pointer);
-    Levenberg_Marquardt_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    gradient_descent.set_loss_index(new_loss_index);
+    conjugate_gradient.set_loss_index(new_loss_index);
+    stochastic_gradient_descent.set_loss_index(new_loss_index);
+    adaptive_moment_estimation.set_loss_index(new_loss_index);
+    quasi_Newton_method.set_loss_index(new_loss_index);
+    Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
 }
 
 
-void TrainingStrategy::set_loss_index_data_set_pointer(DataSet* new_data_set_pointer)
+void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
-    sum_squared_error.set_data_set_pointer(new_data_set_pointer);
-    mean_squared_error.set_data_set_pointer(new_data_set_pointer);
-    normalized_squared_error.set_data_set_pointer(new_data_set_pointer);
-    cross_entropy_error.set_data_set_pointer(new_data_set_pointer);
-    weighted_squared_error.set_data_set_pointer(new_data_set_pointer);
-    Minkowski_error.set_data_set_pointer(new_data_set_pointer);
+    sum_squared_error.set_data_set(new_data_set);
+    mean_squared_error.set_data_set(new_data_set);
+    normalized_squared_error.set_data_set(new_data_set);
+    cross_entropy_error.set_data_set(new_data_set);
+    weighted_squared_error.set_data_set(new_data_set);
+    Minkowski_error.set_data_set(new_data_set);
 }
 
 
-void TrainingStrategy::set_loss_index_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_network)
 {
-    sum_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    mean_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    normalized_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    cross_entropy_error.set_neural_network_pointer(new_neural_network_pointer);
-    weighted_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    Minkowski_error.set_neural_network_pointer(new_neural_network_pointer);
+    sum_squared_error.set_neural_network(new_neural_network);
+    mean_squared_error.set_neural_network(new_neural_network);
+    normalized_squared_error.set_neural_network(new_neural_network);
+    cross_entropy_error.set_neural_network(new_neural_network);
+    weighted_squared_error.set_neural_network(new_neural_network);
+    Minkowski_error.set_neural_network(new_neural_network);
 }
 
 
@@ -678,7 +678,7 @@ void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_numb
 
 void TrainingStrategy::set_display_period(const int & display_period)
 {
-    get_optimization_algorithm_pointer()->set_display_period(display_period);
+    get_optimization_algorithm()->set_display_period(display_period);
 }
 
 
@@ -709,12 +709,12 @@ void TrainingStrategy::set_default() const
 
 TrainingResults TrainingStrategy::perform_training()
 {
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
+    if(neural_network->has_long_short_term_memory_layer() || neural_network->has_recurrent_layer())
     {
         fix_forecasting();
     }
 
-    if(neural_network_pointer->has_convolutional_layer())
+    if(neural_network->has_convolutional_layer())
     {
         ostringstream buffer;
 
@@ -722,7 +722,7 @@ TrainingResults TrainingStrategy::perform_training()
                << "TrainingResults perform_training() const method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     switch(optimization_method)
@@ -783,13 +783,13 @@ void TrainingStrategy::fix_forecasting()
 {
     Index timesteps = 0;
 
-    if(neural_network_pointer->has_recurrent_layer())
+    if(neural_network->has_recurrent_layer())
     {
-        timesteps = neural_network_pointer->get_recurrent_layer_pointer()->get_timesteps();
+        timesteps = neural_network->get_recurrent_layer()->get_timesteps();
     }
-    else if(neural_network_pointer->has_long_short_term_memory_layer())
+    else if(neural_network->has_long_short_term_memory_layer())
     {
-        timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
+        timesteps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
     }
     else
     {
@@ -817,7 +817,7 @@ void TrainingStrategy::fix_forecasting()
     }
     else
     {
-        const Index constant = timesteps > batch_samples_number ? 1 : static_cast<Index>(batch_samples_number/timesteps);
+        const Index constant = timesteps > batch_samples_number ? 1 : Index(batch_samples_number/timesteps);
 
         if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         {
@@ -915,7 +915,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Training strategy element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Loss index
@@ -1013,7 +1013,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             regularization_document.InsertFirstChild(element_clone);
 
-            get_loss_index_pointer()->regularization_from_XML(regularization_document);
+            get_loss_index()->regularization_from_XML(regularization_document);
         }
     }
 
@@ -1166,7 +1166,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1209,7 +1209,7 @@ void TrainingStrategy::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);
@@ -1218,7 +1218,7 @@ void TrainingStrategy::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

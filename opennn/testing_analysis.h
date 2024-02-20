@@ -147,15 +147,15 @@ public:
 
    // Get methods
 
-   NeuralNetwork* get_neural_network_pointer() const;
-   DataSet* get_data_set_pointer() const;
+   NeuralNetwork* get_neural_network() const;
+   DataSet* get_data_set() const;
 
    const bool& get_display() const;
 
    // Set methods
 
-   void set_neural_network_pointer(NeuralNetwork*);
-   void set_data_set_pointer(DataSet*);
+   void set_neural_network(NeuralNetwork*);
+   void set_data_set(DataSet*);
 
    void set_display(const bool&);
 
@@ -197,7 +197,7 @@ public:
    Tensor<type, 1> calculate_binary_classification_selection_errors() const;
    Tensor<type, 1> calculate_multiple_classification_selection_errors() const;
 
-   Tensor<type, 1> calculate_testing_errors() const;
+   Tensor<Tensor<type, 1>, 1> calculate_testing_errors() const;
    Tensor<type, 1> calculate_binary_classification_testing_errors() const;
    Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
 
@@ -300,21 +300,21 @@ public:
 
    Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
 
-   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
-   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
-   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
-   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
    void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
    void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
-   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
-   void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&);
+   void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
    // Forecasting methods
 
@@ -323,8 +323,6 @@ public:
    Tensor<Tensor<type, 1>, 1> calculate_inputs_errors_cross_correlation(const Index& = 10) const;
 
    // Serialization methods
-
-   void print() const;
 
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
@@ -341,11 +339,11 @@ private:
 
    /// Pointer to the neural network object to be tested. 
 
-   NeuralNetwork* neural_network_pointer = nullptr;
+   NeuralNetwork* neural_network = nullptr;
 
    /// Pointer to a data set object.
 
-   DataSet* data_set_pointer = nullptr;
+   DataSet* data_set = nullptr;
 
    /// Display messages to screen.
    
@@ -359,7 +357,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

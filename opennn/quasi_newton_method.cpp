@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "quasi_newton_method.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -25,12 +27,12 @@ QuasiNewtonMethod::QuasiNewtonMethod()
 /// Loss index constructor.
 /// It creates a quasi-Newton method optimization algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
+    : OptimizationAlgorithm(new_loss_index)
 {
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    learning_rate_algorithm.set_loss_index(new_loss_index);
 
     set_default();
 }
@@ -46,7 +48,7 @@ const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() co
 
 /// Returns a pointer to the learning rate algorithm object inside the quasi-Newton method object.
 
-LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm_pointer()
+LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm()
 {
     return &learning_rate_algorithm;
 }
@@ -79,7 +81,7 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
                << "string write_inverse_hessian_approximation_method() const method.\n"
                << "Unknown inverse hessian approximation method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -133,13 +135,13 @@ const type& QuasiNewtonMethod::get_maximum_time() const
 
 /// Sets a pointer to a loss index object to be associated with the quasi-Newton method object.
 /// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void QuasiNewtonMethod::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void QuasiNewtonMethod::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    learning_rate_algorithm.set_loss_index(new_loss_index);
 }
 
 
@@ -179,7 +181,7 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
                << "void set_inverse_hessian_approximation_method(const string&) method.\n"
                << "Unknown inverse hessian approximation method: " << new_inverse_hessian_approximation_method_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -261,7 +263,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0))
     {
         ostringstream buffer;
 
@@ -269,7 +271,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -317,31 +319,8 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
                "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
                << "Unknown inverse hessian approximation method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
-}
-
-
-Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& x, Tensor<type, 1>& y) const
-{
-    // Transform Tensors into Dense matrix  
-
-    const Index n = x.dimension(0);
-    const Index m = x.dimension(0);
-
-    auto x_matrix = Map< Matrix<type, Dynamic, Dynamic, RowMajor> >(x.data(), n, 1);
-
-    auto y_matrix = Map< Matrix<type, Dynamic, Dynamic, RowMajor> >(y.data(), m, 1);
-
-    // Kronecker Product
-
-    auto product = kroneckerProduct(x_matrix, y_matrix).eval();
-
-    // Matrix into a Tensor
-
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), n, m);
-
-    return direct_matrix;
 }
 
 
@@ -391,48 +370,50 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 /// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
-/// @todo Add thread pool.
 
 void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
+
+    const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
+    const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
+
+    Tensor<type, 1>& old_inverse_hessian_dot_gradient_difference = optimization_data.old_inverse_hessian_dot_gradient_difference;
+
+    const Tensor<type, 2>& old_inverse_hessian = optimization_data.old_inverse_hessian;
+    Tensor<type, 2>& inverse_hessian = optimization_data.inverse_hessian;
 
     Tensor<type, 0> parameters_difference_dot_gradient_difference;
-
-    parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = optimization_data.parameters_difference.contract(optimization_data.gradient_difference, AT_B);
-
-
-    optimization_data.old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = optimization_data.old_inverse_hessian.contract(optimization_data.gradient_difference, A_B);
-
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
-    gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = optimization_data.gradient_difference.contract(optimization_data.old_inverse_hessian_dot_gradient_difference, AT_B);
+    Tensor<type, 1>& BFGS = optimization_data.BFGS;
 
-    Tensor<type, 1> BFGS(parameters_number);
+    parameters_difference_dot_gradient_difference.device(*thread_pool_device)
+            = parameters_difference.contract(gradient_difference, AT_B);
+
+    old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
+            = old_inverse_hessian.contract(gradient_difference, A_B);
+
+    gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
+            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B);
 
     BFGS.device(*thread_pool_device)
-            = optimization_data.parameters_difference/parameters_difference_dot_gradient_difference(0)
-            - optimization_data.old_inverse_hessian_dot_gradient_difference/gradient_dot_hessian_dot_gradient(0);
+            = parameters_difference/parameters_difference_dot_gradient_difference(0)
+            - old_inverse_hessian_dot_gradient_difference/gradient_dot_hessian_dot_gradient(0);
 
     // Calculates Approximation
 
-    optimization_data.inverse_hessian = optimization_data.old_inverse_hessian;
+    inverse_hessian = old_inverse_hessian;
 
-    optimization_data.inverse_hessian
-            += kronecker_product(optimization_data.parameters_difference, optimization_data.parameters_difference)
-            / parameters_difference_dot_gradient_difference(0); // Ok
+    inverse_hessian += kronecker_product(parameters_difference, parameters_difference)
+                    / parameters_difference_dot_gradient_difference(0); // Ok
 
-    optimization_data.inverse_hessian
-            -= kronecker_product(optimization_data.old_inverse_hessian_dot_gradient_difference, optimization_data.old_inverse_hessian_dot_gradient_difference)
-            / gradient_dot_hessian_dot_gradient(0); // Ok
+    inverse_hessian -= kronecker_product(old_inverse_hessian_dot_gradient_difference, old_inverse_hessian_dot_gradient_difference)
+                     / gradient_dot_hessian_dot_gradient(0); // Ok
 
-    optimization_data.inverse_hessian
-            += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
+    inverse_hessian += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
 }
 
 
@@ -444,8 +425,8 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
 
 void QuasiNewtonMethod::update_parameters(
         const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
-        LossIndexBackPropagation& back_propagation,
+        ForwardPropagation& forward_propagation,
+        BackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data) const
 {
     #ifdef OPENNN_DEBUG
@@ -492,7 +473,7 @@ void QuasiNewtonMethod::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-    const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+    const pair<type, type> directional_point = learning_rate_algorithm.calculate_directional_point(
              batch,
              forward_propagation,
              back_propagation,
@@ -545,9 +526,9 @@ void QuasiNewtonMethod::update_parameters(
 
     // Set parameters
 
-    NeuralNetwork* neural_network_pointer = forward_propagation.neural_network_pointer;
+    NeuralNetwork* neural_network = forward_propagation.neural_network;
 
-    neural_network_pointer->set_parameters(back_propagation.parameters);
+    neural_network->set_parameters(back_propagation.parameters);
 }
 
 
@@ -564,83 +545,77 @@ TrainingResults QuasiNewtonMethod::perform_training()
 #endif
 
     // Start training
-
     if(display) cout << "Training with quasi-Newton method...\n";
-
     TrainingResults results(maximum_epochs_number+1);
 
     // Data set
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    DataSet* data_set = loss_index->get_data_set();
 
     // Loss index
 
-    const string error_type = loss_index_pointer->get_error_type();
+    const string error_type = loss_index->get_error_type();
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+    const Index training_samples_number = data_set->get_training_samples_number();
 
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
-    const bool has_selection = data_set_pointer->has_selection();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const bool has_selection = data_set->has_selection();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
-    neural_network_pointer->set_inputs_names(inputs_names);
-    neural_network_pointer->set_outputs_names(targets_names);
+    neural_network->set_inputs_names(inputs_names);
+    neural_network->set_outputs_names(targets_names);
 
-    if(neural_network_pointer->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        input_variables_descriptives = data_set_pointer->scale_input_variables();
+        input_variables_descriptives = data_set->scale_input_variables();
 
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
-        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
     }
 
-    if(neural_network_pointer->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
-        target_variables_descriptives = data_set_pointer->scale_target_variables();
+        target_variables_descriptives = data_set->scale_target_variables();
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    if(neural_network_pointer->has_flatten_layer())
-    {
-        FlattenLayer* flatten_layer_pointer = neural_network_pointer->get_flatten_layer_pointer();
-        //flatten_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
-    }
+    DataSetBatch training_batch(training_samples_number, data_set);
 
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set);
+
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index
 
-    loss_index_pointer->set_normalization_coefficient();
+    loss_index->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_samples_number, loss_index);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index);
 
     // Optimization algorithm
 
@@ -668,12 +643,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
-
+        
+        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
+        
         // Loss index
 
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
@@ -684,14 +659,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
         // Selection error
 
         if(has_selection)
-        {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
+        {            
+            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
 
             // Loss Index
 
-            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
 
@@ -699,7 +672,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display && epoch%display_period == 0)
         {
@@ -773,43 +746,15 @@ TrainingResults QuasiNewtonMethod::perform_training()
             break;
         }
 
-        if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
 
         if(stop_training) break;
     }
 
-    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    data_set->unscale_input_variables(input_variables_descriptives);
 
-        type* input_data = inputs.data();
-
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-
-    data_set_pointer->unscale_input_variables(input_variables_descriptives);
-
-    if(neural_network_pointer->has_unscaling_layer())
-        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has_unscaling_layer())
+        data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -933,27 +878,27 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
     // Loss tolerance
 
     labels_values(2,0) = "Learning rate tolerance";
-    labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
+    labels_values(2,1) = std::to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
 
     // Minimum loss decrease
 
     labels_values(3,0) = "Minimum loss decrease";
-    labels_values(3,1) = to_string(double(minimum_loss_decrease));
+    labels_values(3,1) = std::to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(4,0) = "Loss goal";
-    labels_values(4,1) = to_string(double(training_loss_goal));
+    labels_values(4,1) = std::to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 
     labels_values(5,0) = "Maximum selection error increases";
-    labels_values(5,1) = to_string(maximum_selection_failures);
+    labels_values(5,1) = std::to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
     labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = to_string(maximum_epochs_number);
+    labels_values(6,1) = std::to_string(maximum_epochs_number);
 
     // Maximum time
 
@@ -976,7 +921,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Quasi-Newton method element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Inverse hessian approximation method
@@ -991,7 +936,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_inverse_hessian_approximation_method(new_inverse_hessian_approximation_method);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1021,13 +966,13 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = type(atof(element->GetText()));
 
             try
             {
                 set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1040,13 +985,13 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_loss_goal = static_cast<type>(atof(element->GetText()));
+            const type new_loss_goal = type(atof(element->GetText()));
 
             try
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1059,13 +1004,13 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = Index(atoi(element->GetText()));
 
             try
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1078,13 +1023,13 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = Index(atoi(element->GetText()));
 
             try
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1097,13 +1042,13 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = static_cast<type>(atof(element->GetText()));
+            const type new_maximum_time = type(atof(element->GetText()));
 
             try
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1122,7 +1067,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1133,7 +1078,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

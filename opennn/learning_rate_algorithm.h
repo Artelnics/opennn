@@ -102,7 +102,7 @@ public:
        }
 
 
-       inline pair<type,type> minimum() const
+       inline pair<type, type> minimum() const
        {
            Tensor<type, 1> losses(3);
 
@@ -151,7 +151,7 @@ public:
                      << "U is less than A:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw runtime_error(buffer.str());
            }
 
            if(U.first > B.first)
@@ -161,7 +161,7 @@ public:
                      << "U is greater than B:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw runtime_error(buffer.str());
            }
 
            if(U.second >= A.second)
@@ -171,7 +171,7 @@ public:
                      << "fU is equal or greater than fA:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw runtime_error(buffer.str());
            }
 
            if(U.second >= B.second)
@@ -181,7 +181,7 @@ public:
                      << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw runtime_error(buffer.str());
            }
        }
 
@@ -200,7 +200,7 @@ public:
 
    // Get methods
 
-   LossIndex* get_loss_index_pointer() const;
+   LossIndex* get_loss_index() const;
 
    bool has_loss_index() const;
 
@@ -222,7 +222,7 @@ public:
    void set();
    void set(LossIndex*);
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index(LossIndex*);
    void set_threads_number(const int&);
 
    // Training operators
@@ -238,7 +238,7 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default();
+   void set_default();
 
    // Learning rate methods
 
@@ -246,13 +246,13 @@ public:
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const DataSetBatch&,
-                                        NeuralNetworkForwardPropagation&,
-                                        LossIndexBackPropagation&,
+                                        ForwardPropagation&,
+                                        BackPropagation&,
                                         OptimizationAlgorithmData&) const;
 
    pair<type, type> calculate_directional_point(const DataSetBatch&,
-                                                NeuralNetworkForwardPropagation&,
-                                                LossIndexBackPropagation&,
+                                                ForwardPropagation&,
+                                                BackPropagation&,
                                                 OptimizationAlgorithmData&) const;
 
    // Serialization methods
@@ -267,7 +267,7 @@ protected:
 
    /// Pointer to an external loss index object.
 
-   LossIndex* loss_index_pointer = nullptr;
+   LossIndex* loss_index = nullptr;
 
    // TRAINING OPERATORS
 
@@ -287,7 +287,7 @@ protected:
 
    bool display = true;
 
-   const type golden_ratio = static_cast<type>(1.618);
+   const type golden_ratio = type(1.618);
 
    ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
@@ -299,7 +299,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

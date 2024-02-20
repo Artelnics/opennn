@@ -84,11 +84,11 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -128,28 +128,28 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         neural_network.print();
 
         // Loss index
 
-        Tensor<Layer*,1> trainable_layers = neural_network.get_trainable_layers_pointers();
+        Tensor<Layer*,1> trainable_layers = neural_network.get_trainable_layers();
 
         back_propagation.set(samples_number, &minkowski_error);
 
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = minkowski_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 
     // Test binary classification trivial
@@ -173,18 +173,18 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &minkowski_error);
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = minkowski_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -194,7 +194,7 @@ void MinkowskiErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 
     }
 
@@ -221,11 +221,11 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -233,14 +233,14 @@ void MinkowskiErrorTest::test_back_propagate()
 
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = minkowski_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 
     // Test forecasting trivial
@@ -264,11 +264,11 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -304,18 +304,18 @@ void MinkowskiErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &minkowski_error);
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = minkowski_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -323,7 +323,7 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= type(0), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 
     }
 
@@ -348,7 +348,7 @@ void MinkowskiErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

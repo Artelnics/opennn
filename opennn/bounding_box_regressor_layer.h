@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 #include "opennn_strings.h"
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {
@@ -38,10 +39,9 @@ public:
 
    // Perceptron layer outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
+   void forward_propagate(const pair<type*, dimensions>&,
                           LayerForwardPropagation*,
                           const bool&);
-
 
 protected:
 
@@ -60,15 +60,15 @@ struct BoundingBoxRegressorLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit BoundingBoxRegressorLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit BoundingBoxRegressorLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : BoundingBoxRegressorLayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer)
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
     }
 
@@ -83,7 +83,7 @@ struct BoundingBoxRegressorLayerForwardPropagation : LayerForwardPropagation
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

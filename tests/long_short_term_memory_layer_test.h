@@ -28,28 +28,6 @@ public:
 
     void test_destructor();
 
-    // lstm layer parameters
-
-    void test_set_biases();
-    void test_set_weights();
-    void test_set_recurrent_weights();
-
-    // Inputs
-
-    void test_set_inputs_number();
-
-    // Parameters methods
-
-    void test_set_parameters();
-
-    // Parameters initialization methods
-
-    void test_set_parameters_constant();
-    void test_set_biases_constant();
-    void test_initialize_recurrent_weights();
-
-    void test_set_parameters_random();
-
     // Forward propagate
 
     void test_forward_propagate();
@@ -61,6 +39,16 @@ public:
 private:
 
     LongShortTermMemoryLayer long_short_term_memory_layer;
+
+    LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation;
+
+    Index inputs_number = 0;
+    Index neurons_number = 0;
+
+    Tensor<type, 2> synaptic_weights;
+    Tensor<type, 2> recurrent_initializer;
+    Tensor<type, 1> biases;
+
 };
 
 
@@ -68,7 +56,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

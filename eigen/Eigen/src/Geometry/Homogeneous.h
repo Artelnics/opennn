@@ -218,7 +218,7 @@ template<typename MatrixOrTransformType>
 struct take_matrix_for_product
 {
   typedef MatrixOrTransformType type;
-  EIGEN_DEVICE_FUNC static const type& run(const type&x) { return x; }
+  EIGEN_DEVICE_FUNC static const type& run(const type &x) { return x; }
 };
 
 template<typename Scalar, int Dim, int Mode,int Options>

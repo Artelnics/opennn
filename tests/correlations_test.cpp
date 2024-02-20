@@ -21,14 +21,11 @@ void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_spearman_linear_correlation\n";
 
-    cout << "test_linear_correlation\n";
-
     Index size;
 
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
-    type correlation;
     type solution;
 
     size = 10;
@@ -43,6 +40,7 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
 }
+
 
 void CorrelationsTest::test_linear_correlation()
 {
@@ -78,7 +76,7 @@ void CorrelationsTest::test_linear_correlation()
 
     y.setValues({type(10), type(9), type(8),type( 7),type( 6),type( 5),type( 4),type( 3),type( 2),type( 1)});
 
-    assert_true(linear_correlation(thread_pool_device, x, y ).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(linear_correlation(thread_pool_device, x, y).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -90,19 +88,19 @@ void CorrelationsTest::test_linear_correlation()
     y.resize(size);
     y = type(2)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y ).r;
+    correlation = linear_correlation(thread_pool_device, x, y).r;
 
-    assert_true(abs(correlation - static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     y = type(-1.0)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y ).r;
-    assert_true(abs(correlation + static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    correlation = linear_correlation(thread_pool_device, x, y).r;
+    assert_true(abs(correlation + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -130,7 +128,7 @@ void CorrelationsTest::test_logistic_correlation()
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
     assert_true(abs(correlation.r) <= type(0.1), LOG);
-    assert_true((correlation.correlation_type == CorrelationType::Logistic), LOG);
+    assert_true((correlation.form == Correlation::Form::Logistic), LOG);
 
     // Test
 
@@ -145,7 +143,7 @@ void CorrelationsTest::test_logistic_correlation()
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
     assert_true(correlation.r >= type(0.999), LOG);
-    assert_true((correlation.correlation_type == CorrelationType::Logistic), LOG);
+    assert_true((correlation.form == Correlation::Form::Logistic), LOG);
 
     y.setConstant(type(0));
 
@@ -154,7 +152,7 @@ void CorrelationsTest::test_logistic_correlation()
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
     assert_true(correlation.r - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true((correlation.correlation_type == CorrelationType::Logistic), LOG);
+    assert_true((correlation.form == Correlation::Form::Logistic), LOG);
 
     // Test
 
@@ -171,15 +169,17 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(correlation.r <= static_cast<type>(1.0), LOG);
+    assert_true(correlation.r <= type(1), LOG);
 
     for(Index i = 0; i < size; i++)
     {
-        y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
+        y[i] = exp(type(2.5)*x[i] + type(1.4));
     }
 
     const int n = omp_get_max_threads();
+
     ThreadPool* thread_pool = new ThreadPool(n);
+
     ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
     // Test
@@ -190,7 +190,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r) >= static_cast<type>(-0.95), LOG);
+    assert_true(abs(correlation.r) >= type(-0.95), LOG);
 
     // Test
 
@@ -232,8 +232,8 @@ void CorrelationsTest::test_logarithmic_correlation()
     solution = type(1);
 
     assert_true(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(4)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.a - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.a - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -256,13 +256,13 @@ void CorrelationsTest::test_exponential_correlation()
     initialize_sequential(x);
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * exp(static_cast<type>(0.5)*x[i]);
+    for(Index i = 0; i < size; i++) y[i] = type(1) * exp(type(0.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.a - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.r - type(1))< type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.a - type(1))< type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.b - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test missing values
 
@@ -272,12 +272,12 @@ void CorrelationsTest::test_exponential_correlation()
     x.setValues({ type(1),type(2),type(3),type(4),type(NAN)});
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1.4) * exp(static_cast<type>(2.5)*x[i]);
+    for(Index i = 0; i < size; i++) y[i] = type(1.4) * exp(type(2.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
     assert_true(abs(correlation.r - type(1)) < type(1.0e-3), LOG);
-    assert_true(correlation.b - static_cast<type>(2.5)< type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(correlation.b - type(2.5)< type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -298,15 +298,15 @@ void CorrelationsTest::test_power_correlation()
     for(Index i = 0; i < size; i++) x[i] = type(i+1);
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * pow(x[i], type(2));
+    for(Index i = 0; i < size; i++) y[i] = type(1) * pow(x[i], type(2));
 
     Correlation correlation = power_correlation(thread_pool_device,x,y);
 
     // Test
 
-    assert_true(correlation.r > static_cast<type>(0.999999), LOG);
-    assert_true(correlation.a - static_cast<type>(1)< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(correlation.b - static_cast<type>(2)< type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(correlation.r > type(0.999999), LOG);
+    assert_true(correlation.a - type(1)< type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(correlation.b - type(2)< type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 void CorrelationsTest::test_autocorrelations()
@@ -319,7 +319,7 @@ void CorrelationsTest::test_autocorrelations()
     Tensor<type, 1> correlations;
 
     correlations = autocorrelations(thread_pool_device,x, size/100);
-    assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);
+    assert_true(minimum(correlations) > type(0.9), LOG);
 }
 
 
@@ -371,7 +371,7 @@ void CorrelationsTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C); 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C); 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

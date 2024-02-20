@@ -18,12 +18,6 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 }
 
 
-void ConvolutionalLayerTest::test_set()
-{
-    cout << "test_set\n";
-}
-
-
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
     cout << "test_eigen_convolution\n";
@@ -178,7 +172,7 @@ void ConvolutionalLayerTest::test_constructor()
 
     assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
                 convolutional_layer.get_inputs_rows_number() == 23 &&
-                convolutional_layer.get_inputs_columns_number() == 64, LOG);
+                convolutional_layer.get_inputs_raw_variables_number() == 64, LOG);
 }
 
 
@@ -186,89 +180,6 @@ void ConvolutionalLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
 }
-
-
-void ConvolutionalLayerTest::test_set_parameters()
-{
-    cout << "test_set_parameters\n";
-/*
-    Tensor<type, 4> new_synaptic_weights(2, 2, 2, 2);
-    Tensor<type, 1> new_biases(2);
-    Tensor<type, 1> parameters(18);
-
-    convolutional_layer.set_biases(new_biases);
-    convolutional_layer.set_synaptic_weights(new_synaptic_weights);
-
-    new_synaptic_weights(0,0,0,0) = type(1);
-    new_synaptic_weights(0,0,0,1) = type(2);
-    new_synaptic_weights(0,0,1,0) = type(3);
-    new_synaptic_weights(0,0,1,1) = type(4);
-    new_synaptic_weights(0,1,0,0) = type(5);
-    new_synaptic_weights(0,1,0,1) = type(6);
-    new_synaptic_weights(0,1,1,0) = type(7);
-    new_synaptic_weights(0,1,1,1) = type(8);
-    new_synaptic_weights(1,0,0,0) = type(9);
-    new_synaptic_weights(1,0,0,1) = type(10);
-    new_synaptic_weights(1,0,1,0) = type(11);
-    new_synaptic_weights(1,0,1,1) = type(12);
-    new_synaptic_weights(1,1,0,0) = type(13);
-    new_synaptic_weights(1,1,0,1) = type(14);
-    new_synaptic_weights(1,1,1,0) = type(15);
-    new_synaptic_weights(1,1,1,1) = type(16);
-
-    new_biases(0) = type(100);
-    new_biases(1) = type(200);
-
-    parameters(0) = type(100);
-    parameters(1) = type(200);
-    parameters(2) = type(1);
-    parameters(3) = type(2);
-    parameters(4) = type(3);
-    parameters(5) = type(4);
-    parameters(6) = type(5);
-    parameters(7) = type(6);
-    parameters(8) = type(7);
-    parameters(9) = type(8);
-    parameters(10) = type(9);
-    parameters(11) = type(10);
-    parameters(12) = type(11);
-    parameters(13) = type(12);
-    parameters(14) = type(13);
-    parameters(15) = type(14);
-    parameters(16) = type(15);
-    parameters(17) = type(16);
-
-    convolutional_layer.set_parameters(parameters, 0);
-
-    const Tensor<type, 4> synaptic_weight = convolutional_layer.get_synaptic_weights();
-    const Tensor<type, 1> biases = convolutional_layer.get_biases();
-
-    assert_true(abs(biases(0) - new_biases(0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(biases(1) - new_biases(1)) < type(NUMERIC_LIMITS_MIN),LOG);
-
-    assert_true(abs(synaptic_weight(0,0,0,0) - new_synaptic_weights(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,0,1) - new_synaptic_weights(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,1,0) - new_synaptic_weights(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,0,1,1) - new_synaptic_weights(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,0,0) - new_synaptic_weights(0,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,0,1) - new_synaptic_weights(0,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,1,0) - new_synaptic_weights(0,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(0,1,1,1) - new_synaptic_weights(0,1,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,0,0) - new_synaptic_weights(1,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,0,1) - new_synaptic_weights(1,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,1,0) - new_synaptic_weights(1,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,0,1,1) - new_synaptic_weights(1,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,0,0) - new_synaptic_weights(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,0,1) - new_synaptic_weights(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,1,0) - new_synaptic_weights(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(synaptic_weight(1,1,1,1) - new_synaptic_weights(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-
-//    assert_true(!convolutional_layer.is_empty() &&
-//                convolutional_layer.get_parameters_number() == 18 &&
-//                convolutional_layer.get_synaptic_weights() == new_synaptic_weights &&
-//                convolutional_layer.get_biases() == new_biases, LOG);
-*/}
 
 
 void ConvolutionalLayerTest::test_calculate_combinations()
@@ -349,7 +260,7 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
 
-    //input_dims
+    //inputs_dimension
     const Index input_images = 1;
     const Index channels = 1;
 
@@ -411,7 +322,7 @@ void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
 
-    //input_dims
+    //inputs_dimension
     const Index input_images = 1;
     const Index channels = 1;
 
@@ -899,33 +810,33 @@ void ConvolutionalLayerTest::test_forward_propagation()
 
     const Index inputs_channels_number = 3;
     const Index inputs_rows_number = 5;
-    const Index inputs_columns_number = 4;
+    const Index inputs_raw_variables_number = 4;
 
     const Index kernels_number = 2;
     const Index kernels_channels_number = inputs_channels_number;
     const Index kernels_rows_number = 3;
-    const Index kernels_columns_number = 3;
+    const Index kernels_raw_variables_number = 3;
 
     const Index targets_number = 1;
 
     DataSet data_set(batch_samples_number,
                      inputs_channels_number,
                      inputs_rows_number,
-                     inputs_columns_number,
+                     inputs_raw_variables_number,
                      targets_number);
 
-    data_set.set_data_constant(static_cast<type>(1));
+    data_set.set_data_constant(type(1));
 
     Tensor<Index, 1> input_variables_dimensions(3);
     input_variables_dimensions.setValues({inputs_channels_number,
                                           inputs_rows_number,
-                                          inputs_columns_number});
+                                          inputs_raw_variables_number});
 
     Tensor<Index, 1> kernels_dimensions(4);
     kernels_dimensions.setValues({kernels_number,
                                   kernels_channels_number,
                                   kernels_rows_number,
-                                  kernels_columns_number});
+                                  kernels_raw_variables_number});
 
     NeuralNetwork neural_network;
 
@@ -951,8 +862,8 @@ void ConvolutionalLayerTest::test_forward_propagation()
     DataSetBatch batch(batch_samples_number, &data_set);
 
     const Tensor<Index, 1>& samples(batch_samples_number);
-    const Tensor<Index, 1>& inputs = data_set.get_input_columns_indices();
-    const Tensor<Index, 1>& targets = data_set.get_target_columns_indices();
+    const Tensor<Index, 1>& inputs = data_set.get_input_raw_variables_indices();
+    const Tensor<Index, 1>& targets = data_set.get_target_raw_variables_indices();
 
     batch.fill(samples, inputs, targets);
 
@@ -1030,14 +941,14 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
     const Index images_number = 2;
     const Index kernels_number = 2;
     const Index output_rows_number = 4;
-    const Index output_columns_number = 4;
+    const Index output_raw_variables_number = 4;
 
 
     // Next layer's values
 
     const Index neurons_perceptron = 3;
 
-    PerceptronLayer perceptronlayer(kernels_number*output_rows_number*output_columns_number,
+    PerceptronLayer perceptronlayer(kernels_number*output_rows_number*output_raw_variables_number,
                                     neurons_perceptron, PerceptronLayer::ActivationFunction::Linear);
 
     convolutional_layer.set(Tensor<type, 4>(5,5,3,1), Tensor<type, 4>(2, 2, 3, kernels_number), Tensor<type, 1>());
@@ -1048,12 +959,12 @@ void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
 
     // initialize
 
-    Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_columns_number,
+    Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_raw_variables_number,
                                                 neurons_perceptron);
 
-    for(int i = 0; i<kernels_number * output_rows_number * output_columns_number*neurons_perceptron; i++)
+    for(int i = 0; i<kernels_number * output_rows_number * output_raw_variables_number*neurons_perceptron; i++)
     {
-        Index neuron_value = i / (kernels_number * output_rows_number * output_columns_number);
+        Index neuron_value = i / (kernels_number * output_rows_number * output_raw_variables_number);
 
         *(synaptic_weights_perceptron.data() + i) = 1.0 * neuron_value;
     }
@@ -1090,19 +1001,21 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     const int kernel_cols = 2;
 
     Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
+
     Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
-    Tensor<type, 4> result((rows_input-kernel_rows)+1,
-                           (cols_input-kernel_cols)+1,
-                            kernel_number,
-                            images_number);
+
+    Tensor<type, 4> result(rows_input-kernel_rows+1,
+                           cols_input-kernel_cols+1,
+                           kernel_number,
+                           images_number);
 
     Tensor<type, 3> tmp_result((rows_input-kernel_rows)+1,
                                (cols_input-kernel_cols)+1,
                                1);
 
-    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
+    const Index output_size_rows_cols = (rows_input-kernel_rows+1)*(cols_input-kernel_cols+1);
 
-    float* ptr_result = (float*) malloc(static_cast<size_t>(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
+    float* ptr_result = (float*) malloc(size_t(output_size_rows_cols*kernel_number*images_number*sizeof(type)));
 
     input.setConstant(1.0);
 
@@ -1114,14 +1027,14 @@ void ConvolutionalLayerTest::test_memcpy_approach()
     kernel.chip(1,3).setConstant(type(1./6.));
 
     time_t beginning_time;
-    time_t current_time;
+    time_t current_time = 0;
     time(&beginning_time);
     type elapsed_time = type(0);
 
     const Eigen::array<ptrdiff_t, 3> dimensions = {0, 1, 2};
 
     #pragma omp parallel for
-    for(int i =0; i<images_number ;i++)
+    for(int i = 0; i < images_number ;i++)
     {
         const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
 
@@ -1134,11 +1047,18 @@ void ConvolutionalLayerTest::test_memcpy_approach()
             const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
 
             Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dimensions);
-
+/*
             memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
                    tmp_result.data(), output_size_rows_cols*sizeof(type));
+*/
+            copy(execution::par, 
+                tmp_result.data(),
+                tmp_result.data() + output_size_rows_cols,
+                result.data() + j * output_size_rows_cols + i * output_size_rows_cols * kernel_number);
          }
     }
+
+    delete ptr_result;
 }
 
 void ConvolutionalLayerTest::run_test_case()
@@ -1149,11 +1069,6 @@ void ConvolutionalLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-   // Set methods
-
-   test_set();
-   test_set_parameters();
 
    // Convolutions
 
@@ -1192,7 +1107,7 @@ void ConvolutionalLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

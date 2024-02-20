@@ -43,30 +43,30 @@ public:
    // Error methods
 
    void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
    void calculate_binary_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        const ForwardPropagation&,
+                        BackPropagation&) const;
 
-   void calculate_multiple_error(const DataSetBatch& batch,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+   void calculate_multiple_error(const DataSetBatch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const;
 
    // Gradient methods
 
    void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
    void calculate_binary_output_delta(const DataSetBatch&,
-                                      NeuralNetworkForwardPropagation&,
-                                      LossIndexBackPropagation&) const;
+                                      ForwardPropagation&,
+                                      BackPropagation&) const;
 
    void calculate_multiple_output_delta(const DataSetBatch&,
-                                        NeuralNetworkForwardPropagation&,
-                                        LossIndexBackPropagation&) const;
+                                        ForwardPropagation&,
+                                        BackPropagation&) const;
 
    string get_error_type() const final;
    string get_error_type_text() const final;
@@ -89,7 +89,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

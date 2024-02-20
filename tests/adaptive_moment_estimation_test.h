@@ -27,8 +27,6 @@ public:
 
     // Constructor and destructor methods
 
-    // Constructor and destructor methods
-
     void test_constructor();
 
     void test_destructor();
@@ -43,18 +41,16 @@ public:
 
 private:
 
-    Index samples_number;
-    Index inputs_number;
-    Index outputs_number;
-    Index neurons_number;
+    Index samples_number = 0;
+    Index inputs_number = 0;
+    Index outputs_number = 0;
+    Index neurons_number = 0;
 
     DataSet data_set;
 
     NeuralNetwork neural_network;
 
     SumSquaredError sum_squared_error;
-
-    QuasiNewtonMethod quasi_newton_method;
 
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
@@ -68,7 +64,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -68,7 +68,7 @@ public:
    // Get methods
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
-   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+   LearningRateAlgorithm* get_learning_rate_algorithm();
 
    const InverseHessianApproximationMethod& get_inverse_hessian_approximation_method() const;
    string write_inverse_hessian_approximation_method() const;
@@ -87,7 +87,7 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*) override;
+   void set_loss_index(LossIndex*) override;
 
    void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
    void set_inverse_hessian_approximation_method(const string&);
@@ -115,9 +115,7 @@ public:
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
 
-   Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
-
-   void update_parameters(const DataSetBatch& , NeuralNetworkForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData&) const;
+   void update_parameters(const DataSetBatch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training() final;
 
@@ -142,13 +140,13 @@ private:
 
    InverseHessianApproximationMethod inverse_hessian_approximation_method;
 
-   type first_learning_rate = static_cast<type>(0.01);
+   type first_learning_rate = type(0.01);
 
    // Stopping criteria
 
    /// Minimum loss improvement between two successive epochs. It is a stopping criterion.
 
-   type minimum_loss_decrease;
+   type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
 
    /// Goal value for the loss. It is a stopping criterion.
 
@@ -177,22 +175,22 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
     {
     }
 
-    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method)
     {
-        set(new_quasi_newton_method_pointer);
+        set(new_quasi_newton_method);
     }
 
     virtual ~QuasiNewtonMehtodData() {}
 
-    void set(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+    void set(QuasiNewtonMethod* new_quasi_newton_method)
     {
-        quasi_newton_method_pointer = new_quasi_newton_method_pointer;
+        quasi_newton_method = new_quasi_newton_method;
 
-        const LossIndex* loss_index_pointer = quasi_newton_method_pointer->get_loss_index_pointer();
+        const LossIndex* loss_index = quasi_newton_method->get_loss_index();
 
-        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network->get_parameters_number();
 
         // Neural network data
 
@@ -218,6 +216,8 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
         // Optimization algorithm data
 
+        BFGS.resize(parameters_number);
+
         training_direction.resize(parameters_number);
 
         old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
@@ -232,7 +232,7 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
         cout << learning_rate << endl;
     }
 
-    QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
+    QuasiNewtonMethod* quasi_newton_method = nullptr;
 
     // Neural network data
 
@@ -257,6 +257,8 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
     // Optimization algorithm data
 
+    Tensor<type, 1> BFGS;
+
     Index epoch = 0;
 
     Tensor<type, 0> training_slope;
@@ -271,7 +273,7 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

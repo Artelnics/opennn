@@ -23,12 +23,12 @@
 #include "layer.h"
 
 #include "config.h"
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {
 
 /// This class represents a layer of bounding neurons. 
-
 /// A bounding layer ensures that the output variables never fall below or above given values.
 
 class BoundingLayer : public Layer
@@ -53,7 +53,6 @@ public:
    bool is_empty() const;
 
    // Get methods
-
 
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
@@ -93,7 +92,9 @@ public:
 
    // Lower and upper bounds
 
-   void forward_propagate(Tensor<type*, 1>, const Tensor<Tensor<Index, 1>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const pair<type*, dimensions>&, 
+                          LayerForwardPropagation*, 
+                          const bool&) final;
 
    // Expression methods
 
@@ -137,38 +138,48 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    virtual ~BoundingLayerForwardPropagation()
     {
-        layer_pointer = new_layer_pointer;
+    }
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
+    {
+        const Index neurons_number = layer->get_neurons_number();
 
-        const Index neurons_number = static_cast<BoundingLayer*>(layer_pointer)->get_neurons_number();
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
+    {
+        layer = new_layer;
+
+        const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_neurons_number();
 
         batch_samples_number = new_batch_samples_number;
 
-        // Allocate memory for outputs_data
+        outputs.resize(batch_samples_number, neurons_number);
 
-        outputs_data.resize(1);
-        outputs_data(0) = (type*)malloc( static_cast<size_t>(batch_samples_number * neurons_number*sizeof(type)));
-
-        outputs_dimensions.resize(1);
-        outputs_dimensions[0].resize(2);
-        outputs_dimensions[0].setValues({batch_samples_number, neurons_number});
+        outputs_data = outputs.data();
     }
 
 
     void print() const
     {
         cout << "Outputs:" << endl;
-
-        cout << TensorMap<Tensor<type,2>>(outputs_data(0), outputs_dimensions[0](0), outputs_dimensions[0](1)) << endl;
+        cout << outputs << endl;
     }
+
+
+    Tensor<type, 2> outputs;
 };
 
 }
@@ -177,7 +188,7 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

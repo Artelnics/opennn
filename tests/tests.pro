@@ -18,6 +18,7 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES += \
     adaptive_moment_estimation_test.cpp \
+    cross_entropy_error_3d_test.cpp \
     tensor_utilities_test.cpp \
     data_set_test.cpp \
     growing_neurons_test.cpp \
@@ -60,6 +61,7 @@ SOURCES += \
 
 HEADERS += \
     adaptive_moment_estimation_test.h \
+    cross_entropy_error_3d_test.h \
     tensor_utilities_test.h \
     growing_neurons_test.h \
     growing_neurons_test.h \

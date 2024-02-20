@@ -14,9 +14,7 @@
 namespace Eigen {
 namespace internal {
 
-namespace {
-
-EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t get_random_seed() {
 #if defined(EIGEN_GPU_COMPILE_PHASE)
   // We don't support 3d kernels since we currently only use 1 and
   // 2d kernels.
@@ -29,7 +27,7 @@ EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
 #endif
 }
 
-static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE unsigned PCG_XSH_RS_generator(uint64_t* state, uint64_t stream) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE unsigned PCG_XSH_RS_generator(uint64_t* state, uint64_t stream) {
   // TODO: Unify with the implementation in the non blocking thread pool.
   uint64_t current = *state;
   // Update the internal state
@@ -38,13 +36,10 @@ static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE unsigned PCG_XSH_RS_generator(uint6
   return static_cast<unsigned>((current ^ (current >> 22)) >> (22 + (current >> 61)));
 }
 
-static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t seed) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t seed) {
   seed = seed ? seed : get_random_seed();
   return seed * 6364136223846793005ULL + 0xda3e39cb94b95bdbULL;
 }
-
-}  // namespace
-
 
 template <typename T> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 T RandomToTypeUniform(uint64_t* state, uint64_t stream) {

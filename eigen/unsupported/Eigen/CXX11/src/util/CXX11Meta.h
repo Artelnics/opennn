@@ -81,7 +81,8 @@ template<typename a, typename... as>        struct take<0, type_list<a, as...>> 
 template<>                                  struct take<0, type_list<>>         { typedef type_list<> type; };
 
 template<typename T, int n, T a, T... as> struct take<n, numeric_list<T, a, as...>> : concat<numeric_list<T, a>, typename take<n-1, numeric_list<T, as...>>::type> {};
-template<typename T, int n>               struct take<n, numeric_list<T>>           { typedef numeric_list<T> type; };
+// XXX The following breaks in gcc-11, and is invalid anyways.
+// template<typename T, int n>               struct take<n, numeric_list<T>>           { typedef numeric_list<T> type; };
 template<typename T, T a, T... as>        struct take<0, numeric_list<T, a, as...>> { typedef numeric_list<T> type; };
 template<typename T>                      struct take<0, numeric_list<T>>           { typedef numeric_list<T> type; };
 

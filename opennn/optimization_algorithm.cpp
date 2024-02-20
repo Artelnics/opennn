@@ -25,10 +25,10 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 
 
 /// It creates a optimization algorithm object associated with a loss index object.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
-    : loss_index_pointer(new_loss_index_pointer)
+OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
+    : loss_index(new_loss_index)
 {
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);
@@ -50,24 +50,24 @@ OptimizationAlgorithm::~OptimizationAlgorithm()
 /// Returns a pointer to the loss index object to which the optimization algorithm is
 /// associated.
 
-LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
+LossIndex* OptimizationAlgorithm::get_loss_index() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "LossIndex* get_loss_index_pointer() const method.\n"
+               << "LossIndex* get_loss_index() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
 
-    return loss_index_pointer;
+    return loss_index;
 }
 
 
@@ -92,7 +92,7 @@ void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
 
 bool OptimizationAlgorithm::has_loss_index() const
 {
-    if(loss_index_pointer)
+    if(loss_index)
     {
         return true;
     }
@@ -141,7 +141,7 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 
 void OptimizationAlgorithm::set()
 {
-    loss_index_pointer = nullptr;
+    loss_index = nullptr;
 
     set_default();
 }
@@ -158,11 +158,11 @@ void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 
 
 /// Sets a pointer to a loss index object to be associated with the optimization algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void OptimizationAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void OptimizationAlgorithm::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 }
 
 
@@ -193,7 +193,7 @@ void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
                << "void set_display_period(const Index&) method.\n"
                << "Display period must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -218,7 +218,7 @@ void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
                << "void set_save_period(const Index&) method.\n"
                << "Save period must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -235,6 +235,7 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 {
     neural_network_file_name = new_neural_network_file_name;
 }
+
 
 BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& inputs_dimensions,
                                                             type* & new_outputs_data, Tensor<Index,1>& outputs_dimensions)
@@ -291,24 +292,24 @@ void OptimizationAlgorithm::check() const
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network_pointer == nullptr)
+    if(neural_network == nullptr)
     {
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -354,7 +355,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Optimization algorithm element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Display
@@ -369,7 +370,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display_string != "0");
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -428,7 +429,7 @@ void OptimizationAlgorithm::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     from_XML(document);
@@ -515,7 +516,7 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
 #ifdef OPENNN_DEBUG
 
-    if(time > static_cast<type>(3600e5))
+    if(time > type(3600e5))
     {
         ostringstream buffer;
 
@@ -523,10 +524,10 @@ string OptimizationAlgorithm::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    if(time < static_cast<type>(0))
+    if(time < type(0))
     {
         ostringstream buffer;
 
@@ -534,7 +535,7 @@ string OptimizationAlgorithm::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 
@@ -644,7 +645,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

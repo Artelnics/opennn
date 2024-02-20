@@ -6,8 +6,7 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
-QT = \ # Do not use qt
-    widgets
+QT = # Do not use qt
 
 TARGET = opennn
 #DESTDIR = "$$PWD/bin"
@@ -15,7 +14,7 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++17
+CONFIG += c++17
 
 CONFIG(debug, debug|release) {
     DEFINES += OPENNN_DEBUG
@@ -23,7 +22,7 @@ CONFIG(debug, debug|release) {
 
 DEFINES += __Cpp17__
 
-#QMAKE_CXXFLAGS += -bigobj
+QMAKE_CXXFLAGS += -bigobj
 
 # OpenMP library
 
@@ -52,44 +51,64 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
-    addition_layer.h \
-    concatenation_layer.h \
     codification.h \
+    cross_entropy_error_3d.h \
+    embedding_layer.h \
+    multihead_attention_layer.h \
     kmeans.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
     opennn_images.h \
     statistics.h \
+    descriptives.h \
+    box_plot.h \
+    histogram.h \
     scaling.h \
     correlations.h \
+    correlation.h \
     codification.h \
     tinyxml2.h \
-    filesystem.h \
     data_set.h \
+    data_set_batch.h \
+    time_series_data_set.h \
+    auto_association_data_set.h \
+    image_data_set.h \
+    text_data_set.h \
+    language_data_set.h \
     layer.h \
-    scaling_layer.h \
+    layer_forward_propagation.h \
+    layer_back_propagation.h \
+    layer_back_propagation_lm.h \
+    scaling_layer_2d.h \
+    scaling_layer_4d.h \
+    transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
+    perceptron_layer_3d.h \
     probabilistic_layer.h \
+    probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \
     bounding_layer.h \
     long_short_term_memory_layer.h \
     recurrent_layer.h \
     neural_network.h \
+    neural_network_forward_propagation.h \
+    neural_network_back_propagation.h \
+    neural_network_back_propagation_lm.h \
+    auto_associative_neural_network.h \
     loss_index.h \
+    loss_index_forward_propagation.h \
+    loss_index_back_propagation.h \
     mean_squared_error.h \
     optimization_algorithm.h \
     stochastic_gradient_descent.h\
     training_strategy.h \
-    neural_network.h \
     sum_squared_error.h\
     normalized_squared_error.h\
     minkowski_error.h \
     mean_squared_error.h \
-    vgg16.h \
-    resnet50.h \
     weighted_squared_error.h\
     cross_entropy_error.h \
     training_strategy.h \
@@ -112,16 +131,16 @@ HEADERS += \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
-    region_based_object_detector.h \
-#    json_to_xml.h \
-#    region_proposal_layer.h \
-    non_max_suppression_layer.h \
     bounding_box_regressor_layer.h \
+    bounding_box.h \
+    unscaling_layer_forward_propagation.h \
+    word_bag.h \
     opennn.h
 
 SOURCES += \
-    addition_layer.cpp \
-    concatenation_layer.cpp \
+    cross_entropy_error_3d.cpp \
+    embedding_layer.cpp \
+    multihead_attention_layer.cpp \
     kmeans.cpp \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
@@ -133,29 +152,37 @@ SOURCES += \
     codification.cpp \
     tinyxml2.cpp \
     data_set.cpp \
+    data_set_batch.cpp \
+    time_series_data_set.cpp \
+    auto_association_data_set.cpp \
+    image_data_set.cpp \
+    text_data_set.cpp \
+    language_data_set.cpp \
     layer.cpp \
-    scaling_layer.cpp \
+    scaling_layer_2d.cpp \
+    scaling_layer_4d.cpp \
+    transformer.cpp \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
+    perceptron_layer_3d.cpp \
     probabilistic_layer.cpp \
+    probabilistic_layer_3d.cpp \
     pooling_layer.cpp \
     bounding_layer.cpp \
     convolutional_layer.cpp \
     long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
     neural_network.cpp \
+    auto_associative_neural_network.cpp \
     loss_index.cpp \
     mean_squared_error.cpp \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \
     optimization_algorithm.cpp \
-    data_set.cpp \
     sum_squared_error.cpp \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
     mean_squared_error.cpp \
-    vgg16.cpp \
-    resnet50.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \
@@ -175,50 +202,4 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     text_analytics.cpp \
-    region_based_object_detector.cpp \
-#    json_to_xml.cpp \
-#    region_proposal_layer.cpp \
-    non_max_suppression_layer.cpp \
-    bounding_box_regressor_layer.cpp \
     unit_testing.cpp
-
-
-#contains(DEFINES, OPENNN_MKL)
-#{
-#    win32:{
-
-#    INTEL_HOME = "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2020.1.216\\windows"
-
-#    INCLUDEPATH += "$$INTEL_HOME/mkl/include"
-
-#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_rt
-#    LIBS += -L"$$INTEL_HOME/redist\intel64_win\mkl" -lmkl_core
-
-#    win32:CONFIG(release, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
-#    else:win32:CONFIG(debug, debug|release): LIBS += -L'$$INTEL_HOME/mkl/lib/intel64_win/' -lmkl_rt
-#    }
-
-#    unix:{
-
-#    ENV_HOME = $$(HOME)
-
-#    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/include/
-#    INCLUDEPATH += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/
-
-#    #QMAKE_PRE_LINK += $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
-
-#    QMAKE_PRE_LINK=/bin/sh $$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/bin/mklvars.sh intel64
-
-#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
-
-#    LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
-#    LIBS += -L$$ENV_HOME/intel/lib/intel64 -liomp5 -lpthread -ldl -lm
-
-#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/ -lmkl_rt
-#    #LIBS += -L$$ENV_HOME/intel/compilers_and_libraries_2020.4.304/linux/mkl/lib/intel64/  \
-#    #    -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core \
-#    #    -L/opt/intel/lib/intel64 \
-#    #    -liomp5 -lpthread -ldl -lm
-#    }
-#}
-

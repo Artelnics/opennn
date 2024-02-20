@@ -245,4 +245,26 @@ build-wrapper-dump.json
 #Tests tools
 tests/data/*.xml
 
+#VS build
+*.log
+*.tlog
+*.lastbuildstate
+*.props
+*.recipe
+\release
+*.bak
+*.TMP
+
+#QT Build
+.qtc_clangd/
+*.settings
+*.advidb2
+\e000
+*.advixeproj
+*.qmake.stash
+
+
+#Python tests
+\.ipynb_checkpoints
+
 # Created by .ignore support plugin (hsz.mobi)

@@ -22,7 +22,7 @@
 
 // OpenNN includes
 
-#include "../opennn/opennn.h"
+#include "../../opennn/opennn/opennn.h"
 
 using namespace opennn;
 
@@ -64,7 +64,7 @@ public:
    
    // Test case methods
 
-   /// This method runs all the methods contained in the test case. 
+   /// This method runs all the methods contained in the test case.
 
    virtual void run_test_case() = 0;
 
@@ -101,7 +101,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

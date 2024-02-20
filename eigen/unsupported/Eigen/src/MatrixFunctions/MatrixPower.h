@@ -281,7 +281,7 @@ inline int MatrixPowerAtomic<MatrixType>::getPadeDegree(long double normIminusT)
 #endif
   int degree = 3;
   for (; degree <= maxPadeDegree; ++degree)
-    if (normIminusT <= maxNormForPade[degree - 3])
+    if (normIminusT <= static_cast<long double>(maxNormForPade[degree - 3]))
       break;
   return degree;
 }

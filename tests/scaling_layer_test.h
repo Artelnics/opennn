@@ -28,30 +28,6 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set();
-
-    void test_set_inputs_number();
-    void test_set_neurons_number();
-
-    void test_set_default();
-
-    // Descriptives
-
-    void test_set_descriptives();
-    void test_set_item_descriptives();
-
-    // Scaling method
-
-    void test_set_scaling_method();
-
-    // Input range
-
-    void test_is_empty();
-
-    void test_check_range();
-
     // Scaling
 
     void test_forward_propagate();
@@ -72,9 +48,9 @@ private:
     Index inputs_number;
     Index samples_number;
 
-    ScalingLayer scaling_layer;
+    ScalingLayer2D scaling_layer;
 
-    ScalingLayerForwardPropagation scaling_layer_forward_propagation;
+    ScalingLayer2DForwardPropagation scaling_layer_forward_propagation;
 
     Tensor<Descriptives, 1> descriptives;
 };
@@ -85,7 +61,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
