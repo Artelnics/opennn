@@ -21,7 +21,7 @@ BoundingBoxRegressorLayer::BoundingBoxRegressorLayer() : Layer()
 }
 
 
-void BoundingBoxRegressorLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
+void BoundingBoxRegressorLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   const bool& is_training)
 {
@@ -31,7 +31,7 @@ void BoundingBoxRegressorLayer::forward_propagate(const Tensor<DynamicTensor<typ
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

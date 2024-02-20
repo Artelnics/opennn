@@ -42,9 +42,9 @@ void GrowingInputsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingInputs* growing_inputs_pointer = new GrowingInputs;
+    GrowingInputs* growing_inputs = new GrowingInputs;
 
-    delete growing_inputs_pointer;
+    delete growing_inputs;
 }
 
 
@@ -58,36 +58,36 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     InputsSelectionResults inputs_selection_results;
 
-//    Test
+    // Test
 
     data_set.generate_random_data(30, 3);
 
     Tensor<string, 1> columns_uses(3);
     columns_uses.setValues({"Input","Input","Target"});
 
-    data_set.set_columns_uses(columns_uses);
+    data_set.set_raw_variables_uses(columns_uses);
 
     data_set.split_samples_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,1,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,1,1});
 
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.optimal_input_columns_indices[0] < 2, LOG);
+    assert_true(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2, LOG);
 
-//    Test
+    // Test
 
     data_set.generate_sum_data(20,3);
 
     neural_network.set();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
 
     TrainingStrategy training_strategy1(&neural_network, &data_set);
 
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.optimal_input_columns_indices[0] < 2, LOG);
+    assert_true(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2, LOG);
 }
 
 

@@ -1,7 +1,7 @@
 
 
-set(BLAS_FOUND TRUE)
-set(LAPACK_FOUND TRUE)
+set(BLAS_FOUND EIGEN_BUILD_BLAS)
+set(LAPACK_FOUND EIGEN_BUILD_LAPACK)
 set(BLAS_LIBRARIES eigen_blas_static)
 set(LAPACK_LIBRARIES eigen_lapack_static)
 

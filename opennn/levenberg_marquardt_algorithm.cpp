@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "levenberg_marquardt_algorithm.h"
+#include "neural_network_forward_propagation.h"
 
 namespace opennn
 {
@@ -25,10 +26,10 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
 /// Loss index constructor.
 /// It creates a Levenberg-Marquardt optimization algorithm object associated associated with a given loss index object.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to an external loss index object.
+/// @param new_loss_index Pointer to an external loss index object.
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
+    : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
 }
@@ -140,12 +141,12 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     // Training parameters
 
-    damping_parameter = static_cast<type>(1.0e-3);
+    damping_parameter = type(1.0e-3);
 
     damping_parameter_factor = type(10.0);
 
-    minimum_damping_parameter = static_cast<type>(1.0e-6);
-    maximum_damping_parameter = static_cast<type>(1.0e6);
+    minimum_damping_parameter = type(1.0e-6);
+    maximum_damping_parameter = type(1.0e6);
 }
 
 
@@ -176,7 +177,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_damping_parameter_factor <= static_cast<type>(0.0))
+    if(new_damping_parameter_factor <= type(0))
     {
         ostringstream buffer;
 
@@ -184,7 +185,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
                << "void set_damping_parameter_factor(const type&) method." << endl
                << "Damping parameter factor must be greater than zero." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -200,7 +201,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_minimum_damping_parameter <= static_cast<type>(0.0))
+    if(new_minimum_damping_parameter <= type(0))
     {
         ostringstream buffer;
 
@@ -208,7 +209,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
                << "void set_minimum_damping_parameter(const type&) method." << endl
                << "Minimum damping parameter must be greater than zero." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -224,7 +225,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_damping_parameter <= static_cast<type>(0.0))
+    if(new_maximum_damping_parameter <= type(0))
     {
         ostringstream buffer;
 
@@ -232,7 +233,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
                << "void set_maximum_damping_parameter(const type&) method." << endl
                << "Maximum damping parameter must be greater than zero." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -287,7 +288,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0))
     {
         ostringstream buffer;
 
@@ -295,7 +296,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -317,35 +318,35 @@ void LevenbergMarquardtAlgorithm::check() const
 {
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class.\n"
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    if(!data_set_pointer)
+    if(!data_set)
     {
         buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
                << "void check() const method.\n"
                << "The loss funcional has no data set." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(!neural_network_pointer)
+    if(!neural_network)
     {
         buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr." << endl;
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -355,17 +356,17 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
-    if(loss_index_pointer->get_error_type() == "MINKOWSKI_ERROR")
+    if(loss_index->get_error_type() == "MINKOWSKI_ERROR")
     {
-        throw invalid_argument("Levenberg-Marquard algorithm cannot work with Minkowski error.");
+        throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     }
-    else if(loss_index_pointer->get_error_type() == "CROSS_ENTROPY_ERROR")
+    else if(loss_index->get_error_type() == "CROSS_ENTROPY_ERROR")
     {
-        throw invalid_argument("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
+        throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     }
-    else if(loss_index_pointer->get_error_type() == "WEIGHTED_SQUARED_ERROR")
+    else if(loss_index->get_error_type() == "WEIGHTED_SQUARED_ERROR")
     {
-        throw invalid_argument("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
+        throw runtime_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
     }
 
     ostringstream buffer;
@@ -386,71 +387,71 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Data set
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    DataSet* data_set = loss_index->get_data_set();
 
-    const bool has_selection = data_set_pointer->has_selection();
+    const bool has_selection = data_set->has_selection();
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index training_samples_number = data_set->get_training_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
     Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network_pointer->set_inputs_names(inputs_names);
-    neural_network_pointer->set_outputs_names(targets_names);
+    neural_network->set_inputs_names(inputs_names);
+    neural_network->set_outputs_names(targets_names);
 
-    if(neural_network_pointer->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        input_variables_descriptives = data_set_pointer->scale_input_variables();
+        input_variables_descriptives = data_set->scale_input_variables();
 
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
-        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
     }
 
-    if(neural_network_pointer->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
-        target_variables_descriptives = data_set_pointer->scale_target_variables();
+        target_variables_descriptives = data_set->scale_target_variables();
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     // Loss index
 
-    loss_index_pointer->set_normalization_coefficient();
+    loss_index->set_normalization_coefficient();
 
     type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
     Index selection_failures = 0;
 
-    LossIndexBackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
+    BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index);
+    BackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index);
 
     // Training strategy stuff
 
@@ -473,34 +474,34 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        neural_network_pointer->forward_propagate(training_batch,
+        
+        neural_network->forward_propagate(training_batch.get_inputs_pair(),
                                                   training_forward_propagation,
                                                   is_training);
 
         // Loss index
 
-        loss_index_pointer->back_propagate_lm(training_batch,
+        loss_index->back_propagate_lm(training_batch,
                                               training_forward_propagation,
                                               training_back_propagation_lm);
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
         if(has_selection)
-        {
-            neural_network_pointer->forward_propagate(selection_batch,
+        {           
+            neural_network->forward_propagate(selection_batch.get_inputs_pair(),
                                                       selection_forward_propagation,
                                                       is_training);
 
-            loss_index_pointer->calculate_errors_lm(selection_batch,
+            loss_index->calculate_errors_lm(selection_batch,
                                                     selection_forward_propagation,
                                                     selection_back_propagation_lm);
 
-            loss_index_pointer->calculate_squared_errors_lm(selection_batch,
+            loss_index->calculate_squared_errors_lm(selection_batch,
                                                             selection_forward_propagation,
                                                             selection_back_propagation_lm);
 
-            loss_index_pointer->calculate_error_lm(selection_batch,
+            loss_index->calculate_error_lm(selection_batch,
                                                    selection_forward_propagation,
                                                    selection_back_propagation_lm);
 
@@ -512,7 +513,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         // Elapsed time
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display && epoch%display_period == 0)
         {
@@ -589,7 +590,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             break;
         }
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
 
         update_parameters(training_batch,
                           training_forward_propagation,
@@ -597,38 +598,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           optimization_data);
     }
 
-    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    if(neural_network->has_scaling_layer())
+        data_set->unscale_input_variables(input_variables_descriptives);
 
-        type* input_data = inputs.data();
-
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-
-    if(neural_network_pointer->has_scaling_layer())
-        data_set_pointer->unscale_input_variables(input_variables_descriptives);
-
-    if(neural_network_pointer->has_unscaling_layer())
-        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has_unscaling_layer())
+        data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -644,40 +618,54 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 /// \param optimization_data
 
 void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation& forward_propagation,
-                                                    LossIndexBackPropagationLM& back_propagation_lm,
+                                                    ForwardPropagation& forward_propagation,
+                                                    BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-    const type regularization_weight = loss_index_pointer->get_regularization_weight();
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
+
+    const type regularization_weight = loss_index->get_regularization_weight();
+
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    Tensor<type, 1>& parameters = back_propagation_lm.parameters;
+
+    const Tensor<type, 1>& gradient = back_propagation_lm.gradient;
+    Tensor<type, 2>& hessian = back_propagation_lm.hessian;
+
+    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
+    Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment;
+
+    const Index parameters_number = parameters.size();
 
     bool success = false;
 
     do
     {
-        sum_diagonal(back_propagation_lm.hessian, damping_parameter);
+        sum_diagonal(hessian, damping_parameter);
 
-        optimization_data.parameters_increment
-                = perform_Householder_QR_decomposition(back_propagation_lm.hessian,(type(-1))*back_propagation_lm.gradient);
+        parameters_increment = perform_Householder_QR_decomposition(hessian, type(-1)*gradient);
 
-        optimization_data.potential_parameters.device(*thread_pool_device)
-                = back_propagation_lm.parameters + optimization_data.parameters_increment;
+        potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
+        
+        neural_network->forward_propagate(inputs_pair,
+                                                  potential_parameters,
+                                                  forward_propagation);
 
-        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        loss_index->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-        loss_index_pointer->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss_index->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-        loss_index_pointer->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
-
-        loss_index_pointer->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        loss_index->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
         type new_loss;
 
-        try{
-            new_loss = back_propagation_lm.error
-                    + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
-        }catch(invalid_argument)
+        try
+        {
+            new_loss = back_propagation_lm.error + regularization_weight*loss_index->calculate_regularization(potential_parameters);
+
+        }catch(exception)
         {
             new_loss = back_propagation_lm.loss;
         }
@@ -686,7 +674,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
-            back_propagation_lm.parameters = optimization_data.potential_parameters;
+            parameters = potential_parameters;
 
             back_propagation_lm.loss = new_loss;
 
@@ -696,44 +684,41 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         }
         else
         {
-            sum_diagonal(back_propagation_lm.hessian, -damping_parameter);
+            sum_diagonal(hessian, -damping_parameter);
 
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
+
     }while(damping_parameter < maximum_damping_parameter);
 
     if(!success)
     {
-        const Index parameters_number = back_propagation_lm.parameters.size();
+        #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation_lm.gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if(abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
-                back_propagation_lm.parameters(i) = back_propagation_lm.parameters(i);
-
-                optimization_data.parameters_increment(i) = type(0);
+                parameters_increment(i) = type(0);
             }
-            else if(back_propagation_lm.gradient(i) > type(0))
+            else if(gradient(i) > type(0))
             {
-                back_propagation_lm.parameters(i) -= numeric_limits<type>::epsilon();
-                        //= nextafter(back_propagation_lm.parameters(i), back_propagation_lm.parameters(i)-1);
+                parameters(i) -= numeric_limits<type>::epsilon();
 
-                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
+                parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
-            else if(back_propagation_lm.gradient(i) < type(0))
+            else if(gradient(i) < type(0))
             {
-                back_propagation_lm.parameters(i) += numeric_limits<type>::epsilon();
-                        //= nextafter(back_propagation_lm.parameters(i), back_propagation_lm.parameters(i)+1);
+                parameters(i) += numeric_limits<type>::epsilon();
 
-                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+                parameters_increment(i) = numeric_limits<type>::epsilon();
             }
         }
     }
 
     // Set parameters
 
-    neural_network_pointer->set_parameters(back_propagation_lm.parameters);
+    neural_network->set_parameters(parameters);
 }
 
 
@@ -754,27 +739,27 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     // Damping parameter factor
 
     labels_values(0,0) = "Damping parameter factor";
-    labels_values(0,1) = to_string(double(damping_parameter_factor));
+    labels_values(0,1) = std::to_string(double(damping_parameter_factor));
 
     // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
-    labels_values(2,1) = to_string(double(minimum_loss_decrease));
+    labels_values(2,1) = std::to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(3,0) = "Loss goal";
-    labels_values(3,1) = to_string(double(training_loss_goal));
+    labels_values(3,1) = std::to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 
     labels_values(4,0) = "Maximum selection error increases";
-    labels_values(4,1) = to_string(maximum_selection_failures);
+    labels_values(4,1) = std::to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
     labels_values(5,0) = "Maximum epochs number";
-    labels_values(5,1) = to_string(maximum_epochs_number);
+    labels_values(5,1) = std::to_string(maximum_epochs_number);
 
     // Maximum time
 
@@ -892,7 +877,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Levenberg-Marquardt algorithm element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Damping parameter factor
@@ -902,13 +887,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(damping_parameter_factor_element)
     {
-        const type new_damping_parameter_factor = static_cast<type>(atof(damping_parameter_factor_element->GetText()));
+        const type new_damping_parameter_factor = type(atof(damping_parameter_factor_element->GetText()));
 
         try
         {
             set_damping_parameter_factor(new_damping_parameter_factor);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -920,13 +905,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(minimum_loss_decrease_element)
     {
-        const type new_minimum_loss_decrease = static_cast<type>(atof(minimum_loss_decrease_element->GetText()));
+        const type new_minimum_loss_decrease = type(atof(minimum_loss_decrease_element->GetText()));
 
         try
         {
             set_minimum_loss_decrease(new_minimum_loss_decrease);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -938,13 +923,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(loss_goal_element)
     {
-        const type new_loss_goal = static_cast<type>(atof(loss_goal_element->GetText()));
+        const type new_loss_goal = type(atof(loss_goal_element->GetText()));
 
         try
         {
             set_loss_goal(new_loss_goal);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -958,13 +943,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
     if(maximum_selection_failures_element)
     {
         const Index new_maximum_selection_failures
-                = static_cast<Index>(atoi(maximum_selection_failures_element->GetText()));
+                = Index(atoi(maximum_selection_failures_element->GetText()));
 
         try
         {
             set_maximum_selection_failures(new_maximum_selection_failures);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -976,13 +961,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(maximum_epochs_number_element)
     {
-        const Index new_maximum_epochs_number = static_cast<Index>(atoi(maximum_epochs_number_element->GetText()));
+        const Index new_maximum_epochs_number = Index(atoi(maximum_epochs_number_element->GetText()));
 
         try
         {
             set_maximum_epochs_number(new_maximum_epochs_number);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -994,13 +979,13 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     if(maximum_time_element)
     {
-        const type new_maximum_time = static_cast<type>(atof(maximum_time_element->GetText()));
+        const type new_maximum_time = type(atof(maximum_time_element->GetText()));
 
         try
         {
             set_maximum_time(new_maximum_time);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1018,7 +1003,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const invalid_argument& e)
+            catch(const exception& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1029,7 +1014,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

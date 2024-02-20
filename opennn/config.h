@@ -1,17 +1,7 @@
-
 #ifndef OPENNN_CONFIG_H
 #define OPENNN_CONFIG_H
 
-
-#include "half.hpp"
-
-#define NUMERIC_LIMITS_MIN 0.000001
-
-//#define OPENNN_MKL
-
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
+#define NUMERIC_LIMITS_MIN type(0.000001)
 
 //Eigen includes
 
@@ -25,20 +15,20 @@
 
 #define NOMINMAX
 
-
 #define EIGEN_USE_THREADS
-
 
 //#pragma warning(push, 0)
 #include "tinyxml2.h"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
-//#pragma warning(pop)
+#include <algorithm>
+#include <execution>
 
+
+//#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
 #include "../../opennn-cuda/opennn-cuda/kernel.cuh"
-
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"
@@ -57,8 +47,13 @@ namespace opennn
 {
     using namespace std;
     using namespace Eigen;
-    using type = float;
-//    typedef double type;
+
+    using type = float; //Eigen::half;
+
+    using dimensions = vector<vector<Index>>;
+
+//    using execution_policy = std::execution::par;
+
 }
 
 

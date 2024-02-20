@@ -28,10 +28,6 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set_inverse_hessian_approximation_method();
-
     // Training methods
 
     void test_calculate_DFP_inverse_hessian_approximation();
@@ -71,7 +67,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

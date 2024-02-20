@@ -19,7 +19,6 @@ NumericalDifferentiationTest::~NumericalDifferentiationTest()
 }
 
 
-
 void NumericalDifferentiationTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -40,27 +39,6 @@ void NumericalDifferentiationTest::test_destructor()
 }
 
 
-void NumericalDifferentiationTest::test_set_get_methods()
-{
-    cout << "test_set_methods\n";
-
-    // Test
-
-    numerical_differentiation.set_precision_digits(9);
-    numerical_differentiation.set_display(true);
-
-    assert_true(numerical_differentiation.get_precision_digits() == 9, LOG);
-    assert_true(numerical_differentiation.get_display(), LOG);
-
-    // Test
-
-    numerical_differentiation.set_default();
-
-    assert_true(numerical_differentiation.get_precision_digits() == 6, LOG);
-    assert_true(numerical_differentiation.get_display(), LOG);
-}
-
-
 void NumericalDifferentiationTest::test_calculate_methods()
 {
     cout << "test_calculate_methods\n";
@@ -70,7 +48,7 @@ void NumericalDifferentiationTest::test_calculate_methods()
     numerical_differentiation.set_precision_digits(9);
 
     assert_true(numerical_differentiation.calculate_eta() == type(1e-9), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(type(5)) - static_cast<type>(0.000189)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(type(5)) - type(0.000189)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -79,11 +57,11 @@ void NumericalDifferentiationTest::test_calculate_methods()
 
     numerical_differentiation.set_precision_digits(3);
 
-    assert_true(abs(numerical_differentiation.calculate_h(input)(0) - static_cast<type>(0.031)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input)(1) - static_cast<type>(0.063)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input)(2) - static_cast<type>(0.094)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input)(3) - static_cast<type>(0.126)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input)(4) - static_cast<type>(0.158)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input)(0) - type(0.031)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input)(1) - type(0.063)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input)(2) - type(0.094)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input)(3) - type(0.126)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input)(4) - type(0.158)) < type(1e-3), LOG);
 
     // Test
 
@@ -91,10 +69,10 @@ void NumericalDifferentiationTest::test_calculate_methods()
 
     input_2d.setValues({{type(0),type(1)},{type(2),type(3)}});
 
-    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(0,0) - static_cast<type>(0.031)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(0,1) - static_cast<type>(0.063)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(1,0) - static_cast<type>(0.094)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(1,1) - static_cast<type>(0.126)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(0,0) - type(0.031)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(0,1) - type(0.063)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(1,0) - type(0.094)) < type(1e-3), LOG);
+    assert_true(abs(numerical_differentiation.calculate_h(input_2d)(1,1) - type(0.126)) < type(1e-3), LOG);
 
 }
 
@@ -111,9 +89,9 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
     type derivatives_1 = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f1_1, x);
     type derivatives_2 = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f1_2, x);
 
-    assert_true(abs(derivatives - type(1)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(derivatives_1 - type(2)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(derivatives_2 - type(3)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(derivatives - type(1)) < type(1e-2), LOG);
+    assert_true(abs(derivatives_1 - type(2)) < type(1e-2), LOG);
+    assert_true(abs(derivatives_2 - type(3)) < type(1e-2), LOG);
 
     // Test
 
@@ -122,8 +100,8 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
     Tensor<type, 1> d2 = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f2, x_1d);
 
-    assert_true(abs(d2(0) - type(2)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(d2(1) - type(4)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(d2(0) - type(2)) < type(1e-3), LOG);
+    assert_true(abs(d2(1) - type(4)) < type(1e-3), LOG);
 
     // Test
 
@@ -132,8 +110,8 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
     Tensor<type, 2> d3 = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
 
-    assert_true(abs(d3(0,0) - type(2)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d3(0,1) - type(4)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(d3(0,0) - type(2)) < type(1e-2), LOG);
+    assert_true(abs(d3(0,1) - type(4)) < type(1e-2), LOG);
 
     // Test
 
@@ -141,15 +119,15 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
     Tensor<type, 1> d4 = numerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_1d);
 
-    assert_true(abs(d4(0) - type(6)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d4(1) - type(12)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(d4(0) - type(6)) < type(1e-2), LOG);
+    assert_true(abs(d4(1) - type(12)) < type(1e-2), LOG);
 
     // Test 5
 
 //    Tensor<type, 1> d5 = nunmerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
-//    assert_true(abs(d5(0) - type(6)) < static_cast<type>(1e-2), LOG);
-//    assert_true(abs(d5(1) - type(12)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d5(0) - type(6)) < type(1e-2), LOG);
+//    assert_true(abs(d5(1) - type(12)) < type(1e-2), LOG);
 }
 
 
@@ -165,9 +143,9 @@ void NumericalDifferentiationTest::test_calculate_second_derivatives()
     type derivatives_1 = numerical_differentiation.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f1_1, x);
     type derivatives_2 = numerical_differentiation.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f1_2, x);
 
-    assert_true(abs(derivatives - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(derivatives_1 - type(2)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(derivatives_2 - 6) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(derivatives - type(0)) < type(1e-2), LOG);
+    assert_true(abs(derivatives_1 - type(2)) < type(1e-1), LOG);
+    assert_true(abs(derivatives_2 - 6) < type(1e-1), LOG);
 
     // Test
 
@@ -176,8 +154,8 @@ void NumericalDifferentiationTest::test_calculate_second_derivatives()
 
     Tensor<type, 1> d2 = numerical_differentiation.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
 
-    assert_true(abs(d2(0) - type(2)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d2(1) - type(2)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(d2(0) - type(2)) < type(1e-2), LOG);
+    assert_true(abs(d2(1) - type(2)) < type(1e-2), LOG);
 
     // Test
 
@@ -188,8 +166,8 @@ void NumericalDifferentiationTest::test_calculate_second_derivatives()
 
     Tensor<type, 1> d3 = numerical_differentiation.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
 
-    assert_true(abs(d3(0) - type(2)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d3(1) - type(2)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(d3(0) - type(2)) < type(1e-2), LOG);
+    assert_true(abs(d3(1) - type(2)) < type(1e-2), LOG);
 }
 
 
@@ -204,15 +182,15 @@ void NumericalDifferentiationTest::test_calculate_gradient()
 
     Tensor<type, 1> derivatives = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4, x_1d);
 
-    assert_true(abs(derivatives(0) - type(1)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(derivatives(1) - type(1)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(derivatives(0) - type(1)) < type(1e-2), LOG);
+    assert_true(abs(derivatives(1) - type(1)) < type(1e-2), LOG);
 
     // Test
 
     Tensor<type, 1> d2 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_1, x_1d);
 
-    assert_true(abs(d2(0) - type(1)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d2(1) - type(1)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(d2(0) - type(1)) < type(1e-2), LOG);
+    assert_true(abs(d2(1) - type(1)) < type(1e-2), LOG);
 
     // Test
 
@@ -224,15 +202,15 @@ void NumericalDifferentiationTest::test_calculate_gradient()
 
 //    Tensor<type, 1> d3 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_3, dummy, x3_1d);
 
-//    assert_true(abs(d3(0) - type(2)) < static_cast<type>(1e-2), LOG);
-//    assert_true(abs(d3(1) - type(3)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d3(0) - type(2)) < type(1e-2), LOG);
+//    assert_true(abs(d3(1) - type(3)) < type(1e-2), LOG);
 
     // Test
 
     Tensor<type, 1> d4 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_2, 2, x3_1d);
 
-    assert_true(abs(d4(0) - type(4)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(d4(1) - type(8)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(d4(0) - type(4)) < type(1e-2), LOG);
+    assert_true(abs(d4(1) - type(8)) < type(1e-2), LOG);
 
     // Test 5
 
@@ -241,8 +219,8 @@ void NumericalDifferentiationTest::test_calculate_gradient()
 
 //   Tensor<type, 1> d5 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_4, dummy_5, x3_1d);
 
-//   assert_true(abs(d5(0) - type(2)) < static_cast<type>(1e-2), LOG);
-//   assert_true(abs(d5(1) - type(3)) < static_cast<type>(1e-2), LOG);
+//   assert_true(abs(d5(0) - type(2)) < type(1e-2), LOG);
+//   assert_true(abs(d5(1) - type(3)) < type(1e-2), LOG);
 }
 
 
@@ -255,8 +233,8 @@ void NumericalDifferentiationTest::test_calculate_gradient_matrix()
 
 //    Tensor<type, 2> derivatives = numerical_differentiation.calculate_gradient_matrix(*this, &NumericalDifferentiationTest::f2_2,-1, x_2d);
 
-//    assert_true(abs(derivatives(0,0) - type(1)) < static_cast<type>(1e-2), LOG);
-//    assert_true(abs(derivatives(0,1) - type(1)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(derivatives(0,0) - type(1)) < type(1e-2), LOG);
+//    assert_true(abs(derivatives(0,1) - type(1)) < type(1e-2), LOG);
 }
 
 
@@ -273,10 +251,10 @@ void NumericalDifferentiationTest::test_calculate_hessian()
 
     assert_true(H.dimension(0) == 2, LOG);
     assert_true(H.dimension(1) == 2, LOG);
-    assert_true(abs(H(0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H(0,1) - type(1)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H(1,0) - type(1)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H(1,1) - type(0)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H(0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H(0,1) - type(1)) < type(1e-1), LOG);
+    assert_true(abs(H(1,0) - type(1)) < type(1e-1), LOG);
+    assert_true(abs(H(1,1) - type(0)) < type(1e-1), LOG);
 
     // Test
 
@@ -287,10 +265,10 @@ void NumericalDifferentiationTest::test_calculate_hessian()
 
     assert_true(H2.dimension(0) == 2, LOG);
     assert_true(H2.dimension(1) == 2, LOG);
-    assert_true(abs(H2(0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2(0,1) - type(2)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2(1,0) - type(2)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2(1,1) - type(0)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H2(0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H2(0,1) - type(2)) < type(1e-1), LOG);
+    assert_true(abs(H2(1,0) - type(2)) < type(1e-1), LOG);
+    assert_true(abs(H2(1,1) - type(0)) < type(1e-1), LOG);
 
     // Test
 
@@ -298,10 +276,10 @@ void NumericalDifferentiationTest::test_calculate_hessian()
 
     assert_true(H3.dimension(0) == 2, LOG);
     assert_true(H3.dimension(1) == 2, LOG);
-    assert_true(abs(H3(0,0) - type(4)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3(0,1) - type(8)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3(1,0) - type(8)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3(1,1) - type(4)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H3(0,0) - type(4)) < type(1e-1), LOG);
+    assert_true(abs(H3(0,1) - type(8)) < type(1e-1), LOG);
+    assert_true(abs(H3(1,0) - type(8)) < type(1e-1), LOG);
+    assert_true(abs(H3(1,1) - type(4)) < type(1e-1), LOG);
 }
 
 
@@ -320,17 +298,17 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
     assert_true(H[0].dimension(0) == 2, LOG);
     assert_true(H[0].dimension(1) == 2, LOG);
-    assert_true(abs(H[0](0,0) - type(2)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H[0](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H[0](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H[0](1,1) - type(0)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H[0](0,0) - type(2)) < type(1e-1), LOG);
+    assert_true(abs(H[0](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H[0](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H[0](1,1) - type(0)) < type(1e-1), LOG);
 
     assert_true(H[1].dimension(0) == 2, LOG);
     assert_true(H[1].dimension(1) == 2, LOG);
-    assert_true(abs(H[1](0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H[1](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H[1](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H[1](1,1) - type(2)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H[1](0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H[1](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H[1](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H[1](1,1) - type(2)) < type(1e-1), LOG);
 
     // Test
 
@@ -344,17 +322,17 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
     assert_true(H2[0].dimension(0) == 2, LOG);
     assert_true(H2[0].dimension(1) == 2, LOG);
-    assert_true(abs(H2[0](0,0) - type(2)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2[0](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2[0](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2[0](1,1) - type(0)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H2[0](0,0) - type(2)) < type(1e-1), LOG);
+    assert_true(abs(H2[0](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H2[0](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H2[0](1,1) - type(0)) < type(1e-1), LOG);
 
     assert_true(H2[1].dimension(0) == 2, LOG);
     assert_true(H2[1].dimension(1) == 2, LOG);
-    assert_true(abs(H2[1](0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2[1](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2[1](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H2[1](1,1) - type(2)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H2[1](0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H2[1](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H2[1](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H2[1](1,1) - type(2)) < type(1e-1), LOG);
 
     // Test
 
@@ -365,17 +343,17 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
     assert_true(H3[0].dimension(0) == 2, LOG);
     assert_true(H3[0].dimension(1) == 2, LOG);
-    assert_true(abs(H3[0](0,0) + type(2)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3[0](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3[0](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3[0](1,1) - type(0)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H3[0](0,0) + type(2)) < type(1e-1), LOG);
+    assert_true(abs(H3[0](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H3[0](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H3[0](1,1) - type(0)) < type(1e-1), LOG);
 
     assert_true(H3[1].dimension(0) == 2, LOG);
     assert_true(H3[1].dimension(1) == 2, LOG);
-    assert_true(abs(H3[1](0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3[1](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3[1](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H3[1](1,1) + type(2)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H3[1](0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H3[1](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H3[1](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H3[1](1,1) + type(2)) < type(1e-1), LOG);
 
     // Test
 
@@ -386,17 +364,17 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
     assert_true(H4[0].dimension(0) == 2, LOG);
     assert_true(H4[0].dimension(1) == 2, LOG);
-    assert_true(abs(H4[0](0,0) - type(4)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H4[0](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H4[0](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H4[0](1,1) - type(0)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H4[0](0,0) - type(4)) < type(1e-1), LOG);
+    assert_true(abs(H4[0](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H4[0](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H4[0](1,1) - type(0)) < type(1e-1), LOG);
 
     assert_true(H4[1].dimension(0) == 2, LOG);
     assert_true(H4[1].dimension(1) == 2, LOG);
-    assert_true(abs(H4[1](0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H4[1](0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H4[1](1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(H4[1](1,1) - type(4)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(H4[1](0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H4[1](0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H4[1](1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(H4[1](1,1) - type(4)) < type(1e-1), LOG);
 }
 
 
@@ -412,8 +390,8 @@ void NumericalDifferentiationTest::test_calculate_hessian_matrices()
 
 //    Tensor<type, 1> H = numerical_differentiation.calculate_hessian_matrices(*this, &NumericalDifferentiationTest::f5, 2, dummy, x_1d);
 
-//    assert_true(abs(H(0) - type(1)) < static_cast<type>(1e-2), LOG);
-//    assert_true(abs(H(1) - type(1)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(H(0) - type(1)) < type(1e-2), LOG);
+//    assert_true(abs(H(1) - type(1)) < type(1e-2), LOG);
 }
 
 void NumericalDifferentiationTest::test_calculate_Jacobian()
@@ -429,10 +407,10 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
     assert_true(J.dimension(0) == 2, LOG);
     assert_true(J.dimension(1) == 2, LOG);
-    assert_true(abs(J(0,0) - type(2)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J(0,1) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J(1,0) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J(1,1) - type(2)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(J(0,0) - type(2)) < type(1e-2), LOG);
+    assert_true(abs(J(0,1) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J(1,0) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J(1,1) - type(2)) < type(1e-2), LOG);
 
     // Test
 
@@ -443,10 +421,10 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
     assert_true(J2.dimension(0) == 2, LOG);
     assert_true(J2.dimension(1) == 2, LOG);
-    assert_true(abs(J2(0,0) - type(2)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J2(0,1) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J2(1,0) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J2(1,1) - type(4)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(J2(0,0) - type(2)) < type(1e-2), LOG);
+    assert_true(abs(J2(0,1) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J2(1,0) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J2(1,1) - type(4)) < type(1e-2), LOG);
 
     // Test
 
@@ -454,10 +432,10 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
     assert_true(J3.dimension(0) == 2, LOG);
     assert_true(J3.dimension(1) == 2, LOG);
-    assert_true(abs(J3(0,0) - type(4)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J3(0,1) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J3(1,0) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J3(1,1) - type(4)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(J3(0,0) - type(4)) < type(1e-2), LOG);
+    assert_true(abs(J3(0,1) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J3(1,0) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J3(1,1) - type(4)) < type(1e-2), LOG);
 
     // Test
 
@@ -468,10 +446,10 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
     assert_true(J4.dimension(0) == 2, LOG);
     assert_true(J4.dimension(1) == 2, LOG);
-    assert_true(abs(J4(0,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(J4(0,1) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J4(1,0) - type(0)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(J4(1,1) + type(2)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(J4(0,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(J4(0,1) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J4(1,0) - type(0)) < type(1e-2), LOG);
+    assert_true(abs(J4(1,1) + type(2)) < type(1e-1), LOG);
 
     // Test 5
 
@@ -479,10 +457,10 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
     assert_true(J5.dimension(0) == 2, LOG);
     assert_true(J5.dimension(1) == 2, LOG);
-    assert_true(abs(J5(0,0) - type(10)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(J5(0,1) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(J5(1,0) - type(0)) < static_cast<type>(1e-1), LOG);
-    assert_true(abs(J5(1,1) - type(10)) < static_cast<type>(1e-1), LOG);
+    assert_true(abs(J5(0,0) - type(10)) < type(1e-1), LOG);
+    assert_true(abs(J5(0,1) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(J5(1,0) - type(0)) < type(1e-1), LOG);
+    assert_true(abs(J5(1,1) - type(10)) < type(1e-1), LOG);
 }
 
 
@@ -494,8 +472,6 @@ void NumericalDifferentiationTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    test_set_get_methods();
 
     test_calculate_methods();
 
@@ -530,7 +506,7 @@ void NumericalDifferentiationTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

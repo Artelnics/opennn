@@ -31,6 +31,7 @@
 #include "unscaling_layer_test.h"
 #include "bounding_layer_test.h"
 #include "probabilistic_layer_test.h"
+#include "probabilistic_layer_3d_test.h"
 #include "long_short_term_memory_layer_test.h"
 #include "recurrent_layer_test.h"
 #include "neural_network_test.h"
@@ -41,6 +42,7 @@
 #include "weighted_squared_error_test.h"
 #include "minkowski_error_test.h"
 #include "cross_entropy_error_test.h"
+#include "cross_entropy_error_3d_test.h"
 
 #include "learning_rate_algorithm_test.h"
 #include "adaptive_moment_estimation_test.h"
@@ -67,7 +69,7 @@
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

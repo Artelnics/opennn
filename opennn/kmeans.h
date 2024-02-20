@@ -54,7 +54,7 @@ class KMeans
 
 public:
 
-    KMeans(Index clusters = 3, string distance_calculation_metod = "euclidean", Index iter = 100);
+    KMeans(Index clusters = 3, string distance_calculation_method = "euclidean", Index iter = 100);
 
     Tensor<Index, 1> calculate_outputs(const Tensor<type, 2>&);
     Tensor<type, 1> elbow_method(const Tensor<type, 2>&, Index max_clusters=10);
@@ -76,7 +76,6 @@ private:
 
     Tensor<type, 2> cluster_centers;
     Tensor<Index, 1> rows_cluster_labels;
-
 };
 
 }
@@ -84,7 +83,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

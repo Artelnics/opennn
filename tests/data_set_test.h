@@ -27,36 +27,14 @@ public:
    void test_constructor();
    void test_destructor();  
 
-   void test_has_time_columns();
-
-   // Set methods
-
-   void test_set();
-   void test_set_samples_number();
-   void test_set_columns_number();
-   
-   void test_set_lags_number();
-   void test_set_steps_ahead_number();
-   void test_set_time_series_data();
-   void test_save_time_series_data_binary();
-
-   // Data methods
-
-   void test_set_data();
-   void test_is_empty();
-
    // Data resizing methods
 
    void test_add_sample();
    void test_append_variable();
    void test_remove_variable();
-   void test_unuse_constant_columns();
+   void test_unuse_constant_raw_variables();
    void test_unuse_repeated_samples();
-   void test_unuse_uncorrelated_columns();
-
-   // Initialization methods
-
-   void test_set_data_constant();
+   void test_unuse_uncorrelated_raw_variables();
 
    // Statistics methods
 
@@ -73,7 +51,7 @@ public:
    void test_calculate_autocorrelations();
    void test_calculate_cross_correlations();
    void test_calculate_input_target_correlations();
-   void test_calculate_input_columns_correlations();
+   void test_calculate_input_raw_variables_correlations();
 
    // Histrogram methods
 
@@ -94,14 +72,6 @@ public:
    void test_calculate_target_distribution();
 
    void test_calculate_Tukey_outliers();
-
-   void test_calculate_euclidean_distance();
-   void test_calculate_distance_matrix();
-   void test_calculate_k_nearest_neighbors();
-   void test_calculate_average_reachability();
-
-   void test_calculate_LOF_outliers();
-   void test_unuse_local_outlier_factor_outliers();
 
    // Data generation
 
@@ -150,7 +120,7 @@ public:
 
    string data_string;
 
-   string data_file_name;
+   string data_source_path;
 
 
    Index inputs_number;
@@ -176,7 +146,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

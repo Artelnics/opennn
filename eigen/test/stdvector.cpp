@@ -52,7 +52,7 @@ void check_stdvector_transform(const TransformType&)
 {
   typedef typename TransformType::MatrixType MatrixType;
   TransformType x(MatrixType::Random()), y(MatrixType::Random());
-  std::vector<TransformType,Eigen::aligned_allocator<TransformType> > v(10), w(20, y);
+  std::vector<TransformType,Eigen::aligned_allocator<TransformType> > v(10, TransformType(MatrixType::Zero())), w(20, y);
   v[5] = x;
   w[6] = v[5];
   VERIFY_IS_APPROX(w[6], v[5]);
@@ -124,7 +124,7 @@ void std_vector_gcc_warning()
 {
   typedef Eigen::Vector3f T;
   std::vector<T, Eigen::aligned_allocator<T> > v;
-  v.push_back(T());
+  v.push_back(T::Zero());
 }
 
 EIGEN_DECLARE_TEST(stdvector)

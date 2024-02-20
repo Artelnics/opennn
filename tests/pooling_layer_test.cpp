@@ -46,7 +46,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(1,1);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -61,7 +61,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2,2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -92,7 +92,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2, 2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -132,7 +132,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 //    pooling_layer.set_pool_size(3, 3);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
 
@@ -149,35 +149,33 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 
 void PoolingLayerTest::test_forward_propagate_average_pooling()
 {
-
-/*
     const Index batch_samples_number = 1;
 
     const Index inputs_channels_number = 3;
     const Index inputs_rows_number = 5;
-    const Index inputs_columns_number = 5;
+    const Index inputs_raw_variables_number = 5;
 
     const Index pool_rows_number = 2;
-    const Index pool_columns_number = 2;
+    const Index pool_raw_variables_number = 2;
 
     const Index targets_number = 1;
-
+/*
     DataSet data_set(batch_samples_number,
                      inputs_channels_number,
                      inputs_rows_number,
-                     inputs_columns_number,
+                     inputs_raw_variables_number,
                      targets_number);
 
-    data_set.set_data_constant(static_cast<type>(1));
+    data_set.set_data_constant(type(1));
 
     Tensor<Index, 1> input_variables_dimensions(3);
     input_variables_dimensions.setValues({inputs_channels_number,
                                           inputs_rows_number,
-                                          inputs_columns_number});
+                                          inputs_raw_variables_number});
 
     Tensor<Index, 1> pool_dimensions(2);
     pool_dimensions.setValues({pool_rows_number,
-                               pool_columns_number});
+                               pool_raw_variables_number});
 
     PoolingLayer pooling_layer(input_variables_dimensions, pool_dimensions);
 
@@ -187,7 +185,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
     Tensor<type, 4> inputs_data(batch_samples_number,
                                 inputs_channels_number,
                                 inputs_rows_number,
-                                inputs_columns_number);
+                                inputs_raw_variables_number);
 
     inputs_data.setValues({
                     {
@@ -264,7 +262,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(1,1);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -279,7 +277,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2,2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -310,7 +308,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(2, 2);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -350,7 +348,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 
 //    pooling_layer.set_pool_size(3, 3);
 //    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
+//    pooling_layer.set_raw_variable_stride(1);
 
 //    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
 
@@ -384,7 +382,7 @@ void PoolingLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -8,8 +8,8 @@
       <Input Index="5">suction_side_displacement_thickness</Input>
    </Inputs>
    <Layers>
-      <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
-      <ScalingLayer>
+      <LayersTypes>Scaling2D Perceptron Perceptron Unscaling Bounding</LayersTypes>
+      <ScalingLayer2D>
          <ScalingNeuronsNumber>5</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
             <Descriptives>200\20000\2886.38\3152.57</Descriptives>
@@ -31,20 +31,20 @@
             <Descriptives>0.000400682\0.0584113\0.0111399\0.0131502</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
-      </ScalingLayer>
+      </ScalingLayer2D>
       <PerceptronLayer>
          <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>5</InputsNumber>
          <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.528796 0.391262 0.599787 -0.318633 -0.436121 -0.632887 -1.25413 0.107052 0.0393711 -0.870149 -0.948761 1.13019 0.404369 0.166001 0.521353 2.24286 0.0964783 0.528599 -0.153455 0.59037 -3.71532 0.146756 -0.109178 0.0550664 -0.531925 -0.742692 -0.485469 1.63213 0.165259 0.12643 2.37116 -0.108316 -0.0504669 -0.0844953 0.294953 1.18491 1.1516 0.390523 -0.197042 1.15873 0.90088 -0.0444644 0.129147 0.133678 0.0527956 2.29744 0.361018 1.37248 -0.155758 -0.0666298 2.07627 2.37527 -0.569327 1.9081 -2.01938 2.5989 1.64794 0.223635 0.796372 0.826256</Parameters>
+         <Parameters>-0.237494 0.475424 0.273246 0.331822 0.207652 0.28683 0.81502 0.662762 0.103104 0.551086 0.402935 0.701968 0.183547 0.161019 0.38084 0.256053 -0.134764 0.0431097 0.465406 -0.310993 1.03022 0.299739 0.460703 0.217246 0.961099 -0.210067 0.889043 0.641203 -0.0718783 1.00719 0.190253 0.0497835 0.688123 0.772832 0.290587 -0.0493369 0.180389 0.27387 0.973379 0.937931 0.861515 0.901562 0.682572 0.332775 0.0598009 0.609163 -0.0172566 0.868256 0.921814 0.0689697 -0.133821 0.765565 0.230807 0.180955 0.850346 0.455221 0.99593 0.69638 0.377391 0.0327805</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
          <LayerName>perceptron_layer_2</LayerName>
          <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>-2.02798 0.909777 0.799011 2.96479 3.01927 -1.13932 2.71118 -1.32353 1.7588 -1.26556 -0.726768</Parameters>
+         <Parameters>0.346765 -0.574396 -0.105433 0.513394 -0.514077 0.308418 0.00786745 0.110302 -0.121047 -0.124655 0.303874</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>

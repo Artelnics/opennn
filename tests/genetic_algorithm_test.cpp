@@ -41,8 +41,9 @@ void GeneticAlgorithmTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GeneticAlgorithm* genetic_algorithm_pointer = new GeneticAlgorithm;
-    delete genetic_algorithm_pointer;
+    GeneticAlgorithm* genetic_algorithm = new GeneticAlgorithm;
+
+    delete genetic_algorithm;
 }
 
 
@@ -97,7 +98,7 @@ void GeneticAlgorithmTest::test_initialize_population()
     input_variables_indices.setValues({0,1,2,3,4,5,6,7,8,9});
     target_variables_indices.setValues({10,11,12});
 
-    data_set.set_input_target_columns(input_variables_indices,target_variables_indices);
+    data_set.set_input_target_raw_variables(input_variables_indices,target_variables_indices);
 
     genetic_algorithm.set_individuals_number(individuals_number);
 
@@ -115,7 +116,6 @@ void GeneticAlgorithmTest::test_initialize_population()
 }
 
 
-
 void GeneticAlgorithmTest::test_perform_fitness_assignment()
 {
     cout << "test_calculate_fitness\n";
@@ -126,7 +126,7 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {3,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -148,7 +148,7 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     // Test
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {3,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -256,7 +256,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     genetic_algorithm.set_fitness(fitness);
 
     selection_errors.resize(8);
-    selection_errors.setValues({0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1});
+    selection_errors.setValues({type(0.8),type(0.7),type(0.6),type(0.5),type(0.4),type(0.3),type(0.2),type(0.1) });
 
     genetic_algorithm.initialize_population_random();
 
@@ -279,50 +279,50 @@ void GeneticAlgorithmTest::test_perform_selection()
 
 void GeneticAlgorithmTest::test_perform_crossover()
 {
-        cout << "test_perform_crossover\n";
+    cout << "test_perform_crossover\n";
 
-        Tensor<type, 2> data(10,5);
-        data.setRandom();
-        data_set.set(data);
+    Tensor<type, 2> data(10,5);
+    data.setRandom();
+    data_set.set(data);
 
-        Tensor<bool, 2> population;
-        Tensor<bool, 2> crossover_population;
-        Tensor<bool, 1> individual;
+    Tensor<bool, 2> population;
+    Tensor<bool, 2> crossover_population;
+    Tensor<bool, 1> individual;
 
-        Tensor<type, 1> fitness(4);
+    Tensor<type, 1> fitness(4);
 
-        Tensor<type, 1> selection_errors(4);
+    Tensor<type, 1> selection_errors(4);
 
-        // Test
+    // Test
 
-        genetic_algorithm.set_individuals_number(4);
+    genetic_algorithm.set_individuals_number(4);
 
-        population.resize(4, 4);
+    population.resize(4, 4);
 
-        population.setValues({{true,false,false,false},
-                              {true,false,false,true},
-                              {true,false,true,false},
-                              {true,false,true,true}});
+    population.setValues({{true,false,false,false},
+                          {true,false,false,true},
+                          {true,false,true,false},
+                          {true,false,true,true}});
 
-        genetic_algorithm.set_population(population);
+    genetic_algorithm.set_population(population);
 
-        selection_errors.setValues({0.4,0.3,0.2,0.1});
+    selection_errors.setValues({0.4,0.3,0.2,0.1});
 
-        genetic_algorithm.set_selection_errors(selection_errors);
+    genetic_algorithm.set_selection_errors(selection_errors);
 
-        genetic_algorithm.perform_fitness_assignment();
+    genetic_algorithm.perform_fitness_assignment();
 
-        genetic_algorithm.perform_selection();
+    genetic_algorithm.perform_selection();
 
-        genetic_algorithm.perform_crossover();
+    genetic_algorithm.perform_crossover();
 
-        crossover_population = genetic_algorithm.get_population();
+    crossover_population = genetic_algorithm.get_population();
 
-        for(Index i = 0; i<4; i++)
-        {
-           assert_true(crossover_population(i,0) == 1, LOG);
-           assert_true(crossover_population(i,1) == 0, LOG);
-        }
+    for(Index i = 0; i<4; i++)
+    {
+       assert_true(crossover_population(i,0) == 1, LOG);
+       assert_true(crossover_population(i,1) == 0, LOG);
+    }
 
 }
 
@@ -380,9 +380,9 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     for(Index i = 0; i < population.dimension(0); i++)
     {
-        individual=population.chip(i,0);
+        individual=population.chip(i, 0);
 
-        mutated_individual=mutated_population.chip(i,0);
+        mutated_individual=mutated_population.chip(i, 0);
 
         for(Index j = 0; j<10; j++)
         {
@@ -408,15 +408,15 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     for(Index i = 0; i < 20; i++)
     {
-        data(i,0) = static_cast<type>(i);
+        data(i,0) = type(i);
         data(i,1) = type(10.0);
         data(i,2) = type(10.0);
-        data(i,3) = static_cast<type>(i);
+        data(i,3) = type(i);
     }
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
 
     genetic_algorithm.set_display(false);
 
@@ -445,15 +445,15 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     {
         data(i,0) = type(i);
         data(i,1) = type(rand());
-        data(i,2) = type(0.0);
+        data(i,2) = type(0);
     }
 
     data_set.set(data);
-    data_set.set_default_columns_uses();
+    data_set.set_default_raw_variables_uses();
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(4);
-    genetic_algorithm.set_selection_error_goal(type(0.0));
+    genetic_algorithm.set_selection_error_goal(type(0));
     genetic_algorithm.set_maximum_epochs_number(1);
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
@@ -476,7 +476,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     }
 
     data_set.set_data(data);
-    data_set.set_default_columns_uses();
+    data_set.set_default_raw_variables_uses();
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 

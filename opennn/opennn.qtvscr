@@ -1,0 +1,632 @@
+<FlowDocument xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" FontFamily="Segoe UI" FontSize="12">
+  <FlowDocument.Tag><![CDATA[{
+  "timestamp": "2024-01-24 10:53:21",
+  "files": {
+    "C:\\Users\\sanch\\Desktop\\refactor\\opennn\\opennn\\opennn.vcxproj": {
+      "before": "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",
+      "after": "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"
+    }
+  }
+}]]></FlowDocument.Tag>
+  <Section Margin="0,24" TextAlignment="Center">
+    <Paragraph FontSize="24" FontWeight="Bold" Margin="12,0">
+      <LineBreak />
+      <Span Foreground="Gray">Qt Visual Studio Tools</Span>
+    </Paragraph>
+    <Paragraph FontSize="42" Margin="12,0" FontWeight="Bold">
+      <Span TextDecorations="Underline">Project Format Conversion</Span>
+    </Paragraph>
+    <Paragraph Margin="12,8" FontSize="18">
+      <Span>Report generated on 2024-01-24 10:53:21</Span>
+    </Paragraph>
+  </Section>
+  <Section>
+    <Paragraph FontSize="32" FontWeight="Bold" Margin="12,0">
+      <Span>Files</Span>
+    </Paragraph>
+    <Paragraph Margin="24,12,0,0">
+      <Span FontFamily="Consolas" FontSize="14" Background="WhiteSmoke"><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+      <LineBreak />
+      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj?before">[Before]</Hyperlink>
+      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj?after">[After]</Hyperlink>
+      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj?diff&amp;before&amp;after">
+                        [Diff before/after]
+                    </Hyperlink>
+      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj?diff&amp;before&amp;current">
+                        [Diff before/current]
+                    </Hyperlink>
+      <Hyperlink NavigateUri="file://C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj?diff&amp;after&amp;current">
+                        [Diff after/current]
+                    </Hyperlink>
+      <LineBreak />
+    </Paragraph>
+  </Section>
+  <Section>
+    <Paragraph FontSize="32" FontWeight="Bold" Margin="12,0">
+      <Span>Changes</Span>
+    </Paragraph>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Replacing paths with "$(QTDIR)"]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>.;..\eigen;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\mkspecs\win32-msvc]]></Span><Span><![CDATA[;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>.;..\eigen;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\mkspecs\win32-msvc]]></Span><Span><![CDATA[;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>.;..\eigen;]]></Span><Span Background="LightCoral"><![CDATA[C:\QT\6.5.0\MSVC2019_64\mkspecs\win32-msvc]]></Span><Span><![CDATA[;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>.;..\eigen;]]></Span><Span Background="LightGreen"><![CDATA[$(QTDIR)\mkspecs\win32-msvc]]></Span><Span><![CDATA[;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Converting custom build steps to Qt/MSBuild items]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      ]]></Span><Span Background="LightCoral"><![CDATA[<AdditionalIncludeDirectories>.;..]]></Span><Span><![CDATA[\eigen;$(QTDIR)\mkspecs\win32-msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      ]]></Span><Span Background="LightGreen"><![CDATA[<AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..]]></Span><Span><![CDATA[\eigen;$(QTDIR)\mkspecs\win32-msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      ]]></Span><Span Background="LightCoral"><![CDATA[<AdditionalIncludeDirectories>.;..]]></Span><Span><![CDATA[\eigen;$(QTDIR)\mkspecs\win32-msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      ]]></Span><Span Background="LightGreen"><![CDATA[<AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..]]></Span><Span><![CDATA[\eigen;$(QTDIR)\mkspecs\win32-msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Enabling multi-processor compilation]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[      <MultiProcessorCompilation>true</MultiProcessorCompilation>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[      <MultiProcessorCompilation>true</MultiProcessorCompilation>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Project format version]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[    ]]></Span><Span Background="LightCoral"><![CDATA[<Keyword>Qt4VSv1.0</Keyword>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[    ]]></Span><Span Background="LightGreen"><![CDATA[<Keyword>QtVS_v304</Keyword>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Fallback for QTMSBUILD environment variable]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Default Qt properties]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  <Import Project="$(QtMsBuild)\qt_defaults.props" Condition="Exists('$(QtMsBuild)\qt_defaults.props')" />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Qt build settings]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Warn if Qt/MSBuild is not found]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') OR !Exists('$(QtMsBuild)\Qt.props')">]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  </Target>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Qt property sheet]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <Import Project="$(QtMsBuild)\Qt.props" />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <Import Project="$(QtMsBuild)\Qt.props" />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Qt targets]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  <Import Project="$(QtMsBuild)\qt.targets" Condition="Exists('$(QtMsBuild)\qt.targets')" />]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Copying Qt build reference to QtInstall project property]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)]]></Span><Span Background="LightCoral"><![CDATA['=='Release|x64'" />]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)]]></Span><Span Background="LightGreen"><![CDATA['=='Release|x64'">]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[  ]]></Span><Span Background="LightCoral"><![CDATA[<PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[    ]]></Span><Span Background="LightGreen"><![CDATA[<QtInstall>6.5.0_msvc2019_64</QtInstall>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  </PropertyGroup>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <QtInstall>6.5.0_msvc2019_64</QtInstall>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[  </PropertyGroup>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Removing Qt module include paths from compiler properties]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\eigen;]]></Span><Span Background="LightCoral"><![CDATA[$(QTDIR)\mkspecs\win32-msvc;]]></Span><Span><![CDATA[%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\eigen;]]></Span><Span><![CDATA[%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\eigen;]]></Span><Span Background="LightCoral"><![CDATA[$(QTDIR)\mkspecs\win32-msvc;]]></Span><Span><![CDATA[%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span><![CDATA[      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\eigen;]]></Span><Span><![CDATA[%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+    <Paragraph FontSize="20" FontWeight="Bold" Margin="12">
+      <Span><![CDATA[🡺 Adding Qt module names to QtModules project property]]></Span>
+    </Paragraph>
+    <Table CellSpacing="0" BorderBrush="Gray" BorderThickness="0.5">
+      <Table.Columns>
+        <TableColumn />
+        <TableColumn />
+      </Table.Columns>
+      <TableRowGroup>
+        <TableRow Background="Orange">
+          <TableCell ColumnSpan="2" BorderThickness="0.5" BorderBrush="Gray">
+            <Paragraph Margin="10,5" FontWeight="Bold">
+              <Span><![CDATA[C:\Users\sanch\Desktop\refactor\opennn\opennn\opennn.vcxproj]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <QtModules></QtModules>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell ColumnSpan="2" Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="0.5" />
+        </TableRow>
+        <TableRow>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0" />
+          </TableCell>
+          <TableCell BorderThickness="0, 0, 0.5, 0" BorderBrush="Gray">
+            <Paragraph FontFamily="Consolas" Margin="4, 0">
+              <Span Background="LightGreen"><![CDATA[    <QtModules></QtModules>]]></Span>
+            </Paragraph>
+          </TableCell>
+        </TableRow>
+      </TableRowGroup>
+    </Table>
+  </Section>
+  <Section>
+    <Paragraph />
+  </Section>
+</FlowDocument>
+<!--QXVn4ThfO399nZdr2Eqseao95WzJjLPmJDhu8J88OPE=-->

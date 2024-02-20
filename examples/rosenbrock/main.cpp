@@ -27,7 +27,7 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
         
-        srand(static_cast<unsigned>(time(nullptr)));
+//        srand(static_cast<unsigned>(time(nullptr)));
      
         // Data Set
         
@@ -44,11 +44,11 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
-        neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
+        neural_network.get_first_perceptron_layer()->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
-        PerceptronLayer* pl = static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(2));
+        PerceptronLayer* pl = static_cast<PerceptronLayer*>(neural_network.get_layers()(2));
 
         pl->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
@@ -58,13 +58,12 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_maximum_epochs_number(1000);
+        training_strategy.set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
 
         cout << "End Rosenbrock" << endl;
-
 
         return 0;
     }

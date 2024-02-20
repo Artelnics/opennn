@@ -28,8 +28,6 @@ public:
 
     void test_destructor();
 
-    void test_set_get_methods();
-
     void test_calculate_methods();
 
     // Derivative methods
@@ -88,14 +86,16 @@ private:
         return vector_x.square();
     }
 
-    Tensor<type, 1> f2_1(const Index& cte, const Tensor<type, 1>& vector_x) const
+    Tensor<type, 1> f2_1(const Index& constant, const Tensor<type, 1>& vector_x) const
     {
-        return type(cte)*vector_x.square();
+        return type(constant)*vector_x.square();
     }
 
-    Tensor<type, 1> f2_2(const Index& cte, const Tensor<type, 2>& matrix_x) const
+    Tensor<type, 1> f2_2(const Index& constant, const Tensor<type, 2>& matrix_x) const
     {
-        return  type(cte)*matrix_x.maximum();
+        Tensor<type, 1> y;
+
+        return  type(constant)*matrix_x.maximum();
     }
 
     Tensor<type, 1> f2_2(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const
@@ -206,7 +206,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

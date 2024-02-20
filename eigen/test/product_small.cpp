@@ -70,7 +70,7 @@ void test_dynamic_bool()
   for(Index i=0;i<C.rows();++i)
     for(Index j=0;j<C.cols();++j)
       for(Index k=0;k<A.cols();++k)
-       D.coeffRef(i,j) |= A.coeff(i,k) & B.coeff(k,j);
+       D.coeffRef(i,j) |= (A.coeff(i,k) && B.coeff(k,j));
   C += A * B;
   VERIFY_IS_EQUAL(C, D);
 

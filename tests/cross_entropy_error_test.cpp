@@ -66,25 +66,25 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &cross_entropy_error);
         cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = cross_entropy_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -110,25 +110,25 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
         back_propagation.set(samples_number, &cross_entropy_error);
         cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = cross_entropy_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
 }
 
@@ -151,7 +151,7 @@ void CrossEntropyErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

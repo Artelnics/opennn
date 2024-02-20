@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   G R A D I E N T   D E S C E N T   T E S T   C L A S S
+//   A D A P T I V E   M O M E N T   E S T I M A T I O N   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -13,7 +13,7 @@ AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
-    adaptive_moment_estimation.set_loss_index_pointer(&sum_squared_error);
+    adaptive_moment_estimation.set_loss_index(&sum_squared_error);
 }
 
 
@@ -28,20 +28,21 @@ void AdaptiveMomentEstimationTest::test_constructor()
 
     // Default constructor
 
-    GradientDescent adaptive_moment_estimation_1;
+    AdaptiveMomentEstimation adaptive_moment_estimation_1;
     assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
 
     // Loss index constructor
 
-    GradientDescent adaptive_moment_estimation_2(&sum_squared_error);
+    AdaptiveMomentEstimation adaptive_moment_estimation_2(&sum_squared_error);
     assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
 }
+
 
 void AdaptiveMomentEstimationTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GradientDescent* adaptive_moment_estimation = new GradientDescent;
+    AdaptiveMomentEstimation* adaptive_moment_estimation = new AdaptiveMomentEstimation;
 
     delete adaptive_moment_estimation;
 }
@@ -63,7 +64,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     adaptive_moment_estimation.set_maximum_epochs_number(1);
@@ -77,7 +78,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
     neural_network.set_parameters_constant(-1);
 
     adaptive_moment_estimation.set_maximum_epochs_number(1);
@@ -111,7 +112,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     training_results = adaptive_moment_estimation.perform_training();
 
-    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    assert_true(training_results.loss <= training_loss_goal, LOG);
 }
 
 
@@ -133,7 +134,7 @@ void AdaptiveMomentEstimationTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

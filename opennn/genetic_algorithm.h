@@ -25,7 +25,7 @@
 // OpenNN includes
 
 #include "training_strategy.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "inputs_selection.h"
 #include "config.h"
 #include "testing_analysis.h"
@@ -59,21 +59,17 @@ public:
 
     const Tensor <bool, 2>& get_population() const;
 
-
     const Tensor <type, 1>& get_training_errors() const;
 
     const Tensor <type, 1>& get_selection_errors() const;
-
 
     const Tensor <type, 1>& get_fitness() const;
 
     const Tensor <bool, 1>& get_selection() const;
 
-
     Index get_individuals_number() const;
 
     Index get_genes_number() const;
-
 
     const type& get_mutation_rate() const;
 
@@ -107,7 +103,7 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
-    void set_initial_columns_indices(const Tensor<Index ,1>&);
+    void set_initial_raw_variables_indices(const Tensor<Index ,1>&);
 
     // GENETIC OPERATORS METHODS
 
@@ -145,29 +141,27 @@ public:
 
     // Check  methods
 
-    void check_categorical_columns();
+    void check_categorical_raw_variables();
 
     Tensor <bool, 1> get_individual_variables_to_indexes (Tensor <bool, 1>&);
 
-    Tensor <bool, 1> get_individual_columns(Tensor <bool, 1>&);
+    Tensor <bool, 1> get_individual_raw_variables(Tensor <bool, 1>&);
 
     Tensor <bool, 1> get_individual_variables(Tensor <bool,1>&);
 
     Tensor <Index, 1> get_selected_individuals_indices ();
 
-    Tensor <Index, 1> get_individual_as_columns_indexes_from_variables( Tensor <bool, 1>&);
+    Tensor <Index, 1> get_individual_as_raw_variables_indexes_from_variables( Tensor <bool, 1>&);
 
-    void set_unused_columns(Tensor<Index, 1>&);
+    void set_unused_raw_variables(Tensor<Index, 1>&);
 
-    Tensor<Index, 1> get_original_unused_columns();
+    Tensor<Index, 1> get_original_unused_raw_variables();
 
     InputsSelectionResults perform_inputs_selection ()  final;
 
     // Serialization method
 
-    Tensor <string, 2> to_string_matrix() const;
-
-    bool calculate_random_bool();
+    Tensor<string, 2> to_string_matrix() const;
 
     void from_XML(const tinyxml2::XMLDocument&);
 
@@ -183,15 +177,15 @@ public:
 
 private:
     
-    /// Initial inputs columns
+    /// Initial inputs raw_variables
 
-    Tensor <Index, 1> initial_columns_indices;
-    Tensor <bool, 1> original_input_columns;
+    Tensor <Index, 1> initial_raw_variables_indices;
+    Tensor <bool, 1> original_input_raw_variables;
 
-    /// Initial columns unused
+    /// Initial raw_variables unused
 
-    Tensor <Index, 1> original_unused_columns_indices;
-    Tensor<bool, 1> original_unused_columns;
+    Tensor <Index, 1> original_unused_raw_variables_indices;
+    Tensor<bool, 1> original_unused_raw_variables;
 
     /// Activation probabilities.
     
@@ -223,9 +217,9 @@ private:
     
     Tensor <bool, 2> optimal_individuals_history;
 
-    Tensor <Index, 1> original_input_columns_indices;
+    Tensor <Index, 1> original_input_raw_variables_indices;
 
-    Tensor <Index, 1> original_target_columns_indices;
+    Tensor <Index, 1> original_target_raw_variables_indices;
 
     Index genes_number;
 

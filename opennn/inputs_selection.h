@@ -56,7 +56,7 @@ public:
 
     // Get methods
 
-    TrainingStrategy* get_training_strategy_pointer() const;
+    TrainingStrategy* get_training_strategy() const;
 
     bool has_training_strategy() const;
 
@@ -111,10 +111,10 @@ protected:
 
     /// Pointer to a training strategy object.
 
-    TrainingStrategy* training_strategy_pointer = nullptr;
+    TrainingStrategy* training_strategy = nullptr;
 
-    Tensor<Index, 1> original_input_columns_indices;
-    Tensor<Index, 1> original_target_columns_indices;
+    Tensor<Index, 1> original_input_raw_variables_indices;
+    Tensor<Index, 1> original_target_raw_variables_indices;
 
     /// Number of trials for each neural network.
 
@@ -221,11 +221,11 @@ struct InputsSelectionResults
        cout << endl;
        cout << "Inputs Selection Results" << endl;
 
-       cout << "Optimal inputs number: " << optimal_input_columns_names.size() << endl;
+       cout << "Optimal inputs number: " << optimal_input_raw_variables_names.size() << endl;
 
        cout << "Inputs: " << endl;
 
-       for(Index i = 0; i < optimal_input_columns_names.size(); i++) cout << "   " << optimal_input_columns_names(i) << endl;
+       for(Index i = 0; i < optimal_input_raw_variables_names.size(); i++) cout << "   " << optimal_input_raw_variables_names(i) << endl;
 
        cout << "Optimum training error: " << optimum_training_error << endl;
        cout << "Optimum selection error: " << optimum_selection_error << endl;
@@ -266,9 +266,9 @@ struct InputsSelectionResults
 
    /// Inputs of the neural network with minimum selection error.
 
-   Tensor<string, 1> optimal_input_columns_names;
+   Tensor<string, 1> optimal_input_raw_variables_names;
 
-   Tensor<Index, 1> optimal_input_columns_indices;
+   Tensor<Index, 1> optimal_input_raw_variables_indices;
 
    Tensor<bool, 1> optimal_inputs;
 
@@ -288,7 +288,7 @@ struct InputsSelectionResults
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -20,10 +20,10 @@ InputsSelection::InputsSelection()
 
 
 /// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a trainig strategy object.
+/// @param new_training_strategy Pointer to a trainig strategy object.
 
-InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer)
-    : training_strategy_pointer(new_training_strategy_pointer)
+InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
+    : training_strategy(new_training_strategy)
 {
     set_default();
 }
@@ -31,24 +31,24 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer
 
 /// Returns a pointer to the training strategy object.
 
-TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
+TrainingStrategy* InputsSelection::get_training_strategy() const
 {
 #ifdef OPENNN_DEBUG
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "DataSet* get_training_strategy_pointer() const method.\n"
+               << "DataSet* get_training_strategy() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
 
-    return training_strategy_pointer;
+    return training_strategy;
 }
 
 
@@ -56,7 +56,7 @@ TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
 
 bool InputsSelection::has_training_strategy() const
 {
-    if(training_strategy_pointer)
+    if(training_strategy)
     {
         return true;
     }
@@ -125,11 +125,11 @@ const type& InputsSelection::get_minimum_correlation() const
 
 
 /// Sets a new training strategy pointer.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
+/// @param new_training_strategy Pointer to a training strategy object.
 
-void InputsSelection::set(TrainingStrategy* new_training_strategy_pointer)
+void InputsSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy_pointer = new_training_strategy_pointer;     
+    training_strategy = new_training_strategy;     
 }
 
 
@@ -166,7 +166,7 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
                << "void set_trials_number(const Index&) method.\n"
                << "Number of assays must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -201,7 +201,7 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
                << "void set_selection_error_goal(const type&) method.\n"
                << "Selection loss goal must be greater or equal than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -235,7 +235,7 @@ void InputsSelection::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -259,7 +259,7 @@ void InputsSelection::set_maximum_correlation(const type& new_maximum_correlatio
                << "void set_maximum_correlation(const type&) method.\n"
                << "Maximum correlation must be comprised between 0 and 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -283,7 +283,7 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
                << "void set_minimum_correlation(const type&) method.\n"
                << "Minimum correaltion must be comprised between 0 and 1.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -307,55 +307,55 @@ void InputsSelection::check() const
 {
     ostringstream buffer;
 
-    if(!training_strategy_pointer)
+    if(!training_strategy)
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
                << "Pointer to training strategy is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Loss index
 
-    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index = training_strategy->get_loss_index();
 
     // Neural network
 
-    if(!loss_index_pointer->has_neural_network())
+    if(!loss_index->has_neural_network())
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network_pointer->is_empty())
+    if(neural_network->is_empty())
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
                << "Neural network is empty.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Data set
 
-    if(!loss_index_pointer->has_data_set())
+    if(!loss_index->has_data_set())
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
                << "Pointer to data set is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
 
     if(selection_samples_number == 0)
     {
@@ -363,7 +363,7 @@ void InputsSelection::check() const
                << "void check() const method.\n"
                << "Number of selection samples is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -407,7 +407,7 @@ string InputsSelection::write_time(const type& time) const
 
 #ifdef OPENNN_DEBUG
 
-    if(time > static_cast<type>(3600e5))
+    if(time > type(3600e5))
     {
         ostringstream buffer;
 
@@ -415,10 +415,10 @@ string InputsSelection::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    if(time < static_cast<type>(0))
+    if(time < type(0))
     {
         ostringstream buffer;
 
@@ -426,7 +426,7 @@ string InputsSelection::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 
@@ -461,7 +461,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
                << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 #endif
 
@@ -492,7 +492,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

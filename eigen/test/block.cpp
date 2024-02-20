@@ -143,11 +143,12 @@ template<typename MatrixType> void block(const MatrixType& m)
   
   // check that linear acccessors works on blocks
   m1 = m1_copy;
-  if((MatrixType::Flags&RowMajorBit)==0)
-    VERIFY_IS_EQUAL(m1.leftCols(c1).coeff(r1+c1*rows), m1(r1,c1));
-  else
-    VERIFY_IS_EQUAL(m1.topRows(r1).coeff(c1+r1*cols), m1(r1,c1));
-  
+  if (c1 > 0 && r1 > 0) {
+    if ((MatrixType::Flags & RowMajorBit) == 0)
+      VERIFY_IS_EQUAL(m1.leftCols(c1).coeff(r1 + c1 * rows), m1(r1, c1));
+    else
+      VERIFY_IS_EQUAL(m1.topRows(r1).coeff(c1 + r1 * cols), m1(r1, c1));
+  }
 
   // now test some block-inside-of-block.
   

@@ -31,7 +31,7 @@ void ScalingTest::test_scale_data_mean_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::MeanStandardDeviation);
+    data_set.set_raw_variables_scalers(Scaler::MeanStandardDeviation);
 
     data_set.scale_data();
     scaled_matrix = data_set.get_data();
@@ -55,7 +55,7 @@ void ScalingTest::test_scale_data_minimum_maximum()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -76,7 +76,7 @@ void ScalingTest::test_scale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::NoScaling);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -97,7 +97,7 @@ void ScalingTest::test_scale_data_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::StandardDeviation);
+    data_set.set_raw_variables_scalers(Scaler::StandardDeviation);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -118,7 +118,7 @@ void ScalingTest::test_scale_data_logarithmic()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::Logarithm);
+    data_set.set_raw_variables_scalers(Scaler::Logarithm);
     data_set.scale_data();
 
     scaled_matrix = data_set.get_data();
@@ -143,7 +143,7 @@ void ScalingTest::test_unscale_data_mean_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::MeanStandardDeviation);
+    data_set.set_raw_variables_scalers(Scaler::MeanStandardDeviation);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
 
@@ -166,7 +166,7 @@ void ScalingTest::test_unscale_data_minimum_maximum()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::MinimumMaximum);
+    data_set.set_raw_variables_scalers(Scaler::MinimumMaximum);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.scale_data();
@@ -188,7 +188,7 @@ void ScalingTest::test_unscale_data_no_scaling()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::NoScaling);
+    data_set.set_raw_variables_scalers(Scaler::NoScaling);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.unscale_data(variables_descriptives);
@@ -209,7 +209,7 @@ void ScalingTest::test_unscale_data_standard_deviation()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::StandardDeviation);
+    data_set.set_raw_variables_scalers(Scaler::StandardDeviation);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.scale_data();
@@ -231,7 +231,7 @@ void ScalingTest::test_unscale_data_logarithmic()
     matrix.setRandom();
 
     data_set.set(matrix);
-    data_set.set_columns_scalers(Scaler::Logarithm);
+    data_set.set_raw_variables_scalers(Scaler::Logarithm);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
     data_set.scale_data();
@@ -268,7 +268,7 @@ void ScalingTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library sl free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

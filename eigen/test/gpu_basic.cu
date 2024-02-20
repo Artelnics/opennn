@@ -138,10 +138,12 @@ struct complex_operators {
     out[out_idx++] = a / numext::real(b);
     out[out_idx++] = numext::real(a) / b;
     
+#if !defined(EIGEN_COMP_MSVC)
     out[out_idx] = a; out[out_idx++] += b;
     out[out_idx] = a; out[out_idx++] -= b;
     out[out_idx] = a; out[out_idx++] *= b;
     out[out_idx] = a; out[out_idx++] /= b;
+#endif
     
     const ComplexType true_value = ComplexType(ValueType(1), ValueType(0));
     const ComplexType false_value = ComplexType(ValueType(0), ValueType(0));
@@ -188,6 +190,7 @@ struct complex_operators {
     res.segment(block_idx, size) = x1.real().array() / x2.array();
     block_idx += size;
     
+#if !defined(EIGEN_COMP_MSVC)
     res.segment(block_idx, size) = x1; res.segment(block_idx, size) += x2;
     block_idx += size;
     res.segment(block_idx, size) = x1; res.segment(block_idx, size) -= x2;
@@ -196,6 +199,7 @@ struct complex_operators {
     block_idx += size;
     res.segment(block_idx, size) = x1; res.segment(block_idx, size).array() /= x2.array();
     block_idx += size;
+#endif
 
     const T true_vector = T::Constant(true_value);
     const T false_vector = T::Constant(false_value);

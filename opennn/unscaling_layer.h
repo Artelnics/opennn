@@ -22,12 +22,13 @@
 
 #include "config.h"
 #include "layer.h"
-#include "statistics.h"
-#include "opennn_strings.h"
-
+#include "layer_forward_propagation.h"
+#include "scaling.h"
 
 namespace opennn
 {
+
+//struct UnscalingLayerForwardPropagation;
 
 /// This class represents a layer of unscaling neurons.
 
@@ -35,7 +36,7 @@ namespace opennn
 /// Unscaling layers are included in the definition of a neural network.
 /// They are used to unnormalize variables so they are in the original range after computer processing.
 
-class   UnscalingLayer : public Layer
+class UnscalingLayer : public Layer
 {
 
 public:
@@ -50,7 +51,7 @@ public:
 
    // Get methods  
 
-   Index get_inputs_number() const override;
+   Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
    Tensor<Descriptives, 1> get_descriptives() const; 
@@ -77,7 +78,7 @@ public:
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
 
-   virtual void set_default();
+   void set_default();
 
    // Output variables descriptives
 
@@ -111,7 +112,7 @@ public:
 
    // Forward propagation methods
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
 
    // Serialization methods
 
@@ -121,7 +122,6 @@ public:
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
 
 protected:
 
@@ -145,6 +145,7 @@ protected:
    bool display = true;
 };
 
+
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
     // Constructor
@@ -155,36 +156,43 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 
     // Constructor
 
-    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
         : LayerForwardPropagation()
     {
-        set(new_batch_samples_number, new_layer_pointer);
+        set(new_batch_samples_number, new_layer);
+    }
+    
+    
+    pair<type*, dimensions> get_outputs_pair() const final
+    {
+        const Index neurons_number = layer->get_neurons_number();
+
+        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final
     {
-        layer_pointer = new_layer_pointer;
+        layer = new_layer;
 
-        const Index neurons_number = static_cast<UnscalingLayer*>(layer_pointer)->get_neurons_number();
+        const Index neurons_number = static_cast<UnscalingLayer*>(layer)->get_neurons_number();
 
         batch_samples_number = new_batch_samples_number;
 
-        // Allocate memory for outputs_data
+        outputs.resize(batch_samples_number, neurons_number);
 
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
+        outputs_data = outputs.data();
     }
 
 
     void print() const
     {
         cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<4>() << endl;
+        cout << outputs << endl;
     }
+
+
+    Tensor<type, 2> outputs;
 };
 
 }
@@ -193,7 +201,7 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

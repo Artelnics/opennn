@@ -29,13 +29,12 @@ EmbeddingLayer::EmbeddingLayer() : Layer()
 /// It initializes the parameters at random.
 /// This constructor also initializes the rest of the class members to their default values.
 
-EmbeddingLayer::EmbeddingLayer(const Index& new_input_dim,
+EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
                                const Index& new_input_length,
                                const Index& new_depth,
-                               const bool& new_positional_encoding,
-                               const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
+                               const bool& new_positional_encoding) : Layer()
 {
-    set(new_input_dim, new_input_length, new_depth, new_positional_encoding, new_activation_function);
+    set(new_inputs_dimension, new_input_length, new_depth, new_positional_encoding);
 
     layer_type = Type::Embedding;
 
@@ -45,9 +44,9 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_input_dim,
 
 /// Returns the dimension (maximum value + 1) of the input to the layer.
 
-Index EmbeddingLayer::get_input_dim() const
+Index EmbeddingLayer::get_input_dimension() const
 {
-    return input_dim;
+    return inputs_dimension;
 }
 
 
@@ -55,7 +54,7 @@ Index EmbeddingLayer::get_input_dim() const
 
 Index EmbeddingLayer::get_input_length() const
 {
-    return input_length;
+    return inputs_length;
 }
 
 
@@ -66,12 +65,9 @@ Index EmbeddingLayer::get_depth() const
     return depth;
 }
 
-
-/// Each returns the layer's Perceptron sub-layer.
-
-PerceptronLayer EmbeddingLayer::get_perceptron_layer() const
+Tensor<type, 2> EmbeddingLayer::get_embedding_weights() const
 {
-    return perceptron_layer;
+    return embedding_weights;
 }
 
 
@@ -79,61 +75,7 @@ PerceptronLayer EmbeddingLayer::get_perceptron_layer() const
 
 Index EmbeddingLayer::get_parameters_number() const
 {
-    return perceptron_layer.get_parameters_number();
-}
-
-
-/// Returns the activation function of the layer.
-/// The activation function of a layer is the activation function of all perceptrons in it.
-
-const PerceptronLayer::ActivationFunction& EmbeddingLayer::get_activation_function() const
-{
-    return activation_function;
-}
-
-
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
-
-string EmbeddingLayer::write_activation_function() const
-{
-    switch(activation_function)
-    {
-    case PerceptronLayer::ActivationFunction::Logistic:
-        return "Logistic";
-
-    case PerceptronLayer::ActivationFunction::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case PerceptronLayer::ActivationFunction::Threshold:
-        return "Threshold";
-
-    case PerceptronLayer::ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";
-
-    case PerceptronLayer::ActivationFunction::Linear:
-        return "Linear";
-
-    case PerceptronLayer::ActivationFunction::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case PerceptronLayer::ActivationFunction::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case PerceptronLayer::ActivationFunction::SoftPlus:
-        return "SoftPlus";
-
-    case PerceptronLayer::ActivationFunction::SoftSign:
-        return "SoftSign";
-
-    case PerceptronLayer::ActivationFunction::HardSigmoid:
-        return "HardSigmoid";
-
-    case PerceptronLayer::ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
-    }
-
-    return string();
+    return embedding_weights.size();
 }
 
 
@@ -151,15 +93,15 @@ const bool& EmbeddingLayer::get_display() const
 
 void EmbeddingLayer::set()
 {
-    input_dim = 0;
+    inputs_dimension = 0;
 
-    input_length = 0;
+    inputs_length = 0;
 
     depth = 0;
 
     positional_encoding = false;
 
-    perceptron_layer.set();
+    embedding_weights.resize(0, 0);
 
     set_default();
 }
@@ -168,23 +110,20 @@ void EmbeddingLayer::set()
 /// Sets new input dimension, input length, embedding depth and activation function of the layer.
 /// It also sets the rest of the members to their default values.
 
-void EmbeddingLayer::set(const Index& new_input_dim,
+void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_input_length,
                          const Index& new_depth,
-                         const bool& new_positional_encoding,
-                         const PerceptronLayer::ActivationFunction& new_activation_function)
+                         const bool& new_positional_encoding)
 {
-    input_dim = new_input_dim;
+    inputs_dimension = new_inputs_dimension;
 
-    input_length = new_input_length;
+    inputs_length = new_input_length;
 
     depth = new_depth;
 
-    set_perceptron();
+    set_embedding_weights();
 
     positional_encoding = new_positional_encoding;
-
-    activation_function = new_activation_function;
 
     set_default();
 }
@@ -210,11 +149,11 @@ void EmbeddingLayer::set_name(const string& new_layer_name)
 
 /// Sets a new input dim in the layer.
 
-void EmbeddingLayer::set_input_dim(const Index& new_input_dim)
+void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
 {
-    input_dim = new_input_dim;
+    inputs_dimension = new_inputs_dimension;
 
-    set_perceptron();
+    set_embedding_weights();
 }
 
 
@@ -222,7 +161,7 @@ void EmbeddingLayer::set_input_dim(const Index& new_input_dim)
 
 void EmbeddingLayer::set_input_length(const Index& new_input_length)
 {
-    input_length = new_input_length;
+    inputs_length = new_input_length;
 }
 
 
@@ -232,84 +171,44 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 
-    set_perceptron();
+    set_embedding_weights();
 }
 
 
-/// Sets the perceptron sub-layer according to the layer's parameters.
+/// Sets the lookup table and randomizes its parameters.
 
-void EmbeddingLayer::set_perceptron()
+void EmbeddingLayer::set_embedding_weights()
 {
-    perceptron_layer.set(input_dim, depth, activation_function);
-}
+    embedding_weights.resize(inputs_dimension, depth);
 
-/// This class sets a new activation(or transfer) function in the layer.
-
-void EmbeddingLayer::set_activation_function(const PerceptronLayer::ActivationFunction& new_activation_function)
-{
-    activation_function = new_activation_function;
+    set_parameters_random();
 }
 
 
-/// Sets a new activation(or transfer) function in a single layer.
-/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function Activation function for that layer.
-
-void EmbeddingLayer::set_activation_function(const string& new_activation_function_name)
+void EmbeddingLayer::set_parameters_random()
 {
-    if(new_activation_function_name == "Logistic")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::Logistic;
-    }
-    else if(new_activation_function_name == "HyperbolicTangent")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::HyperbolicTangent;
-    }
-    else if(new_activation_function_name == "Threshold")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::Threshold;
-    }
-    else if(new_activation_function_name == "SymmetricThreshold")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::SymmetricThreshold;
-    }
-    else if(new_activation_function_name == "Linear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::Linear;
-    }
-    else if(new_activation_function_name == "RectifiedLinear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::RectifiedLinear;
-    }
-    else if(new_activation_function_name == "ScaledExponentialLinear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::ScaledExponentialLinear;
-    }
-    else if(new_activation_function_name == "SoftPlus")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::SoftPlus;
-    }
-    else if(new_activation_function_name == "SoftSign")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::SoftSign;
-    }
-    else if(new_activation_function_name == "HardSigmoid")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::HardSigmoid;
-    }
-    else if(new_activation_function_name == "ExponentialLinear")
-    {
-        activation_function = PerceptronLayer::ActivationFunction::ExponentialLinear;
-    }
-    else
-    {
-        ostringstream buffer;
+    /// @todo Avoid loops
 
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void set_activation_function(const string&) method.\n"
-               << "Unknown activation function: " << new_activation_function_name << ".\n";
+    const type minimum = type(-0.2);
+    const type maximum = type(0.2);
 
-        throw invalid_argument(buffer.str());
+//    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
+
+    // first row must be 0s because input value 0 is padding
+
+    for(Index j = 0; j < depth; j++)
+    {
+        embedding_weights(0, j) = type(0);
+    }
+
+    for(Index i = 1; i < inputs_dimension; i++)
+    {
+        for(Index j = 0; j < depth; j++)
+        {
+            const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+            embedding_weights(i, j) = minimum + (maximum - minimum)*random;
+        }
     }
 }
 
@@ -325,450 +224,147 @@ void EmbeddingLayer::set_display(const bool& new_display)
 }
 
 
-/// Calculates one-hot encoding, of dimension = input_dim, of an input row (assuming all input values are integers)
+/*
+/// Calculates one-hot encoding, of dimension = inputs_dimension, of an input row (assuming all input values are integers)
 /// @return Matrix of one-hot encodings of all values in input_row
 
 Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_row)
 {
-    Tensor<type, 2> one_hot_encoded_input_row(input_length, input_dim);
+    Tensor<type, 2> one_hot_encoded_input_row(inputs_length, inputs_dimension);
     one_hot_encoded_input_row.setZero();
 
     const Tensor<type, 0> max_input = input_row.maximum();
 
-    if(max_input(0) >= type(input_dim))
+    if(max_input(0) >= type(inputs_dimension))
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: EmbeddingLayer class.\n"
                << "void EmbeddingLayer::one_hot_encode_row(const Tensor<Index, 1>&)\n"
-               << "All input values must be less than " << input_dim << " (" << max_input(0) << ").\n";
+               << "All input values must be less than " << inputs_dimension << " (" << max_input(0) << ").\n";
         throw invalid_argument(buffer.str());
     }
 
 #pragma omp parallel for
-    for(Index i = 0; i < input_length; i++)
+    for(Index i = 0; i < inputs_length; i++)
         one_hot_encoded_input_row(i, Index(input_row(i))) = 1;
 
     return one_hot_encoded_input_row;
 }
+*/
 
 
 /// Looks up embedding of an input row, by passing its one-hot encoding through a perceptron layer (that corresponds to the lookup table)
 /// Saves the embedding matrix of the row in outputs_data of the given perceptron layer forward propagation structure
 
-void EmbeddingLayer::lookup_embedding(const Tensor<type, 1>& input_row,
-                                    PerceptronLayerForwardPropagation* perceptron_forward_propagation,
-                                    const bool& is_training)
+void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
-    Tensor<type, 2> one_hot_encoded_input_row = one_hot_encode_row(input_row);
+    const Index batch_size = inputs.dimension(0);
 
-    Tensor<type*, 1> one_hot_encoded_input_row_data(1);
-    one_hot_encoded_input_row_data.setValues({one_hot_encoded_input_row.data()});
-
-    Tensor<Tensor<Index, 1>, 1> one_hot_encoded_input_row_dimensions;
-    one_hot_encoded_input_row_dimensions.setValues({get_dimensions(one_hot_encoded_input_row)});
-
-//    perceptron_layer.forward_propagate(one_hot_encoded_input_row_data,
-//                                       one_hot_encoded_input_row_dimensions, // input_length is batch_size
-//                                       perceptron_forward_propagation,
-//                                       is_training);
-};
-
-
-/// Builds positional encoding matrix with dimensions (input_length, depth) of the layer.
-
-const Tensor<type, 2> EmbeddingLayer::build_positional_encoding_matrix()
-{
-    Tensor<type, 2> positional_encoding_matrix(input_length, depth);
-    positional_encoding_matrix.setZero();
-
-    type half_depth = type(depth)/2;
-
-// #pragma omp parallel for collapse(2)
-    for(Index i = 0; i < input_length; i++)
+    for(Index row = 0; row < batch_size; row++)
     {
-        for(Index j = 0; j < half_depth - 1; j++)
+        for(Index input_position = 0; input_position < inputs_length; input_position++)
         {
-            positional_encoding_matrix(i, 2*j) = sin( (i + 1) / pow(100000, (j + 1) / half_depth) );
-            positional_encoding_matrix(i, 2*j+1) = cos( (i + 1) / pow(100000, (j + 1) / half_depth) );
-        }
-
-        if(depth % 2 == 0)
-        {
-            positional_encoding_matrix(i, depth - 2) = sin( (i+1) / 10000 );
-            positional_encoding_matrix(i, depth - 1) = cos( (i+1) / 10000 );
-        }
-        else
-        {
-            positional_encoding_matrix(i, depth - 1) = sin( (i+1) / 10000 );
+            outputs.chip(row, 0).chip(input_position, 0)
+                = embedding_weights.chip(inputs(row, input_position), 0);
         }
     }
-
-    return positional_encoding_matrix;
-};
+}
 
 
-void EmbeddingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
-                                        LayerForwardPropagation* forward_propagation,
-                                        const bool& is_training)
+void EmbeddingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+                                       LayerForwardPropagation* layer_forward_propagation,
+                                       const bool& is_training)
 {
-    if(inputs(0).get_dimension(1) != input_length)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: EmbeddingLayer class.\n"
-               << "void EmbeddingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>&, type*, Tensor<Index, 1>&)\n"
-               << "Inputs columns number must be equal to " << input_length << ", (" << inputs(0).get_dimension(1) << ").\n";
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index batch_size = inputs(0).get_dimension(0);
-
-    const TensorMap<Tensor<type, 2>> inputs_tensor_map = inputs(0).to_tensor_map<2>();
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
-        = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
+        = static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation);
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation =
-        embedding_layer_forward_propagation->perceptron_forward_propagation;
+    Tensor<type, 3>& outputs = embedding_layer_forward_propagation->outputs;
 
-    Tensor<type, 1> input_row(input_length);
-
-//#pragma omp parallel for
-    for(Index i = 0; i < batch_size; i++)
-    {
-        input_row = inputs_tensor_map.chip(i, 0);
-        lookup_embedding(input_row, &perceptron_layer_forward_propagation, is_training);
-
-        memcpy(embedding_layer_forward_propagation->outputs(0).get_data() + i*input_length*depth,
-               perceptron_layer_forward_propagation.outputs(0).get_data(),
-               static_cast<size_t>(input_length*depth*sizeof(type)));
-    }
+    lookup_embedding(inputs, outputs);
 
     if(positional_encoding)
     {
-        TensorMap<Tensor<type, 3>> outputs = embedding_layer_forward_propagation->outputs(0).to_tensor_map<3>();
+        if(!embedding_layer_forward_propagation->built_positional_encoding_matrix)
+        {
+            embedding_layer_forward_propagation->build_positional_encoding_matrix();
+        }
 
-        const Tensor<type, 2> positional_encoding_matrix = build_positional_encoding_matrix();
-#pragma omp parallel for
-        for(Index i = 0; i < batch_size; i++)
-            outputs.chip(i, 0) += positional_encoding_matrix;
+        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+
+        for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
+        {
+            outputs.chip(batch_element, 0)/*.device(thread_pool_device)*/ += positional_encoding;
+        }
     }
 }
 
-/*
-void EmbeddingLayer::forward_propagate(type* inputs_data,
-                                        const Tensor<Index, 1>& inputs_dimensions,
-                                        Tensor<type, 1>& potential_parameters,
-                                        LayerForwardPropagation* forward_propagation)
+void EmbeddingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
+                                            LayerBackPropagation* next_back_propagation,
+                                            LayerBackPropagation* back_propagation) const
 {
-#ifdef OPENNN_DEBUG
-    if(inputs_dimensions(1) != get_inputs_number())
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception:" << LOG << endl
-               << "void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() << ", (inputs number).\n";
 
-        throw invalid_argument(buffer.str());
+    EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
+        static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
+
+    switch (next_back_propagation->layer->get_type())
+    {
+    case Type::MultiheadAttention:
+    {
+        MultiheadAttentionLayerForwardPropagation* next_multihead_attention_layer_forward_propagation =
+            reinterpret_cast<MultiheadAttentionLayerForwardPropagation*>(next_forward_propagation);
+
+        MultiheadAttentionLayerBackPropagation* next_multihead_attention_layer_back_propagation =
+            reinterpret_cast<MultiheadAttentionLayerBackPropagation*>(next_back_propagation);
+
+        calculate_hidden_delta(next_multihead_attention_layer_forward_propagation,
+                               next_multihead_attention_layer_back_propagation,
+                               embedding_layer_back_propagation);
     }
-
-    check_size(potential_parameters, get_parameters_number(), LOG);
-#endif
-
-    const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index inputs_number = get_inputs_number();
-
-    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), 1, neurons_number);
-
-    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
-
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-        = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
-
-    const Tensor<Index, 1> activations_dimensions = perceptron_layer_forward_propagation->outputs_dimensions;
-
-    const Tensor<Index, 1> combinations_dimensions = get_dimensions(perceptron_layer_forward_propagation->combinations);
-
-    const Tensor<Index, 1> derivatives_dimensions = get_dimensions(perceptron_layer_forward_propagation->activations_derivatives);
-
-
-    calculate_combinations(inputs,
-                           potential_biases,
-                           potential_synaptic_weights,
-                           perceptron_layer_forward_propagation->get_combinations_data());
-
-
-    calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations.data(),
-                                      combinations_dimensions,
-                                      perceptron_layer_forward_propagation->outputs_data,
-                                      activations_dimensions,
-                                      perceptron_layer_forward_propagation->activations_derivatives.data(),
-                                      derivatives_dimensions);
-}
-*/
-
-
-string EmbeddingLayer::write_activation_function_expression() const
-{
-    switch(activation_function)
-    {
-    case PerceptronLayer::ActivationFunction::Threshold:
-        return "threshold";
-
-    case PerceptronLayer::ActivationFunction::SymmetricThreshold:
-        return "symmetric_threshold";
-
-    case PerceptronLayer::ActivationFunction::Logistic:
-        return "logistic";
-
-    case PerceptronLayer::ActivationFunction::HyperbolicTangent:
-        return "tanh";
-
-    case PerceptronLayer::ActivationFunction::Linear:
-        return string();
-
-    case PerceptronLayer::ActivationFunction::RectifiedLinear:
-        return "ReLU";
-
-    case PerceptronLayer::ActivationFunction::ExponentialLinear:
-        return "ELU";
-
-    case PerceptronLayer::ActivationFunction::ScaledExponentialLinear:
-        return "SELU";
-
-    case PerceptronLayer::ActivationFunction::SoftPlus:
-        return "soft_plus";
-
-    case PerceptronLayer::ActivationFunction::SoftSign:
-        return "soft_sign";
-
-    case PerceptronLayer::ActivationFunction::HardSigmoid:
-        return "hard_sigmoid";
+    return;
 
     default:
-        return string();
+
+        return;
     }
 }
 
-/// @todo
-///// Returns a string with the expression of the inputs-outputs relationship of the layer.
-///// @param inputs_names vector of strings with the name of the layer inputs.
-///// @param outputs_names vector of strings with the name of the layer outputs.
+void EmbeddingLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation* next_forward_propagation,
+                                            MultiheadAttentionLayerBackPropagation* next_back_propagation,
+                                            EmbeddingLayerBackPropagation* back_propagation) const
+{
+    // Next layer
 
-//string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
-//{
-//#ifdef OPENNN_DEBUG
-//    //    check_size(inputs_names, get_inputs_number(), LOG);
-//    //    check_size(outputs_names, get_neurons_number(), LOG);
-//#endif
+    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
 
-//    ostringstream buffer;
+}
 
-//    for(Index j = 0; j < outputs_names.size(); j++)
-//    {
-//        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+                                              LayerForwardPropagation* forward_propagation,
+                                              LayerBackPropagation* back_propagation) const
+{
+    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
 
-//        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "( " << biases(0,j) << " +";
+    // Forward propagation
 
-//        for(Index i = 0; i < inputs_names.size() - 1; i++)
-//        {
-//            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
-//        }
+    EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation = static_cast<EmbeddingLayerForwardPropagation*>(forward_propagation);
 
-//        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") );\n";
-//    }
+    // Back propagation
 
-//    return buffer.str();
-//}
+    EmbeddingLayerBackPropagation* embedding_layer_back_propagation = static_cast<EmbeddingLayerBackPropagation*>(back_propagation);
 
+    const Tensor<type, 3>& deltas = embedding_layer_back_propagation->deltas;
 
-//void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
-//{
-//    ostringstream buffer;
+    Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
 
-//    // Perceptron layer
 
-//    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("PerceptronLayer");
-
-//    if(!perceptron_layer_element)
-//    {
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "PerceptronLayer element is nullptr.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    // Layer name
-
-//    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
-
-//    if(!layer_name_element)
-//    {
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "LayerName element is nullptr.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    if(layer_name_element->GetText())
-//    {
-//        set_name(layer_name_element->GetText());
-//    }
-
-//    // Inputs number
-
-//    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
-
-//    if(!inputs_number_element)
-//    {
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "InputsNumber element is nullptr.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    if(inputs_number_element->GetText())
-//    {
-//        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
-//    }
-
-//    // Neurons number
-
-//    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
-
-//    if(!neurons_number_element)
-//    {
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "NeuronsNumber element is nullptr.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    if(neurons_number_element->GetText())
-//    {
-//        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
-//    }
-
-//    // Activation function
-
-//    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
-
-//    if(!activation_function_element)
-//    {
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "ActivationFunction element is nullptr.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    if(activation_function_element->GetText())
-//    {
-//        set_activation_function(activation_function_element->GetText());
-//    }
-
-//    // Parameters
-
-//    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
-
-//    if(!parameters_element)
-//    {
-//        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "Parameters element is nullptr.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
-//    if(parameters_element->GetText())
-//    {
-//        const string parameters_string = parameters_element->GetText();
-
-//        set_parameters(to_type_vector(parameters_string, ' '));
-//    }
-//}
-
-
-//void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
-//{
-//    ostringstream buffer;
-
-//    // Perceptron layer
-
-//    file_stream.OpenElement("PerceptronLayer");
-
-//    // Layer name
-//    file_stream.OpenElement("LayerName");
-//    buffer.str("");
-//    buffer << layer_name;
-//    file_stream.PushText(buffer.str().c_str());
-//    file_stream.CloseElement();
-
-//    // Inputs number
-//    file_stream.OpenElement("InputsNumber");
-
-//    buffer.str("");
-//    buffer << get_inputs_number();
-
-//    file_stream.PushText(buffer.str().c_str());
-
-//    file_stream.CloseElement();
-
-//    // Outputs number
-
-//    file_stream.OpenElement("NeuronsNumber");
-
-//    buffer.str("");
-//    buffer << get_neurons_number();
-
-//    file_stream.PushText(buffer.str().c_str());
-
-//    file_stream.CloseElement();
-
-//    // Activation function
-
-//    file_stream.OpenElement("ActivationFunction");
-
-//    file_stream.PushText(write_activation_function().c_str());
-
-//    file_stream.CloseElement();
-
-//    // Parameters
-
-//    file_stream.OpenElement("Parameters");
-
-//    buffer.str("");
-
-//    const Tensor<type, 1> parameters = get_parameters();
-//    const Index parameters_size = parameters.size();
-
-//    for(Index i = 0; i < parameters_size; i++)
-//    {
-//        buffer << parameters(i);
-
-//        if(i != (parameters_size-1)) buffer << " ";
-//    }
-
-//    file_stream.PushText(buffer.str().c_str());
-
-//    file_stream.CloseElement();
-
-//    // Peceptron layer (end tag)
-
-//    file_stream.CloseElement();
-//}
-
+}
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

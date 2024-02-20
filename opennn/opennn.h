@@ -10,40 +10,46 @@
 #define OPENNN_H
 
 #include "config.h"
-#include "half.hpp"
 
 // Data set
 
 #include "data_set.h"
+#include "time_series_data_set.h"
+#include "auto_association_data_set.h"
+#include "text_data_set.h"
+#include "image_data_set.h"
 
 // Neural network
 
 #include "config.h"
 #include "layer.h"
-#include "addition_layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"
 #include "bounding_layer.h"
 #include "perceptron_layer.h"
+#include "perceptron_layer_3d.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 #include "probabilistic_layer.h"
-#include "scaling_layer.h"
-// #include "region_proposal_layer.h"
+#include "probabilistic_layer_3d.h"
+#include "scaling_layer_2d.h"
+#include "scaling_layer_4d.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 #include "kmeans.h"
-#include "non_max_suppression_layer.h"
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
-#include "vgg16.h"
+#include "auto_associative_neural_network.h"
+#include "transformer.h"
+#include "neural_network_forward_propagation.h"
 
 // Training strategy
 
 #include "loss_index.h"
 
 #include "cross_entropy_error.h"
+#include "cross_entropy_error_3d.h"
 #include "mean_squared_error.h"
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"
@@ -75,20 +81,17 @@
 #include "numerical_differentiation.h"
 #include "correlations.h"
 #include "response_optimization.h"
-#include "opennn_images.h"
-#include "tensor_utilities.h"
+#include "images.h"
+#include "tensors.h"
 #include "statistics.h"
 #include "scaling.h"
-#include "region_based_object_detector.h"
-#include "json_to_xml.h"
-#include "text_analytics.h"
 #include "codification.h"
-#include "dynamic_tensor.h"
+
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

@@ -8,7 +8,6 @@
 
 #include "inputs_selection_test.h"
 
-
 InputsSelectionTest::InputsSelectionTest() : UnitTesting()
 {
     training_strategy.set(&neural_network, &data_set);
@@ -43,8 +42,9 @@ void InputsSelectionTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingInputs* growing_inputs_pointer = new GrowingInputs;
-    delete growing_inputs_pointer;
+    GrowingInputs* growing_inputs = new GrowingInputs;
+
+    delete growing_inputs;
 }
 
 
@@ -63,7 +63,7 @@ void InputsSelectionTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

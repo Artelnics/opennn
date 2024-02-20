@@ -56,7 +56,7 @@ public:
    explicit GradientDescent(LossIndex*);
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
-   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+   LearningRateAlgorithm* get_learning_rate_algorithm();
 
    virtual string get_hardware_use() const;
 
@@ -72,11 +72,11 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*) final;
+   void set_loss_index(LossIndex*) final;
 
    void set_learning_rate_algorithm(const LearningRateAlgorithm&);
 
-   void set_default() override;
+   void set_default() final;
 
    // Stopping criteria
 
@@ -95,8 +95,8 @@ public:
 
    void update_parameters(
            const DataSetBatch&,
-           NeuralNetworkForwardPropagation&,
-           LossIndexBackPropagation&,
+           ForwardPropagation&,
+           BackPropagation&,
            GradientDescentData&) const;
 
    TrainingResults perform_training() final;
@@ -119,7 +119,7 @@ private:
 
    LearningRateAlgorithm learning_rate_algorithm;
 
-   const type first_learning_rate = static_cast<type>(0.01);
+   const type first_learning_rate = type(0.01);
 
    // Stopping criteria 
 
@@ -156,24 +156,24 @@ struct GradientDescentData : public OptimizationAlgorithmData
     }
 
 
-    explicit GradientDescentData(GradientDescent* new_gradient_descent_pointer)
+    explicit GradientDescentData(GradientDescent* new_gradient_descent)
     {
-        set(new_gradient_descent_pointer);
+        set(new_gradient_descent);
     }
 
     /// Destructor
 
     virtual ~GradientDescentData() {}
 
-    void set(GradientDescent* new_gradient_descent_pointer)
+    void set(GradientDescent* new_gradient_descent)
     {
-        gradient_descent_pointer = new_gradient_descent_pointer;
+        gradient_descent = new_gradient_descent;
 
-        const LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
+        const LossIndex* loss_index = gradient_descent->get_loss_index();
 
-        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
+        const Index parameters_number = neural_network->get_parameters_number();
 
         // Neural network data
 
@@ -194,7 +194,7 @@ struct GradientDescentData : public OptimizationAlgorithmData
         cout << learning_rate << endl;
     }
 
-    GradientDescent* gradient_descent_pointer = nullptr;
+    GradientDescent* gradient_descent = nullptr;
 
     // Optimization algorithm data
 

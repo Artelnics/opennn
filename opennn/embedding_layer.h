@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef EMBEDDING_LAYER_H
-#define EMBEDDING_LAYER_H
+#ifndef EMBEDDINGLAYER_H
+#define EMBEDDINGLAYER_H
 
 // System includes
 
@@ -22,11 +22,9 @@
 
 #include "config.h"
 #include "layer.h"
-#include "perceptron_layer.h"
-
-#ifdef OPENNN_MKL
-#include "../mkl/mkl.h"
-#endif
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+#include "multihead_attention_layer.h"
 
 namespace opennn
 {
@@ -36,27 +34,20 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
 
 
 /// This class represents an Embedding layer.
 
-/// EmbeddingLayer has inputs of a fixed length (input_length) and within a fixed set of possible integer values (input_dim).
+/// EmbeddingLayer has inputs of a fixed length (inputs_length) and within a fixed set of possible integer values (inputs_dimensions).
 /// The layer will assign to each possible value a dense vector of fixed length (depth).
-/// The vectors are learnable parameters, which is implemented by passing a one-hot encoding of each value through a PerceptronLayer.
 
 
 class EmbeddingLayer : public Layer
-
 {
-
+/// @todo get_parameters() and set_parameters()
 public:
-
-    /// Enumeration of the available activation functions for the perceptron neuron model.
-
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
-                                    ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
     // Constructors
 
@@ -65,23 +56,18 @@ public:
     explicit EmbeddingLayer(const Index&, /// Input dim
                             const Index&, /// Input length
                             const Index&, /// Embedding depth
-                            const bool& = false, /// Add positional encoding or not
-                            const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::Linear);
+                            const bool& = false); /// Add positional encoding or not
 
     // Get methods
 
     bool is_empty() const;
 
-    Index get_input_dim() const;
+    Index get_input_dimension() const;
     Index get_input_length() const;
     Index get_depth() const;
-    PerceptronLayer get_perceptron_layer() const;
+    Tensor<type, 2> get_embedding_weights() const;
 
     Index get_parameters_number() const final;
-
-    const PerceptronLayer::ActivationFunction& get_activation_function() const;
-
-    string write_activation_function() const;
 
     // Display messages
 
@@ -90,8 +76,7 @@ public:
     // Set methods
 
     void set();
-    void set(const Index&, const Index&, const Index&, const bool& = false,
-             const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::Linear);
+    void set(const Index&, const Index&, const Index&, const bool& = false);
 
     void set_default();
     void set_name(const string&);
@@ -102,10 +87,8 @@ public:
     void set_input_length(const Index&);
     void set_depth(const Index&);
 
-    void set_perceptron();
-
-    void set_activation_function(const PerceptronLayer::ActivationFunction&);
-    void set_activation_function(const string&);
+    void set_embedding_weights();
+    void set_parameters_random() final;
 
     // Display messages
 
@@ -113,29 +96,37 @@ public:
 
     // Embedding lookup
 
-    Tensor<type, 2> one_hot_encode_row(const Tensor<type, 1>&);
-
-    void lookup_embedding(const Tensor<type, 1>&, PerceptronLayerForwardPropagation*, const bool&);
-
-    // Positional encoding
-
-    const Tensor<type, 2> build_positional_encoding_matrix();
+    void lookup_embedding(const Tensor<type, 2>&, Tensor<type, 3>&);
 
     // Embedding layer outputs
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
-
+    void forward_propagate(const pair<type*, dimensions>&layer,
+                           LayerForwardPropagation*,
+                           const bool&) final;
     /*
-    void forward_propagate(type*,
-                           const Tensor<Index, 1>&,
+    void forward_propagate(const pair<type*, dimensions>&,
                            Tensor<type, 1>&,
                            LayerForwardPropagation*) final;
 */
+    // Delta methods
+
+    void calculate_hidden_delta(LayerForwardPropagation*,
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const final;
+
+    void calculate_hidden_delta(MultiheadAttentionLayerForwardPropagation*,
+                                MultiheadAttentionLayerBackPropagation*,
+                                EmbeddingLayerBackPropagation*) const;
+
+    // Gradient methods
+
+    void calculate_error_gradient(const pair<type*, dimensions>&,
+                                  LayerForwardPropagation*,
+                                  LayerBackPropagation*) const final;
+
     // Expression methods
 
     //    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-    string write_activation_function_expression() const;
 
     // Serialization methods
     /// @todo
@@ -149,37 +140,33 @@ protected:
 
     /// Input dimension (i.e. number of values input can take or vocabulary size)
 
-    Index input_dim;
+    Index inputs_dimension;
 
     /// Length of each input entry (assuming equal length)
 
-    Index input_length;
+    Index inputs_length;
 
     /// Embedding depth
 
     Index depth;
 
-    /// Perceptron layer
+    /// Lookup table
 
-    PerceptronLayer perceptron_layer;
+    Tensor<type, 2> embedding_weights;
 
     /// Whether the layer has to add positional encoding or not
 
     bool positional_encoding;
-
-    /// Activation function variable.
-
-    PerceptronLayer::ActivationFunction activation_function;
 
     /// Display messages to screen.
 
     bool display = true;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#else
-    };
+    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
 #endif
+
+    };
 
     struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
     {
@@ -189,113 +176,114 @@ protected:
         {
         }
 
+
+        explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+            : LayerForwardPropagation()
+        {
+            set(new_batch_samples_number, new_layer);
+        }
+
+
         virtual ~EmbeddingLayerForwardPropagation()
         {
         }
-
-
-        explicit EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-            : LayerForwardPropagation()
+        
+        
+        pair<type*, dimensions> get_outputs_pair() const final
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+            const Index inputs_length = embedding_layer->get_input_length();
+
+            const Index depth = embedding_layer->get_depth();
+
+            return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_length, depth}});
         }
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            EmbeddingLayer* layer_pointer = static_cast<EmbeddingLayer*>(new_layer_pointer);
+            EmbeddingLayer* layer = static_cast<EmbeddingLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index input_length = layer_pointer->get_input_length();
+            const Index inputs_length = layer->get_input_length();
 
-            const Index depth = layer_pointer->get_depth();
+            const Index depth = layer->get_depth();
 
             // Outputs
 
-            outputs.resize(1);
-            Tensor<Index, 1> output_dimensions(3);
-            output_dimensions.setValues({batch_samples_number, input_length, depth});
-            outputs(0).set_dimensions(output_dimensions);
+            outputs.resize(batch_samples_number, inputs_length, depth);
 
-            // Rest of quantities
-
-            PerceptronLayer perceptron_layer = layer_pointer-> get_perceptron_layer();
-
-            perceptron_forward_propagation.set(input_length, &perceptron_layer);
+            outputs_data = outputs.data();
         }
+
 
         void print() const
         {
-            //            cout << "Attention scores:" << endl;
-            //            cout << attention_scores.dimensions() << endl;
+//            cout << "Attention scores:" << endl;
+//            cout << attention_scores.dimensions() << endl;
 
+//            cout << "Outputs dimensions:" << endl;
+//            cout << outputs_dimensions << endl;
 
-            //            cout << "Outputs dimensions:" << endl;
-            //            cout << outputs_dimensions << endl;
+//            cout << "Outputs:" << endl;
+//            cout << TensorMap<Tensor<type,3>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2)) << endl;
 
-            //            cout << "Outputs:" << endl;
-            //            cout << TensorMap<Tensor<type,3>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2)) << endl;
-
-            //            cout << "Attention scores:" << endl;
-            //            cout << attention_scores << endl;
+//            cout << "Attention scores:" << endl;
+//            cout << attention_scores << endl;
         }
 
-        PerceptronLayerForwardPropagation perceptron_forward_propagation;
+
+        void build_positional_encoding_matrix()
+        {
+            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+            const Index inputs_length = embedding_layer->get_input_length();
+            const Index depth = embedding_layer->get_depth();
+
+            positional_encoding.resize(inputs_length, depth);
+
+            positional_encoding.setZero();
+
+            const type half_depth = type(depth)/type(2);
+
+            #pragma omp parallel /*for collapse(2)*/
+
+            for(Index i = 0; i < inputs_length; i++)
+            {
+                for(Index j = 0; j < Index(half_depth - 1); j++)
+                {
+                    positional_encoding(i, 2*j) = type(sin( (i + 1) / pow(10000, (j + 1) / half_depth) ));
+                    positional_encoding(i, 2*j+1) = type(cos( (i + 1) / pow(10000, (j + 1) / half_depth) ));
+                }
+            }
+
+            if(depth % 2 == 0)
+            {
+                for(Index i = 0; i < inputs_length; i++)
+                {
+                    positional_encoding(i, depth - 2) = type(sin( (i+1) / 10000 ));
+                    positional_encoding(i, depth - 1) = type(cos( (i+1) / 10000 ));
+                }
+            }
+            else
+            {
+                for(Index i = 0; i < inputs_length; i++)
+                {
+                    positional_encoding(i, depth - 1) = type(sin( (i+1) / 10000 ));
+                }
+            }
+
+            built_positional_encoding_matrix = true;
+        }
+
+        bool built_positional_encoding_matrix = false;
+
+        Tensor<type, 2> positional_encoding;
+
+        Tensor<type, 3> outputs;
     };
-
-
-    struct EmbeddingLayerBackPropagationLM : LayerBackPropagationLM
-    {
-        // Default constructor
-
-        explicit EmbeddingLayerBackPropagationLM() : LayerBackPropagationLM()
-        {
-
-        }
-
-
-        explicit EmbeddingLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-            : LayerBackPropagationLM()
-        {
-            set(new_batch_samples_number, new_layer_pointer);
-        }
-
-
-        virtual ~EmbeddingLayerBackPropagationLM()
-        {
-
-        }
-
-        /// @todo
-        /*
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
-
-            batch_samples_number = new_batch_samples_number;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-            const Index parameters_number = layer_pointer->get_parameters_number();
-
-            deltas.resize(batch_samples_number, neurons_number);
-
-            squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-        }
-
-        void print() const
-        {
-            cout << "Deltas:" << endl;
-            cout << deltas << endl;
-
-            cout << "Squared errors Jacobian: " << endl;
-            cout << squared_errors_Jacobian << endl;
-
-        }
-
-        Tensor<type, 2> squared_errors_Jacobian;
-*/
-    };
-
 
 
     struct EmbeddingLayerBackPropagation : LayerBackPropagation
@@ -307,51 +295,40 @@ protected:
 
         }
 
+
+        explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+            : LayerBackPropagation()
+        {
+            set(new_batch_samples_number, new_layer);
+        }
+
+
         virtual ~EmbeddingLayerBackPropagation()
         {
         }
 
 
-        explicit EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-            : LayerBackPropagation()
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            set(new_batch_samples_number, new_layer_pointer);
-        }
+            layer = new_layer;
 
-        /// @todo
-        /*
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
+            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
-            const Index neurons_number = layer_pointer->get_neurons_number();
-            const Index inputs_number = layer_pointer->get_inputs_number();
+            const Index inputs_length = embedding_layer->get_input_length();
 
-            deltas_dimensions.resize(2);
-            deltas_dimensions.setValues({batch_samples_number, neurons_number});
+            const Index depth = embedding_layer->get_depth();
 
-            deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+            // Deltas
 
-            biases_derivatives.resize(neurons_number);
+            deltas.resize(batch_samples_number, inputs_length, depth);
 
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+            deltas_data = deltas.data();
 
-            deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
-        }
+            const Index input_dimension = embedding_layer->get_input_dimension();
 
-        Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-        {
-            Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
-
-            const Index inputs_number = layer_pointer->get_inputs_number();
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
-            layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
-
-            return layer_gradient;
+            embedding_weights_derivatives.resize(input_dimension, depth);
         }
 
 
@@ -360,18 +337,15 @@ protected:
             cout << "Deltas:" << endl;
             //cout << deltas << endl;
 
-            cout << "Biases derivatives:" << endl;
-            cout << biases_derivatives << endl;
-
-            cout << "Synaptic weights derivatives:" << endl;
-            cout << synaptic_weights_derivatives << endl;
         }
 
-        Tensor<type, 1> biases_derivatives;
-        Tensor<type, 2> synaptic_weights_derivatives;
 
-        Tensor<type, 2> deltas_times_activations_derivatives;
-*/
+        Tensor<type, 3> deltas;
+
+        Tensor<type, 2> embedding_weights_derivatives;
+
+        //Tensor<type, 3> error_combinations_derivatives;
+
     };
 
 }
@@ -380,7 +354,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

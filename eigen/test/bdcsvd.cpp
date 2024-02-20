@@ -54,18 +54,44 @@ void bdcsvd_method()
   VERIFY_IS_APPROX(m.bdcSvd(ComputeFullU|ComputeFullV).adjoint().solve(m), m);
 }
 
-// compare the Singular values returned with Jacobi and Bdc
+// Compare the Singular values returned with Jacobi and Bdc.
 template<typename MatrixType> 
-void compare_bdc_jacobi(const MatrixType& a = MatrixType(), unsigned int computationOptions = 0)
+void compare_bdc_jacobi(const MatrixType& a = MatrixType(), unsigned int computationOptions = 0, int algoswap = 16, bool random = true)
 {
-  MatrixType m = MatrixType::Random(a.rows(), a.cols());
-  BDCSVD<MatrixType> bdc_svd(m);
+  MatrixType m = random ? MatrixType::Random(a.rows(), a.cols()) : a;
+
+  BDCSVD<MatrixType> bdc_svd(m.rows(), m.cols(), computationOptions);
+  bdc_svd.setSwitchSize(algoswap);
+  bdc_svd.compute(m);
+
   JacobiSVD<MatrixType> jacobi_svd(m);
   VERIFY_IS_APPROX(bdc_svd.singularValues(), jacobi_svd.singularValues());
+
   if(computationOptions & ComputeFullU) VERIFY_IS_APPROX(bdc_svd.matrixU(), jacobi_svd.matrixU());
   if(computationOptions & ComputeThinU) VERIFY_IS_APPROX(bdc_svd.matrixU(), jacobi_svd.matrixU());
   if(computationOptions & ComputeFullV) VERIFY_IS_APPROX(bdc_svd.matrixV(), jacobi_svd.matrixV());
   if(computationOptions & ComputeThinV) VERIFY_IS_APPROX(bdc_svd.matrixV(), jacobi_svd.matrixV());
+}
+
+// Verifies total deflation is **not** triggered.
+void compare_bdc_jacobi_instance(bool structure_as_m, int algoswap = 16)
+{
+  MatrixXd m(4, 3);
+  if (structure_as_m) {
+    // The first 3 rows are the reduced form of Matrix 1 as shown below, and it
+    // has nonzero elements in the first column and diagonals only.
+    m << 1.056293, 0, 0,
+         -0.336468, 0.907359, 0,
+         -1.566245, 0, 0.149150,
+         -0.1, 0, 0;
+  } else {
+    // Matrix 1.
+    m << 0.882336, 18.3914, -26.7921,
+         -5.58135, 17.1931, -24.0892,
+         -20.794, 8.68496, -4.83103,
+         -8.4981, -10.5451, 23.9072;
+  }
+  compare_bdc_jacobi(m, 0, algoswap, false);
 }
 
 EIGEN_DECLARE_TEST(bdcsvd)
@@ -114,5 +140,13 @@ EIGEN_DECLARE_TEST(bdcsvd)
   // CALL_SUBTEST_9( svd_preallocate<void>() );
 
   CALL_SUBTEST_2( svd_underoverflow<void>() );
+
+  // Without total deflation issues.
+  CALL_SUBTEST_11((  compare_bdc_jacobi_instance(true) ));
+  CALL_SUBTEST_12((  compare_bdc_jacobi_instance(false) ));
+
+  // With total deflation issues before, when it shouldn't be triggered.
+  CALL_SUBTEST_13((  compare_bdc_jacobi_instance(true, 3) ));
+  CALL_SUBTEST_14((  compare_bdc_jacobi_instance(false, 3) ));
 }
 

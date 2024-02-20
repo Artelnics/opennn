@@ -27,8 +27,8 @@ void TrainingStrategyTest::test_constructor()
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    assert_true(training_strategy.get_neural_network_pointer() != nullptr, LOG);
-    assert_true(training_strategy.get_data_set_pointer() != nullptr, LOG);
+    assert_true(training_strategy.get_neural_network() != nullptr, LOG);
+    assert_true(training_strategy.get_data_set() != nullptr, LOG);
 }
 
 
@@ -36,9 +36,9 @@ void TrainingStrategyTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
+    TrainingStrategy* training_strategy = new TrainingStrategy(&neural_network, &data_set);
 
-    delete training_strategy_pointer;
+    delete training_strategy;
 }
 
 
@@ -73,12 +73,12 @@ void TrainingStrategyTest::test_perform_training()
     data_set.set_data(data);
     data_set.set_training();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, neurons_number, targets_number});
     neural_network.set_parameters_random();
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
     training_strategy.set_maximum_epochs_number(10);
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L1);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L1);
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
@@ -183,7 +183,7 @@ void TrainingStrategyTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

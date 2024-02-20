@@ -79,11 +79,11 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, outputs_number});
         neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -92,7 +92,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &weighted_squared_error);
         weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = weighted_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -102,7 +102,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
 
     }
 
@@ -129,11 +129,11 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         // Neural network
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number, neurons_number, outputs_number});
         neural_network.set_parameters_random();
 
         forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch, forward_propagation, is_training);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
         // Loss index
 
@@ -142,13 +142,13 @@ void WeightedSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &weighted_squared_error);
         weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        numerical_differentiation_gradient = weighted_squared_error.calculate_numerical_differentiation_gradient();
+        numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_differentiation_gradient, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
 }
 
@@ -170,7 +170,7 @@ void WeightedSquaredErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lewser General Public

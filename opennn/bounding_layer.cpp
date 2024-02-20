@@ -67,7 +67,7 @@ type BoundingLayer::get_lower_bound(const Index& i) const
                << "type get_lower_bound(const Index&) const method.\n"
                << "Index must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -109,7 +109,7 @@ type BoundingLayer::get_upper_bound(const Index& i) const
                << "type get_upper_bound(const Index&) const method.\n"
                << "Number of bounding neurons is zero.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
     else if(i >= neurons_number)
     {
@@ -119,7 +119,7 @@ type BoundingLayer::get_upper_bound(const Index& i) const
                << "type get_upper_bound(const Index&) const method.\n"
                << "Index must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -231,7 +231,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
                << "void set_bounding_method(const string&) method.\n"
                << "Unknown bounding method: " << new_method_string << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -288,7 +288,7 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
                << "void set_lower_bound(const Index&, const type&) method.\n"
                << "Index of bounding neurons must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -322,7 +322,7 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
                << "void set_lower_bounds(const Tensor<type, 1>&) method.\n"
                << "Size must be equal to number of bounding neurons number.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -352,12 +352,6 @@ void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
 
 void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
-#ifdef OPENNN_DEBUG
-check_size(new_upper_bounds, get_neurons_number(), LOG);
-#endif
-
-    // Set upper bound of neurons
-
     upper_bounds = new_upper_bounds;
 }
 
@@ -381,7 +375,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
                << "void set_upper_bound(const Index&, const type&) method.\n"
                << "Index of bounding neuron must be less than number of bounding neurons.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -397,60 +391,40 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(const Tensor<DynamicTensor<type>, 1>& inputs,
+void BoundingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
                                       LayerForwardPropagation* forward_propagation,
                                       const bool& is_training)
 {
+    const TensorMap<Tensor<type,2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation
             = static_cast<BoundingLayerForwardPropagation*>(forward_propagation);
 
-#ifdef OPENNN_DEBUG
-    if(inputs_dimensions(1) != get_inputs_number())
-    {
-        ostringstream buffer;
+    Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "void forward_propagate method.\n"
-               << "Inputs columns number must be equal to " << get_inputs_number() <<" (inputs number).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
-
-    const Tensor<Index, 1> inputs_dimensions = inputs(0).get_dimensions();
+    outputs.device(*thread_pool_device) = inputs;
 
     if(bounding_method == BoundingMethod::Bounding)
     {
-        const Index rows_number = inputs_dimensions(0);
-        const Index columns_number = inputs_dimensions(1);
+        const Index rows_number = inputs.dimension(0);
+        const Index raw_variables_number = inputs.dimension(1);
 
-        TensorMap<Tensor<type,2>> inputs_map = inputs(0).to_tensor_map<2>();
-
-        TensorMap<Tensor<type,2>> outputs = bounding_layer_forward_propagation->outputs(0).to_tensor_map<2>();
+        #pragma omp parallel for
 
         for(Index i = 0; i < rows_number; i++)
         {
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < raw_variables_number; j++)
             {
-                if(inputs_map(i,j) < lower_bounds(j))
+                if(inputs(i,j) < lower_bounds(j))
                 {
                     outputs(i,j) = lower_bounds(j);
                 }
-                else if(inputs_map(i,j) > upper_bounds(j))
+                else if(inputs(i,j) > upper_bounds(j))
                 {
                     outputs(i,j) = upper_bounds(j);
                 }
-                else
-                {
-                    outputs(i,j) = inputs_map(i,j);
-                }
             }
         }
-    }
-    else
-    {
-        Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
-        copy(inputs(0).get_data(), inputs(0).get_data() + inputs_size(0), bounding_layer_forward_propagation->outputs(0).get_data());
     }
 }
 
@@ -475,7 +449,7 @@ string BoundingLayer::write_bounding_method() const
                << "string write_bounding_method() const method.\n"
                << "Unknown bounding method.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -583,7 +557,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
                << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                << "Unknown bounding method type.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     file_stream.PushText(buffer.str().c_str());
@@ -622,7 +596,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "BoundingLayer element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Bounding neurons number
@@ -635,10 +609,10 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "BoundingNeuronsNumber element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
+    const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
@@ -659,7 +633,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                        << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                        << "Item " << i+1 << " is nullptr.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             item_element->QueryUnsignedAttribute("Index", &index);
@@ -670,7 +644,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                        << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                        << "Index " << index << " is not correct.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
 
             // Lower bound
@@ -681,7 +655,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 if(lower_bound_element->GetText())
                 {
-                    lower_bounds[index-1] = static_cast<type>(atof(lower_bound_element->GetText()));
+                    lower_bounds[index-1] = type(atof(lower_bound_element->GetText()));
                 }
             }
 
@@ -693,7 +667,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 if(upper_bound_element->GetText())
                 {
-                    upper_bounds[index-1] = static_cast<type>(atof(upper_bound_element->GetText()));
+                    upper_bounds[index-1] = type(atof(upper_bound_element->GetText()));
                 }
             }
         }
@@ -705,7 +679,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(use_bounding_layer_element)
         {
-            Index new_method = static_cast<Index>(atoi(use_bounding_layer_element->GetText()));
+            Index new_method = Index(atoi(use_bounding_layer_element->GetText()));
 
             if(new_method == 1)
             {
@@ -721,7 +695,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
                        << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                        << "Unknown bounding method.\n";
 
-                throw invalid_argument(buffer.str());
+                throw runtime_error(buffer.str());
             }
         }
     }
@@ -730,7 +704,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

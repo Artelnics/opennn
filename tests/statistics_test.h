@@ -24,27 +24,20 @@ public:
 
    virtual ~StatisticsTest();
 
-   // Descriptives
-
-   void test_set_mean();
-   void test_set_standard_deviation();
-   void test_has_mean_zero_standard_deviation_one();
-   void test_has_minimum_minus_one_maximum_one();
-
    // Minimum
 
-   void test_set_minimum();
    void test_minimum();
 
    // Maximun
 
-   void test_set_maximum();
    void test_maximum();
 
    // Mean
+
    void test_mean();
 
    // Median
+
    void test_median();
 
    // Variance
@@ -102,7 +95,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

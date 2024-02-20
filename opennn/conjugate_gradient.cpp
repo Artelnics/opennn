@@ -7,7 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "conjugate_gradient.h"
-#include "training_strategy.h"
+#include "neural_network_forward_propagation.h"
+#include "loss_index_back_propagation.h"
 
 namespace opennn
 {
@@ -26,12 +27,12 @@ ConjugateGradient::ConjugateGradient()
 /// Loss index constructor.
 /// It creates a conjugate gradient optimization algorithm associated with a loss index object.
 /// It also initializes the rest of the class members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
-    : OptimizationAlgorithm(new_loss_index_pointer)
+ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index)
+    : OptimizationAlgorithm(new_loss_index)
 {
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    learning_rate_algorithm.set_loss_index(new_loss_index);
 
     set_default();
 }
@@ -48,19 +49,19 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 {
 
 #ifdef OPENNN_DEBUG
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "void calculate_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_gradient_size = old_gradient.size();
@@ -71,7 +72,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -82,7 +83,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -94,7 +95,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "Size of old training direction (" << old_training_direction_size
                << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -125,19 +126,19 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
 
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     const Index old_gradient_size = old_gradient.size();
 
@@ -147,7 +148,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -158,7 +159,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -184,11 +185,11 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     // Bound the Fletcher-Reeves parameter between 0 and 1
 
-    if(FR_parameter < static_cast<type>(0.0))
+    if(FR_parameter < type(0.0))
     {
         FR_parameter = type(0);
     }
-    else if(FR_parameter > static_cast<type>(1.0))
+    else if(FR_parameter > type(1.0))
     {
         FR_parameter = type(1);
     }
@@ -211,18 +212,18 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "void calculate_FR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     const Index old_gradient_size = old_gradient.size();
 
@@ -232,7 +233,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -243,7 +244,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -255,7 +256,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "Size of old training direction (" << old_training_direction_size
                << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -286,18 +287,18 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     const Index old_gradient_size = old_gradient.size();
 
@@ -307,7 +308,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -318,7 +319,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -344,11 +345,11 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     // Bound the Polak-Ribiere parameter between 0 and 1
 
-    if(PR_parameter < static_cast<type>(0.0))
+    if(PR_parameter < type(0.0))
     {
         PR_parameter = type(0);
     }
-    else if(PR_parameter > static_cast<type>(1.0))
+    else if(PR_parameter > type(1.0))
     {
         PR_parameter = type(1);
     }
@@ -371,18 +372,18 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
 
     ostringstream buffer;
 
-    if(!loss_index_pointer)
+    if(!loss_index)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "void calculate_PR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     const Index old_gradient_size = old_gradient.size();
 
@@ -392,7 +393,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -403,7 +404,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -415,7 +416,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "Size of old training direction(" << old_training_direction_size
                << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -436,7 +437,7 @@ const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() co
 
 /// Returns a pointer to the learning rate algorithm object inside the conjugate gradient method object.
 
-LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
+LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm()
 {
     return &learning_rate_algorithm;
 }
@@ -545,13 +546,13 @@ void ConjugateGradient::set_default()
 
 /// Sets a pointer to a loss index object to be associated with the conjugate gradient object.
 /// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// @param new_loss_index Pointer to a loss index object.
 
-void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void ConjugateGradient::set_loss_index(LossIndex* new_loss_index)
 {
-    loss_index_pointer = new_loss_index_pointer;
+    loss_index = new_loss_index;
 
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    learning_rate_algorithm.set_loss_index(new_loss_index);
 }
 
 
@@ -592,7 +593,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
                << "void set_training_direction_method(const string&) method.\n"
                << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 }
 
@@ -632,7 +633,7 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_time < static_cast<type>(0.0))
+    if(new_maximum_time < type(0.0))
     {
         ostringstream buffer;
 
@@ -640,7 +641,7 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -676,7 +677,7 @@ void ConjugateGradient::set_save_period(const Index& new_save_period)
                << "void set_save_period(const type&) method.\n"
                << "Save period must be greater than 0.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
 #endif
@@ -709,25 +710,25 @@ TrainingResults ConjugateGradient::perform_training()
 
     cout << "----- ConjugateGradient ----" << endl;
 
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    DataSet* data_set = loss_index->get_data_set();
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
-    const bool has_selection = data_set_pointer->has_selection();
+    const Index training_samples_number = data_set->get_training_samples_number();
+    const Index selection_samples_number = data_set->get_selection_samples_number();
+    const bool has_selection = data_set->has_selection();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set->get_selection_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set->get_target_variables_indices();
 
-    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
-    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+    const Tensor<string, 1> inputs_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set->get_target_variables_names();
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
 
 //    cout << "Training samples number: " << training_samples_number << endl;
@@ -742,39 +743,39 @@ TrainingResults ConjugateGradient::perform_training()
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network_pointer->has_scaling_layer())
+    if(neural_network->has_scaling_layer())
     {
-        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
-        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        scaling_layer_2d->set(input_variables_descriptives, input_variables_scalers);
     }
 
-    if(neural_network_pointer->has_unscaling_layer())
+    if(neural_network->has_unscaling_layer())
     {
-        target_variables_descriptives = data_set_pointer->scale_target_variables();
+        target_variables_descriptives = data_set->scale_target_variables();
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
-    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
+    ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     // Loss index
 
     string information;
 
-    loss_index_pointer->set_normalization_coefficient();
+    loss_index->set_normalization_coefficient();
 
-    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_samples_number, loss_index);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index);
 
     // Optimization algorithm
 
@@ -797,11 +798,11 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation, is_training);
+        neural_network->forward_propagate(training_batch.get_inputs_pair(), training_forward_propagation, is_training);
 
         // Loss index
 
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
         // Update parameters
@@ -810,10 +811,10 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation, is_training);
 
-            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            neural_network->forward_propagate(selection_batch.get_inputs_pair(), selection_forward_propagation, is_training);
+
+            loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
 
@@ -823,7 +824,7 @@ TrainingResults ConjugateGradient::perform_training()
         // Optimization algorithm
 
         time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         if(display && epoch%display_period == 0)
         {
@@ -904,41 +905,13 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Update stuff
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
     }
 
+    data_set->unscale_input_variables(input_variables_descriptives);
 
-    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
-    {
-        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
-        type* input_data = inputs.data();
-
-//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
-        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
-
-        type* outputs_data = outputs.data();
-
-        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Descriptives distances_descriptives(samples_distances);
-
-        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-
-        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
-        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
-
-        neural_network_pointer->set_distances_box_plot(distances_box_plot);
-        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
-        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
-        neural_network_pointer->set_distances_descriptives(distances_descriptives);
-    }
-
-    data_set_pointer->unscale_input_variables(input_variables_descriptives);
-
-    if(neural_network_pointer->has_unscaling_layer())
-        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    if(neural_network->has_unscaling_layer())
+        data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -965,27 +938,27 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     // Learning rate tolerance
 
     labels_values(2,0) = "Learning rate tolerance";
-    labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
+    labels_values(2,1) = std::to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
 
     // Minimum loss decrease
 
     labels_values(3,0) = "Minimum loss decrease";
-    labels_values(3,1) = to_string(double(minimum_loss_decrease));
+    labels_values(3,1) = std::to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(4,0) = "Loss goal";
-    labels_values(4,1) = to_string(double(training_loss_goal));
+    labels_values(4,1) = std::to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 
     labels_values(5,0) = "Maximum selection error increases";
-    labels_values(5,1) = to_string(maximum_selection_failures);
+    labels_values(5,1) = std::to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
     labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = to_string(maximum_epochs_number);
+    labels_values(6,1) = std::to_string(maximum_epochs_number);
 
     // Maximum time
 
@@ -1004,8 +977,8 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
 void ConjugateGradient::update_parameters(
         const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
-        LossIndexBackPropagation& back_propagation,
+        ForwardPropagation& forward_propagation,
+        BackPropagation& back_propagation,
         ConjugateGradientData& optimization_data) const
 {
     const Index parameters_number = back_propagation.parameters.dimension(0);
@@ -1094,7 +1067,7 @@ void ConjugateGradient::update_parameters(
 
     // Update parameters
 
-    forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
+    forward_propagation.neural_network->set_parameters(back_propagation.parameters);
 }
 
 
@@ -1231,7 +1204,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Conjugate gradient element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw runtime_error(buffer.str());
     }
 
     // Training direction method
@@ -1246,7 +1219,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_training_direction_method(new_training_direction_method);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1276,13 +1249,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(minimum_loss_decrease_element)
     {
-        const type new_minimum_loss_decrease = static_cast<type>(atof(minimum_loss_decrease_element->GetText()));
+        const type new_minimum_loss_decrease = type(atof(minimum_loss_decrease_element->GetText()));
 
         try
         {
             set_minimum_loss_decrease(new_minimum_loss_decrease);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1295,13 +1268,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(loss_goal_element)
     {
-        const type new_loss_goal = static_cast<type>(atof(loss_goal_element->GetText()));
+        const type new_loss_goal = type(atof(loss_goal_element->GetText()));
 
         try
         {
             set_loss_goal(new_loss_goal);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1314,13 +1287,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(maximum_selection_failures_element)
     {
-        const Index new_maximum_selection_failures = static_cast<Index>(atoi(maximum_selection_failures_element->GetText()));
+        const Index new_maximum_selection_failures = Index(atoi(maximum_selection_failures_element->GetText()));
 
         try
         {
             set_maximum_selection_failures(new_maximum_selection_failures);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1333,13 +1306,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(maximum_iterations_number_element)
     {
-        const Index new_maximum_iterations_number = static_cast<Index>(atoi(maximum_iterations_number_element->GetText()));
+        const Index new_maximum_iterations_number = Index(atoi(maximum_iterations_number_element->GetText()));
 
         try
         {
             set_maximum_epochs_number(new_maximum_iterations_number);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1352,13 +1325,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(maximum_time_element)
     {
-        const type new_maximum_time = static_cast<type>(atof(maximum_time_element->GetText()));
+        const type new_maximum_time = type(atof(maximum_time_element->GetText()));
 
         try
         {
             set_maximum_time(new_maximum_time);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1371,13 +1344,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(display_period_element)
     {
-        const Index new_display_period = static_cast<Index>(atoi(display_period_element->GetText()));
+        const Index new_display_period = Index(atoi(display_period_element->GetText()));
 
         try
         {
             set_display_period(new_display_period);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1390,13 +1363,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     if(element)
     {
-        const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
+        const Index new_save_period = Index(atoi(element->GetText()));
 
         try
         {
             set_save_period(new_save_period);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1414,7 +1387,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_neural_network_file_name(new_neural_network_file_name);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1433,7 +1406,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display != "0");
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1452,7 +1425,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_hardware_use(new_hardware_use);
         }
-        catch(const invalid_argument& e)
+        catch(const exception& e)
         {
             cerr << e.what() << endl;
         }
@@ -1469,23 +1442,23 @@ ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
 
 
 /// Loss index constructor.
-/// @param new_conjugate_gradient_pointer New conjugate gradient method pointer.
+/// @param new_conjugate_gradient New conjugate gradient method pointer.
 
-ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationAlgorithmData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient) : OptimizationAlgorithmData()
 {
-    set(new_conjugate_gradient_pointer);
+    set(new_conjugate_gradient);
 }
 
 
-void ConjugateGradientData::set(ConjugateGradient* new_conjugate_gradient_pointer)
+void ConjugateGradientData::set(ConjugateGradient* new_conjugate_gradient)
 {
-    conjugate_gradient_pointer = new_conjugate_gradient_pointer;
+    conjugate_gradient = new_conjugate_gradient;
 
-    const LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index = conjugate_gradient->get_loss_index();
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
     potential_parameters.resize(parameters_number);
 

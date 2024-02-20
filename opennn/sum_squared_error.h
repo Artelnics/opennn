@@ -48,28 +48,28 @@ public:
    // Back propagation
 
    void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const override;
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
    void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
    // Back propagation LM
 
    void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+                           const ForwardPropagation&,
+                           BackPropagationLM&) const final;
 
    void calculate_output_delta_lm(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagationLM&) const final;
+                                  ForwardPropagation&,
+                                  BackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+                              BackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const DataSetBatch&,
-                                        LossIndexBackPropagationLM&) const final;
+                                        BackPropagationLM&) const final;
 
    // Serialization methods
 
@@ -93,7 +93,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

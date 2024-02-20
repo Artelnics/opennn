@@ -18,3 +18,30 @@
 [0722/174602.635:ERROR:ssl_client_socket_impl.cc(960)] handshake failed; returned -1, SSL error code 1, net_error -202
 [0722/174653.104:ERROR:ssl_client_socket_impl.cc(960)] handshake failed; returned -1, SSL error code 1, net_error -202
 [0722/174653.111:ERROR:ssl_client_socket_impl.cc(960)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133451.244:WARNING:policy_logger.cc(148)] :components\enterprise\browser\controller\chrome_browser_cloud_management_controller.cc(88) Could not create policy manager as CBCM is not enabled.
+[0122/133452.083:WARNING:dxgi_swap_chain_image_backing.cc(208)] First draw to surface should draw to everything
+[0122/133459.904:ERROR:cert_verify_proc_builtin.cc(701)] CertVerifyProcBuiltin for 127.0.0.1 failed:
+----- Certificate i=0 (CN=kubernetes.docker.internal) -----
+ERROR: No matching issuer found
+
+
+[0122/133459.904:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.032:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.034:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.038:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.042:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.045:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.045:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.045:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.058:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.064:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.068:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.071:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.078:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.078:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.078:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.078:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.093:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133500.875:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133615.599:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202
+[0122/133615.605:ERROR:ssl_client_socket_impl.cc(968)] handshake failed; returned -1, SSL error code 1, net_error -202

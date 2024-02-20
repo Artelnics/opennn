@@ -23,7 +23,6 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tensor_utilities.h"
 #include "loss_index.h"
 
 namespace opennn
@@ -52,7 +51,7 @@ public:
 
    // Get methods
 
-   LossIndex* get_loss_index_pointer() const;
+   LossIndex* get_loss_index() const;
 
    /// Hardware use.
    string get_hardware_use() const;
@@ -82,7 +81,7 @@ public:
 
    virtual void set_threads_number(const int&);
 
-   virtual void set_loss_index_pointer(LossIndex*);
+   virtual void set_loss_index(LossIndex*);
 
    virtual void set_display(const bool&);
 
@@ -99,7 +98,7 @@ public:
 
    virtual void check() const;
 
-   /// Trains a neural network which has a loss index associated. 
+   /// Trains a neural network which has a loss index associated.
 
    virtual TrainingResults perform_training() = 0;
 
@@ -125,7 +124,7 @@ protected:
 
    /// Pointer to a loss index for a neural network object.
 
-   LossIndex* loss_index_pointer = nullptr;
+   LossIndex* loss_index = nullptr;
 
    /// Number of training epochs in the neural network.
 
@@ -229,29 +228,15 @@ struct TrainingResults
         return training_error_history(size-1);
     }
 
-    type get_selection_error()
+    type get_selection_error() const
     {
         const Index size = selection_error_history.size();
 
         return selection_error_history(size-1);
     }
 
-    type get_loss()
-    {
-        return loss;
-    }
 
-    type get_loss_decrease()
-    {
-        return loss_decrease;
-    }
-
-    Index get_selection_failures()
-    {
-        return selection_failures;
-    }
-
-    Index get_epochs_number()
+    Index get_epochs_number() const
     {
         return training_error_history.size() - 1;
     }
@@ -308,11 +293,11 @@ struct TrainingResults
 
     string elapsed_time;
 
-    type loss;
+    type loss = NAN;
 
-    Index selection_failures;
+    Index selection_failures = 0;
 
-    type loss_decrease;
+    type loss_decrease = type(0);
 };
 
 }
@@ -321,7 +306,7 @@ struct TrainingResults
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

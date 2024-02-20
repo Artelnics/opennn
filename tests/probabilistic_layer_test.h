@@ -28,24 +28,11 @@ public:
 
     void test_destructor();
 
-    // Set methods
-
-    void test_set();
-    void test_set_default();
-    void test_set_biases();
-    void test_set_synaptic_weights();
-    void test_set_parameters();
-    void test_set_decision_threshold();
-
-    // Activation function
-
-    void test_set_activation_function();
+    // Forward propagate
 
     void test_calculate_combinations();
     void test_calculate_activations();
     void test_calculate_activations_derivatives();
-
-    // Forward propagate
 
     void test_forward_propagate();
 
@@ -60,10 +47,25 @@ public:
 
 private:
 
-    Index inputs_number;
-    Index outputs_number;
-    Index neurons_number;
-    Index samples_number;
+    Index inputs_number = 0;
+    Index outputs_number = 0;
+    Index neurons_number = 0;
+    Index samples_number = 0;
+
+    Tensor<type, 1> biases;
+    Tensor<type, 2> synaptic_weights;
+    Tensor<type, 1> parameters;
+
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
+    Tensor<type, 2> activations_derivatives_2d;
+    Tensor<type, 3> activations_derivatives_3d;
+
+    pair<type*, dimensions> inputs_pair;
+
+    bool is_training = true;
 
     ProbabilisticLayer probabilistic_layer;
 
@@ -78,7 +80,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
