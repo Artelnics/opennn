@@ -221,10 +221,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
-#else
-};
 #endif
 
+};
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {

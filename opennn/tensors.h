@@ -56,11 +56,12 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 // Sum
 
-void sum_raw_variables(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
+void sum_diagonal(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 // Multiplication
 
@@ -68,10 +69,14 @@ void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
 void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&);
+void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&);
+
+void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 
 // Division
 
-void divide_raw_variables(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 // Checking
 
@@ -239,6 +244,9 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
+
+
+const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
 
 }
 

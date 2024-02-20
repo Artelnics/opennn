@@ -3,8 +3,6 @@
 
 #define NUMERIC_LIMITS_MIN type(0.000001)
 
-//#define OPENNN_CUDA
-
 //Eigen includes
 
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
@@ -26,12 +24,11 @@
 #include <algorithm>
 #include <execution>
 
-//#pragma warning(pop)
 
+//#define OPENNN_CUDA
 #ifdef OPENNN_CUDA
 
 #include "../../opennn-cuda/opennn-cuda/kernel.cuh"
-
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"

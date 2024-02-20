@@ -34,7 +34,7 @@ struct EmbeddingLayerBackPropagation;
 struct EmbeddingLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
 
 
@@ -163,10 +163,10 @@ protected:
     bool display = true;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#else
-    };
+    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
 #endif
+
+    };
 
     struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
     {

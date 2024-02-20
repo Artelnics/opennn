@@ -146,7 +146,7 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());
 
-    divide_raw_variables(thread_pool_device,
+    divide_columns(thread_pool_device,
                    output_layer_back_propagation->deltas,
                    loss_index_back_propagation.squared_errors);
 }

@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef DATASET_H
-#define DATASET_H
+#ifndef SET_H
+#define SET_H
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 // System includes
@@ -856,11 +856,6 @@ protected:
 
     bool display = true;     
 };
-
-
-#ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/data_set_cuda.h"
-#endif
 
 }
 

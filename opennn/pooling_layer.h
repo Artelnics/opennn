@@ -180,9 +180,9 @@ protected:
     const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
     const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
 
-//#ifdef OPENNN_CUDA
-//#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+#endif
 
 };
 
@@ -333,9 +333,9 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
 };
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
+#endif
 
 
 }
