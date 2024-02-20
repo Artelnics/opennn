@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "tensor_utilities.h"
+#include "../eigen/Eigen/Dense"
 
 
 namespace opennn {
@@ -441,61 +442,12 @@ protected:
 
     /// @todo inefficient code
 
-    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
-    {
-        const Index rows_number = x.dimension(0);
-        const Index raw_variables_number = x.dimension(1);
+    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const;
 
-        softmax(x, y);
+    void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
 
-        dy_dx.setZero();
-
-        Tensor<type, 1> y_row(raw_variables_number);
-        Tensor<type, 2> dy_dx_matrix(raw_variables_number, raw_variables_number);
-
-        for (Index i = 0; i < rows_number; i++)
-        {
-            y_row = y.chip(i, 0);
-
-            dy_dx_matrix = -kronecker_product(y_row, y_row);
-
-            sum_diagonal(dy_dx_matrix, y_row);
-
-            dy_dx.chip(i, 0) = dy_dx_matrix;
-        }
-    }
-
-
-    void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
-    {
-        const Index rows_number = x.dimension(0);
-        const Index raw_variables_number = x.dimension(1);
-        const Index channels_number = x.dimension(2);
-
-        softmax(x, y);
-
-        dy_dx.setZero();
-
-        Tensor<type, 2> y_row(raw_variables_number, channels_number);
-        Tensor<type, 1> y_element(channels_number);
-        Tensor<type, 2> dy_dx_element(channels_number, channels_number);
-
-        for (Index i = 0; i < rows_number; i++)
-        {
-            y_row = y.chip(i, 0);
-
-            for (Index j = 0; j < raw_variables_number; j++)
-            {
-                y_element = y_row.chip(j, 0);
-
-                dy_dx_element = -kronecker_product(y_element, y_element);
-
-                sum_diagonal(dy_dx_element, y_element);
-
-                dy_dx.chip(i, 0).chip(j, 0) = dy_dx_element;
-            }
-        }
-    }
+    void softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
+    
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};

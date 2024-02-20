@@ -223,21 +223,55 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 }
 
 
-void divide_raw_variables(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
-    const Index raw_variables_number = matrix.dimension(1);
+    Index columns_number = vector.size();
 
-    for(Index j = 0; j < raw_variables_number; j++)
+#pragma omp parallel for
+
+    for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
+        TensorMap<Tensor<type, 1>>  column = tensor_map(matrix, i);
 
-        column.device(*thread_pool_device) = column/vector(j);
+        column.device(*thread_pool_device) = vector * vector(i);
     }
 }
 
 
-void sum_raw_variables(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+#pragma omp parallel for
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
+
+        column.device(*thread_pool_device) = column / vector(j);
+    }
+}
+
+
+void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+#pragma omp parallel for
+
+    for (Index j = 0; j < channels_number; j++)
+    {
+        TensorMap<Tensor<type, 2>> channel(tensor.data() + j * rows_number*columns_number, rows_number, columns_number);
+
+        channel.device(*thread_pool_device) = channel / matrix;
+    }
+}
+
+
+void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1093,6 +1127,17 @@ void sum_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
 }
 
 
+void sum_diagonal(TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& values)
+{
+    const Index rows_number = matrix.dimension(0);
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < rows_number; i++)
+        matrix(i, i) += values(i);
+}
+
+
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
@@ -1845,11 +1890,9 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
 {
-    type* a = nullptr;
+    TensorMap<Tensor<type, 1>> column((type*) matrix.data() + column_index * matrix.dimension(0), matrix.dimension(0));
 
-    TensorMap<Tensor<type, 1>> b(a, 1);
-
-    return b;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
+    return column;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
 }
 
 }
