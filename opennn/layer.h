@@ -264,23 +264,14 @@ protected:
     template <int rank>
     void symmetric_threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        Tensor<type, 1> ones(x.dimension(0));
-        ones.setConstant(type(1));
-
-        y.device(*thread_pool_device) = (x > 0).select(ones, -ones);
+        y.device(*thread_pool_device) = (x > type(0)).select(x.constant(type(1)), x.constant(type(-1)));
     }
 
 
     template <int rank>
     void threshold(const Tensor<type, rank>& x, Tensor<type, rank>& y) const
     {
-        Tensor<type, 1> ones(x.dimension(0));
-        ones.setConstant(type(1));
-
-        Tensor<type, 1> zeros(x.dimension(0));
-        zeros.setConstant(type(0));
-
-        y.device(*thread_pool_device) = (x >= 0).select(ones, zeros);
+        y.device(*thread_pool_device) = (x >= type(0)).select(x.constant(type(1)), x.constant(type(0)));
     }
 
 

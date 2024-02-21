@@ -589,7 +589,7 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pa
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
-
+    
     calculate_combinations(inputs,
                            outputs);
 

@@ -44,11 +44,10 @@ struct ForwardPropagation
         
         const Tensor<Layer*, 1> neural_network_layers = neural_network->get_layers();
 
-        const Index layers_number = layers.size();
+        const Index layers_number = neural_network_layers.size();
         
         layers.resize(layers_number);
         layers.setConstant(nullptr);
-
         for(Index i = 0; i < layers_number; i++)
         {
             switch(neural_network_layers(i)->get_type())
@@ -145,7 +144,7 @@ struct ForwardPropagation
             }
             break;
 
-            default: break;
+            default: cout << "Default" << endl; break;
             }
         }
     }
