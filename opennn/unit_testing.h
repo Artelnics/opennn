@@ -20,6 +20,7 @@
 #include <sstream>
 #include <time.h>
 
+
 // OpenNN includes
 
 #include "../../opennn/opennn/opennn.h"
