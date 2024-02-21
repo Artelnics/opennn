@@ -58,10 +58,11 @@ DataSet::DataSet(const Tensor<type, 2>& data, const Index& samples_number, const
     samples_uses.setConstant(SampleUse::Training);
 
     split_samples_sequential();
-
+    /**
     set_indra_columns(columns_names);
 
     set_default_columns_scalers();
+    */
 }
 
 
@@ -2061,6 +2062,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
     }
 }
 
+/**
 void DataSet::set_indra_columns(const Tensor<string, 1>& columns_names)
 {
     Tensor<Index, 1> input_column_indices(columns.size() - 48);
@@ -2079,7 +2081,7 @@ void DataSet::set_indra_columns(const Tensor<string, 1>& columns_names)
 
     set_input_target_columns(input_column_indices, target_column_indices);
 }
-
+*/
 
 
 void DataSet::set_raw_variables(const Tensor<RawVariable, 1>& new_raw_variables)
@@ -10292,7 +10294,7 @@ void DataSet::read_csv_3_simple()
         sample_index++;
 
         type percentage = static_cast<type>(sample_index)/static_cast<type>(samples_number);
-        update_progress_bar(percentage);
+        //update_progress_bar(percentage);
     }
 
     const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
@@ -10856,7 +10858,7 @@ void DataSet::read_csv_3_complete()
         sample_index++;
 
         type percentage = static_cast<type>(sample_index)/static_cast<type>(data.dimension(0));
-        update_progress_bar(percentage);
+        //update_progress_bar(percentage);
     }
 
     const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;

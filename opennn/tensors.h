@@ -36,7 +36,7 @@ bool calculate_random_bool();
 
 // Initialization
 
-void update_progress_bar(type);
+//void update_progress_bar(type);
 void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 

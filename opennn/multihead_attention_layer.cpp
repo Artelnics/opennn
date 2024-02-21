@@ -801,7 +801,7 @@ void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensi
 
 
     // QUERY AND KEY DERIVATIVES
-    /*
+    
     //calculate_error_attention_scores_derivatives(); // using deltas, projection_weights, value and softmax_derivatives(attention_scores)
     
     //batch_matrix_multiplication(*thread_pool_device, error_attention_output, value, error_softmax_attention_scores_derivatives, A_BT);
