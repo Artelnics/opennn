@@ -17,8 +17,6 @@
 #include <cstring>
 #include <time.h>
 #include <omp.h>
-// #include <Eigen/Dense>
-// #include "unsupported/Eigen/CXX11/Tensor"
 #include "config.h"
 
 // OpenNN includes
@@ -27,7 +25,7 @@
 
 using namespace opennn;
 
-namespace OpenNN
+namespace opennn
 {
 
 
@@ -200,7 +198,7 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
     {
         current_point(0) = type(cluster_index);
         current_point(1) = sum_squared_error_values(cluster_index-1);
-
+         
         perpendicular_distance
             = type(abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
                   (final_endpoint(0) - initial_endpoint(0)) * current_point(1) +
@@ -229,19 +227,22 @@ Tensor<Index, 1> KMeans::get_cluster_labels()
     return rows_cluster_labels;
 }
 
+
 Index KMeans::get_clusters_number()
 {
     return clusters_number;
 }
+
 
 void KMeans::set_cluster_number(const Index& new_clusters_number)
 {
     clusters_number = new_clusters_number;
 }
 
+
 void KMeans::set_centers_random(const Tensor<type, 2>& data)
 {
-    Index data_size = data.dimension(0);
+    const Index data_size = data.dimension(0);
 
     random_device rd;
     mt19937 gen(rd());

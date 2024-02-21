@@ -6,14 +6,28 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
-
 namespace opennn
 {
+/**
+<<<<<<< HEAD:opennn/tensor_utilities.cpp
+void update_progress_bar(type progress) {
+    const int barWidth = 50;
 
+    std::cout << "[";
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << std::setw(3) << static_cast<int>(progress * 100.0) << "%\r";
+    std::cout.flush();
+}
+*/
 
 type calculate_random_uniform(const type& minimum, const type& maximum)
 {
@@ -183,21 +197,55 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device, const Ten
 }
 
 
-void divide_raw_variables(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
-    const Index raw_variables_number = matrix.dimension(1);
+    Index columns_number = vector.size();
 
-    for(Index j = 0; j < raw_variables_number; j++)
+#pragma omp parallel for
+
+    for (Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
+        TensorMap<Tensor<type, 1>>  column = tensor_map(matrix, i);
 
-        column.device(*thread_pool_device) = column/vector(j);
+        column.device(*thread_pool_device) = vector * vector(i);
     }
 }
 
 
-void sum_raw_variables(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+#pragma omp parallel for
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
+
+        column.device(*thread_pool_device) = column / vector(j);
+    }
+}
+
+
+void divide_matrices(ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+#pragma omp parallel for
+
+    for (Index j = 0; j < channels_number; j++)
+    {
+        TensorMap<Tensor<type, 2>> channel(tensor.data() + j * rows_number*columns_number, rows_number, columns_number);
+
+        channel.device(*thread_pool_device) = channel / matrix;
+    }
+}
+
+
+void sum_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -469,6 +517,30 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
     return rank;
 }
 
+/**
+<<<<<<< HEAD:opennn/tensor_utilities.cpp
+Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
+{
+   const Index columns_number = box_plots.dimension(0);
+
+   Tensor<type, 2> summary(5, columns_number);
+
+   for(Index i = 0; i < columns_number; i++)
+   {
+       const BoxPlot& box_plot = box_plots(i);
+       summary(0, i) = box_plot.minimum;
+       summary(1, i) = box_plot.first_quartile;
+       summary(2, i) = box_plot.median;
+       summary(3, i) = box_plot.third_quartile;
+       summary(4, i) = box_plot.maximum;
+   }
+
+   Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
+   Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
+
+   return reshaped_summary;
+}
+*/
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 {
@@ -1047,6 +1119,17 @@ void sum_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
     const Index rows_number = matrix.dimension(0);
 
     #pragma omp parallel for
+
+    for (Index i = 0; i < rows_number; i++)
+        matrix(i, i) += values(i);
+}
+
+
+void sum_diagonal(TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& values)
+{
+    const Index rows_number = matrix.dimension(0);
+
+#pragma omp parallel for
 
     for (Index i = 0; i < rows_number; i++)
         matrix(i, i) += values(i);
@@ -1805,11 +1888,9 @@ Tensor<Index, 1> intersection(const Tensor<Index, 1>& tensor_1, const Tensor<Ind
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
 {
-    type* a = nullptr;
+    TensorMap<Tensor<type, 1>> column((type*) matrix.data() + column_index * matrix.dimension(0), matrix.dimension(0));
 
-    TensorMap<Tensor<type, 1>> b(a, 1);
-
-    return b;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
+    return column;// ((type*)matrix.data(), column_index * matrix.dimension(0), matrix.dimension(0));
 }
 
 }

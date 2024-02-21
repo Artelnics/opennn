@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {

@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -549,7 +549,7 @@ Tensor<type, 2> TestingAnalysis::calculate_errors() const
 
     const Tensor<type, 1> training_errors = calculate_training_errors();
     const Tensor<type, 1> selection_errors = calculate_selection_errors();
-    const Tensor<type, 1> testing_errors = calculate_testing_errors();
+    const Tensor<type, 1> testing_errors = calculate_testing_errors()(0);
 
     errors(0,0) = training_errors(0);
     errors(1,0) = training_errors(1);
@@ -839,8 +839,10 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 /// <li> Normalized squared error.
 /// </ul>
 
-Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
+Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_testing_errors() const
 {
+    Tensor<Tensor<type, 1>, 1> testing_errors(2);
+
     // Data set
 
     const Index testing_samples_number = data_set->get_testing_samples_number();
@@ -853,18 +855,36 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
 
     Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
+    cout << "outputs.dimensions(): " << outputs.dimensions() << endl;
+
     Tensor<type, 1> errors(4);
 
     // Results
 
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
+    Tensor<type, 1> outputs_error = ((outputs-targets).sum(Eigen::array<int, 1>({0}))).abs();
+
+    cout << "outputs_error 1: " << endl << outputs_error << endl;
+
+    Tensor<type, 1> mean_normalization_parameter(outputs.dimension(1));
+    mean_normalization_parameter.setConstant(type(1.0/testing_samples_number));
+
+    outputs_error = outputs_error * mean_normalization_parameter;
+
+    cout << "outputs_error 2: " << endl << outputs_error << endl;
+
+    cout << "outputs_error.dimensions(): " << outputs_error.dimensions() << endl;
+
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/type(testing_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
-    return errors;
+    testing_errors(0) = errors;
+    testing_errors(1) = outputs_error;
+
+    return testing_errors;
 }
 
 

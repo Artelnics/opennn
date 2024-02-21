@@ -17,9 +17,8 @@
 // OpenNN includes
 
 #include "config.h"
-#include "opennn_strings.h"
+#include "strings.h"
 #include "statistics.h"
-
 
 #include "../eigen/unsupported/Eigen/KroneckerProduct"
 
@@ -37,6 +36,7 @@ bool calculate_random_bool();
 
 // Initialization
 
+//void update_progress_bar(type);
 void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 
@@ -56,11 +56,12 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 // Sum
 
-void sum_raw_variables(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
+void sum_diagonal(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 // Multiplication
 
@@ -70,9 +71,12 @@ void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, cons
 void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&);
 void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&);
 
+void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
+
 // Division
 
-void divide_raw_variables(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_matrices(ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 // Checking
 

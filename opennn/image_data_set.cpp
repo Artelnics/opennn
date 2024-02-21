@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "image_data_set.h"
-#include "opennn_images.h"
-#include "opennn_strings.h"
+#include "images.h"
+#include "strings.h"
 
 namespace opennn
 {
@@ -1336,89 +1336,9 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     }
 }
 
-Tensor<unsigned char, 1> ImageDataSet::read_bmp_image(const string& filename)
-{
-    FILE* file = fopen(filename.data(), "rb");
-
-    if(!file)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp_image() method.\n"
-               << "Couldn't open the file.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    unsigned char info[54];
-    fread(info, sizeof(unsigned char), 54, file);
-
-    const Index width_no_padding = *(int*)&info[18];
-    image_height = *(int*)&info[22];
-    const Index bits_per_pixel = *(int*)&info[28];
-    int channels;
-
-    bits_per_pixel == 24 ? channels = 3 : channels = 1;
-
-    channels_number = channels;
-
-    padding = 0;
-
-    image_width = width_no_padding;
-
-    while((channels*image_width + padding)% 4 != 0)
-        padding++;
-
-    const size_t size = image_height*(channels_number*image_width + padding);
-
-    Tensor<unsigned char, 1> image(size);
-    image.setZero();
-
-    int data_offset = *(int*)(&info[0x0A]);
-    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
-
-    fread(image.data(), sizeof(unsigned char), size, file);
-    fclose(file);
-
-    if(channels_number == 3)
-    {
-        const int rows_number = static_cast<int>(get_image_height());
-        const int raw_variables_number = static_cast<int>(get_image_width());
-
-        Tensor<unsigned char, 1> data_without_padding = remove_padding(image, rows_number, raw_variables_number, padding);
-
-        const Eigen::array<Eigen::Index, 3> dims_3D = {channels, rows_number, raw_variables_number};
-        const Eigen::array<Eigen::Index, 1> dims_1D = {rows_number*raw_variables_number};
-
-        Tensor<unsigned char,1> red_channel_flatted = data_without_padding.reshape(dims_3D).chip(2,0).reshape(dims_1D); // row_major
-        Tensor<unsigned char,1> green_channel_flatted = data_without_padding.reshape(dims_3D).chip(1,0).reshape(dims_1D); // row_major
-        Tensor<unsigned char,1> blue_channel_flatted = data_without_padding.reshape(dims_3D).chip(0,0).reshape(dims_1D); // row_major
-
-        Tensor<unsigned char,1> red_channel_flatted_sorted(red_channel_flatted.size());
-        Tensor<unsigned char,1> green_channel_flatted_sorted(green_channel_flatted.size());
-        Tensor<unsigned char,1> blue_channel_flatted_sorted(blue_channel_flatted.size());
-
-        red_channel_flatted_sorted.setZero();
-        green_channel_flatted_sorted.setZero();
-        blue_channel_flatted_sorted.setZero();
-
-        sort_channel(red_channel_flatted, red_channel_flatted_sorted, raw_variables_number);
-        sort_channel(green_channel_flatted, green_channel_flatted_sorted, raw_variables_number);
-        sort_channel(blue_channel_flatted, blue_channel_flatted_sorted,raw_variables_number);
-
-        Tensor<unsigned char, 1> red_green_concatenation(red_channel_flatted_sorted.size() + green_channel_flatted_sorted.size());
-        red_green_concatenation = red_channel_flatted_sorted.concatenate(green_channel_flatted_sorted,0); // To allow a double concatenation
-
-        image = red_green_concatenation.concatenate(blue_channel_flatted_sorted, 0);
-    }
-
-    return image;
-}
-
-
 void ImageDataSet::read_bmp()
-{/*
+{
+/*
     const fs::path path = data_source_path;
 
     if(data_source_path.empty())
@@ -1650,7 +1570,8 @@ void ImageDataSet::read_bmp()
     image_height = height;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, paddingWidth, height});*/
+    input_variables_dimensions.setValues({channels, paddingWidth, height});
+*/
 }
 
 
@@ -2301,7 +2222,7 @@ Index ImageDataSet::get_bounding_boxes_number_from_XML(const string& file_name)
         bounding_boxes_number += annotations_number;
     }
 
-    read_bmp_image(image_filename); // Read an image to save initially the channels number
+//    read_bmp_image(image_filename); // Read an image to save initially the channels number
 
     return bounding_boxes_number;
 }

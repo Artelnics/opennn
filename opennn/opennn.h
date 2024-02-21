@@ -81,11 +81,10 @@
 #include "numerical_differentiation.h"
 #include "correlations.h"
 #include "response_optimization.h"
-#include "opennn_images.h"
-#include "tensor_utilities.h"
+#include "images.h"
+#include "tensors.h"
 #include "statistics.h"
 #include "scaling.h"
-#include "text_analytics.h"
 #include "codification.h"
 
 

@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn_strings.h"
+#include "strings.h"
 #include "probabilistic_layer.h"
 
 namespace opennn
@@ -514,7 +514,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
-    sum_raw_variables(thread_pool_device, biases, combinations);
+    sum_columns(thread_pool_device, biases, combinations);
 }
 
 

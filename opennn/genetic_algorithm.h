@@ -25,7 +25,7 @@
 // OpenNN includes
 
 #include "training_strategy.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "inputs_selection.h"
 #include "config.h"
 #include "testing_analysis.h"

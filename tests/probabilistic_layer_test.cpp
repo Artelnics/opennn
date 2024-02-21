@@ -85,6 +85,7 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 
     Tensor<type, 1> biases(1);
     Tensor<type, 2> synaptic_weights(1, 1);
+
     biases.setConstant(type(1));
     synaptic_weights.setConstant(type(2));
 
@@ -92,7 +93,6 @@ void ProbabilisticLayerTest::test_calculate_combinations()
     inputs.setConstant(type(3));
 
     Tensor<type, 2> combinations(1, 1);
-
     probabilistic_layer.set(1, 1);
 
     probabilistic_layer.set_synaptic_weights(synaptic_weights);

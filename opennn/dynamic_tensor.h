@@ -75,9 +75,28 @@ public:
     {
         if(this != &other)
         {
-            const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
+//            const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
 
-            if(different_dimensions(0))
+            bool different_dimensions = false;
+
+            if(dimensions.size() != other.dimensions.size())
+            {
+                different_dimensions = true;
+            }
+
+            if(!different_dimensions)
+            {
+                for(Index i =  0; i < dimensions.size(); i++)
+                {
+                    if(dimensions(i) != other.dimensions(i))
+                    {
+                        different_dimensions = true;
+                        break;
+                    }
+                }
+            }
+
+            if(different_dimensions)
             {
                 dimensions = other.dimensions;
             }
@@ -123,11 +142,27 @@ public:
 
     bool operator != (DynamicTensor& other)
     {
+<<<<<<< HEAD
+
+//        if(!(dimensions == other.dimensions).all()(0))
+//        {
+//            return true;
+//        }
+
+        if(dimensions.size() != other.dimensions.size())
+=======
         const Tensor<bool, 0> different_dimensions = (dimensions != other.dimensions).all();
 
         if(different_dimensions(0))
+>>>>>>> refactor
         {
             return true;
+        }
+
+        for(Index i =  0; i < dimensions.size(); i++)
+        {
+            if(dimensions(i) != other.dimensions(i))
+                return true;
         }
 
         const Tensor<Index, 0> size = dimensions.prod();

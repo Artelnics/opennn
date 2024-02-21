@@ -197,7 +197,7 @@ public:
    Tensor<type, 1> calculate_binary_classification_selection_errors() const;
    Tensor<type, 1> calculate_multiple_classification_selection_errors() const;
 
-   Tensor<type, 1> calculate_testing_errors() const;
+   Tensor<Tensor<type, 1>, 1> calculate_testing_errors() const;
    Tensor<type, 1> calculate_binary_classification_testing_errors() const;
    Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
 

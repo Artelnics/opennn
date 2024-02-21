@@ -9,11 +9,8 @@
 #include "data_set.h"
 #include "statistics.h"
 #include "correlations.h"
-#include "tensor_utilities.h"
-#include "text_analytics.h"
+#include "tensors.h"
 #include "codification.h"
-
-#include "bounding_box.h"
 
 using namespace opennn;
 using namespace std;
@@ -43,6 +40,29 @@ DataSet::DataSet(const Tensor<type, 2>& data)
     set(data);
 
     set_default();
+}
+
+/// @brief Indra DataSet constructor.
+/// @param data 
+/// @param indra 
+DataSet::DataSet(const Tensor<type, 2>& data, const Index& samples_number, const Tensor<string, 1>& columns_names, bool& indra)
+{
+    set();
+
+    set_default();
+
+    set(data);
+
+    samples_uses.resize(samples_number);
+
+    samples_uses.setConstant(SampleUse::Training);
+
+    split_samples_sequential();
+    /**
+    set_indra_columns(columns_names);
+
+    set_default_columns_scalers();
+    */
 }
 
 
@@ -811,6 +831,209 @@ Tensor<string, 1> DataSet::RawVariable::get_used_variables_names() const
     return used_variables_names;
 }
 
+/**
+ <<<<<<< HEAD
+ /// This method transforms the columns into time series for forecasting problems.
+
+ void DataSet::transform_time_series_columns()
+ {
+     cout << "Transforming time series columns..." << endl;
+
+     // Categorical columns?
+
+     time_series_columns = columns;
+
+     const Index columns_number = get_columns_number();
+
+     Tensor<Column, 1> new_columns;
+
+     if(has_time_columns())
+     {
+         // @todo check if there are more than one time column
+         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
+     }
+     else
+     {
+         new_columns.resize(columns_number*(lags_number+steps_ahead));
+     }
+
+     Index lag_index = lags_number - 1;
+     Index ahead_index = 0;
+     Index column_index = 0;
+     Index new_column_index = 0;
+
+     for(Index i = 0; i < columns_number*(lags_number+steps_ahead); i++)
+     {
+         column_index = i%columns_number;
+
+         if(time_series_columns(column_index).type == ColumnType::DateTime) continue;
+
+         if(i < lags_number*columns_number)
+         {
+             new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
+
+             new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+             new_columns(new_column_index).set_use(VariableUse::Input);
+
+             new_columns(new_column_index).type = columns(column_index).type;
+             new_columns(new_column_index).categories = columns(column_index).categories;
+
+             new_column_index++;
+         }
+         else if(i == columns_number*(lags_number+steps_ahead) - 1)
+         {
+             new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
+
+             new_columns(new_column_index).type = columns(column_index).type;
+             new_columns(new_column_index).categories = columns(column_index).categories;
+
+             new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+             new_columns(new_column_index).set_use(VariableUse::Target);
+
+             new_column_index++;
+         }
+         else
+         {
+             new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
+
+             new_columns(new_column_index).type = columns(column_index).type;
+             new_columns(new_column_index).categories = columns(column_index).categories;
+
+             new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+             new_columns(new_column_index).set_use(VariableUse::Unused);
+
+             new_column_index++;
+         }
+
+         if(lag_index > 0 && column_index == columns_number - 1)
+         {
+             lag_index--;
+         }
+         else if(column_index == columns_number - 1)
+         {
+             ahead_index++;
+         }
+     }
+
+     columns = new_columns;
+ }
+
+
+ void DataSet::transform_time_series_data()
+ {
+     cout << "Transforming time series data..." << endl;
+
+     // Categorical / Time columns?
+
+     const Index old_samples_number = data.dimension(0);
+     const Index old_variables_number = data.dimension(1);
+
+     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+     const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+     time_series_data = data;
+
+     data.resize(new_samples_number, new_variables_number);
+
+     Index index = 0;
+
+     for(Index j = 0; j < old_variables_number; j++)
+     {
+         if(columns(get_column_index(j)).type == ColumnType::DateTime)
+         {
+             index++;
+             continue;
+         }
+
+         for(Index i = 0; i < lags_number+steps_ahead; i++)
+         {
+             memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
+                    time_series_data.data() + i + j*old_samples_number,
+                    static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+         }
+     }
+
+     samples_uses.resize(new_samples_number);
+     split_samples_random();
+ }
+
+
+ /// This method duplicates the columns for association problems.
+
+ void DataSet::transform_associative_columns()
+ {
+     cout << "Transforming associative columns..." << endl;
+
+     associative_columns = columns;
+
+     const Index columns_number = get_columns_number();
+
+     Tensor<Column, 1> new_columns;
+
+     new_columns.resize(2*columns_number);
+
+     Index column_index = 0;
+     Index index = 0;
+
+     for(Index i = 0; i < 2*columns_number; i++)
+     {
+         column_index = i%columns_number;
+
+         if(i < columns_number)
+         {
+             new_columns(index).name = columns(column_index).name;
+
+             new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+             new_columns(index).set_use(DataSet::VariableUse::Input);
+             new_columns(index).type = columns(column_index).type;
+             new_columns(index).categories = columns(column_index).categories;
+             index++;
+         }
+         else
+         {
+             new_columns(index).name = columns(column_index).name + "_output";
+
+             new_columns(index).categories_uses.resize(columns(column_index).get_categories_number());
+             new_columns(index).set_use(DataSet::VariableUse::Target);
+             new_columns(index).type = columns(column_index).type;
+             new_columns(index).categories = columns(column_index).categories;
+             index++;
+         }
+     }
+
+     columns = new_columns;
+ }
+
+
+ void DataSet::transform_associative_data()
+ {
+     cout << "Transforming associative data..." << endl;
+
+     const Index samples_number = data.dimension(0);
+
+     const Index old_variables_number = data.dimension(1);
+     const Index new_variables_number = 2 * old_variables_number;
+
+     associative_data = data;
+
+     data.resize(samples_number, new_variables_number);
+
+     // Duplicate data
+
+     Index index = 0;
+
+     for(Index i = 0; i < old_variables_number; i++)
+     {
+         copy(associative_data.data() + (i - index) * samples_number,
+              associative_data.data() + (i + 1 - index) *  samples_number,
+              data.data() + (i - index) * samples_number);
+
+         copy(associative_data.data() + (i - index) * samples_number,
+              associative_data.data() + (i + 1 - index) *  samples_number,
+              data.data() + samples_number * old_variables_number + (i - index) * samples_number);
+     }
+ }
+*/
 
 /// Returns true if a given sample is to be used for training, selection or testing,
 /// and false if it is to be unused.
@@ -1838,6 +2061,27 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
         i++;
     }
 }
+
+/**
+void DataSet::set_indra_columns(const Tensor<string, 1>& columns_names)
+{
+    Tensor<Index, 1> input_column_indices(columns.size() - 48);
+    Tensor<Index, 1> target_column_indices(48);
+
+    columns.resize(columns_names.size());
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        columns(i).name == columns_names(i);
+        columns(i).type = ColumnType::Numeric;
+
+        if (i < 48){ target_column_indices(i) = i;}
+        else { input_column_indices(i - 48) = i;}
+    }
+
+    set_input_target_columns(input_column_indices, target_column_indices);
+}
+*/
 
 
 void DataSet::set_raw_variables(const Tensor<RawVariable, 1>& new_raw_variables)
@@ -4485,6 +4729,84 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index) 
     return data.slice(offsets, extents);
 }
 
+/**
+<<<<<<< HEAD
+ map<string, DataSet> DataSet::group_by(const DataSet& original, const string& column_name) const
+ {
+     cout << "Grouping by category..." << endl;
+
+     map<string, DataSet> result;
+
+     const Index samples_number = original.get_samples_number();
+
+     bool is_categorical = false;
+     Index column_index = -1;
+     const Index columns_number = original.get_columns_number();
+
+     for (Index i = 0; i < columns_number; ++i)
+     {
+         if (original.columns(i).name == column_name && original.columns(i).type == DataSet::ColumnType::Categorical)
+         {
+             is_categorical = true;
+             column_index = i;
+             break;
+         }
+     }
+
+     if (!is_categorical)
+     {
+         throw std::runtime_error("The column is not categorical");
+     }
+
+     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
+     {
+         string category = original.get_sample_category(sample_index, column_index);
+
+
+         if (result.find(category) == result.end())
+         {
+             result[category].set_properties_from_parent(original);
+         }
+
+         result[category].add_sample(original.get_sample(sample_index));
+     }
+
+     return result;
+ }
+
+alvaros
+Tensor<type, 2> DataSet::concat()
+{
+   Tensor<type, 2> merged_data;
+   bool is_first_iteration = true;
+
+   for(const auto& pair : groupedData)
+   {
+       const string& key = pair.first;
+       const DataSet& value = pair.second;
+
+       if(is_first_iteration)
+       {
+           merged_data = value.get_data();
+           is_first_iteration = false;
+       }
+       else
+       {
+           Tensor<type, 2> new_merged_data = merged_data.concatenate(value.get_data(), 0);
+           merged_data = new_merged_data;
+       }
+   }
+}
+
+
+ void DataSet::quicksort_by_column(Index target_column)
+ {
+     Tensor<type, 2>* data_matrix_ptr = this->get_data_pointer();
+     Index number_of_rows = data_matrix_ptr->dimension(0);
+
+     quick_sort(*data_matrix_ptr, 0, number_of_rows - 1, target_column);
+ }
+*/
 
 Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 {
@@ -4534,6 +4856,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
         throw runtime_error("The specified column is not of categorical type.");
     }
 
+
     for(Index raw_variable_index = column_index_start; raw_variable_index < raw_variables.size(); ++raw_variable_index)
     {
         if(data(sample_index, raw_variable_index) == 1)
@@ -4571,6 +4894,100 @@ Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected
     return data_slice;
 }
 
+/**
+<<<<<<< HEAD
+/// Returns the data from the time series column with a given index,
+/// @param column_index Index of the column.
+
+Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) const
+{
+    Index columns_number = 1;
+
+    const Index rows_number = time_series_data.dimension(0);
+
+    if(time_series_columns(column_index).type == ColumnType::Categorical)
+    {
+        columns_number = time_series_columns(column_index).get_categories_number();
+    }
+
+    const Eigen::array<Index, 2> extents = {rows_number, columns_number};
+    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
+
+    return time_series_data.slice(offsets, extents);
+}
+
+
+
+Tensor<type, 2> DataSet::pivot_to_long_format(const Index& frequency)
+{
+
+    if (frequency <= 0 && frequency != -1)
+    {
+        throw std::invalid_argument("Frequency must be positive.");
+    }
+
+    Index categorical_column_index = -1;
+    Index numeric_column_index = -1;
+    Index time_colum_index = -1;
+
+    for (Index column_index = 0; column_index < get_columns_number(); ++column_index)
+    {
+        if (columns(column_index).type == ColumnType::Categorical && categorical_column_index == -1)
+        {
+            categorical_column_index = column_index;
+        }
+        if (columns(column_index).type == ColumnType::Numeric)
+        {
+            numeric_column_index = column_index;
+        }
+        if(columns(column_index).type == ColumnType::DateTime)
+        {
+            time_colum_index = column_index;
+            this->quicksort_by_column(column_index);
+        }
+    }
+
+    if (categorical_column_index == -1 || numeric_column_index == -1 || time_colum_index == -1)
+    {
+        throw std::runtime_error("The transformation to the long format could not be performed.");
+    }
+
+    Tensor<Index, 1> category_indices = get_categorical_to_indices(categorical_column_index);
+    Index rows_number = get_samples_number();
+
+    Index categorical_number = columns(categorical_column_index).get_categories_number();
+    Index number_of_periods = (frequency == -1) ? 1 : rows_number / (categorical_number * frequency);
+    Index total_rows = categorical_number * number_of_periods;
+
+    Tensor<type, 2> melt_data(total_rows, (frequency == -1) ? rows_number / categorical_number : frequency);
+    melt_data.setZero();
+
+    Tensor<Index, 1> row_counters(total_rows);
+    row_counters.setZero();
+
+    for (Index row_index = 0; row_index < rows_number; ++row_index)
+    {
+        Index categorical_index = category_indices(row_index) - 1;
+        if (categorical_index >= 0 && categorical_index < categorical_number)
+        {
+            Index date = get_column_data(time_colum_index)(row_index);
+            Index period = (frequency == -1) ? 0 : (date - 1) / frequency;
+
+            Index position = categorical_index * number_of_periods + period;
+
+            Index column = (frequency == -1) ? date - 1 : (date - 1) % frequency;
+
+            if (position < total_rows && column < (frequency == -1 ? rows_number / categorical_number : frequency))
+            {
+                melt_data(position, column) = get_column_data(numeric_column_index)(row_index);
+            }
+        }
+    }
+
+    return melt_data;
+}
+=======
+*/
 
 /// Returns the data from the data set column with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
@@ -8447,6 +8864,137 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     cout << "Binary data file saved." << endl;
 }
 
+/**
+<<<<<<< HEAD
+/// Saves to the data file the values of the time series data matrix in binary format.
+
+void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
+{
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class." << endl
+               << "void save_time_series_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = time_series_data.dimension(1);
+    Index rows_number = time_series_data.dimension(0);
+
+    cout << "Saving binary data file..." << endl;
+
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    for(int i = 0; i < columns_number; i++)
+    {
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = time_series_data(j,i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+        }
+    }
+
+    file.close();
+
+    cout << "Binary data file saved." << endl;
+}
+
+
+/// Saves to the data file the values of the auto associative data matrix in binary format.
+
+void DataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
+{
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class." << endl
+               << "void save_auto_associative_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = associative_data.dimension(1);
+    Index rows_number = associative_data.dimension(0);
+
+    cout << "Saving binary associative data file..." << endl;
+
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    for(int i = 0; i < columns_number; i++)
+    {
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = associative_data(j,i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+        }
+    }
+
+    file.close();
+
+    cout << "Binary data file saved." << endl;
+}
+
+
+/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
+
+void DataSet::transform_time_series()
+{
+    cout << "Transforming time series..." << endl;
+
+    if(lags_number == 0 || steps_ahead == 0) return;
+
+    transform_time_series_data();
+
+    transform_time_series_columns();
+
+    split_samples_sequential();
+
+    unuse_constant_columns();
+}
+
+
+/// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
+
+void DataSet::transform_associative_dataset()
+{
+    transform_associative_data();
+
+    transform_associative_columns();
+
+    unuse_constant_columns();
+
+    set_auto_associative_samples_uses();
+}
+*/
 
 /// This method loads the data from a binary data file.
 /// @todo Can load block of data instead of element by element?
@@ -9477,7 +10025,12 @@ void DataSet::read_csv_1()
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
 
-        if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+/*        if(nans_columns(column_index))
+        {
+            columns(column_index).type = ColumnType::Constant;
+            column_index++;
+        }
+        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
                 || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
                 || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
                 || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
@@ -9526,8 +10079,6 @@ void DataSet::read_csv_2_simple()
 {   
     regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
-
-    cout << "read_csv_2_simple" << endl;
 
     #ifdef _WIN32
 
@@ -9741,6 +10292,9 @@ void DataSet::read_csv_3_simple()
 
         raw_variable_index = 0;
         sample_index++;
+
+        type percentage = static_cast<type>(sample_index)/static_cast<type>(samples_number);
+        //update_progress_bar(percentage);
     }
 
     const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;
@@ -10302,6 +10856,9 @@ void DataSet::read_csv_3_complete()
         }
 
         sample_index++;
+
+        type percentage = static_cast<type>(sample_index)/static_cast<type>(data.dimension(0));
+        //update_progress_bar(percentage);
     }
 
     const Index data_file_preview_index = has_raw_variables_names ? 3 : 2;

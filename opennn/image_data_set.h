@@ -96,12 +96,14 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
+
+
     void set_categories_number(const Index&);
 
     type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
-
+/*
     Tensor<unsigned char, 1> read_bmp_image(const string&);
-
+*/
     void fill_image_data(const string&, const vector<string>&, const vector<string>&, const vector<int>&, const int&, const int&, const int&, const Tensor<type, 2>&);
 
     void read_bmp();

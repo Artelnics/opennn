@@ -95,7 +95,6 @@
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);__Cpp11__;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;__Cpp11__;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
@@ -110,7 +109,6 @@
     </Midl>
     <Lib>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\lib\x64</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,7 +134,6 @@
       <PGOUsePreTrainedModel>true</PGOUsePreTrainedModel>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
       <UseProcessorExtensions>None</UseProcessorExtensions>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
@@ -151,7 +148,6 @@
     </Midl>
     <Lib>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\lib\x64</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
@@ -170,7 +166,6 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
@@ -185,7 +180,6 @@
     </Midl>
     <Lib>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\lib\x64</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
@@ -203,7 +197,6 @@
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);NDEBUG;__Cpp11__;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
@@ -218,7 +211,6 @@
     </Midl>
     <Lib>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\lib\x64</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -312,10 +304,10 @@
     <ClInclude Include="numerical_differentiation.h" />
     <ClCompile Include="numerical_differentiation.cpp" />
     <ClInclude Include="opennn.h" />
-    <ClInclude Include="opennn_images.h" />
-    <ClCompile Include="opennn_images.cpp" />
-    <ClInclude Include="opennn_strings.h" />
-    <ClCompile Include="opennn_strings.cpp" />
+    <ClInclude Include="images.h" />
+    <ClCompile Include="images.cpp" />
+    <ClInclude Include="strings.h" />
+    <ClCompile Include="strings.cpp" />
     <ClInclude Include="optimization_algorithm.h" />
     <ClCompile Include="optimization_algorithm.cpp" />
     <ClInclude Include="perceptron_layer.h" />
@@ -370,12 +362,10 @@
     <ClCompile Include="stochastic_gradient_descent_data.cpp" />
     <ClInclude Include="sum_squared_error.h" />
     <ClCompile Include="sum_squared_error.cpp" />
-    <ClInclude Include="tensor_utilities.h" />
-    <ClCompile Include="tensor_utilities.cpp" />
+    <ClInclude Include="tensors.h" />
+    <ClCompile Include="tensors.cpp" />
     <ClInclude Include="testing_analysis.h" />
     <ClCompile Include="testing_analysis.cpp" />
-    <ClInclude Include="text_analytics.h" />
-    <ClCompile Include="text_analytics.cpp" />
     <ClInclude Include="text_data_set.h" />
     <ClCompile Include="text_data_set.cpp" />
     <ClInclude Include="time_series_data_set.h" />

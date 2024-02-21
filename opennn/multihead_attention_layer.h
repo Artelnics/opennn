@@ -266,13 +266,13 @@ protected:
 
             // Rest of quantities
 
-            query.resize(new_batch_samples_number, input_size, weights_depth, heads_number);
-            key.resize(new_batch_samples_number, context_size, weights_depth, heads_number);
-            value.resize(new_batch_samples_number, context_size, weights_depth, heads_number);
+            query.resize(input_size, weights_depth, new_batch_samples_number, heads_number);
+            key.resize(context_size, weights_depth, new_batch_samples_number, heads_number);
+            value.resize(context_size, weights_depth, new_batch_samples_number, heads_number);
 
-            attention_scores.resize(new_batch_samples_number, input_size, context_size, heads_number);
-            softmax_attention_scores.resize(new_batch_samples_number, input_size, context_size, heads_number);
-            attention_outputs.resize(new_batch_samples_number, input_size, weights_depth, heads_number);
+            attention_scores.resize(context_size, input_size, new_batch_samples_number, heads_number);
+            softmax_attention_scores.resize(context_size, input_size, new_batch_samples_number, heads_number);
+            attention_outputs.resize(input_size, weights_depth, new_batch_samples_number, heads_number);
         }
 
         void print() const
@@ -343,13 +343,13 @@ protected:
 
             deltas_data = deltas.data();
 
-            error_attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
-            error_softmax_attention_scores_derivatives.resize(batch_samples_number, input_size, context_size, heads_number);
-            error_attention_output_derivatives.resize(batch_samples_number, input_size, weights_depth, heads_number);
+            error_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
+            error_softmax_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
+            error_attention_output_derivatives.resize(input_size, weights_depth, batch_samples_number, heads_number);
 
-            error_query_derivatives.resize(batch_samples_number, input_size, weights_depth, heads_number);
-            error_key_derivatives.resize(batch_samples_number, context_size, weights_depth, heads_number);
-            error_value_derivatives.resize(batch_samples_number, context_size, weights_depth, heads_number);
+            error_query_derivatives.resize(input_size, weights_depth, batch_samples_number, heads_number);
+            error_key_derivatives.resize(context_size, weights_depth, batch_samples_number, heads_number);
+            error_value_derivatives.resize(context_size, weights_depth, batch_samples_number, heads_number);
 
             error_input_derivatives.resize(batch_samples_number, input_size, depth);
             error_context_derivatives.resize(batch_samples_number, context_size, depth);

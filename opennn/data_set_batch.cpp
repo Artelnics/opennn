@@ -1,7 +1,7 @@
 #include "data_set_batch.h"
-#include "tensor_utilities.h"
+#include "tensors.h"
 #include "image_data_set.h"
-#include "opennn_images.h"
+#include "images.h"
 
 namespace opennn
 {
@@ -108,28 +108,28 @@ void DataSetBatch::perform_augmentation() const
 
         if(random_reflection_axis_x)
         {
-            reflect_image_x(image, image);
+            //reflect_image_x(image, image);
         }
 
         if(random_reflection_axis_y)
         {
-            reflect_image_y(image, image);
+            //reflect_image_y(image, image);
         }
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
         {
             const type angle = (random_rotation_minimum < random_rotation_maximum)
-                    ? random_rotation_minimum + type(rand())
-                    : random_rotation_maximum;
+                             ? random_rotation_minimum + type(rand())
+                             : random_rotation_maximum;
 
-            rotate_image(image, image, angle);
+            //rotate_image(image, image, angle);
         }
 
         if(random_rescaling_minimum != 0 && random_rescaling_maximum != 0)
         {
             const type rescaling = (random_rescaling_minimum < random_rescaling_maximum)
-                    ? random_rescaling_minimum + type(rand())
-                    : random_rescaling_maximum;
+                                 ? random_rescaling_minimum + type(rand())
+                                 : random_rescaling_maximum;
 
             //rescale_image(image, image, rescaling);
         }
@@ -137,10 +137,10 @@ void DataSetBatch::perform_augmentation() const
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
         {
             const type translation = (random_horizontal_translation_minimum < random_rescaling_maximum)
-                    ? random_horizontal_translation_minimum + type(rand())
-                    : random_rescaling_maximum;
+                                   ? random_horizontal_translation_minimum + type(rand())
+                                   : random_rescaling_maximum;
 
-            translate_image(image, image, translation);
+            //translate_image(image, image, translation);
         }
     }  
 }

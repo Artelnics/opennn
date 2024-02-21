@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "scaling_layer_4d.h"
-#include "opennn_strings.h"
+#include "strings.h"
 
 namespace opennn
 {

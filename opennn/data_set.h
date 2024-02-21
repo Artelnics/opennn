@@ -84,6 +84,8 @@ public:
 
     explicit DataSet(const Tensor<type, 2>&);
 
+    explicit DataSet(const Tensor<type, 2>&, const Index&, const Tensor<string, 1>&, bool&);
+
     explicit DataSet(const Index&, const Index&);
 
     explicit DataSet(const Index&, const Index&, const Index&);
@@ -447,8 +449,9 @@ public:
 
     // raw_variables set methods
 
-    void set_raw_variables(const Tensor<RawVariable, 1>&);
+//    void set_indra_columns(const Tensor<string, 1>&);
 
+    void set_raw_variables(const Tensor<RawVariable, 1>&);
     void set_default_raw_variables_uses();
 
     void set_default_raw_variables_names();
@@ -672,6 +675,70 @@ public:
     Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
 
     void unuse_Tukey_outliers(const type& = type(1.5));
+
+    /**
+<<<<<<< HEAD
+    // Local outlier factor
+
+    Tensor<Index, 1> calculate_local_outlier_factor_outliers(const Index& = 20, const Index& = 0, const type& = type(0)) const;
+
+    void unuse_local_outlier_factor_outliers(const Index& = 20, const type& = type(1.5));
+
+    // Isolation Forest outlier
+
+    Tensor<Index, 1> calculate_isolation_forest_outliers(const Index& = 100, const Index& = 256, const type& = type(0)) const;
+
+    void unuse_isolation_forest_outliers(const Index& = 20, const type& = type(1.5));
+
+    // Time series methods
+
+    void transform_time_series();
+    void transform_time_series_columns();
+    void transform_time_series_data();
+    void transform_time_series_non_categorical_data();
+
+    void get_time_series_columns_number(const Index&);
+    void set_time_series_data(const Tensor<type, 2>&);
+    void set_time_series_columns_number(const Index&);
+
+    Tensor<type, 2> get_time_series_column_data(const Index&) const;
+    Tensor<type, 2> pivot_to_long_format(const Index& = -1);
+    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
+    Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
+
+    // Autoassiciative methods
+
+    Index get_associative_columns_number() const;
+    void set_associative_data(const Tensor<type, 2>&);
+    void set_associative_columns_number(const Index&);
+
+    void transform_associative_dataset();
+    void transform_associative_columns();
+    void transform_associative_data();
+
+    // Image classification methods
+
+    Index get_channels_number() const;
+    Index get_image_width() const;
+    Index get_image_height() const;
+    Index get_image_padding() const;
+    Index get_image_size() const;
+
+    void set_channels_number(const int&);
+    void set_image_width(const int&);
+    void set_image_height(const int&);
+    void set_image_padding(const int&);
+    void set_images_number(const Index&);
+
+    type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
+
+    // Text classification methods
+
+    Tensor<type,1> sentence_to_data(const string&) const;
+
+=======
+>>>>>>> refactor
+*/
 
     // Data generation
 
