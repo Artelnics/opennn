@@ -22,7 +22,7 @@ CONFIG(debug, debug|release) {
 
 DEFINES += __Cpp17__
 
-QMAKE_CXXFLAGS += -bigobj
+#QMAKE_CXXFLAGS += -bigobj
 
 # OpenMP library
 
@@ -30,10 +30,12 @@ win32:{
 #QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
+}
+else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
-}else: macx{
+}
+else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
@@ -58,8 +60,8 @@ HEADERS += \
     kmeans.h \
     numerical_differentiation.h \
     config.h \
-    opennn_strings.h \
-    opennn_images.h \
+    strings.h \
+    images.h \
     statistics.h \
     descriptives.h \
     box_plot.h \
@@ -127,7 +129,7 @@ HEADERS += \
     genetic_algorithm.h \
     testing_analysis.h \
     response_optimization.h \
-    tensor_utilities.h \
+    tensors.h \
     unit_testing.h \
     flatten_layer.h \
     text_analytics.h \
@@ -143,9 +145,9 @@ SOURCES += \
     multihead_attention_layer.cpp \
     kmeans.cpp \
     numerical_differentiation.cpp \
-    opennn_strings.cpp \
-    opennn_images.cpp \
-    tensor_utilities.cpp \
+    strings.cpp \
+    images.cpp \
+    tensors.cpp \
     statistics.cpp \
     scaling.cpp \
     correlations.cpp \
