@@ -33,12 +33,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <ProfileGuidedOptimization>Disabled</ProfileGuidedOptimization>
     <CodeCoverageOperations>Disabled</CodeCoverageOperations>
     <UseInteloneMKL>No</UseInteloneMKL>
@@ -46,12 +46,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 2024</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -223,11 +223,9 @@
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
-    <ClCompile Include="box_plot.cpp" />
     <ClInclude Include="codification.h" />
     <ClCompile Include="codification.cpp" />
     <ClInclude Include="raw_variable.h" />
-    <ClCompile Include="raw_variable.cpp" />
     <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
     <ClCompile Include="conjugate_gradient.cpp" />
@@ -244,7 +242,6 @@
     <ClInclude Include="data_set_batch.h" />
     <ClCompile Include="data_set_batch.cpp" />
     <ClInclude Include="descriptives.h" />
-    <ClCompile Include="descriptives.cpp" />
     <ClInclude Include="embedding_layer.h" />
     <ClCompile Include="embedding_layer.cpp" />
     <ClInclude Include="flatten_layer.h" />
@@ -258,7 +255,6 @@
     <ClInclude Include="growing_neurons.h" />
     <ClCompile Include="growing_neurons.cpp" />
     <ClInclude Include="histogram.h" />
-    <ClCompile Include="histogram.cpp" />
     <ClInclude Include="image_data_set.h" />
     <ClCompile Include="image_data_set.cpp" />
     <ClInclude Include="inputs_selection.h" />
@@ -278,11 +274,8 @@
     <ClInclude Include="loss_index.h" />
     <ClCompile Include="loss_index.cpp" />
     <ClInclude Include="loss_index_back_propagation.h" />
-    <ClCompile Include="loss_index_back_propagation.cpp" />
     <ClInclude Include="loss_index_back_propagation_lm.h" />
-    <ClCompile Include="loss_index_back_propagation_lm.cpp" />
     <ClInclude Include="loss_index_forward_propagation.h" />
-    <ClCompile Include="loss_index_forward_propagation.cpp" />
     <ClInclude Include="mean_squared_error.h" />
     <ClCompile Include="mean_squared_error.cpp" />
     <ClInclude Include="minkowski_error.h" />
@@ -294,9 +287,7 @@
     <ClInclude Include="neural_network.h" />
     <ClCompile Include="neural_network.cpp" />
     <ClInclude Include="neural_network_back_propagation.h" />
-    <ClCompile Include="neural_network_back_propagation.cpp" />
     <ClInclude Include="neural_network_forward_propagation.h" />
-    <ClCompile Include="neural_network_forward_propagation.cpp" />
     <ClInclude Include="neurons_selection.h" />
     <ClCompile Include="neurons_selection.cpp" />
     <ClInclude Include="normalized_squared_error.h" />
@@ -315,35 +306,25 @@
     <ClInclude Include="perceptron_layer_3d.h" />
     <ClCompile Include="perceptron_layer_3d.cpp" />
     <ClInclude Include="perceptron_layer_back_propagation.h" />
-    <ClCompile Include="perceptron_layer_back_propagation.cpp" />
     <ClInclude Include="perceptron_layer_forward_propagation.h" />
-    <ClCompile Include="perceptron_layer_forward_propagation.cpp" />
     <ClInclude Include="pooling_layer.h" />
     <ClCompile Include="pooling_layer.cpp" />
     <ClInclude Include="pooling_layer_back_propagation.h" />
-    <ClCompile Include="pooling_layer_back_propagation.cpp" />
     <ClInclude Include="pooling_layer_forward_propagation.h" />
-    <ClCompile Include="pooling_layer_forward_propagation.cpp" />
     <ClInclude Include="probabilistic_layer.h" />
     <ClCompile Include="probabilistic_layer.cpp" />
     <ClInclude Include="probabilistic_layer_3d.h" />
     <ClCompile Include="probabilistic_layer_3d.cpp" />
     <ClInclude Include="probabilistic_layer_back_propagation.h" />
-    <ClCompile Include="probabilistic_layer_back_propagation.cpp" />
     <ClInclude Include="probabilistic_layer_back_propagation_lm.h" />
-    <ClCompile Include="probabilistic_layer_back_propagation_lm.cpp" />
     <ClInclude Include="probabilistic_layer_forward_propagation.h" />
-    <ClCompile Include="probabilistic_layer_forward_propagation.cpp" />
     <ClInclude Include="quasi_newton_method.h" />
     <ClCompile Include="quasi_newton_method.cpp" />
     <ClInclude Include="quasi_newton_method_data.h" />
-    <ClCompile Include="quasi_newton_method_data.cpp" />
     <ClInclude Include="recurrent_layer.h" />
     <ClCompile Include="recurrent_layer.cpp" />
     <ClInclude Include="recurrent_layer_back_propagation.h" />
-    <ClCompile Include="recurrent_layer_back_propagation.cpp" />
     <ClInclude Include="recurrent_layer_forward_propagation.h" />
-    <ClCompile Include="recurrent_layer_forward_propagation.cpp" />
     <ClInclude Include="response_optimization.h" />
     <ClCompile Include="response_optimization.cpp" />
     <ClInclude Include="scaling.h" />
@@ -353,13 +334,11 @@
     <ClInclude Include="scaling_layer_4d.h" />
     <ClCompile Include="scaling_layer_4d.cpp" />
     <ClInclude Include="scaling_layer_forward_propagation.h" />
-    <ClCompile Include="scaling_layer_forward_propagation.cpp" />
     <ClInclude Include="statistics.h" />
     <ClCompile Include="statistics.cpp" />
     <ClInclude Include="stochastic_gradient_descent.h" />
     <ClCompile Include="stochastic_gradient_descent.cpp" />
     <ClInclude Include="stochastic_gradient_descent_data.h" />
-    <ClCompile Include="stochastic_gradient_descent_data.cpp" />
     <ClInclude Include="sum_squared_error.h" />
     <ClCompile Include="sum_squared_error.cpp" />
     <ClInclude Include="tensors.h" />
@@ -381,11 +360,9 @@
     <ClInclude Include="unscaling_layer.h" />
     <ClCompile Include="unscaling_layer.cpp" />
     <ClInclude Include="unscaling_layer_forward_propagation.h" />
-    <ClCompile Include="unscaling_layer_forward_propagation.cpp" />
     <ClInclude Include="weighted_squared_error.h" />
     <ClCompile Include="weighted_squared_error.cpp" />
     <ClInclude Include="word_bag.h" />
-    <ClCompile Include="word_bag.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

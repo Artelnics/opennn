@@ -804,7 +804,22 @@ void PerceptronLayer3D::calculate_hidden_delta(MultiheadAttentionLayerForwardPro
                                                MultiheadAttentionLayerBackPropagation* next_back_propagation,
                                                PerceptronLayer3DBackPropagation* back_propagation) const
 {
-    /// @todo
+    // Next layer
+
+    const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
+
+    // This back propagation
+
+    Tensor<type, 3>& deltas = back_propagation->deltas;
+
+    // Next back propagation
+
+    bool is_context; // @todo
+
+    if (is_context)
+        deltas.device(*thread_pool_device) = next_back_propagation->error_context_derivatives;
+    else
+        deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
 }
 
 

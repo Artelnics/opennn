@@ -135,9 +135,9 @@ int main()
         Tensor<type, 4> inputs_4d;
 
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
-
-        //Tensor<unsigned char,1> zero = image_data_set.read_bmp_image("../data/images/zero/0_1.bmp");
-        //Tensor<unsigned char,1> one = image_data_set.read_bmp_image("../data/images/one/1_1.bmp");
+        /*
+        Tensor<unsigned char,1> zero = image_data_set.read_bmp_image("../data/images/zero/0_1.bmp");
+        Tensor<unsigned char,1> one = image_data_set.read_bmp_image("../data/images/one/1_1.bmp");
 
         vector<type> zero_int(zero.size()); ;
         vector<type> one_int(one.size());
@@ -150,7 +150,7 @@ int main()
 
         Tensor<type, 2> inputs(2, zero.size());
         Tensor<type, 2> outputs(2, neural_network.get_outputs_number());
-
+        
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         outputs = neural_network.calculate_outputs(inputs);
@@ -160,7 +160,7 @@ int main()
         cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+        */
         cout << "Bye!" << endl;
 
         return 0;

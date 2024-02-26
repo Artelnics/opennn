@@ -191,7 +191,7 @@ void ImageDataSet::set_images_number(const Index & new_images_number)
     images_number = new_images_number;
 }
 
-
+/*
 type ImageDataSet::calculate_intersection_over_union(const BoundingBox& bounding_box_1, const BoundingBox& bounding_box_2)
 {
     const Index intersection_x_top_left = max(bounding_box_1.x_top_left, bounding_box_2.x_top_left);
@@ -220,7 +220,7 @@ type ImageDataSet::calculate_intersection_over_union(const BoundingBox& bounding
 
     return intersection_over_union;
 }
-
+*/
 
 void ImageDataSet::set_augmentation(const bool& new_augmentation)
 {

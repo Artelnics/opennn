@@ -91,6 +91,8 @@ public:
 
     // Architecture
 
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+
     void set_input_size(const Index&);
     void set_context_size(const Index&);
     void set_depth(const Index&);
@@ -147,6 +149,8 @@ public:
     void calculate_error_gradient(const pair<type*, dimensions>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
+
+    void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const final;
 
     // Serialization methods
 

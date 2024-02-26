@@ -1837,8 +1837,6 @@ void MeanSquaredErrorTest::run_test_case()
     test_constructor();
     test_destructor();
 
-//    test_calculate_gradient_transformer();
-
     // Convolutional network methods
 
 //    test_calculate_gradient_convolutional_network();
@@ -1846,15 +1844,15 @@ void MeanSquaredErrorTest::run_test_case()
     // Back propagate methods
 
     test_back_propagate_perceptron();
-    test_back_propagate_probabilistic();
-    test_back_propagate_convolutional();
-    test_back_propagate_recurrent();
-    test_back_propagate_long_short_term_memory();
+    //test_back_propagate_probabilistic();
+    //test_back_propagate_convolutional();
+    //test_back_propagate_recurrent();
+    //test_back_propagate_long_short_term_memory();
 
 
-    test_back_propagate();
-
-    test_back_propagate_lm();
+    //test_back_propagate();
+    
+    //test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";
 }

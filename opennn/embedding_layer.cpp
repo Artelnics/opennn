@@ -338,13 +338,27 @@ void EmbeddingLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropag
 
     const MultiheadAttentionLayer* next_multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(next_back_propagation->layer);
 
+    // Next back propagation
+
+    const Tensor<type, 3>& next_error_input_derivatives = next_back_propagation->error_input_derivatives;
+    const Tensor<type, 3>& next_error_context_derivatives = next_back_propagation->error_context_derivatives;
+
+    // This back propagation
+
+    Tensor<type, 3>& deltas = back_propagation->deltas;
+
+    deltas.device(*thread_pool_device) = next_error_input_derivatives + next_error_context_derivatives;
 }
+
 
 void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, inputs.second[0][0], inputs.second[0][1]);
+    Index batch_samples_number = inputs.second[0][0];
+    Index inputs_number = inputs.second[0][1];
+
+    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, batch_samples_number, inputs_number);
 
     // Forward propagation
 
@@ -358,7 +372,15 @@ void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
 
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
 
+    embedding_weights_derivatives.setZero();
 
+    for (Index i = 0; i < batch_samples_number; i++)
+    {
+        for (Index j = 0; j < inputs_number; j++)
+        {
+            embedding_weights_derivatives.chip(inputs_map(i, j), 0).device(*thread_pool_device) += deltas.chip(i, 0).chip(j, 0);
+        }
+    }
 }
 
 }

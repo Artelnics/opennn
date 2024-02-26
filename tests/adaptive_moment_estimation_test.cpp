@@ -11,9 +11,9 @@
 
 AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
 {
-    sum_squared_error.set(&neural_network, &data_set);
+    mean_squared_error.set(&neural_network, &data_set);
 
-    adaptive_moment_estimation.set_loss_index(&sum_squared_error);
+    adaptive_moment_estimation.set_loss_index(&mean_squared_error);
 }
 
 
@@ -33,7 +33,7 @@ void AdaptiveMomentEstimationTest::test_constructor()
 
     // Loss index constructor
 
-    AdaptiveMomentEstimation adaptive_moment_estimation_2(&sum_squared_error);
+    AdaptiveMomentEstimation adaptive_moment_estimation_2(&mean_squared_error);
     assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
 }
 
@@ -105,6 +105,14 @@ void AdaptiveMomentEstimationTest::test_perform_training()
     neural_network.set_parameters_constant(type(-1));
 
     type training_loss_goal = type(0.05);
+
+    cout << "Data: " << endl << data_set.get_data() << endl;
+    cout << "Input Data: " << endl << data_set.get_input_data() << endl;
+    cout << "Target Data: " << endl << data_set.get_target_data() << endl;
+
+    cout << "Number of parameters: " << endl << neural_network.get_parameters_number() << endl;
+
+    adaptive_moment_estimation.set_display(true);
 
     adaptive_moment_estimation.set_loss_goal(training_loss_goal);
     adaptive_moment_estimation.set_maximum_epochs_number(10000);

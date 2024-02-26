@@ -50,7 +50,7 @@ private:
 
     NeuralNetwork neural_network;
 
-    SumSquaredError sum_squared_error;
+    MeanSquaredError mean_squared_error;
 
     AdaptiveMomentEstimation adaptive_moment_estimation;
 

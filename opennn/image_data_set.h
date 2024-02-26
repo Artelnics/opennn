@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "data_set.h"
-#include "bounding_box.h"
+//#include "bounding_box.h"
 
 // #include <filesystem>
 //#include <experimental/filesystem>
@@ -100,7 +100,7 @@ public:
 
     void set_categories_number(const Index&);
 
-    type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
+    //type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
 /*
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 */
@@ -108,7 +108,7 @@ public:
 
     void read_bmp();
 
-    BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
+    //BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
 
     Index get_bounding_boxes_number_from_XML(const string&);
 

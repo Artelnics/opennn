@@ -750,7 +750,7 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs_pai
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
     Scaler scaler;
-
+    
     for(Index i = 0; i < neurons_number; i++)
     {
         scaler = scalers(i);
@@ -758,7 +758,7 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs_pai
         const TensorMap<Tensor<type, 1>> input_column(inputs.data() + i * samples_number, samples_number);
         
         TensorMap<Tensor<type, 1>> output_column(outputs.data() + i * samples_number, samples_number);
-
+        
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
             if(display)
@@ -774,7 +774,7 @@ void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs_pai
         {
             if(scaler == Scaler::NoScaling)
             {
-
+                output_column = input_column;
             }
             else if(scaler == Scaler::MinimumMaximum)
             {

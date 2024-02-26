@@ -64,10 +64,13 @@ void ScalingLayerTest::test_forward_propagate()
     pair<type*, dimensions> inputs_pair;
 
     // Test
-
+    
     inputs_number = 1;
     samples_number = 1;
     bool is_training = true;
+
+    inputs.resize(samples_number, inputs_number);
+    inputs.setRandom();
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
@@ -77,23 +80,26 @@ void ScalingLayerTest::test_forward_propagate()
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
-
+    
     scaling_layer.forward_propagate(inputs_pair,
                                     &scaling_layer_forward_propagation,
                                     is_training);
-
+    
     outputs = scaling_layer_forward_propagation.outputs;
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
-/*
+
     assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    
     // Test
 
     inputs_number = 3 + rand()%10;
     samples_number = 1;
 
+    inputs.resize(samples_number, inputs_number);
+    inputs.setRandom();
+
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::NoScaling);
@@ -112,15 +118,18 @@ void ScalingLayerTest::test_forward_propagate()
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
-/*
+
     assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(1) - inputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(2) - inputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    
     // Test
 
     inputs_number = 1;
     samples_number = 1;
+
+    inputs.resize(samples_number, inputs_number);
+    inputs.setRandom();
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
@@ -139,9 +148,9 @@ void ScalingLayerTest::test_forward_propagate()
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
-/*
+
     assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    
     // Test
 
     inputs_number = 3;
@@ -156,8 +165,11 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
-/*
-    inputs_descriptives = data_set.calculate_input_variables_descriptives();
+
+    Tensor<Index, 1> all_indices(3);
+    all_indices.setValues({ 0, 1, 2 });
+    
+    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
     scaling_layer.set_descriptives(inputs_descriptives);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
@@ -177,7 +189,7 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(abs(outputs(0,0) - type(-1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(1,0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(2,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
+    
     // Test
 
     inputs_number = 2;
@@ -187,11 +199,14 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
-    data.resize(samples_number,inputs_number + 1);
-    data.setValues({{type(0),type(0)},{type(2),type(2)}});
-    data_set.set_data(data);
+    inputs.resize(samples_number, inputs_number);
+    inputs.setValues({{type(0),type(0)},
+                      {type(2),type(2)}});
 
-    inputs_descriptives = data_set.calculate_input_variables_descriptives();
+    all_indices.resize(2);
+    all_indices.setValues({ 0, 1 });
+
+    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
     scaling_layer.set_descriptives(inputs_descriptives);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
@@ -208,6 +223,11 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
 
+    type scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation - inputs_descriptives(0).mean / inputs_descriptives(0).standard_deviation;
+
+    assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+
+    /*
     inputs_number = 1;
     samples_number = 1;
 

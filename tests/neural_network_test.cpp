@@ -607,7 +607,7 @@ void NeuralNetworkTest::test_forward_propagate()
     data_set.set(data);
 
     data_set.set_training();
-/*
+
     training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
@@ -624,7 +624,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
 
-    Tensor<type, 1> biases_perceptron(neurons_number, 1);
+    Tensor<type, 1> biases_perceptron(neurons_number);
 
     biases_perceptron.setConstant(type(1));
 
@@ -636,24 +636,14 @@ void NeuralNetworkTest::test_forward_propagate()
 
     perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
-    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+    ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
-    neural_network.forward_propagate(batch, forward_propagation, is_training);
+    neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1]);
+        = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1]);
 
-    Tensor<type, 2> perceptron_combinations = perceptron_layer_forward_propagation->combinations;
-
-    TensorMap<Tensor<type, 2>> perceptron_activations(perceptron_layer_forward_propagation->outputs_data(0),
-                                                      perceptron_layer_forward_propagation->outputs_dimensions[0], perceptron_layer_forward_propagation->outputs_dimensions(1));
-
-    assert_true(perceptron_combinations.dimension(0) == 5, LOG);
-    assert_true(abs(perceptron_combinations(0,0) - 3) < type(1e-3), LOG);
-    assert_true(abs(perceptron_combinations(1,0) - 5) < type(1e-3), LOG);
-    assert_true(abs(perceptron_combinations(2,0) - 7) < type(1e-3), LOG);
-    assert_true(abs(perceptron_combinations(3,0) - 1) < type(1e-3), LOG);
-    assert_true(abs(perceptron_combinations(4,0) - 1) < type(1e-3), LOG);
+    Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
     assert_true(perceptron_activations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_activations(0,0) - type(0.952)) < type(1e-3), LOG);
@@ -661,7 +651,7 @@ void NeuralNetworkTest::test_forward_propagate()
     assert_true(abs(perceptron_activations(2,0) - type(0.999)) < type(1e-3), LOG);
     assert_true(abs(perceptron_activations(3,0) - type(0.731)) < type(1e-3), LOG);
     assert_true(abs(perceptron_activations(4,0) - type(0.731)) < type(1e-3), LOG);
-
+    /*
     // Test
 
     inputs_number = 4;

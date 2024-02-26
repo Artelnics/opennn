@@ -363,8 +363,6 @@ void Layer::softmax_derivatives(const Tensor<type, 3>& y, Tensor<type, 4>& dy_dx
 
             self_kronecker_product(thread_pool_device, y_vector, dy_dx_matrix);
 
-            kronecker_product(y_vector, y_vector);
-
             dy_dx_matrix = -dy_dx_matrix;
 
             sum_diagonal(dy_dx_matrix, y_vector);

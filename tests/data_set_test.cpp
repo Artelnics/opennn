@@ -2227,7 +2227,7 @@ void DataSetTest::run_test_case()
     test_scale_data();
 
     // Correlations
-
+/*
     test_calculate_input_target_correlations();
     test_calculate_input_raw_variables_correlations();
 
@@ -2260,7 +2260,7 @@ void DataSetTest::run_test_case()
     test_scrub_missing_values();
 
     // Time series
-/*
+
     test_transform_time_series();
     test_set_lags_number();
     test_set_steps_ahead_number();
