@@ -75,7 +75,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     // Test
 
-    data_set.set(1,1,1);
+    data_set.set(samples_number, inputs_number, outputs_number);
     data_set.set_data_random();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number, outputs_number});
@@ -102,15 +102,17 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     // Loss goal
 
-    neural_network.set_parameters_constant(type(-1));
+    samples_number = 1;
+    inputs_number = 1;
+    outputs_number = 1;
+
+    data_set.set(samples_number, inputs_number, outputs_number);
+    data_set.set_data_random();
+
+    neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
+    neural_network.set_parameters_constant(-1);
 
     type training_loss_goal = type(0.05);
-
-    cout << "Data: " << endl << data_set.get_data() << endl;
-    cout << "Input Data: " << endl << data_set.get_input_data() << endl;
-    cout << "Target Data: " << endl << data_set.get_target_data() << endl;
-
-    cout << "Number of parameters: " << endl << neural_network.get_parameters_number() << endl;
 
     adaptive_moment_estimation.set_display(true);
 
@@ -126,7 +128,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
 void AdaptiveMomentEstimationTest::run_test_case()
 {
-    cout << "Running gradient descent test case...\n";
+    cout << "Running Adaptive Moment Estimation (ADAM) test case...\n";
 
     // Constructor and destructor methods
 

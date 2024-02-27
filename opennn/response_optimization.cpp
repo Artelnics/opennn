@@ -626,7 +626,7 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     {
         if(envelope.size() != 0)
         {
-            envelope = filter_raw_variable_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
+            envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
         }
         else
         {

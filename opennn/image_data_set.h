@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "data_set.h"
-//#include "bounding_box.h"
 
 // #include <filesystem>
 //#include <experimental/filesystem>
@@ -96,29 +95,9 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
-
-
     void set_categories_number(const Index&);
 
-    //type calculate_intersection_over_union(const BoundingBox&, const BoundingBox&);
-/*
-    Tensor<unsigned char, 1> read_bmp_image(const string&);
-*/
     void fill_image_data(const string&, const vector<string>&, const vector<string>&, const vector<int>&, const int&, const int&, const int&, const Tensor<type, 2>&);
-
-    void read_bmp();
-
-    //BoundingBox propose_random_region(const Tensor<unsigned char, 1>& image) const;
-
-    Index get_bounding_boxes_number_from_XML(const string&);
-
-    Index get_label_classes_number_from_XML(const string&);
-
-    Tensor<type, 1> get_bounding_box(const Tensor<unsigned char, 1>&,
-                                     const Index&, const Index&,
-                                     const Index&, const Index&) const;
-
-    void read_ground_truth();
 
     void from_XML(const tinyxml2::XMLDocument&);
     void write_XML(tinyxml2::XMLPrinter&) const;

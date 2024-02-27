@@ -372,8 +372,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const
                                                                            const Tensor<type, 1>y)
 {
     return filter_missing_values_vector_matrix(y,x);
-};
-
+}
 
 
 /// Filter the missing values of two matrix.

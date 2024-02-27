@@ -60,8 +60,6 @@ public:
 
     // Get methods
 
-    bool is_empty() const;
-
     Index get_input_dimension() const;
     Index get_input_length() const;
     Index get_depth() const;

@@ -53,21 +53,6 @@ namespace opennn
     //void rescale_image(Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&);
     void translate_image(Tensor<type, 3>&, Tensor<type, 3>&, const Index&);
 
-    // Object detection
-
-    Tensor<Tensor<type, 1>, 1> propose_single_random_region(const Tensor<Tensor<type, 1>, 1>&, const Index&, const Index&);
-
-    type intersection_over_union(const Index&, const Index&, const Index&, const Index&,
-                                 const Index&, const Index&, const Index&, const Index&);
-
-    Tensor<type, 1> get_ground_truth_values(Tensor<unsigned char, 1>&, Index&, Index&, Index&, Index&);
-
-    Tensor<type, 1> get_bounding_box(const Tensor<Tensor<type, 1>, 1>&, const Index&,
-                                     const Index&, const Index&, const Index&);
-
-    Tensor<type, 1> resize_proposed_region(const Tensor<type, 1>, const Index&, const Index&,
-                                           const Index&, const Index&, const Index&);
-
     //const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
     //const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
 

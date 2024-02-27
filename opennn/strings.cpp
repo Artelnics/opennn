@@ -319,7 +319,7 @@ Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
     }
 
     return get_tokens(result,' ');
-};
+}
 
 
 
@@ -337,7 +337,7 @@ Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
     }
 
     return unique_count;
-};
+}
 
 
 
@@ -2045,18 +2045,18 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 
 Tensor<string,1> sort_string_tensor(Tensor<string, 1> tensor)
 {
-    auto compareStringLength = [](const string &a, const string &b)
-    {
-        return a.length() > b.length();
-    };
+    auto compareStringLength = [](const string& a, const string& b)
+        {
+            return a.length() > b.length();
+        };
 
-    vector<string> tensorAsVector(tensor.data(), tensor.data() + tensor.size());
+    vector<string> tensor_as_vector(tensor.data(), tensor.data() + tensor.size());
     
-    sort(tensorAsVector.begin(), tensorAsVector.end(), compareStringLength);
+    sort(tensor_as_vector.begin(), tensor_as_vector.end(), compareStringLength);
 
     for(int i = 0; i < tensor.size(); i++)
     {
-        tensor(i) = tensorAsVector[i];
+        tensor(i) = tensor_as_vector[i];
     }
 
     return tensor;
@@ -2428,7 +2428,7 @@ Index TextAnalytics::get_document_sentences_number() const
     }
 
     return count;
-};
+}
 
 
 // Set methods
@@ -2741,7 +2741,7 @@ string TextAnalytics::to_string(Tensor<string,1> token) const
     word += token(token.size() - 1);
 
     return word;
-};
+}
 
 
 /// Join the words Tensors into strings documents
@@ -2900,7 +2900,7 @@ void TextAnalytics::delete_blanks(Tensor<string, 1>& vector) const
             index++;
         }
     }
-};
+}
 
 
 void TextAnalytics::delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens) const
@@ -2911,7 +2911,7 @@ void TextAnalytics::delete_blanks(Tensor<Tensor<string, 1>, 1>& tokens) const
     {
         delete_blanks(tokens(i));
     }
-};
+}
 
 
 /// Reduces inflected(or sometimes derived) words to their word stem, base or root form.
@@ -4777,7 +4777,7 @@ void TextAnalytics::load_documents(const string& path)
     {
         documents(i) = documents_copy(i);
         targets(i) = targets_copy(i);
-    };
+    }
 
     Index lines_count = 0;
     Index lines_number = 0;

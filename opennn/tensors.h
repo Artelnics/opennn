@@ -39,7 +39,6 @@ bool calculate_random_bool();
 
 // Initialization
 
-//void update_progress_bar(type);
 void initialize_sequential(Tensor<type, 1>&);
 void initialize_sequential(Tensor<Index, 1>&);
 
@@ -54,8 +53,6 @@ void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
-
-// raw_variables
 
 // Sum
 
@@ -148,7 +145,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
 
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 
-Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
+Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
 
 // Kronecker product
 
@@ -227,13 +224,11 @@ Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 
 Index partition(Tensor<type, 2>&, Index, Index, Index);
 Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-void swap_rows(Tensor<type, 2>&, Index, Index);
+void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
 
 Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
 Tensor<type, 1> mode(Tensor<type, 1>&);
-
-void print_tensor(const float* vector, const int dimensions[]);
 
 
 template<class T, int n>

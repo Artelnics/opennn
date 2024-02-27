@@ -39,6 +39,24 @@ int main()
    {
         cout << "Blank\n";
 
+        Index dim0 = 2;
+        Index dim1 = 3;
+        Index index = 1;
+
+        Tensor<type, 2> test1(dim0, dim1);
+        test1.setConstant(1);
+
+        Tensor<type, 1> test2(index + dim0*dim1);
+        test2.setConstant(2);
+
+
+        copy(execution::par,
+            test1.data(),
+            test1.data () + test1.size(),
+            test2.data() + index);
+
+        cout << "test 2:" << endl << test2 << endl;
+
         cout << "Bye!" << endl;
 
         return 0;

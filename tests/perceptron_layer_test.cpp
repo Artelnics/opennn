@@ -510,23 +510,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
     combinations.setConstant(type(1));
 
-    activations_derivatives.setZero();
-
-    /* Threshold activations not implemented
-    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
-    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-
-    assert_true(activations_derivatives.rank() == 2, LOG);
-    assert_true(activations_derivatives.dimension(0) == 1, LOG);
-    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-    assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(activations_derivatives(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
-    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-    assert_true(abs(activations(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(activations_derivatives(0,0)) < type(1e-3), LOG);
-    */
+    activations_derivatives.setZero();    
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
     perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);

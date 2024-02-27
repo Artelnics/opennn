@@ -94,13 +94,18 @@ void StochasticGradientDescentTest::test_perform_training()
 
     old_error = error;
 
-    stochastic_gradient_descent.set_maximum_epochs_number(2);
+    stochastic_gradient_descent.set_maximum_epochs_number(10000);
     neural_network.set_parameters_constant(-1);
 
+    stochastic_gradient_descent.set_display(true);
+    stochastic_gradient_descent.set_display_period(100);
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
     assert_true(error <= old_error, LOG);
+
+    cout << "old_error: " << endl << old_error << endl;
+    cout << "error: " << endl << error << endl;
 
     // Loss goal
 

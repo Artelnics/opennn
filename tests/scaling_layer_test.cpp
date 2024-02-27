@@ -166,8 +166,8 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-    Tensor<Index, 1> all_indices(3);
-    all_indices.setValues({ 0, 1, 2 });
+    Tensor<Index, 1> all_indices;
+    initialize_sequential(all_indices, 0, 1, inputs_number-1);
     
     inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
     scaling_layer.set_descriptives(inputs_descriptives);
@@ -203,8 +203,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs.setValues({{type(0),type(0)},
                       {type(2),type(2)}});
 
-    all_indices.resize(2);
-    all_indices.setValues({ 0, 1 });
+    initialize_sequential(all_indices, 0, 1, inputs_number-1);
 
     inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
     scaling_layer.set_descriptives(inputs_descriptives);
@@ -227,19 +226,23 @@ void ScalingLayerTest::test_forward_propagate()
 
     assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    /*
-    inputs_number = 1;
-    samples_number = 1;
+    // Test
+    
+    inputs_number = 2;
+    samples_number = 2;
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
-    data.resize(samples_number, inputs_number + 1);
-    data.setConstant(type(1));
-    data_set.set(data);
+    inputs.resize(samples_number, inputs_number);
+    inputs.setValues({ {type(0),type(0)},
+                      {type(2),type(2)} });
 
-    scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
+    initialize_sequential(all_indices, 0, 1, inputs_number - 1);
+
+    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
+    scaling_layer.set_descriptives(inputs_descriptives);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
@@ -255,7 +258,9 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(outputs.dimension(0) == inputs_number, LOG);
     assert_true(outputs.dimension(1) == samples_number, LOG);
 
-    assert_true(abs(outputs(0) - data(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
+
+    assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -266,11 +271,13 @@ void ScalingLayerTest::test_forward_propagate()
     scaling_layer.set_display(false);
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
-    data.resize(samples_number, inputs_number + 1);
-    data.setConstant(type(1));
-    data_set.set_data(data);
+    inputs.resize(samples_number, inputs_number);
+    inputs.setRandom();
 
-    scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
+    initialize_sequential(all_indices, 0, 1, inputs_number - 1);
+
+    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
+    scaling_layer.set_descriptives(inputs_descriptives);
 
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
@@ -286,9 +293,11 @@ void ScalingLayerTest::test_forward_propagate()
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+    scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
+    assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+
+    scaled_input = inputs(1, 0) / inputs_descriptives(1).standard_deviation;
+    assert_true(abs(outputs(1, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
