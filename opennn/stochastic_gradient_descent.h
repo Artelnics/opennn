@@ -122,7 +122,7 @@ private:
 
    /// Parameter that accelerates SGD in the relevant direction and dampens oscillations.
 
-   type momentum;
+   type momentum = type(0);
 
    /// Boolean. Whether to apply Nesterov momentum.
 

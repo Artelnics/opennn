@@ -630,7 +630,7 @@ void ProbabilisticLayer::calculate_error_gradient(const pair<type*, dimensions>&
     const Index samples_number = inputs_pair.second[0][0];
     const Index neurons_number = get_neurons_number();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, inputs_pair.second[0][1]);
 
     // Forward propagation
 

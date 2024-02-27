@@ -51,6 +51,7 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
     const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
     Tensor<type, 2>& errors = back_propagation.errors;
+
     type& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = outputs - targets;

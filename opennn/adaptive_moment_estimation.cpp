@@ -232,7 +232,6 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-
     TrainingResults results(maximum_epochs_number + 1);
 
     check();
@@ -449,6 +448,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             cout << "Training error: " << training_error << endl;
             if(has_selection) cout << "Selection error: " << selection_error << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+            //cout << "Gradient: " << endl << training_back_propagation.gradient << endl;
         }
 
         // Training history

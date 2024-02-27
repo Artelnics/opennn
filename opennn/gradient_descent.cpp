@@ -287,7 +287,7 @@ void GradientDescent::update_parameters(
     if(abs(optimization_data.learning_rate) > type(0))
     {
         back_propagation.parameters.device(*thread_pool_device)
-                -= back_propagation.gradient*optimization_data.learning_rate;
+            -= back_propagation.gradient*optimization_data.learning_rate;
     }
     else
     {

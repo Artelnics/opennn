@@ -304,7 +304,7 @@ void divide_columns(ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matri
     {
         TensorMap<Tensor<type,1>> column(matrix.data() + j*rows_number, rows_number);
 
-        column.device(*thread_pool_device) = column / vector(j);
+        column.device(*thread_pool_device) = column / vector;
     }
 }
 

@@ -150,6 +150,48 @@ void MeanSquaredErrorTest::test_back_propagate_perceptron()
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
+
+
+    {
+        samples_number = 10;
+        inputs_number = 8;
+        outputs_number = 9;
+        neurons_number = 12;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, neurons_number, outputs_number });
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch.get_inputs_pair(), forward_propagation, is_training);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+    }
 }
 
 
@@ -202,10 +244,10 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
 
     // Test binary classification random samples, inputs, outputs, neurons
     {
-        samples_number = type(1);// + rand() % 10;
-        inputs_number = type(1);// + rand() % 10;
-        outputs_number = type(1);// +rand() % 10;
-        neurons_number = type(1);// + rand() % 10;
+        samples_number = type(1) + rand() % 10;
+        inputs_number = type(1) + rand() % 10;
+        neurons_number = type(1) + rand() % 10;
+        outputs_number = type(1) + rand() % 10;
 
         // Data set
 
@@ -233,8 +275,8 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        back_propagation.print();
-/*
+        //back_propagation.print();
+
         numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
@@ -242,14 +284,7 @@ void MeanSquaredErrorTest::test_back_propagate_probabilistic()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
-
-        cout << back_propagation.gradient << endl;
-
-        cout  << endl;
-
-        cout << numerical_gradient << endl;
-*/
+        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
     }
 }
 
@@ -1839,12 +1874,12 @@ void MeanSquaredErrorTest::run_test_case()
 
     // Convolutional network methods
 
-//    test_calculate_gradient_convolutional_network();
+    //test_calculate_gradient_convolutional_network();
 
     // Back propagate methods
 
     test_back_propagate_perceptron();
-    //test_back_propagate_probabilistic();
+    test_back_propagate_probabilistic();
     //test_back_propagate_convolutional();
     //test_back_propagate_recurrent();
     //test_back_propagate_long_short_term_memory();
