@@ -390,19 +390,12 @@ void PoolingLayer::forward_propagate_no_pooling(const Tensor<type, 4>& inputs,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
 {
-//    const Index neurons_number = get_neurons_number();
-
-//    const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
-
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation
             = static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation);
 
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
-/*
-    memcpy(outputs_data,
-           inputs.data(),
-           batch_samples_number*neurons_number*sizeof(type));
-*/
+
+    outputs = inputs;
 }
 
 

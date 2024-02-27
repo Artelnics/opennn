@@ -1204,11 +1204,11 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 Tensor<type,1> TextDataSet::sentence_to_data(const string& sentence) const
 {
-/*
+
     Tensor<string, 1> tokens = get_tokens(sentence,' ');
 
     Tensor<type, 1> vector(get_raw_variables_number() - 1);
-
+/*
     TextAnalytics text_analytics;
     text_analytics.set_short_words_length(short_words_length);
     text_analytics.set_long_words_length(long_words_length);

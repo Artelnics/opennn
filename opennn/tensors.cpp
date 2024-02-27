@@ -12,22 +12,6 @@
 
 namespace opennn
 {
-/**
-<<<<<<< HEAD:opennn/tensor_utilities.cpp
-void update_progress_bar(type progress) {
-    const int barWidth = 50;
-
-    std::cout << "[";
-    int pos = barWidth * progress;
-    for (int i = 0; i < barWidth; ++i) {
-        if (i < pos) std::cout << "=";
-        else if (i == pos) std::cout << ">";
-        else std::cout << " ";
-    }
-    std::cout << "] " << std::setw(3) << static_cast<int>(progress * 100.0) << "%\r";
-    std::cout.flush();
-}
-*/
 
 type calculate_random_uniform(const type& minimum, const type& maximum)
 {
@@ -280,7 +264,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
 
 void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
 {
-    Index columns_number = vector.size();
+    const Index columns_number = vector.size();
 
 #pragma omp parallel for
 
@@ -598,30 +582,6 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
     return rank;
 }
 
-/**
-<<<<<<< HEAD:opennn/tensor_utilities.cpp
-Tensor<type, 2> box_plots_to_tensor(const Tensor<BoxPlot, 1>& box_plots)
-{
-   const Index columns_number = box_plots.dimension(0);
-
-   Tensor<type, 2> summary(5, columns_number);
-
-   for(Index i = 0; i < columns_number; i++)
-   {
-       const BoxPlot& box_plot = box_plots(i);
-       summary(0, i) = box_plot.minimum;
-       summary(1, i) = box_plot.first_quartile;
-       summary(2, i) = box_plot.median;
-       summary(3, i) = box_plot.third_quartile;
-       summary(4, i) = box_plot.maximum;
-   }
-
-   Eigen::array<Index, 2> new_shape = {1, 5 * columns_number};
-   Tensor<type, 2> reshaped_summary = summary.reshape(new_shape);
-
-   return reshaped_summary;
-}
-*/
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 {
@@ -669,7 +629,7 @@ Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index
     }
 
     return sorted_tokens;
-};
+}
 
 
 
@@ -698,8 +658,7 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
     }
 
     return sorted_tokens;
-};
-
+}
 
 
 Index count_less_than(const Tensor<Index,1>& vector, const Index& bound)
@@ -713,8 +672,7 @@ Index count_less_than(const Tensor<Index,1>& vector, const Index& bound)
     }
 
     return count;
-};
-
+}
 
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Index& bound)
@@ -735,7 +693,7 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>& vector, const Inde
     }
 
     return indices;
-};
+}
 
 
 
@@ -750,8 +708,7 @@ Index count_less_than(const Tensor<double,1>& vector, const double& bound)
     }
 
     return count;
-};
-
+}
 
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const double& bound)
@@ -772,7 +729,7 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
     }
 
     return indices;
-};
+}
 
 
 Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
@@ -786,7 +743,7 @@ Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
     }
 
     return count;
-};
+}
 
 
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
@@ -894,30 +851,27 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
             index++;
         }
     }
-};
-
+}
 
 
 Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
 
-//    copy(new_vector.data(), new_vector.data() + index, vector.data());
+    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
-};
-
+}
 
 
 Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 {
     Tensor<Index, 1> new_vector(index);
 
-//    copy(new_vector.data(), new_vector.data() + index, vector.data());
+    copy(new_vector.data(), new_vector.data() + index, vector.data());
 
     return new_vector;
-};
-
+}
 
 
 /// Returns the number of elements which are equal or greater than a minimum given value
@@ -961,17 +915,16 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
 void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
 {
-/*
     copy(execution::par,
         matrix.data(),
-        vector.data() + vector.size(),
+        (type*)vector.data() + vector.size(),
         matrix.data() + row_index);
-*/
 }
 
-Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>& matrix,const Index& raw_variable_index, const type& minimum, const type& maximum)
+
+Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, const Index& column_index, const type& minimum, const type& maximum)
 {
-    const Tensor<type,1> column = matrix.chip(raw_variable_index,1);
+    const Tensor<type,1> column = matrix.chip(column_index,1);
     const Index new_rows_number = count_between(column, minimum, maximum);
 
     if(new_rows_number == 0)
@@ -991,7 +944,7 @@ Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>& matrix,const 
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(matrix(i,raw_variable_index) >= minimum && matrix(i, raw_variable_index) <= maximum)
+        if(matrix(i, column_index) >= minimum && matrix(i, column_index) <= maximum)
         {
             row = matrix.chip(i, 0);
 
@@ -1008,14 +961,14 @@ Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>& matrix,const 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TensorUtilities class.\n"
-               << "Tensor<type,2> filter_raw_variable_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
+               << "Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
                << "Invalid conditions\n";
 
         throw runtime_error(buffer.str());
     }
 
     return new_matrix;
-};
+}
 
 
 Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
@@ -1682,7 +1635,7 @@ bool contains(const Tensor<string,1>& vector, const string& value)
     const string* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
-};
+}
 
 
 void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
@@ -1754,51 +1707,16 @@ Tensor<string, 1> to_string_tensor(const Tensor<type,1>& x)
     }
 
     return vector;
-};
-
-
-void print_tensor(const float* vector, const int dimensions[])
-{
-    cout<<"Tensor"<<endl;
-
-    const int rows_number = dimensions[0];
-    const int raw_variables_number = dimensions[1];
-    const int channels = dimensions[2];
-    const int batch = dimensions[3];
-
-    for(int l = 0; l<batch; l++)
-    {
-        for(int k = 0; k<channels; k++)
-        {
-            for(int i = 0; i<rows_number; i++)
-            {
-                for(int j = 0; j<raw_variables_number; j++)
-                {
-                    if(i + rows_number*j + k*rows_number*raw_variables_number + l*channels*rows_number*raw_variables_number % rows_number*raw_variables_number*channels == 0)
-
-                        cout<< "<--Batch-->"<<endl;
-
-                    if(i + rows_number*j + k*rows_number*raw_variables_number % rows_number*raw_variables_number == 0)
-
-                        cout<< "*--Channel--*"<<endl;
-
-                   cout<<*(vector + i + j*rows_number + k*rows_number*raw_variables_number+ l*channels*rows_number*raw_variables_number)<< " ";
-                }
-
-               cout<<" "<<endl;
-            }
-        }
-    }
 }
 
 
-void swap_rows(Tensor<type, 2>& data_matrix, Index row1, Index row2)
+void swap_rows(Tensor<type, 2>& matrix, const Index& row_1, const Index& row_2)
 {
-    const Tensor<type, 1> temp = data_matrix.chip(row1, 0);
+    const Tensor<type, 1> temp = matrix.chip(row_1, 0);
 
-    data_matrix.chip(row1, 0) = data_matrix.chip(row2, 0);
+    matrix.chip(row_1, 0) = matrix.chip(row_2, 0);
 
-    data_matrix.chip(row2, 0) = temp;
+    matrix.chip(row_2, 0) = temp;
 }
 
 

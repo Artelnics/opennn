@@ -2074,7 +2074,7 @@ void GeneticAlgorithm::load(const string& file_name)
     }
 
     from_XML(document);
-};
+}
 
 }
 
