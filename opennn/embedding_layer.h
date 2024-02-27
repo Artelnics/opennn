@@ -107,7 +107,7 @@ public:
     void forward_propagate(const pair<type*, dimensions>&,
                            Tensor<type, 1>&,
                            LayerForwardPropagation*) final;
-*/
+    */
     // Delta methods
 
     void calculate_hidden_delta(LayerForwardPropagation*,
@@ -163,7 +163,7 @@ protected:
     bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
 #endif
 
     };
@@ -191,7 +191,7 @@ protected:
         
         pair<type*, dimensions> get_outputs_pair() const final
         {
-            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+            const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
             const Index inputs_length = embedding_layer->get_input_length();
 
@@ -203,7 +203,7 @@ protected:
 
         void set(const Index& new_batch_samples_number, Layer* new_layer) final
         {
-            EmbeddingLayer* layer = static_cast<EmbeddingLayer*>(new_layer);
+            const EmbeddingLayer* layer = static_cast<EmbeddingLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
@@ -235,48 +235,9 @@ protected:
         }
 
 
-        void build_positional_encoding_matrix()
-        {
-            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+        void build_positional_encoding_matrix();
 
-            const Index inputs_length = embedding_layer->get_input_length();
-            const Index depth = embedding_layer->get_depth();
-
-            positional_encoding.resize(inputs_length, depth);
-
-            positional_encoding.setZero();
-
-            const type half_depth = type(depth)/type(2);
-
-            #pragma omp parallel /*for collapse(2)*/
-
-            for(Index i = 0; i < inputs_length; i++)
-            {
-                for(Index j = 0; j < Index(half_depth - 1); j++)
-                {
-                    positional_encoding(i, 2*j) = type(sin( (i + 1) / pow(10000, (j + 1) / half_depth) ));
-                    positional_encoding(i, 2*j+1) = type(cos( (i + 1) / pow(10000, (j + 1) / half_depth) ));
-                }
-            }
-
-            if(depth % 2 == 0)
-            {
-                for(Index i = 0; i < inputs_length; i++)
-                {
-                    positional_encoding(i, depth - 2) = type(sin( (i+1) / 10000 ));
-                    positional_encoding(i, depth - 1) = type(cos( (i+1) / 10000 ));
-                }
-            }
-            else
-            {
-                for(Index i = 0; i < inputs_length; i++)
-                {
-                    positional_encoding(i, depth - 1) = type(sin( (i+1) / 10000 ));
-                }
-            }
-
-            built_positional_encoding_matrix = true;
-        }
+        // Struct members
 
         bool built_positional_encoding_matrix = false;
 
@@ -312,7 +273,7 @@ protected:
         {
             layer = new_layer;
 
-            EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
+            const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
 
             batch_samples_number = new_batch_samples_number;
 
@@ -343,9 +304,6 @@ protected:
         Tensor<type, 3> deltas;
 
         Tensor<type, 2> embedding_weights_derivatives;
-
-        //Tensor<type, 3> error_combinations_derivatives;
-
     };
 
 }

@@ -383,6 +383,55 @@ void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     }
 }
 
+void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
+{
+    const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+    const Index inputs_length = embedding_layer->get_input_length();
+    const Index depth = embedding_layer->get_depth();
+
+    positional_encoding.resize(inputs_length, depth);
+
+    positional_encoding.setZero();
+
+    const type half_depth = type(depth) / type(2);
+
+    /// @todo (because h file?) Try to use matrix form
+
+    #pragma omp parallel for
+
+    for (Index i = 0; i < inputs_length; i++)
+    {
+        for (Index j = 0; j < Index(half_depth - 1); j++)
+        {
+            positional_encoding(i, 2 * j) = type(sin((i + 1) / pow(10000, (j + 1) / half_depth)));
+            positional_encoding(i, 2 * j + 1) = type(cos((i + 1) / pow(10000, (j + 1) / half_depth)));
+        }
+    }
+
+    if (depth % 2 == 0)
+    {
+        #pragma omp parallel for
+
+        for (Index i = 0; i < inputs_length; i++)
+        {
+            positional_encoding(i, depth - 2) = type(sin((i + 1) / 10000));
+            positional_encoding(i, depth - 1) = type(cos((i + 1) / 10000));
+        }
+    }
+    else
+    {
+        #pragma omp parallel for
+
+        for (Index i = 0; i < inputs_length; i++)
+        {
+            positional_encoding(i, depth - 1) = type(sin((i + 1) / 10000));
+        }
+    }
+
+    built_positional_encoding_matrix = true;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
