@@ -115,7 +115,7 @@ public:
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
 
-   void update_parameters(const DataSetBatch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
+   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training() final;
 

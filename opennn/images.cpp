@@ -88,8 +88,10 @@ namespace opennn
 
 /// @todo ChatGPT gives something easier
 
-Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
+void read_bmp_image(const string& filename, Tensor<type, 3>& image)
 {
+    Tensor<Tensor<type, 1>, 1> image;
+/*
     FILE* file = fopen(filename.data(), "rb");
 
     if(!file)
@@ -181,8 +183,9 @@ Tensor<Tensor<type, 1>, 1> read_bmp_image_data(const string& filename)
 
         image_data(0) = image_type;
     }
-
+*/
     return image_data;
+
 }
 
 
@@ -212,40 +215,30 @@ void sort_channel(Tensor<unsigned char,1>& original, Tensor<unsigned char,1>& so
 }
 
 
-void reflect_image_x(Tensor<type, 3>& input,
+void reflect_image_x(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
                      Tensor<type, 3>& output)
 {
     const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
 
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
-
-    output = input.reverse(reflect_horizontal_dimesions);
+    output.device(*thread_pool_device) = input.reverse(reflect_horizontal_dimesions);
 }
 
 
-void reflect_image_y(Tensor<type, 3>& input,
+void reflect_image_y(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
                      Tensor<type, 3>& output)
 {
     const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
 
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
-
-    output = input.reverse(reflect_vertical_dimesions);
+    output.device(*thread_pool_device) = input.reverse(reflect_vertical_dimesions);
 }
 
 
-void rotate_image(Tensor<type, 3>& input,
+// @todo Improve performance
+
+void rotate_image(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& input,
                   Tensor<type, 3>& output,
                   const type& angle_degree)
 {
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
-
     const Index width = input.dimension(0);
     const Index height = input.dimension(1);
     const Index channels = input.dimension(2);
@@ -338,243 +331,4 @@ void translate_image(Tensor<type, 3>& input,
     }
 }
 
-
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image, 
-                                        const int& rows_number,
-                                        const int& raw_variables_number, 
-                                        const int& padding)
-{
-    Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
-
-    const int channels = 3;
-
-    if(rows_number % 4 == 0)
-    {
-        copy(execution::par, 
-             image.data(), 
-             image.data() + raw_variables_number * channels * rows_number, 
-             data_without_padding.data());
-    }
-    else
-    {
-        for(int i = 0; i < rows_number; i++)
-        {
-            if(i == 0)
-            {
-                copy(execution::par, 
-                    image.data(), image.data() + raw_variables_number * channels, data_without_padding.data());
-
-            }
-            else
-            {
-                copy(execution::par, 
-                    image.data() + channels * raw_variables_number * i + padding * i,
-                    image.data() + channels * raw_variables_number * (i + 1) + padding * i,
-                    data_without_padding.data() + channels * raw_variables_number * i);
-
-            }
-        }
-    }
-
-    return data_without_padding;
-}
-
-
-Tensor<unsigned char, 1> resize_image(Tensor<unsigned char, 1> &data,
-                                      const Index &image_width,
-                                      const Index &image_height,
-                                      const Index &channels_number)
-{
-    /*
-    const fs::path path = data_source_path;
-
-    if(data_source_path.empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Data file name is empty.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    has_raw_variables_names = true;
-    has_rows_labels = true;
-
-    separator = Separator::None;
-
-    vector<fs::path> folder_paths;
-    vector<fs::path> image_paths;
-
-    int classes_number = 0;
-    int images_total_number = 0;
-
-    for(const auto & entry_path : fs::directory_iterator(path))
-    {
-        if(entry_path.path().string().find(".DS_Store") != string::npos)
-        {
-            cout << ".DS_Store found in : " << entry_path << endl;
-        }
-        else
-        {
-            fs::path actual_directory = entry_path.path().string();
-
-            folder_paths.emplace_back(actual_directory);
-            classes_number++;
-
-            for(const auto & entry_image : fs::directory_iterator(actual_directory))
-            {
-                if(entry_image.path().string().find(".DS_Store") != string::npos)
-                {
-                    cout << ".DS_Store found in : " << entry_image.path() << endl;
-                }
-                else
-                {
-                    image_paths.emplace_back(entry_image.path().string());
-                    images_total_number++;
-                }
-            }
-        }
-    }
-
-    images_number = images_total_number;
-
-    const int image_size = width * height * channels;
-
-    Tensor<type, 2> imageDataAux(image_data.dimension(0), image_data.dimension(1));
-    imageDataAux = image_data;
-
-    if(classes_number == 2)
-    {
-        Index binary_raw_variables_number = 1;
-        data.resize(images_number, image_size + binary_raw_variables_number);
-        imageDataAux.resize(images_number, image_size + binary_raw_variables_number);
-    }
-    else
-    {
-        data.resize(images_number, image_size + classes_number);
-        imageDataAux.resize(images_number, image_size + classes_number);
-    }
-
-//    memcpy(data.data(), image_data.data(), images_number * image_size * sizeof(type));
-
-    copy(execution::par,
-    image_data.data(), image_data.data() + images_number * image_size, data.data());
-
-    rows_labels.resize(images_number);
-
-    Index row_index = 0;
-
-    for(Index i = 0; i < classes_number; i++)
-    {
-        vector<string> images_paths;
-        Index images_in_folder = 0;
-
-        for(const auto & entry : fs::directory_iterator(folder_paths[i]))
-        {
-            if(entry.path().string().find(".DS_Store") != string::npos)
-            {
-                cout << ".DS_Store found in : " << entry << endl;
-            }
-            else
-            {
-                images_paths.emplace_back(entry.path().string());
-                images_in_folder++;
-            }
-        }
-
-        for(Index j = 0;  j < images_in_folder; j++)
-        {
-
-            if(classes_number == 2 && i == 0)
-            {
-                data(row_index, image_size) = 1;
-            }
-            else if(classes_number == 2 && i == 1)
-            {
-                data(row_index, image_size) = type(0);
-            }
-            else
-            {
-                data(row_index, image_size + i) = 1;
-            }
-
-            rows_labels(row_index) = images_paths[j];
-
-            row_index++;
-        }
-    }
-
-    raw_variables.resize(image_size + 1);
-
-    // Input raw_variables
-
-    Index raw_variable_index = 0;
-
-    for(Index i = 0; i < channels; i++)
-    {
-        for(Index j = 0; j < width; j++)
-        {
-            for(Index k = 0; k < height ; k++)
-            {
-                raw_variables(raw_variable_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
-                raw_variables(raw_variable_index).type = ColumnType::Numeric;
-                raw_variables(raw_variable_index).raw_variable_use = VariableUse::Input;
-                raw_variables(raw_variable_index).scaler = Scaler::MinimumMaximum;
-                raw_variable_index++;
-            }
-        }
-    }
-
-    // Target raw_variables
-
-    raw_variables(image_size).name = "class";
-
-    if(classes_number == 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
-
-        throw runtime_error(buffer.str());
-    }
-
-    Tensor<string, 1> categories(classes_number);
-
-    for(Index i = 0 ; i < classes_number; i++)
-    {
-        categories(i) = folder_paths[i].filename().string();
-    }
-
-    raw_variables(image_size).raw_variable_use = VariableUse::Target;
-    raw_variables(image_size).categories = categories;
-
-    raw_variables(image_size).categories_uses.resize(classes_number);
-    raw_variables(image_size).categories_uses.setConstant(VariableUse::Target);
-
-    if(classes_number == 2)
-    {
-        raw_variables(image_size).type = ColumnType::Binary;
-    }
-    else
-    {
-        raw_variables(image_size).type = ColumnType::Categorical;
-    }
-
-    samples_uses.resize(images_number);
-    split_samples_random();
-
-    image_width = width;
-    image_height = height;
-    channels_number = channels;
-
-    input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
-    */
-
-    return Tensor<unsigned char, 1>();
-}
 }

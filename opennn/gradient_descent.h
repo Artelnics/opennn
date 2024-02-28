@@ -94,7 +94,7 @@ public:
    void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_parameters(
-           const DataSetBatch&,
+           const Batch&,
            ForwardPropagation&,
            BackPropagation&,
            GradientDescentData&) const;

@@ -237,7 +237,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 /// \param forward_propagation
 /// \param back_propagation
 
-void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
+void NormalizedSquaredError::calculate_error(const Batch& batch,
                                              const ForwardPropagation& forward_propagation,
                                              BackPropagation& back_propagation) const
 {
@@ -276,7 +276,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
+void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
                                                 const ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
@@ -303,7 +303,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
+void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
                                                     ForwardPropagation&,
                                                     BackPropagation& back_propagation) const
 {
@@ -329,7 +329,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
+void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & loss_index_back_propagation) const
 {
@@ -348,7 +348,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
 }
 
 
-void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
+void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                          BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index total_samples_number = data_set->get_samples_number();
@@ -362,7 +362,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& bat
 }
 
 
-void NormalizedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
+void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                              BackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG

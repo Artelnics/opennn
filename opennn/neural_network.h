@@ -22,7 +22,6 @@
 // OpenNN includes
 
 #include "config.h"
-#include "data_set_batch.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"

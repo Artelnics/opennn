@@ -260,7 +260,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 /// \param optimization_data
 
 void GradientDescent::update_parameters(
-        const DataSetBatch& batch,
+        const Batch& batch,
         ForwardPropagation& forward_propagation,
         BackPropagation& back_propagation,
         GradientDescentData& optimization_data) const
@@ -385,10 +385,10 @@ TrainingResults GradientDescent::perform_training()
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
-    DataSetBatch training_batch(training_samples_number, data_set);
+    Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set);
+    Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index

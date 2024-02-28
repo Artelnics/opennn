@@ -42,13 +42,13 @@ public:
 
    // Error methods
 
-   void calculate_error(const DataSetBatch&,
+   void calculate_error(const Batch&,
                         const ForwardPropagation&,
                         BackPropagation&) const final;
 
    // Gradient methods
 
-   void calculate_output_delta(const DataSetBatch&,
+   void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
                                BackPropagation&) const final;
 

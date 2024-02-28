@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include "data_set.h"
+#include "batch.h"
 #include "neural_network.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
@@ -161,59 +162,59 @@ public:
 
    // Back propagation
 
-   virtual void calculate_error(const DataSetBatch&,
+   virtual void calculate_error(const Batch&,
                                 const ForwardPropagation&,
                                 BackPropagation&) const = 0;
 
    void add_regularization(BackPropagation&) const;
 
-   virtual void calculate_output_delta(const DataSetBatch&,
+   virtual void calculate_output_delta(const Batch&,
                                        ForwardPropagation&,
                                        BackPropagation&) const = 0;
 
-   void calculate_layers_error_gradient(const DataSetBatch& ,
+   void calculate_layers_error_gradient(const Batch& ,
                                         ForwardPropagation& ,
                                         BackPropagation& ) const;
 
    void assemble_layers_error_gradient(BackPropagation&) const;
 
-   void back_propagate(const DataSetBatch&,
+   void back_propagate(const Batch&,
                        ForwardPropagation&,
                        BackPropagation&) const;
 
    // Back propagation LM
 
-   void calculate_errors_lm(const DataSetBatch&,
+   void calculate_errors_lm(const Batch&,
                             const ForwardPropagation&,
                             BackPropagationLM&) const; // general
 
-   virtual void calculate_squared_errors_lm(const DataSetBatch&,
+   virtual void calculate_squared_errors_lm(const Batch&,
                                             const ForwardPropagation&,
                                             BackPropagationLM&) const;
 
-   virtual void calculate_error_lm(const DataSetBatch&,
+   virtual void calculate_error_lm(const Batch&,
                                    const ForwardPropagation&,
                                    BackPropagationLM&) const {}
 
-   virtual void calculate_output_delta_lm(const DataSetBatch&,
+   virtual void calculate_output_delta_lm(const Batch&,
                                           ForwardPropagation&,
                                           BackPropagationLM&) const {}
 
-   void calculate_layers_delta_lm(const DataSetBatch&,
+   void calculate_layers_delta_lm(const Batch&,
                                   ForwardPropagation&,
                                   BackPropagationLM&) const;
 
-   virtual void calculate_error_gradient_lm(const DataSetBatch&,
+   virtual void calculate_error_gradient_lm(const Batch&,
                                       BackPropagationLM&) const;
 
-   void calculate_squared_errors_jacobian_lm(const DataSetBatch&,
+   void calculate_squared_errors_jacobian_lm(const Batch&,
                                              ForwardPropagation&,
                                              BackPropagationLM&) const;
 
-   virtual void calculate_error_hessian_lm(const DataSetBatch&,
+   virtual void calculate_error_hessian_lm(const Batch&,
                                            BackPropagationLM&) const {}
 
-   void back_propagate_lm(const DataSetBatch&,
+   void back_propagate_lm(const Batch&,
                           ForwardPropagation&,
                           BackPropagationLM&) const;
 

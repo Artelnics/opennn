@@ -40,7 +40,7 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet*
 /// \param forward_propagation
 /// \param back_propagation
 
-void CrossEntropyError::calculate_error(const DataSetBatch& batch,
+void CrossEntropyError::calculate_error(const Batch& batch,
                      const ForwardPropagation& forward_propagation,
                      BackPropagation& back_propagation) const
 {      
@@ -57,7 +57,7 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
+void CrossEntropyError::calculate_binary_error(const Batch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -90,7 +90,7 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 }
 
 
-void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
+void CrossEntropyError::calculate_multiple_error(const Batch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
@@ -122,7 +122,7 @@ void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
 }
 
 
-void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
+void CrossEntropyError::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -139,7 +139,7 @@ void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
+void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
                                                       ForwardPropagation& forward_propagation,
                                                       BackPropagation& back_propagation) const
 {
@@ -167,7 +167,7 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 }
 
 
-void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batch,
+void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {

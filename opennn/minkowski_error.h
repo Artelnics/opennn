@@ -56,11 +56,11 @@ public:
 
    // loss methods
 
-   void calculate_error(const DataSetBatch& batch,
+   void calculate_error(const Batch& batch,
                         const ForwardPropagation& forward_propagation,
                         BackPropagation& back_propagation) const final;
 
-   void calculate_output_delta(const DataSetBatch&,
+   void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
                                BackPropagation&) const final;
 

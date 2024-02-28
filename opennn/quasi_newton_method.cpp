@@ -424,7 +424,7 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
 /// \param optimization_data
 
 void QuasiNewtonMethod::update_parameters(
-        const DataSetBatch& batch,
+        const Batch& batch,
         ForwardPropagation& forward_propagation,
         BackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data) const
@@ -602,11 +602,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    DataSetBatch training_batch(training_samples_number, data_set);
+    Batch training_batch(training_samples_number, data_set);
 
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set);
+    Batch selection_batch(selection_samples_number, data_set);
 
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 

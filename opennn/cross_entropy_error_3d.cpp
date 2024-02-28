@@ -40,7 +40,7 @@ CrossEntropyError3D::CrossEntropyError3D(NeuralNetwork* new_neural_network, Data
 /// \param forward_propagation
 /// \param back_propagation
 
-void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
+void CrossEntropyError3D::calculate_error(const Batch& batch,
                                           const ForwardPropagation& forward_propagation,
                                           BackPropagation& back_propagation) const
 {
@@ -73,7 +73,7 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
         ostringstream buffer;
 
         buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_multiple_error(const DataSetBatch&, const NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
+               << "void calculate_multiple_error(const Batch&, const NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
                << "NAN values found in back propagation error.";
 
         throw runtime_error(buffer.str());
@@ -81,7 +81,7 @@ void CrossEntropyError3D::calculate_error(const DataSetBatch& batch,
 }
 
 
-void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
+void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -109,7 +109,7 @@ void CrossEntropyError3D::calculate_output_delta(const DataSetBatch& batch,
 
     Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
 
-    deltas.device(*thread_pool_device) = (-targets / (outputs/* + epsilon*/)) / type(batch_samples_number);
+    deltas.device(*thread_pool_device) = targets / (outputs * type(-batch_samples_number));
 }
 
 

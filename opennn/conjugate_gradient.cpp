@@ -759,10 +759,10 @@ TrainingResults ConjugateGradient::perform_training()
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    DataSetBatch training_batch(training_samples_number, data_set);
+    Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set);
+    Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
@@ -976,7 +976,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 /// @param optimization_data New conjugate gradient method data.
 
 void ConjugateGradient::update_parameters(
-        const DataSetBatch& batch,
+        const Batch& batch,
         ForwardPropagation& forward_propagation,
         BackPropagation& back_propagation,
         ConjugateGradientData& optimization_data) const

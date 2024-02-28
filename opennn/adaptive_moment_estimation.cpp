@@ -277,8 +277,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    DataSetBatch training_batch(training_batch_samples_number, data_set);
-    DataSetBatch selection_batch(selection_batch_samples_number, data_set);
+    Batch training_batch(training_batch_samples_number, data_set);
+    Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -632,7 +632,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("AdaptiveMomentEstimation");
 
-    // DataSetBatch size
+    // Batch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -712,7 +712,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    // DataSetBatch size
+    // Batch size
 
     const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
 

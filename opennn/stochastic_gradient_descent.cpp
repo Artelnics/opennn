@@ -366,8 +366,8 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
 
-    DataSetBatch training_batch(training_batch_samples_number, data_set);
-    DataSetBatch selection_batch(selection_batch_samples_number, data_set);
+    Batch training_batch(training_batch_samples_number, data_set);
+    Batch selection_batch(selection_batch_samples_number, data_set);
     
     const pair<type*, dimensions> training_inputs = training_batch.get_inputs_pair();
 
@@ -672,7 +672,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.OpenElement("StochasticGradientDescent");
 
-    // DataSetBatch size
+    // Batch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -759,7 +759,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    // DataSetBatch size
+    // Batch size
 
     const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
 

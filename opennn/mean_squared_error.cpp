@@ -41,7 +41,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, DataSet* n
 /// \param forward_propagation
 /// \param back_propagation
 
-void MeanSquaredError::calculate_error(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error(const Batch& batch,
                                        const ForwardPropagation& forward_propagation,
                                        BackPropagation& back_propagation) const
 {
@@ -81,7 +81,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_lm(const Batch& batch,
                                           const ForwardPropagation&,
                                           BackPropagationLM& back_propagation) const
 {
@@ -105,7 +105,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
+void MeanSquaredError::calculate_output_delta(const Batch& batch,
                                               ForwardPropagation&,
                                               BackPropagation& back_propagation) const
 {
@@ -129,7 +129,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
+void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& loss_index_back_propagation) const
 {
@@ -152,7 +152,7 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 }
 
 
-void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                    BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
@@ -170,7 +170,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                   BackPropagationLM& loss_index_back_propagation_lm) const
 {
      const Index outputs_number = neural_network->get_outputs_number();

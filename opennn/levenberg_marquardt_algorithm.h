@@ -104,7 +104,7 @@ public:
    TrainingResults perform_training() final;
 
    void update_parameters(
-           const DataSetBatch&,
+           const Batch&,
            ForwardPropagation&,
            BackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
