@@ -125,42 +125,42 @@ private:
 
    /// Initial Levenberg-Marquardt parameter.
 
-   type damping_parameter;
+   type damping_parameter = type(0);
 
    /// Minimum Levenberg-Marquardt parameter.
 
-   type minimum_damping_parameter;
+   type minimum_damping_parameter = type(0);
 
    /// Maximum Levenberg-Marquardt parameter.
 
-   type maximum_damping_parameter;
+   type maximum_damping_parameter = type(0);
 
    /// Damping parameter increase/decrease factor.
 
-   type damping_parameter_factor;
+   type damping_parameter_factor = type(0);
 
    // Stopping criteria 
 
    /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
 
-   type minimum_loss_decrease;
+   type minimum_loss_decrease = type(0);
 
    /// Goal value for the loss. It is a stopping criterion.
 
-   type training_loss_goal;
+   type training_loss_goal = type(0);
 
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_failures;
+   Index maximum_selection_failures = 0;
 
    /// Maximum number of epoch to perform_training. It is a stopping criterion.
 
-   Index maximum_epochs_number;
+   Index maximum_epochs_number = 0;
 
    /// Maximum training time. It is a stopping criterion.
 
-   type maximum_time;
+   type maximum_time = type(0);
 };
 
 
