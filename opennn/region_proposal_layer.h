@@ -101,14 +101,15 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
         const Index region_columns =  region_proposal_layer_pointer->get_region_columns();
         const Index channels_number =  region_proposal_layer_pointer->get_channels_number();
 
+        // TODO proposal fix to undelclared variables: outputs_data, outputs_dimensions
+        std::vector<type*> outputs_data;
+        std::vector<Tensor<long, 1>> outputs_dimensions;
+
         outputs_data.resize(2);
         outputs_dimensions.resize(2);
 
         // Image patches
-
-        outputs_data.resize(1);
-
-        outputs_data(0) = (type*)malloc(static_cast<size_t>(batch_samples_number*regions_number*region_rows*region_columns*channels_number*sizeof(type)));
+        outputs_data[0] = (type*)malloc(static_cast<size_t>(batch_samples_number*regions_number*region_rows*region_columns*channels_number*sizeof(type)));
 
         outputs_dimensions[0].resize(4);
 
@@ -119,7 +120,7 @@ struct RegionProposalLayerForwardPropagation : LayerForwardPropagation
 
         // Bounding boxes
 
-        outputs_data(1) = (type*)malloc(static_cast<size_t>(1));
+        outputs_data[0] = (type*)malloc(static_cast<size_t>(1));
 
         outputs_dimensions[1].resize(1);
 
