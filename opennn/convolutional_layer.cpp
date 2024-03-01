@@ -1639,6 +1639,49 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair() const
+{
+    const Index neurons_number = layer->get_neurons_number();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number, 1, 1 } });
+}
+
+void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    batch_samples_number = new_batch_samples_number;
+
+    layer = new_layer;
+
+    const ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(layer);
+
+    const Index inputs_rows_number = convolutional_layer->get_inputs_rows_number();
+    const Index inputs_raw_variables_number = convolutional_layer->get_inputs_raw_variables_number();
+
+    const Index inputs_channels_number = convolutional_layer->get_inputs_channels_number();
+
+    const Index kernels_number = convolutional_layer->get_kernels_number();
+    const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+    const Index outputs_raw_variables_number = convolutional_layer->get_outputs_raw_variables_number();
+
+    preprocessed_inputs.resize(batch_samples_number,
+        inputs_rows_number,
+        inputs_raw_variables_number,
+        inputs_channels_number);
+
+    outputs.resize(batch_samples_number,
+        outputs_rows_number,
+        outputs_raw_variables_number,
+        kernels_number);
+
+    means.resize(kernels_number);
+    standard_deviations.resize(kernels_number);
+
+    activations_derivatives.resize(batch_samples_number,
+        inputs_rows_number,
+        inputs_raw_variables_number,
+        inputs_channels_number);
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

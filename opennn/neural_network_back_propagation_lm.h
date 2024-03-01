@@ -31,46 +31,8 @@ struct NeuralNetworkBackPropagationLM
     }
 
 
-    void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network)
-    {
-        batch_samples_number = new_batch_samples_number;
+    void set(const Index new_batch_samples_number, NeuralNetwork* new_neural_network);
 
-        neural_network = new_neural_network;
-
-        const Tensor<Layer*, 1> trainable_layerss = neural_network->get_trainable_layers();
-
-        const Index trainable_layers_number = trainable_layerss.size();
-
-        layers.resize(trainable_layers_number);
-
-        for(Index i = 0; i < trainable_layers_number; i++)
-        {
-            switch(trainable_layerss(i)->get_type())
-            {
-            case Layer::Type::Perceptron:
-
-            layers(i) = new PerceptronLayerBackPropagationLM(batch_samples_number, trainable_layerss(i));
-
-            break;
-
-            case Layer::Type::Probabilistic:
-
-            layers(i) = new ProbabilisticLayerBackPropagationLM(batch_samples_number, trainable_layerss(i));
-
-            break;
-
-            default:
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                       << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
-
-                throw invalid_argument(buffer.str());
-            }
-            }
-        }
-    }
 
     void print()
     {

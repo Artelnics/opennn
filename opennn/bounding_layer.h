@@ -150,26 +150,10 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
     }
     
     
-    pair<type*, dimensions> get_outputs_pair() const final
-    {
-        const Index neurons_number = layer->get_neurons_number();
-
-        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
-    }
+    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final
-    {
-        layer = new_layer;
-
-        const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_neurons_number();
-
-        batch_samples_number = new_batch_samples_number;
-
-        outputs.resize(batch_samples_number, neurons_number);
-
-        outputs_data = outputs.data();
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
     void print() const

@@ -432,10 +432,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
     }
 
-    DataSetBatch training_batch(training_samples_number, data_set);
+    Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    DataSetBatch selection_batch(selection_samples_number, data_set);
+    Batch selection_batch(selection_samples_number, data_set);
     selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
@@ -617,7 +617,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 /// \param loss_index_back_propagation_lm
 /// \param optimization_data
 
-void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
+void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     ForwardPropagation& forward_propagation,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
@@ -1009,6 +1009,26 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             }
         }
     }
+}
+
+void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method)
+{
+    Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method;
+
+    const LossIndex* loss_index = Levenberg_Marquardt_algorithm->get_loss_index();
+
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    const Index parameters_number = neural_network->get_parameters_number();
+
+    // Neural network data
+
+    old_parameters.resize(parameters_number);
+
+    parameters_difference.resize(parameters_number);
+
+    potential_parameters.resize(parameters_number);
+    parameters_increment.resize(parameters_number);
 }
 
 }

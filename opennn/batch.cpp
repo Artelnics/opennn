@@ -1,4 +1,4 @@
-#include "data_set_batch.h"
+#include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
@@ -6,13 +6,13 @@
 namespace opennn
 {
 
-DataSetBatch::~DataSetBatch()
+Batch::~Batch()
 {
 
 }
 
 
-void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
+void Batch::fill(const Tensor<Index, 1>& samples_indices,
                         const Tensor<Index, 1>& inputs_indices,
                         const Tensor<Index, 1>& targets_indices)
 {
@@ -69,7 +69,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples_indices,
 }
 
 
-void DataSetBatch::perform_augmentation() const
+void Batch::perform_augmentation() const
 {
     ImageDataSet* image_data_set
             = static_cast<ImageDataSet*>(data_set);
@@ -146,13 +146,13 @@ void DataSetBatch::perform_augmentation() const
 }
 
 
-DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_set)
+Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 {
     set(new_samples_number, new_data_set);
 }
 
 
-void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set)
+void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {
     batch_size = new_batch_size;
 
@@ -228,13 +228,13 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set)
 }
 
 
-Index DataSetBatch::get_batch_samples_number() const
+Index Batch::get_batch_samples_number() const
 {
     return batch_size;
 }
 
 
-void DataSetBatch::print() const
+void Batch::print() const
 {
     cout << "Batch" << endl;
 
@@ -255,7 +255,7 @@ void DataSetBatch::print() const
 }
 
 
-std::pair<type *, dimensions> DataSetBatch::get_inputs_pair() const
+std::pair<type *, dimensions> Batch::get_inputs_pair() const
 {
     pair<type *, dimensions> inputs;
 
@@ -266,7 +266,7 @@ std::pair<type *, dimensions> DataSetBatch::get_inputs_pair() const
 }
 
 
-std::pair<type *, dimensions> DataSetBatch::get_targets_pair() const
+std::pair<type *, dimensions> Batch::get_targets_pair() const
 {
     pair<type *, dimensions> targets;
 

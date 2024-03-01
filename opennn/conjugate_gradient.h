@@ -138,7 +138,7 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
    void update_parameters(
-           const DataSetBatch&,
+           const Batch&,
            ForwardPropagation&,
            BackPropagation&,
            ConjugateGradientData&) const;

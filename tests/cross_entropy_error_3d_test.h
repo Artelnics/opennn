@@ -59,7 +59,7 @@ private:
 
     CrossEntropyError3D cross_entropy_error_3d;
 
-    DataSetBatch batch;
+    Batch batch;
 
     ForwardPropagation forward_propagation;
 

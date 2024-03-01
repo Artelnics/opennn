@@ -102,83 +102,13 @@ struct TransformerForwardPropagation
 
     // Destructor
 
-    virtual ~TransformerForwardPropagation()
-    {
-        const Index layers_number = layers.size();
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            delete layers(i);
-        }
-    }
+    virtual ~TransformerForwardPropagation();
 
 
-    void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-    {
-        Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
-
-        batch_samples_number = new_batch_samples;
-
-        const Tensor<Layer*, 1> neural_network_layers = neural_network->get_layers();
-
-        const Index layers_number = layers.size();
-
-        layers.resize(layers_number);
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            switch (neural_network_layers(i)->get_type())
-            {
-
-            case Layer::Type::Embedding:
-            {
-                layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            case Layer::Type::MultiheadAttention:
-            {
-                layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            case Layer::Type::Perceptron:
-            {
-                layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            case Layer::Type::Probabilistic:
-            {
-                layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            default: break;
-            }
-        }
-    }
+    void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
 
 
-    void print() const
-    {
-        cout << "Transformer forward propagation" << endl;
-
-        const Index layers_number = layers.size();
-
-        cout << "Layers number: " << layers_number << endl;
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            cout << "Layer " << i + 1 << ": " << layers(i)->layer->get_name() << endl;
-
-            layers(i)->print();
-        }
-    }
+    void print() const;
 
 
     Index batch_samples_number = 0;

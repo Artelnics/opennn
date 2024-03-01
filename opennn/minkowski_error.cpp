@@ -87,7 +87,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 /// \param forward_propagation
 /// \param back_propagation
 
-void MinkowskiError::calculate_error(const DataSetBatch& batch,
+void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
@@ -120,7 +120,7 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
+void MinkowskiError::calculate_output_delta(const Batch& batch,
                                             ForwardPropagation&,
                                             BackPropagation& back_propagation) const
 {

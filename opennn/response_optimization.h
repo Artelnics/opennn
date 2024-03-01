@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "neural_network.h"
+#include "data_set.h"
 
 namespace opennn
 {
@@ -127,36 +128,7 @@ struct ResponseOptimizationResults
 
     Tensor<type, 1> optimal_variables;
 
-    void print() const
-    {
-        const Index inputs_number = neural_network->get_inputs_number();
-        const Index outputs_number = neural_network->get_outputs_number();
-
-        const Tensor<string, 1> inputs_names = neural_network->get_inputs_names();
-        const Tensor<string, 1> outputs_names = neural_network->get_outputs_names();
-
-        cout << "\nResponse optimization results: " << endl;
-        if(optimal_variables.size() == 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void ResponseOptimizationResults::print() method.\n"
-                   << "Optimal variables vector is empty.\n";
-
-            throw runtime_error(buffer.str());
-        }
-
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
-        }
-
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            cout << outputs_names[i] << ": " << optimal_variables[inputs_number+i] << endl;
-        }
-    }
+    void print() const;
 };
 
 

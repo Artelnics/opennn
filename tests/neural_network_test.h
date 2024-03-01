@@ -65,7 +65,7 @@ private:
 
     DataSet data_set;
 
-    DataSetBatch batch;
+    Batch batch;
 
     Tensor<Index,1> training_samples_indices;
     Tensor<Index,1> input_variables_indices;

@@ -179,7 +179,7 @@ void WeightedSquaredError::set_data_set(DataSet* new_data_set)
 }
 
 
-void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_error(const Batch& batch,
                                            const ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation) const
 {
@@ -223,7 +223,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_error_lm(const Batch& batch,
                                               const ForwardPropagation&,
                                               BackPropagationLM &back_propagation) const
 {
@@ -240,7 +240,7 @@ void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 }
 
 
-void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_output_delta(const Batch& batch,
                                                   ForwardPropagation& ,
                                                   BackPropagation& back_propagation) const
 {
@@ -285,7 +285,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
 /// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
 
-void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                        BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
@@ -302,7 +302,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch
 }
 
 
-void WeightedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                       BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index batch_samples_number = batch.get_batch_samples_number();
@@ -457,7 +457,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
 }
 
 
-void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
                                                        const ForwardPropagation& forward_propagation,
                                                        BackPropagationLM& loss_index_back_propagation_lm) const
 {

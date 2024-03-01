@@ -68,7 +68,7 @@ private:
 
     MeanSquaredError mean_squared_error;
 
-    DataSetBatch batch;
+    Batch batch;
 
     ForwardPropagation forward_propagation;
 

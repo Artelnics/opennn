@@ -77,9 +77,9 @@ const type& AdaptiveMomentEstimation::get_epsilon() const
 
 /// Returns the initial learning rate.
 
-const type& AdaptiveMomentEstimation::get_initial_learning_rate() const
+const type& AdaptiveMomentEstimation::get_learning_rate() const
 {
-    return initial_learning_rate;
+    return learning_rate;
 }
 
 
@@ -147,9 +147,9 @@ void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 /// Sets a new learning rate.
 /// @param new_learning_rate New learning rate.
 
-void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learning_rate)
+void AdaptiveMomentEstimation::set_learning_rate(const type& new_learning_rate)
 {
-    initial_learning_rate= new_learning_rate;
+    learning_rate= new_learning_rate;
 }
 
 
@@ -277,8 +277,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
-    DataSetBatch training_batch(training_batch_samples_number, data_set);
-    DataSetBatch selection_batch(selection_batch_samples_number, data_set);
+    Batch training_batch(training_batch_samples_number, data_set);
+    Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -348,19 +348,21 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Main loop
 
+    optimization_data.iteration = 1;
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
-
+        
         const Index batches_number = training_batches.dimension(0);
-
+        
 //        training_loss = type(0);
         training_error = type(0);
-
-        optimization_data.iteration = 1;
-
+        
+        //optimization_data.iteration = 1;
+        
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
 
@@ -379,7 +381,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               is_training);
             
             // Loss index
-
+            
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
@@ -391,13 +393,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
         }
-
+        
         // Loss
 
         training_error /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
-
+        /*
         if(has_selection)
         {
             selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
@@ -436,7 +438,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
 
-        }
+        }*/
         
         // Elapsed time
 
@@ -509,14 +511,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-
+    
     data_set->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network->has_unscaling_layer())
         data_set->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
-
+    
     return results;
 
 }
@@ -530,8 +532,8 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
     // Initial learning rate
 
-    labels_values(0,0) = "Initial learning rate";
-    labels_values(0,1) = std::to_string(double(initial_learning_rate));
+    labels_values(0,0) = "Learning rate";
+    labels_values(0,1) = std::to_string(double(learning_rate));
 
     // Initial decay
 
@@ -584,10 +586,11 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
     AdaptiveMomentEstimationData& optimization_data) const
 {
-    const type learning_rate =
-        type(initial_learning_rate *
-            sqrt(type(1) - pow(beta_2, type(optimization_data.iteration))) /
-            (type(1) - pow(beta_1, type(optimization_data.iteration))));
+    Index& iteration = optimization_data.iteration;
+    
+    const type bias_correction =
+            sqrt(type(1) - pow(beta_2, type(iteration))) /
+            (type(1) - pow(beta_1, type(iteration)));
 
     const Tensor<type, 1>& gradient = back_propagation.gradient;
 
@@ -603,9 +606,15 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     Tensor<type, 1>& parameters = back_propagation.parameters;
 
+    //cout << "Gradient sample: " << gradient(0) << endl;
+    //cout << "Gradient first estimate sample: " << gradient_exponential_decay(0) << endl;
+    //cout << "Gradient second estimate sample: " << sqrt(square_gradient_exponential_decay(0)) << endl;
+    //cout << "Gradient approximation sample: " << bias_correction * (gradient_exponential_decay(0) / sqrt(square_gradient_exponential_decay(0)) + epsilon) << endl;
+    //cout << endl;
+    
     parameters.device(*thread_pool_device)
-        -= learning_rate * gradient_exponential_decay/(square_gradient_exponential_decay.sqrt() + epsilon);
-        
+        -= learning_rate * bias_correction * gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
+    
     optimization_data.iteration++;
 
     // Update parameters
@@ -632,7 +641,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("AdaptiveMomentEstimation");
 
-    // DataSetBatch size
+    // Batch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -712,7 +721,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error(buffer.str());
     }
 
-    // DataSetBatch size
+    // Batch size
 
     const tinyxml2::XMLElement* batch_samples_number_element = root_element->FirstChildElement("BatchSize");
 
@@ -842,8 +851,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     gradient_exponential_decay.setZero();
 
     square_gradient_exponential_decay.resize(parameters_number);
-    square_gradient_exponential_decay.setZero();
-
     square_gradient_exponential_decay.setZero();
 }
 

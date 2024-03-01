@@ -987,6 +987,82 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         set_padding_width(Index(stoi(padding_width_string)));
     }
 }
+
+pair<type*, dimensions> PoolingLayerForwardPropagation::get_outputs_pair() const
+{
+    const Index neurons_number = layer->get_neurons_number();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number, 1, 1 } });
+}
+
+void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    batch_samples_number = new_batch_samples_number;
+
+    layer = new_layer;
+
+    const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
+
+    const Index pool_rows_number = pooling_layer->get_pool_rows_number();
+
+    const Index pool_raw_variables_number = pooling_layer->get_pool_raw_variables_number();
+
+    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+
+    const Index outputs_raw_variables_number = pooling_layer->get_outputs_raw_variables_number();
+
+    const Index channels_number = pooling_layer->get_channels_number();
+
+    outputs.resize(batch_samples_number,
+        outputs_rows_number,
+        outputs_raw_variables_number,
+        channels_number);
+
+    outputs_data = outputs.data();
+
+    image_patches.resize(batch_samples_number,
+        pool_rows_number,
+        pool_raw_variables_number,
+        outputs_rows_number * outputs_raw_variables_number,
+        channels_number);
+}
+
+pair<type*, dimensions> PoolingLayerBackPropagation::get_deltas_pair() const
+{
+    const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
+
+    const Index kernels_number = 0;// = pooling_layer->get_kernels_number();
+
+    const Index outputs_raw_variables_number = pooling_layer->get_outputs_raw_variables_number();
+
+    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+
+    return pair<type*, dimensions>(deltas_data, { { batch_samples_number,
+        kernels_number,
+        outputs_rows_number,
+        outputs_raw_variables_number } });
+}
+
+void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    batch_samples_number = new_batch_samples_number;
+
+    layer = new_layer;
+
+    const PoolingLayer* pooling_layer = static_cast<PoolingLayer*>(layer);
+
+    const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
+    const Index outputs_raw_variables_number = pooling_layer->get_outputs_raw_variables_number();
+
+    const Index kernels_number = 0;
+
+    deltas.resize(batch_samples_number,
+        kernels_number,
+        outputs_rows_number,
+        outputs_raw_variables_number);
+
+    deltas_data = deltas.data();
+}
 }
 
 // OpenNN: Open Neural Networks Library.

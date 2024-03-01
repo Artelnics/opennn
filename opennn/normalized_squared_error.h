@@ -72,28 +72,28 @@ public:
 
    // Back propagation
      
-   void calculate_error(const DataSetBatch&,
+   void calculate_error(const Batch&,
                         const ForwardPropagation&,
                         BackPropagation&) const final;
 
-   void calculate_output_delta(const DataSetBatch&,
+   void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
                                BackPropagation&) const final;
 
     // Back propagation LM
 
-   void calculate_error_lm(const DataSetBatch&,
+   void calculate_error_lm(const Batch&,
                            const ForwardPropagation&,
                            BackPropagationLM&) const final;
 
-   void calculate_output_delta_lm(const DataSetBatch&,
+   void calculate_output_delta_lm(const Batch&,
                                ForwardPropagation&,
                                BackPropagationLM&) const final;
 
-   void calculate_error_gradient_lm(const DataSetBatch&,
+   void calculate_error_gradient_lm(const Batch&,
                               BackPropagationLM&) const final;
 
-   void calculate_error_hessian_lm(const DataSetBatch&,
+   void calculate_error_hessian_lm(const Batch&,
                                         BackPropagationLM&) const final;
 
    // Serialization methods

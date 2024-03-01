@@ -988,6 +988,89 @@ void MultiheadAttentionLayer::insert_gradient(LayerBackPropagation* back_propaga
         gradient_data + gradient_index);
 }
 
+pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_pair() const
+{
+    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+
+    const Index input_size = multihead_attention_layer->get_input_size();
+
+    const Index depth = multihead_attention_layer->get_depth();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, input_size, depth } });
+}
+
+void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index input_size = multihead_attention_layer->get_input_size();
+
+    const Index context_size = multihead_attention_layer->get_context_size();
+
+    const Index depth = multihead_attention_layer->get_depth();
+
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+
+    const Index weights_depth = multihead_attention_layer->get_weights_depth();
+
+    // Outputs
+
+    outputs.resize(batch_samples_number, input_size, depth);
+
+    outputs_data = outputs.data();
+
+    // Rest of quantities
+
+    query.resize(input_size, weights_depth, new_batch_samples_number, heads_number);
+    key.resize(context_size, weights_depth, new_batch_samples_number, heads_number);
+    value.resize(context_size, weights_depth, new_batch_samples_number, heads_number);
+
+    attention_scores.resize(context_size, input_size, new_batch_samples_number, heads_number);
+    softmax_attention_scores.resize(context_size, input_size, new_batch_samples_number, heads_number);
+    attention_outputs.resize(input_size, weights_depth, new_batch_samples_number, heads_number);
+}
+
+void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index input_size = multihead_attention_layer->get_input_size();
+    const Index context_size = multihead_attention_layer->get_context_size();
+    const Index depth = multihead_attention_layer->get_depth();
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+    const Index weights_depth = multihead_attention_layer->get_weights_depth();
+
+    deltas.resize(batch_samples_number, input_size, depth);
+
+    deltas_data = deltas.data();
+
+    error_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
+    error_softmax_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
+    error_attention_output_derivatives.resize(input_size, weights_depth, batch_samples_number, heads_number);
+
+    error_query_derivatives.resize(input_size, weights_depth, batch_samples_number, heads_number);
+    error_key_derivatives.resize(context_size, weights_depth, batch_samples_number, heads_number);
+    error_value_derivatives.resize(context_size, weights_depth, batch_samples_number, heads_number);
+
+    error_input_derivatives.resize(batch_samples_number, input_size, depth);
+    error_context_derivatives.resize(batch_samples_number, context_size, depth);
+
+    query_weights_derivatives.resize(depth, weights_depth, heads_number);
+    key_weights_derivatives.resize(depth, weights_depth, heads_number);
+    value_weights_derivatives.resize(depth, weights_depth, heads_number);
+
+    projection_weights_derivatives.resize(weights_depth, depth, heads_number);
+    projection_biases_derivatives.resize(depth);
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

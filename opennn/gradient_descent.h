@@ -94,7 +94,7 @@ public:
    void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_parameters(
-           const DataSetBatch&,
+           const Batch&,
            ForwardPropagation&,
            BackPropagation&,
            GradientDescentData&) const;
@@ -165,24 +165,7 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     virtual ~GradientDescentData() {}
 
-    void set(GradientDescent* new_gradient_descent)
-    {
-        gradient_descent = new_gradient_descent;
-
-        const LossIndex* loss_index = gradient_descent->get_loss_index();
-
-        const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-        const Index parameters_number = neural_network->get_parameters_number();
-
-        // Neural network data
-
-        potential_parameters.resize(parameters_number);
-
-        // Optimization algorithm data
-
-        training_direction.resize(parameters_number);
-    }
+    void set(GradientDescent* new_gradient_descent);
 
 
     virtual void print() const

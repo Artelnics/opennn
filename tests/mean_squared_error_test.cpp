@@ -858,7 +858,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 //       const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
 //       const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-//       DataSetBatch batch(samples_number, &data_set);
+//       Batch batch(samples_number, &data_set);
 
 //       batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
@@ -981,7 +981,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //    const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
 //    const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-//    DataSetBatch batch(images_number, &data_set);
+//    Batch batch(images_number, &data_set);
 
 //    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
@@ -1173,7 +1173,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 //        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
 //        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-//        DataSetBatch batch(images_number, &data_set);
+//        Batch batch(images_number, &data_set);
 
 //        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
@@ -1323,7 +1323,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
         const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-        DataSetBatch batch(images_number, &data_set);
+        Batch batch(images_number, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
@@ -1513,7 +1513,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         Tensor<Index, 1> target_variables_indices(1);
         target_variables_indices(0) = 18;
 
-        DataSetBatch batch(images_number, &data_set);
+        Batch batch(images_number, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
@@ -1731,7 +1731,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
         Tensor<Index, 1> target_variables_indices(1);
         target_variables_indices(0) = 18;
 
-        DataSetBatch batch(images_number, &data_set);
+        Batch batch(images_number, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 

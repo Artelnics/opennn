@@ -262,36 +262,10 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
     }
     
     
-    pair<type*, dimensions> get_outputs_pair() const final
-    {
-        PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
-
-        const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-
-        const Index inputs_size = perceptron_layer_3d->get_inputs_size();
-
-        return pair<type*, dimensions>(outputs_data, {{batch_samples_number, inputs_size, neurons_number}});
-    }
+    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final
-    {
-        layer = new_layer;
-
-        PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-
-        const Index inputs_size = perceptron_layer_3d->get_inputs_size();
-
-        outputs.resize(batch_samples_number, inputs_size, neurons_number);
-
-        outputs_data = outputs.data();
-
-        activations_derivatives.resize(batch_samples_number, inputs_size, neurons_number);
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
      void print() const
@@ -331,39 +305,10 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     }
     
     
-    pair<type*, dimensions> get_deltas_pair() const final
-    {
-        PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
-
-        const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-        const Index inputs_number = perceptron_layer_3d->get_inputs_number();
-
-        return pair<type*, dimensions>(deltas_data, {{batch_samples_number, inputs_number, neurons_number}});
-    }
+    pair<type*, dimensions> get_deltas_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final
-    {
-        layer = new_layer;
-
-        PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-        const Index inputs_number = perceptron_layer_3d->get_inputs_number();
-        const Index inputs_size = perceptron_layer_3d->get_inputs_size();
-
-        deltas.resize(batch_samples_number, inputs_number, neurons_number);
-
-        deltas_data = deltas.data();
-
-        biases_derivatives.resize(neurons_number);
-
-        synaptic_weights_derivatives.resize(inputs_size, neurons_number);
-
-        error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
     void print() const

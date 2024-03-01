@@ -3151,6 +3151,17 @@ void TestingAnalysis::load(const string& file_name)
 }
 
 
+void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
+{
+    std::ofstream file;
+    file.open(file_name);
+
+    file << "Goodness-of-fit analysis\n";
+    file << "Determination: " << determination << endl;
+
+    file.close();
+}
+
 }
 
 

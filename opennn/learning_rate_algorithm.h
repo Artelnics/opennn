@@ -245,12 +245,12 @@ public:
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const DataSetBatch&,
+   Triplet calculate_bracketing_triplet(const Batch&,
                                         ForwardPropagation&,
                                         BackPropagation&,
                                         OptimizationAlgorithmData&) const;
 
-   pair<type, type> calculate_directional_point(const DataSetBatch&,
+   pair<type, type> calculate_directional_point(const Batch&,
                                                 ForwardPropagation&,
                                                 BackPropagation&,
                                                 OptimizationAlgorithmData&) const;

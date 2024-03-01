@@ -104,7 +104,7 @@ public:
    TrainingResults perform_training() final;
 
    void update_parameters(
-           const DataSetBatch&,
+           const Batch&,
            ForwardPropagation&,
            BackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
@@ -179,25 +179,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     virtual ~LevenbergMarquardtAlgorithmData() {}
 
-    void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method)
-    {
-        Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method;
-
-        const LossIndex* loss_index = Levenberg_Marquardt_algorithm->get_loss_index();
-
-        const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-        const Index parameters_number = neural_network->get_parameters_number();
-
-        // Neural network data
-
-        old_parameters.resize(parameters_number);
-
-        parameters_difference.resize(parameters_number);
-
-        potential_parameters.resize(parameters_number);
-        parameters_increment.resize(parameters_number);
-    }
+    void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method);
 
     LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
 

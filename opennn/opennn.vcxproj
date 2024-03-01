@@ -239,8 +239,8 @@
     <ClCompile Include="cross_entropy_error_3d.cpp" />
     <ClInclude Include="data_set.h" />
     <ClCompile Include="data_set.cpp" />
-    <ClInclude Include="data_set_batch.h" />
-    <ClCompile Include="data_set_batch.cpp" />
+    <ClInclude Include="batch.h" />
+    <ClCompile Include="batch.cpp" />
     <ClInclude Include="descriptives.h" />
     <ClInclude Include="embedding_layer.h" />
     <ClCompile Include="embedding_layer.cpp" />

@@ -55,7 +55,7 @@ private:
 
    CrossEntropyError cross_entropy_error;
 
-   DataSetBatch batch;
+   Batch batch;
 
    ForwardPropagation forward_propagation;
 

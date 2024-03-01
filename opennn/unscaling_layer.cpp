@@ -1075,6 +1075,28 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+
+pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() const
+{
+    const Index neurons_number = layer->get_neurons_number();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number } });
+}
+
+
+void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    const Index neurons_number = static_cast<UnscalingLayer*>(layer)->get_neurons_number();
+
+    batch_samples_number = new_batch_samples_number;
+
+    outputs.resize(batch_samples_number, neurons_number);
+
+    outputs_data = outputs.data();
+}
+
 }
 
 

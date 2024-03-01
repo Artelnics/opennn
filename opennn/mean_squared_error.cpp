@@ -9,6 +9,7 @@
 #include "mean_squared_error.h"
 #include "neural_network_forward_propagation.h"
 #include "loss_index_back_propagation.h"
+#include "adaptive_moment_estimation.h"
 
 namespace opennn
 {
@@ -41,7 +42,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, DataSet* n
 /// \param forward_propagation
 /// \param back_propagation
 
-void MeanSquaredError::calculate_error(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error(const Batch& batch,
                                        const ForwardPropagation& forward_propagation,
                                        BackPropagation& back_propagation) const
 {
@@ -66,22 +67,22 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
     Tensor<type, 2>& errors = back_propagation.errors;
 
     type& error = back_propagation.error;
-
+    
     errors.device(*thread_pool_device) = outputs - targets;
-
+    
     Tensor<type, 0> sum_squared_error;
-
+    
     sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
-
+    
     const type coefficient = type(1) / type(batch_samples_number * outputs_number);
-
+    
     error = sum_squared_error(0)*coefficient;
-
+    
     if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
-void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_lm(const Batch& batch,
                                           const ForwardPropagation&,
                                           BackPropagationLM& back_propagation) const
 {
@@ -105,7 +106,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
+void MeanSquaredError::calculate_output_delta(const Batch& batch,
                                               ForwardPropagation&,
                                               BackPropagation& back_propagation) const
 {
@@ -129,7 +130,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
+void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& loss_index_back_propagation) const
 {
@@ -152,7 +153,7 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 }
 
 
-void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                    BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
@@ -170,7 +171,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                   BackPropagationLM& loss_index_back_propagation_lm) const
 {
      const Index outputs_number = neural_network->get_outputs_number();

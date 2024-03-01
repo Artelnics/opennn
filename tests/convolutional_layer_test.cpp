@@ -859,7 +859,7 @@ void ConvolutionalLayerTest::test_forward_propagation()
 
     // Forward Propagation
 
-    DataSetBatch batch(batch_samples_number, &data_set);
+    Batch batch(batch_samples_number, &data_set);
 
     const Tensor<Index, 1>& samples(batch_samples_number);
     const Tensor<Index, 1>& inputs = data_set.get_input_raw_variables_indices();

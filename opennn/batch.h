@@ -11,17 +11,17 @@ using namespace Eigen;
 namespace opennn
 {
 
-struct DataSetBatch
+struct Batch
 {
     /// Default constructor.
 
-    DataSetBatch() {}
+    Batch() {}
 
-    DataSetBatch(const Index&, DataSet*);
+    Batch(const Index&, DataSet*);
 
     /// Destructor.
 
-    virtual ~DataSetBatch();
+    virtual ~Batch();
 
     pair<type *, dimensions> get_inputs_pair() const;
 
@@ -57,7 +57,7 @@ struct DataSetBatch
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/data_set_batch.h"
+    #include "../../opennn-cuda/opennn-cuda/batch.h"
 
 #endif
 

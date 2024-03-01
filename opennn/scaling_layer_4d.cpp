@@ -1137,6 +1137,27 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
+{
+    const Index neurons_number = layer->get_neurons_number();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number, 1, 1 } });
+}
+
+
+void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    const Index neurons_number = layer->get_neurons_number();
+
+    batch_samples_number = new_batch_samples_number;
+
+    outputs.resize(batch_samples_number, neurons_number, 1, 1);
+
+    outputs_data = outputs.data();
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

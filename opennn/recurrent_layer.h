@@ -254,31 +254,10 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     }
     
     
-    pair<type*, dimensions> get_outputs_pair() const final
-    {
-        return pair<type*, dimensions>();
-    }
+    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final
-    {
-        layer = new_layer;
-
-        const Index neurons_number = layer->get_neurons_number();
-        const Index inputs_number = layer->get_inputs_number();
-
-        batch_samples_number = new_batch_samples_number;
-
-        outputs.resize(batch_samples_number, neurons_number);
-
-        previous_activations.resize(neurons_number);
-
-        current_inputs.resize(inputs_number);
-        current_combinations.resize(neurons_number);
-        current_activations_derivatives.resize(neurons_number);
-
-        activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
     void print() const
     {
@@ -328,9 +307,9 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
         combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
-        combinations_input_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        combinations_input_weights_derivatives.resize(inputs_number, neurons_number, neurons_number);
 
-        combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+        combinations_recurrent_weights_derivatives.resize(neurons_number, neurons_number, neurons_number);
 
         error_current_combinations_derivatives.resize(neurons_number);
 
@@ -354,8 +333,8 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> current_deltas;
 
     Tensor<type, 2> combinations_biases_derivatives;
-    Tensor<type, 2> combinations_input_weights_derivatives;
-    Tensor<type, 2> combinations_recurrent_weights_derivatives;
+    Tensor<type, 3> combinations_input_weights_derivatives;
+    Tensor<type, 3> combinations_recurrent_weights_derivatives;
 
     Tensor<type, 1> error_current_combinations_derivatives;
 

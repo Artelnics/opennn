@@ -206,14 +206,7 @@ struct TrainingResults
     {
     }
 
-    explicit TrainingResults(const Index& epochs_number)
-    {
-        training_error_history.resize(1+epochs_number);
-        training_error_history.setConstant(type(-1.0));
-
-        selection_error_history.resize(1+epochs_number);
-        selection_error_history.setConstant(type(-1.0));
-    }
+    explicit TrainingResults(const Index& epochs_number);
 
     /// Destructor.
 
@@ -221,25 +214,12 @@ struct TrainingResults
 
     string write_stopping_condition() const;
 
-    type get_training_error()
-    {
-        const Index size = training_error_history.size();
+    type get_training_error();
 
-        return training_error_history(size-1);
-    }
-
-    type get_selection_error() const
-    {
-        const Index size = selection_error_history.size();
-
-        return selection_error_history(size-1);
-    }
+    type get_selection_error() const;
 
 
-    Index get_epochs_number() const
-    {
-        return training_error_history.size() - 1;
-    }
+    Index get_epochs_number() const;
 
 
     /// Returns a string representation of the results structure.

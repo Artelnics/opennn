@@ -34,7 +34,7 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network, DataSet* new
 }
 
 
-void SumSquaredError::calculate_error(const DataSetBatch& batch,
+void SumSquaredError::calculate_error(const Batch& batch,
                                       const ForwardPropagation& forward_propagation,
                                       BackPropagation& back_propagation) const
 {
@@ -66,7 +66,7 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_error_lm(const DataSetBatch&,
+void SumSquaredError::calculate_error_lm(const Batch&,
                      const ForwardPropagation&,
                      BackPropagationLM& back_propagation) const
 {
@@ -83,7 +83,7 @@ void SumSquaredError::calculate_error_lm(const DataSetBatch&,
 }
 
 
-void SumSquaredError::calculate_output_delta(const DataSetBatch&,
+void SumSquaredError::calculate_output_delta(const Batch&,
                                              ForwardPropagation&,
                                              BackPropagation& back_propagation) const
 {
@@ -103,7 +103,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 }
 
 
-void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
+void SumSquaredError::calculate_output_delta_lm(const Batch&,
                                                 ForwardPropagation&,
                                                 BackPropagationLM& loss_index_back_propagation) const
 {
@@ -127,7 +127,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 }
 
 
-void SumSquaredError::calculate_error_gradient_lm(const DataSetBatch& ,
+void SumSquaredError::calculate_error_gradient_lm(const Batch& ,
                                                   BackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
@@ -147,7 +147,7 @@ void SumSquaredError::calculate_error_gradient_lm(const DataSetBatch& ,
 }
 
 
-void SumSquaredError::calculate_error_hessian_lm(const DataSetBatch&,
+void SumSquaredError::calculate_error_hessian_lm(const Batch&,
                                                       BackPropagationLM& loss_index_back_propagation_lm) const
 {
     const Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;

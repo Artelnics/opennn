@@ -115,7 +115,7 @@ public:
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
 
-   void update_parameters(const DataSetBatch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
+   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training() final;
 
@@ -182,46 +182,7 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
     virtual ~QuasiNewtonMehtodData() {}
 
-    void set(QuasiNewtonMethod* new_quasi_newton_method)
-    {
-        quasi_newton_method = new_quasi_newton_method;
-
-        const LossIndex* loss_index = quasi_newton_method->get_loss_index();
-
-        const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-        const Index parameters_number = neural_network->get_parameters_number();
-
-        // Neural network data
-
-        old_parameters.resize(parameters_number);
-
-        parameters_difference.resize(parameters_number);
-
-        potential_parameters.resize(parameters_number);
-        parameters_increment.resize(parameters_number);
-
-        // Loss index data
-
-        old_gradient.resize(parameters_number);
-        old_gradient.setZero();
-
-        gradient_difference.resize(parameters_number);
-
-        inverse_hessian.resize(parameters_number, parameters_number);
-        inverse_hessian.setZero();
-
-        old_inverse_hessian.resize(parameters_number, parameters_number);
-        old_inverse_hessian.setZero();
-
-        // Optimization algorithm data
-
-        BFGS.resize(parameters_number);
-
-        training_direction.resize(parameters_number);
-
-        old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
-    }
+    void set(QuasiNewtonMethod* new_quasi_newton_method);
 
     virtual void print() const
     {

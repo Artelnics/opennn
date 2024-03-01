@@ -76,15 +76,36 @@ void initialize_sequential(Tensor<Index, 1>& new_tensor,
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index rows_number = matrix.dimension(0);
-    const Index raw_variables_number = matrix.dimension(1);
+    const Index columns_number = matrix.dimension(1);
 
     #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
-        for(Index j = 0; j < raw_variables_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
            matrix(i,j) *= vector(j);
+        }
+    }
+}
+
+
+void multiply_rows(Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+    const Index channels_number = tensor.dimension(2);
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < rows_number; i++)
+    {
+        for (Index j = 0; j < columns_number; j++)
+        {
+            for (Index k = 0; k < channels_number; k++)
+            {
+                tensor(i, j, k) *= vector(k);
+            }
         }
     }
 }
@@ -858,7 +879,7 @@ Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
 
-    copy(new_vector.data(), new_vector.data() + index, vector.data());
+    copy(vector.data(), vector.data() + index, new_vector.data());
 
     return new_vector;
 }
@@ -868,7 +889,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 {
     Tensor<Index, 1> new_vector(index);
 
-    copy(new_vector.data(), new_vector.data() + index, vector.data());
+    copy(vector.data(), vector.data() + index, new_vector.data());
 
     return new_vector;
 }

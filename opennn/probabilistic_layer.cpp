@@ -1343,6 +1343,24 @@ void ProbabilisticLayerBackPropagation::print() const
     cout << "Synaptic weights derivatives:" << endl;
     cout << synaptic_weights_derivatives << endl;
 }
+
+
+void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = layer->get_neurons_number();
+    const Index parameters_number = layer->get_parameters_number();
+
+    deltas.resize(batch_samples_number, neurons_number);
+    deltas_row.resize(neurons_number);
+
+    squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+
+    error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+}
 } // namespace opennn
 
 // OpenNN: Open Neural Networks Library.

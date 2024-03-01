@@ -266,7 +266,7 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 /// (ii) the loss for that learning rate.
 
 pair<type, type> LearningRateAlgorithm::calculate_directional_point(
-    const DataSetBatch& batch,
+    const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
@@ -432,7 +432,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
 /// This algorithm is used by line minimization algorithms.
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
-    const DataSetBatch& batch,
+    const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const

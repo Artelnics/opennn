@@ -383,6 +383,34 @@ void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     }
 }
 
+pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const
+{
+    const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+    const Index inputs_length = embedding_layer->get_input_length();
+
+    const Index depth = embedding_layer->get_depth();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, inputs_length, depth } });
+}
+
+void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    const EmbeddingLayer* layer = static_cast<EmbeddingLayer*>(new_layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index inputs_length = layer->get_input_length();
+
+    const Index depth = layer->get_depth();
+
+    // Outputs
+
+    outputs.resize(batch_samples_number, inputs_length, depth);
+
+    outputs_data = outputs.data();
+}
+
 void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
@@ -430,6 +458,29 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     }
 
     built_positional_encoding_matrix = true;
+}
+
+void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index inputs_length = embedding_layer->get_input_length();
+
+    const Index depth = embedding_layer->get_depth();
+
+    // Deltas
+
+    deltas.resize(batch_samples_number, inputs_length, depth);
+
+    deltas_data = deltas.data();
+
+    const Index input_dimension = embedding_layer->get_input_dimension();
+
+    embedding_weights_derivatives.resize(input_dimension, depth);
 }
 
 }
