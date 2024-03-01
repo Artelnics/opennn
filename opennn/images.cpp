@@ -90,7 +90,6 @@ namespace opennn
 
 void read_bmp_image(const string& filename, Tensor<type, 3>& image)
 {/*
->>>>>>> 366d668b969201a27503aad2baf4f2cd500f137b
     Tensor<Tensor<type, 1>, 1> image;
 
     FILE* file = fopen(filename.data(), "rb");
