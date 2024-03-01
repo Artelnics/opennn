@@ -64,7 +64,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     Index targets_number;
     Index neurons_number;
 
-    DataSetBatch batch;
+    Batch batch;
 
     ForwardPropagation forward_propagation;
 

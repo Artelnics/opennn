@@ -55,7 +55,7 @@ private:
 
     MinkowskiError minkowski_error;
 
-    DataSetBatch batch;
+    Batch batch;
 
     ForwardPropagation forward_propagation;
 

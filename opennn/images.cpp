@@ -89,9 +89,9 @@ namespace opennn
 /// @todo ChatGPT gives something easier
 
 void read_bmp_image(const string& filename, Tensor<type, 3>& image)
-{
+{/*
     Tensor<Tensor<type, 1>, 1> image;
-/*
+
     FILE* file = fopen(filename.data(), "rb");
 
     if(!file)
@@ -183,9 +183,9 @@ void read_bmp_image(const string& filename, Tensor<type, 3>& image)
 
         image_data(0) = image_type;
     }
-*/
-    return image_data;
 
+    return image_data;
+*/
 }
 
 

@@ -51,7 +51,7 @@ public:
    
    // Training operators
 
-   const type& get_initial_learning_rate() const;
+   const type& get_learning_rate() const;
    const type& get_beta_1() const;
    const type& get_beta_2() const;
    const type& get_epsilon() const;
@@ -75,7 +75,7 @@ public:
 
    // Training operators
 
-   void set_initial_learning_rate(const type&);
+   void set_learning_rate(const type&);
    void set_beta_1(const type&);
    void set_beta_2(const type&);
    void set_epsilon(const type&);
@@ -113,7 +113,7 @@ private:
 
    /// Initial learning rate
 
-   type initial_learning_rate = type(0.001);
+   type learning_rate = type(0.001);
 
    /// Learning rate decay over each update.
 
@@ -129,7 +129,7 @@ private:
 
    /// Small number to prevent any division by zero
 
-   type epsilon =type(1.e-7);
+   type epsilon =type(1.e-8);
 
     // Stopping criteria
 

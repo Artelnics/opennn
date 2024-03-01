@@ -460,7 +460,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              Tensor<type, 2>& combinations) const
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
-
+    
     sum_columns(thread_pool_device, biases, combinations);
 }
 
@@ -592,12 +592,12 @@ void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pa
     
     calculate_combinations(inputs,
                            outputs);
-
+    
     if(is_training && dropout_rate > type(0))
     {
         dropout(outputs);
     }
-
+    
     if(is_training)
     {
         Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;

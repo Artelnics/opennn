@@ -851,9 +851,9 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
     else if(model_type == ModelType::Forecasting)
     {
         //                LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        //                RecurrentLayer* long_short_term_memory_layer = new RecurrentLayer(architecture[0], architecture[1]);
+        RecurrentLayer* recurrent_layer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        //                add_layer(long_short_term_memory_layer);
+        add_layer(recurrent_layer);
 
         for(Index i = 0 ; i < size-1 ; i++)
         {

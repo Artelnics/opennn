@@ -171,11 +171,10 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-            = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
+            = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(last_trainable_layer_index));
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
@@ -185,7 +184,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][1], outputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
 
     Tensor<type, 2>& deltas = probabilistic_layer_back_propagation->deltas;
 

@@ -138,7 +138,7 @@ public:
    Tensor<Index, 1> input_variables_indices;
    Tensor<Index, 1> target_variables_indices;
 
-   DataSetBatch data_set_batch;
+   Batch data_set_batch;
 
 };
 

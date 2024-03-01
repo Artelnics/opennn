@@ -61,7 +61,7 @@ private:
 
     NormalizedSquaredError normalized_squared_error;
 
-    DataSetBatch batch;
+    Batch batch;
 
     ForwardPropagation forward_propagation;
 

@@ -9,6 +9,7 @@
 #include "mean_squared_error.h"
 #include "neural_network_forward_propagation.h"
 #include "loss_index_back_propagation.h"
+#include "adaptive_moment_estimation.h"
 
 namespace opennn
 {
@@ -66,17 +67,17 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors = back_propagation.errors;
 
     type& error = back_propagation.error;
-
+    
     errors.device(*thread_pool_device) = outputs - targets;
-
+    
     Tensor<type, 0> sum_squared_error;
-
+    
     sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
-
+    
     const type coefficient = type(1) / type(batch_samples_number * outputs_number);
-
+    
     error = sum_squared_error(0)*coefficient;
-
+    
     if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 

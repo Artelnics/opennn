@@ -77,7 +77,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 void RecurrentLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-
+    
     neurons_number = 4;
     samples_number = 2;
     inputs_number = 3;
@@ -112,7 +112,7 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.forward_propagate(inputs_pair, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
-
+    
     // Test
 
     samples_number = 3;
@@ -142,7 +142,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
-
+    
     recurrent_layer.forward_propagate(inputs_pair, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;

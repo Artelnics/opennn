@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "neural_network.h"
+#include "data_set.h"
 
 namespace opennn
 {
