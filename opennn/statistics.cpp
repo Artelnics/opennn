@@ -1904,6 +1904,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     squared_sums.setZero();
     count.setZero();
 
+
+    /// @todo optimize this loop
     for(Index i = 0; i < row_indices_size; i++)
     {
         row_index = row_indices(i);
@@ -1914,7 +1916,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
         {
             raw_variable_index = raw_variables_indices(j);
 
-            const type value = matrix(row_index,raw_variable_index);
+            const type value = matrix(row_index, raw_variable_index);
 
             if(isnan(value)) continue;
 

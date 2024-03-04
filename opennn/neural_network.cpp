@@ -1356,6 +1356,8 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
 
+    /// @todo optimize this loop
+
     Index position = 0;
 
     for(Index i = 0; i < trainable_layers_number; i++)

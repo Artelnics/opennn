@@ -160,9 +160,9 @@ protected:
 
     bool display = true;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn-cuda/opennn-cuda/embedding_layer_cuda.h"
+//#endif
 
     };
 
