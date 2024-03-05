@@ -32,43 +32,50 @@
 #include <limits.h>
 #include <list>
 #include <vector>
+#include <string_view>
 
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
 #include "../../opennn/opennn_strings.h"
 
-#define NUMB_OF_TRAINING_DATA (60'000U)
-#define NUMB_OF_COLUMNS_PER_IMAGE (28U)
-#define NUMB_OF_ROWS_PER_IMAGE (28U)
-#define NUMB_OF_INPUT_VARIABLES (NUMB_OF_COLUMNS_PER_IMAGE*NUMB_OF_ROWS_PER_IMAGE)
-#define NUMB_OF_TESTING_DATA (10'000U)
-#define NUMB_OF_LABELS (10U)
-#define PATH_TO_DATA "data/"
-#define NAME_OF_TRAINING_FILE "train-images.idx3-ubyte"
-#define NAME_OF_TRAINING_LABEL_FILE "train-labels.idx1-ubyte"
-#define NAME_OF_TESTING_INPUT_FILE "t10k-images.idx3-ubyte"
-#define NAME_OF_TESTING_LABEL_FILE "t10k-labels.idx1-ubyte"
+constexpr Index numb_of_training_data = 60'000;
+constexpr Index numb_of_columns_per_image = 28;
+constexpr Index numb_of_rows_per_image = 28;
+constexpr Index numb_of_input_variables = numb_of_columns_per_image * numb_of_rows_per_image;
+constexpr Index numb_of_testing_data = 10'000;
+constexpr Index numb_of_labels = 10;
+
+constexpr auto path_to_data = "data/"sv;
+constexpr auto name_of_training_file = "train-images.idx3-ubyte"sv;
+constexpr auto name_of_training_label_file = "train-labels.idx1-ubyte"sv;
+constexpr auto name_of_testing_input_file = "t10k-images.idx3-ubyte"sv;
+constexpr auto name_of_testing_label_file = "t10k-labels.idx1-ubyte"sv;
 
 
 using namespace opennn;
 
+static string operator+(const string_view s0, const string_view s1)
+{
+    return string(s0) + string(s1);
+}
+
 Tensor<type, 2> get_data_from_file()
 {
-    Tensor<type, 2U> data(NUMB_OF_TRAINING_DATA + NUMB_OF_TESTING_DATA, NUMB_OF_INPUT_VARIABLES + NUMB_OF_LABELS);
-    ifstream training_data_input_file(PATH_TO_DATA NAME_OF_TRAINING_FILE, iostream::in | iostream::binary);
-    ifstream training_labeling_file(PATH_TO_DATA NAME_OF_TRAINING_LABEL_FILE, iostream::in | iostream::binary);
+    Tensor<type, 2U> data(numb_of_training_data + numb_of_testing_data, numb_of_input_variables + numb_of_labels);
+    ifstream training_data_input_file(path_to_data + name_of_training_file, iostream::in | iostream::binary);
+    ifstream training_labeling_file(path_to_data + name_of_training_label_file, iostream::in | iostream::binary);
     //ignore headers
     training_data_input_file.ignore(16U);
     training_labeling_file.ignore(8U);
     auto fill = [&data](ifstream& input, ifstream& target, Index begin, Index end)
     {
-        Tensor<type, 1U> labels(NUMB_OF_LABELS);
+        Tensor<type, 1U> labels(numb_of_labels);
         for(Index k = begin; k < end; ++k)
         {
             Index i = 0U;
             char c{};
-            for(; i < NUMB_OF_INPUT_VARIABLES; ++i)
+            for(; i < numb_of_input_variables; ++i)
             {
                 input.get(c);
                 //min max scaling
@@ -79,20 +86,20 @@ Tensor<type, 2> get_data_from_file()
             Index idx = static_cast<Index>(c);
             labels.setZero();
             labels(idx) = static_cast<type>(1);
-            for(Index j = 0U; j < NUMB_OF_LABELS; ++j, ++i)
+            for(Index j = 0U; j < numb_of_labels; ++j, ++i)
             {
                 data(k, i) = labels(j);
             }
         }
 
     };
-    fill(training_data_input_file, training_labeling_file, 0U, NUMB_OF_TRAINING_DATA);
-    std::ifstream testing_data_input_file(PATH_TO_DATA NAME_OF_TESTING_INPUT_FILE, std::iostream::in | std::iostream::binary);
-    std::ifstream testing_data_label_file(PATH_TO_DATA NAME_OF_TESTING_LABEL_FILE, std::iostream::in | std::iostream::binary);
+    fill(training_data_input_file, training_labeling_file, 0U, numb_of_training_data);
+    std::ifstream testing_data_input_file(path_to_data + name_of_testing_input_file, std::iostream::in | std::iostream::binary);
+    std::ifstream testing_data_label_file(path_to_data + name_of_testing_label_file, std::iostream::in | std::iostream::binary);
     //ignore headers
     testing_data_input_file.ignore(16U);
     testing_data_label_file.ignore(8U);
-    fill(testing_data_input_file, testing_data_label_file, NUMB_OF_TRAINING_DATA, NUMB_OF_TRAINING_DATA + NUMB_OF_TESTING_DATA);
+    fill(testing_data_input_file, testing_data_label_file, numb_of_training_data, numb_of_training_data + numb_of_testing_data);
     return data;
 }
 
@@ -100,24 +107,24 @@ DataSet get_data_set()
 {
     Tensor<type, 2> data = get_data_from_file();
     DataSet data_set(data);
-    for(Index sample_indx = 0; sample_indx < static_cast<Index>(NUMB_OF_TRAINING_DATA * 0.8); sample_indx++)
+    for(Index sample_indx = 0; sample_indx < static_cast<Index>(numb_of_training_data * 0.8); sample_indx++)
     {
         data_set.set_sample_use(sample_indx, DataSet::SampleUse::Training);
     }
-    for(Index sample_indx = static_cast<Index>(NUMB_OF_TRAINING_DATA * 0.8); sample_indx < NUMB_OF_TRAINING_DATA; sample_indx++)
+    for(Index sample_indx = static_cast<Index>(numb_of_training_data * 0.8); sample_indx < numb_of_training_data; sample_indx++)
     {
         data_set.set_sample_use(sample_indx, DataSet::SampleUse::Selection);
     }
-    for(Index sample_indx = NUMB_OF_TRAINING_DATA; sample_indx < NUMB_OF_TRAINING_DATA + NUMB_OF_TESTING_DATA; sample_indx++)
+    for(Index sample_indx = numb_of_training_data; sample_indx < numb_of_training_data + numb_of_testing_data; sample_indx++)
     {
         data_set.set_sample_use(sample_indx, DataSet::SampleUse::Testing);
     }
-    for(Index column_indx = 0; column_indx < NUMB_OF_INPUT_VARIABLES; column_indx++)
+    for(Index column_indx = 0; column_indx < numb_of_input_variables; column_indx++)
     {
         data_set.set_column_use(column_indx, DataSet::VariableUse::Input);
         data_set.set_column_type(column_indx, DataSet::ColumnType::Numeric);
     }
-    for(Index column_indx = NUMB_OF_INPUT_VARIABLES; column_indx < NUMB_OF_INPUT_VARIABLES + NUMB_OF_LABELS; column_indx++)
+    for(Index column_indx = numb_of_input_variables; column_indx < numb_of_input_variables + numb_of_labels; column_indx++)
     {
         data_set.set_column_type(column_indx, DataSet::ColumnType::Binary);
         data_set.set_column_use(column_indx, DataSet::VariableUse::Target);
@@ -170,11 +177,11 @@ TrainingResults do_example1(DataSet& ds)
     ts.set_display(false);
     
     Tensor<Index, 1> input_variable_dimension(1);
-    input_variable_dimension.setValues({NUMB_OF_INPUT_VARIABLES});
+    input_variable_dimension.setValues({numb_of_input_variables});
     ds.set_input_variables_dimensions(input_variable_dimension);
 
-    PerceptronLayer* pcll = new PerceptronLayer(NUMB_OF_INPUT_VARIABLES, 128U, PerceptronLayer::ActivationFunction::RectifiedLinear);
-    ProbabilisticLayer* pl = new ProbabilisticLayer(pcll->get_neurons_number(), NUMB_OF_LABELS);
+    PerceptronLayer* pcll = new PerceptronLayer(numb_of_input_variables, 128U, PerceptronLayer::ActivationFunction::RectifiedLinear);
+    ProbabilisticLayer* pl = new ProbabilisticLayer(pcll->get_neurons_number(), numb_of_labels);
     pl->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     nn.add_layer(pcll);
     nn.add_layer(pl);
@@ -199,14 +206,14 @@ TrainingResults do_example2(DataSet& ds)
     ts.set_display(false);
 
     Tensor<Index, 1> input_variable_dimension(3);
-    input_variable_dimension.setValues({1, NUMB_OF_COLUMNS_PER_IMAGE, NUMB_OF_ROWS_PER_IMAGE});
+    input_variable_dimension.setValues({1, numb_of_columns_per_image, numb_of_rows_per_image});
     ds.set_input_variables_dimensions(input_variable_dimension);
 
     const Index batch_samples = 100U;
     Tensor<Index, 1> conv_input_dimension(4);
     conv_input_dimension[Convolutional4dDimensions::sample_index] = batch_samples;
-    conv_input_dimension[Convolutional4dDimensions::row_index] = NUMB_OF_ROWS_PER_IMAGE;
-    conv_input_dimension[Convolutional4dDimensions::column_index] = NUMB_OF_COLUMNS_PER_IMAGE;
+    conv_input_dimension[Convolutional4dDimensions::row_index] = numb_of_rows_per_image;
+    conv_input_dimension[Convolutional4dDimensions::column_index] = numb_of_columns_per_image;
     conv_input_dimension[Convolutional4dDimensions::channel_index] = 1;
 
     Tensor<Index, 1> conv_kernel_dimension(4);
@@ -253,6 +260,8 @@ TrainingResults do_example2(DataSet& ds)
     nn.add_layer(pcl);
     nn.add_layer(pll);
 
+    ts.set_display(true);
+    ts.set_display_period(1);
     TrainingResults r = ts.perform_training();
    
     test(ta);
@@ -269,18 +278,20 @@ TrainingResults do_example3(DataSet& ds)
     ts.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
     ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
     ts.set_default();
-    ts.set_maximum_epochs_number(10);
-    ts.set_display(false);
+    ts.set_maximum_epochs_number(50);
+    ts.set_maximum_time(60* 60* 60 * 10);
+    ts.set_display(true);
+    ts.set_display_period(1);
 
     Tensor<Index, 1> input_variable_dimension(3);
-    input_variable_dimension.setValues({1, NUMB_OF_COLUMNS_PER_IMAGE, NUMB_OF_ROWS_PER_IMAGE});
+    input_variable_dimension.setValues({1, numb_of_columns_per_image, numb_of_rows_per_image});
     ds.set_input_variables_dimensions(input_variable_dimension);
 
     const Index batch_samples = 100U;
     Tensor<Index, 1> conv_input_dimension(4);
     conv_input_dimension[Convolutional4dDimensions::sample_index] = batch_samples;
-    conv_input_dimension[Convolutional4dDimensions::row_index] = NUMB_OF_ROWS_PER_IMAGE;
-    conv_input_dimension[Convolutional4dDimensions::column_index] = NUMB_OF_COLUMNS_PER_IMAGE;
+    conv_input_dimension[Convolutional4dDimensions::row_index] = numb_of_rows_per_image;
+    conv_input_dimension[Convolutional4dDimensions::column_index] = numb_of_columns_per_image;
     conv_input_dimension[Convolutional4dDimensions::channel_index] = 1;
 
     Tensor<Index, 1> conv_kernel_dimension0(4);
@@ -320,8 +331,8 @@ TrainingResults do_example3(DataSet& ds)
 
     FlattenLayer* fl = new FlattenLayer(pooling_layer1->get_outputs_dimensions());
 
-    PerceptronLayer* pcl0 = new PerceptronLayer(fl->get_outputs_number(), 120U, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-    PerceptronLayer* pcl1 = new PerceptronLayer(pcl0->get_neurons_number(), 84U, PerceptronLayer::ActivationFunction::HyperbolicTangent);
+    PerceptronLayer* pcl0 = new PerceptronLayer(fl->get_outputs_number(), 120U, PerceptronLayer::ActivationFunction::RectifiedLinear);
+    PerceptronLayer* pcl1 = new PerceptronLayer(pcl0->get_neurons_number(), 84U, PerceptronLayer::ActivationFunction::RectifiedLinear);
 
     ProbabilisticLayer* pll = new ProbabilisticLayer(pcl1->get_neurons_number(), 10);
     pll->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
@@ -361,11 +372,11 @@ int main()
         
         DataSet ds = get_data_set();
 
-        cout << "Model 1: \n";
-        TrainingResults tr0 = do_example1(ds);
-        tr0.print();
-        cout << "Training time: " << tr0.elapsed_time << " \n";
-        save_errors(tr0, "tr0");
+        //cout << "Model 1: \n";
+        //TrainingResults tr0 = do_example1(ds);
+        //tr0.print();
+        //cout << "Training time: " << tr0.elapsed_time << " \n";
+        //save_errors(tr0, "tr0");
 
         cout << "Model 2: \n";
         TrainingResults tr1 = do_example2(ds);
