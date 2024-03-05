@@ -32,6 +32,9 @@
 #include <filesystem>
 #include <experimental/filesystem>
 
+#include <regex>
+#include <codecvt>
+
 // OpenNN includes
 
 #include "config.h"
@@ -109,7 +112,7 @@ public:
 
     /// Enumeration of available methods for missing values in the data.
 
-    enum class MissingValuesMethod{Unuse, Mean, Median};
+    enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
     /// Enumeration of the learning tasks.
 
@@ -291,6 +294,10 @@ public:
 
     string get_sample_string(const Index&, const string& = ",") const;
 
+    // Create Box plot from histogram
+
+    Tensor<type, 1> box_plot_from_histogram(Histogram&, const Index&) const;
+
     // Columns get methods
 
     Tensor<Column, 1> get_columns() const;
@@ -303,6 +310,7 @@ public:
     Tensor<Column, 1> get_used_columns() const;
 
     Index get_columns_number() const;
+    Index get_constant_columns_number() const;
 
     Index get_input_columns_number() const;
     Index get_input_time_series_columns_number() const;
@@ -311,6 +319,10 @@ public:
     Index get_time_columns_number() const;
     Index get_unused_columns_number() const;
     Index get_used_columns_number() const;
+
+    Index get_variables_less_target() const;
+
+    Tensor<Index, 1> get_columns_index(const Tensor<string, 1>&) const;
 
     Index get_column_index(const string&) const;
     Index get_column_index(const Index&) const;
@@ -321,6 +333,7 @@ public:
     Tensor<Index, 1> get_target_time_series_columns_indices() const;
     Tensor<Index, 1> get_unused_columns_indices() const;
     Tensor<Index, 1> get_used_columns_indices() const;
+    Tensor<Index, 1> get_numerical_input_columns() const;
 
     Tensor<string, 1> get_columns_names() const;
 
@@ -342,6 +355,7 @@ public:
     Index get_target_variables_number() const;
     Index get_unused_variables_number() const;
     Index get_used_variables_number() const;
+    Index get_numerical_input_columns_number() const;
 
     string get_variable_name(const Index&) const;
     Tensor<string, 1> get_variables_names() const;
@@ -356,6 +370,7 @@ public:
     Tensor<Index, 1> get_unused_variables_indices() const;
     Tensor<Index, 1> get_used_variables_indices() const;
     Tensor<Index, 1> get_input_variables_indices() const;
+    Tensor<Index, 1> get_numerical_input_variables_indices() const;
     Tensor<Index, 1> get_target_variables_indices() const;
 
     VariableUse get_variable_use(const Index&) const;
@@ -408,6 +423,8 @@ public:
     Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
+
+    Tensor<type, 2> get_columns_data(const Tensor<Index, 1>&) const;
 
     Tensor<type, 2> get_column_data(const Index&) const;
     Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
@@ -482,6 +499,7 @@ public:
     void set_project_type_string(const string&);
     void set_project_type(const ProjectType&);
 
+//    void set_threads();
     void set_threads_number(const int&);
 
     // Samples set methods
@@ -491,6 +509,7 @@ public:
     void set_training();
     void set_selection();
     void set_testing();
+    void set_auto_associative_samples_uses();
 
     void set_training(const Tensor<Index, 1>&);
     void set_selection(const Tensor<Index, 1>&);
@@ -520,7 +539,10 @@ public:
     void set_columns_uses(const Tensor<VariableUse, 1>&);
     void set_columns_unused();
     void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_columns(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_columns_unused();
+
+    void set_columns_unused(const Tensor<Index, 1>&);
 
     void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
@@ -535,6 +557,8 @@ public:
     void set_columns_number(const Index&);
 
     void set_columns_scalers(const Scaler&);
+
+    void set_columns_scalers(const Tensor<Scaler, 1>&);
 
     void set_binary_simple_columns();
 
@@ -626,10 +650,15 @@ public:
     Tensor<Index, 1> unuse_repeated_samples();
 
     Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
+    Tensor<string, 1> unuse_multicollinear_columns(Tensor<Index, 1>&, Tensor<Index, 1>&);
 
     // Initialization methods
 
     void set_data_constant(const type&);
+
+    static type round_to_precision(type, const int&);
+    static Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
+    static Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
     void set_data_random();
     void set_data_binary_random();
@@ -673,11 +702,13 @@ public:
 
     // Box and whiskers
 
+    BoxPlot calculate_single_box_plot(Tensor<type,1>&) const;
     Tensor<BoxPlot, 1> calculate_columns_box_plots() const;
+    Tensor<BoxPlot, 1> calculate_data_columns_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
-    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(/*CorrelationMethod::Both*/) const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(const bool& = true, const bool& = false) const;
 
     void print_inputs_correlations() const;
 
@@ -721,6 +752,8 @@ public:
     // Tuckey outlier detection
 
     Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
+
+    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& cleaning_parameter);
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 
@@ -802,6 +835,7 @@ public:
     void print_columns() const;
     void print_columns_types() const;
     void print_columns_uses() const;
+    void print_columns_scalers() const;
 
     void print_data() const;
     void print_data_preview() const;
@@ -875,6 +909,8 @@ public:
     void impute_missing_values_unuse();
     void impute_missing_values_mean();
     void impute_missing_values_median();
+    void impute_missing_values_interpolate();
+
 
     void scrub_missing_values();
 
@@ -1044,8 +1080,6 @@ private:
 
     bool display = true;
 
-    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
     // Image treatment
 
     static size_t number_of_elements_in_directory(const fs::path& path);
@@ -1100,7 +1134,6 @@ private:
     type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
 
     Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
-
 };
 
 
@@ -1118,15 +1151,24 @@ struct DataSetBatch
 
     /// Destructor.
 
-    virtual ~DataSetBatch() {}
+    virtual ~DataSetBatch()
+    {
+        if(targets_data != nullptr) free(targets_data);
+    }
 
     Index get_batch_size() const;
 
     void set(const Index&, DataSet*);
 
-    void set_inputs(Tensor<type, 2>& new_inputs)
+    template<int DIM>
+    void set_inputs(const Tensor<type, DIM>& new_inputs)
     {
-        inputs_data = new_inputs.data();
+        static_assert(DIM == 2U || DIM == 4U, "Dimension has to be 2 or 4.");
+
+        auto new_inputs_data = make_unique<type[]>(new_inputs.size());
+        copy(new_inputs.data(), new_inputs.data() + new_inputs.size(), new_inputs_data.get());
+
+        inputs_data = move(new_inputs_data);
         inputs_dimensions = get_dimensions(new_inputs);
     }
 
@@ -1138,14 +1180,15 @@ struct DataSetBatch
 
     DataSet* data_set_pointer = nullptr;
 
-    type* inputs_data;
+//    type* inputs_data = nullptr;
+
+    unique_ptr<type[]> inputs_data;
 
     Tensor<Index, 1> inputs_dimensions;
 
-    type* targets_data;
+    type* targets_data = nullptr;
 
     Tensor<Index, 1> targets_dimensions;
-
 };
 
 
@@ -1154,7 +1197,7 @@ struct DataSetBatch
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

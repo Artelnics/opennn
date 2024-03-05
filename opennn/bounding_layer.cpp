@@ -547,7 +547,7 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
         for(Index i = 0; i < neurons_number; i++)
         {
             buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ")\n";
-            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << inputs_names[i] << ")\n";
+            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << outputs_names[i] << ")\n";
         }
     }
     else
@@ -782,7 +782,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

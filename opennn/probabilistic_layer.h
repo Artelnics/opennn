@@ -235,6 +235,10 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer_pointer);
     }
 
+    virtual ~ProbabilisticLayerForwardPropagation()
+    {
+    }
+
     void set(const Index new_batch_samples_number, Layer* new_layer_pointer)
     {
         layer_pointer = new_layer_pointer;
@@ -302,6 +306,11 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
         set(new_batch_samples_number, new_layer_pointer);
     }
 
+    virtual ~ProbabilisticLayerBackPropagationLM()
+    {
+
+    }
+
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
@@ -345,6 +354,10 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     }
 
+    virtual ~ProbabilisticLayerBackPropagation()
+    {
+    }
+
 
     explicit ProbabilisticLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerBackPropagation()
@@ -365,7 +378,6 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         deltas_dimensions.resize(2);
         deltas_dimensions.setValues({batch_samples_number, neurons_number});
 
-        //delete deltas_data;
         deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
 
         biases_derivatives.resize(neurons_number);
@@ -416,7 +428,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

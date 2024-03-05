@@ -343,9 +343,6 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
 #endif
 
-//    cout << "Outputs: " << endl << outputs << endl;
-//    cout << "Targets: " << endl << targets << endl;
-
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
     if(has_NAN(back_propagation.errors))
@@ -406,6 +403,10 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     back_propagation.loss = back_propagation.error;
 
+    // Assemble gradient
+
+    assemble_layers_error_gradient(back_propagation);
+    
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
@@ -421,9 +422,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight * back_propagation.regularization_gradient;
     }
 
-    // Assemble gradient
-
-    assemble_layers_error_gradient(back_propagation);
 }
 
 
@@ -507,7 +505,8 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     const Tensor<Index, 1> outputs_dimensions = forward_propagation.layers(last_trainable_layer_index)->outputs_dimensions;
 
-    const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data, batch.inputs_dimensions(0), batch.inputs_dimensions(1));
+    const TensorMap<Tensor<type, 2>> inputs(batch.inputs_data.get(), batch.inputs_dimensions(0), batch.inputs_dimensions(1));
+
     const TensorMap<Tensor<type, 2>> outputs(forward_propagation.layers(last_trainable_layer_index)->outputs_data, outputs_dimensions(0), outputs_dimensions(1));
 
     // Layer 0
@@ -721,30 +720,14 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
     calculate_output_delta(batch,forward_propagation,
                            back_propagation);
 
-
     // Hidden layers
 
     for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
     {
-        // Needs to check flatten layer for convolutional
-        if(trainable_layers_pointers(i)->get_type() == Layer::Type::Flatten)
-        {
-            continue;
-        }
-        if(trainable_layers_pointers(i+1)->get_type() == Layer::Type::Flatten)
-        {
-            trainable_layers_pointers(i)
-                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+2), // Perceptron layer
-                                             back_propagation.neural_network.layers(i+2), // Perceptron layer
-                                             back_propagation.neural_network.layers(i));
-        }
-        else
-        {
-            trainable_layers_pointers(i)
-                    ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
-                                             back_propagation.neural_network.layers(i+1),
-                                             back_propagation.neural_network.layers(i));
-        }
+        trainable_layers_pointers(i)
+                ->calculate_hidden_delta(forward_propagation.layers(first_trainable_layer_index+i+1),
+                                            back_propagation.neural_network.layers(i+1),
+                                            back_propagation.neural_network.layers(i));
 /* --> This part was in dev-fwd_refactoring, check
         trainable_layers_pointers(i)->calculate_hidden_delta(
             forward_propagation.layers(first_trainable_layer_index+i+1),
@@ -805,9 +788,10 @@ void LossIndex::calculate_layers_error_gradient(const DataSetBatch& batch,
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data,
+    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_data.get(),
                                                            forward_propagation.layers(first_trainable_layers_index),
                                                            back_propagation.neural_network.layers(0));
+
     for(Index i = 1; i < trainable_layers_number; i++)
     {
         const LayerForwardPropagation* layer_forward_propagation = forward_propagation.layers(first_trainable_layers_index+i-1);
@@ -1171,7 +1155,7 @@ type LossIndex::calculate_h(const type& x) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

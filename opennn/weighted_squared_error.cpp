@@ -125,7 +125,7 @@ void WeightedSquaredError::set_weights()
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary)
+    else if((data_set_pointer) && (data_set_pointer->get_target_columns().size() == 1) && (data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary))
     {
         const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
@@ -162,7 +162,7 @@ void WeightedSquaredError::set_normalization_coefficient()
     {
         normalization_coefficient = static_cast<type>(1);
     }
-    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary)
+    else if((data_set_pointer) && (data_set_pointer->get_target_columns().size() == 1) && (data_set_pointer->get_target_columns()(0).type == DataSet::ColumnType::Binary))
     {
         const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
@@ -559,7 +559,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

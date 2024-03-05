@@ -26,6 +26,7 @@
 
 namespace opennn
 {
+
 struct BatchNormalizationLayerForwardPropagation;
 
 class BatchNormalizationLayer : public Layer
@@ -33,69 +34,69 @@ class BatchNormalizationLayer : public Layer
 {
 
 public:
-   // Constructors
+    // Constructors
 
-   explicit BatchNormalizationLayer();
+    explicit BatchNormalizationLayer();
 
-   explicit BatchNormalizationLayer(const Index&);
+    explicit BatchNormalizationLayer(const Index&);
 
-   // Get methods
+    // Get methods
 
     Index get_inputs_number() const;
 
-   // Parameters
+    // Parameters
 
-   // Display messages
+    // Display messages
 
-   // Set methods
+    // Set methods
 
-   void set(const Index&);
+    void set(const Index&);
 
-   void set_default();
+    void set_default();
 
-   // Architecture
+    // Architecture
 
-   // Parameters
+    // Parameters
 
-   // Display messages
+    // Display messages
 
-   void set_parameters_random();
+    void set_parameters_random();
 
-   // Perceptron layer combinations
+    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>&,
-                               const Tensor<type, 2>&,
-                               type*);
+    void calculate_combinations(const Tensor<type, 2>&,
+                                const Tensor<type, 2>&,
+                                type*);
 
-   Tensor<type, 2> perform_inputs_normalization(const Tensor<type, 2>&, BatchNormalizationLayerForwardPropagation*)const;
-   // Perceptron layer outputs
+    Tensor<type, 2> perform_inputs_normalization(const Tensor<type, 2>&, BatchNormalizationLayerForwardPropagation*)const;
+    // Perceptron layer outputs
 
-   void forward_propagate(type*, const Tensor<Index, 1>&,
-                          LayerForwardPropagation*);
+    void forward_propagate(type*, const Tensor<Index, 1>&,
+                           LayerForwardPropagation*);
 
-   // Gradient methods
+    // Gradient methods
 
-   // Serialization methods
+    // Serialization methods
 
 protected:
 
-   // MEMBERS
+    // MEMBERS
 
-   /// Inputs
+    /// Inputs
 
-   Tensor<type, 2> inputs;
+    Tensor<type, 2> inputs;
 
-   /// Outputs
+    /// Outputs
 
-   Tensor<type, 2> outputs;
+    Tensor<type, 2> outputs;
 
-   /// learneable_parameters
+    /// learneable_parameters
 
-   Tensor<type, 2> synaptic_weights; // 2 x inputs
+    Tensor<type, 2> synaptic_weights; // 2 x inputs
 
-   /// Display messages to screen. 
+    /// Display messages to screen.
 
-   bool display = true;
+    bool display = true;
 };
 
 
@@ -125,6 +126,7 @@ struct BatchNormalizationLayerForwardPropagation : LayerForwardPropagation
 
         outputs_dimensions.resize(2);
         outputs_dimensions.setValues({batch_samples_number, inputs_number});
+
         outputs_data = (type*) malloc( static_cast<size_t>(batch_samples_number * inputs_number*sizeof(type)) );
 
         // fixed parameters
@@ -141,7 +143,7 @@ struct BatchNormalizationLayerForwardPropagation : LayerForwardPropagation
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

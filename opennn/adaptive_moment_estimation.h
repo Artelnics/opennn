@@ -164,7 +164,6 @@ private:
 
    /// Training and selection batch size.
 
-
    Index batch_samples_number = 1000;
 
 

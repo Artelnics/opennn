@@ -32,13 +32,13 @@ void BatchNormalizationLayerTest::test_perform_inputs_normalization()
                       {4,5,6},
                       {7,8,9}});
 
-    BatchNormalizationLayer batch_norm_layer;
-    batch_norm_layer.set(inputs_number);
+    BatchNormalizationLayer *batch_norm_layer;
+    batch_norm_layer->set(inputs_number);
 
     BatchNormalizationLayerForwardPropagation forward_propagation;
-    forward_propagation.set(batch_number, &batch_norm_layer);
+    forward_propagation.set(batch_number, batch_norm_layer);
 
-    Tensor<type, 2> inputs_normalized = batch_norm_layer.perform_inputs_normalization(inputs, &forward_propagation);
+    Tensor<type, 2> inputs_normalized = batch_norm_layer->perform_inputs_normalization(inputs, &forward_propagation);
 
     assert_true(forward_propagation.mean[0] == 4, LOG);
     assert_true(forward_propagation.variance[0] == 6, LOG);
@@ -146,7 +146,7 @@ void BatchNormalizationLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

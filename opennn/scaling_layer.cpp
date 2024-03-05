@@ -1040,7 +1040,7 @@ void ScalingLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& 
                 }
                 else if(scaler == Scaler::StandardDeviation)
                 {
-                    column = static_cast<type>(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/static_cast<type>(descriptives(i).standard_deviation);
+                    column = static_cast<type>(1/descriptives(i).standard_deviation) * inputs.chip(i, 1);/*column/static_cast<type>(descriptives(i).standard_deviation);*/
                 }
                 else if(scaler == Scaler::Logarithm)
                 {
@@ -1486,7 +1486,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

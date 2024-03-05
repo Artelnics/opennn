@@ -23,6 +23,31 @@ int main(){
 
 
 Inputs Names:
+/**
+Artificial Intelligence Techniques SL	
+artelnics@artelnics.com	
+
+Your model has been exported to this c file.
+You can manage it with the main method, where you 	
+can change the values of your inputs. For example:
+
+if we want to add these 3 values (0.3, 2.5 and 1.8)
+to our 3 inputs (Input_1, Input_2 and Input_1), the
+main program has to look like this:
+	
+int main(){ 
+	vector<float> inputs(3);
+	
+	const float asdas  = 0.3;
+	inputs[0] = asdas;
+	const float input2 = 2.5;
+	inputs[1] = input2;
+	const float input3 = 1.8;
+	inputs[2] = input3;
+	. . .
+
+
+Inputs Names:
 	0) sepal_lenght
 	1) sepal_width
 	2) petal_lenght
@@ -46,34 +71,24 @@ vector<float> calculate_outputs(const vector<float>& inputs)
 	const float petal_lenght = inputs[2];
 	const float petal_width = inputs[3];
 
-	double scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.8280661106;
+double double double 	double scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.8280661106;
 	double scaled_sepal_width = (sepal_width-3.057333231)/0.4358662963;
 	double scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
 	double scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 
-<<<<<<< HEAD
-	double perceptron_layer_1_output_0 = tanh( -1.67565 + (scaled_sepal_lenght*-0.219405) + (scaled_sepal_width*-0.283519) + (scaled_petal_lenght*1.24661) + (scaled_petal_width*1.58539) );
-	double perceptron_layer_1_output_1 = tanh( 1.95591 + (scaled_sepal_lenght*0.518382) + (scaled_sepal_width*0.491331) + (scaled_petal_lenght*-1.4719) + (scaled_petal_width*-2.18824) );
-	double perceptron_layer_1_output_2 = tanh( 1.36319 + (scaled_sepal_lenght*0.434006) + (scaled_sepal_width*-3.62986) + (scaled_petal_lenght*2.43801) + (scaled_petal_width*2.22975) );
+	double perceptron_layer_1_output_0 = tanh( 2.44948 + (scaled_sepal_lenght*-1.42579) + (scaled_sepal_width*2.56502) + (scaled_petal_lenght*-2.67917) + (scaled_petal_width*-3.8776) );
+	double perceptron_layer_1_output_1 = tanh( -2.28658 + (scaled_sepal_lenght*-1.597) + (scaled_sepal_width*0.0771116) + (scaled_petal_lenght*3.89079) + (scaled_petal_width*1.66861) );
+	double perceptron_layer_1_output_2 = tanh( -1.27553 + (scaled_sepal_lenght*-2.07794) + (scaled_sepal_width*4.07168) + (scaled_petal_lenght*-4.45896) + (scaled_petal_width*-4.61889) );
 
-	double probabilistic_layer_combinations_0 = -0.543941 -3.34266*perceptron_layer_1_output_0 -0.158748*perceptron_layer_1_output_1 -3.90887*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_1 = 1.55881 -0.388061*perceptron_layer_1_output_0 +1.59409*perceptron_layer_1_output_1 +1.35736*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_2 = -1.31063 +3.76368*perceptron_layer_1_output_0 -1.55624*perceptron_layer_1_output_1 +2.54995*perceptron_layer_1_output_2 ;
-=======
-	double perceptron_layer_1_output_0 = tanh( 0.398424 + (scaled_sepal_lenght*0.509155) + (scaled_sepal_width*-0.755941) + (scaled_petal_lenght*1.04209) + (scaled_petal_width*1.13809) );
-	double perceptron_layer_1_output_1 = tanh( -3.23168 + (scaled_sepal_lenght*-0.176614) + (scaled_sepal_width*-0.910796) + (scaled_petal_lenght*2.20948) + (scaled_petal_width*2.42128) );
-	double perceptron_layer_1_output_2 = tanh( 0.300156 + (scaled_sepal_lenght*0.382983) + (scaled_sepal_width*0.632999) + (scaled_petal_lenght*-0.888551) + (scaled_petal_width*-1.23076) );
-
-	double probabilistic_layer_combinations_0 = -0.45919 -1.31559*perceptron_layer_1_output_0 -1.20404*perceptron_layer_1_output_1 +3.04406*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_1 = 1.2198 +0.674133*perceptron_layer_1_output_0 -1.58597*perceptron_layer_1_output_1 -0.618454*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_2 = -0.850095 +1.07785*perceptron_layer_1_output_0 +2.88505*perceptron_layer_1_output_1 -2.82181*perceptron_layer_1_output_2 ;
->>>>>>> dev
+	double probabilistic_layer_combinations_0 = -0.913727 +1.90729*perceptron_layer_1_output_0 -5.04514*perceptron_layer_1_output_1 +3.83425*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_1 = 4.3078 +1.65102*perceptron_layer_1_output_0 -1.00319*perceptron_layer_1_output_1 -1.49737*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_2 = -2.97608 -3.59247*perceptron_layer_1_output_0 +5.90514*perceptron_layer_1_output_1 -2.33415*perceptron_layer_1_output_2 ;
 
 	double sum = exp(probabilistic_layer_combinations_0) + exp(probabilistic_layer_combinations_1) + exp(probabilistic_layer_combinations_2);
 
-	double iris_setosa = exp(probabilistic_layer_combinations_0)/sum;
-	double iris_versicolor = exp(probabilistic_layer_combinations_1)/sum;
-	double iris_virginica = exp(probabilistic_layer_combinations_2)/sum;
+	iris_setosa = exp(probabilistic_layer_combinations_0)/sum;
+	iris_versicolor = exp(probabilistic_layer_combinations_1)/sum;
+	iris_virginica = exp(probabilistic_layer_combinations_2)/sum;
 
 	vector<float> out(3);
 	out[0] = iris_setosa;

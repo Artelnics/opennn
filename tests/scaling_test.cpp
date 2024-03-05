@@ -135,7 +135,7 @@ void ScalingTest::test_scale_data_logarithmic()
 
 void ScalingTest::test_unscale_data_mean_standard_deviation()
 {
-    cout << "test_unscale_data_minimum_maximum\n";
+    cout << "test_unscale_data_mean_standard_deviation\n";
 
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> unscaled_matrix;
@@ -146,8 +146,6 @@ void ScalingTest::test_unscale_data_mean_standard_deviation()
     data_set.set_columns_scalers(Scaler::MeanStandardDeviation);
 
     variables_descriptives = data_set.calculate_variables_descriptives();
-
-    variables_descriptives[0].print();
 
     data_set.scale_data();
     data_set.unscale_data(variables_descriptives);

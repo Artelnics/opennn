@@ -857,7 +857,7 @@ void PerceptronLayer::calculate_hidden_delta(PerceptronLayerForwardPropagation* 
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));;
+    const TensorMap<Tensor<type, 2>> next_deltas(next_back_propagation->deltas_data, next_back_propagation->deltas_dimensions(0), next_back_propagation->deltas_dimensions(1));
 
     TensorMap<Tensor<type, 2>> deltas(back_propagation->deltas_data, back_propagation->deltas_dimensions(0), back_propagation->deltas_dimensions(1));
 
@@ -1072,7 +1072,8 @@ void PerceptronLayer::calculate_hidden_delta_lm(PerceptronLayerForwardPropagatio
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
     back_propagation->deltas.device(*thread_pool_device) =
-            (next_back_propagation->deltas*next_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_forward_propagation->activations_derivatives.dimension(0),1}})).contract(next_synaptic_weights, A_BT);
+            (next_back_propagation->deltas*next_forward_propagation->activations_derivatives.reshape(Eigen::array<Index,2> {{next_forward_propagation->activations_derivatives.dimension(0),next_forward_propagation->activations_derivatives.dimension(1)}}))
+            .contract(next_synaptic_weights, A_BT);
 }
 
 
@@ -1282,7 +1283,6 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     copy(perceptron_layer_back_propagation->biases_derivatives.data(),
          perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
          gradient.data() + index);
-
 
     copy(perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
          perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
@@ -1547,7 +1547,7 @@ string PerceptronLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

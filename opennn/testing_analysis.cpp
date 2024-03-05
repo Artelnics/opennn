@@ -1301,19 +1301,36 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
 #endif
 
-    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> testing_inputs_data = data_set_pointer->get_testing_input_data();
+    Tensor<type, 2> outputs;
 
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+    Tensor<Index, 1> inputs_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+    const Index inputs_variables_dimensions_rank = inputs_variables_dimensions.size();
+    if(inputs_variables_dimensions_rank != 1 && inputs_variables_dimensions_rank != 3)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<type, 1> calculate_multiple_classification_testing_errors() const.\n"
+               << "Input variable dimension has to be 1 or 3.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+    Tensor<Index, 1> inputs_dimensions([&](){
+        Tensor<Index, 1> inputs_dimensions(inputs_variables_dimensions_rank + 1);
+        inputs_dimensions[Convolutional4dDimensions::sample_index] = testing_samples_number;
+        copy(
+            inputs_variables_dimensions.data(), 
+            inputs_variables_dimensions.data() + inputs_variables_dimensions_rank, 
+            inputs_dimensions.data() + 1);
+        return inputs_dimensions;
+    }());
+    outputs = neural_network_pointer->calculate_outputs(testing_inputs_data.data(), inputs_dimensions);
+    
 
     Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
-    // Neural network
-
-    Tensor<type, 2> outputs;
-
-    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
-
-    Tensor<type, 1> errors(4);
+    Tensor<type, 1> errors(5);
 
     // Results
 
@@ -1323,6 +1340,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
     errors(1) = errors(0)/type(testing_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_cross_entropy_error(targets, outputs);
 
     return errors;
 }
@@ -1504,15 +1522,17 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 #endif
 
     const Tensor<type, 0> targets_mean = targets.mean();
+    const Tensor<type, 0> outputs_mean = outputs.mean();
 
-    Tensor<type, 0> numerator = ((targets-outputs)*(targets-outputs)).sum();
-    Tensor<type, 0> denominator = ((- targets_mean(0) + targets)*(- targets_mean(0) + targets)).sum();
+    Tensor<type,0> numerator = (( - targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
+    Tensor<type,0> denominator = (( - targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
 
     denominator(0) == 0 ? denominator(0) = 1 : 0;
 
-    type determination_coefficient = type(1) - (numerator(0)/denominator(0));
+    type determination_coefficient = ((numerator(0)/denominator(0))*(numerator(0)/denominator(0)));
 
     return determination_coefficient;
+
 };
 
 
@@ -1666,7 +1686,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
     const Index outputs_number = neural_network_pointer->get_outputs_number();
-
+    const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 #ifdef OPENNN_DEBUG
 
     check();
@@ -1709,18 +1729,34 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     }
 
 #endif
-
-    Tensor<type, 2> inputs = data_set_pointer->get_testing_input_data();
-
-    Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-
-    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
-
-    // Neural network
-
+    Tensor<type, 2> testing_inputs_data = data_set_pointer->get_testing_input_data();
     Tensor<type, 2> outputs;
 
-    outputs = neural_network_pointer->calculate_outputs(inputs.data(), inputs_dimensions);
+    Tensor<Index, 1> inputs_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+    const Index inputs_variables_dimensions_rank = inputs_variables_dimensions.size();
+    if(inputs_variables_dimensions_rank != 1 && inputs_variables_dimensions_rank != 3)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<type, 1> calculate_multiple_classification_testing_errors() const.\n"
+               << "Input variable dimension has to be 1 or 3.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+    Tensor<Index, 1> inputs_dimensions([&](){
+        Tensor<Index, 1> inputs_dimensions(inputs_variables_dimensions_rank + 1);
+        inputs_dimensions[Convolutional4dDimensions::sample_index] = testing_samples_number;
+        copy(
+            inputs_variables_dimensions.data(), 
+            inputs_variables_dimensions.data() + inputs_variables_dimensions_rank, 
+            inputs_dimensions.data() + 1);
+        return inputs_dimensions;
+    }());
+
+    outputs = neural_network_pointer->calculate_outputs(testing_inputs_data.data(), inputs_dimensions);
+    
+    Tensor<type, 2> targets = data_set_pointer->get_testing_target_data();
 
     if(outputs_number == 1)
     {
@@ -4260,7 +4296,7 @@ void TestingAnalysis::load(const string& file_name)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

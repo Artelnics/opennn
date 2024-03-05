@@ -25,9 +25,18 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
+   void test_constructor1();
    void test_destructor();
+   void test_set_column_stride();
+   void test_set_row_stride();
+   void test_set_pooling_method();
+   void test_output_dimension();
+   void test_calculate_no_pooling_outputs();
    void test_calculate_average_pooling_outputs();
    void test_calculate_max_pooling_outputs();
+   void test_forward_propagate();
+   void test_calculate_hidden_delta_average_pooling();
+   void test_calculate_hidden_delta_max_pooling();
 
    // Unit testing methods
 

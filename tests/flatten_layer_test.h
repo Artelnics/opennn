@@ -26,8 +26,10 @@ public:
 
    void test_constructor();
    void test_destructor();
+   void test_output_dimension();
+   void test_calculate_outputs();
    void test_forward_propagate();
-
+   void test_calculate_hidden_delta();
    // Unit testing methods
 
    void run_test_case();

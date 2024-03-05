@@ -65,7 +65,6 @@ Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
     return descriptives;
 }
 
-
 /// Returns a vector with the minimum values of all unscaling neurons.
 /// The size is the number of neurons in the layer.
 
@@ -400,7 +399,6 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
     min_range = min;
     max_range = max;
 }
-
 
 /// Sets the descriptives for all the neurons in the unscaling layer from a vector.
 /// The size of this vector must be equal to the number of unscaling neurons.
@@ -1237,7 +1235,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

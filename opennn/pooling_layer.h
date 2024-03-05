@@ -30,6 +30,10 @@
 
 namespace opennn
 {
+//Forward declaration
+struct PoolingLayerForwardPropagation;
+struct PoolingLayerBackPropagation;
+struct Switch;
 
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
 /// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
@@ -56,6 +60,8 @@ public:
     Tensor<Index, 1> get_outputs_dimensions() const;
 
     Index get_inputs_number() const;
+
+    Index get_inputs_images_number() const;
 
     Index get_inputs_channels_number() const;
 
@@ -107,6 +113,8 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
+    void set_parameters(const Tensor<type, 1>&, const Index&) override final;
+
     void set_default();
 
     // Outputs
@@ -117,11 +125,11 @@ public:
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) {}
 
-    Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
+    void calculate_no_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
-    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
-
-    Tensor<type, 4> calculate_average_pooling_outputs(const Tensor<type, 4>&) const;
+    void calculate_max_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&, Switch*) const;
+    
+    void calculate_average_pooling_outputs(const TensorMap<Tensor<type, 4>>&, TensorMap<Tensor<type, 4>>&) const;
 
     // Activations derivatives
 
@@ -135,7 +143,7 @@ public:
     // First order activations
 
     void forward_propagate(type*, const Tensor<Index, 1>&,
-                           LayerForwardPropagation*, bool&) final {}
+                           LayerForwardPropagation*, bool&) final;
 
     void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*)
     {
@@ -146,6 +154,12 @@ public:
     void calculate_hidden_delta(LayerForwardPropagation*,
                                 LayerBackPropagation*,
                                 LayerBackPropagation*) const;
+
+    
+    void calculate_hidden_delta(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                LayerBackPropagation*) const;
+
 
 //    Tensor<type, 4> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
     Tensor<type, 4> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
@@ -177,7 +191,43 @@ protected:
 #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
 #endif
 
+private:
+
+    void calculate_hidden_delta_average_pooling(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                LayerBackPropagation*) const;
+
+    void calculate_hidden_delta_max_pooling(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                LayerBackPropagation*) const;
+
+    void calculate_hidden_delta_no_pooling(PoolingLayerForwardPropagation*,
+                                PoolingLayerBackPropagation*,
+                                LayerBackPropagation*) const;
+
+
 };
+
+struct PoolingLayerForwardPropagation : LayerForwardPropagation
+{
+    PoolingLayerForwardPropagation(const Index& numb_of_batches, Layer* layer_pointer);
+    PoolingLayerForwardPropagation();
+    ~PoolingLayerForwardPropagation() override;
+    void set(const Index& numb_of_batches, Layer* layer_pointer) override;
+    void print() const override;
+
+    unique_ptr<Switch> pimpl{};
+};
+
+struct PoolingLayerBackPropagation : LayerBackPropagation
+{
+    PoolingLayerBackPropagation(const Index& numb_of_batches, Layer* layer_pointer);
+    PoolingLayerBackPropagation();
+    ~PoolingLayerBackPropagation() override;
+    void set(const Index& numb_of_batches, Layer* layer_pointer) override;
+    void print() const override;
+};
+
 }
 
 #endif // POOLING_LAYER_H

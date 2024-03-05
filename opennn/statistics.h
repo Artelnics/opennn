@@ -151,6 +151,10 @@ struct Histogram
 
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
+  /// Values constructor 2.
+
+  explicit Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+
   /// Data constructor
 
   explicit Histogram(const Tensor<type, 1>&, const Index&);
@@ -285,6 +289,7 @@ struct Histogram
 
      // Maximal indices
      Index maximal_index(const Tensor<type, 1>&);
+     Index maximal_index_from_indices(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
      Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
      Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);

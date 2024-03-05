@@ -146,10 +146,7 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     {
         if(!x_binary && !y_binary)
         {
-            const Correlation linear_correlation
-                    = opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
-
-            return linear_correlation;
+            return opennn::linear_correlation_spearman(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
         else if(!x_binary && y_binary)
         {
@@ -271,6 +268,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
     exponential_correlation.correlation_type = CorrelationType::Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
+
     exponential_correlation.b = exponential_correlation.b;
 
     return exponential_correlation;
@@ -493,7 +491,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 #endif
 
     Correlation linear_correlation;
-
     linear_correlation.correlation_type = CorrelationType::Linear;
 
     if(is_constant(x) && !is_constant(y))
@@ -543,7 +540,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     const Index n = x_filter.size();
 
-    if(x_filter.size() == 0 )
+    if(x_filter.size() == 0)
     {
         cout << "Warning: Column X and Y hasn't common rows." << endl;
 
@@ -574,7 +571,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(abs(s_x()) < NUMERIC_LIMITS_MIN
     && abs(s_y()) < NUMERIC_LIMITS_MIN
     && abs(s_xx()) < NUMERIC_LIMITS_MIN
-    && abs(s_yy()) < NUMERIC_LIMITS_MIN
+        && abs(s_yy()) < NUMERIC_LIMITS_MIN
     && abs(s_xy()) < NUMERIC_LIMITS_MIN)
     {
         linear_correlation.a = type(0);
@@ -589,16 +586,12 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
+        linear_correlation.a = static_cast<type>(s_y() * s_xx() - s_x() * s_xy()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
+        linear_correlation.b = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(static_cast<double>(n) * s_xx() - s_x() * s_x());
 
-        linear_correlation.a =
-            type((s_y() * s_xx() - s_x() * s_xy())/(static_cast<double>(n) * s_xx() - s_x() * s_x()));
+        const double denominator = sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y()));
 
-        linear_correlation.b =
-            type(((static_cast<double>(n) * s_xy()) - (s_x() * s_y())) /((static_cast<double>(n) * s_xx()) - (s_x() * s_x())));
-
-
-
-        if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
+        if(denominator < NUMERIC_LIMITS_MIN)
         {
             linear_correlation.r = NAN;
             linear_correlation.lower_confidence = NAN;
@@ -606,11 +599,8 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         }
         else
         {
-            linear_correlation.r =
-                type((static_cast<double>(n) * s_xy() - s_x() * s_y()) /
-                sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())));
-
-            // Confidence intervals, with transformation of coefficients to Z distribution and back
+            linear_correlation.r
+                    = static_cast<type>(static_cast<double>(n) * s_xy() - s_x() * s_y()) / static_cast<type>(denominator);
 
             const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
@@ -620,6 +610,10 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
             linear_correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
         }
+
+        linear_correlation.r = clamp(linear_correlation.r, static_cast<type>(-1), static_cast<type>(1));
+        linear_correlation.lower_confidence = clamp(linear_correlation.lower_confidence, static_cast<type>(-1), static_cast<type>(1));
+        linear_correlation.upper_confidence = clamp(linear_correlation.upper_confidence, static_cast<type>(-1), static_cast<type>(1));
     }
 
     return linear_correlation;
@@ -661,43 +655,42 @@ Tensor<type,1> calculate_spearman_ranks(const Tensor<type,1> & x)
 {
     const int n = x.size();
 
-    Tensor<type,1> rank_x(n);
+    vector<pair<type, size_t> > v_sort(n);
 
-    for(int i = 0; i < n; i++)
+    for (size_t i = 0U; i < v_sort.size(); ++i)
     {
-        int r = 1, s = 1;
-
-        // Count no of smaller elements in 0 to i-1
-
-        for(int j = 0; j < i; j++)
-        {
-            if (x[j] < x[i] ) r++;
-            if (x[j] == x[i] ) s++;
-        }
-
-        // Count no of smaller elements in i+1 to N-1
-
-        for(int j = i+1; j < n; j++)
-        {
-            if (x[j] < x[i] ) r++;
-            if (x[j] == x[i] ) s++;
-        }
-
-        // Use Fractional Rank formula fractional_rank = r + (n-1)/2
-
-        rank_x[i] = r + (s-1) * 0.5;
+        v_sort[i] = make_pair(x[i], i);
     }
 
-    return rank_x;
+    sort(v_sort.begin(), v_sort.end());
+
+    vector<type> x_rank_vector(n);
+    type rank = 1.0;
+
+    for (int i = 0U; i < v_sort.size(); ++i)
+    {
+        size_t repeated = 1U;
+        for (size_t j = i + 1U; j < v_sort.size() && v_sort[j].first == v_sort[i].first; ++j, ++repeated);
+        for (size_t k = 0; k < repeated; ++k)
+        {
+            x_rank_vector[v_sort[i + k].second] = rank + (repeated - 1) / 2.0;
+        }
+        i += repeated - 1;
+        rank += repeated;
+    }
+
+    TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
+
+    return x_rank;
 }
 
 
 Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
-    Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
-    Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
+    const Tensor<type, 1> x_filter = filter_vectors.first.cast<type>();
+    const Tensor<type, 1> y_filter = filter_vectors.second.cast<type>();
 
     const Tensor<type, 1> x_rank = calculate_spearman_ranks(x_filter);
     const Tensor<type, 1> y_rank = calculate_spearman_ranks(y_filter);
@@ -781,6 +774,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
+    cout << "logistic_correlation_vector_vector" << endl;
+
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(data);
@@ -818,6 +813,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Eigen::array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+
+    cout << "correlation.r: " << correlation.r << endl;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -922,7 +919,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 }
 
 
-
 Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 2>& y)
@@ -971,8 +967,8 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1, target_variables_number});
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -1097,7 +1093,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number-1,target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
@@ -1202,7 +1198,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

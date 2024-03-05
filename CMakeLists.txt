@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(opennn)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CPACK_GENERATOR "TGZ")
 
 set(CMAKE_SUPPRESS_REGENERATION true)
@@ -16,7 +16,7 @@ set(VS_STARTUP_PROJECT opennn)
 #endif()
 
 # Uncomment next line to compile without using C++11
-# add_definitions(-D__Cpp11__)
+add_definitions(-D__Cpp11__)
 
 find_package(OpenMP REQUIRED)
 set(CMAKE_C_FLAGS "${OpenMP_C_FLAGS}")

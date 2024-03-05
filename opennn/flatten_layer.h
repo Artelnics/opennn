@@ -26,8 +26,9 @@
 namespace opennn
 {
 
+//forward declaration
 struct FlattenLayerForwardPropagation;
-
+struct FlattenLayerBackPropagation;
 /// This class represents a flatten layer.
 
 /// Flatten layers are included in the definition of a neural network.
@@ -83,6 +84,10 @@ public:
 
     bool is_empty() const;
 
+    // Gradients
+
+    void calculate_hidden_delta(LayerForwardPropagation*, LayerBackPropagation*, LayerBackPropagation*) const override;
+
     // Outputs
 
     void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
@@ -102,95 +107,38 @@ protected:
     /// Display warning messages to screen.
 
     bool display = true;
+private:
+
+    void calculate_hidden_delta(FlattenLayerForwardPropagation*, FlattenLayerBackPropagation*, LayerBackPropagation*) const;
 };
 
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
 {
    // Default constructor
-
-   explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {
-   }
+   explicit FlattenLayerForwardPropagation();
 
    // Constructor
+   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
-   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-       : LayerForwardPropagation()
-   {
-       set(new_batch_samples_number, new_layer_pointer);
-   }
+   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
-
-   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-   {
-       layer_pointer = new_layer_pointer;
-
-       const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
-
-       batch_samples_number = new_batch_samples_number;
-
-       outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
-
-       outputs_data = outputs.data();
-
-       outputs_dimensions = get_dimensions(outputs);
-   }
-
-
-   void print() const
-   {
-       cout << "Outputs:" << endl;
-
-       cout << outputs << endl;
-   }
-
-   Tensor<type, 2> outputs;
+   void print() const;
 };
 
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
-
     // Default constructor
+    explicit FlattenLayerBackPropagation();
 
-    explicit FlattenLayerBackPropagation() : LayerBackPropagation()
-    {
+    virtual ~FlattenLayerBackPropagation();
 
-    }
+    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer);
 
-    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = new_layer_pointer->get_neurons_number();
-//        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
-
-//        deltas.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
-
-        deltas.resize(batch_samples_number, neurons_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas: " << endl;
-
-        cout << deltas << endl;
-    }
-
-    Tensor<type, 2> deltas;
-
+    void print() const;
 };
 
 
@@ -200,7 +148,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

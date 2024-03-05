@@ -250,7 +250,7 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
-    ofstream file(filename);
+    std::ofstream file(filename);
 
     if(!file.is_open())
     {
@@ -842,6 +842,30 @@ type l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y)
 }
 
 
+type l2_distance(const TensorMap<Tensor<type, 0>>&x, const TensorMap<Tensor<type, 0>>&y)
+{
+    Tensor<type, 0> distance;
+
+    distance = (x-y).square().sum().sqrt();
+
+    return distance(0);
+}
+
+Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, const Index& size)
+{
+    Tensor<type, 1> distance(size);
+
+    Tensor<type, 2> difference = x - y;
+
+    for(Index i = 0; i < difference.dimension(1); i ++)
+    {
+        distance(i) = abs(difference(i));
+    }
+
+    return distance;
+}
+
+
 void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {
     const Index rows_number = matrix.dimension(0);
@@ -1407,12 +1431,11 @@ void print_tensor(const float* vector, const int dims[])
         }
     }
 }
-
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

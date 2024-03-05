@@ -24,6 +24,7 @@ public:
 
    void test_eigen_convolution();
    void test_eigen_convolution_3d();
+   void test_calculate_convolutions();
    void test_read_bmp();
 
    // Constructor and destructor methods
@@ -61,11 +62,15 @@ public:
 
   // Forward propagate
 
-  void test_forward_propagate();
+  void test_forward_propagate_training();
+  void test_forward_propagate_not_training();
 
   //Back propagate
-
-  void test_calculate_hidden_delta_perceptron_test();
+  
+  void test_calculate_hidden_delta();
+  void test_calculate_error_gradient();
+  void test_calculate_hidden_delta1();
+  void test_calculate_error_gradient1();
 
   // Utils
 

@@ -583,6 +583,7 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
+
 #ifdef OPENNN_DEBUG
 
     check();
@@ -705,15 +706,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Update parameters
 
-<<<<<<< HEAD
-//        cout << "------------------------------" << endl;
-
-//        optimization_data.print();
-
-//        cout << "------------------------------" << endl;
-
-=======
->>>>>>> dev
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Selection error
@@ -757,13 +749,13 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         old_loss = training_back_propagation.loss;
 
-        if(training_back_propagation.loss <= training_loss_goal)
+        if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_back_propagation.loss << endl;
-
             stop_training = true;
 
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
+
+            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -811,6 +803,34 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         if(stop_training) break;
+    }
+
+    if(neural_network_pointer->get_project_type() == NeuralNetwork::ProjectType::AutoAssociation)
+    {
+        Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
+        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
+
+        type* input_data = inputs.data();
+
+//        Tensor<type, 2> outputs = neural_network_pointer->calculate_unscaled_outputs(input_data, inputs_dimensions);
+        Tensor<type, 2> outputs = neural_network_pointer->calculate_scaled_outputs(input_data, inputs_dimensions);
+
+        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
+
+        type* outputs_data = outputs.data();
+
+        Tensor<type, 1> samples_distances = neural_network_pointer->calculate_samples_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        Descriptives distances_descriptives(samples_distances);
+
+        BoxPlot distances_box_plot = calculate_distances_box_plot(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
+
+        Tensor<type, 2> multivariate_distances = neural_network_pointer->calculate_multivariate_distances(input_data, inputs_dimensions, outputs_data, outputs_dimensions);
+        Tensor<BoxPlot, 1> multivariate_distances_box_plot = data_set_pointer->calculate_data_columns_box_plot(multivariate_distances);
+
+        neural_network_pointer->set_distances_box_plot(distances_box_plot);
+        neural_network_pointer->set_variables_distances_names(data_set_pointer->get_input_variables_names());
+        neural_network_pointer->set_multivariate_distances_box_plot(multivariate_distances_box_plot);
+        neural_network_pointer->set_distances_descriptives(distances_descriptives);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
@@ -1140,7 +1160,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

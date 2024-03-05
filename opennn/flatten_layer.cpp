@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "flatten_layer.h"
+#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -24,8 +25,7 @@ FlattenLayer::FlattenLayer() : Layer()
 
 FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
-    input_variables_dimensions = new_input_variables_dimensions;
-    set(input_variables_dimensions);
+    set(new_input_variables_dimensions);
 
     layer_type = Type::Flatten;
 }
@@ -33,7 +33,7 @@ FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimension
 
 void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
-
+    return;
 }
 
 
@@ -55,16 +55,17 @@ void FlattenLayer::set_name(const string& new_layer_name)
 //Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 Index FlattenLayer::get_outputs_number() const
 {
-    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
+    return  input_variables_dimensions(Convolutional4dDimensions::channel_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::column_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::row_index);
 }
 
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(2);
 
-    /// @todo
-    outputs_dimensions(0) = input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2);
-    outputs_dimensions(1) = 1; // batches number
+    outputs_dimensions(0) = get_inputs_batch_number(); 
+    outputs_dimensions(1) = get_input_height() * get_input_width() * get_inputs_channels_number();
 
     return outputs_dimensions;
 }
@@ -72,31 +73,34 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 /// @todo
 Index FlattenLayer::get_inputs_number() const
 {
-    return input_variables_dimensions(0) * input_variables_dimensions(1) * input_variables_dimensions(2) * input_variables_dimensions(3);
+    return get_input_height() * 
+        get_input_width() * 
+        get_inputs_channels_number() * 
+        get_inputs_batch_number();
 }
 
 
 Index FlattenLayer::get_input_height() const
 {
-    return input_variables_dimensions(2);
+    return input_variables_dimensions(Convolutional4dDimensions::row_index);
 }
 
 
 Index FlattenLayer::get_input_width() const
 {
-    return input_variables_dimensions(1);
+    return input_variables_dimensions(Convolutional4dDimensions::column_index);
 }
 
 
 Index FlattenLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions(0);
+    return input_variables_dimensions(Convolutional4dDimensions::channel_index);
 }
 
 
 Index FlattenLayer::get_inputs_batch_number() const
 {
-    return input_variables_dimensions(3);
+    return input_variables_dimensions(Convolutional4dDimensions::sample_index);
 }
 
 
@@ -104,7 +108,9 @@ Index FlattenLayer::get_inputs_batch_number() const
 
 Index FlattenLayer::get_neurons_number() const
 {
-    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2);
+    return  input_variables_dimensions(Convolutional4dDimensions::row_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::channel_index) * 
+            input_variables_dimensions(Convolutional4dDimensions::column_index);
 }
 
 
@@ -147,39 +153,38 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 /// @param inputs 4d tensor(batch, channels, width, height)
 /// @return result 2d tensor(batch, number of pixels)
 
-/*
-Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
-{
-    const Index rows_number = inputs.dimension(0);
-    const Index columns_number= inputs.dimension(1);
-    const Index channels_number = inputs.dimension(2);
-    const Index batch_size = inputs.dimension(3);
-
-    const Eigen::array<Index, 2> new_dims{{batch_size, channels_number*rows_number*columns_number}};
-*/ // --> old
 void FlattenLayer::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
                                      type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
 {
-    const Index height = inputs_dimensions(0);
-    const Index width = inputs_dimensions(1);
-    const Index channels = inputs_dimensions(2);
-    const Index batch = inputs_dimensions(3);
+    const Index rows_number = inputs_dimensions[Convolutional4dDimensions::row_index];
+    const Index columns_number = inputs_dimensions[Convolutional4dDimensions::column_index];
+    const Index channels_number = inputs_dimensions[Convolutional4dDimensions::channel_index];
+    const Index batch_size = inputs_dimensions[Convolutional4dDimensions::sample_index];
+    const Index variable_size = rows_number * columns_number * channels_number;
 
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
+
+    const TensorMap<Tensor<type, 4>> inputs(inputs_data, [&](){
+        DSizes<Index, 4> dim{};
+        dim[Convolutional4dDimensions::channel_index] = channels_number;
+        dim[Convolutional4dDimensions::row_index] = rows_number;
+        dim[Convolutional4dDimensions::column_index] = columns_number;
+        dim[Convolutional4dDimensions::sample_index] = batch_size;
+        return dim;
+    }());
 
 
-    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+    const Index output_batch_numbers = outputs_dimensions(0);
+    const Index variable_size_numbers = outputs_dimensions(1);
+    TensorMap<Tensor<type, 2>> outputs(outputs_data, output_batch_numbers, variable_size_numbers);
 
-    TensorMap<Tensor<type, 2>> outputs(outputs_data, batch, channels*width*height);
-
-    outputs = inputs.reshape(new_dims);
+    outputs.device(*thread_pool_device) = inputs.reshape(outputs.dimensions());
 }
 
 
-//
-//void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
-// --> old
-void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions, LayerForwardPropagation* forward_propagation, bool& switch_train)
+
+void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                     LayerForwardPropagation* forward_propagation,
+                                     bool& switch_train)
 {
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
@@ -210,55 +215,87 @@ void FlattenLayer::forward_propagate(type* inputs_data, const Tensor<Index, 1>& 
 
 #endif
 
-/*
-
-    const Index rows_number = inputs.dimension(0);
-    const Index columns_number = inputs.dimension(1);
-    const Index channels_number = inputs.dimension(2);
-//    const Index batch_size = inputs.dimension(3);
-
-    Index image_counter = 0;
-    Index variable_counter = 0;
-
-    for(Index i = 0; i < flatten_layer_forward_propagation->outputs.size(); i++)
-    {
-        flatten_layer_forward_propagation->outputs(image_counter,variable_counter) = inputs(i);
-
-        variable_counter++;
-
-        if(variable_counter == channels_number * rows_number * columns_number)
-        {
-            variable_counter = 0;
-            image_counter++;
-        }
-    }
-*/ // check, old version
-/*
-    if(inputs_dimensions.size() != 4)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final.\n"
-               << "Inputs rank must be equal to 4.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index height = inputs_dimensions(0);
-    const Index width = inputs_dimensions(1);
-    const Index channels = inputs_dimensions(2);
-    const Index batch = inputs_dimensions(3);
-
-    const Eigen::array<Index, 2> new_dims{{batch, channels*width*height}};
-
-    TensorMap<Tensor<type, 4>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
-//    TensorMap<Tensor<type, 2>> outputs(flatten_layer_forward_propagation->outputs.data(), batch, channels*width*height);
-
-     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
-*/ // --> check
+    calculate_outputs(
+        inputs_data, 
+        inputs_dimensions, 
+        forward_propagation->outputs_data, 
+        forward_propagation->outputs_dimensions);
+    
 }
 
 
+
+
+void FlattenLayer::calculate_hidden_delta(
+    FlattenLayerForwardPropagation* next_flatten_layer_forwardpropagation,
+    FlattenLayerBackPropagation* next_flatten_layer_back_propagation,
+    LayerBackPropagation* back_propagation) const
+{
+    (void)next_flatten_layer_forwardpropagation;
+    const Index images_number = next_flatten_layer_back_propagation->deltas_dimensions(0);
+    const Index next_delta_pixel_numbers = next_flatten_layer_back_propagation->deltas_dimensions(1);
+    
+    TensorMap<Tensor<type, 2>> next_delta(
+        next_flatten_layer_back_propagation->deltas_data, 
+        images_number, 
+        next_delta_pixel_numbers);
+
+    const Index delta_row_numbers = back_propagation->deltas_dimensions(Convolutional4dDimensions::row_index);
+    const Index delta_column_numbers = back_propagation->deltas_dimensions(Convolutional4dDimensions::column_index);
+    const Index delta_channel_numbers = back_propagation->deltas_dimensions(Convolutional4dDimensions::channel_index);
+
+    TensorMap<Tensor<type, 4>> delta(
+        back_propagation->deltas_data,
+        [&](){
+            DSizes<Index, 4> dim{};
+            dim[Convolutional4dDimensions::row_index] = delta_row_numbers;
+            dim[Convolutional4dDimensions::column_index] = delta_column_numbers;
+            dim[Convolutional4dDimensions::channel_index] = delta_channel_numbers;
+            dim[Convolutional4dDimensions::sample_index] = images_number;
+            return dim;
+        }());
+
+    delta.device(*thread_pool_device) = next_delta.reshape(delta.dimensions());
+}
+void FlattenLayer::calculate_hidden_delta(
+    LayerForwardPropagation* next_layer_forwardpropagation,
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerBackPropagation* back_propagation) const
+{
+    switch(next_layer_forwardpropagation->layer_pointer->get_type())
+    {
+        case Layer::Type::Flatten:
+        {
+            FlattenLayerForwardPropagation* next_flatten_layer_forward_propagation = 
+                static_cast<FlattenLayerForwardPropagation*>(next_layer_forwardpropagation);
+            FlattenLayerBackPropagation* next_flatten_layer_back_propagation = 
+                static_cast<FlattenLayerBackPropagation*>(next_layer_back_propagation);
+            calculate_hidden_delta(
+                next_flatten_layer_forward_propagation, 
+                next_flatten_layer_back_propagation,
+                back_propagation);
+            
+        }
+        break;
+        case Layer::Type::Perceptron:
+        {
+            static_cast<const PerceptronLayer*>(next_layer_forwardpropagation->layer_pointer)->calculate_hidden_delta(
+                next_layer_forwardpropagation,
+                next_layer_back_propagation,
+                back_propagation);
+        }
+        break;
+        default:
+        {
+            //Forwarding
+            next_layer_forwardpropagation->layer_pointer->calculate_hidden_delta(
+                next_layer_forwardpropagation,
+                next_layer_back_propagation,
+                back_propagation);
+        }
+        break;
+    }
+}
 /// Serializes the flatten layer object into an XML document of the TinyXML.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -380,10 +417,93 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     set(inputsDimensionTensor);
 }
 
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation() : LayerForwardPropagation()
+{
+}
+
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer_pointer);
+}
+
+void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+{
+    layer_pointer = new_layer_pointer;
+    
+    batch_samples_number = new_batch_samples_number;
+
+    const FlattenLayer* flatten_layer_pointer = static_cast<const FlattenLayer*>(layer_pointer);
+
+    const Index rows_number = flatten_layer_pointer->get_input_height();
+    const Index columns_number = flatten_layer_pointer->get_input_width();
+    const Index channels_number = flatten_layer_pointer->get_inputs_channels_number();
+
+
+    outputs_data = static_cast<type*>(malloc(batch_samples_number * rows_number * columns_number * channels_number * sizeof(type)));
+    
+    outputs_dimensions.resize(2);
+    outputs_dimensions.setValues({
+        batch_samples_number,
+        rows_number * columns_number * channels_number
+    });
+}
+
+void FlattenLayerForwardPropagation::print() const
+{
+    //TODO: output
+    cout << "Outputs:" << endl;
+}
+
+FlattenLayerBackPropagation::FlattenLayerBackPropagation() : LayerBackPropagation()
+{
+}
+
+FlattenLayerBackPropagation::~FlattenLayerBackPropagation()
+{
+}
+
+
+FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer_pointer);
+}
+
+
+void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+{
+    layer_pointer = new_layer_pointer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const FlattenLayer* flatten_layer_pointer = static_cast<const FlattenLayer*>(layer_pointer);
+
+    const Index rows_number = flatten_layer_pointer->get_input_height();
+    const Index columns_number = flatten_layer_pointer->get_input_width();
+    const Index channels_number = flatten_layer_pointer->get_inputs_channels_number();
+
+    deltas_data = static_cast<type*>(malloc(batch_samples_number * rows_number * columns_number * channels_number * sizeof(type)));
+    deltas_dimensions.resize(2);
+    deltas_dimensions.setValues({
+        batch_samples_number,
+        rows_number *
+        columns_number *
+        channels_number,
+    });
+}
+
+
+void FlattenLayerBackPropagation::print() const
+{
+    //TODO: output
+    cout << "Deltas: " << endl;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

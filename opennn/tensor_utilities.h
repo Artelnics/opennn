@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "opennn_strings.h"
+#include "4d_dimensions.h"
 
 #include "../eigen/Eigen/Dense"
 
@@ -92,8 +93,11 @@ type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
 void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
+type l2_distance(const TensorMap<Tensor<type, 0>>&, const TensorMap<Tensor<type, 0>>&);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
+Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
+
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
@@ -150,6 +154,18 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, N>&tensor)
 }
 
 void print_tensor(const float* vector, const int dims[]);
+
+template<typename InputTensorType, typename KernelTensorType, typename ConvolutionalDimensionType = Eigen::array<Index, 3>>
+auto perform_convolution(const InputTensorType& input, const KernelTensorType& kernel, const Index row_stride = 1, const Index column_stride = 1, const ConvolutionalDimensionType convolution_dimension = Eigen::array{Convolutional4dDimensions::channel_index, Convolutional4dDimensions::column_index, Convolutional4dDimensions::row_index})
+{
+    Eigen::array<Index, 4> strides;
+    strides[Convolutional4dDimensions::sample_index] = 1;
+    strides[Convolutional4dDimensions::channel_index] = 1;
+    strides[Convolutional4dDimensions::row_index] = row_stride;
+    strides[Convolutional4dDimensions::column_index] = column_stride;
+
+    return input.convolve(kernel, convolution_dimension).stride(strides);
+}
 
 }
 

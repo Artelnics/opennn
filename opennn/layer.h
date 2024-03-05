@@ -219,7 +219,10 @@ struct LayerForwardPropagation
     {
     }
 
-    virtual ~LayerForwardPropagation() {}
+    virtual ~LayerForwardPropagation()
+    {
+        free(outputs_data);
+    }
 
     virtual void set(const Index&, Layer*) {}
 
@@ -230,6 +233,7 @@ struct LayerForwardPropagation
     Layer* layer_pointer = nullptr;
 
     type* outputs_data = nullptr;
+
     Tensor<Index, 1> outputs_dimensions;
 };
 
@@ -240,7 +244,10 @@ struct LayerBackPropagation
 
     explicit LayerBackPropagation() {}
 
-    virtual ~LayerBackPropagation() {}
+    virtual ~LayerBackPropagation()
+    {
+        free(deltas_data);
+    }
 
     virtual void set(const Index&, Layer*) {}
 
