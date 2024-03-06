@@ -830,6 +830,25 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+void GradientDescentData::set(GradientDescent* new_gradient_descent)
+{
+    gradient_descent = new_gradient_descent;
+
+    const LossIndex* loss_index = gradient_descent->get_loss_index();
+
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    const Index parameters_number = neural_network->get_parameters_number();
+
+    // Neural network data
+
+    potential_parameters.resize(parameters_number);
+
+    // Optimization algorithm data
+
+    training_direction.resize(parameters_number);
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -2293,6 +2293,117 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
     }
     }
 }
+
+
+pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_pair() const
+{
+    return pair<type*, dimensions>();
+}
+
+
+void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    const Index inputs_number = layer->get_inputs_number();
+    const Index neurons_number = layer->get_neurons_number();
+
+    batch_samples_number = new_batch_samples_number;
+
+    outputs.resize(batch_samples_number, neurons_number);
+
+    previous_hidden_state_activations.resize(neurons_number);
+    previous_cell_states.resize(neurons_number);
+
+    current_inputs.resize(inputs_number);
+
+    current_forget_combinations.resize(neurons_number);
+    current_input_combinations.resize(neurons_number);
+    current_state_combinations.resize(neurons_number);
+    current_output_combinations.resize(neurons_number);
+
+    current_forget_activations.resize(neurons_number);
+    current_input_activations.resize(neurons_number);
+    current_state_activations.resize(neurons_number);
+    current_output_activations.resize(neurons_number);
+
+    current_cell_states.resize(neurons_number);
+
+    current_forget_activations_derivatives.resize(neurons_number);
+    current_input_activations_derivatives.resize(neurons_number);
+    current_state_activations_derivatives.resize(neurons_number);
+    current_output_activations_derivatives.resize(neurons_number);
+    current_hidden_states_derivatives.resize(neurons_number);
+
+    forget_activations.resize(batch_samples_number, neurons_number);
+    input_activations.resize(batch_samples_number, neurons_number);
+    state_activations.resize(batch_samples_number, neurons_number);
+    output_activations.resize(batch_samples_number, neurons_number);
+    cell_states.resize(batch_samples_number, neurons_number);
+    hidden_states.resize(batch_samples_number, neurons_number);
+
+    forget_activations_derivatives.resize(batch_samples_number, neurons_number);
+    input_activations_derivatives.resize(batch_samples_number, neurons_number);
+    state_activations_derivatives.resize(batch_samples_number, neurons_number);
+    output_activations_derivatives.resize(batch_samples_number, neurons_number);
+    cell_states_derivatives.resize(batch_samples_number, neurons_number);
+    hidden_states_derivatives.resize(batch_samples_number, neurons_number);
+
+}
+
+
+void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = layer->get_neurons_number();
+    const Index inputs_number = layer->get_inputs_number();
+
+    deltas.resize(batch_samples_number, neurons_number);
+
+    current_deltas.resize(neurons_number);
+
+    forget_weights_derivatives.resize(inputs_number * neurons_number);
+    input_weights_derivatives.resize(inputs_number * neurons_number);
+    state_weights_derivatives.resize(inputs_number * neurons_number);
+    output_weights_derivatives.resize(inputs_number * neurons_number);
+
+    forget_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+    input_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+    state_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+    output_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+
+    forget_biases_derivatives.resize(neurons_number);
+    input_biases_derivatives.resize(neurons_number);
+    state_biases_derivatives.resize(neurons_number);
+    output_biases_derivatives.resize(neurons_number);
+
+    input_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+    forget_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+    state_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+    output_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+
+    hidden_states_biases_derivatives.resize(neurons_number, neurons_number);
+    cell_states_biases_derivatives.resize(neurons_number, neurons_number);
+
+    input_combinations_weights_derivatives.resize(inputs_number * neurons_number, neurons_number);
+    forget_combinations_weights_derivatives.resize(inputs_number * neurons_number, neurons_number);
+    state_combinations_weights_derivatives.resize(inputs_number * neurons_number, neurons_number);
+    output_combinations_weights_derivatives.resize(inputs_number * neurons_number, neurons_number);
+
+    hidden_states_weights_derivatives.resize(inputs_number * neurons_number, neurons_number);
+    cell_states_weights_derivatives.resize(inputs_number * neurons_number, neurons_number);
+
+    input_combinations_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+    forget_combinations_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+    state_combinations_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+    output_combinations_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+
+    hidden_states_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+    cell_states_recurrent_weights_derivatives.resize(neurons_number * neurons_number, neurons_number);
+}
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -172,22 +172,7 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
     virtual ~StochasticGradientDescentData() {}
 
-    void set(StochasticGradientDescent* new_stochastic_gradient_descent)
-    {
-        stochastic_gradient_descent = new_stochastic_gradient_descent;
-
-        const LossIndex* loss_index = stochastic_gradient_descent->get_loss_index();
-
-        const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-        const Index parameters_number = neural_network->get_parameters_number();
-
-        parameters_increment.resize(parameters_number);
-        last_parameters_increment.resize(parameters_number);
-
-        parameters_increment.setZero();
-        last_parameters_increment.setZero();
-    }
+    void set(StochasticGradientDescent* new_stochastic_gradient_descent);
 
     StochasticGradientDescent* stochastic_gradient_descent = nullptr;
 

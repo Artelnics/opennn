@@ -353,6 +353,46 @@ void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
     set(inputs_dimension_tensor);
 }
 
+pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
+{
+    const Index neurons_number = layer->get_neurons_number();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number } });
+}
+
+void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    batch_samples_number = new_batch_samples_number;
+
+    layer = new_layer;
+
+    const Index neurons_number = layer->get_neurons_number();
+
+    outputs.resize(batch_samples_number, neurons_number);
+
+    outputs_data = outputs.data();
+}
+
+pair<type*, dimensions> FlattenLayerBackPropagation::get_deltas_pair() const
+{
+    const Index neurons_number = layer->get_neurons_number();
+
+    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, neurons_number } });
+}
+
+void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = new_layer->get_neurons_number();
+
+    deltas.resize(batch_samples_number, neurons_number);
+
+    deltas_data = deltas.data();
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

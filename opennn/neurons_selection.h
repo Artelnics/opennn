@@ -163,40 +163,11 @@ struct NeuronsSelectionResults
 
     // Epochs constructor
 
-   explicit NeuronsSelectionResults(const Index& maximum_epochs_number)
-   {
-        neurons_number_history.resize(maximum_epochs_number);
-        neurons_number_history.setConstant(0);
-
-        training_error_history.resize(maximum_epochs_number);
-        training_error_history.setConstant(type(-1));
-
-        selection_error_history.resize(maximum_epochs_number);
-        selection_error_history.setConstant(type(-1));
-
-        optimum_training_error = numeric_limits<type>::max();
-        optimum_selection_error = numeric_limits<type>::max();
-    }
+   explicit NeuronsSelectionResults(const Index& maximum_epochs_number);
 
    virtual ~NeuronsSelectionResults() {}
 
-   void resize_history(const Index& new_size)
-   {
-       const Tensor<Index, 1> old_neurons_number_history = neurons_number_history;
-       const Tensor<type, 1> old_training_error_history = training_error_history;
-       const Tensor<type, 1> old_selection_error_history = selection_error_history;
-
-       neurons_number_history.resize(new_size);
-       training_error_history.resize(new_size);
-       selection_error_history.resize(new_size);
-
-       for(Index i = 0; i < new_size; i++)
-       {
-           neurons_number_history(i) = old_neurons_number_history(i);
-           training_error_history(i) = old_training_error_history(i);
-           selection_error_history(i) = old_selection_error_history(i);
-       }
-   }
+   void resize_history(const Index& new_size);
 
    string write_stopping_condition() const;
 

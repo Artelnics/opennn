@@ -438,6 +438,15 @@ void OptimizationAlgorithm::load(const string& file_name)
 
 /// Return a string with the stopping condition of the Results
 
+TrainingResults::TrainingResults(const Index& epochs_number)
+{
+    training_error_history.resize(1 + epochs_number);
+    training_error_history.setConstant(type(-1.0));
+
+    selection_error_history.resize(1 + epochs_number);
+    selection_error_history.setConstant(type(-1.0));
+}
+
 string TrainingResults::write_stopping_condition() const
 {
     switch(stopping_condition)
@@ -460,6 +469,25 @@ string TrainingResults::write_stopping_condition() const
     default:
         return string();
     }
+}
+
+type TrainingResults::get_training_error()
+{
+    const Index size = training_error_history.size();
+
+    return training_error_history(size - 1);
+}
+
+type TrainingResults::get_selection_error() const
+{
+    const Index size = selection_error_history.size();
+
+    return selection_error_history(size - 1);
+}
+
+Index TrainingResults::get_epochs_number() const
+{
+    return training_error_history.size() - 1;
 }
 
 

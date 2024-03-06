@@ -1186,6 +1186,33 @@ void RecurrentLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
+
+pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() const
+{
+    return pair<type*, dimensions>();
+}
+
+
+void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    const Index neurons_number = layer->get_neurons_number();
+    const Index inputs_number = layer->get_inputs_number();
+
+    batch_samples_number = new_batch_samples_number;
+
+    outputs.resize(batch_samples_number, neurons_number);
+
+    previous_activations.resize(neurons_number);
+
+    current_inputs.resize(inputs_number);
+    current_combinations.resize(neurons_number);
+    current_activations_derivatives.resize(neurons_number);
+
+    activations_derivatives.resize(batch_samples_number, neurons_number);
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

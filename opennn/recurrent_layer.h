@@ -253,34 +253,10 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
         set(new_batch_samples_number, new_layer);
     }
     
-    
-    pair<type*, dimensions> get_outputs_pair() const final
-    {
-        const Index neurons_number = layer->get_neurons_number();
-
-        return pair<type*, dimensions>(outputs_data, { {batch_samples_number, neurons_number} });
-    }
+    pair<type*, dimensions> get_outputs_pair() const final;
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final
-    {
-        layer = new_layer;
-
-        const Index neurons_number = layer->get_neurons_number();
-        const Index inputs_number = layer->get_inputs_number();
-
-        batch_samples_number = new_batch_samples_number;
-
-        outputs.resize(batch_samples_number, neurons_number);
-
-        previous_activations.resize(neurons_number);
-
-        current_inputs.resize(inputs_number);
-        current_combinations.resize(neurons_number);
-        current_activations_derivatives.resize(neurons_number);
-
-        activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
+    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
     void print() const
     {

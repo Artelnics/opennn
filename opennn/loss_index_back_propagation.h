@@ -27,46 +27,10 @@ struct BackPropagation
 
     virtual ~BackPropagation();
 
-    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index)
-    {
-        loss_index = new_loss_index;
-
-        batch_samples_number = new_batch_samples_number;
-
-        // Neural network
-
-        NeuralNetwork* neural_network_p = loss_index->get_neural_network();
-
-        const Index parameters_number = neural_network_p->get_parameters_number();
-
-        const Index outputs_number = neural_network_p->get_outputs_number();
-
-        // First order loss
-
-        neural_network.set(batch_samples_number, neural_network_p);
-
-        error = type(0);
-
-        loss = type(0);
-
-        errors.resize(batch_samples_number, outputs_number);
-
-        parameters = neural_network_p->get_parameters();
-
-        gradient.resize(parameters_number);
-
-        regularization_gradient.resize(parameters_number);
-    }
+    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
 
 
-    pair<type*, dimensions> get_output_deltas_pair() const
-    {
-        const NeuralNetwork* neural_network_p = loss_index->get_neural_network();
-
-        const Index last_trainable_layer_index = neural_network_p->get_last_trainable_layer_index();
-
-        return neural_network.layers(last_trainable_layer_index)->get_deltas_pair();
-    }
+    pair<type*, dimensions> get_output_deltas_pair() const;
 
 
     void print() const

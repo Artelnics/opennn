@@ -1031,6 +1031,75 @@ string ProbabilisticLayer3D::write_expression(const Tensor<string, 1>& inputs_na
 }
 
 
+pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const
+{
+    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
+
+    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
+
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, inputs_number, neurons_number } });
+}
+
+
+void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
+
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+
+    outputs.resize(batch_samples_number, inputs_number, neurons_number);
+
+    outputs_data = outputs.data();
+
+    activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number, neurons_number);
+}
+
+
+pair<type*, dimensions> ProbabilisticLayer3DBackPropagation::get_deltas_pair() const
+{
+    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
+
+    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+
+    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, inputs_number, neurons_number } });
+}
+
+
+void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+    const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
+
+    deltas.resize(batch_samples_number, inputs_number, neurons_number);
+
+    deltas_data = deltas.data();
+
+    biases_derivatives.resize(neurons_number);
+
+    synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
+
+    deltas_row.resize(neurons_number);
+
+    activations_derivatives_matrix.resize(neurons_number, neurons_number);
+
+    error_combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+}
 
 pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const
 {
