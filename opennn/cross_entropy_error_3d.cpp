@@ -47,9 +47,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
+    
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
-
+    
     const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
                                              outputs_pair.second[0][0],
                                              outputs_pair.second[0][1],
@@ -72,8 +72,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: cross_entropy_error class.\n"
-               << "void calculate_multiple_error(const Batch&, const NeuralNetworkForwardPropagation&,BackPropagation&) method.\n"
+        buffer << "OpenNN Exception: cross_entropy_error_3d class.\n"
+               << "void calculate_error(const Batch&, const NeuralNetworkForwardPropagation&, BackPropagation&) method.\n"
                << "NAN values found in back propagation error.";
 
         throw runtime_error(buffer.str());
@@ -88,13 +88,13 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    ProbabilisticLayer3DBackPropagation* probabilistic_layer_back_propagation
+    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation
             = static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
-
+    
     const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
                                              outputs_pair.second[0][0],
                                              outputs_pair.second[0][1],
@@ -106,9 +106,13 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
                                              targets_pair.second[0][0],
                                              targets_pair.second[0][1],
                                              targets_pair.second[0][2]);
-
-    Tensor<type, 3>& deltas = probabilistic_layer_back_propagation->deltas;
-
+    /*
+    cout << "Targets: " << endl << targets.chip(0, 0) << endl;
+    cout << "Outputs: " << endl << outputs.chip(0, 0) << endl;
+    cout << "Deltas: " << endl << (targets / (outputs * type(-batch_samples_number))).chip(0, 0) << endl;
+    */
+    Tensor<type, 3>& deltas = probabilistic_layer_3d_back_propagation->deltas;
+    
     deltas.device(*thread_pool_device) = targets / (outputs * type(-batch_samples_number));
 }
 

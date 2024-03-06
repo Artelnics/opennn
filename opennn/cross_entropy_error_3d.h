@@ -61,6 +61,12 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
+protected:
+
+   /// Small number to prevent any division by zero
+
+   type epsilon = type(1.e-8);
+
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/cross_entropy_error_cuda.h"
 #endif

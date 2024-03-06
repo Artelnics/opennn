@@ -159,7 +159,7 @@ void NeuralNetwork::add_layer(Layer* layer)
         Tensor<Index, 1> new_layer_inputs_indices(1);
         new_layer_inputs_indices(0) = old_layers_number-1;
 
-        layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;           
+        layers_inputs_indices(old_layers_number) = new_layer_inputs_indices;
     }
     else
     {
@@ -488,9 +488,14 @@ Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
     const Index layers_number = get_layers_number();
 
-    if(layer_name == "dataset")
+    if(layer_name == "dataset" || layer_name == "input")
     {
         return -1;
+    }
+
+    if (layer_name == "context")
+    {
+        return -2;
     }
 
     for(Index i = 0; i < layers_number; i++)
@@ -855,7 +860,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& model_type, const Tensor
 
         add_layer(recurrent_layer);
 
-        for(Index i = 0 ; i < size-1 ; i++)
+        for(Index i = 1 ; i < size-1 ; i++)
         {
             PerceptronLayer* perceptron_layer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
@@ -1799,11 +1804,12 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     const Index batch_samples_number = inputs.dimension(0);
+    const Index inputs_number = inputs.dimension(1);
     const Index outputs_number = get_outputs_number();
 
     ForwardPropagation neural_network_forward_propagation(batch_samples_number, this);
 
-    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), {{batch_samples_number, outputs_number}});
+    const pair<type*, dimensions> inputs_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
     forward_propagate(inputs_pair, neural_network_forward_propagation);
 

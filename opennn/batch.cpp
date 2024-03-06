@@ -2,6 +2,7 @@
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
+#include "language_data_set.h"
 
 namespace opennn
 {
@@ -13,8 +14,8 @@ Batch::~Batch()
 
 
 void Batch::fill(const Tensor<Index, 1>& samples_indices,
-                        const Tensor<Index, 1>& inputs_indices,
-                        const Tensor<Index, 1>& targets_indices)
+                 const Tensor<Index, 1>& inputs_indices,
+                 const Tensor<Index, 1>& targets_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
@@ -225,6 +226,48 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     }
 
     targets_data = targets_tensor.data();
+
+    // LanguageDataSet
+
+    if (is_instance_of<LanguageDataSet>(data_set))
+    {
+        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+        const Index context_variables_number = language_data_set->get_context_variables_number();
+
+        const Tensor<Index, 1> context_variables_dimensions = language_data_set->get_context_variables_dimensions();
+
+        if (context_variables_dimensions.size() == 1)
+        {
+            context_dimensions = { {batch_size, context_variables_number} };
+
+            context_tensor.resize(1);
+            context_tensor.resize(batch_size * context_variables_number);
+        }
+        else if (context_variables_dimensions.size() == 2)
+        {
+            const Index rows_number = context_variables_dimensions(0);
+            const Index raw_variables_number = context_variables_dimensions(1);
+
+            context_dimensions = { {batch_size, rows_number, raw_variables_number} };
+
+            context_tensor.resize(1);
+            context_tensor.resize(batch_size * rows_number * raw_variables_number);
+        }
+        else if (context_variables_dimensions.size() == 3)
+        {
+            const Index channels_number = context_variables_dimensions(0);
+            const Index rows_number = context_variables_dimensions(1);
+            const Index raw_variables_number = context_variables_dimensions(2);
+
+            context_dimensions = { {batch_size, channels_number, rows_number, raw_variables_number} };
+
+            context_tensor.resize(1);
+            context_tensor.resize(batch_size * channels_number * rows_number * raw_variables_number);
+        }
+
+        context_data = context_tensor.data();
+    }
 }
 
 
@@ -274,6 +317,17 @@ std::pair<type *, dimensions> Batch::get_targets_pair() const
     targets.second = targets_dimensions;
 
     return targets;
+}
+
+
+std::pair<type*, dimensions> Batch::get_context_pair() const
+{
+    pair<type*, dimensions> context;
+
+    context.first = context_data;
+    context.second = context_dimensions;
+
+    return context;
 }
 
 }

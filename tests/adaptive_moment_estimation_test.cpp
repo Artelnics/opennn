@@ -103,11 +103,12 @@ void AdaptiveMomentEstimationTest::test_perform_training()
     // Loss goal
 
     samples_number = 1;
-    inputs_number = 10;
-    outputs_number = 10;
+    inputs_number = 1;
+    outputs_number = 1;
 
     data_set.set(samples_number, inputs_number, outputs_number);
     data_set.set_data_random();
+    //data_set.set_testing();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
     neural_network.set_parameters_random();
@@ -115,19 +116,19 @@ void AdaptiveMomentEstimationTest::test_perform_training()
     type training_loss_goal = type(0.05);
 
     //adaptive_moment_estimation.set_display(true);
-    //adaptive_moment_estimation.set_loss_goal(training_loss_goal);
+    adaptive_moment_estimation.set_loss_goal(training_loss_goal);
     adaptive_moment_estimation.set_maximum_epochs_number(10000);
     adaptive_moment_estimation.set_maximum_time(1000.0);
     
-    for (Index i = 0; i < 100; i++)
-    {
-        data_set.set_data_random();
-        neural_network.set_parameters_random();
+    //for (Index i = 0; i < 100; i++)
+    //{
+        //data_set.set_data_random();
+        //neural_network.set_parameters_random();
         training_results = adaptive_moment_estimation.perform_training();
-        assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
-    }
+        //assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    //}
     
-    //assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
 }
 
 

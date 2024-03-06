@@ -57,7 +57,11 @@ int main()
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+
+        //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        //training_strategy.get_loss_index()->set_regularization_weight(0.01);
+
         training_strategy.set_maximum_epochs_number(10000);
         training_strategy.set_display_period(1);
         training_strategy.set_maximum_time(86400);

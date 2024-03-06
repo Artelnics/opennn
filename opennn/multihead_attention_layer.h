@@ -100,6 +100,7 @@ public:
 
     void set_weights();
     void set_parameters_random() final;
+    void set_parameters_constant(const type&) final;
 
     void set_dropout_rate(const type&);
     void set_causal_mask(const bool&);

@@ -67,6 +67,7 @@ int main()
    "tensor_utilities | tu\n"
    "testing_analysis | ta\n"
    "training_strategy | ts\n"
+   "transformer | tf\n"
    "unscaling_layer | ul\n"
    "weighted_squared_error | wse\n"
    "\n" << endl;
@@ -461,6 +462,15 @@ int main()
         tests_passed_count += testing_analysis_test.get_tests_passed_count();
         tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
+
+      else if (test == "transformer" || test == "tf")
+      {
+          TransformerTest transformer_test;
+          transformer_test.run_test_case();
+          tests_count += transformer_test.get_tests_count();
+          tests_passed_count += transformer_test.get_tests_passed_count();
+          tests_failed_count += transformer_test.get_tests_failed_count();
+          }
 
       else if(test == "response_optimization" || test == "ro")
       {

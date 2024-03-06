@@ -27,6 +27,8 @@ struct Batch
 
     pair<type *, dimensions> get_targets_pair() const;
 
+    pair<type *, dimensions> get_context_pair() const;
+
     Index get_batch_samples_number() const;
 
     void set(const Index&, DataSet*);
@@ -52,6 +54,12 @@ struct Batch
     Tensor<type, 1> targets_tensor;
 
     type* targets_data = nullptr;
+
+    dimensions context_dimensions;
+
+    Tensor<type, 1> context_tensor;
+
+    type* context_data = nullptr;
 };
 
 

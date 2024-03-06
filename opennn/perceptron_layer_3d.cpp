@@ -191,17 +191,17 @@ string PerceptronLayer3D::write_activation_function() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic:
-        return "Logistic";
+    /*case ActivationFunction::Logistic:
+        return "Logistic";*/
 
     case ActivationFunction::HyperbolicTangent:
         return "HyperbolicTangent";
 
-    case ActivationFunction::Threshold:
+    /*case ActivationFunction::Threshold:
         return "Threshold";
 
     case ActivationFunction::SymmetricThreshold:
-        return "SymmetricThreshold";
+        return "SymmetricThreshold";*/
 
     case ActivationFunction::Linear:
         return "Linear";
@@ -209,7 +209,7 @@ string PerceptronLayer3D::write_activation_function() const
     case ActivationFunction::RectifiedLinear:
         return "RectifiedLinear";
 
-    case ActivationFunction::ScaledExponentialLinear:
+    /*case ActivationFunction::ScaledExponentialLinear:
         return "ScaledExponentialLinear";
 
     case ActivationFunction::SoftPlus:
@@ -222,7 +222,7 @@ string PerceptronLayer3D::write_activation_function() const
         return "HardSigmoid";
 
     case ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
+        return "ExponentialLinear";*/
     }
 
     return string();
@@ -281,11 +281,11 @@ void PerceptronLayer3D::set(const Index& new_inputs_number, const Index& new_inp
 
 void PerceptronLayer3D::set_default()
 {
-    layer_name = "perceptron_layer";
+    layer_name = "perceptron_layer_3d";
 
     display = true;
 
-    layer_type = Type::Perceptron;
+    layer_type = Type::Perceptron3D;
 }
 
 
@@ -376,7 +376,7 @@ void PerceptronLayer3D::set_activation_function(const string& new_activation_fun
 {
     if(new_activation_function_name == "Logistic")
     {
-        activation_function = ActivationFunction::Logistic;
+        //activation_function = ActivationFunction::Logistic;
     }
     else if(new_activation_function_name == "HyperbolicTangent")
     {
@@ -384,11 +384,11 @@ void PerceptronLayer3D::set_activation_function(const string& new_activation_fun
     }
     else if(new_activation_function_name == "Threshold")
     {
-        activation_function = ActivationFunction::Threshold;
+        //activation_function = ActivationFunction::Threshold;
     }
     else if(new_activation_function_name == "SymmetricThreshold")
     {
-        activation_function = ActivationFunction::SymmetricThreshold;
+        //activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
@@ -400,23 +400,23 @@ void PerceptronLayer3D::set_activation_function(const string& new_activation_fun
     }
     else if(new_activation_function_name == "ScaledExponentialLinear")
     {
-        activation_function = ActivationFunction::ScaledExponentialLinear;
+        //activation_function = ActivationFunction::ScaledExponentialLinear;
     }
     else if(new_activation_function_name == "SoftPlus")
     {
-        activation_function = ActivationFunction::SoftPlus;
+        //activation_function = ActivationFunction::SoftPlus;
     }
     else if(new_activation_function_name == "SoftSign")
     {
-        activation_function = ActivationFunction::SoftSign;
+        //activation_function = ActivationFunction::SoftSign;
     }
     else if(new_activation_function_name == "HardSigmoid")
     {
-        activation_function = ActivationFunction::HardSigmoid;
+        //activation_function = ActivationFunction::HardSigmoid;
     }
     else if(new_activation_function_name == "ExponentialLinear")
     {
-        activation_function = ActivationFunction::ExponentialLinear;
+        //activation_function = ActivationFunction::ExponentialLinear;
     }
     else
     {
@@ -1106,14 +1106,14 @@ string PerceptronLayer3D::write_activation_function_expression() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Threshold:
+    /*case ActivationFunction::Threshold:
         return "threshold";
 
     case ActivationFunction::SymmetricThreshold:
         return "symmetric_threshold";
 
     case ActivationFunction::Logistic:
-        return "logistic";
+        return "logistic";*/
 
     case ActivationFunction::HyperbolicTangent:
         return "tanh";
@@ -1124,7 +1124,7 @@ string PerceptronLayer3D::write_activation_function_expression() const
     case ActivationFunction::RectifiedLinear:
         return "ReLU";
 
-    case ActivationFunction::ExponentialLinear:
+    /*case ActivationFunction::ExponentialLinear:
         return "ELU";
 
     case ActivationFunction::ScaledExponentialLinear:
@@ -1137,7 +1137,7 @@ string PerceptronLayer3D::write_activation_function_expression() const
         return "soft_sign";
 
     case ActivationFunction::HardSigmoid:
-        return "hard_sigmoid";
+        return "hard_sigmoid";*/
 
     default:
         return string();

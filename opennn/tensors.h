@@ -231,6 +231,8 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
 Tensor<type, 1> mode(Tensor<type, 1>&);
 
+pair<type*, dimensions> join_pairs(Tensor<pair<type*, dimensions>, 1>&);
+
 
 template<class T, int n>
 Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)

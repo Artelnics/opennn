@@ -233,7 +233,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     TrainingResults results(maximum_epochs_number + 1);
-
+    
     check();
 
     // Start training
@@ -265,10 +265,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
-
+    
     const Index training_samples_number = data_set->get_training_samples_number();
     const Index selection_samples_number = data_set->get_selection_samples_number();
-
+    
     training_samples_number < batch_samples_number
             ? training_batch_samples_number = training_samples_number
             : training_batch_samples_number = batch_samples_number;
@@ -276,16 +276,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     selection_samples_number < batch_samples_number && selection_samples_number != 0
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
-
+    
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
-
+    
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
-
+    
     Tensor<Index, 2> training_batches(training_batches_number, training_batch_samples_number);
     Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
-
+    
     // Neural network
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -347,7 +347,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Main loop
-
+    
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
@@ -399,13 +399,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_error /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
-        /*
+        
         if(has_selection)
         {
             selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
-
+            
             selection_error = type(0);
-
+            
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
                 // Data set
@@ -415,19 +415,19 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                      target_variables_indices);
 
                 // Neural network
-
+                
                 inputs_pair = training_batch.get_inputs_pair();
 
                 neural_network->forward_propagate(inputs_pair,
                                                           selection_forward_propagation,
                                                           is_training);
-
+                
                 // Loss
 
                 loss_index->calculate_error(selection_batch,
                                                     selection_forward_propagation,
                                                     selection_back_propagation);
-
+                
                 selection_error += selection_back_propagation.error;
 
             }
@@ -438,7 +438,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
 
-        }*/
+        }
         
         // Elapsed time
 

@@ -352,7 +352,9 @@
     <ClCompile Include="testing_analysis_test.cpp" />
     <ClInclude Include="training_strategy_test.h" />
     <ClCompile Include="training_strategy_test.cpp" />
+    <ClInclude Include="transformer_test.h" />
     <ClInclude Include="unscaling_layer_test.h" />
+    <ClCompile Include="transformer_test.cpp" />
     <ClCompile Include="unscaling_layer_test.cpp" />
     <ClInclude Include="weighted_squared_error_test.h" />
     <ClCompile Include="weighted_squared_error_test.cpp" />

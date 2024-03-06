@@ -386,6 +386,16 @@ void MultiheadAttentionLayer::set_parameters_random()
     }
 }
 
+void MultiheadAttentionLayer::set_parameters_constant(const type& value)
+{
+    query_weights.setConstant(value);
+    key_weights.setConstant(value);
+    value_weights.setConstant(value);
+
+    projection_weights.setConstant(value);
+    projection_biases.setConstant(value);
+}
+
 
 void MultiheadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
 {

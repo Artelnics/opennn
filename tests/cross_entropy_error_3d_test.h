@@ -44,8 +44,10 @@ private:
 
     Index samples_number = 0;
     Index inputs_number = 0;
-    Index inputs_dim = 0;
-    Index outputs_dim = 0;
+    Index inputs_dimension = 0;
+    Index depth = 0;
+
+    bool is_training = true;
 
     Tensor<type, 3> data;
 

@@ -22,6 +22,8 @@
 // OpenNN includes
 
 #include "neural_network.h"
+#include "neural_network_forward_propagation.h"
+#include "batch.h"
 
 
 namespace opennn
@@ -44,10 +46,17 @@ public:
 
     explicit Transformer(const initializer_list<Index>&);
 
+    void set(const Tensor<Index, 1>&);
 
-    void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimensions, const Index& context_dim,
+    void set(const initializer_list<Index>&);
+
+    void set(const Index& inputs_length, const Index& context_length, const Index& inputs_dimension, const Index& context_dimension,
              const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& number_of_layers);
 
+    /// @todo move to NeuralNetwork
+    void forward_propagate(const Batch&, ForwardPropagation&, const bool&) const;
+    bool is_input_layer(const Tensor<Index, 1>&) const;
+    bool is_context_layer(const Tensor<Index, 1>&) const;
 
 protected:
 
@@ -63,11 +72,11 @@ protected:
 
     /// Maximum value in input
 
-    Index inputs_dimensions;
+    Index inputs_dimension;
 
     /// Maximum value in context
 
-    Index context_dim;
+    Index context_dimension;
 
     /// Embedding depth for each EmbeddingLayer
 
@@ -88,7 +97,7 @@ protected:
 };
 
 
-struct TransformerForwardPropagation
+struct TransformerForwardPropagation : ForwardPropagation
 {
     // Constructors
 
@@ -113,55 +122,7 @@ struct TransformerForwardPropagation
     }
 
 
-    void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-    {
-        Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
-
-        batch_samples_number = new_batch_samples;
-
-        const Tensor<Layer*, 1> neural_network_layers = neural_network->get_layers();
-
-        const Index layers_number = layers.size();
-
-        layers.resize(layers_number);
-
-        for(Index i = 0; i < layers_number; i++)
-        {
-            switch (neural_network_layers(i)->get_type())
-            {
-
-            case Layer::Type::Embedding:
-            {
-                layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            case Layer::Type::MultiheadAttention:
-            {
-                layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            case Layer::Type::Perceptron:
-            {
-                layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            case Layer::Type::Probabilistic:
-            {
-                layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-            }
-            break;
-
-            default: break;
-            }
-        }
-    }
+    void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
 
 
     void print() const

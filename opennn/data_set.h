@@ -124,7 +124,7 @@ public:
     /// This enumeration represents the possible uses of an variable
     /// (input, target, time or unused).
 
-    enum class VariableUse{Id, Input, Target, Time, Unused};
+    enum class VariableUse{Id, Input, Target, Time, Unused, Context};
 
     /// This enumeration represents the data type of a column
     /// (numeric, binary, categorical or time).

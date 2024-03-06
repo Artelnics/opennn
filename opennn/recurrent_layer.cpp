@@ -689,12 +689,11 @@ void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pai
                                        const bool& is_training)
 {
     const Index samples_number = inputs_pair.second[0][0];
-    const Index neurons_number = get_neurons_number();
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, inputs_pair.second[0][1]);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -837,7 +836,7 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
 
     // Forward propagation
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, neurons_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, inputs_number);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 

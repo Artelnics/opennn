@@ -54,6 +54,11 @@ namespace opennn
      
     //using execution_policy = std::execution::par;
 
+    template<typename Base, typename T>
+    inline bool is_instance_of(const T* ptr) {
+        return dynamic_cast<const Base*>(ptr) != nullptr;
+    }
+
 }
 
 

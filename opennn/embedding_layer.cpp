@@ -30,11 +30,11 @@ EmbeddingLayer::EmbeddingLayer() : Layer()
 /// This constructor also initializes the rest of the class members to their default values.
 
 EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
-                               const Index& new_input_length,
+                               const Index& new_inputs_number,
                                const Index& new_depth,
                                const bool& new_positional_encoding) : Layer()
 {
-    set(new_inputs_dimension, new_input_length, new_depth, new_positional_encoding);
+    set(new_inputs_dimension, new_inputs_number, new_depth, new_positional_encoding);
 
     layer_type = Type::Embedding;
 
@@ -52,9 +52,9 @@ Index EmbeddingLayer::get_input_dimension() const
 
 /// Returns the length of the input to the layer.
 
-Index EmbeddingLayer::get_input_length() const
+Index EmbeddingLayer::get_inputs_number() const
 {
-    return inputs_length;
+    return inputs_number;
 }
 
 
@@ -79,6 +79,25 @@ Index EmbeddingLayer::get_parameters_number() const
 }
 
 
+Tensor<type, 1> EmbeddingLayer::get_parameters() const
+{
+    Tensor<type, 1> parameters(get_parameters_number());
+
+    copy(execution::par,
+        embedding_weights.data(),
+        embedding_weights.data() + embedding_weights.size(),
+        parameters.data());
+
+    return parameters;
+}
+
+
+Index EmbeddingLayer::get_neurons_number() const
+{
+    return inputs_number * depth;
+}
+
+
 /// Returns true if messages from this class are displayed on the screen,
 /// or false if messages from this class are not displayed on the screen.
 
@@ -95,7 +114,7 @@ void EmbeddingLayer::set()
 {
     inputs_dimension = 0;
 
-    inputs_length = 0;
+    inputs_number = 0;
 
     depth = 0;
 
@@ -111,13 +130,13 @@ void EmbeddingLayer::set()
 /// It also sets the rest of the members to their default values.
 
 void EmbeddingLayer::set(const Index& new_inputs_dimension,
-                         const Index& new_input_length,
+                         const Index& new_inputs_number,
                          const Index& new_depth,
                          const bool& new_positional_encoding)
 {
     inputs_dimension = new_inputs_dimension;
 
-    inputs_length = new_input_length;
+    inputs_number = new_inputs_number;
 
     depth = new_depth;
 
@@ -159,9 +178,9 @@ void EmbeddingLayer::set_input_dim(const Index& new_inputs_dimension)
 
 /// Sets a new input length in the layer.
 
-void EmbeddingLayer::set_input_length(const Index& new_input_length)
+void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    inputs_length = new_input_length;
+    inputs_number = new_inputs_number;
 }
 
 
@@ -179,7 +198,7 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
 
 void EmbeddingLayer::set_embedding_weights()
 {
-    embedding_weights.resize(inputs_dimension, depth);
+    embedding_weights.resize(inputs_dimension + 1, depth);
 
     set_parameters_random();
 }
@@ -195,13 +214,11 @@ void EmbeddingLayer::set_parameters_random()
 //    embedding_weights = Eigen::internal::random<Eigen::Tensor<type, 2>>(1, 1).array() * 0.4 - 0.2;
 
     // first row must be 0s because input value 0 is padding
-
-    for(Index j = 0; j < depth; j++)
-    {
-        embedding_weights(0, j) = type(0);
-    }
-
-    for(Index i = 1; i < inputs_dimension; i++)
+    
+    embedding_weights.chip(0, 0).setConstant(0);
+    
+#pragma omp parallel for
+    for(Index i = 1; i < inputs_dimension + 1; i++)
     {
         for(Index j = 0; j < depth; j++)
         {
@@ -210,6 +227,11 @@ void EmbeddingLayer::set_parameters_random()
             embedding_weights(i, j) = minimum + (maximum - minimum)*random;
         }
     }
+}
+
+void EmbeddingLayer::set_parameters_constant(const type& value)
+{
+    embedding_weights.setConstant(value);
 }
 
 
@@ -230,7 +252,7 @@ void EmbeddingLayer::set_display(const bool& new_display)
 
 Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_row)
 {
-    Tensor<type, 2> one_hot_encoded_input_row(inputs_length, inputs_dimension);
+    Tensor<type, 2> one_hot_encoded_input_row(inputs_number, inputs_dimension);
     one_hot_encoded_input_row.setZero();
 
     const Tensor<type, 0> max_input = input_row.maximum();
@@ -245,7 +267,7 @@ Tensor<type, 2> EmbeddingLayer::one_hot_encode_row(const Tensor<type, 1>& input_
     }
 
 #pragma omp parallel for
-    for(Index i = 0; i < inputs_length; i++)
+    for(Index i = 0; i < inputs_number; i++)
         one_hot_encoded_input_row(i, Index(input_row(i))) = 1;
 
     return one_hot_encoded_input_row;
@@ -262,7 +284,7 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 
     for(Index row = 0; row < batch_size; row++)
     {
-        for(Index input_position = 0; input_position < inputs_length; input_position++)
+        for(Index input_position = 0; input_position < inputs_number; input_position++)
         {
             outputs.chip(row, 0).chip(input_position, 0)
                 = embedding_weights.chip(inputs(row, input_position), 0);
@@ -383,14 +405,45 @@ void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
     }
 }
 
+pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() const
+{
+    const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
+
+    const Index inputs_number = embedding_layer->get_inputs_number();
+
+    const Index depth = embedding_layer->get_depth();
+    
+    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, inputs_number, depth } });
+}
+
+
+void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
+
+    batch_samples_number = new_batch_samples_number;
+
+    const Index inputs_number = embedding_layer->get_inputs_number();
+
+    const Index depth = embedding_layer->get_depth();
+
+    // Outputs
+
+    outputs.resize(batch_samples_number, inputs_number, depth);
+
+    outputs_data = outputs.data();
+}
+
 void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-    const Index inputs_length = embedding_layer->get_input_length();
+    const Index inputs_number = embedding_layer->get_inputs_number();
     const Index depth = embedding_layer->get_depth();
 
-    positional_encoding.resize(inputs_length, depth);
+    positional_encoding.resize(inputs_number, depth);
 
     positional_encoding.setZero();
 
@@ -400,7 +453,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 
     #pragma omp parallel for
 
-    for (Index i = 0; i < inputs_length; i++)
+    for (Index i = 0; i < inputs_number; i++)
     {
         for (Index j = 0; j < Index(half_depth - 1); j++)
         {
@@ -413,7 +466,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     {
         #pragma omp parallel for
 
-        for (Index i = 0; i < inputs_length; i++)
+        for (Index i = 0; i < inputs_number; i++)
         {
             positional_encoding(i, depth - 2) = type(sin((i + 1) / 10000));
             positional_encoding(i, depth - 1) = type(cos((i + 1) / 10000));
@@ -423,7 +476,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     {
         #pragma omp parallel for
 
-        for (Index i = 0; i < inputs_length; i++)
+        for (Index i = 0; i < inputs_number; i++)
         {
             positional_encoding(i, depth - 1) = type(sin((i + 1) / 10000));
         }

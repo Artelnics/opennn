@@ -36,10 +36,21 @@ public:
 
     explicit LanguageDataSet();
 
+    void set(const Index& new_samples_number, const Index& new_inputs_number, const Index& new_targets_number);
+
     string get_text_separator_string() const;
 
     Tensor<string, 1> get_context_vocabulary() const;
     Tensor<string, 1> get_completion_vocabulary() const;
+
+    Index get_context_variables_number() const;
+    const Tensor<Index, 1>& get_context_variables_dimensions() const;
+
+    void set_default_raw_variables_uses();
+    void set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses);
+    void set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses);
+
+    void set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions);
 
     void set_text_separator(const Separator&);
     void set_text_separator(const string&);
@@ -64,6 +75,8 @@ private:
     Tensor<string, 1> context_vocabulary;
 
     Tensor<string, 1> completion_vocabulary;
+
+    Tensor<Index, 1> context_variables_dimensions;
 
     Index max_completion_length;
 

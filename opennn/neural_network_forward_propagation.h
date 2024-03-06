@@ -48,6 +48,7 @@ struct ForwardPropagation
         
         layers.resize(layers_number);
         layers.setConstant(nullptr);
+
         for(Index i = 0; i < layers_number; i++)
         {
             switch(neural_network_layers(i)->get_type())

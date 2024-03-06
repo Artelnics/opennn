@@ -17,6 +17,16 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
+void LanguageDataSet::set(const Index& new_samples_number,
+                  const Index& new_inputs_number,
+                  const Index& new_targets_number)
+{
+    DataSet::set(new_samples_number, new_inputs_number, new_targets_number);
+
+    context_variables_dimensions.resize(1);
+}
+
+
 /// Returns the string which will be used as separator in the data file for Text Classification.
 
 string LanguageDataSet::get_text_separator_string() const
@@ -45,6 +55,73 @@ Tensor<string, 1> LanguageDataSet::get_completion_vocabulary() const
 {
     return completion_vocabulary;
 }
+
+
+Index LanguageDataSet::get_context_variables_number() const
+{
+
+    Index context_number = 0;
+
+    for (Index i = 0; i < raw_variables.size(); i++)
+    {
+        if (raw_variables(i).type == RawVariableType::Categorical)
+        {
+            for (Index j = 0; j < raw_variables(i).categories_uses.size(); j++)
+            {
+                if (raw_variables(i).categories_uses(j) == VariableUse::Context)
+                {
+                    context_number++;
+                }
+            }
+        }
+        else if (raw_variables(i).raw_variable_use == VariableUse::Context)
+        {
+            context_number++;
+        }
+    }
+
+    return context_number;
+}
+
+
+const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() const
+{
+    return context_variables_dimensions;
+}
+
+
+void LanguageDataSet::set_default_raw_variables_uses()
+{
+    DataSet::set_default_raw_variables_uses();
+
+    if (raw_variables.size() > 1)
+        context_variables_dimensions.resize(1);
+}
+
+
+void LanguageDataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses)
+{
+    DataSet::set_raw_variables_uses(new_raw_variables_uses);
+
+    context_variables_dimensions.resize(1);
+    context_variables_dimensions.setConstant(get_context_variables_number());
+}
+
+
+void LanguageDataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses)
+{
+    DataSet::set_raw_variables_uses(new_raw_variables_uses);
+
+    context_variables_dimensions.resize(1);
+    context_variables_dimensions.setConstant(get_context_variables_number());
+}
+
+
+void LanguageDataSet::set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions)
+{
+    context_variables_dimensions = new_context_dimensions;
+}
+
 
 /// Sets a new separator.
 /// @param new_separator Separator value.

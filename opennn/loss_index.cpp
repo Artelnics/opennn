@@ -686,7 +686,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     pair<type*, dimensions> inputs_pair;
 
     // Hidden layers
-
+    
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
         layer = layers(i);
@@ -697,8 +697,6 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         if(i == last_trainable_layer_index)
         {
             calculate_output_delta(batch, forward_propagation, back_propagation);
-
-            
         }
         else
         {
@@ -718,7 +716,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
             inputs_pair = previous_layer_forward_propagation->get_outputs_pair();
         }
-
+        
         layer->calculate_error_gradient(inputs_pair, layer_forward_propagation, layer_back_propagation);
     }
 }
@@ -953,8 +951,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        parameters_forward(i) += h;
        
        neural_network->forward_propagate(inputs_pair,
-                                                 parameters_forward,
-                                                 forward_propagation);
+                                         parameters_forward,
+                                         forward_propagation);
 
        calculate_error(batch, forward_propagation, back_propagation);
 
@@ -965,8 +963,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        parameters_backward(i) -= h;
        
        neural_network->forward_propagate(inputs_pair,
-                                                 parameters_backward,
-                                                 forward_propagation);
+                                         parameters_backward,
+                                         forward_propagation);
 
        calculate_error(batch, forward_propagation, back_propagation);
 
