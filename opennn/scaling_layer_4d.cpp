@@ -733,18 +733,18 @@ void ScalingLayer4D::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer4D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void ScalingLayer4D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                      LayerForwardPropagation* forward_propagation,
                                      const bool& is_training)
 {
     ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation
             = static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
-                                            inputs_pair.second[0][0],
-                                            inputs_pair.second[0][1],
-                                            inputs_pair.second[0][2],
-                                            inputs_pair.second[0][3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
+                                            inputs_pair(0).second[0],
+                                            inputs_pair(0).second[1],
+                                            inputs_pair(0).second[2],
+                                            inputs_pair(0).second[3]);
 
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 

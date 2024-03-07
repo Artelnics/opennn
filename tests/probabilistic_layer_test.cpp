@@ -413,7 +413,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(inputs_pair,
+    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -459,7 +459,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(inputs_pair,
+    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -499,7 +499,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(inputs_pair,
+    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                           &probabilistic_layer_forward_propagation,
                                           is_training);
 
@@ -540,7 +540,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(inputs_pair, &probabilistic_layer_forward_propagation, is_training);
+    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair), &probabilistic_layer_forward_propagation, is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
 
@@ -574,7 +574,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    probabilistic_layer.forward_propagate(inputs_pair, &probabilistic_layer_forward_propagation, is_training);
+    probabilistic_layer.forward_propagate(tensor_wrapper(inputs_pair), &probabilistic_layer_forward_propagation, is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
     

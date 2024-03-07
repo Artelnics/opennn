@@ -159,7 +159,7 @@ public:
                                           Tensor<type, 2>&,
                                           Tensor<type, 2>&) const;
 
-   void forward_propagate(const pair<type*, dimensions>&layer,
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
                           LayerForwardPropagation*,
                           const bool&) final;
 
@@ -207,7 +207,7 @@ public:
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 2>&) const;
 
-   void calculate_error_gradient(const pair<type*, dimensions>&,
+   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 

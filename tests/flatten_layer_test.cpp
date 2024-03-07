@@ -66,7 +66,7 @@ void FlattenLayerTest::test_forward_propagate()
 
     pair<type*, dimensions> inputs_pair(inputs.data(), {{image_height, image_width, image_channels_number, images_number}});
 
-    flatten_layer.forward_propagate(inputs_pair, &flatten_layer_forward_propagation, is_training);
+    flatten_layer.forward_propagate(tensor_wrapper(inputs_pair), &flatten_layer_forward_propagation, is_training);
 
     outputs = flatten_layer_forward_propagation.outputs;
 

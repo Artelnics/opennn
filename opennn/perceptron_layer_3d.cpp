@@ -610,11 +610,11 @@ void PerceptronLayer3D::calculate_activations_derivatives(const Tensor<type, 3>&
 }
 
 
-void PerceptronLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
 
     PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
         static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -647,12 +647,12 @@ void PerceptronLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_
 }
 
 
-void PerceptronLayer3D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                         Tensor<type, 1>& potential_parameters,
                                         LayerForwardPropagation* layer_forward_propagation)
 {
 
-    const TensorMap<Tensor<type, 3>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1], inputs_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
 
     PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
         static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation);
@@ -823,14 +823,14 @@ void PerceptronLayer3D::calculate_hidden_delta(MultiheadAttentionLayerForwardPro
 }
 
 
-void PerceptronLayer3D::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
+void PerceptronLayer3D::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                  LayerForwardPropagation* forward_propagation,
                                                  LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs_map(inputs_pair.first,
-                                                inputs_pair.second[0][0],
-                                                inputs_pair.second[0][1],
-                                                inputs_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> inputs_map(inputs_pair(0).first,
+                                                inputs_pair(0).second[0],
+                                                inputs_pair(0).second[1],
+                                                inputs_pair(0).second[2]);
 
     // Forward propagation
 

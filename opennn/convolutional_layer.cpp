@@ -354,15 +354,15 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 }
 
 
-void ConvolutionalLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void ConvolutionalLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                            LayerForwardPropagation* layer_forward_propagation,
                                            const bool& is_training)
-{
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
-                                            inputs_pair.second[0][0],
-                                            inputs_pair.second[0][1],
-                                            inputs_pair.second[0][2],
-                                            inputs_pair.second[0][3]);
+{    
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
+                                            inputs_pair(0).second[0],
+                                            inputs_pair(0).second[1],
+                                            inputs_pair(0).second[2],
+                                            inputs_pair(0).second[3]);
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation);
@@ -484,15 +484,15 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
 }
 
 
-void ConvolutionalLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
+void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 4>> inputs(inputs_pair.first,
-                                            inputs_pair.second[0][0],
-                                            inputs_pair.second[0][1],
-                                            inputs_pair.second[0][2],
-                                            inputs_pair.second[0][3]);
+    const TensorMap<Tensor<type, 4>> inputs(inputs_pair(0).first,
+                                            inputs_pair(0).second[0],
+                                            inputs_pair(0).second[1],
+                                            inputs_pair(0).second[2],
+                                            inputs_pair(0).second[3]);
 
     // Convolutional layer
 

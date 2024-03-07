@@ -81,7 +81,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
     
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
     
@@ -109,7 +109,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
 
@@ -140,7 +140,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
 
@@ -177,7 +177,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
 
@@ -213,7 +213,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
 
@@ -249,7 +249,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
 
@@ -284,7 +284,7 @@ void ScalingLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    scaling_layer.forward_propagate(inputs_pair,
+    scaling_layer.forward_propagate(tensor_wrapper(inputs_pair),
                                     &scaling_layer_forward_propagation,
                                     is_training);
 

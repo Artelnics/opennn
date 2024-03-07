@@ -1802,41 +1802,6 @@ Tensor<type, 1> mode(Tensor<type, 1>& data)
 }
 
 
-// Assumes each of the pairs' dimensions has only one vector of dimensions
-pair<type*, dimensions> join_pairs(Tensor<pair<type*, dimensions>, 1>& pairs_tensor)
-{
-    const Index pairs_number = pairs_tensor.size();
-
-    Tensor<Index, 1> pairs_sizes(pairs_number);
-    dimensions pairs_dimensions(pairs_number);
-
-    for (Index pair_index = 0; pair_index < pairs_number; pair_index++)
-    {
-        pairs_sizes(pair_index) = 0;
-        pairs_dimensions[pair_index] = pairs_tensor(pair_index).second[0];
-
-        for(int i = 0; i < pairs_tensor(pair_index).second[0].size(); i++)
-            pairs_sizes(pair_index) += pairs_tensor(pair_index).second[0][i];
-    }
-
-    Tensor<Index, 0> total_dimensions = pairs_sizes.sum();
-    Tensor<type, 1> tensor(total_dimensions(0));
-    Index copy_index = 0;
-
-    for (Index pair_index = 0; pair_index < pairs_number; pair_index++)
-    {
-        copy(execution::par,
-            pairs_tensor(pair_index).first,
-            pairs_tensor(pair_index).first + pairs_sizes(pair_index),
-            tensor.data() + copy_index);
-
-        copy_index += pairs_sizes(pair_index);
-    }
-
-    return pair<type*, dimensions>(tensor.data(), pairs_dimensions);
-}
-
-
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>& data, Tensor<type, 1>& difference_data, const type& value)
 {
     std::vector<type> result;

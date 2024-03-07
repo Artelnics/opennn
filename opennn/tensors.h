@@ -231,8 +231,6 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
 Tensor<type, 1> mode(Tensor<type, 1>&);
 
-pair<type*, dimensions> join_pairs(Tensor<pair<type*, dimensions>, 1>&);
-
 
 template<class T, int n>
 Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
@@ -242,6 +240,15 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
     memcpy(dimensions.data(), tensor.dimensions().data(), size_t(n)*sizeof(Index));
 
     return dimensions;
+}
+
+template<class T>
+Tensor<T, 1> tensor_wrapper(T obj)
+{
+    Tensor<T, 1> wrapper(1);
+    wrapper.setValues({obj});
+
+    return wrapper;
 }
 
 

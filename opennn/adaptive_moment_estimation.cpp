@@ -311,7 +311,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
-    pair<type*, dimensions> inputs_pair;
+    Tensor<pair<type*, dimensions>, 1> inputs_pair;
 
     // Loss index
 

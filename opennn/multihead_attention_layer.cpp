@@ -554,22 +554,22 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 }
 
 
-void MultiheadAttentionLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
 {
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation);
 
-    const TensorMap<Tensor<type, 3>> input(inputs_pair.first,
-                                           inputs_pair.second[0][0],
-                                           inputs_pair.second[0][1],
-                                           inputs_pair.second[0][2]);
+    const TensorMap<Tensor<type, 3>> input(inputs_pair(0).first,
+                                           inputs_pair(0).second[0],
+                                           inputs_pair(0).second[1],
+                                           inputs_pair(0).second[2]);
 
-    const TensorMap<Tensor<type, 3>> context(inputs_pair.first + inputs_pair.second[0][0] + inputs_pair.second[0][1] + inputs_pair.second[0][2],
-                                             inputs_pair.second[1][0],
-                                             inputs_pair.second[1][1],
-                                             inputs_pair.second[1][2]);
+    const TensorMap<Tensor<type, 3>> context(inputs_pair(1).first,
+                                             inputs_pair(1).second[0],
+                                             inputs_pair(1).second[1],
+                                             inputs_pair(1).second[2]);
 
     Tensor<type, 4>& query = multihead_attention_layer_forward_propagation->query;
     Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
@@ -702,21 +702,21 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
 }
 
 
-void MultiheadAttentionLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+void MultiheadAttentionLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs,
                                                        LayerForwardPropagation* forward_propagation,
                                                        LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> input(inputs.first,
-                                           inputs.second[0][0],
-                                           inputs.second[0][1],
-                                           inputs.second[0][2]);
+    const TensorMap<Tensor<type, 3>> input(inputs(0).first,
+                                           inputs(0).second[0],
+                                           inputs(0).second[1],
+                                           inputs(0).second[2]);
 
-    const TensorMap<Tensor<type, 3>> context(inputs.first + inputs.second[0][0] + inputs.second[0][1] + inputs.second[0][2],
-                                             inputs.second[1][0],
-                                             inputs.second[1][1],
-                                             inputs.second[1][2]);
+    const TensorMap<Tensor<type, 3>> context(inputs(1).first,
+                                             inputs(1).second[0],
+                                             inputs(1).second[1],
+                                             inputs(1).second[2]);
 
-    Index batch_samples_number = inputs.second[0][0];
+    Index batch_samples_number = inputs(0).second[0];
 
     // Forward propagation
 

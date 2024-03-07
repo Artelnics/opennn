@@ -151,11 +151,11 @@ public:
                                           Tensor<type, 3>&,
                                           Tensor<type, 3>&) const;
 
-   void forward_propagate(const pair<type*, dimensions>&,
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                           LayerForwardPropagation*,
                           const bool&) final;
 
-   void forward_propagate(const pair<type*, dimensions>&,
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                           Tensor<type, 1>&,
                           LayerForwardPropagation*);
 
@@ -179,7 +179,7 @@ public:
 
    // Gradient methods
 
-   void calculate_error_gradient(const pair<type*, dimensions>&,
+   void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const final;
 

@@ -623,7 +623,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
 
-    const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
+    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
     const type regularization_weight = loss_index->get_regularization_weight();
 

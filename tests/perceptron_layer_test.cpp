@@ -711,7 +711,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -740,7 +740,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -782,7 +782,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -823,7 +823,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, false);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, false);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -851,7 +851,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -881,7 +881,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
@@ -907,7 +907,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    perceptron_layer.forward_propagate(inputs_pair, &perceptron_layer_forward_propagation, is_training);
+    perceptron_layer.forward_propagate(tensor_wrapper(inputs_pair), &perceptron_layer_forward_propagation, is_training);
 
     outputs = perceptron_layer_forward_propagation.outputs;
     parameters.resize(2);

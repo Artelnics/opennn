@@ -1727,7 +1727,7 @@ type NeuralNetwork::calculate_parameters_norm() const
 /// @param batch Batch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {
@@ -1752,7 +1752,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair
         last_layer_index = layers_number-1;
     }
 
-    pair<type*, dimensions> layer_inputs_pair;
+    Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
 
     for(Index i = first_layer_index; i <= last_layer_index; i++)
     {
@@ -1762,7 +1762,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair
         }
         else
         {
-            layer_inputs_pair = forward_propagation.layers(i - 1)->get_outputs_pair();
+            layer_inputs_pair = tensor_wrapper(forward_propagation.layers(i - 1)->get_outputs_pair());
         }
 
         layers(i)->forward_propagate(layer_inputs_pair,
@@ -1777,7 +1777,7 @@ void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair
 /// @param parameters Parameters of neural network.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void NeuralNetwork::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                       const Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation) const
 {
@@ -1815,7 +1815,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const pair<type*, dimensions> inputs_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
-    forward_propagate(inputs_pair, neural_network_forward_propagation);
+    forward_propagate(tensor_wrapper(inputs_pair), neural_network_forward_propagation);
 
     const Index layers_number = get_layers_number();
 
@@ -1823,7 +1823,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     
     const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     return outputs;
 }
@@ -1838,7 +1838,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     const pair<type*, dimensions> inputs_pair((type*)inputs.data(), { {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)} });
 
-    forward_propagate(inputs_pair, neural_network_forward_propagation);
+    forward_propagate(tensor_wrapper(inputs_pair), neural_network_forward_propagation);
 
     const Index layers_number = get_layers_number();
 
@@ -1846,7 +1846,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(layers_number - 1)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     return outputs;
 }

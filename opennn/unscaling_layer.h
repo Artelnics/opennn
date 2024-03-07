@@ -112,7 +112,7 @@ public:
 
    // Forward propagation methods
 
-   void forward_propagate(const pair<type*, dimensions>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, LayerForwardPropagation*, const bool&) final;
 
    // Serialization methods
 

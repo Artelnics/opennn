@@ -127,7 +127,7 @@ public:
 
     // Multihead Attention layer outputs
 
-    void forward_propagate(const pair<type*, dimensions>&,
+    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 
@@ -147,7 +147,7 @@ public:
 
     // Gradient methods
 
-    void calculate_error_gradient(const pair<type*, dimensions>&,
+    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 

@@ -122,7 +122,7 @@ public:
 
     // First order activations
 
-    void forward_propagate(const pair<type*, dimensions>&,
+    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                            LayerForwardPropagation*,
                            const bool&) final;
 

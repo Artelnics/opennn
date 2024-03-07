@@ -684,16 +684,16 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
 }
 
 
-void RecurrentLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = inputs_pair.second[0][0];
+    const Index samples_number = inputs_pair(0).second[0];
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
         = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_pair(0).second[1]);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
@@ -820,11 +820,11 @@ void RecurrentLayer::calculate_hidden_delta(ProbabilisticLayerForwardPropagation
 }
 
 
-void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
+void RecurrentLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
-    const Index samples_number = inputs_pair.second[0][0];
+    const Index samples_number = inputs_pair(0).second[0];
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
@@ -836,7 +836,7 @@ void RecurrentLayer::calculate_error_gradient(const pair<type*, dimensions>& inp
 
     // Forward propagation
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, samples_number, inputs_number);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, samples_number, inputs_number);
 
     Tensor<type, 1>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 

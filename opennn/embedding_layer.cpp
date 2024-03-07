@@ -293,11 +293,11 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 }
 
 
-void EmbeddingLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                        LayerForwardPropagation* layer_forward_propagation,
                                        const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
         = static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation);
@@ -373,14 +373,14 @@ void EmbeddingLayer::calculate_hidden_delta(MultiheadAttentionLayerForwardPropag
 }
 
 
-void EmbeddingLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs,
+void EmbeddingLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs,
                                               LayerForwardPropagation* forward_propagation,
                                               LayerBackPropagation* back_propagation) const
 {
-    Index batch_samples_number = inputs.second[0][0];
-    Index inputs_number = inputs.second[0][1];
+    Index batch_samples_number = inputs(0).second[0];
+    Index inputs_number = inputs(0).second[1];
 
-    const TensorMap<Tensor<type, 2>> inputs_map(inputs.first, batch_samples_number, inputs_number);
+    const TensorMap<Tensor<type, 2>> inputs_map(inputs(0).first, batch_samples_number, inputs_number);
 
     // Forward propagation
 
@@ -485,6 +485,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     built_positional_encoding_matrix = true;
 }
 
+
 void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -493,13 +494,13 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_length = embedding_layer->get_input_length();
+    const Index inputs_number = embedding_layer->get_inputs_number();
 
     const Index depth = embedding_layer->get_depth();
 
     // Deltas
 
-    deltas.resize(batch_samples_number, inputs_length, depth);
+    deltas.resize(batch_samples_number, inputs_number, depth);
 
     deltas_data = deltas.data();
 

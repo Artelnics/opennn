@@ -2179,13 +2179,13 @@ void DataSetTest::test_fill()
     //const TensorMap<Tensor<type, 2>> inputs = data_set_batch.inputs(0).to_tensor_map<2>();
     //const TensorMap<Tensor<type, 2>> targets = data_set_batch.targets.to_tensor_map<2>();
 
-    const pair<type*, dimensions> inputs_pair = data_set_batch.get_inputs_pair();
+    const Tensor<pair<type*, dimensions>, 1> inputs_pair = data_set_batch.get_inputs_pair();
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     const pair<type*, dimensions> targets_pair = data_set_batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     assert_true(are_equal(inputs, input_data), LOG);
     assert_true(are_equal(targets, target_data), LOG);

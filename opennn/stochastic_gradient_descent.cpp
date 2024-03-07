@@ -369,7 +369,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
     
-    const pair<type*, dimensions> training_inputs = training_batch.get_inputs_pair();
+    const Tensor<pair<type*, dimensions>, 1> training_inputs = training_batch.get_inputs_pair();
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
@@ -465,8 +465,8 @@ TrainingResults StochasticGradientDescent::perform_training()
             // Neural network
 
             neural_network->forward_propagate(training_inputs,
-                                                      training_forward_propagation,
-                                                      is_training);
+                                              training_forward_propagation,
+                                              is_training);
 
 
             // Loss index

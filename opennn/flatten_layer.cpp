@@ -126,7 +126,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 }
 
 
-void FlattenLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void FlattenLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                      LayerForwardPropagation* layer_forward_propagation,
                                      const bool& is_training)
 {
@@ -140,7 +140,7 @@ void FlattenLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
     memcpy(outputs_data,
-           inputs_pair.first,
+           inputs_pair(0).first,
            batch_samples_number*neurons_number*sizeof(type));
 
 }

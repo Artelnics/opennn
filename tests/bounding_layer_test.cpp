@@ -69,7 +69,7 @@ void BoundingLayerTest::test_forward_propagate()
     inputs(0) = type(-2.0);
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
-    bounding_layer.forward_propagate(inputs_pair, &bounding_layer_forward_propagation, is_training);
+    bounding_layer.forward_propagate(tensor_wrapper(inputs_pair), &bounding_layer_forward_propagation, is_training);
 
     outputs = bounding_layer_forward_propagation.outputs;
 
@@ -81,7 +81,7 @@ void BoundingLayerTest::test_forward_propagate()
     inputs(0) = type(2.0);
 
     bounding_layer_forward_propagation.set(samples_number, &bounding_layer);
-    bounding_layer.forward_propagate(inputs_pair, &bounding_layer_forward_propagation, is_training);
+    bounding_layer.forward_propagate(tensor_wrapper(inputs_pair), &bounding_layer_forward_propagation, is_training);
 
     outputs = bounding_layer_forward_propagation.outputs;
 

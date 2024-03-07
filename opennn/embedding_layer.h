@@ -101,11 +101,11 @@ public:
 
     // Embedding layer outputs
 
-    void forward_propagate(const pair<type*, dimensions>&layer,
+    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&layer,
                            LayerForwardPropagation*,
                            const bool&) final;
     /*
-    void forward_propagate(const pair<type*, dimensions>&,
+    void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&,
                            Tensor<type, 1>&,
                            LayerForwardPropagation*) final;
     */
@@ -121,7 +121,7 @@ public:
 
     // Gradient methods
 
-    void calculate_error_gradient(const pair<type*, dimensions>&,
+    void calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
 
@@ -246,28 +246,7 @@ protected:
         }
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer) final
-        {
-            layer = new_layer;
-
-            const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
-
-            batch_samples_number = new_batch_samples_number;
-
-            const Index inputs_number = embedding_layer->get_inputs_number();
-
-            const Index depth = embedding_layer->get_depth();
-
-            // Deltas
-
-            deltas.resize(batch_samples_number, inputs_number, depth);
-
-            deltas_data = deltas.data();
-
-            const Index input_dimension = embedding_layer->get_input_dimension();
-
-            embedding_weights_derivatives.resize(input_dimension, depth);
-        }
+        void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 
 
         void print() const

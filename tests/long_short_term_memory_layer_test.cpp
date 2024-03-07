@@ -88,7 +88,7 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
     inputs_pair.first = inputs.data();
     inputs_pair.second = {{samples_number, inputs_number}};
 
-    long_short_term_memory_layer.forward_propagate(inputs_pair, &long_short_term_layer_forward_propagation, is_training);
+    long_short_term_memory_layer.forward_propagate(tensor_wrapper(inputs_pair), &long_short_term_layer_forward_propagation, is_training);
 
     assert_true(long_short_term_layer_forward_propagation.outputs.rank() == 2, LOG);
     assert_true(long_short_term_layer_forward_propagation.outputs.dimension(0) == 1, LOG);

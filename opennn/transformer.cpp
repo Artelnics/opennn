@@ -191,8 +191,7 @@ void Transformer::forward_propagate(const Batch& batch,
         last_layer_index = layers_number - 1;
     }
 
-    pair<type*, dimensions> layer_inputs_pair;
-    Tensor<pair<type*, dimensions>, 1> layer_inputs_pairs_tensor;
+    Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
@@ -206,14 +205,12 @@ void Transformer::forward_propagate(const Batch& batch,
         }
         else
         {
-            layer_inputs_pairs_tensor.resize(layers_inputs_indices(i).size());
+            layer_inputs_pair.resize(layers_inputs_indices(i).size());
 
             for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
             {
-                layer_inputs_pairs_tensor(i) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+                layer_inputs_pair(i) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
-
-            layer_inputs_pair = join_pairs(layer_inputs_pairs_tensor);
         }
 
         layers(i)->forward_propagate(layer_inputs_pair,
@@ -236,6 +233,17 @@ bool Transformer::is_context_layer(const Tensor<Index, 1>& layer_inputs_indices)
         if (layer_inputs_indices(i) == -2) return true;
 
     return false;
+}
+
+
+TransformerForwardPropagation::~TransformerForwardPropagation()
+{
+    const Index layers_number = layers.size();
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        delete layers(i);
+    }
 }
 
 
@@ -280,67 +288,6 @@ void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNe
         case Layer::Type::Probabilistic3D:
         {
             layers(i) = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-        }
-        break;
-
-        default: break;
-        }
-    }
-}
-
-
-TransformerForwardPropagation::~TransformerForwardPropagation()
-{
-    const Index layers_number = layers.size();
-
-    for (Index i = 0; i < layers_number; i++)
-    {
-        delete layers(i);
-    }
-}
-
-void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-{
-    Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
-
-    batch_samples_number = new_batch_samples;
-
-    const Tensor<Layer*, 1> neural_network_layers = neural_network->get_layers();
-
-    const Index layers_number = layers.size();
-
-    layers.resize(layers_number);
-
-    for (Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers(i)->get_type())
-        {
-
-        case Layer::Type::Embedding:
-        {
-            layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-        }
-        break;
-
-        case Layer::Type::MultiheadAttention:
-        {
-            layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-        }
-        break;
-
-        case Layer::Type::Perceptron:
-        {
-            layers(i) = new PerceptronLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
-
-        }
-        break;
-
-        case Layer::Type::Probabilistic:
-        {
-            layers(i) = new ProbabilisticLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }
         break;

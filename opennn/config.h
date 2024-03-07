@@ -50,7 +50,7 @@ namespace opennn
 
     using type = float; //Eigen::half;
 
-    using dimensions = vector<vector<Index>>;
+    using dimensions = vector<Index>;
      
     //using execution_policy = std::execution::par;
 

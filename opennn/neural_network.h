@@ -273,11 +273,11 @@ public:
 
    /// Calculate forward propagation in neural network
 
-   void forward_propagate(const pair<type*, dimensions>&, 
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                           ForwardPropagation&, 
                           const bool& = false) const;
 
-   void forward_propagate(const pair<type*, dimensions>&, 
+   void forward_propagate(const Tensor<pair<type*, dimensions>, 1>&, 
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
 

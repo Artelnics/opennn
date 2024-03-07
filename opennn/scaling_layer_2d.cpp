@@ -735,17 +735,17 @@ void ScalingLayer2D::check_range(const Tensor<type, 1>& inputs) const
 }
 
 
-void ScalingLayer2D::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void ScalingLayer2D::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                        LayerForwardPropagation* forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = inputs_pair.second[0][0];
+    const Index samples_number = inputs_pair(0).second[0];
     const Index neurons_number = get_neurons_number();
 
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation
         = static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation);
 
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 

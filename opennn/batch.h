@@ -23,11 +23,11 @@ struct Batch
 
     virtual ~Batch();
 
-    pair<type *, dimensions> get_inputs_pair() const;
+    Tensor<pair<type*, dimensions>, 1> get_inputs_pair() const;
 
-    pair<type *, dimensions> get_targets_pair() const;
+    pair<type*, dimensions> get_targets_pair() const;
 
-    pair<type *, dimensions> get_context_pair() const;
+    Tensor<pair<type*, dimensions>, 1> get_context_pair() const;
 
     Index get_batch_samples_number() const;
 

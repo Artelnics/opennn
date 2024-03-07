@@ -326,11 +326,11 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
     
     const pair<type*, dimensions> outputs_pair = neural_network_forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     loss_index_back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
@@ -487,9 +487,9 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const Batch& batch,
     }
     else
     {
-        const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
+        const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
-        const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+        const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
         layers(first_trainable_layer_index)
             ->calculate_squared_errors_Jacobian_lm(inputs,
@@ -683,7 +683,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     LayerForwardPropagation* next_layer_forward_propagation = nullptr;
     LayerBackPropagation* next_layer_back_propagation = nullptr;
 
-    pair<type*, dimensions> inputs_pair;
+    Tensor<pair<type*, dimensions>, 1> inputs_pair;
 
     // Hidden layers
     
@@ -714,7 +714,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         {
             previous_layer_forward_propagation = forward_propagation.layers(i-1);
 
-            inputs_pair = previous_layer_forward_propagation->get_outputs_pair();
+            inputs_pair = tensor_wrapper(previous_layer_forward_propagation->get_outputs_pair());
         }
         
         layer->calculate_error_gradient(inputs_pair, layer_forward_propagation, layer_back_propagation);
@@ -982,7 +982,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     Tensor<type, 1> numerical_gradient(parameters_number);
     numerical_gradient.setConstant(type(0));
 
-    const pair<type*, dimensions> inputs_pair = batch.get_inputs_pair();
+    const Tensor<pair<type*, dimensions>, 1> inputs_pair = batch.get_inputs_pair();
 
     for(Index i = 0; i < parameters_number; i++)
     {

@@ -192,11 +192,11 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     /// @todo remove allocation using a better select
 
@@ -249,11 +249,11 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.targets_dimensions[0][0];
+    const Index batch_samples_number = batch.targets_dimensions[0];
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     // Back propagation
 
@@ -261,7 +261,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0][0], deltas_pair.second[0][1]);
+    TensorMap<Tensor<type, 2>> deltas(deltas_pair.first, deltas_pair.second[0], deltas_pair.second[1]);
 
 
     const type coefficient = type(2.0)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
@@ -467,14 +467,14 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0][0], targets_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const pair<type*, dimensions> outputs_pair = probabilistic_layer_forward_propagation->get_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0][0], outputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[0], outputs_pair.second[1]);
 
     /// @todo remove allocation
 

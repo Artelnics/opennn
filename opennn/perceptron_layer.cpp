@@ -579,11 +579,11 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 }
 
 
-void PerceptronLayer::forward_propagate(const pair<type*, dimensions>& inputs_pair,
+void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                         LayerForwardPropagation* layer_forward_propagation,
                                         const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
@@ -877,11 +877,11 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM *
 }
 
 
-void PerceptronLayer::calculate_error_gradient(const pair<type*, dimensions>& inputs_pair,
+void PerceptronLayer::calculate_error_gradient(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs(inputs_pair.first, inputs_pair.second[0][0], inputs_pair.second[0][1]);
+    const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     // Forward propagation
 

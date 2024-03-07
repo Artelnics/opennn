@@ -298,18 +298,18 @@ void Batch::print() const
 }
 
 
-std::pair<type *, dimensions> Batch::get_inputs_pair() const
+Tensor<pair<type*, dimensions>, 1> Batch::get_inputs_pair() const
 {
     pair<type *, dimensions> inputs;
 
     inputs.first = inputs_data;
     inputs.second = inputs_dimensions;
 
-    return inputs;
+    return tensor_wrapper(inputs);
 }
 
 
-std::pair<type *, dimensions> Batch::get_targets_pair() const
+pair<type*, dimensions> Batch::get_targets_pair() const
 {
     pair<type *, dimensions> targets;
 
@@ -320,14 +320,14 @@ std::pair<type *, dimensions> Batch::get_targets_pair() const
 }
 
 
-std::pair<type*, dimensions> Batch::get_context_pair() const
+Tensor<pair<type*, dimensions>, 1> Batch::get_context_pair() const
 {
     pair<type*, dimensions> context;
 
     context.first = context_data;
     context.second = context_dimensions;
 
-    return context;
+    return tensor_wrapper(context);
 }
 
 }

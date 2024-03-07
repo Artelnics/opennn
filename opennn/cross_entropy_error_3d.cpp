@@ -51,16 +51,16 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
     
     const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             outputs_pair.second[0][0],
-                                             outputs_pair.second[0][1],
-                                             outputs_pair.second[0][2]);
+                                             outputs_pair.second[0],
+                                             outputs_pair.second[1],
+                                             outputs_pair.second[2]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 3>> targets(targets_pair.first, 
-                                             targets_pair.second[0][0],
-                                             targets_pair.second[0][1],
-                                             targets_pair.second[0][2]);
+                                             targets_pair.second[0],
+                                             targets_pair.second[1],
+                                             targets_pair.second[2]);
 
     Tensor<type, 0> cross_entropy_error;
 
@@ -96,16 +96,16 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
     const pair<type*, dimensions> outputs_pair = forward_propagation.layers(last_trainable_layer_index)->get_outputs_pair();
     
     const TensorMap<Tensor<type, 3>> outputs(outputs_pair.first, 
-                                             outputs_pair.second[0][0],
-                                             outputs_pair.second[0][1],
-                                             outputs_pair.second[0][2]);
+                                             outputs_pair.second[0],
+                                             outputs_pair.second[1],
+                                             outputs_pair.second[2]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     const TensorMap<Tensor<type, 3>> targets(targets_pair.first, 
-                                             targets_pair.second[0][0],
-                                             targets_pair.second[0][1],
-                                             targets_pair.second[0][2]);
+                                             targets_pair.second[0],
+                                             targets_pair.second[1],
+                                             targets_pair.second[2]);
     /*
     cout << "Targets: " << endl << targets.chip(0, 0) << endl;
     cout << "Outputs: " << endl << outputs.chip(0, 0) << endl;
