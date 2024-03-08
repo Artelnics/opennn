@@ -93,11 +93,9 @@ public:
 
     void set_selection_errors(const Tensor<type, 1>&);
 
-
     void set_fitness(const Tensor<type, 1>&);
 
     void set_mutation_rate(const type&);
-
 
     void set_elitism_size(const Index&);
 

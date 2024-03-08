@@ -408,17 +408,17 @@ check_size(new_parameters, get_parameters_number(), LOG);
     const Index recurrent_weights_number = get_recurrent_weights_number();
 
     copy(/*execution::par,*/ 
-        new_parameters.data() + index,
+         new_parameters.data() + index,
          new_parameters.data() + index + biases_number,
          biases.data());
 
     copy(/*execution::par,*/ 
-        new_parameters.data() + index + biases_number,
+         new_parameters.data() + index + biases_number,
          new_parameters.data() + index + biases_number + inputs_weights_number,
          input_weights.data());
 
     copy(/*execution::par,*/ 
-        new_parameters.data() + biases_number + inputs_weights_number + index,
+         new_parameters.data() + biases_number + inputs_weights_number + index,
          new_parameters.data() + biases_number + inputs_weights_number + index + recurrent_weights_number,
          recurrent_weights.data());
 }

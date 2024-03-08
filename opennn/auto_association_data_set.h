@@ -31,9 +31,9 @@ class AutoAssociationDataSet : public DataSet
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+    // DEFAULT CONSTRUCTOR
 
-   explicit AutoAssociationDataSet();
+    explicit AutoAssociationDataSet();
 
 
     Tensor<RawVariable, 1> get_associative_raw_variables() const;

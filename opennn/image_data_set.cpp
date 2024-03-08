@@ -1373,7 +1373,6 @@ void ImageDataSet::fill_image_data(const string& new_data_source_path, const vec
             rows_labels(row_index) = images_path[row_index];
 
             row_index++;
-
         }
     }
 
