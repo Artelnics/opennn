@@ -212,27 +212,25 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 }
 
 
-void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
+void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>& aux_rows) const
 {
     const Index rows_number = x.dimension(0);
-    const Index raw_variables_number = x.dimension(1);
 
     const Eigen::array<Index, 1> softmax_dimension{ {1} };
-    const Eigen::array<Index, 2> range_2{ {rows_number, 1} };
-    const Eigen::array<Index, 2> expand_softmax_dim{ {1, raw_variables_number} };
 
     // Normalize values to avoid possible NANs
-    const Tensor<type, 2> x_max = x.maximum(softmax_dimension).reshape(range_2).broadcast(expand_softmax_dim);
 
-    y.device(*thread_pool_device) = x - x_max;
+    y.device(*thread_pool_device) = x;
+
+    aux_rows.device(*thread_pool_device) = x.maximum(softmax_dimension);
+
+    substract_columns(thread_pool_device, aux_rows, y);
 
     y.device(*thread_pool_device) = y.exp();
 
-    Tensor<type, 1> y_sum(rows_number);
+    aux_rows.device(*thread_pool_device) = y.sum(softmax_dimension);
 
-    y_sum.device(*thread_pool_device) = y.sum(softmax_dimension);
-
-    divide_columns(thread_pool_device, y, y_sum);
+    divide_columns(thread_pool_device, y, aux_rows);
 }
 
 
@@ -286,30 +284,6 @@ void Layer::softmax(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
     y.device(*thread_pool_device) = y / y_sum;
 }
 
-void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const
-{
-    const Index rows_number = x.dimension(0);
-    const Index raw_variables_number = x.dimension(1);
-
-    softmax(x, y);
-
-    dy_dx.setZero();
-
-    Tensor<type, 1> y_row(raw_variables_number);
-    Tensor<type, 2> dy_dx_matrix(raw_variables_number, raw_variables_number);
-
-    for (Index i = 0; i < rows_number; i++)
-    {
-        y_row = y.chip(i, 0);
-
-        dy_dx_matrix = -kronecker_product(y_row, y_row);
-
-        sum_diagonal(dy_dx_matrix, y_row);
-
-        dy_dx.chip(i, 0) = dy_dx_matrix;
-    }
-}
-
 
 void Layer::softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const
 {
@@ -327,17 +301,19 @@ void Layer::softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Te
 
     for (Index i = 0; i < rows_number; i++)
     {
-        y_row = y.chip(i, 0);
-
         for (Index j = 0; j < raw_variables_number; j++)
         {
-            y_element = y_row.chip(j, 0);
+            const TensorMap<Tensor<type, 1>> y_vector((type*) y.data() + j * rows_number + i * rows_number * raw_variables_number,
+                                                      rows_number);
 
-            dy_dx_element = -kronecker_product(y_element, y_element);
+            TensorMap<Tensor<type, 2>> dy_dx_matrix((type*) dy_dx.data() + j * rows_number * rows_number + i * rows_number * rows_number * raw_variables_number,
+                                                    rows_number, rows_number);
 
-            sum_diagonal(dy_dx_element, y_element);
+            self_kronecker_product(thread_pool_device, y_vector, dy_dx_matrix);
 
-            dy_dx.chip(i, 0).chip(j, 0) = dy_dx_element;
+            dy_dx_matrix = -dy_dx_matrix;
+
+            sum_diagonal(dy_dx_matrix, y_vector);
         }
     }
 }

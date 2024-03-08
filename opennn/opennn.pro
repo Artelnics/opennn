@@ -72,7 +72,7 @@ HEADERS += \
     codification.h \
     tinyxml2.h \
     data_set.h \
-    data_set_batch.h \
+    batch.h \
     time_series_data_set.h \
     auto_association_data_set.h \
     image_data_set.h \
@@ -132,7 +132,6 @@ HEADERS += \
     tensors.h \
     unit_testing.h \
     flatten_layer.h \
-    text_analytics.h \
     bounding_box_regressor_layer.h \
     bounding_box.h \
     unscaling_layer_forward_propagation.h \
@@ -154,7 +153,7 @@ SOURCES += \
     codification.cpp \
     tinyxml2.cpp \
     data_set.cpp \
-    data_set_batch.cpp \
+    batch.cpp \
     time_series_data_set.cpp \
     auto_association_data_set.cpp \
     image_data_set.cpp \
@@ -203,5 +202,4 @@ SOURCES += \
     testing_analysis.cpp \
     response_optimization.cpp \
     flatten_layer.cpp \
-    text_analytics.cpp \
     unit_testing.cpp

@@ -683,6 +683,7 @@ public:
     void generate_sequential_data(const Index&, const Index&);
     void generate_Rosenbrock_data(const Index&, const Index&);
     void generate_sum_data(const Index&, const Index&);
+    void generate_classification_data(const Index&, const Index&, const Index&);
 
     // Serialization methods
 

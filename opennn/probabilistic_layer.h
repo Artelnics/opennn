@@ -134,15 +134,12 @@ public:
                                Tensor<type, 2>&) const;
 
    void calculate_activations(const Tensor<type, 2>&,
-                              Tensor<type, 2>&) const;
+                              Tensor<type, 2>&,
+                              Tensor<type, 1>&) const;
 
    void calculate_activations_derivatives(const Tensor<type, 2>&,
                                           Tensor<type, 2>&,
                                           Tensor<type, 2>&) const;
-
-   void calculate_activations_derivatives(const Tensor<type, 2>&,
-                                          Tensor<type, 2>&,
-                                          Tensor<type, 3>&) const;
 
 
    // Outputs
@@ -243,7 +240,8 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
     Tensor<type, 2> activations_derivatives_2d;
-    Tensor<type, 3> activations_derivatives_3d;
+
+    Tensor<type, 1> aux_rows;
 };
 
 
@@ -262,6 +260,8 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     void print() const;
 
     Tensor<type, 2> deltas;
+
+    Tensor<type, 2> targets;
 
     Tensor<type, 1> deltas_row;
     Tensor<type, 2> activations_derivatives_matrix;
@@ -311,6 +311,8 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> error_combinations_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
+
+    Tensor<type, 2> targets;
 };
 
 }

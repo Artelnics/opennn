@@ -38,12 +38,12 @@ void AutoAssociationDataSet::transform_associative_data()
 
     for(Index i = 0; i < old_variables_number; i++)
     {
-        copy(execution::par, 
+        copy(/*execution::par,*/ 
              associative_data.data() + (i - index) * samples_number,
              associative_data.data() + (i + 1 - index) *  samples_number,
              data.data() + (i - index) * samples_number);
 
-        copy(execution::par, 
+        copy(/*execution::par,*/ 
              associative_data.data() + (i - index) * samples_number,
              associative_data.data() + (i + 1 - index) *  samples_number,
              data.data() + samples_number * old_variables_number + (i - index) * samples_number);

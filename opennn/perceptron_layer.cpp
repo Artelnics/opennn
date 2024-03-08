@@ -129,12 +129,12 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
     const type* biases_data = biases.data();
     type* parameters_data = parameters.data();
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          synaptic_weights_data,
          synaptic_weights_data + synaptic_weights_number,
          parameters_data);
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          biases_data,
          biases_data + biases_number,
          parameters_data + synaptic_weights_number);
@@ -322,12 +322,12 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         new_parameters_data + index,
         new_parameters_data + index + synaptic_weights_number,
         synaptic_weights_data);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         new_parameters_data + index + synaptic_weights_number,
         new_parameters_data + index + synaptic_weights_number + biases_number,
         biases_data);
@@ -589,15 +589,15 @@ void PerceptronLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
-    
+
     calculate_combinations(inputs,
                            outputs);
-    
+
     if(is_training && dropout_rate > type(0))
     {
         dropout(outputs);
     }
-    
+
     if(is_training)
     {
         Tensor<type, 2>& activations_derivatives = perceptron_layer_forward_propagation->activations_derivatives;
@@ -870,7 +870,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM *
 
     type* squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          squared_errors_Jacobian_data,
          squared_errors_Jacobian_data + layer_parameters_number*batch_samples_number,
          squared_errors_Jacobian_data + index);
@@ -931,12 +931,12 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     type* gradient_data = gradient.data();
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);

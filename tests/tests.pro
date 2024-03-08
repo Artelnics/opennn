@@ -25,6 +25,7 @@ SOURCES += \
     unscaling_layer_test.cpp \
     scaling_layer_test.cpp \
     probabilistic_layer_test.cpp \
+    probabilistic_layer_3d_test.cpp \
     perceptron_layer_test.cpp \
     long_short_term_memory_layer_test.cpp \
     recurrent_layer_test.cpp \
@@ -53,6 +54,7 @@ SOURCES += \
     stochastic_gradient_descent_test.cpp \
     statistics_test.cpp \
     scaling_test.cpp \
+    #transformer_test.cpp \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
     response_optimization_test.cpp \
@@ -70,6 +72,7 @@ HEADERS += \
     unscaling_layer_test.h \
     scaling_layer_test.h \
     probabilistic_layer_test.h \
+    probabilistic_layer_3d_test.h \
     perceptron_layer_test.h \
     long_short_term_memory_layer_test.h \
     recurrent_layer_test.h \
@@ -99,6 +102,7 @@ HEADERS += \
     correlations_test.h \
     statistics_test.h \
     scaling_test.h \
+    #transformer_test.h \
     convolutional_layer_test.h \
     pooling_layer_test.h \
     flatten_layer_test.h \

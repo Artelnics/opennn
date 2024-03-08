@@ -215,26 +215,26 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     // Biases
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          (type*)forget_biases.data(),
          (type*)forget_biases.data() + forget_biases.size(),
          (type*)parameters.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          input_biases.data(),
          input_biases.data() + input_biases.size(),
          parameters.data() + current_position);
 
     current_position += input_biases.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          state_biases.data(),
          state_biases.data() + state_biases.size(),
          parameters.data() + current_position);
 
     current_position += state_biases.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          output_biases.data(),
          output_biases.data() + output_biases.size(),
          parameters.data() + current_position);
@@ -243,28 +243,28 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     // Weights
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          forget_weights.data(),
          forget_weights.data() + forget_weights.size(),
          parameters.data() + current_position);
 
     current_position += forget_weights.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          input_weights.data(),
          input_weights.data() + input_weights.size(),
          parameters.data() + current_position);
 
     current_position += input_weights.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          state_weights.data(),
          state_weights.data() + state_weights.size(),
          parameters.data() + current_position);
 
     current_position += state_weights.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          output_weights.data(),
          output_weights.data() + output_weights.size(),
          parameters.data() + current_position);
@@ -273,28 +273,28 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     // Recurrent weights
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          forget_recurrent_weights.data(),
          forget_recurrent_weights.data() + forget_recurrent_weights.size(),
          parameters.data() + current_position);
 
     current_position += forget_recurrent_weights.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          input_recurrent_weights.data(),
          input_recurrent_weights.data() + input_recurrent_weights.size(),
          parameters.data() + current_position);
 
     current_position += input_recurrent_weights.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          state_recurrent_weights.data(),
          state_recurrent_weights.data() + state_recurrent_weights.size(),
          parameters.data() + current_position);
 
     current_position += state_recurrent_weights.size();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          output_recurrent_weights.data(),
          output_recurrent_weights.data() + output_recurrent_weights.size(),
          parameters.data() + current_position);
@@ -659,28 +659,28 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
     Index size = neurons_number;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          forget_biases.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          input_biases.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          state_biases.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          output_biases.data());
@@ -691,28 +691,28 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
     size = inputs_number*neurons_number;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          forget_weights.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          input_weights.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          state_weights.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          output_weights.data());
@@ -723,28 +723,28 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
     size = neurons_number*neurons_number;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          forget_recurrent_weights.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          input_recurrent_weights.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          state_recurrent_weights.data());
 
     current_index += size;
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters_data + current_index,
          new_parameters_data + current_index + size,
          output_recurrent_weights.data());         
@@ -1452,12 +1452,12 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<pair<type*, dimens
 
         set_row(hidden_states_derivatives, current_hidden_states_derivatives, i);
 
-        copy(execution::par,
+        copy(/*execution::par,
         cell_states_data,
         cell_states_data + neurons_number,
         cell_states_data + copy_index);
 
-        copy(execution::par, 
+        copy(/*execution::par,
         hidden_states_data,
         hidden_states_data + neurons_number,
         hidden_states_data + copy_index);
@@ -1803,7 +1803,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<pair<type*,
 
         cell_states_weights_derivatives.device(*thread_pool_device) += forget_combinations_weights_derivatives;
 /*
-        copy(execution::par,
+        copy(/*execution::par,execution::par,
             cell_states_weights_derivatives.data(),
             cell_states_weights_derivatives.data() + cell_states_weights_derivatives.size(),
             hidden_states_weights_derivatives.data());
@@ -1839,66 +1839,66 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 
     // Biases
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data(),
          long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data() + neurons_number,
         gradient_data + index);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->input_biases_derivatives.data(),
          long_short_term_memory_layer_back_propagation->input_biases_derivatives.data() + neurons_number,
         gradient_data + index + neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->state_biases_derivatives.data(),
          long_short_term_memory_layer_back_propagation->state_biases_derivatives.data() + neurons_number,
         gradient_data + index + 2*neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->output_biases_derivatives.data(),
          long_short_term_memory_layer_back_propagation->output_biases_derivatives.data() + neurons_number,
         gradient_data + index + 3*neurons_number);
 
     // Weights
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data() + inputs_number*neurons_number,
         gradient_data + index + 4*neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->input_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->input_weights_derivatives.data() + inputs_number*neurons_number,
         gradient_data + index + 4*neurons_number + inputs_number*neurons_number);
 
-    copy(execution::par,
+    copy(/*execution::par,*/
         long_short_term_memory_layer_back_propagation->state_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->state_weights_derivatives.data() + inputs_number*neurons_number,
         gradient_data + index + 4*neurons_number + 2*inputs_number*neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->output_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->output_weights_derivatives.data() + inputs_number*neurons_number,
         gradient_data + index + 4*neurons_number + 3*inputs_number*neurons_number);
 
     // Recurrent weights
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number + neurons_number*neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number + 2*neurons_number*neurons_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data(),
          long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number + 3*neurons_number*neurons_number);

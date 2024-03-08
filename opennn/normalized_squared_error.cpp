@@ -105,7 +105,7 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 
     for(Index i = 0; i < raw_variables; i++)
     {
-        copy(execution::par, 
+        copy(/*execution::par,*/ 
              targets.data() + targets.dimension(0) * i,
              targets.data() + targets.dimension(0) * i + rows,
              targets_t_1.data() + targets_t_1.dimension(0) * i);
@@ -113,7 +113,7 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 
     for(Index i = 0; i < raw_variables; i++)
     {
-        copy(execution::par, 
+        copy(/*execution::par,*/ 
              targets.data() + targets.dimension(0) * i + 1,
              targets.data() + targets.dimension(0) * i + 1 + rows,
              targets_t.data() + targets_t.dimension(0) * i);
@@ -339,7 +339,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
 
     const Layer* output_layer = output_layer_back_propagation->layer;
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());

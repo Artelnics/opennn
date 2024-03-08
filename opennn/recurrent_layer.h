@@ -252,9 +252,8 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     {
         set(new_batch_samples_number, new_layer);
     }
-    
-    pair<type*, dimensions> get_outputs_pair() const final;
 
+    pair<type*, dimensions> get_outputs_pair() const final;
 
     void set(const Index& new_batch_samples_number, Layer* new_layer) final;
 

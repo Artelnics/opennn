@@ -287,14 +287,38 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
 {
     const Index columns_number = vector.size();
 
-#pragma omp parallel for
-
     for (Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type, 1>>  column = tensor_map(matrix, i);
 
         column.device(*thread_pool_device) = vector * vector(i);
     }
+}
+
+
+void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+{
+    const Index columns_number = vector.size();
+
+#pragma omp parallel for
+    for(Index i = 0; i < columns_number; i++)
+    {
+        const type value_i = vector(i);
+
+        for(Index j = 0; j < columns_number; j++)
+        {
+            matrix(i, j) = value_i*vector(j);
+        }
+    }
+
+    /*
+    for (Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+        column.device(*thread_pool_device) = vector*vector(i);
+    }
+*/
 }
 
 
@@ -356,6 +380,20 @@ void sum_matrices(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& v
         TensorMap<Tensor<type,2>> matrix(tensor.data() + i*rows_number*raw_variables_number, rows_number, raw_variables_number);
 
         matrix.device(*thread_pool_device) = matrix + vector(i);
+    }
+}
+
+
+void substract_columns(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+{
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type,1>> column(matrix.data() + i*rows_number, rows_number);
+
+        column.device(*thread_pool_device) = column - vector;
     }
 }
 
@@ -874,7 +912,7 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
     }
 }
 
-
+/*
 Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
 {
     Tensor<string, 1> new_vector(index);
@@ -893,7 +931,7 @@ Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
 
     return new_vector;
 }
-
+*/
 
 /// Returns the number of elements which are equal or greater than a minimum given value
 /// and equal or less than a maximum given value.
@@ -936,9 +974,9 @@ void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_i
 
 void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
 {
-    copy(execution::par,
-        matrix.data(),
-        (type*)vector.data() + vector.size(),
+    copy(/*execution::par,*/
+        (type*) vector.data(),
+        (type*) vector.data() + vector.size(),
         matrix.data() + row_index);
 }
 
@@ -1191,6 +1229,17 @@ void sum_diagonal(TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& val
 }
 
 
+void substract_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
+{
+    const Index rows_number = matrix.dimension(0);
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < rows_number; i++)
+        matrix(i, i) -= values(i);
+}
+
+
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
@@ -1392,10 +1441,10 @@ Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Inde
 
     Tensor<Index, 1> data(size);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          x.data(), x.data() + x.size(), data.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          y.data(), y.data() + y.size(), data.data() + x.size());
 
     return data;

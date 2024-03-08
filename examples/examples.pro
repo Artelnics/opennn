@@ -10,18 +10,14 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
-SUBDIRS += airfoil_self_noise
-SUBDIRS += airline_passengers
+SUBDIRS += airfoil_self_noise \
+    classification \
+    forecasting
 SUBDIRS += amazon_reviews
 SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
-SUBDIRS += logical_operations
 SUBDIRS += mnist
-SUBDIRS += object_detector
-#SUBDIRS += outlier_detection
 SUBDIRS += rosenbrock
-SUBDIRS += simple_approximation
-SUBDIRS += simple_classification
 
 win32:{
 #QMAKE_CXXFLAGS+= -arch:AVX

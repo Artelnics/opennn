@@ -375,13 +375,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Neural network
             
             inputs_pair = training_batch.get_inputs_pair();
-            
+
             neural_network->forward_propagate(inputs_pair,
                                               training_forward_propagation,
                                               is_training);
-            
+
             // Loss index
-            
+
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
@@ -392,6 +392,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 //            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
+
         }
         
         // Loss

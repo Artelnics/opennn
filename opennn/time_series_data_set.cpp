@@ -437,7 +437,7 @@ void TimeSeriesDataSet::transform_time_series_data()
 
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
-            copy(execution::par, 
+            copy(/*execution::par,*/ 
                 time_series_data.data() + i + j * old_samples_number,
                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
                 data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);

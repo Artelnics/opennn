@@ -78,7 +78,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     error = sum_squared_error(0)*coefficient;
     
-    if(isnan(error)) throw runtime_error("Error is NAN.");
+   // if(isnan(error)) throw runtime_error("Error is NAN.");
 }
 
 
@@ -142,7 +142,7 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     const Layer::Type output_layer_type = output_layer->get_type();
 
-    copy(execution::par,
+    copy(/*execution::par,*/
          loss_index_back_propagation.errors.data(),
          loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
          output_layer_back_propagation->deltas.data());

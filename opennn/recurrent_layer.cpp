@@ -139,17 +139,17 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         biases.data(),
          biases.data() + biases.size(),
          parameters.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         input_weights.data(),
          input_weights.data() + input_weights.size(),
          parameters.data() + biases.size());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         recurrent_weights.data(),
          recurrent_weights.data() + recurrent_weights.size(),
          parameters.data() + biases.size() + input_weights.size());
@@ -407,17 +407,17 @@ check_size(new_parameters, get_parameters_number(), LOG);
     const Index inputs_weights_number = get_input_weights_number();
     const Index recurrent_weights_number = get_recurrent_weights_number();
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         new_parameters.data() + index,
          new_parameters.data() + index + biases_number,
          biases.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         new_parameters.data() + index + biases_number,
          new_parameters.data() + index + biases_number + inputs_weights_number,
          input_weights.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
         new_parameters.data() + biases_number + inputs_weights_number + index,
          new_parameters.data() + biases_number + inputs_weights_number + index + recurrent_weights_number,
          recurrent_weights.data());
@@ -704,6 +704,7 @@ void RecurrentLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
     Tensor<type, 2, RowMajor>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
     Tensor<type, 1>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
+
     for(Index i = 0; i < samples_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
@@ -968,21 +969,21 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Biases
 
-    copy(execution::par,
+    copy(/*execution::par,*/
         recurrent_layer_back_propagation->biases_derivatives.data(),
         recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
         gradient_data + index);
 
     // Input weights
 
-    copy(execution::par,
+    copy(/*execution::par,*/
         recurrent_layer_back_propagation->input_weights_derivatives.data(),
         recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number * neurons_number,
         gradient_data + index + neurons_number);
 
     // Recurrent weights
 
-    copy(execution::par,
+    copy(/*execution::par,*/
         recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
         recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number * neurons_number,
         gradient_data + index + neurons_number + inputs_number * neurons_number);

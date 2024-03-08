@@ -83,7 +83,7 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    copy(execution::par,
+    copy(/*execution::par,*/
         embedding_weights.data(),
         embedding_weights.data() + embedding_weights.size(),
         parameters.data());

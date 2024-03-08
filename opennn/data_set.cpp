@@ -8856,6 +8856,42 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
 }
 
+/// Generates an artifical data_set with a given number of samples, a number of features and a number of classes.
+/// @param samples_numer Number of samples in the data_set.
+/// @param variables_number Number of features to take into account in the classification problem.
+/// @param classes_number Number of classes in the data_set.
+
+void DataSet::generate_classification_data(const Index& samples_number, const Index& variables_number, const Index& classes_number)
+{
+    cout << "Generating Classification Data..." << endl;
+
+    set(samples_number, variables_number + classes_number);
+
+    data.setRandom();
+    /*
+    data.setConstant(0.0);
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < variables_number; j++)
+        {
+            data(i, j) = arc4random();
+        }
+    }
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        const Index random_class = arc4random() % classes_number;
+        data(i, variables_number + random_class) = 1;
+    }
+*/
+    cout << "Done." << endl;
+}
+
 
 void DataSet::generate_sum_data(const Index& samples_number, const Index& variables_number)
 {

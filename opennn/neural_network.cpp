@@ -1115,6 +1115,11 @@ void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
 void NeuralNetwork::set_default()
 {
     display = true;
+
+    const int n = omp_get_max_threads();
+
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 }
 
 
@@ -1717,7 +1722,9 @@ type NeuralNetwork::calculate_parameters_norm() const
 {
     const Tensor<type, 1> parameters = get_parameters();
 
-    const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
+    Tensor<type, 0> parameters_norm;
+
+    parameters_norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
 
     return parameters_norm(0);
 }

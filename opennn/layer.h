@@ -277,7 +277,7 @@ protected:
 
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-    void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const;
+    void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 1>&) const;
 
     void softmax(const Tensor<type, 3>& x, Tensor<type, 3>& y) const;
 
@@ -411,7 +411,7 @@ protected:
 
     /// @todo inefficient code
 
-    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx) const;
+    void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y, Tensor<type, 3>& dy_dx, Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 2>&) const;
 
     void softmax_derivatives(const Tensor<type, 3>& x, Tensor<type, 3>& y, Tensor<type, 4>& dy_dx) const;
 

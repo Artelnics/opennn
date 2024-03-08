@@ -476,7 +476,7 @@ void ConvolutionalLayer::calculate_hidden_delta(FlattenLayerForwardPropagation* 
 
     const Index next_flatten_layer_neurons_number = next_flatten_layer->get_neurons_number();
     
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          next_flatten_layer_back_propagation->deltas.data(),
          next_flatten_layer_back_propagation->deltas.data() +
          batch_samples_number * next_flatten_layer_neurons_number,
@@ -587,7 +587,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<pair<type*, dimen
                 += image.convolve(delta_reshape, convolutions_dimensions);
         }
 
-        copy(execution::par,
+        copy(/*execution::par,*/
              kernel_synaptic_weights_derivatives.data(),
              kernel_synaptic_weights_derivatives.data() + kernel_synaptic_weights_number,
              synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index);
@@ -617,12 +617,12 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
     // Copy from back propagation to gradient
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          synaptic_weights_derivatives_data,
          synaptic_weights_derivatives_data + synaptic_weights_number,
          gradient_data + index);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          biases_derivatives_data,
          biases_derivatives_data + biases_number,
          gradient_data + index + synaptic_weights_number);
@@ -875,12 +875,12 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          synaptic_weights.data(),
          synaptic_weights.data() + synaptic_weights.size(),
          parameters.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          biases.data(),
          biases.data() + biases.size(),
          parameters.data() + synaptic_weights.size());
@@ -1156,12 +1156,12 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
     biases.resize(kernels_number);
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters.data() + index, 
          new_parameters.data() + index + synaptic_weights.size(), 
          synaptic_weights.data());
 
-    copy(execution::par, 
+    copy(/*execution::par,*/ 
          new_parameters.data() + index + synaptic_weights.size(),
          new_parameters.data() + index + synaptic_weights.size() + biases.size(),
          biases.data());

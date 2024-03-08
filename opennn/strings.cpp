@@ -2295,7 +2295,7 @@ Tensor<type, 2> str_to_input(const string& input_string)
 
     Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    copy(execution::par,
+    copy(/*execution::par,*/
         input_data.data(),
         input_data.data() + input_data.size(),
         flatten_input_data.data());
@@ -2313,7 +2313,7 @@ string output_to_str(const Tensor<type, 2>& flatten_output_data)
 
     Tensor<type, 2> output_data(tensor_size, alphabet_length);
 
-    copy(execution::par,
+    copy(/*execution::par,
         flatten_output_data.data(),
         flatten_output_data.data() + tensor_size, output_data.data());
 
@@ -4858,12 +4858,12 @@ void TextAnalytics::load_documents(const string& path)
     Tensor<string,1> document_copy(lines_count);
     Tensor<string,1> document_target_copy(lines_count);
 
-    copy(execution::par,
+    copy(/*execution::par,
         document.data(),
         document.data() + lines_count,
         document_copy.data());
 
-    copy(execution::par,
+    copy(/*execution::par,
         document_target.data(),
         document_target.data() + lines_count,
         document_target_copy.data());
@@ -5094,7 +5094,7 @@ void TextGenerationAlphabet::create_alphabet()
 
     alphabet.resize(text_copy.length());
 
-    copy(execution::par,
+    copy(/*execution::par,
         text_copy.begin(),
         text_copy.end(),
         alphabet.data());
@@ -5246,7 +5246,7 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
     Tensor<type, 2> flatten_input_data(1, input_data.size());
 
-    copy(execution::par,
+    copy(/*execution::par,
         input_data.data(),
         input_data.data() + input_data.size(),
         flatten_input_data.data());
@@ -5263,7 +5263,7 @@ string TextGenerationAlphabet::output_to_str(const Tensor<type, 2>&flatten_outpu
 
     Tensor<type, 2> output_data(tensor_size, alphabet_length);
 
-    copy(execution::par,
+    copy(/*execution::par,
         flatten_output_data.data(),
         flatten_output_data.data() + tensor_size, output_data.data());
 

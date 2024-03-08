@@ -301,6 +301,10 @@ protected:
 
    Tensor<Tensor<Index, 1>, 1> layers_inputs_indices;
 
+
+   ThreadPool* thread_pool;
+   ThreadPoolDevice* thread_pool_device;
+
    /// Display messages to screen.
 
    bool display = true;
