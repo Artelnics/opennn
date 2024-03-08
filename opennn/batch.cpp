@@ -15,7 +15,8 @@ Batch::~Batch()
 
 void Batch::fill(const Tensor<Index, 1>& samples_indices,
                  const Tensor<Index, 1>& inputs_indices,
-                 const Tensor<Index, 1>& targets_indices)
+                 const Tensor<Index, 1>& targets_indices,
+                 const Tensor<Index, 1>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
@@ -62,6 +63,11 @@ void Batch::fill(const Tensor<Index, 1>& samples_indices,
         const bool augmentation = data_set->get_augmentation();
 
         if(augmentation) perform_augmentation();
+    }
+
+    if (context_indices.size() != 0)
+    {
+        fill_submatrix(data, samples_indices, context_indices, context_data);
     }
 
     /// todo dimensions

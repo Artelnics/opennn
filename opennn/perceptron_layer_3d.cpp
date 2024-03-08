@@ -814,12 +814,15 @@ void PerceptronLayer3D::calculate_hidden_delta(MultiheadAttentionLayerForwardPro
 
     // Next back propagation
 
+    /* Transformer's cross-attention layer takes MHA as input and Perceptron3D as context.
     bool is_context; // @todo
 
-    if (is_context)
-        deltas.device(*thread_pool_device) = next_back_propagation->error_context_derivatives;
-    else
+    if (!is_context)
         deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
+    else
+    */
+
+    deltas.device(*thread_pool_device) = next_back_propagation->error_context_derivatives;
 }
 
 

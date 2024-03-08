@@ -5156,6 +5156,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Perceptron3D:
         {
+            cout << "PercepFP" << endl;
             layers(i) = new PerceptronLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
@@ -5168,6 +5169,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Probabilistic3D:
         {
+            cout << "ProbFP" << endl;
             layers(i) = new ProbabilisticLayer3DForwardPropagation(batch_samples_number, neural_network_layers(i));
         }
         break;
@@ -5228,6 +5230,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Embedding:
         {
+            cout << "EmbeddingFP" << endl;
             layers(i) = new EmbeddingLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }
@@ -5235,6 +5238,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::MultiheadAttention:
         {
+            cout << "AttentionFP" << endl;
             layers(i) = new MultiheadAttentionLayerForwardPropagation(batch_samples_number, neural_network_layers(i));
 
         }

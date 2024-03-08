@@ -296,7 +296,7 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                        LayerForwardPropagation* layer_forward_propagation,
                                        const bool& is_training)
-{
+{/*
     const TensorMap<Tensor<type, 2>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1]);
 
     EmbeddingLayerForwardPropagation* embedding_layer_forward_propagation
@@ -317,9 +317,9 @@ void EmbeddingLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>&
 
         for(Index batch_element = 0; batch_element < outputs.dimension(0); batch_element++)
         {
-            outputs.chip(batch_element, 0)/*.device(thread_pool_device)*/ += positional_encoding;
+            outputs.chip(batch_element, 0)/*.device(thread_pool_device) += positional_encoding;
         }
-    }
+    }*/
 }
 
 void EmbeddingLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,

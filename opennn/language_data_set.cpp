@@ -13,16 +13,6 @@ namespace opennn
 
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
-
-}
-
-
-void LanguageDataSet::set(const Index& new_samples_number,
-                  const Index& new_inputs_number,
-                  const Index& new_targets_number)
-{
-    DataSet::set(new_samples_number, new_inputs_number, new_targets_number);
-
     context_variables_dimensions.resize(1);
 }
 
@@ -87,6 +77,93 @@ Index LanguageDataSet::get_context_variables_number() const
 const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() const
 {
     return context_variables_dimensions;
+}
+
+
+/// Returns the indices of the input variables.
+
+Tensor<Index, 1> LanguageDataSet::get_context_variables_indices() const
+{
+    const Index context_number = get_context_variables_number();
+
+    const Tensor<Index, 1> context_raw_variables_indices = get_context_raw_variables_indices();
+
+    Tensor<Index, 1> context_variables_indices(context_number);
+
+    Index context_index = 0;
+    Index context_variable_index = 0;
+
+    for (Index i = 0; i < raw_variables.size(); i++)
+    {
+        if (raw_variables(i).type == RawVariableType::Categorical)
+        {
+            const Index current_categories_number = raw_variables(i).get_categories_number();
+
+            for (Index j = 0; j < current_categories_number; j++)
+            {
+                if (raw_variables(i).categories_uses(j) == VariableUse::Context)
+                {
+                    context_variables_indices(context_index) = context_variable_index;
+                    context_index++;
+                }
+
+                context_variable_index++;
+            }
+        }
+        else if (raw_variables(i).raw_variable_use == VariableUse::Context) // Binary, numeric
+        {
+            context_variables_indices(context_index) = context_variable_index;
+            context_index++;
+            context_variable_index++;
+        }
+        else
+        {
+            context_variable_index++;
+        }
+    }
+
+    return context_variables_indices;
+}
+
+
+/// Returns the number of raw_variables whose uses are Input.
+
+Index LanguageDataSet::get_context_raw_variables_number() const
+{
+    Index context_raw_variables_number = 0;
+
+    for (Index i = 0; i < raw_variables.size(); i++)
+    {
+        if (raw_variables(i).raw_variable_use == VariableUse::Context)
+        {
+            context_raw_variables_number++;
+        }
+    }
+
+    return context_raw_variables_number;
+}
+
+
+/// Returns a indices vector with the positions of the inputs.
+
+Tensor<Index, 1> LanguageDataSet::get_context_raw_variables_indices() const
+{
+    const Index context_raw_variables_number = get_context_raw_variables_number();
+
+    Tensor<Index, 1> context_raw_variables_indices(context_raw_variables_number);
+
+    Index index = 0;
+
+    for (Index i = 0; i < raw_variables.size(); i++)
+    {
+        if (raw_variables(i).raw_variable_use == VariableUse::Context)
+        {
+            context_raw_variables_indices(index) = i;
+            index++;
+        }
+    }
+
+    return context_raw_variables_indices;
 }
 
 
@@ -155,6 +232,15 @@ void LanguageDataSet::set_text_separator(const string& new_separator_string)
 
         throw runtime_error(buffer.str());
     }
+}
+
+void LanguageDataSet::set_default()
+{
+    DataSet::set_default();
+
+    context_variables_dimensions.resize(1);
+
+    context_variables_dimensions.setConstant(get_context_variables_number());
 }
 
 Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const

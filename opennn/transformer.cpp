@@ -60,18 +60,18 @@ void Transformer::set(const Index& inputs_length, const Index& context_length, c
 
     // Embedding Layers
 
-    EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
-
-    context_embedding_layer->set_name("context_embedding");
-    add_layer(context_embedding_layer);
-    set_layer_inputs_indices("context_embedding", "dataset");
-
-
     EmbeddingLayer* input_embedding_layer = new EmbeddingLayer(inputs_dimension, inputs_length, embedding_depth, true);
 
     input_embedding_layer->set_name("input_embedding");
     add_layer(input_embedding_layer);
-    set_layer_inputs_indices("input_embedding", "dataset");
+    set_layer_inputs_indices("input_embedding", "input");
+
+
+    EmbeddingLayer* context_embedding_layer = new EmbeddingLayer(context_dimension, context_length, embedding_depth, true);
+
+    context_embedding_layer->set_name("context_embedding");
+    add_layer(context_embedding_layer);
+    set_layer_inputs_indices("context_embedding", "context");
 
 
     // Encoder
@@ -192,7 +192,7 @@ void Transformer::forward_propagate(const Batch& batch,
     }
 
     Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
-
+    
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
         if ( i == first_layer_index || is_input_layer(layers_inputs_indices(i)) )
@@ -209,13 +209,16 @@ void Transformer::forward_propagate(const Batch& batch,
 
             for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
             {
-                layer_inputs_pair(i) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+                //layer_inputs_pair(i) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
         }
-
+        /*
+        cout << "Before forward propagate of layer: " << layers(i)->get_name() << endl;
+        TensorMap<Tensor<type, 2>> layer_inputs(layer_inputs_pair(0).first, layer_inputs_pair(0).second[0], layer_inputs_pair(0).second[1]);
+        cout << "Layer inputs:" << endl << layer_inputs << endl;
         layers(i)->forward_propagate(layer_inputs_pair,
                                      forward_propagation.layers(i),
-                                     is_training);
+                                     is_training);*/
     }
 }
 

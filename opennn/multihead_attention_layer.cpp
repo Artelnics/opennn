@@ -557,7 +557,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
-{
+{/*
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -604,7 +604,7 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     Tensor<type, 3>& outputs = multihead_attention_layer_forward_propagation->outputs;
 
     calculate_output_projection(attention_outputs,
-                                outputs);
+                                outputs);*/
 
 }
 
@@ -693,12 +693,15 @@ void MultiheadAttentionLayer::calculate_hidden_delta(MultiheadAttentionLayerForw
 
     // Next back propagation
 
+    /* Transformer's cross-attention layer takes MHA as input and Perceptron3D as context
     bool is_context; // @todo
 
     if(is_context)
         deltas.device(*thread_pool_device) = next_back_propagation->error_context_derivatives;
     else
-        deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
+    */
+
+    deltas.device(*thread_pool_device) = next_back_propagation->error_input_derivatives;
 }
 
 
