@@ -8,7 +8,7 @@
 
 #include "cross_entropy_error_3d.h"
 #include "neural_network_forward_propagation.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {

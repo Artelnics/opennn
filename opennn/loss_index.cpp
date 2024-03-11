@@ -8,7 +8,7 @@
 
 #include "neural_network_forward_propagation.h"
 #include "loss_index.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
@@ -320,7 +320,7 @@ void LossIndex::check() const
 
 void LossIndex::calculate_errors_lm(const Batch& batch,
                                     const ForwardPropagation & neural_network_forward_propagation,
-                                    BackPropagationLM & loss_index_back_propagation) const
+                                    BackPropagationLM & back_propagation) const
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     
@@ -332,17 +332,17 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets(targets_pair.first, targets_pair.second[0], targets_pair.second[1]);
 
-    loss_index_back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
 
 
 void LossIndex::calculate_squared_errors_lm(const Batch&,
                                             const ForwardPropagation&,
-                                            BackPropagationLM& loss_index_back_propagation_lm) const
+                                            BackPropagationLM& back_propagation_lm) const
 {
-    const Tensor<type, 2>& errors = loss_index_back_propagation_lm.errors;
+    const Tensor<type, 2>& errors = back_propagation_lm.errors;
 
-    Tensor<type, 1>& squared_errors = loss_index_back_propagation_lm.squared_errors;
+    Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
     squared_errors.device(*thread_pool_device) = errors.square().sum(rows_sum).sqrt();
 }
@@ -401,41 +401,41 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
 void LossIndex::back_propagate_lm(const Batch& batch,
                                   ForwardPropagation& forward_propagation,
-                                  BackPropagationLM& loss_index_back_propagation_lm) const
+                                  BackPropagationLM& back_propagation_lm) const
 {
-    calculate_errors_lm(batch, forward_propagation, loss_index_back_propagation_lm);
+    calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-    calculate_squared_errors_lm(batch, forward_propagation, loss_index_back_propagation_lm);
+    calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-    calculate_error_lm(batch, forward_propagation, loss_index_back_propagation_lm);
+    calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-    calculate_layers_delta_lm(batch, forward_propagation, loss_index_back_propagation_lm);
+    calculate_layers_delta_lm(batch, forward_propagation, back_propagation_lm);
 
-    calculate_squared_errors_jacobian_lm(batch, forward_propagation, loss_index_back_propagation_lm);
+    calculate_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
 
-    calculate_error_gradient_lm(batch, loss_index_back_propagation_lm);
+    calculate_error_gradient_lm(batch, back_propagation_lm);
 
-    calculate_error_hessian_lm(batch, loss_index_back_propagation_lm);
+    calculate_error_hessian_lm(batch, back_propagation_lm);
 
     // Loss
 
-    loss_index_back_propagation_lm.loss = loss_index_back_propagation_lm.error;
+    back_propagation_lm.loss = back_propagation_lm.error;
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        const type regularization = calculate_regularization(loss_index_back_propagation_lm.parameters);
+        const type regularization = calculate_regularization(back_propagation_lm.parameters);
 
-        loss_index_back_propagation_lm.loss += regularization_weight*regularization;
+        back_propagation_lm.loss += regularization_weight*regularization;
 
-        calculate_regularization_gradient(loss_index_back_propagation_lm.parameters, loss_index_back_propagation_lm.regularization_gradient);
+        calculate_regularization_gradient(back_propagation_lm.parameters, back_propagation_lm.regularization_gradient);
 
-        loss_index_back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*loss_index_back_propagation_lm.regularization_gradient;
+        back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*back_propagation_lm.regularization_gradient;
 
-        calculate_regularization_hessian(loss_index_back_propagation_lm.parameters, loss_index_back_propagation_lm.regularization_hessian);
+        calculate_regularization_hessian(back_propagation_lm.parameters, back_propagation_lm.regularization_hessian);
 
-        loss_index_back_propagation_lm.hessian += regularization_weight*loss_index_back_propagation_lm.regularization_hessian;
+        back_propagation_lm.hessian += regularization_weight*back_propagation_lm.regularization_hessian;
     }
 }
 
@@ -452,23 +452,33 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 
 void LossIndex::calculate_squared_errors_jacobian_lm(const Batch& batch,
                                                   ForwardPropagation& forward_propagation,
-                                                  BackPropagationLM& loss_index_back_propagation_lm) const
+                                                  BackPropagationLM& back_propagation_lm) const
 {
+    // Neural network
+
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-
-    loss_index_back_propagation_lm.squared_errors_jacobian.setZero();
-
-    const Index batch_samples_number = batch.get_batch_samples_number();
-
-    Index memory_index = 0;
 
     Tensor<Layer*, 1> trainable_layers = neural_network->get_trainable_layers();
 
     Tensor<Layer*, 1> layers = neural_network->get_layers();
 
     const Tensor<Index, 1> trainable_layers_parameters_number = neural_network->get_trainable_layers_parameters_numbers();
+
+    // Batch
+
+    const Index batch_samples_number = batch.get_batch_samples_number();
+
+    // Forward propagation
+
+    //const Tensor<LayerForwardPropagation*, 1>& layers = forward_propagation.layers;
+
+    // Back propagation
+
+    back_propagation_lm.squared_errors_jacobian.setZero();
+
+    Index memory_index = 0;
 
     // Layer 0
 
@@ -494,12 +504,12 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const Batch& batch,
         layers(first_trainable_layer_index)
             ->calculate_squared_errors_Jacobian_lm(inputs,
                                                    forward_propagation.layers(first_trainable_layer_index),
-                                                   loss_index_back_propagation_lm.neural_network.layers(0));
+                                                   back_propagation_lm.neural_network.layers(0));
 
         layers(first_trainable_layer_index)
-            ->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(0),
+            ->insert_squared_errors_Jacobian_lm(back_propagation_lm.neural_network.layers(0),
                                                 memory_index,
-                                                loss_index_back_propagation_lm.squared_errors_jacobian);
+                                                back_propagation_lm.squared_errors_jacobian);
 
         memory_index += trainable_layers_parameters_number(0)*batch_samples_number;
     }
@@ -518,12 +528,12 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const Batch& batch,
             const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
             trainable_layers(i)->calculate_squared_errors_Jacobian_lm(outputs,
-                                                                   forward_propagation.layers(first_trainable_layer_index + i),
-                                                                   loss_index_back_propagation_lm.neural_network.layers(i));
+                                                                      forward_propagation.layers(first_trainable_layer_index + i),
+                                                                      back_propagation_lm.neural_network.layers(i));
 
-            trainable_layers(i)->insert_squared_errors_Jacobian_lm(loss_index_back_propagation_lm.neural_network.layers(i),
+            trainable_layers(i)->insert_squared_errors_Jacobian_lm(back_propagation_lm.neural_network.layers(i),
                                                                             memory_index,
-                                                                            loss_index_back_propagation_lm.squared_errors_jacobian);
+                                                                            back_propagation_lm.squared_errors_jacobian);
 
             memory_index += trainable_layers_parameters_number(i)*batch_samples_number;
         }
@@ -544,11 +554,15 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const Batch& batch,
 }
 
 
-void LossIndex::calculate_error_gradient_lm(const Batch& batch,
-                                      BackPropagationLM& loss_index_back_propagation_lm) const
+void LossIndex::calculate_error_gradient_lm(const Batch&,
+                                            BackPropagationLM& back_propagation_lm) const
 {
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+    const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+
+    Tensor<type, 1>& gradient = back_propagation_lm.gradient;
+
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B);
 }
 
 

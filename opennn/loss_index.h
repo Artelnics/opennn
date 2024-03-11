@@ -276,8 +276,6 @@ protected:
 
    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/loss_index_cuda.h"
 #endif
@@ -299,7 +297,16 @@ struct BackPropagationLM
     BackPropagationLM();
 
     explicit BackPropagationLM(const Index&, LossIndex*);
+/*
+    Tensor<type, 2>& get_output_deltas() const
+    {
+        //const Index layers_number = neural_network.layers.size();
 
+        //neural_network.layers()
+
+        return 
+    }
+*/
     void set(const Index&, LossIndex*);
 
     void print() const;

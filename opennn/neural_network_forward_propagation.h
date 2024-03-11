@@ -64,6 +64,5 @@ struct ForwardPropagation
     Tensor<LayerForwardPropagation*, 1> layers;
 };
 
-
 }
 #endif

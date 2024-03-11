@@ -61,6 +61,9 @@ void sum_matrices(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void substract_columns(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
+
+void set_identity(Tensor<type, 2>&);
+
 void sum_diagonal(Tensor<type, 2>&, const type&);
 void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 void sum_diagonal(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
@@ -79,6 +82,9 @@ void batch_matrix_multiplication(ThreadPoolDevice*, const Tensor<type, 4>&, cons
 
 void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 void self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+
+Tensor<type, 2> self_kronecker_product(ThreadPoolDevice*, const Tensor<type, 1>&);
+
 
 // Division
 
@@ -158,8 +164,9 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, cons
 // Kronecker product
 
 Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
-
+/*
 void kronecker_product(const Tensor<type, 1>&, Tensor<type, 2>&);
+*/
 
 // L1 norm
 
@@ -228,8 +235,6 @@ string string_tensor_to_string(const Tensor<string, 1>&, const string&);
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 
-
-
 Index partition(Tensor<type, 2>&, Index, Index, Index);
 Tensor<Index, 1> intersection(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 void swap_rows(Tensor<type, 2>&, const Index&, const Index&);
@@ -238,6 +243,7 @@ Tensor<type, 1> calculate_delta(const Tensor<type, 1>&);
 Tensor<type, 1> fill_gaps_by_value(Tensor<type, 1>&, Tensor<type, 1>&, const type&);
 Tensor<type, 1> mode(Tensor<type, 1>&);
 
+TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
 template<class T, int n>
 Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
@@ -257,9 +263,6 @@ Tensor<T, 1> tensor_wrapper(T obj)
 
     return wrapper;
 }
-
-
-TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
 
 }
 

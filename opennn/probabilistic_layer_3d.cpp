@@ -549,19 +549,15 @@ void ProbabilisticLayer3D::calculate_activations_derivatives(const Tensor<type, 
 
     switch(activation_function)
     {
-//    case ActivationFunction::Logistic:
-
-//        logistic_derivatives(combinations,
-//                             activations,
-//                             activations_derivatives);
-
-//        return;
 
     case ActivationFunction::Softmax:
 
+        // !!! Do we need this or just softmax???
+/*
         softmax_derivatives(combinations,
                             activations,
                             activations_derivatives);
+*/
         return;
 
     default:

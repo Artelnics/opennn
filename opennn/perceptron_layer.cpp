@@ -829,9 +829,11 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
 
     Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
 
+    /// @todo simplify, in matrix notation?
+
     Index synaptic_weight_index = 0;
 
-    for (Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
     {
         const TensorMap<Tensor<type, 1>> error_combinations_derivatives_neuron = tensor_map(error_combinations_derivatives, neuron_index);
 
@@ -848,7 +850,7 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
 
         // bias
 
-        Index bias_index = synaptic_weights_number + neuron_index;
+        const Index bias_index = synaptic_weights_number + neuron_index;
 
         TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias = tensor_map(squared_errors_Jacobian, bias_index);
 
@@ -857,7 +859,7 @@ void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>
 }
 
 
-void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM * back_propagation ,
+void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM* back_propagation,
                                                         const Index& index,
                                                         Tensor<type, 2>& squared_errors_Jacobian) const
 {

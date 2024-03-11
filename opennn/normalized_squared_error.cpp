@@ -8,7 +8,7 @@
 
 #include "normalized_squared_error.h"
 #include "neural_network_forward_propagation.h"
-#include "loss_index_back_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
@@ -270,7 +270,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
         
-    back_propagation.error = sum_squared_error(0)*coefficient;
+    error = sum_squared_error(0)*coefficient;
 
     if (isnan(error)) throw runtime_error("Error is NAN.");
 }
@@ -317,6 +317,8 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Back propagation
 
+    const Tensor<type, 2>& errors = back_propagation.errors;
+
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
     const pair<type*, dimensions> deltas_pair = back_propagation.get_output_deltas_pair();  
@@ -325,45 +327,53 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     const type coefficient = type(2) / (type(batch_samples_number) / type(total_samples_number) * normalization_coefficient);
 
-    deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    deltas.device(*thread_pool_device) = coefficient*errors;
 }
 
 
 void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
                                                        ForwardPropagation&,
-                                                       BackPropagationLM & loss_index_back_propagation) const
+                                                       BackPropagationLM & back_propagation) const
 {
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
-    LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
+    LayerBackPropagationLM* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Layer* output_layer = output_layer_back_propagation->layer;
+    const Tensor<type, 2>& errors = back_propagation.errors;
+    const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    copy(/*execution::par,*/
-         loss_index_back_propagation.errors.data(),
-         loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-         output_layer_back_propagation->deltas.data());
+    Tensor<type, 2>& deltas = output_layer_back_propagation->deltas;
 
-    divide_columns(thread_pool_device, output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
+    deltas.device(*thread_pool_device) = errors;
+
+    divide_columns(thread_pool_device, deltas, squared_errors);
 }
 
 
 void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
-                                                         BackPropagationLM& loss_index_back_propagation_lm) const
+                                                         BackPropagationLM& back_propagation_lm) const
 {
     const Index total_samples_number = data_set->get_samples_number();
 
+    // Batch
+
     const Index batch_samples_number = batch.get_batch_samples_number();
+
+    // Back propagation
+
+    Tensor<type, 1>& gradient = back_propagation_lm.gradient;
+
+    const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     const type coefficient = type(2* total_samples_number)/type(batch_samples_number* normalization_coefficient);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B)*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
 }
 
 
 void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
-                                                             BackPropagationLM& loss_index_back_propagation_lm) const
+                                                             BackPropagationLM& back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -371,15 +381,22 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
 #endif
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
     const Index total_samples_number = data_set->get_samples_number();
+
+    // Batch
+
+    const Index batch_samples_number = batch.get_batch_samples_number();
+
+    // Back propagation
+
+    const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
+    const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+
+    Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
     const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
 
-    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) =
-            loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
-
-    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.hessian;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
 }
 
 

@@ -282,7 +282,7 @@ void batch_matrix_multiplication(ThreadPoolDevice* thread_pool_device,
     }
 }
 
-
+/*
 void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
 {
     const Index columns_number = vector.size();
@@ -294,12 +294,30 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
         column.device(*thread_pool_device) = vector * vector(i);
     }
 }
+*/
+
+
+Tensor<type, 2> self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+{
+    const Index columns_number = vector.size();
+
+    Tensor<type, 2> matrix(columns_number, columns_number);
+
+    for (Index i = 0; i < columns_number; i++)
+    {
+        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+        column.device(*thread_pool_device) = vector * vector(i);
+    }
+
+    return matrix;
+}
 
 
 void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index columns_number = vector.size();
-
+/*
 #pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
     {
@@ -310,15 +328,13 @@ void self_kronecker_product(ThreadPoolDevice* thread_pool_device, const Tensor<t
             matrix(i, j) = value_i*vector(j);
         }
     }
-
-    /*
+*/
     for (Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
         column.device(*thread_pool_device) = vector*vector(i);
     }
-*/
 }
 
 
@@ -1052,7 +1068,7 @@ Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1
     return direct_matrix;
 }
 
-
+/*
 void kronecker_product(const Tensor<type, 1>& x, Tensor<type, 2>& y)
 {
     const Index n = x.dimension(0);
@@ -1066,7 +1082,7 @@ void kronecker_product(const Tensor<type, 1>& x, Tensor<type, 2>& y)
 
     product = kroneckerProduct(x_matrix, x_matrix).eval();
 }
-
+*/
 
 type l1_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
 {
@@ -1193,6 +1209,19 @@ Tensor<type, 1> l2_distance(const Tensor<type, 2>&x, const Tensor<type, 2>&y, co
     }
 
     return distance;
+}
+
+
+void set_identity(Tensor<type, 2>& matrix)
+{
+    const Index rows_number = matrix.dimension(0);
+
+    matrix.setZero();
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < rows_number; i++)
+        matrix(i, i) = type(1);
 }
 
 
