@@ -1080,7 +1080,7 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
 }
 
 

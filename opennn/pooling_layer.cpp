@@ -992,7 +992,7 @@ pair<type*, dimensions> PoolingLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number, 1, 1 } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number, 1, 1 });
 }
 
 void PoolingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
@@ -1037,10 +1037,10 @@ pair<type*, dimensions> PoolingLayerBackPropagation::get_deltas_pair() const
 
     const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
 
-    return pair<type*, dimensions>(deltas_data, { { batch_samples_number,
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number,
         kernels_number,
         outputs_rows_number,
-        outputs_raw_variables_number } });
+        outputs_raw_variables_number });
 }
 
 void PoolingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)

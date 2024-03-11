@@ -191,34 +191,33 @@ void Transformer::forward_propagate(const Batch& batch,
         last_layer_index = layers_number - 1;
     }
 
-    Tensor<pair<type*, dimensions>, 1> layer_inputs_pair;
+    Tensor<pair<type*, dimensions>, 1> layer_inputs;
     
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
         if ( i == first_layer_index || is_input_layer(layers_inputs_indices(i)) )
         {
-            layer_inputs_pair = batch.get_inputs_pair();
+            layer_inputs = batch.get_inputs_pair();
         }
         else if ( is_context_layer(layers_inputs_indices(i)) )
         {
-            layer_inputs_pair = batch.get_context_pair();
+            layer_inputs = batch.get_context_pair();
         }
         else
         {
-            layer_inputs_pair.resize(layers_inputs_indices(i).size());
+            layer_inputs.resize(layers_inputs_indices(i).size());
 
             for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
             {
-                //layer_inputs_pair(i) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+                layer_inputs(j) = forward_propagation.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
             }
         }
         /*
-        cout << "Before forward propagate of layer: " << layers(i)->get_name() << endl;
-        TensorMap<Tensor<type, 2>> layer_inputs(layer_inputs_pair(0).first, layer_inputs_pair(0).second[0], layer_inputs_pair(0).second[1]);
-        cout << "Layer inputs:" << endl << layer_inputs << endl;
-        layers(i)->forward_propagate(layer_inputs_pair,
+        TensorMap<Tensor<type, 2>> layer_inputs_tensor(layer_inputs(0).first, layer_inputs(0).second[0], layer_inputs(0).second[1]);
+        cout << "Layer inputs:" << endl << layer_inputs_tensor << endl;*/
+        layers(i)->forward_propagate(layer_inputs,
                                      forward_propagation.layers(i),
-                                     is_training);*/
+                                     is_training);
     }
 }
 

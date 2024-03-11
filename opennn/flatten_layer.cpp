@@ -357,7 +357,7 @@ pair<type*, dimensions> FlattenLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number });
 }
 
 void FlattenLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
@@ -377,7 +377,7 @@ pair<type*, dimensions> FlattenLayerBackPropagation::get_deltas_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, neurons_number } });
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, neurons_number });
 }
 
 void FlattenLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)

@@ -1643,7 +1643,7 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagation::get_outputs_pair()
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, neurons_number, 1, 1 } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, neurons_number, 1, 1 });
 }
 
 void ConvolutionalLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)

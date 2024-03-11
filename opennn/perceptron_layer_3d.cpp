@@ -37,7 +37,7 @@ PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number, const Index
 {
     set(new_inputs_number, new_inputs_size, new_neurons_number, new_activation_function);
 
-    layer_type = Type::Perceptron;
+    layer_type = Type::Perceptron3D;
 
     layer_name = "perceptron_layer";
 }
@@ -651,7 +651,6 @@ void PerceptronLayer3D::forward_propagate(const Tensor<pair<type*, dimensions>, 
                                         Tensor<type, 1>& potential_parameters,
                                         LayerForwardPropagation* layer_forward_propagation)
 {
-
     const TensorMap<Tensor<type, 3>> inputs(inputs_pair(0).first, inputs_pair(0).second[0], inputs_pair(0).second[1], inputs_pair(0).second[2]);
 
     PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
@@ -1153,9 +1152,9 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
-    const Index inputs_size = perceptron_layer_3d->get_inputs_size();
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, inputs_size, neurons_number } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
@@ -1168,13 +1167,13 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
-    const Index inputs_size = perceptron_layer_3d->get_inputs_size();
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
-    outputs.resize(batch_samples_number, inputs_size, neurons_number);
+    outputs.resize(batch_samples_number, inputs_number, neurons_number);
 
     outputs_data = outputs.data();
 
-    activations_derivatives.resize(batch_samples_number, inputs_size, neurons_number);
+    activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 }
 
 pair<type*, dimensions> PerceptronLayer3DBackPropagation::get_deltas_pair() const
@@ -1184,7 +1183,7 @@ pair<type*, dimensions> PerceptronLayer3DBackPropagation::get_deltas_pair() cons
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
     const Index inputs_number = perceptron_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, inputs_number, neurons_number } });
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)

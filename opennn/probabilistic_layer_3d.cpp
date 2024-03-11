@@ -1039,7 +1039,7 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
 
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(outputs_data, { { batch_samples_number, inputs_number, neurons_number } });
+    return pair<type*, dimensions>(outputs_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 
@@ -1070,7 +1070,7 @@ pair<type*, dimensions> ProbabilisticLayer3DBackPropagation::get_deltas_pair() c
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
 
-    return pair<type*, dimensions>(deltas_data, { { batch_samples_number, inputs_number, neurons_number } });
+    return pair<type*, dimensions>(deltas_data, { batch_samples_number, inputs_number, neurons_number });
 }
 
 

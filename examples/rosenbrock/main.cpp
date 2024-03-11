@@ -31,7 +31,7 @@ int main()
      
         // Data Set
 
-        const Index samples_number = 1000000;
+        const Index samples_number = 10000;
         const Index inputs_number = 1000;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = 1000;
@@ -62,7 +62,7 @@ int main()
         //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         //training_strategy.get_loss_index()->set_regularization_weight(0.01);
 
-        training_strategy.set_maximum_epochs_number(1);
+        training_strategy.set_maximum_epochs_number(100);
         training_strategy.set_display_period(1);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
         training_strategy.set_maximum_time(86400);

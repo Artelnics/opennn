@@ -462,7 +462,7 @@ int main()
         tests_passed_count += testing_analysis_test.get_tests_passed_count();
         tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
-/*
+
       else if (test == "transformer" || test == "tf")
       {
           TransformerTest transformer_test;
@@ -471,7 +471,7 @@ int main()
           tests_passed_count += transformer_test.get_tests_passed_count();
           tests_failed_count += transformer_test.get_tests_failed_count();
           }
-*/
+
       else if(test == "response_optimization" || test == "ro")
       {
         ResponseOptimizationTest response_optimization_test;

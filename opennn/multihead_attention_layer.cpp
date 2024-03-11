@@ -557,7 +557,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensions>, 1>& inputs_pair,
                                                 LayerForwardPropagation* layer_forward_propagation,
                                                 const bool& is_training)
-{/*
+{
     MultiheadAttentionLayerForwardPropagation* multihead_attention_layer_forward_propagation
         = static_cast<MultiheadAttentionLayerForwardPropagation*>(layer_forward_propagation);
 
@@ -574,16 +574,16 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     Tensor<type, 4>& query = multihead_attention_layer_forward_propagation->query;
     Tensor<type, 4>& key = multihead_attention_layer_forward_propagation->key;
     Tensor<type, 4>& value = multihead_attention_layer_forward_propagation->value;
-
+    
     calculate_transformation(input, query, query_weights);
-
+    
     calculate_transformation(context, key, key_weights);
-
+    
     calculate_transformation(context, value, value_weights);
 
     Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
     Tensor<type, 4>& softmax_attention_scores = multihead_attention_layer_forward_propagation->softmax_attention_scores;
-
+    
     compute_attention_scores(query,
                              key,
                              attention_scores,
@@ -604,7 +604,7 @@ void MultiheadAttentionLayer::forward_propagate(const Tensor<pair<type*, dimensi
     Tensor<type, 3>& outputs = multihead_attention_layer_forward_propagation->outputs;
 
     calculate_output_projection(attention_outputs,
-                                outputs);*/
+                                outputs);
 
 }
 
