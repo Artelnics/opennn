@@ -102,7 +102,7 @@ HEADERS += \
     auto_associative_neural_network.h \
     loss_index.h \
     loss_index_forward_propagation.h \
-    loss_index_back_propagation.h \
+    back_propagation.h \
     mean_squared_error.h \
     optimization_algorithm.h \
     stochastic_gradient_descent.h\
